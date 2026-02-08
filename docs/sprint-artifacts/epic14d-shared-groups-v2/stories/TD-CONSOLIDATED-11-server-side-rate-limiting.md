@@ -1,6 +1,6 @@
 # Story: TD-CONSOLIDATED-11: Server-Side Rate Limiting
 
-## Status: ready-for-dev
+## Status: review
 ## Epic: Epic 14d-v2 Shared Groups (Tech Debt - Tier 5)
 
 > **Consolidated from:** TD-14d-6, TD-14d-39
@@ -33,13 +33,13 @@ Timestamp-based rate limiting in Firestore security rules using `request.time` (
 
 ## Functional Acceptance Criteria
 
-- [ ] AC-1: Firestore security rules enforce 60-second cooldown on group settings updates (owner path)
-- [ ] AC-2: Firestore security rules enforce 30-second cooldown on group deletions (time since last `updatedAt`)
-- [ ] AC-3: Join and leave operations are NOT affected by rate limiting
-- [ ] AC-4: Existing groups without `lastSettingsUpdateAt` field are not blocked (migration-safe, null-safe)
-- [ ] AC-5: Client-side cooldowns remain unchanged and functional as UX layer
-- [ ] AC-6: Integration tests validate rate limiting enforcement, cooldown expiry, migration safety, and join/leave isolation
-- [ ] AC-7: All existing tests pass (`npm run test:story`)
+- [x] AC-1: Firestore security rules enforce 60-second cooldown on group settings updates (owner path)
+- [x] AC-2: Firestore security rules enforce 30-second cooldown on group deletions (time since last `updatedAt`)
+- [x] AC-3: Join and leave operations are NOT affected by rate limiting
+- [x] AC-4: Existing groups without `lastSettingsUpdateAt` field are not blocked (migration-safe, null-safe)
+- [x] AC-5: Client-side cooldowns remain unchanged and functional as UX layer
+- [x] AC-6: Integration tests validate rate limiting enforcement, cooldown expiry, migration safety, and join/leave isolation
+- [x] AC-7: All existing tests pass (`npm run test:story`)
 
 ## Architectural Acceptance Criteria (MANDATORY)
 
@@ -47,28 +47,28 @@ Timestamp-based rate limiting in Firestore security rules using `request.time` (
 
 ### File Location Requirements
 
-- [ ] AC-ARCH-LOC-1: Rate limiting helpers (`isSettingsUpdateAllowed`, `isDeleteAllowed`) in `firestore.rules` within `match /sharedGroups/{groupId}` block, alongside existing helpers
-- [ ] AC-ARCH-LOC-2: `lastSettingsUpdateAt` field in `SharedGroup` interface at `src/types/sharedGroup.ts`, grouped with existing `transactionSharingLastToggleAt` field
-- [ ] AC-ARCH-LOC-3: `lastSettingsUpdateAt` write logic in `updateGroup()` function at `src/features/shared-groups/services/groupService.ts`, within the existing `runTransaction` block
-- [ ] AC-ARCH-LOC-4: Rate limiting integration tests in `tests/integration/firestore-rules.test.ts` as a new `describe` block
+- [x] AC-ARCH-LOC-1: Rate limiting helpers (`isSettingsUpdateAllowed`, `isDeleteAllowed`) in `firestore.rules` within `match /sharedGroups/{groupId}` block, alongside existing helpers
+- [x] AC-ARCH-LOC-2: `lastSettingsUpdateAt` field in `SharedGroup` interface at `src/types/sharedGroup.ts`, grouped with existing `transactionSharingLastToggleAt` field
+- [x] AC-ARCH-LOC-3: `lastSettingsUpdateAt` write logic in `updateGroup()` function at `src/features/shared-groups/services/groupService.ts`, within the existing `runTransaction` block
+- [x] AC-ARCH-LOC-4: Rate limiting integration tests in `tests/integration/firestore-rules.test.ts` as a new `describe` block
 
 ### Pattern Requirements
 
-- [ ] AC-ARCH-PATTERN-1: `lastSettingsUpdateAt` written inside the same `runTransaction` that validates ownership (TOCTOU prevention)
-- [ ] AC-ARCH-PATTERN-2: Security rules include migration-safe null/missing-field guard: `!('lastSettingsUpdateAt' in resource.data) || resource.data.lastSettingsUpdateAt == null`
-- [ ] AC-ARCH-PATTERN-3: Uses `request.time` (server-provided) in security rules and `serverTimestamp()` in service writes — consistent with existing timestamp patterns
-- [ ] AC-ARCH-PATTERN-4: `lastSettingsUpdateAt: Timestamp | null` follows established pattern of `transactionSharingLastToggleAt: Timestamp | null` in SharedGroup type
-- [ ] AC-ARCH-PATTERN-5: Integration tests use existing emulator helpers (`setupFirebaseEmulator`, `clearFirestoreData`, `withSecurityRulesDisabled`, `assertSucceeds`, `assertFails`)
-- [ ] AC-ARCH-PATTERN-6: Rate limiting only on `isGroupOwner()` update path — join/leave paths remain unmodified
+- [x] AC-ARCH-PATTERN-1: `lastSettingsUpdateAt` written inside the same `runTransaction` that validates ownership (TOCTOU prevention)
+- [x] AC-ARCH-PATTERN-2: Security rules include migration-safe null/missing-field guard: `!('lastSettingsUpdateAt' in resource.data) || resource.data.lastSettingsUpdateAt == null`
+- [x] AC-ARCH-PATTERN-3: Uses `request.time` (server-provided) in security rules and `serverTimestamp()` in service writes — consistent with existing timestamp patterns
+- [x] AC-ARCH-PATTERN-4: `lastSettingsUpdateAt: Timestamp | null` follows established pattern of `transactionSharingLastToggleAt: Timestamp | null` in SharedGroup type
+- [x] AC-ARCH-PATTERN-5: Integration tests use existing emulator helpers (`setupFirebaseEmulator`, `clearFirestoreData`, `withSecurityRulesDisabled`, `assertSucceeds`, `assertFails`)
+- [x] AC-ARCH-PATTERN-6: Rate limiting only on `isGroupOwner()` update path — join/leave paths remain unmodified
 
 ### Anti-Pattern Requirements (Must NOT Happen)
 
-- [ ] AC-ARCH-NO-1: Client-side timestamps must NOT be used for rate limiting enforcement — only `request.time` in rules
-- [ ] AC-ARCH-NO-2: `Timestamp.now()` must NOT be used in `updateGroup()` for `lastSettingsUpdateAt` — must use `serverTimestamp()`
-- [ ] AC-ARCH-NO-3: Rate limiting must NOT be applied to `isUserJoining()` or `isUserLeaving()` paths
-- [ ] AC-ARCH-NO-4: A separate `lastDeleteAttemptAt` field must NOT be introduced — use existing `updatedAt`
-- [ ] AC-ARCH-NO-5: `updateTransactionSharingEnabled()` must NOT write `lastSettingsUpdateAt` — toggle has its own independent cooldown system
-- [ ] AC-ARCH-NO-6: Rules must NOT access `resource.data.lastSettingsUpdateAt` without a prior existence/null check — would silently block ALL owner updates on pre-existing groups
+- [x] AC-ARCH-NO-1: Client-side timestamps must NOT be used for rate limiting enforcement — only `request.time` in rules
+- [x] AC-ARCH-NO-2: `Timestamp.now()` must NOT be used in `updateGroup()` for `lastSettingsUpdateAt` — must use `serverTimestamp()`
+- [x] AC-ARCH-NO-3: Rate limiting must NOT be applied to `isUserJoining()` or `isUserLeaving()` paths
+- [x] AC-ARCH-NO-4: A separate `lastDeleteAttemptAt` field must NOT be introduced — use existing `updatedAt`
+- [x] AC-ARCH-NO-5: `updateTransactionSharingEnabled()` must NOT write `lastSettingsUpdateAt` — toggle has its own independent cooldown system
+- [x] AC-ARCH-NO-6: Rules must NOT access `resource.data.lastSettingsUpdateAt` without a prior existence/null check — would silently block ALL owner updates on pre-existing groups
 
 ## File Specification
 
@@ -85,16 +85,16 @@ Timestamp-based rate limiting in Firestore security rules using `request.time` (
 
 **Files:** `src/types/sharedGroup.ts`, `src/features/shared-groups/services/groupService.ts`
 
-- [ ] 1.1 Add `lastSettingsUpdateAt: Timestamp | null` to `SharedGroup` interface (alongside `transactionSharingLastToggleAt`)
-- [ ] 1.2 Add `lastSettingsUpdateAt: null` to `createGroup()` initial document (same pattern as other nullable timestamps)
-- [ ] 1.3 Add `lastSettingsUpdateAt: serverTimestamp()` to `updateGroup()` transaction `updateData` object (alongside `updatedAt: serverTimestamp()`)
-- [ ] 1.4 Run `npx tsc --noEmit` to verify type changes compile
+- [x] 1.1 Add `lastSettingsUpdateAt: Timestamp | null` to `SharedGroup` interface (alongside `transactionSharingLastToggleAt`)
+- [x] 1.2 Add `lastSettingsUpdateAt: null` to `createGroup()` initial document (same pattern as other nullable timestamps)
+- [x] 1.3 Add `lastSettingsUpdateAt: serverTimestamp()` to `updateGroup()` transaction `updateData` object (alongside `updatedAt: serverTimestamp()`)
+- [x] 1.4 Run `npx tsc --noEmit` to verify type changes compile
 
 ### Task 2: Firestore Security Rules
 
 **File:** `firestore.rules`
 
-- [ ] 2.1 Add `isSettingsUpdateAllowed()` helper function in `match /sharedGroups/{groupId}` block:
+- [x] 2.1 Add `isSettingsUpdateAllowed()` helper function in `match /sharedGroups/{groupId}` block:
   ```
   function isSettingsUpdateAllowed() {
     return !('lastSettingsUpdateAt' in resource.data)
@@ -102,7 +102,7 @@ Timestamp-based rate limiting in Firestore security rules using `request.time` (
         || request.time > resource.data.lastSettingsUpdateAt + duration.value(60, 's');
   }
   ```
-- [ ] 2.2 Add `isDeleteAllowed()` helper function:
+- [x] 2.2 Add `isDeleteAllowed()` helper function:
   ```
   function isDeleteAllowed() {
     return !('updatedAt' in resource.data)
@@ -110,24 +110,24 @@ Timestamp-based rate limiting in Firestore security rules using `request.time` (
         || request.time > resource.data.updatedAt + duration.value(30, 's');
   }
   ```
-- [ ] 2.3 Modify `allow update` rule: gate `isGroupOwner()` path with `&& isSettingsUpdateAllowed()`
-- [ ] 2.4 Modify `allow delete` rule: add `&& isDeleteAllowed()`
-- [ ] 2.5 Validate rules syntax (deploy to emulator or `firebase deploy --only firestore:rules --dry-run`)
+- [x] 2.3 Modify `allow update` rule: gate `isGroupOwner()` path with `&& isSettingsUpdateAllowed()`
+- [x] 2.4 Modify `allow delete` rule: add `&& isDeleteAllowed()`
+- [x] 2.5 Validate rules syntax (deploy to emulator or `firebase deploy --only firestore:rules --dry-run`)
 
 ### Task 3: Integration Tests
 
 **File:** `tests/integration/firestore-rules.test.ts`
 
-- [ ] 3.1 Add `describe('Rate Limiting Security Rules (TD-CONSOLIDATED-11)')` block
-- [ ] 3.2 Test: owner update DENIED within 60s cooldown (`lastSettingsUpdateAt` = `Timestamp.now()`)
-- [ ] 3.3 Test: owner update ALLOWED after 60s cooldown (`lastSettingsUpdateAt` = 61s ago)
-- [ ] 3.4 Test: owner update ALLOWED with `null` `lastSettingsUpdateAt` (migration safety)
-- [ ] 3.5 Test: owner update ALLOWED with missing `lastSettingsUpdateAt` field (migration safety)
-- [ ] 3.6 Test: delete DENIED within 30s of last `updatedAt`
-- [ ] 3.7 Test: delete ALLOWED after 30s cooldown
-- [ ] 3.8 Test: join operation NOT affected by rate limiting
-- [ ] 3.9 Test: leave operation NOT affected by rate limiting
-- [ ] 3.10 Run `npm run test:story` to verify all tests pass
+- [x] 3.1 Add `describe('Rate Limiting Security Rules (TD-CONSOLIDATED-11)')` block
+- [x] 3.2 Test: owner update DENIED within 60s cooldown (`lastSettingsUpdateAt` = `Timestamp.now()`)
+- [x] 3.3 Test: owner update ALLOWED after 60s cooldown (`lastSettingsUpdateAt` = 61s ago)
+- [x] 3.4 Test: owner update ALLOWED with `null` `lastSettingsUpdateAt` (migration safety)
+- [x] 3.5 Test: owner update ALLOWED with missing `lastSettingsUpdateAt` field (migration safety)
+- [x] 3.6 Test: delete DENIED within 30s of last `updatedAt`
+- [x] 3.7 Test: delete ALLOWED after 30s cooldown
+- [x] 3.8 Test: join operation NOT affected by rate limiting
+- [x] 3.9 Test: leave operation NOT affected by rate limiting
+- [x] 3.10 Run `npm run test:story` to verify all tests pass
 
 ## Dev Notes
 

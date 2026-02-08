@@ -25,7 +25,7 @@ import {
     assertSucceeds,
     assertFails,
 } from '../setup/firebase-emulator';
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, setDoc, Timestamp, query, where } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, setDoc, Timestamp, query, where, serverTimestamp } from 'firebase/firestore';
 
 describe('Firestore Security Rules', () => {
     beforeAll(async () => {
@@ -819,9 +819,11 @@ describe('Shared Group Security Rules (Epic 14d-v2)', () => {
      */
     it('should allow owner to delete group document', async () => {
         // Create a group with USER_1 as owner
+        // TD-CONSOLIDATED-11: updatedAt must be >30s ago to bypass delete cooldown
         await withSecurityRulesDisabled(async (firestore) => {
             await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID), {
                 ...createValidSharedGroup(TEST_USERS.USER_1),
+                updatedAt: Timestamp.fromDate(new Date(Date.now() - 31000)),
             });
         });
 
@@ -1896,9 +1898,11 @@ describe('Member Leave Security Rules (Epic 14d-v2 Story 1.7)', () => {
      */
     it('should allow owner to delete group', async () => {
         // Create group with USER_1 as owner
+        // TD-CONSOLIDATED-11: updatedAt must be >30s ago to bypass delete cooldown
         await withSecurityRulesDisabled(async (firestore) => {
             await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID), {
                 ...createValidSharedGroup(TEST_USERS.USER_1, [TEST_USERS.USER_1, TEST_USERS.USER_2]),
+                updatedAt: Timestamp.fromDate(new Date(Date.now() - 31000)),
             });
         });
 
@@ -2230,5 +2234,355 @@ describe('User Preferences Security Rules (Story 14d-v2-1-12b)', () => {
         const prefsDoc = doc(user2Firestore, getUserPreferencesPath(TEST_USERS.USER_1));
 
         await assertFails(deleteDoc(prefsDoc));
+    });
+});
+
+/**
+ * Rate Limiting Security Rules Tests (TD-CONSOLIDATED-11)
+ *
+ * Tests server-side rate limiting for destructive group operations:
+ * - Settings updates: 60-second cooldown on lastSettingsUpdateAt
+ * - Group deletions: 30-second cooldown on updatedAt
+ * - Join/leave: No rate limiting applied
+ * - Migration safety: Null/missing fields don't block operations
+ */
+describe('Rate Limiting Security Rules (TD-CONSOLIDATED-11)', () => {
+    const TEST_GROUP_ID = 'rate-limit-test-group';
+
+    beforeAll(async () => {
+        await setupFirebaseEmulator();
+    });
+
+    afterAll(async () => {
+        await teardownFirebaseEmulator();
+    });
+
+    beforeEach(async () => {
+        await clearFirestoreData();
+    });
+
+    /**
+     * Helper: Create a shared group document with configurable timestamps
+     */
+    function createGroupData(
+        ownerId: string,
+        members: string[],
+        overrides: Record<string, unknown> = {}
+    ) {
+        return {
+            name: 'Rate Limit Test Group',
+            ownerId,
+            appId: 'boletapp-d609f',
+            color: '#10b981',
+            shareCode: 'ratelimit-code-16',
+            shareCodeExpiresAt: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+            members,
+            memberUpdates: {},
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+            transactionSharingEnabled: true,
+            transactionSharingLastToggleAt: null,
+            transactionSharingToggleCountToday: 0,
+            transactionSharingToggleCountResetAt: null,
+            lastSettingsUpdateAt: null,
+            ...overrides,
+        };
+    }
+
+    // ========================================================================
+    // AC-1: Settings update 60-second cooldown
+    // ========================================================================
+
+    /**
+     * Test 1: Owner update DENIED within 60s cooldown
+     * lastSettingsUpdateAt = now -> attempt update immediately -> DENIED
+     */
+    it('should deny owner settings update within 60s cooldown (AC-1)', async () => {
+        // Create group with lastSettingsUpdateAt = now (cooldown active)
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID),
+                createGroupData(TEST_USERS.USER_1, [TEST_USERS.USER_1], {
+                    lastSettingsUpdateAt: Timestamp.now(),
+                })
+            );
+        });
+
+        // Owner attempts update immediately - should be DENIED by cooldown
+        const user1Firestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const groupDoc = doc(user1Firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID);
+
+        await assertFails(
+            updateDoc(groupDoc, {
+                name: 'Updated Name',
+                updatedAt: serverTimestamp(),
+                lastSettingsUpdateAt: serverTimestamp(),
+            })
+        );
+    });
+
+    /**
+     * Test 2: Owner update ALLOWED after 60s cooldown elapsed
+     * lastSettingsUpdateAt = 61s ago -> attempt update -> ALLOWED
+     */
+    it('should allow owner settings update after 60s cooldown elapsed (AC-1)', async () => {
+        // Create group with lastSettingsUpdateAt = 61 seconds ago (cooldown expired)
+        const sixtyOneSecondsAgo = Timestamp.fromDate(new Date(Date.now() - 61000));
+
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID),
+                createGroupData(TEST_USERS.USER_1, [TEST_USERS.USER_1], {
+                    lastSettingsUpdateAt: sixtyOneSecondsAgo,
+                })
+            );
+        });
+
+        // Owner update should succeed after cooldown
+        const user1Firestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const groupDoc = doc(user1Firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID);
+
+        await assertSucceeds(
+            updateDoc(groupDoc, {
+                name: 'Updated After Cooldown',
+                updatedAt: serverTimestamp(),
+                lastSettingsUpdateAt: serverTimestamp(),
+            })
+        );
+    });
+
+    // ========================================================================
+    // AC-4: Migration safety - null and missing field handling
+    // ========================================================================
+
+    /**
+     * Test 3: Owner update ALLOWED when lastSettingsUpdateAt is null
+     * Migration safety: new groups start with null
+     */
+    it('should allow owner settings update when lastSettingsUpdateAt is null (AC-4)', async () => {
+        // Create group with lastSettingsUpdateAt: null (default for new groups)
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID),
+                createGroupData(TEST_USERS.USER_1, [TEST_USERS.USER_1], {
+                    lastSettingsUpdateAt: null,
+                })
+            );
+        });
+
+        // Owner update should succeed (null = never updated = no cooldown)
+        const user1Firestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const groupDoc = doc(user1Firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID);
+
+        await assertSucceeds(
+            updateDoc(groupDoc, {
+                name: 'First Update Ever',
+                updatedAt: serverTimestamp(),
+                lastSettingsUpdateAt: serverTimestamp(),
+            })
+        );
+    });
+
+    /**
+     * Test 4: Owner update ALLOWED when lastSettingsUpdateAt field is missing entirely
+     * Migration safety: pre-existing groups won't have this field
+     */
+    it('should allow owner settings update when lastSettingsUpdateAt field is missing (AC-4)', async () => {
+        // Create group WITHOUT lastSettingsUpdateAt field (pre-existing group)
+        await withSecurityRulesDisabled(async (firestore) => {
+            const groupWithoutField = {
+                name: 'Legacy Group',
+                ownerId: TEST_USERS.USER_1,
+                appId: 'boletapp-d609f',
+                color: '#10b981',
+                shareCode: 'legacy-share-code',
+                shareCodeExpiresAt: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+                members: [TEST_USERS.USER_1],
+                memberUpdates: {},
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now(),
+                // NOTE: lastSettingsUpdateAt intentionally omitted
+            };
+            await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID), groupWithoutField);
+        });
+
+        // Owner update should succeed (missing field = no cooldown active)
+        const user1Firestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const groupDoc = doc(user1Firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID);
+
+        await assertSucceeds(
+            updateDoc(groupDoc, {
+                name: 'Updated Legacy Group',
+                updatedAt: serverTimestamp(),
+                lastSettingsUpdateAt: serverTimestamp(),
+            })
+        );
+    });
+
+    // ========================================================================
+    // AC-2: Delete 30-second cooldown
+    // ========================================================================
+
+    /**
+     * Test 5: Delete DENIED within 30s of last updatedAt
+     * updatedAt = now -> attempt delete -> DENIED
+     */
+    it('should deny group deletion within 30s of last update (AC-2)', async () => {
+        // Create group with updatedAt = now (delete cooldown active)
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID),
+                createGroupData(TEST_USERS.USER_1, [TEST_USERS.USER_1], {
+                    updatedAt: Timestamp.now(),
+                })
+            );
+        });
+
+        // Owner attempts delete immediately - should be DENIED by cooldown
+        const user1Firestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const groupDoc = doc(user1Firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID);
+
+        await assertFails(deleteDoc(groupDoc));
+    });
+
+    /**
+     * Test 6: Delete ALLOWED after 30s cooldown elapsed
+     * updatedAt = 31s ago -> attempt delete -> ALLOWED
+     */
+    it('should allow group deletion after 30s cooldown elapsed (AC-2)', async () => {
+        // Create group with updatedAt = 31 seconds ago (cooldown expired)
+        const thirtyOneSecondsAgo = Timestamp.fromDate(new Date(Date.now() - 31000));
+
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID),
+                createGroupData(TEST_USERS.USER_1, [TEST_USERS.USER_1], {
+                    updatedAt: thirtyOneSecondsAgo,
+                })
+            );
+        });
+
+        // Owner delete should succeed after cooldown
+        const user1Firestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const groupDoc = doc(user1Firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID);
+
+        await assertSucceeds(deleteDoc(groupDoc));
+    });
+
+    // ========================================================================
+    // AC-3: Join/leave operations NOT affected by rate limiting
+    // ========================================================================
+
+    /**
+     * Test 7: Join operation NOT affected by rate limiting
+     * Even with active cooldown, non-member can join via isUserJoining path
+     */
+    it('should allow join operation even when settings cooldown is active (AC-3)', async () => {
+        // Create group with active cooldown (lastSettingsUpdateAt = now)
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID),
+                createGroupData(TEST_USERS.USER_1, [TEST_USERS.USER_1], {
+                    lastSettingsUpdateAt: Timestamp.now(),
+                    updatedAt: Timestamp.now(),
+                })
+            );
+        });
+
+        // USER_2 joins the group - should succeed (join not rate-limited)
+        const user2Firestore = getAuthedFirestore(TEST_USERS.USER_2);
+        const groupDoc = doc(user2Firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID);
+
+        await assertSucceeds(
+            updateDoc(groupDoc, {
+                members: [TEST_USERS.USER_1, TEST_USERS.USER_2],
+            })
+        );
+    });
+
+    /**
+     * Test 8: Leave operation NOT affected by rate limiting
+     * Even with active delete cooldown, member can leave via isUserLeaving path
+     */
+    it('should allow leave operation even when delete cooldown is active (AC-3)', async () => {
+        // Create group with active delete cooldown (updatedAt = now)
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID),
+                createGroupData(TEST_USERS.USER_1, [TEST_USERS.USER_1, TEST_USERS.USER_2], {
+                    updatedAt: Timestamp.now(),
+                    lastSettingsUpdateAt: Timestamp.now(),
+                })
+            );
+        });
+
+        // USER_2 (member, not owner) leaves - should succeed (leave not rate-limited)
+        const user2Firestore = getAuthedFirestore(TEST_USERS.USER_2);
+        const groupDoc = doc(user2Firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID);
+
+        await assertSucceeds(
+            updateDoc(groupDoc, {
+                members: [TEST_USERS.USER_1],
+                updatedAt: Timestamp.now(),
+            })
+        );
+    });
+
+    // ========================================================================
+    // Code Review Fix: Transaction sharing toggle isolation
+    // ========================================================================
+
+    /**
+     * Test 9: Transaction sharing toggle NOT blocked by settings cooldown
+     * Toggle has its own independent cooldown system (isTransactionSharingToggle path)
+     */
+    it('should allow transaction sharing toggle even when settings cooldown is active', async () => {
+        // Create group with active settings cooldown (lastSettingsUpdateAt = now)
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID),
+                createGroupData(TEST_USERS.USER_1, [TEST_USERS.USER_1], {
+                    lastSettingsUpdateAt: Timestamp.now(),
+                    transactionSharingEnabled: true,
+                })
+            );
+        });
+
+        // Owner toggles transaction sharing - should succeed (separate path, no settings cooldown)
+        const user1Firestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const groupDoc = doc(user1Firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID);
+
+        await assertSucceeds(
+            updateDoc(groupDoc, {
+                transactionSharingEnabled: false,
+                transactionSharingLastToggleAt: Timestamp.now(),
+                transactionSharingToggleCountToday: 1,
+                updatedAt: Timestamp.now(),
+            })
+        );
+    });
+
+    // ========================================================================
+    // Security Review Fix: Future timestamp lock-out prevention
+    // ========================================================================
+
+    /**
+     * Test 10: Client CANNOT write far-future lastSettingsUpdateAt to lock out owner
+     * Security fix: lastSettingsUpdateAt must equal request.time when being written
+     */
+    it('should deny settings update with non-serverTimestamp lastSettingsUpdateAt', async () => {
+        // Create group with expired cooldown (should normally allow update)
+        const twoMinutesAgo = Timestamp.fromDate(new Date(Date.now() - 120000));
+
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID),
+                createGroupData(TEST_USERS.USER_1, [TEST_USERS.USER_1], {
+                    lastSettingsUpdateAt: twoMinutesAgo,
+                })
+            );
+        });
+
+        // Malicious client tries to set lastSettingsUpdateAt to far future
+        const user1Firestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const groupDoc = doc(user1Firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID);
+
+        await assertFails(
+            updateDoc(groupDoc, {
+                name: 'Locked Group',
+                lastSettingsUpdateAt: Timestamp.fromDate(new Date('2099-01-01')),
+            })
+        );
     });
 });

@@ -8,6 +8,11 @@
  * - Time-based cooldown check
  * - Daily limit with configurable reset strategy
  * - CooldownReason enum (replaces inline string unions, TD-14d-36)
+ *
+ * Rate limiting is enforced client-side as a UX guardrail. Firestore rules
+ * handle authorization (owner-only writes). See ADR-022 for trade-off analysis.
+ *
+ * @see docs/architecture/decisions/ADR-022-client-side-rate-limiting.md
  */
 
 import type { Timestamp } from 'firebase/firestore';

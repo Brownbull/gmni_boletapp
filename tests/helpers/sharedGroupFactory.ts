@@ -29,6 +29,7 @@ export function createMockGroup(overrides: Partial<SharedGroup> = {}): SharedGro
         transactionSharingLastToggleAt: null,
         transactionSharingToggleCountToday: 0,
         transactionSharingToggleCountResetAt: null,
+        lastSettingsUpdateAt: null,
         ...overrides,
     };
 }

@@ -301,15 +301,29 @@
           2. Error handling completeness
           3. Performance considerations
           4. Naming conventions
-          5. DRY principle compliance (use ast-grep to detect duplicated structural patterns across files)
+          5. DRY principle compliance
           6. Complexity analysis
           7. Documentation quality
 
-          **ast-grep Structural Analysis (for DRY/duplication checks):**
-          Use ast-grep MCP tools when checking for duplicated patterns:
-          - `find_code`: Simple pattern search (e.g., `$ARR.sort(($A, $B) => $$$)` for inline comparators)
-          - `find_code_by_rule`: Complex rules (e.g., find batch.commit() without surrounding chunking loop)
-          See .claude/skills/ast-grep/SKILL.md for BoletApp-specific patterns.
+          **MANDATORY: ast-grep Structural Pattern Scan**
+          Before writing your review output, run these ast-grep checks on the changed files:
+
+          1. **Duplication check**: For each new function/pattern in changed files, use `find_code` to search the
+             full `src/` directory for structurally similar patterns. Flag if the same pattern exists elsewhere
+             (potential DRY violation or missed shared utility).
+             Example: `find_code(pattern="$ARR.sort(($A, $B) => $$$)", project_folder="{project-root}")`
+
+          2. **Known anti-pattern scan**: Run these against changed files:
+             - `$BATCH.commit()` — flag if not inside a chunking loop (batch safety, Finding 9d)
+             - `localStorage.getItem($KEY)` — flag if manual JSON.parse instead of shared utility (Finding 10d)
+             - `collection($DB, "artifacts", $$$)` — flag hardcoded Firestore paths (Finding 9a)
+
+          3. **Import coupling check** (if files touch services/hooks):
+             `find_code(pattern="import {$$$} from 'firebase/firestore'")` — flag direct Firebase SDK imports
+             in new code (should use repository layer per DAL plan)
+
+          Tools: `find_code` for simple patterns, `find_code_by_rule` for relational YAML rules.
+          Full pattern library: .claude/skills/ast-grep/SKILL.md
 
           **Output Format:**
           ```
@@ -323,6 +337,11 @@
 
           ### LOW Severity
           - [Finding]: [Description] [file:line]
+
+          ### ast-grep Pattern Scan Results
+          - Duplication matches: X (list files if any)
+          - Anti-pattern hits: X (batch safety, localStorage, hardcoded paths)
+          - Firebase SDK coupling: X direct imports in new code
 
           ### Summary
           - Total issues: X

@@ -6,10 +6,10 @@
  * Client-side filtering for view mode (Personal vs Group).
  * Follows the soft-delete pattern: filter after normalization.
  *
- * Architecture Pattern (from 04-architecture.md):
- * This utility provides a pure filtering function that operates on
- * normalized transaction arrays, similar to how isDeleted() filters
- * soft-deleted transactions in firestore.ts.
+ * Security note: Client-side filtering is a UI convenience, NOT a security
+ * boundary. Firestore rules enforce user data isolation independently.
+ *
+ * @see docs/architecture/decisions/ADR-021-view-mode-client-side-filtering.md
  */
 
 import type { Transaction } from '../types/transaction';

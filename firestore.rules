@@ -96,21 +96,58 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'updatedAt']);
       }
 
-      // Update: Owner can update group settings, member can join, or member can leave
+      // Helper: Is settings update allowed (60s cooldown)?
+      // TD-CONSOLIDATED-11: Server-side rate limiting for owner settings updates
+      // Migration-safe: allows updates when field is missing or null (pre-existing groups)
+      // Timestamp validation: if lastSettingsUpdateAt is being changed, it MUST equal
+      // request.time (enforces serverTimestamp(), prevents future timestamp lock-out attack)
+      function isSettingsUpdateAllowed() {
+        let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+        // If lastSettingsUpdateAt is being written, validate it's server timestamp
+        let timestampValid = !changedKeys.hasAny(['lastSettingsUpdateAt'])
+            || request.resource.data.lastSettingsUpdateAt == request.time;
+        // Cooldown check on existing value (migration-safe)
+        let cooldownPassed = !('lastSettingsUpdateAt' in resource.data)
+            || resource.data.lastSettingsUpdateAt == null
+            || request.time > resource.data.lastSettingsUpdateAt + duration.value(60, 's');
+        return timestampValid && cooldownPassed;
+      }
+
+      // Helper: Is this a transaction sharing toggle update?
+      // TD-CONSOLIDATED-11: Toggle has its own independent cooldown system
+      // (transactionSharingLastToggleAt, not lastSettingsUpdateAt)
+      // Must be a separate update path to avoid settings cooldown blocking toggles
+      function isTransactionSharingToggle() {
+        return request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['transactionSharingEnabled', 'transactionSharingLastToggleAt',
+                      'transactionSharingToggleCountToday', 'transactionSharingToggleCountResetAt',
+                      'updatedAt']);
+      }
+
+      // Helper: Is delete allowed (30s cooldown)?
+      // TD-CONSOLIDATED-11: Server-side rate limiting for group deletions
+      // Uses existing updatedAt field (set on creation and any modification)
+      // Note: updatedAt is written by ALL operations (settings, toggle, join, leave),
+      // so this enforces "30s since last modification by anyone" — acceptable
+      // trade-off to avoid adding a dedicated lastDeleteAttemptAt field.
+      function isDeleteAllowed() {
+        return !('updatedAt' in resource.data)
+            || resource.data.updatedAt == null
+            || request.time > resource.data.updatedAt + duration.value(30, 's');
+      }
+
+      // Update: Owner can update settings (with cooldown), toggle sharing, or members can join/leave
       // AC#4: Non-owners cannot update (except to join or leave)
       // Story 14d-v2-1-6c-2: Allow joining via share code
       // Story 14d-v2-1-7a: Allow members to leave group
-      // Story 14d-v2-1-11b: Transaction sharing toggle fields (owner-only via isGroupOwner)
-      //   - transactionSharingEnabled (AC6)
-      //   - transactionSharingLastToggleAt (AC7)
-      //   - transactionSharingToggleCountToday (AC8)
-      //   - transactionSharingToggleCountResetAt
-      //   Non-owners denied write (AC9) - enforced by isGroupOwner() check
-      allow update: if isGroupOwner() || (request.auth != null && isUserJoining()) || (request.auth != null && isUserLeaving());
+      // Story 14d-v2-1-11b: Transaction sharing toggle (owner-only, independent cooldown)
+      // TD-CONSOLIDATED-11: Settings updates gated by 60s cooldown, toggle has separate path
+      allow update: if (isGroupOwner() && (isSettingsUpdateAllowed() || isTransactionSharingToggle())) || (request.auth != null && isUserJoining()) || (request.auth != null && isUserLeaving());
 
       // Delete: Only owner can delete group
       // AC#4: Non-owners cannot delete
-      allow delete: if isGroupOwner();
+      // TD-CONSOLIDATED-11: isDeleteAllowed() gates deletes with 30s cooldown
+      allow delete: if isGroupOwner() && isDeleteAllowed();
 
       // ========================================================================
       // Changelog Subcollection - Epic 14d-v2 Story 1.3b

@@ -170,6 +170,7 @@ export async function createGroup(
         transactionSharingLastToggleAt: null,
         transactionSharingToggleCountToday: 0,
         transactionSharingToggleCountResetAt: null,
+        lastSettingsUpdateAt: null,
     };
 
     // Create the document in Firestore
@@ -366,8 +367,9 @@ export async function updateGroup(
         throw new Error('No updates provided');
     }
 
-    // Add updatedAt timestamp
+    // Add updatedAt timestamp + rate limiting timestamp (TD-CONSOLIDATED-11)
     updateData.updatedAt = serverTimestamp();
+    updateData.lastSettingsUpdateAt = serverTimestamp();
 
     // ECC Review Fix: Use transaction to prevent TOCTOU vulnerability
     // Ownership check and update are now atomic
