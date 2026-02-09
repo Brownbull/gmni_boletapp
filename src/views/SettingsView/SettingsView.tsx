@@ -17,11 +17,9 @@ import {
     EscaneoView,
     SuscripcionView,
     DatosAprendidosView,
-    GruposView,
     AppView,
     CuentaView,
 } from '@/components/settings';
-import { SharedGroupErrorBoundary } from '@/features/shared-groups';
 // Story 14e-25d: Direct toast hook (ViewHandlersContext deleted)
 import { useToast } from '@/shared/hooks';
 import { useModalActions } from '@/managers/ModalManager';
@@ -227,18 +225,35 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
             case 'grupos':
                 return (
-                    <SharedGroupErrorBoundary
-                        t={t}
-                        theme={themeData.theme}
-                        onNavigateHome={() => setCurrentView('main')}
+                    <div
+                        className="flex flex-col items-center justify-center text-center px-6"
+                        style={{ minHeight: '40vh' }}
+                        data-testid="grupos-coming-soon"
                     >
-                        <GruposView
-                            t={t}
-                            theme={themeData.theme}
-                            lang={preferences.lang as 'en' | 'es'}
-                            onShowToast={onShowToast}
-                        />
-                    </SharedGroupErrorBoundary>
+                        <div
+                            className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+                            style={{ backgroundColor: 'var(--bg-tertiary)' }}
+                        >
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}>
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                        </div>
+                        <h2
+                            className="text-lg font-semibold mb-2"
+                            style={{ color: 'var(--text-primary)' }}
+                        >
+                            {t('featureComingSoon')}
+                        </h2>
+                        <p
+                            className="text-sm"
+                            style={{ color: 'var(--text-secondary)' }}
+                        >
+                            {t('featureComingSoonDescription')}
+                        </p>
+                    </div>
                 );
 
             case 'app':
@@ -337,7 +352,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
                 <SettingsMenuItem
                     title={t('settingsGrupos')}
-                    subtitle={t('settingsGruposDesc')}
+                    subtitle={t('featureComingSoon')}
                     icon="users"
                     iconBgColor="#dbeafe"
                     iconColor="#3b82f6"

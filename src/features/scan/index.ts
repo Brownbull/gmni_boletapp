@@ -42,7 +42,7 @@
 
 // Re-export ScanFeature orchestrator (Story 14e-10, 14e-23a)
 export { ScanFeature } from './ScanFeature';
-export type { ScanFeatureProps, ActiveGroupInfo } from './ScanFeature';
+export type { ScanFeatureProps } from './ScanFeature';
 
 // Re-export entire store module
 export * from './store';

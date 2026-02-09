@@ -25,18 +25,12 @@
  */
 
 import { useMemo, useCallback } from 'react';
-import { getFirestore } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useTheme } from '@/contexts/ThemeContext';
-// Story 14d-v2-0: ViewMode migrated from Context to Zustand store
-import { useViewMode } from '@/shared/stores/useViewModeStore';
-import { useUserSharedGroups } from '@/hooks/useUserSharedGroups';
 import { useAnalyticsInitialState, useNavigationStore } from '@/shared/stores/useNavigationStore';
 import { TRANSLATIONS } from '@/utils/translations';
-// Story 14d-v2-1-10d: View mode filtering utility
-import { filterTransactionsByViewMode } from '@/utils/viewModeFilterUtils';
 import type { Transaction } from '@/types/transaction';
 import type { Language, Theme, ColorTheme, FontColorMode } from '@/types/settings';
 import type { AnalyticsNavigationState } from '@/types/analytics';
@@ -190,34 +184,6 @@ export function useTrendsViewData(): UseTrendsViewDataReturn {
     // === User Preferences ===
     const { preferences } = useUserPreferences(user, services);
 
-    // === Group Mode ===
-    const { mode: viewMode, group: viewModeGroup } = useViewMode();
-    const db = getFirestore();
-    const { groups: sharedGroups } = useUserSharedGroups(db, user?.uid);
-    const isGroupMode = viewMode === 'group' && !!viewModeGroup;
-
-    // Compose active group info for group mode display
-    const activeGroup: ActiveGroupInfo | null = useMemo(() => {
-        if (!isGroupMode || !viewModeGroup) return null;
-        // Find the group in sharedGroups to get member profiles
-        const group = sharedGroups.find((g) => g.id === viewModeGroup.id);
-        return {
-            id: viewModeGroup.id ?? '',
-            name: viewModeGroup.name,
-            memberProfiles: group?.memberProfiles,
-        };
-    }, [isGroupMode, viewModeGroup, sharedGroups]);
-
-    // Compose group members for TrendsView
-    const groupMembers: GroupMemberInfo[] = useMemo(() => {
-        if (!activeGroup?.memberProfiles) return [];
-        return Object.entries(activeGroup.memberProfiles).map(([uid, profile]) => ({
-            uid,
-            displayName: profile.displayName,
-            email: profile.email,
-        }));
-    }, [activeGroup?.memberProfiles]);
-
     // === Navigation Store ===
     const analyticsInitialState = useAnalyticsInitialState();
     const pendingDistributionView = useNavigationStore((s) => s.pendingDistributionView);
@@ -245,19 +211,10 @@ export function useTrendsViewData(): UseTrendsViewDataReturn {
     // Story 14e-25b.1: Empty map as default - real implementation would compute from shared transactions
     const spendingByMember = useMemo(() => new Map<string, number>(), []);
 
-    // Story 14d-v2-1-10d: Filter transactions by view mode (personal vs group)
-    const transactions = useMemo(() => {
-        return filterTransactionsByViewMode(
-            rawTransactions,
-            viewMode,
-            viewModeGroup?.id ?? null
-        );
-    }, [rawTransactions, viewMode, viewModeGroup?.id]);
-
     // === Return Complete Data ===
     return {
-        // Transaction data - Story 14d-v2-1-10d: Filtered transactions
-        transactions,
+        // Transaction data
+        transactions: rawTransactions,
 
         // User info
         user: userInfo,
@@ -285,9 +242,9 @@ export function useTrendsViewData(): UseTrendsViewDataReturn {
         analyticsInitialState,
 
         // Group mode
-        isGroupMode,
-        groupName: activeGroup?.name,
-        groupMembers,
+        isGroupMode: false,
+        groupName: undefined,
+        groupMembers: [],
         spendingByMember,
 
         // Callbacks - stub implementation, override via _testOverrides in production

@@ -18,18 +18,15 @@
  */
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { Inbox, ArrowUpDown, Filter, ChevronLeft, ChevronRight, Receipt, Package, X, Bookmark, Trash2, CheckSquare } from 'lucide-react';
+import { Inbox, ArrowUpDown, Filter, ChevronLeft, ChevronRight, Receipt, Package, X, Trash2, CheckSquare } from 'lucide-react';
 import { ImageViewer } from '../components/ImageViewer';
 // Story 10a.1: Filter bar for consolidated home view (AC #2)
 import { HistoryFilterBar } from '../components/history/HistoryFilterBar';
 // Story 14.15b: Selection mode and modals for Dashboard
-// Group consolidation: Replaced personal group modals with TransactionGroupSelector
 // Story 14e-5: DeleteTransactionsModal now uses Modal Manager
 import type { TransactionPreview } from '../components/history/DeleteTransactionsModal';
 import { useModalActions } from '@managers/ModalManager';
-import { TransactionGroupSelector } from '@/features/shared-groups';
 import { useSelectionMode } from '../hooks/useSelectionMode';
-import { useAllUserGroups } from '../hooks/useAllUserGroups';
 import { deleteTransactionsBatch } from '../services/firestore';
 import { getFirestore } from 'firebase/firestore';
 // Story 14d-v2-1.1: useQueryClient import removed - group cache invalidation disabled (Epic 14c cleanup)
@@ -124,8 +121,6 @@ interface Transaction {
     currency?: string;
     // Story 11.1: createdAt for sort by scan date
     createdAt?: any; // Firestore Timestamp or Date
-    // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
-    // Epic 14d will use sharedGroupId (single nullable string) instead
 }
 
 /**
@@ -599,19 +594,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
         clearSelection,
     } = useSelectionMode();
 
-    // Group consolidation: Shared groups for group assignment
-    const { groups, isLoading: groupsLoading } = useAllUserGroups(userId || undefined);
-
-    // Story 14d-v2-1.1: queryClient removed - group cache invalidation disabled (Epic 14c cleanup)
-
-    // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
-    // Epic 14d will use sharedGroupId (single nullable string) instead
-    const getGroupColorForTransaction = useCallback((_tx: Transaction): string | undefined => {
-        return undefined;
-    }, []);
-
-    // Group consolidation: Modal states
-    const [showGroupSelector, setShowGroupSelector] = useState(false);
     // Story 14e-5: Delete modal now uses Modal Manager
     const { openModal, closeModal } = useModalActions();
 
@@ -2003,23 +1985,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
         }
     };
 
-    // Group consolidation: Modal handlers for selection mode
-    // Note: No need for selectedIds.size check here - buttons are already disabled when size is 0
-    const handleOpenAssignGroup = useCallback(() => {
-        setShowGroupSelector(true);
-    }, []);
-
-    // Story 14e-5: handleOpenDelete defined after getSelectedTransactions (see below)
-
-    // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
-    // Epic 14d will use sharedGroupId (single nullable string) instead
-    // Group assignment functionality disabled until Epic 14d
-    const handleGroupSelect = async (_groupIds: string[]) => {
-        console.warn('[DashboardView] Group assignment disabled - Epic 14c cleanup');
-        setShowGroupSelector(false);
-        exitSelectionMode();
-    };
-
     // Story 14e-5: handleConfirmDelete logic moved into openDeleteModal callback
 
     // Story 14.15b: Get selected transactions for delete modal preview
@@ -2094,9 +2059,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
                         thumbnailUrl: transaction.thumbnailUrl,
                         imageUrls: transaction.imageUrls,
                         items: transaction.items || [],
-                        // Story 14d-v2-1.1: sharedGroupIds removed (Epic 14c cleanup)
                     }}
-                    groupColor={getGroupColorForTransaction(transaction)}
                     formatters={{
                         formatCurrency,
                         formatDate,
@@ -3306,15 +3269,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
                                         />
                                     </button>
                                     <button
-                                        onClick={handleOpenAssignGroup}
-                                        className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-                                        style={{ backgroundColor: 'var(--primary)' }}
-                                        aria-label="Asignar grupo"
-                                        disabled={selectedIds.size === 0}
-                                    >
-                                        <Bookmark size={16} style={{ color: 'white' }} />
-                                    </button>
-                                    <button
                                         onClick={handleOpenDelete}
                                         className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
                                         style={{ backgroundColor: 'var(--error)' }}
@@ -3448,20 +3402,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
                         images={selectedTransaction.imageUrls}
                         merchantName={selectedTransaction.alias || selectedTransaction.merchant}
                         onClose={handleCloseViewer}
-                    />
-                )}
-
-                {/* Story 14.15b: Group Assignment Modal */}
-                {/* Group consolidation: TransactionGroupSelector replaces AssignGroupModal + CreateGroupModal */}
-                {showGroupSelector && (
-                    <TransactionGroupSelector
-                        groups={groups}
-                        selectedIds={[]}
-                        onSelect={handleGroupSelect}
-                        onClose={() => setShowGroupSelector(false)}
-                        t={t}
-                        theme={theme === 'dark' ? 'dark' : 'light'}
-                        isLoading={groupsLoading}
                     />
                 )}
 

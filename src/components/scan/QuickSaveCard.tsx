@@ -51,8 +51,6 @@ import { useScanActiveDialog, useScanActions } from '@features/scan/store';
 import { DIALOG_TYPES } from '../../types/scanStateMachine';
 import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';
 import { useLocationDisplay } from '../../hooks/useLocations';
-import { AutoTagIndicator } from '@/features/shared-groups';
-
 // Story 14d.6: Import centralized type from scanStateMachine
 import type { QuickSaveDialogData } from '../../types/scanStateMachine';
 // Re-export for backward compatibility
@@ -103,19 +101,6 @@ export interface QuickSaveCardProps {
   isEntering?: boolean;
   /** Story 14.35b: User's default country for foreign location detection */
   userDefaultCountry?: string;
-  /**
-   * When provided, shows indicator that transaction will be shared to this group.
-   */
-  activeGroup?: {
-    id: string;
-    name: string;
-    color: string;
-    icon?: string;
-  } | null;
-  /**
-   * If not provided, the remove button is hidden.
-   */
-  onRemoveGroupTag?: () => void;
 }
 
 /**
@@ -141,8 +126,6 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
   isEntering = true,
   lang = 'es',
   userDefaultCountry,
-  activeGroup,
-  onRemoveGroupTag,
 }) => {
   const isDark = theme === 'dark';
   const prefersReducedMotion = useReducedMotion();
@@ -494,21 +477,6 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
                 </AnimatedItem>
               )}
             </div>
-          </div>
-        )}
-
-        {activeGroup && (
-          <div className="mb-4">
-            <AutoTagIndicator
-              groupId={activeGroup.id}
-              groupName={activeGroup.name}
-              groupColor={activeGroup.color}
-              groupIcon={activeGroup.icon}
-              onRemove={onRemoveGroupTag}
-              showRemove={!!onRemoveGroupTag}
-              t={t}
-              size="small"
-            />
           </div>
         )}
 

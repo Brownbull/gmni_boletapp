@@ -27,14 +27,10 @@
  */
 
 import { useMemo, useCallback } from 'react';
-import { getFirestore } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useUserCredits } from '@/hooks/useUserCredits';
 import { useTheme } from '@/contexts/ThemeContext';
-// Story 14d-v2-0: ViewMode migrated from Context to Zustand store
-import { useViewMode } from '@/shared/stores/useViewModeStore';
-import { useUserSharedGroups } from '@/hooks/useUserSharedGroups';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useCategoryMappings } from '@/hooks/useCategoryMappings';
 import { useMerchantMappings } from '@/hooks/useMerchantMappings';
@@ -47,7 +43,6 @@ import type { Transaction, StoreCategory, ItemCategory } from '@/types/transacti
 import type { UserCredits } from '@/types/scan';
 import type { Language, Theme } from '@/types/settings';
 import type { ItemNameMapping } from '@/types/itemNameMapping';
-import type { GroupWithMeta } from '@/features/shared-groups';
 
 // Zustand store imports
 import {
@@ -130,11 +125,6 @@ export interface UseTransactionEditorDataReturn {
     // Cross-store suggestions
     itemNameMappings: ItemNameMapping[];
 
-    // Shared groups
-    availableGroups: GroupWithMeta[];
-    groupsLoading: boolean;
-    activeGroup: { memberProfiles?: Record<string, { displayName?: string; photoURL?: string | null }> } | null;
-
     // Mapping functions (for learning callbacks)
     saveMapping: (item: string, category: StoreCategory, source?: 'user' | 'ai') => Promise<string>;
     saveMerchantMapping: (originalMerchant: string, targetMerchant: string, storeCategory?: StoreCategory) => Promise<string>;
@@ -203,33 +193,6 @@ export function useTransactionEditorData(
         [saveItemNameMappingInternal]
     );
 
-    // === Group Mode ===
-    const { mode: viewMode, group: viewModeGroup } = useViewMode();
-    const db = getFirestore();
-    const { groups: sharedGroups, isLoading: sharedGroupsLoading } = useUserSharedGroups(db, user?.uid);
-    const isGroupMode = viewMode === 'group' && !!viewModeGroup;
-
-    // Available groups for selector
-    const availableGroups: GroupWithMeta[] = useMemo(() => {
-        return sharedGroups.map(group => ({
-            id: group.id || '',
-            name: group.name,
-            color: group.color,
-            icon: group.icon,
-            isShared: true,
-            memberCount: group.members?.length || 0,
-        }));
-    }, [sharedGroups]);
-
-    // Active group info for owner display
-    const activeGroup = useMemo(() => {
-        if (!isGroupMode || !viewModeGroup) return null;
-        const group = sharedGroups.find((g) => g.id === viewModeGroup.id);
-        return {
-            memberProfiles: group?.memberProfiles,
-        };
-    }, [isGroupMode, viewModeGroup, sharedGroups]);
-
     // === Scan State from Zustand ===
     const scanState = useScanStore();
     const scanPhase = useScanPhase();
@@ -286,13 +249,8 @@ export function useTransactionEditorData(
         );
     }, [currentTransaction?._ownerId, user?.uid]);
 
-    // Get owner profile from active group
-    const ownerProfile = useMemo(() => {
-        if (!currentTransaction?._ownerId || !activeGroup?.memberProfiles) {
-            return undefined;
-        }
-        return activeGroup.memberProfiles[currentTransaction._ownerId];
-    }, [currentTransaction?._ownerId, activeGroup?.memberProfiles]);
+    // Owner profile (shared groups removed - always undefined)
+    const ownerProfile = undefined;
 
     // === Formatters ===
     const t = useCallback(
@@ -350,11 +308,6 @@ export function useTransactionEditorData(
 
         // Cross-store suggestions
         itemNameMappings,
-
-        // Shared groups
-        availableGroups,
-        groupsLoading: sharedGroupsLoading,
-        activeGroup,
 
         // Mapping functions
         saveMapping,

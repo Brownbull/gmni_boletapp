@@ -24,9 +24,7 @@ import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';
 import { useLocationDisplay } from '../../hooks/useLocations';
 import type { ForeignLocationDisplayFormat } from '../../services/userPreferencesService';
 import type { Language } from '../../types/settings';
-import { safeCSSColor } from '@/utils/validationUtils';
-import type { MemberProfile } from '../../types/sharedGroup';
-import { ProfileIndicator } from '@/features/shared-groups';
+
 
 // ============================================================================
 // Types
@@ -70,18 +68,6 @@ export interface TransactionCardSelection {
 }
 
 /**
- * Determines whether to show owner indicator on the card.
- */
-export interface TransactionCardOwnership {
-  /** Owner's user ID */
-  ownerId: string;
-  /** Whether current user owns this transaction */
-  isOwn: boolean;
-  /** Owner's profile info (for displaying avatar/initial) */
-  ownerProfile?: MemberProfile | null;
-}
-
-/**
  * Simplified props interface for TransactionCard.
  * Accepts a Transaction object directly instead of individual fields.
  */
@@ -108,9 +94,6 @@ export interface TransactionCardProps {
   onThumbnailClick?: () => void;
   /** Selection mode props (optional - for batch operations) */
   selection?: TransactionCardSelection;
-  ownership?: TransactionCardOwnership;
-  /** Group color for left border accent (looked up from shared group, not stored on transaction) */
-  groupColor?: string;
 }
 
 // Re-export the TransactionItem type for convenience
@@ -135,7 +118,6 @@ interface ReceiptThumbnailProps {
   colorTheme: ThemeName;
   mode: ModeName;
   onThumbnailClick?: (e: React.MouseEvent) => void;
-  ownership?: TransactionCardOwnership;
 }
 
 const ReceiptThumbnail: React.FC<ReceiptThumbnailProps> = ({
@@ -146,7 +128,6 @@ const ReceiptThumbnail: React.FC<ReceiptThumbnailProps> = ({
   colorTheme,
   mode,
   onThumbnailClick,
-  ownership,
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -169,20 +150,6 @@ const ReceiptThumbnail: React.FC<ReceiptThumbnailProps> = ({
     );
   };
 
-  const OwnerBadge = () => {
-    // Only show if ownership data exists and this is NOT the current user's transaction
-    if (!ownership || ownership.isOwn) return null;
-
-    return (
-      <ProfileIndicator
-        userId={ownership.ownerId}
-        profile={ownership.ownerProfile}
-        size="small"
-        className="absolute -bottom-0.5 -left-0.5"
-      />
-    );
-  };
-
   if (!thumbnailUrl) {
     // Show receipt icon placeholder with category badge
     return (
@@ -197,7 +164,6 @@ const ReceiptThumbnail: React.FC<ReceiptThumbnailProps> = ({
           <Receipt size={18} strokeWidth={1.2} style={{ color: 'var(--text-tertiary)', opacity: 0.7 }} />
         </div>
         <CategoryBadge />
-        <OwnerBadge />
       </div>
     );
   }
@@ -248,7 +214,6 @@ const ReceiptThumbnail: React.FC<ReceiptThumbnailProps> = ({
       )}
       {/* Category badge overlay */}
       <CategoryBadge />
-      <OwnerBadge />
     </div>
   );
 };
@@ -285,8 +250,6 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
   onClick,
   onThumbnailClick,
   selection,
-  ownership,
-  groupColor,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -404,18 +367,12 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
   // Use thicker border when duplicate
   const hasBorderEmphasis = isDuplicate;
 
-  // Show group-colored left border accent when transaction belongs to a shared group
-  const hasGroupAccent = !!groupColor;
-
   return (
     <div
       className={`rounded-lg overflow-hidden transition-colors ${hasBorderEmphasis ? 'border-2' : 'border'}`}
       style={{
         backgroundColor: 'var(--surface)',
         borderColor: getBorderColor(),
-        // Only the left border shows the group color; other 3 borders use default color
-        borderLeftWidth: hasGroupAccent ? '5px' : undefined,
-        borderLeftColor: hasGroupAccent ? safeCSSColor(groupColor) : undefined,
       }}
       data-testid="transaction-card"
       data-id={id}
@@ -474,7 +431,6 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
             colorTheme={colorTheme}
             mode={mode}
             onThumbnailClick={handleThumbnailClick}
-            ownership={ownership}
           />
 
           {/* Info Section */}

@@ -1,16 +1,13 @@
 /**
  * NotificationsView - Notifications/Alerts Panel
  *
- *
- * Displays pending invitations and shared group notifications.
+ * Displays in-app notifications.
  * Matches InsightsView layout with ProfileAvatar and ProfileDropdown.
  */
 
 import React, { useState, useRef } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { ProfileDropdown, ProfileAvatar, getInitials } from '../components/ProfileDropdown';
-import { PendingInvitationsSection, NotificationsList } from '@/features/shared-groups';
-import type { SharedGroup } from '../types/sharedGroup';
 import type { InAppNotificationClient } from '../types/notification';
 import type { User } from 'firebase/auth';
 
@@ -20,13 +17,8 @@ interface NotificationsViewProps {
   setView: (view: string) => void;
   t: (key: string, params?: Record<string, string | number>) => string;
   theme: string;
-  pendingInvitations: any[];
-  services: { appId?: string } | null;
   lang: 'en' | 'es';
-  setToastMessage: (msg: { text: string; type: 'success' | 'info' }) => void;
   inAppNotifications: InAppNotificationClient[];
-  userSharedGroups: SharedGroup[];
-  setGroupMode: (groupId: string, group: SharedGroup) => void;
   markNotificationAsRead: (id: string) => Promise<void>;
   markAllNotificationsAsRead: () => Promise<void>;
   deleteInAppNotification: (id: string) => Promise<void>;
@@ -39,17 +31,12 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
   setView,
   t,
   theme,
-  pendingInvitations,
-  services,
-  lang,
-  setToastMessage,
+  lang: _lang,
   inAppNotifications,
-  userSharedGroups,
-  setGroupMode,
-  markNotificationAsRead,
-  markAllNotificationsAsRead,
-  deleteInAppNotification,
-  deleteAllInAppNotifications,
+  markNotificationAsRead: _markNotificationAsRead,
+  markAllNotificationsAsRead: _markAllNotificationsAsRead,
+  deleteInAppNotification: _deleteInAppNotification,
+  deleteAllInAppNotifications: _deleteAllInAppNotifications,
 }) => {
   // Profile dropdown state
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -127,44 +114,8 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
 
       {/* Content area with top padding for fixed header - full width, no side padding */}
       <div className="flex-1 pt-[72px] pb-24 overflow-y-auto">
-        {pendingInvitations.length > 0 && user?.uid && services?.appId && (
-          <PendingInvitationsSection
-            invitations={pendingInvitations}
-            userId={user.uid}
-            appId={services.appId}
-            t={t}
-            theme={theme}
-            lang={lang}
-            onShowToast={(message, type) => setToastMessage({ text: message, type: type === 'error' ? 'info' : (type || 'success') })}
-          />
-        )}
-
-        {inAppNotifications.length > 0 && (
-          <NotificationsList
-            notifications={inAppNotifications}
-            groups={userSharedGroups}
-            onNotificationClick={(notification) => {
-              // Navigate to group view if groupId is present
-              if (notification.groupId) {
-                const group = userSharedGroups.find(g => g.id === notification.groupId);
-                if (group) {
-                  // Switch to group mode and navigate to dashboard
-                  setGroupMode(group.id!, group);
-                  navigateToView('dashboard');
-                }
-              }
-            }}
-            onMarkAsRead={markNotificationAsRead}
-            onMarkAllAsRead={markAllNotificationsAsRead}
-            onDelete={deleteInAppNotification}
-            onDeleteAll={deleteAllInAppNotifications}
-            t={t}
-            lang={lang}
-          />
-        )}
-
-        {/* Empty State - No pending alerts */}
-        {pendingInvitations.length === 0 && inAppNotifications.length === 0 && (
+        {/* Empty State - No notifications */}
+        {inAppNotifications.length === 0 && (
           <div className="flex-1 flex flex-col items-center justify-center p-6 text-center min-h-[50vh]">
             <div
               className="w-16 h-16 rounded-full flex items-center justify-center mb-4"

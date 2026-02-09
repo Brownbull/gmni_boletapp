@@ -25,16 +25,12 @@
  */
 
 import { useMemo, useEffect, useCallback } from 'react';
-import { getFirestore } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { usePaginatedTransactions } from '@/hooks/usePaginatedTransactions';
 import { useRecentScans } from '@/hooks/useRecentScans';
 import { mergeTransactionsWithRecentScans } from '@/utils/transactionMerge';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useTheme } from '@/contexts/ThemeContext';
-// Story 14d-v2-0: ViewMode migrated from Context to Zustand store
-import { useViewMode } from '@/shared/stores/useViewModeStore';
-import { useUserSharedGroups } from '@/hooks/useUserSharedGroups';
 import {
     useNavigationStore,
     usePendingHistoryFilters,
@@ -42,8 +38,6 @@ import {
 import { formatCurrency as formatCurrencyUtil } from '@/utils/currency';
 import { formatDate as formatDateUtil } from '@/utils/date';
 import { TRANSLATIONS } from '@/utils/translations';
-// Story 14d-v2-1-10d: View mode filtering utility
-import { filterTransactionsByViewMode } from '@/utils/viewModeFilterUtils';
 import type { Transaction } from '@/types/transaction';
 import type { HistoryFilterState } from '@/contexts/HistoryFiltersContext';
 import type { Language, Theme, ColorTheme, FontColorMode } from '@/types/settings';
@@ -196,23 +190,6 @@ export function useHistoryViewData(): UseHistoryViewDataReturn {
     const defaultCountry = preferences.defaultCountry || '';
     const foreignLocationFormat = preferences.foreignLocationFormat || 'code';
 
-    // === Group Mode ===
-    const { mode: viewMode, group: viewModeGroup } = useViewMode();
-    const db = getFirestore();
-    const { groups: sharedGroups } = useUserSharedGroups(db, user?.uid);
-    const isGroupMode = viewMode === 'group' && !!viewModeGroup;
-
-    // Compose active group info for group mode display
-    const activeGroup: ActiveGroupInfo | null = useMemo(() => {
-        if (!isGroupMode || !viewModeGroup) return null;
-        // Find the group in sharedGroups to get member profiles
-        const group = sharedGroups.find((g) => g.id === viewModeGroup.id);
-        return {
-            id: viewModeGroup.id ?? '',
-            memberProfiles: group?.memberProfiles,
-        };
-    }, [isGroupMode, viewModeGroup, sharedGroups]);
-
     // === Navigation Store ===
     const pendingHistoryFilters = usePendingHistoryFilters();
     const clearPendingFilters = useNavigationStore((s) => s.clearPendingFilters);
@@ -247,15 +224,6 @@ export function useHistoryViewData(): UseHistoryViewDataReturn {
         () => mergeTransactionsWithRecentScans(paginatedTransactions, recentScans),
         [paginatedTransactions, recentScans]
     );
-
-    // Story 14d-v2-1-10d: Filter transactions by view mode (personal vs group)
-    const viewModeFilteredTransactions = useMemo(() => {
-        return filterTransactionsByViewMode(
-            transactionsWithRecentScans,
-            viewMode,
-            viewModeGroup?.id ?? null
-        );
-    }, [transactionsWithRecentScans, viewMode, viewModeGroup?.id]);
 
     // === User Info ===
     const userInfo: UserInfo = useMemo(
@@ -295,9 +263,9 @@ export function useHistoryViewData(): UseHistoryViewDataReturn {
 
     // === Return Complete Data ===
     return {
-        // Transaction data - Story 14d-v2-1-10d: Use filtered transactions
-        transactions: viewModeFilteredTransactions,
-        allTransactions: viewModeFilteredTransactions,
+        // Transaction data
+        transactions: transactionsWithRecentScans,
+        allTransactions: transactionsWithRecentScans,
 
         // Pagination
         hasMore,
@@ -328,8 +296,8 @@ export function useHistoryViewData(): UseHistoryViewDataReturn {
         formatDate,
 
         // Group mode
-        isGroupMode,
-        activeGroup,
+        isGroupMode: false,
+        activeGroup: null,
 
         // Filter state
         pendingFilters: pendingHistoryFilters,

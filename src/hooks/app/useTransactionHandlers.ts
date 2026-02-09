@@ -42,7 +42,6 @@ import { useCallback, useMemo } from 'react';
 import type { User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import type { Transaction } from '../../types/transaction';
-import type { SharedGroup } from '../../types/sharedGroup';
 import type { UserPreferences } from '../../services/userPreferencesService';
 import type { Insight, UserInsightProfile, LocalInsightCache } from '../../types/insight';
 import type { View } from '../../components/App';
@@ -66,8 +65,6 @@ import { batchReviewActions, atomicBatchActions } from '@features/batch-review';
 // =============================================================================
 // Types
 // =============================================================================
-
-import type { ViewMode } from '@/shared/stores/useViewModeStore';
 
 /**
  * Toast message configuration
@@ -111,10 +108,6 @@ export interface UseTransactionHandlersProps {
     user: User | null;
     /** Firebase services (db, appId) */
     services: { db: Firestore; appId: string } | null;
-    /** Current view mode (personal or group) */
-    viewMode: ViewMode;
-    /** Active shared group (null if in personal mode) */
-    activeGroup: SharedGroup | null;
     /** User preferences for defaults */
     userPreferences: UserPreferences;
     /** All transactions for insight generation context */
@@ -235,8 +228,6 @@ export function useTransactionHandlers(
     const {
         user,
         services,
-        viewMode,
-        activeGroup,
         userPreferences,
         transactions,
         currency,
@@ -288,8 +279,6 @@ export function useTransactionHandlers(
         userPreferences.defaultCountry,
         userPreferences.defaultCity,
         userPreferences.defaultCurrency,
-        viewMode,
-        activeGroup,
     ]);
 
     /**
