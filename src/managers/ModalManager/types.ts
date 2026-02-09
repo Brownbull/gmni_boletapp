@@ -14,7 +14,7 @@ import type {
 } from '../../components/dialogs/TransactionConflictDialog';
 import type {
   TransactionPreview,
-} from '../../components/history/DeleteTransactionsModal';
+} from '@features/history/components/DeleteTransactionsModal';
 import type {
   LearnMerchantSelection,
   ItemNameChange,
@@ -27,7 +27,7 @@ import type {
 } from '../../components/SubcategoryLearningPrompt';
 
 // Re-export types for consumer convenience
-export type { TransactionPreview } from '../../components/history/DeleteTransactionsModal';
+export type { TransactionPreview } from '@features/history/components/DeleteTransactionsModal';
 export type { LearnMerchantSelection, ItemNameChange } from '../../components/dialogs/LearnMerchantDialog';
 export type { ItemToLearn } from '../../components/CategoryLearningPrompt';
 export type { SubcategoryItemToLearn } from '../../components/SubcategoryLearningPrompt';

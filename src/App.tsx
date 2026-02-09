@@ -107,9 +107,9 @@ import {
     useEditorMode,
     useTransactionEditorActions,
 } from '@features/transaction-editor';
-import { getQuarterFromMonth } from './utils/analyticsHelpers';
+import { getQuarterFromMonth } from '@features/analytics/utils/analyticsHelpers';
 import { HistoryFiltersProvider, type HistoryFilterState, type TemporalFilterState } from './contexts/HistoryFiltersContext';
-import type { HistoryNavigationPayload } from './utils/analyticsToHistoryFilters';
+import type { HistoryNavigationPayload } from '@features/analytics/utils/analyticsToHistoryFilters';
 import { analyzeReceipt, ReceiptType } from './services/gemini';
 import { SupportedCurrency } from './services/userPreferencesService';
 import { addTransaction as firestoreAddTransaction } from './services/firestore';

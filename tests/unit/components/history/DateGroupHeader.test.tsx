@@ -13,7 +13,7 @@ import {
   formatDateGroupLabel,
   groupTransactionsByDate,
   calculateGroupTotal,
-} from '../../../../src/components/history/DateGroupHeader';
+} from '@features/history/components/DateGroupHeader';
 
 // ============================================================================
 // Test Fixtures

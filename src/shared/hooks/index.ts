@@ -2,6 +2,7 @@
 
 export { useToast, type ToastMessage, type ToastType } from './useToast';
 export { useHistoryNavigation } from './useHistoryNavigation';
+export * from './useHistoryFilters';
 
 // Dialog utility hooks
 export { useBodyScrollLock } from './useBodyScrollLock';

@@ -31,17 +31,17 @@ import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { Inbox, ChevronLeft, ChevronRight, Loader2, Download, FileText, Package, AlertTriangle } from 'lucide-react';
 import { ProfileDropdown, ProfileAvatar, getInitials } from '@/components/ProfileDropdown';
 import { ItemCard, AggregatedItemCard } from '@/components/items';
-import { SearchBar } from '@/components/history/SearchBar';
-import { TemporalBreadcrumb } from '@/components/history/TemporalBreadcrumb';
-import { IconFilterBar } from '@/components/history/IconFilterBar';
-import { FilterChips } from '@/components/history/FilterChips';
+import { SearchBar } from '@features/history/components/SearchBar';
+import { TemporalBreadcrumb } from '@features/history/components/TemporalBreadcrumb';
+import { IconFilterBar } from '@features/history/components/IconFilterBar';
+import { FilterChips } from '@features/history/components/FilterChips';
 // Story 14.31 Session 3: Sort control
-import { SortControl } from '@/components/history/SortControl';
-import type { SortOption } from '@/components/history/SortControl';
+import { SortControl } from '@features/history/components/SortControl';
+import type { SortOption } from '@features/history/components/SortControl';
 import { PageTransition } from '@/components/animation/PageTransition';
 import { TransitionChild } from '@/components/animation/TransitionChild';
 import { useDerivedItems } from '@/hooks/useDerivedItems';
-import { useHistoryFilters } from '@/hooks/useHistoryFilters';
+import { useHistoryFilters } from '@shared/hooks/useHistoryFilters';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 // Story 14.31 Session 2: Item aggregation (group same products together)
@@ -49,7 +49,7 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { aggregateItems, sortAggregatedItems, sortItemsByPrice, sortItemsByName, sortItemsByDate } from '@/hooks/useItems';
 // Story 14.31 Session 2: Item duplicate detection
 import { filterToDuplicatesGrouped, getItemDuplicateCount } from '@/services/itemDuplicateDetectionService';
-import { extractAvailableFilters } from '@/utils/historyFilterUtils';
+import { extractAvailableFilters } from '@shared/utils/historyFilterUtils';
 // Story 14.13b: Normalize item categories for filtering (handles Spanish/translated names)
 import { normalizeItemCategory } from '@/utils/categoryNormalizer';
 // Story 14.13a: Category group expansion functions for multi-dimension filtering

@@ -9,7 +9,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import {
     useAnalyticsTransactions,
-} from '../../../src/hooks/useAnalyticsTransactions';
+} from '@features/analytics/hooks/useAnalyticsTransactions';
 import type { Transaction } from '../../../src/types/transaction';
 
 // ============================================================================

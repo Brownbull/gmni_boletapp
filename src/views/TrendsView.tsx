@@ -22,13 +22,13 @@ import { ChevronLeft, ChevronRight, PieChart, LayoutGrid, Plus, Minus, Receipt, 
 import { PageTransition } from '../components/animation/PageTransition';
 import { TransitionChild } from '../components/animation/TransitionChild';
 // Story 14.40: Category statistics popup
-import { CategoryStatisticsPopup } from '../components/analytics/CategoryStatisticsPopup';
-import { useCategoryStatistics, type CategoryFilterType } from '../hooks/useCategoryStatistics';
+import { CategoryStatisticsPopup } from '@features/analytics/components/CategoryStatisticsPopup';
+import { useCategoryStatistics, type CategoryFilterType } from '@features/analytics/hooks/useCategoryStatistics';
 // Story 14.14b: Profile dropdown for consistent header
 import { ProfileDropdown, ProfileAvatar, getInitials } from '../components/ProfileDropdown';
 // Story 14.14b: IconFilterBar for consistent filter dropdowns
-import { IconFilterBar } from '../components/history/IconFilterBar';
-import { useHistoryFilters } from '../hooks/useHistoryFilters';
+import { IconFilterBar } from '@features/history/components/IconFilterBar';
+import { useHistoryFilters } from '@shared/hooks/useHistoryFilters';
 import {
     extractAvailableFilters,
     buildYearFilter,
@@ -36,7 +36,7 @@ import {
     buildMonthFilter,
     buildWeekFilter,
     filterTransactionsByHistoryFilters,
-} from '../utils/historyFilterUtils';
+} from '@shared/utils/historyFilterUtils';
 import type { HistoryFilterState } from '../contexts/HistoryFiltersContext';
 // Story 14.13: Hooks
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
@@ -80,8 +80,8 @@ import {
 } from '../utils/categoryTranslations';
 import type { Transaction } from '../types/transaction';
 // Story 14.13.3: Sankey chart for flow visualization
-import { SankeyChart, type SankeySelectionData } from '../components/analytics/SankeyChart';
-import type { SankeyMode } from '../utils/sankeyDataBuilder';
+import { SankeyChart, type SankeySelectionData } from '@features/analytics/components/SankeyChart';
+import type { SankeyMode } from '@features/analytics/utils/sankeyDataBuilder';
 // Story 14e-25b.1: ColorTheme now comes from TrendsViewData type
 // Story 14.13.2: Period comparison utilities
 import {
@@ -89,7 +89,7 @@ import {
     calculateChange,
     isDateInPeriod,
     type PeriodIdentifier,
-} from '../utils/periodComparison';
+} from '@features/analytics/utils/periodComparison';
 // Story 14e-25d: Direct navigation from store and shared hooks (ViewHandlersContext deleted)
 import { useNavigationActions } from '@/shared/stores';
 import { useHistoryNavigation } from '@/shared/hooks';

@@ -15,7 +15,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { AnalyticsProvider } from '../../../src/contexts/AnalyticsContext';
-import { DrillDownGrid } from '../../../src/components/analytics/DrillDownGrid';
+import { DrillDownGrid } from '@features/analytics/components/DrillDownGrid';
 import type { AnalyticsNavigationState } from '../../../src/types/analytics';
 import type { Transaction } from '../../../src/types/transaction';
 

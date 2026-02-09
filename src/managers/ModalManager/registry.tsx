@@ -129,7 +129,7 @@ export const MODAL_REGISTRY: Record<ModalType, LazyModalComponent> = {
     }))
   ),
   deleteTransactions: React.lazy(() =>
-    import('@/components/history/DeleteTransactionsModal').then((module) => ({
+    import('@features/history/components/DeleteTransactionsModal').then((module) => ({
       default: (props: React.ComponentProps<typeof module.DeleteTransactionsModal>) => (
         <module.DeleteTransactionsModal {...props} isOpen={true} />
       ),

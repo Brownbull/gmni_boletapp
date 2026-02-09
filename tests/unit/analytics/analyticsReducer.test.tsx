@@ -21,7 +21,7 @@ import {
   resetToYear,
   clearCategoryFilter,
 } from '../../../src/contexts/AnalyticsContext';
-import { useAnalyticsNavigation } from '../../../src/hooks/useAnalyticsNavigation';
+import { useAnalyticsNavigation } from '@features/analytics/hooks/useAnalyticsNavigation';
 import type { AnalyticsNavigationState } from '../../../src/types/analytics';
 
 // Helper to create a wrapper with AnalyticsProvider

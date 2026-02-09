@@ -7,11 +7,11 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { CategoryStatisticsPopup } from '../../../../src/components/analytics/CategoryStatisticsPopup';
-import type { CategoryStatistics } from '../../../../src/hooks/useCategoryStatistics';
+import { CategoryStatisticsPopup } from '@features/analytics/components/CategoryStatisticsPopup';
+import type { CategoryStatistics } from '@features/analytics/hooks/useCategoryStatistics';
 
 // Mock the useReducedMotion hook
-vi.mock('../../../../src/hooks/useReducedMotion', () => ({
+vi.mock('@/hooks/useReducedMotion', () => ({
   useReducedMotion: () => false,
 }));
 

@@ -13,8 +13,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useState } from 'react';
 import { AnalyticsProvider } from '../../../src/contexts/AnalyticsContext';
-import { ChartModeToggle } from '../../../src/components/analytics/ChartModeToggle';
-import { useAnalyticsNavigation } from '../../../src/hooks/useAnalyticsNavigation';
+import { ChartModeToggle } from '@features/analytics/components/ChartModeToggle';
+import { useAnalyticsNavigation } from '@features/analytics/hooks/useAnalyticsNavigation';
 import type { AnalyticsNavigationState, TemporalPosition } from '../../../src/types/analytics';
 
 // ============================================================================

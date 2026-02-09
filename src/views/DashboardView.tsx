@@ -21,10 +21,10 @@ import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { Inbox, ArrowUpDown, Filter, ChevronLeft, ChevronRight, Receipt, Package, X, Trash2, CheckSquare } from 'lucide-react';
 import { ImageViewer } from '../components/ImageViewer';
 // Story 10a.1: Filter bar for consolidated home view (AC #2)
-import { HistoryFilterBar } from '../components/history/HistoryFilterBar';
+import { HistoryFilterBar } from '@features/history/components/HistoryFilterBar';
 // Story 14.15b: Selection mode and modals for Dashboard
 // Story 14e-5: DeleteTransactionsModal now uses Modal Manager
-import type { TransactionPreview } from '../components/history/DeleteTransactionsModal';
+import type { TransactionPreview } from '@features/history/components/DeleteTransactionsModal';
 import { useModalActions } from '@managers/ModalManager';
 import { useSelectionMode } from '../hooks/useSelectionMode';
 import { deleteTransactionsBatch } from '../services/firestore';
@@ -35,12 +35,12 @@ import { getFirestore } from 'firebase/firestore';
 // Story 14e-25b.2: Language type now comes from hook (useDashboardViewData)
 import { translateCategory } from '../utils/categoryTranslations';
 // Story 10a.1: Filter and duplicate detection utilities (AC #2, #4)
-import { useHistoryFilters } from '../hooks/useHistoryFilters';
+import { useHistoryFilters } from '@shared/hooks/useHistoryFilters';
 import { getDuplicateIds } from '../services/duplicateDetectionService';
 import {
     extractAvailableFilters,
     filterTransactionsByHistoryFilters,
-} from '../utils/historyFilterUtils';
+} from '@shared/utils/historyFilterUtils';
 import type { Transaction as TransactionType } from '../types/transaction';
 // Story 14.12: Animation framework imports
 import { PageTransition } from '../components/animation/PageTransition';
@@ -85,7 +85,7 @@ import { normalizeItemCategory } from '../utils/categoryNormalizer';
 import { normalizeItemNameForGrouping } from '../hooks/useItems';
 import { calculateTreemapLayout } from '../utils/treemapLayout';
 // Story 14.13 Session 4: Navigation payload for treemap cell clicks
-import { HistoryNavigationPayload, DrillDownPath } from '../utils/analyticsToHistoryFilters';
+import { HistoryNavigationPayload, DrillDownPath } from '@features/analytics/utils/analyticsToHistoryFilters';
 // Story 14e-25d: Direct navigation hooks (ViewHandlersContext deleted)
 import { useHistoryNavigation } from '@/shared/hooks';
 import { useNavigationActions } from '@/shared/stores';

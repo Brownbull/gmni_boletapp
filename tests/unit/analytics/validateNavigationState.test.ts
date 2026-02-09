@@ -13,7 +13,7 @@ import {
   getQuarterFromMonth,
   getDefaultNavigationState,
   getCurrentYear,
-} from '../../../src/utils/analyticsHelpers';
+} from '@features/analytics/utils/analyticsHelpers';
 import type { AnalyticsNavigationState } from '../../../src/types/analytics';
 
 describe('getQuarterFromMonth', () => {
