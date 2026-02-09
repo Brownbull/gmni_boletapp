@@ -44,8 +44,8 @@ import {
 export interface ToastMessage {
     /** Message text to display */
     text: string;
-    /** Toast type for styling */
-    type: 'success' | 'info';
+    /** Toast type for styling — error/warning added in Story 15-2h */
+    type: 'success' | 'info' | 'error' | 'warning';
 }
 
 /**

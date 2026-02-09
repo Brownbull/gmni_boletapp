@@ -80,10 +80,10 @@ development_status:
   15-2b-date-utilities: done            # 2 pts - Merge date.ts + dateHelpers.ts + periodUtils.ts
   15-2c-timestamp-utils: done           # 2 pts - Unified TimestampLike → Date/millis
   15-2d-transaction-validation: done    # 2 pts - Shared validation predicates (11+ files)
-  15-2e-comparators: backlog            # 2 pts - Typed sort comparators (132 calls, 43 files)
+  15-2e-comparators: done               # 2 pts - Typed sort comparators (132 calls, 43 files)
   15-2f-storage-wrapper: done           # 2 pts - Typed localStorage wrapper (22 files)
-  15-2g-number-format: backlog          # 2 pts - formatDecimal(), formatPercent()
-  15-2h-error-handling: backlog         # 3 pts - Error code mapping + toast service (37 files)
+  15-2g-number-format: done             # 2 pts - formatDecimal(), formatPercent()
+  15-2h-error-handling: done            # 3 pts - Error code mapping + toast service (37 files)
 
   # Phase 3: Component Deduplication
   15-3a-confirm-dialog-shared: backlog  # 2 pts - Promote ConfirmationDialog, replace window.confirm

@@ -12,6 +12,7 @@ import type { Transaction } from '../types/transaction';
 import { getQuarterFromMonth } from './analyticsHelpers';
 // Story 14.21: Use unified category colors
 import { getCategoryBackgroundAuto } from '../config/categoryColors';
+import { byNumberDesc } from '@/utils/comparators';
 
 // ============================================================================
 // Types
@@ -306,7 +307,7 @@ export function calculateCategoryBreakdown(
       count: data.count,
       percentage: grandTotal > 0 ? (data.total / grandTotal) * 100 : 0,
     }))
-    .sort((a, b) => b.total - a.total);
+    .sort(byNumberDesc('total'));
 }
 
 // ============================================================================

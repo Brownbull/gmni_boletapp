@@ -11,6 +11,7 @@
 
 import type { TransactionItem } from '../types';
 import { TRANSLATIONS } from '@/utils/translations';
+import { roundTo } from '@/utils/numberFormat';
 
 /**
  * Result of reconciling items with receipt total.
@@ -73,9 +74,9 @@ export function reconcileItemsTotal(
   }, 0);
 
   // Round to avoid floating point issues
-  const roundedItemsSum = Math.round(itemsSum * 100) / 100;
-  const roundedReceiptTotal = Math.round(receiptTotal * 100) / 100;
-  const difference = Math.round((roundedReceiptTotal - roundedItemsSum) * 100) / 100;
+  const roundedItemsSum = roundTo(itemsSum);
+  const roundedReceiptTotal = roundTo(receiptTotal);
+  const difference = roundTo(roundedReceiptTotal - roundedItemsSum);
 
   // Allow small discrepancies (< $1)
   if (Math.abs(difference) < 1) {

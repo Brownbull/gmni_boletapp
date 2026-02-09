@@ -10,6 +10,7 @@
  */
 
 import { toDateSafe } from '@/utils/timestamp';
+import { byNumberDesc } from '@/utils/comparators';
 
 // ============================================================================
 // Types
@@ -437,7 +438,7 @@ export function calculatePeriodComparison<T>(
     });
 
     // Sort by current value descending
-    trendData.sort((a, b) => b.currentValue - a.currentValue);
+    trendData.sort(byNumberDesc('currentValue'));
 
     return {
         trendData,

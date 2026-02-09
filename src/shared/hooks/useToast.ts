@@ -1,8 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
 
+export type ToastType = 'success' | 'info' | 'error' | 'warning';
+
 export interface ToastMessage {
     text: string;
-    type: 'success' | 'info';
+    type: ToastType;
 }
 
 /**
@@ -25,7 +27,7 @@ export interface ToastMessage {
 export const useToast = (autoDismissMs = 3000) => {
     const [toastMessage, setToastMessage] = useState<ToastMessage | null>(null);
 
-    const showToast = useCallback((text: string, type: 'success' | 'info' = 'info') => {
+    const showToast = useCallback((text: string, type: ToastType = 'info') => {
         setToastMessage({ text, type });
     }, []);
 
@@ -33,10 +35,11 @@ export const useToast = (autoDismissMs = 3000) => {
         setToastMessage(null);
     }, []);
 
-    // Auto-dismiss effect
+    // Auto-dismiss effect — errors stay longer for readability
     useEffect(() => {
         if (toastMessage) {
-            const timer = setTimeout(dismissToast, autoDismissMs);
+            const duration = toastMessage.type === 'error' ? autoDismissMs * 2 : autoDismissMs;
+            const timer = setTimeout(dismissToast, duration);
             return () => clearTimeout(timer);
         }
     }, [toastMessage, autoDismissMs, dismissToast]);

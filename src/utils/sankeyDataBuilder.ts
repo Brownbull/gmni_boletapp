@@ -13,6 +13,7 @@
  */
 
 import type { Transaction } from '../types/transaction';
+import { byNumberDesc } from '@/utils/comparators';
 import {
     STORE_CATEGORY_GROUPS,
     ITEM_CATEGORY_GROUPS,
@@ -157,7 +158,7 @@ function applyThreshold(
     }
 
     // Sort by value descending
-    const sorted = [...categories].sort((a, b) => b.value - a.value);
+    const sorted = [...categories].sort(byNumberDesc('value'));
 
     // Calculate percentages
     sorted.forEach(cat => {
