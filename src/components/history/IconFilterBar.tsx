@@ -53,6 +53,7 @@ import type { Language } from '../../utils/translations';
 import { useLocationDisplay } from '../../hooks/useLocations';
 import { CountryFlag } from '../CountryFlag';
 import type { GroupWithMeta } from '../../hooks/useAllUserGroups';
+import { safeCSSColor } from '@/utils/validationUtils';
 
 // ============================================================================
 // Types
@@ -1985,7 +1986,7 @@ function GroupFilterDropdown({
                   {/* Group color circle with emoji icon inside */}
                   <span
                     className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: group.color }}
+                    style={{ backgroundColor: safeCSSColor(group.color) }}
                   >
                     <span
                       style={{

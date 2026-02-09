@@ -27,6 +27,7 @@ import React, { useEffect, useCallback, useState, useRef, useMemo } from 'react'
 import { Check, User, Users, Plus } from 'lucide-react';
 // Story 14d-v2-0: ViewMode migrated from Context to Zustand store
 import { useViewMode } from '@/shared/stores/useViewModeStore';
+import type { ViewMode } from '@/shared/stores/useViewModeStore';
 // Story 14d-v2-1-10b: Import groupDialogsActions for Create Group button
 import { groupDialogsActions } from '@/features/shared-groups/store/useGroupDialogsStore';
 import type { SharedGroup } from '@/types/sharedGroup';
@@ -45,7 +46,7 @@ export interface ViewModeSwitcherProps {
   /** Whether groups are still loading */
   isLoading: boolean;
   /** Callback when a mode is selected */
-  onSelect?: (mode: 'personal' | 'group', group?: SharedGroup) => void;
+  onSelect?: (mode: ViewMode, group?: SharedGroup) => void;
   /** Translation function */
   t: (key: string) => string;
 }

@@ -18,6 +18,8 @@
 import React, { useState, useRef } from 'react';
 import { ArrowLeft, ChevronLeft } from 'lucide-react';
 import { ProfileDropdown, ProfileAvatar, getInitials } from './ProfileDropdown';
+import { safeCSSColor } from '@/utils/validationUtils';
+import type { ViewMode } from '@/shared/stores/useViewModeStore';
 
 /**
  * Helper to extract emoji from group name (e.g., "🏠 Family" → "🏠")
@@ -128,7 +130,7 @@ export interface TopHeaderProps {
 
     /**
      */
-    viewMode?: 'personal' | 'group';
+    viewMode?: ViewMode;
 
     /**
      */
@@ -144,7 +146,7 @@ export interface TopHeaderProps {
  */
 interface AppLogoProps {
     theme: string;
-    viewMode?: 'personal' | 'group';
+    viewMode?: ViewMode;
     activeGroup?: ActiveGroupInfo;
 }
 
@@ -166,7 +168,7 @@ const AppLogo: React.FC<AppLogoProps> = ({ viewMode, activeGroup }) => {
                 style={{
                     width: '44px',
                     height: '44px',
-                    background: activeGroup.color || 'var(--primary, #2563eb)',
+                    background: safeCSSColor(activeGroup.color, 'var(--primary, #2563eb)'),
                 }}
             >
                 <span

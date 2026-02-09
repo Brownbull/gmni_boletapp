@@ -11,20 +11,11 @@ import { renderHook, act } from '@testing-library/react';
 import { useGroupDialogs } from '@/hooks/useGroupDialogs';
 import { useGroupDialogsStore, initialGroupDialogsState } from '@/features/shared-groups';
 import type { SharedGroup, PendingInvitation } from '@/types/sharedGroup';
-import type { Timestamp } from 'firebase/firestore';
+import { createMockTimestamp, createMockTimestampDaysFromNow } from '@helpers/firestore';
 
 // =============================================================================
 // Test Fixtures
 // =============================================================================
-
-const createMockTimestamp = (date: Date = new Date()): Timestamp => ({
-    toDate: () => date,
-    toMillis: () => date.getTime(),
-    seconds: Math.floor(date.getTime() / 1000),
-    nanoseconds: 0,
-    isEqual: () => false,
-    valueOf: () => '',
-} as Timestamp);
 
 const mockSharedGroup: SharedGroup = {
     id: 'group-123',
@@ -34,7 +25,7 @@ const mockSharedGroup: SharedGroup = {
     color: '#10b981',
     icon: '🏠',
     shareCode: 'ABC123DEF456GHI7',
-    shareCodeExpiresAt: createMockTimestamp(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+    shareCodeExpiresAt: createMockTimestampDaysFromNow(7),
     members: ['user-owner', 'user-member'],
     memberUpdates: {},
     createdAt: createMockTimestamp(),
@@ -64,7 +55,7 @@ const mockPendingInvitation: PendingInvitation = {
     invitedByUserId: 'user-owner',
     invitedByName: 'Owner Name',
     createdAt: createMockTimestamp(),
-    expiresAt: createMockTimestamp(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+    expiresAt: createMockTimestampDaysFromNow(7),
     status: 'pending',
 };
 

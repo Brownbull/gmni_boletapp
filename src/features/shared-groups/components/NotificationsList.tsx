@@ -19,6 +19,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { Bookmark, ArrowRight, Trash2, X, CheckSquare } from 'lucide-react';
 import type { InAppNotificationClient } from '@/types/notification';
 import type { SharedGroup } from '@/types/sharedGroup';
+import { safeCSSColor } from '@/utils/validationUtils';
 
 // ============================================================================
 // Types
@@ -59,9 +60,6 @@ const SWIPE_THRESHOLD = 80;
 
 /** Animation duration for slide out (ms) */
 const SLIDE_OUT_DURATION = 200;
-
-/** Default group color if none specified */
-const DEFAULT_GROUP_COLOR = '#10b981';
 
 /** Long press duration to enter selection mode (ms) */
 const LONG_PRESS_DURATION = 500;
@@ -277,7 +275,7 @@ function NotificationItem({
         }
     }, [isSelectionMode, offsetX, notification, onMarkAsRead, onNotificationClick, onToggleSelect]);
 
-    const accentColor = groupColor || DEFAULT_GROUP_COLOR;
+    const accentColor = safeCSSColor(groupColor);
     const displayIcon = notification.groupIcon || groupIcon;
 
     return (

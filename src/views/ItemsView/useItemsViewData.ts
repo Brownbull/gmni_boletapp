@@ -30,6 +30,7 @@ import { useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePaginatedTransactions } from '@/hooks/usePaginatedTransactions';
 import { useRecentScans } from '@/hooks/useRecentScans';
+import { mergeTransactionsWithRecentScans } from '@/utils/transactionMerge';
 import { useTheme } from '@/contexts/ThemeContext';
 import { formatCurrency as formatCurrencyUtil } from '@/utils/currency';
 import { formatDate as formatDateUtil } from '@/utils/date';
@@ -155,23 +156,11 @@ export function useItemsViewData(): UseItemsViewDataReturn {
     // Recent scans for merge
     const recentScans = useRecentScans(user, services);
 
-    // Merge recent scans with paginated transactions
-    // Logic moved from App.tsx - deduplicates by transaction ID
-    // Recent scans appear at TOP of list
-    const transactions = useMemo(() => {
-        if (!recentScans?.length) return paginatedTransactions;
-
-        // Build set of recent scan IDs for deduplication
-        const recentIds = new Set(recentScans.filter((s) => s.id).map((s) => s.id));
-
-        // Filter paginated to exclude duplicates
-        const filteredPaginated = paginatedTransactions.filter(
-            (tx) => tx.id && !recentIds.has(tx.id)
-        );
-
-        // Recent scans at top, then paginated
-        return [...recentScans, ...filteredPaginated];
-    }, [paginatedTransactions, recentScans]);
+    // Merge recent scans with paginated transactions (deduplication)
+    const transactions = useMemo(
+        () => mergeTransactionsWithRecentScans(paginatedTransactions, recentScans),
+        [paginatedTransactions, recentScans]
+    );
 
     // === User Info ===
     const userInfo: UserInfo = useMemo(

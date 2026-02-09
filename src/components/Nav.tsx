@@ -52,6 +52,7 @@ import { getFABColorScheme, shouldShowShineAnimation, shouldShowPulseAnimation }
 // Story 14e-11: ScanMode/ScanPhase types now inferred from Zustand hooks
 // Story 14e-4: Modal Manager for credit info modal
 import { useModalActions } from '../managers/ModalManager';
+import { safeCSSColor } from '@/utils/validationUtils';
 
 // Story 12.3: Scan status for nav icon indicator
 export type ScanStatus = 'idle' | 'processing' | 'ready';
@@ -295,8 +296,9 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
     const navStyle: React.CSSProperties = {
         // When in group mode, use gradient background from bottom to top
         // 70% from bottom is normal bg color, then gradient to group color at top
+        // safeCSSColor guarantees #RRGGBB or #RGB; appending "20" hex suffix = valid 8-digit hex with ~12% alpha
         background: activeGroupColor
-            ? `linear-gradient(to top, var(--bg) 0%, var(--bg) 70%, ${activeGroupColor}20 100%)`
+            ? `linear-gradient(to top, var(--bg) 0%, var(--bg) 70%, ${safeCSSColor(activeGroupColor)}20 100%)`
             : 'var(--bg)',
         borderTop: '1px solid var(--border-medium)',
     };

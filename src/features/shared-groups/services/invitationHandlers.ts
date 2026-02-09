@@ -21,7 +21,7 @@
 import type { Firestore } from 'firebase/firestore';
 import type { MemberProfile, PendingInvitation } from '@/types/sharedGroup';
 import { acceptInvitation, declineInvitation } from '@/services/invitationService';
-import { joinGroupDirectly } from './groupService';
+import { joinGroupDirectly } from './groupMemberService';
 
 // =============================================================================
 // Constants
@@ -89,7 +89,10 @@ export async function handleAcceptInvitationService(
         await joinGroupDirectly(db, invitation.groupId, userId, userProfile, appId, shareMyTransactions);
     } else {
         // Real invitation - accept through the invitation service
-        await acceptInvitation(db, invitation.id!, userId, userProfile, appId, shareMyTransactions);
+        if (!invitation.id) {
+            throw new Error('Invitation ID is required for accepting a real invitation');
+        }
+        await acceptInvitation(db, invitation.id, userId, userProfile, appId, shareMyTransactions);
     }
 }
 
@@ -122,7 +125,10 @@ export async function handleDeclineInvitationService(
 ): Promise<void> {
     if (!isSyntheticInvitation(invitation)) {
         // Real invitation - decline through the invitation service
-        await declineInvitation(db, invitation.id!);
+        if (!invitation.id) {
+            throw new Error('Invitation ID is required for declining a real invitation');
+        }
+        await declineInvitation(db, invitation.id);
     }
     // Synthetic invitation - no-op (nothing in Firestore to update)
 }

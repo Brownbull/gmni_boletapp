@@ -196,4 +196,41 @@ grep -rA2 "afterEach\|afterAll\|cleanup" tests/e2e/
 
 ---
 
-*Source: Atlas Migration 2026-02-05 + E2E Lessons Learned 2026-02-05*
+### 7. CSS Color Injection Prevention
+
+**Severity:** MEDIUM - CSS injection via Firestore-sourced colors
+
+| Check | Rule |
+|-------|------|
+| `group.color` in style props | Must use `safeCSSColor()` from `@/utils/validationUtils` |
+| `invitation.groupColor` in style props | Must use `safeCSSColor()` |
+| Any Firestore-sourced color in CSS | Must use `safeCSSColor()` |
+| Custom fallback values | Must be hardcoded strings, not user input |
+| New color-rendering components | Verify `safeCSSColor()` wrapping before merge |
+
+**Pattern:**
+```typescript
+import { safeCSSColor } from '@/utils/validationUtils';
+
+// GOOD: Validated at rendering boundary
+style={{ backgroundColor: safeCSSColor(group.color) }}
+
+// GOOD: With custom fallback (hardcoded only)
+style={{ background: safeCSSColor(group.color, 'var(--primary, #2563eb)') }}
+
+// BAD: Raw Firestore value in CSS
+style={{ backgroundColor: group.color }}
+```
+
+**Verification:**
+```bash
+# Find potential ungated color usage in style props
+grep -rn "group\.color" src/ --include="*.tsx" | grep -v safeCSSColor | grep -v "import"
+grep -rn "groupColor" src/ --include="*.tsx" | grep "backgroundColor\|background:\|color:" | grep -v safeCSSColor
+```
+
+**Historical frequency:** TD-CONSOLIDATED-7 (2026-02-08). Applied defense-in-depth across 23 components. ColorPicker and EditGroupDialog were gaps caught during ECC code review.
+
+---
+
+*Source: Atlas Migration 2026-02-05 + E2E Lessons Learned 2026-02-05 + TD-CONSOLIDATED-7 CSS Color Review 2026-02-08*

@@ -23,7 +23,7 @@ import { AnalyticsProvider } from '../../../src/contexts/AnalyticsContext';
 import { HistoryFiltersProvider } from '../../../src/contexts/HistoryFiltersContext';
 import { TrendsView } from '../../../src/views/TrendsView';
 import type { Transaction } from '../../../src/types/transaction';
-// Story 14e-25b.1: Import type for __testData prop
+// Story 14e-25b.1: Import type for _testOverrides prop
 import type { TrendsViewData } from '../../../src/views/TrendsView/useTrendsViewData';
 
 // ============================================================================
@@ -129,7 +129,7 @@ const mockT = (key: string) => {
 /**
  * Story 14e-25b.1: Default test data for TrendsView
  * TrendsView now owns its data via useTrendsViewData() hook.
- * Tests use __testData prop to override hook data.
+ * Tests use _testOverrides prop to override hook data.
  */
 const defaultTestData: Partial<TrendsViewData> = {
   transactions: [],

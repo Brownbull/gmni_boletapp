@@ -22,6 +22,7 @@ import { TransferOwnershipDialog } from './TransferOwnershipDialog';
 import { RemoveMemberDialog } from './RemoveMemberDialog';
 import { OwnerLeaveWarningDialog } from './OwnerLeaveWarningDialog';
 import { DeleteGroupDialog } from './DeleteGroupDialog';
+import { safeCSSColor } from '@/utils/validationUtils';
 
 export interface GroupMembersManagerProps {
     /** The shared group being managed */
@@ -209,7 +210,7 @@ export const GroupMembersManager: React.FC<GroupMembersManagerProps> = ({
                             <div
                                 className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
                                 style={{
-                                    backgroundColor: isMemberOwner ? group.color : 'var(--bg-secondary)',
+                                    backgroundColor: isMemberOwner ? safeCSSColor(group.color) : 'var(--bg-secondary)',
                                 }}
                             >
                                 {photoUrl ? (

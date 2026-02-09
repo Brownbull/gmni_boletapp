@@ -18,7 +18,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Timestamp } from 'firebase/firestore';
+import { createMockTimestampDaysAgo, createMockTimestampDaysFromNow } from '../../helpers';
 
 // Mock Firestore before importing the module
 vi.mock('firebase/firestore', async () => {
@@ -114,18 +114,6 @@ function createMockDoc(id: string, data: Partial<SharedGroup>) {
     };
 }
 
-/**
- * Helper to create mock Timestamp
- */
-function createMockTimestamp(daysAgo: number = 0): Timestamp {
-    const date = new Date();
-    date.setDate(date.getDate() - daysAgo);
-    return {
-        toDate: () => date,
-        seconds: Math.floor(date.getTime() / 1000),
-        nanoseconds: 0,
-    } as unknown as Timestamp;
-}
 
 // =============================================================================
 // Tests
@@ -375,13 +363,13 @@ describe('groupService', () => {
             await createGroup(mockDb, userId, appId, {
                 name: 'Test Group',
                 transactionSharingEnabled: true,
-                color: '#ff0000',
+                color: '#3b82f6',
             });
 
             const addDocCall = mockAddDoc.mock.calls[0];
             const groupData = addDocCall[1] as Partial<SharedGroup>;
 
-            expect(groupData.color).toBe('#ff0000');
+            expect(groupData.color).toBe('#3b82f6');
         });
 
         it('includes icon when provided', async () => {
@@ -841,11 +829,11 @@ describe('groupService', () => {
                 name: 'Test Group',
                 color: '#10b981',
                 shareCode: 'testcode123',
-                shareCodeExpiresAt: createMockTimestamp(-7),
+                shareCodeExpiresAt: createMockTimestampDaysFromNow(7),
                 members: [ownerId, memberId],
                 memberUpdates: {},
-                createdAt: createMockTimestamp(30),
-                updatedAt: createMockTimestamp(1),
+                createdAt: createMockTimestampDaysAgo(30),
+                updatedAt: createMockTimestampDaysAgo(1),
                 timezone: 'America/Santiago',
                 transactionSharingEnabled: true,
                 transactionSharingLastToggleAt: null,
@@ -1081,14 +1069,14 @@ describe('groupService', () => {
                 name: 'Test Group',
                 color: '#10b981',
                 shareCode: 'testcode123',
-                shareCodeExpiresAt: createMockTimestamp(-7),
+                shareCodeExpiresAt: createMockTimestampDaysFromNow(7),
                 members: [currentOwnerId, newOwnerId, otherMember],
                 memberUpdates: {},
-                createdAt: createMockTimestamp(30),
-                updatedAt: createMockTimestamp(1),
+                createdAt: createMockTimestampDaysAgo(30),
+                updatedAt: createMockTimestampDaysAgo(1),
                 timezone: 'America/Santiago',
                 transactionSharingEnabled: true,
-                transactionSharingLastToggleAt: createMockTimestamp(2),
+                transactionSharingLastToggleAt: createMockTimestampDaysAgo(2),
                 transactionSharingToggleCountToday: 2,
                 ...overrides,
             };
@@ -1398,11 +1386,11 @@ describe('groupService', () => {
                 name: 'Test Group',
                 color: '#10b981',
                 shareCode: 'testcode123',
-                shareCodeExpiresAt: createMockTimestamp(-7),
+                shareCodeExpiresAt: createMockTimestampDaysFromNow(7),
                 members: [userId], // Single member - last member
                 memberUpdates: {},
-                createdAt: createMockTimestamp(30),
-                updatedAt: createMockTimestamp(1),
+                createdAt: createMockTimestampDaysAgo(30),
+                updatedAt: createMockTimestampDaysAgo(1),
                 timezone: 'America/Santiago',
                 transactionSharingEnabled: true,
                 transactionSharingLastToggleAt: null,
@@ -1443,23 +1431,28 @@ describe('groupService', () => {
                 ).rejects.toThrow('User ID and group ID are required');
             });
 
-            it('does not call getDoc when validation fails', async () => {
+            // TD-CONSOLIDATED-10: Validation gate now uses runTransaction, not getDoc
+            it('does not call runTransaction when input validation fails', async () => {
                 try {
                     await deleteGroupAsLastMember(mockDb, '', groupId);
                 } catch {
                     // Expected to throw
                 }
 
-                expect(mockGetDoc).not.toHaveBeenCalled();
+                expect(mockRunTransaction).not.toHaveBeenCalled();
             });
         });
 
-        // Group Validation Tests
+        // Group Validation Tests (TD-CONSOLIDATED-10: validation now inside runTransaction)
         describe('group validation', () => {
             it('throws error when group not found', async () => {
-                mockGetDoc.mockResolvedValue({
-                    exists: () => false,
-                } as any);
+                mockRunTransaction.mockImplementation(async (_db, callback) => {
+                    const mockTransaction = {
+                        get: vi.fn().mockResolvedValue({ exists: () => false }),
+                        delete: vi.fn(),
+                    };
+                    return callback(mockTransaction);
+                });
 
                 await expect(
                     deleteGroupAsLastMember(mockDb, userId, groupId)
@@ -1471,11 +1464,17 @@ describe('groupService', () => {
                     members: ['other-user'], // userId is not a member
                 });
 
-                mockGetDoc.mockResolvedValue({
-                    exists: () => true,
-                    data: () => mockGroup,
-                    id: groupId,
-                } as any);
+                mockRunTransaction.mockImplementation(async (_db, callback) => {
+                    const mockTransaction = {
+                        get: vi.fn().mockResolvedValue({
+                            exists: () => true,
+                            data: () => mockGroup,
+                            id: groupId,
+                        }),
+                        delete: vi.fn(),
+                    };
+                    return callback(mockTransaction);
+                });
 
                 await expect(
                     deleteGroupAsLastMember(mockDb, userId, groupId)
@@ -1487,11 +1486,17 @@ describe('groupService', () => {
                     members: [userId, 'other-user'], // Multiple members
                 });
 
-                mockGetDoc.mockResolvedValue({
-                    exists: () => true,
-                    data: () => mockGroup,
-                    id: groupId,
-                } as any);
+                mockRunTransaction.mockImplementation(async (_db, callback) => {
+                    const mockTransaction = {
+                        get: vi.fn().mockResolvedValue({
+                            exists: () => true,
+                            data: () => mockGroup,
+                            id: groupId,
+                        }),
+                        delete: vi.fn(),
+                    };
+                    return callback(mockTransaction);
+                });
 
                 await expect(
                     deleteGroupAsLastMember(mockDb, userId, groupId)
@@ -1504,13 +1509,6 @@ describe('groupService', () => {
             let mockTransactionDelete: ReturnType<typeof vi.fn>;
 
             beforeEach(() => {
-                const mockGroup = createMockGroup();
-                mockGetDoc.mockResolvedValue({
-                    exists: () => true,
-                    data: () => mockGroup,
-                    id: groupId,
-                } as any);
-
                 // Default: empty subcollections and no transactions
                 mockGetDocs.mockResolvedValue({
                     docs: [],
@@ -1521,7 +1519,7 @@ describe('groupService', () => {
                 const mockBatch = createMockBatch();
                 mockWriteBatch.mockReturnValue(mockBatch as any);
 
-                // ECC Review: TOCTOU fix - deletion now uses runTransaction
+                // TD-CONSOLIDATED-10: Both validation gate + final delete use runTransaction
                 mockTransactionDelete = vi.fn();
                 mockRunTransaction.mockImplementation(async (_db, callback) => {
                     const mockTransaction = {
@@ -1532,7 +1530,7 @@ describe('groupService', () => {
                         }),
                         delete: mockTransactionDelete,
                     };
-                    await callback(mockTransaction);
+                    return callback(mockTransaction);
                 });
             });
 
@@ -1690,13 +1688,6 @@ describe('groupService', () => {
         // Uses correct Firestore collections
         describe('collection usage', () => {
             beforeEach(() => {
-                const mockGroup = createMockGroup();
-                mockGetDoc.mockResolvedValue({
-                    exists: () => true,
-                    data: () => mockGroup,
-                    id: groupId,
-                } as any);
-
                 mockGetDocs.mockResolvedValue({
                     docs: [],
                     empty: true,
@@ -1706,7 +1697,7 @@ describe('groupService', () => {
                 const mockBatch = createMockBatch();
                 mockWriteBatch.mockReturnValue(mockBatch as any);
 
-                // TOCTOU fix: deletion now uses runTransaction
+                // TD-CONSOLIDATED-10: Both validation gate + final delete use runTransaction
                 mockRunTransaction.mockImplementation(async (_db, callback) => {
                     const mockTransaction = {
                         get: vi.fn().mockResolvedValue({
@@ -1716,7 +1707,7 @@ describe('groupService', () => {
                         }),
                         delete: vi.fn(),
                     };
-                    await callback(mockTransaction);
+                    return callback(mockTransaction);
                 });
             });
 
@@ -1730,12 +1721,18 @@ describe('groupService', () => {
         // ECC Review Fix Tests (Story 14d-v2-1-7b)
         describe('ECC Review fixes', () => {
             beforeEach(() => {
-                const mockGroup = createMockGroup();
-                mockGetDoc.mockResolvedValue({
-                    exists: () => true,
-                    data: () => mockGroup,
-                    id: groupId,
-                } as any);
+                // TD-CONSOLIDATED-10: Validation gate now uses runTransaction
+                mockRunTransaction.mockImplementation(async (_db, callback) => {
+                    const mockTransaction = {
+                        get: vi.fn().mockResolvedValue({
+                            exists: () => true,
+                            data: () => createMockGroup(),
+                            id: groupId,
+                        }),
+                        delete: vi.fn(),
+                    };
+                    return callback(mockTransaction);
+                });
 
                 mockGetDocs.mockResolvedValue({
                     docs: [],
@@ -1766,14 +1763,15 @@ describe('groupService', () => {
                     ).rejects.toThrow('Invalid application ID');
                 });
 
-                it('does not call getDoc when appId validation fails', async () => {
+                // TD-CONSOLIDATED-10: Validation gate now uses runTransaction, not getDoc
+                it('does not call runTransaction when appId validation fails', async () => {
                     try {
                         await deleteGroupAsLastMember(mockDb, userId, groupId, '../hack');
                     } catch {
                         // Expected to throw
                     }
 
-                    expect(mockGetDoc).not.toHaveBeenCalled();
+                    expect(mockRunTransaction).not.toHaveBeenCalled();
                 });
             });
 
@@ -1790,7 +1788,7 @@ describe('groupService', () => {
                             }),
                             delete: vi.fn(),
                         };
-                        await callback(mockTransaction);
+                        return callback(mockTransaction);
                     });
 
                     await deleteGroupAsLastMember(mockDb, userId, groupId, appId);
@@ -1799,17 +1797,9 @@ describe('groupService', () => {
                 });
 
                 it('re-validates membership inside transaction', async () => {
-                    // Outside transaction: user is member
-                    const mockGroupBefore = createMockGroup({ members: [userId] });
-
-                    // Inside transaction: user is no longer a member (race condition)
+                    // TD-CONSOLIDATED-10: Both validation gate and final delete use runTransaction
+                    // Simulate race: transaction reads show user no longer a member
                     const mockGroupInTx = createMockGroup({ members: ['other-user'] });
-
-                    mockGetDoc.mockResolvedValue({
-                        exists: () => true,
-                        data: () => mockGroupBefore,
-                        id: groupId,
-                    } as any);
 
                     mockRunTransaction.mockImplementation(async (_db, callback) => {
                         const mockTransaction = {
@@ -1820,7 +1810,7 @@ describe('groupService', () => {
                             }),
                             delete: vi.fn(),
                         };
-                        await callback(mockTransaction);
+                        return callback(mockTransaction);
                     });
 
                     await expect(
@@ -1829,17 +1819,9 @@ describe('groupService', () => {
                 });
 
                 it('re-validates single member inside transaction', async () => {
-                    // Outside transaction: user is only member
-                    const mockGroupBefore = createMockGroup({ members: [userId] });
-
-                    // Inside transaction: another member joined (race condition)
+                    // TD-CONSOLIDATED-10: Both validation gate and final delete use runTransaction
+                    // Simulate race: transaction reads show another member joined
                     const mockGroupInTx = createMockGroup({ members: [userId, 'new-member'] });
-
-                    mockGetDoc.mockResolvedValue({
-                        exists: () => true,
-                        data: () => mockGroupBefore,
-                        id: groupId,
-                    } as any);
 
                     mockRunTransaction.mockImplementation(async (_db, callback) => {
                         const mockTransaction = {
@@ -1850,7 +1832,7 @@ describe('groupService', () => {
                             }),
                             delete: vi.fn(),
                         };
-                        await callback(mockTransaction);
+                        return callback(mockTransaction);
                     });
 
                     await expect(
@@ -1888,7 +1870,7 @@ describe('groupService', () => {
                             }),
                             delete: vi.fn(),
                         };
-                        await callback(mockTransaction);
+                        return callback(mockTransaction);
                     });
 
                     // Should not throw - changelog failure is expected
@@ -1921,7 +1903,7 @@ describe('groupService', () => {
                             }),
                             delete: vi.fn(),
                         };
-                        await callback(mockTransaction);
+                        return callback(mockTransaction);
                     });
 
                     await deleteGroupAsLastMember(mockDb, userId, groupId, appId);
@@ -1951,6 +1933,85 @@ describe('groupService', () => {
                 });
             });
         });
+
+        // TD-CONSOLIDATED-10: Concurrent Operation Protection (AC-5)
+        describe('concurrent operation protection (TOCTOU)', () => {
+            it('validation gate rejects when membership removed concurrently', async () => {
+                // Simulates: user was a member, but removed concurrently before
+                // the validation gate transaction reads the document
+                mockRunTransaction.mockImplementation(async (_db, callback) => {
+                    const mockTransaction = {
+                        get: vi.fn().mockResolvedValue({
+                            exists: () => true,
+                            data: () => createMockGroup({ members: ['other-user'] }), // userId removed
+                            id: groupId,
+                        }),
+                        delete: vi.fn(),
+                    };
+                    return callback(mockTransaction);
+                });
+
+                await expect(
+                    deleteGroupAsLastMember(mockDb, userId, groupId, appId)
+                ).rejects.toThrow('You are not a member of this group');
+
+                // Only validation gate transaction was called — cascade never reached
+                expect(mockRunTransaction).toHaveBeenCalledTimes(1);
+            });
+
+            it('final delete rejects when new member joins between validation and delete', async () => {
+                let callCount = 0;
+                mockRunTransaction.mockImplementation(async (_db, callback) => {
+                    callCount++;
+                    const mockTransaction = {
+                        get: vi.fn().mockResolvedValue({
+                            exists: () => true,
+                            data: () => callCount === 1
+                                // First call (validation gate): user is sole member
+                                ? createMockGroup({ members: [userId] })
+                                // Second call (final delete): new member joined concurrently
+                                : createMockGroup({ members: [userId, 'new-member'] }),
+                            id: groupId,
+                        }),
+                        delete: vi.fn(),
+                    };
+                    return callback(mockTransaction);
+                });
+
+                mockGetDocs.mockResolvedValue({ docs: [], empty: true, size: 0 } as any);
+                mockWriteBatch.mockReturnValue(createMockBatch() as any);
+
+                await expect(
+                    deleteGroupAsLastMember(mockDb, userId, groupId, appId)
+                ).rejects.toThrow('Cannot delete group with other members');
+
+                // Both validation gate AND final delete transaction were called
+                expect(mockRunTransaction).toHaveBeenCalledTimes(2);
+            });
+
+            it('uses two transactions: validation gate + final delete', async () => {
+                const mockTransactionDelete = vi.fn();
+                mockRunTransaction.mockImplementation(async (_db, callback) => {
+                    const mockTransaction = {
+                        get: vi.fn().mockResolvedValue({
+                            exists: () => true,
+                            data: () => createMockGroup(),
+                            id: groupId,
+                        }),
+                        delete: mockTransactionDelete,
+                    };
+                    return callback(mockTransaction);
+                });
+
+                mockGetDocs.mockResolvedValue({ docs: [], empty: true, size: 0 } as any);
+                mockWriteBatch.mockReturnValue(createMockBatch() as any);
+
+                await deleteGroupAsLastMember(mockDb, userId, groupId, appId);
+
+                // Two separate transactions: validation gate + final atomic delete
+                expect(mockRunTransaction).toHaveBeenCalledTimes(2);
+            });
+        });
     });
 
     // =========================================================================
@@ -1973,11 +2034,11 @@ describe('groupService', () => {
                 name: 'Test Group',
                 color: '#10b981',
                 shareCode: 'testcode123',
-                shareCodeExpiresAt: createMockTimestamp(-7),
+                shareCodeExpiresAt: createMockTimestampDaysFromNow(7),
                 members: [ownerId, memberId],
                 memberUpdates: {},
-                createdAt: createMockTimestamp(30),
-                updatedAt: createMockTimestamp(1),
+                createdAt: createMockTimestampDaysAgo(30),
+                updatedAt: createMockTimestampDaysAgo(1),
                 timezone: 'America/Santiago',
                 transactionSharingEnabled: true,
                 transactionSharingLastToggleAt: null,
@@ -2018,23 +2079,28 @@ describe('groupService', () => {
                 ).rejects.toThrow('Owner ID and group ID are required');
             });
 
-            it('does not call getDoc when validation fails', async () => {
+            // TD-CONSOLIDATED-10: Validation gate now uses runTransaction, not getDoc
+            it('does not call runTransaction when validation fails', async () => {
                 try {
                     await deleteGroupAsOwner(mockDb, '', groupId);
                 } catch {
                     // Expected to throw
                 }
 
-                expect(mockGetDoc).not.toHaveBeenCalled();
+                expect(mockRunTransaction).not.toHaveBeenCalled();
             });
         });
 
-        // Group Validation Tests
+        // Group Validation Tests (TD-CONSOLIDATED-10: validation now inside runTransaction)
         describe('group validation', () => {
             it('throws error when group not found', async () => {
-                mockGetDoc.mockResolvedValue({
-                    exists: () => false,
-                } as any);
+                mockRunTransaction.mockImplementation(async (_db, callback) => {
+                    const mockTransaction = {
+                        get: vi.fn().mockResolvedValue({ exists: () => false }),
+                        delete: vi.fn(),
+                    };
+                    return callback(mockTransaction);
+                });
 
                 await expect(
                     deleteGroupAsOwner(mockDb, ownerId, groupId)
@@ -2044,11 +2110,17 @@ describe('groupService', () => {
             it('throws error when user is not the owner (AC #4)', async () => {
                 const mockGroup = createMockGroup();
 
-                mockGetDoc.mockResolvedValue({
-                    exists: () => true,
-                    data: () => mockGroup,
-                    id: groupId,
-                } as any);
+                mockRunTransaction.mockImplementation(async (_db, callback) => {
+                    const mockTransaction = {
+                        get: vi.fn().mockResolvedValue({
+                            exists: () => true,
+                            data: () => mockGroup,
+                            id: groupId,
+                        }),
+                        delete: vi.fn(),
+                    };
+                    return callback(mockTransaction);
+                });
 
                 // memberId is not the owner
                 await expect(
@@ -2062,24 +2134,33 @@ describe('groupService', () => {
                 // unauthorized users from triggering transaction updates on other members' data
                 const mockGroup = createMockGroup();
 
-                mockGetDoc.mockResolvedValue({
-                    exists: () => true,
-                    data: () => mockGroup,
-                    id: groupId,
-                } as any);
+                // TD-CONSOLIDATED-10: Validation gate uses runTransaction — ownership check
+                // throws inside the transaction, so runTransaction IS called once (validation gate)
+                // but cascade operations should NOT be reached
+                mockRunTransaction.mockImplementation(async (_db, callback) => {
+                    const mockTransaction = {
+                        get: vi.fn().mockResolvedValue({
+                            exists: () => true,
+                            data: () => mockGroup,
+                            id: groupId,
+                        }),
+                        delete: vi.fn(),
+                    };
+                    return callback(mockTransaction);
+                });
 
                 // Reset getDocs mock to track cascade calls
                 mockGetDocs.mockClear();
 
-                // memberId is not the owner - should fail immediately
+                // memberId is not the owner - should fail in validation gate
                 await expect(
                     deleteGroupAsOwner(mockDb, memberId, groupId)
                 ).rejects.toThrow('Only the group owner can delete the group');
 
                 // Verify cascade operations were NOT called (getDocs would be called for transaction queries)
                 expect(mockGetDocs).not.toHaveBeenCalled();
-                // Verify transaction delete was NOT called
-                expect(mockRunTransaction).not.toHaveBeenCalled();
+                // Verify only the validation gate transaction was called (not the delete transaction)
+                expect(mockRunTransaction).toHaveBeenCalledTimes(1);
             });
         });
 
@@ -2088,13 +2169,6 @@ describe('groupService', () => {
             let mockTransactionDelete: ReturnType<typeof vi.fn>;
 
             beforeEach(() => {
-                const mockGroup = createMockGroup();
-                mockGetDoc.mockResolvedValue({
-                    exists: () => true,
-                    data: () => mockGroup,
-                    id: groupId,
-                } as any);
-
                 mockGetDocs.mockResolvedValue({
                     docs: [],
                     empty: true,
@@ -2104,7 +2178,7 @@ describe('groupService', () => {
                 const mockBatch = createMockBatch();
                 mockWriteBatch.mockReturnValue(mockBatch as any);
 
-                // ECC Review: TOCTOU fix - deletion now uses runTransaction
+                // TD-CONSOLIDATED-10: Both validation gate + final delete use runTransaction
                 mockTransactionDelete = vi.fn();
                 mockRunTransaction.mockImplementation(async (_db, callback) => {
                     const mockTransaction = {
@@ -2115,7 +2189,7 @@ describe('groupService', () => {
                         }),
                         delete: mockTransactionDelete,
                     };
-                    await callback(mockTransaction);
+                    return callback(mockTransaction);
                 });
             });
 
@@ -2220,11 +2294,18 @@ describe('groupService', () => {
                     members: [ownerId], // Only owner
                 });
 
-                mockGetDoc.mockResolvedValue({
-                    exists: () => true,
-                    data: () => mockGroup,
-                    id: groupId,
-                } as any);
+                // TD-CONSOLIDATED-10: Override validation gate to return single-member group
+                mockRunTransaction.mockImplementation(async (_db, callback) => {
+                    const mockTransaction = {
+                        get: vi.fn().mockResolvedValue({
+                            exists: () => true,
+                            data: () => mockGroup,
+                            id: groupId,
+                        }),
+                        delete: mockTransactionDelete,
+                    };
+                    return callback(mockTransaction);
+                });
 
                 const mockBatch = createMockBatch();
                 mockWriteBatch.mockReturnValue(mockBatch as any);
@@ -2237,16 +2318,8 @@ describe('groupService', () => {
             });
 
             it('works with multiple members', async () => {
-                const mockGroup = createMockGroup({
-                    members: [ownerId, memberId, 'third-member'],
-                });
-
-                mockGetDoc.mockResolvedValue({
-                    exists: () => true,
-                    data: () => mockGroup,
-                    id: groupId,
-                } as any);
-
+                // Default createMockGroup() has [ownerId, memberId] — multiple members
+                // Parent beforeEach already sets up the correct mock
                 const mockBatch = createMockBatch();
                 mockWriteBatch.mockReturnValue(mockBatch as any);
 
@@ -2261,13 +2334,6 @@ describe('groupService', () => {
         // Uses correct Firestore collections
         describe('collection usage', () => {
             beforeEach(() => {
-                const mockGroup = createMockGroup();
-                mockGetDoc.mockResolvedValue({
-                    exists: () => true,
-                    data: () => mockGroup,
-                    id: groupId,
-                } as any);
-
                 mockGetDocs.mockResolvedValue({
                     docs: [],
                     empty: true,
@@ -2277,7 +2343,7 @@ describe('groupService', () => {
                 const mockBatch = createMockBatch();
                 mockWriteBatch.mockReturnValue(mockBatch as any);
 
-                // TOCTOU fix: deletion now uses runTransaction
+                // TD-CONSOLIDATED-10: Both validation gate + final delete use runTransaction
                 mockRunTransaction.mockImplementation(async (_db, callback) => {
                     const mockTransaction = {
                         get: vi.fn().mockResolvedValue({
@@ -2287,7 +2353,7 @@ describe('groupService', () => {
                         }),
                         delete: vi.fn(),
                     };
-                    await callback(mockTransaction);
+                    return callback(mockTransaction);
                 });
             });
 
@@ -2307,12 +2373,18 @@ describe('groupService', () => {
         // ECC Review Fix Tests (Story 14d-v2-1-7b)
         describe('ECC Review fixes', () => {
             beforeEach(() => {
-                const mockGroup = createMockGroup();
-                mockGetDoc.mockResolvedValue({
-                    exists: () => true,
-                    data: () => mockGroup,
-                    id: groupId,
-                } as any);
+                // TD-CONSOLIDATED-10: Validation gate now uses runTransaction
+                mockRunTransaction.mockImplementation(async (_db, callback) => {
+                    const mockTransaction = {
+                        get: vi.fn().mockResolvedValue({
+                            exists: () => true,
+                            data: () => createMockGroup(),
+                            id: groupId,
+                        }),
+                        delete: vi.fn(),
+                    };
+                    return callback(mockTransaction);
+                });
 
                 mockGetDocs.mockResolvedValue({
                     docs: [],
@@ -2343,14 +2415,15 @@ describe('groupService', () => {
                     ).rejects.toThrow('Invalid application ID');
                 });
 
-                it('does not call getDoc when appId validation fails', async () => {
+                // TD-CONSOLIDATED-10: Validation gate now uses runTransaction, not getDoc
+                it('does not call runTransaction when appId validation fails', async () => {
                     try {
                         await deleteGroupAsOwner(mockDb, ownerId, groupId, '../hack');
                     } catch {
                         // Expected to throw
                     }
 
-                    expect(mockGetDoc).not.toHaveBeenCalled();
+                    expect(mockRunTransaction).not.toHaveBeenCalled();
                 });
             });
 
@@ -2367,7 +2440,7 @@ describe('groupService', () => {
                             }),
                             delete: vi.fn(),
                         };
-                        await callback(mockTransaction);
+                        return callback(mockTransaction);
                     });
 
                     await deleteGroupAsOwner(mockDb, ownerId, groupId, appId);
@@ -2376,17 +2449,9 @@ describe('groupService', () => {
                 });
 
                 it('re-validates ownership inside transaction', async () => {
-                    // Outside transaction: user is owner
-                    const mockGroupBefore = createMockGroup({ ownerId });
-
-                    // Inside transaction: ownership transferred (race condition)
+                    // TD-CONSOLIDATED-10: Both validation gate and final delete use runTransaction
+                    // Simulate race: transaction reads show ownership transferred
                     const mockGroupInTx = createMockGroup({ ownerId: 'different-owner' });
-
-                    mockGetDoc.mockResolvedValue({
-                        exists: () => true,
-                        data: () => mockGroupBefore,
-                        id: groupId,
-                    } as any);
 
                     mockRunTransaction.mockImplementation(async (_db, callback) => {
                         const mockTransaction = {
@@ -2397,7 +2462,7 @@ describe('groupService', () => {
                             }),
                             delete: vi.fn(),
                         };
-                        await callback(mockTransaction);
+                        return callback(mockTransaction);
                     });
 
                     await expect(
@@ -2406,14 +2471,7 @@ describe('groupService', () => {
                 });
 
                 it('handles group deleted between check and transaction', async () => {
-                    const mockGroupBefore = createMockGroup();
-
-                    mockGetDoc.mockResolvedValue({
-                        exists: () => true,
-                        data: () => mockGroupBefore,
-                        id: groupId,
-                    } as any);
-
+                    // TD-CONSOLIDATED-10: Simulate group deleted during transaction
                     mockRunTransaction.mockImplementation(async (_db, callback) => {
                         const mockTransaction = {
                             get: vi.fn().mockResolvedValue({
@@ -2421,7 +2479,7 @@ describe('groupService', () => {
                             }),
                             delete: vi.fn(),
                         };
-                        await callback(mockTransaction);
+                        return callback(mockTransaction);
                     });
 
                     await expect(
@@ -2459,7 +2517,7 @@ describe('groupService', () => {
                             }),
                             delete: vi.fn(),
                         };
-                        await callback(mockTransaction);
+                        return callback(mockTransaction);
                     });
 
                     await expect(
@@ -2495,7 +2553,7 @@ describe('groupService', () => {
                             }),
                             delete: vi.fn(),
                         };
-                        await callback(mockTransaction);
+                        return callback(mockTransaction);
                     });
 
                     await deleteGroupAsOwner(mockDb, ownerId, groupId, appId);
@@ -2510,15 +2568,10 @@ describe('groupService', () => {
                 it('handles empty members array gracefully', async () => {
                     const mockGroup = createMockGroup({ members: [] });
 
-                    mockGetDoc.mockResolvedValue({
-                        exists: () => true,
-                        data: () => mockGroup,
-                        id: groupId,
-                    } as any);
-
                     const mockBatch = createMockBatch();
                     mockWriteBatch.mockReturnValue(mockBatch as any);
 
+                    // TD-CONSOLIDATED-10: Override to return empty members group
                     mockRunTransaction.mockImplementation(async (_db, callback) => {
                         const mockTransaction = {
                             get: vi.fn().mockResolvedValue({
@@ -2528,7 +2581,7 @@ describe('groupService', () => {
                             }),
                             delete: vi.fn(),
                         };
-                        await callback(mockTransaction);
+                        return callback(mockTransaction);
                     });
 
                     // Empty members means owner check fails (owner not in members)
@@ -2556,6 +2609,87 @@ describe('groupService', () => {
                         deleteGroupAsOwner(mockDb, ownerId, groupId, appId)
                     ).rejects.toThrow('Batch commit failed');
                 });
+            });
+        });
+
+        // TD-CONSOLIDATED-10: Concurrent Operation Protection (AC-5)
+        describe('concurrent operation protection (TOCTOU)', () => {
+            it('validation gate rejects when ownership transferred concurrently', async () => {
+                // Simulates: user was owner, but ownership transferred concurrently
+                // before the validation gate transaction reads the document
+                mockRunTransaction.mockImplementation(async (_db, callback) => {
+                    const mockTransaction = {
+                        get: vi.fn().mockResolvedValue({
+                            exists: () => true,
+                            data: () => createMockGroup({ ownerId: 'different-owner' }),
+                            id: groupId,
+                        }),
+                        delete: vi.fn(),
+                    };
+                    return callback(mockTransaction);
+                });
+
+                await expect(
+                    deleteGroupAsOwner(mockDb, ownerId, groupId, appId)
+                ).rejects.toThrow('Only the group owner can delete the group');
+
+                // Only validation gate transaction was called — cascade never reached
+                expect(mockRunTransaction).toHaveBeenCalledTimes(1);
+            });
+
+            it('final delete rejects when ownership transferred between validation and delete', async () => {
+                let callCount = 0;
+                mockRunTransaction.mockImplementation(async (_db, callback) => {
+                    callCount++;
+                    const mockTransaction = {
+                        get: vi.fn().mockResolvedValue({
+                            exists: () => true,
+                            data: () => callCount === 1
+                                // First call (validation gate): user is owner
+                                ? createMockGroup()
+                                // Second call (final delete): ownership transferred concurrently
+                                : createMockGroup({ ownerId: 'different-owner' }),
+                            id: groupId,
+                        }),
+                        delete: vi.fn(),
+                    };
+                    return callback(mockTransaction);
+                });
+
+                mockGetDocs.mockResolvedValue({ docs: [], empty: true, size: 0 } as any);
+                mockWriteBatch.mockReturnValue(createMockBatch() as any);
+
+                await expect(
+                    deleteGroupAsOwner(mockDb, ownerId, groupId, appId)
+                ).rejects.toThrow('Only the group owner can delete the group');
+
+                // Both validation gate AND final delete transaction were called
+                expect(mockRunTransaction).toHaveBeenCalledTimes(2);
+            });
+
+            it('validation gate returns memberIds for cascade operations', async () => {
+                const expectedMembers = [ownerId, memberId, 'third-member'];
+                mockRunTransaction.mockImplementation(async (_db, callback) => {
+                    const mockTransaction = {
+                        get: vi.fn().mockResolvedValue({
+                            exists: () => true,
+                            data: () => createMockGroup({ members: expectedMembers }),
+                            id: groupId,
+                        }),
+                        delete: vi.fn(),
+                    };
+                    return callback(mockTransaction);
+                });
+
+                mockGetDocs.mockResolvedValue({ docs: [], empty: true, size: 0 } as any);
+                mockWriteBatch.mockReturnValue(createMockBatch() as any);
+
+                await deleteGroupAsOwner(mockDb, ownerId, groupId, appId);
+
+                // Two transactions: validation gate + final delete
+                expect(mockRunTransaction).toHaveBeenCalledTimes(2);
+                // Cascade queries each member's transactions
+                expect(mockQuery).toHaveBeenCalled();
             });
         });
     });

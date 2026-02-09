@@ -261,3 +261,16 @@ All 4 tests pass consistently across 2 consecutive runs (verified cleanup preven
 | `src/utils/translations.ts` | Prior - toast keys (joinedGroupWithSharing, etc.) |
 | `src/components/settings/subviews/GruposView.tsx` | Prior - orchestration, analytics, offline |
 | `src/services/analyticsService.ts` | Prior - trackEvent stub |
+
+### ECC Review Record #3 (2026-02-07)
+
+**Agents:** code-reviewer (TRIVIAL classification - incremental polish review)
+**Scores:** Code 9/10 | **Overall: 9/10**
+**Verdict:** APPROVE — 0 issues introduced by diff, 1 QUICK fix applied, 2 COMPLEX pre-existing
+
+**QUICK fix applied (1):**
+1. Comment in userPreferencesService.ts reworded: "Task 8 bug" → self-explanatory Firestore setDoc behavior description
+
+**COMPLEX items (pre-existing, already tracked):**
+- ~15 bare `toHaveBeenCalled()` in OptInDialog tests → TD-CONSOLIDATED-8
+- Object mutation in updateShareMyTransactions → TD-CONSOLIDATED-2

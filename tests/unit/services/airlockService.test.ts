@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
-import { Timestamp } from 'firebase/firestore';
+import { createMockTimestamp } from '../../helpers';
 import {
   generateAirlock,
   getUserAirlocks,
@@ -59,19 +59,6 @@ function createMockFirestore() {
   return {} as import('firebase/firestore').Firestore;
 }
 
-function createMockTimestamp(daysAgo: number = 0): Timestamp {
-  const date = new Date();
-  date.setDate(date.getDate() - daysAgo);
-  return {
-    toDate: () => date,
-    seconds: Math.floor(date.getTime() / 1000),
-    nanoseconds: 0,
-    toMillis: () => date.getTime(),
-    isEqual: () => false,
-    valueOf: () => '',
-    toJSON: () => ({ seconds: Math.floor(date.getTime() / 1000), nanoseconds: 0 }),
-  } as unknown as Timestamp;
-}
 
 function createMockAirlock(overrides: Partial<AirlockRecord> = {}): AirlockRecord {
   return {

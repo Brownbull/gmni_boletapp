@@ -16,7 +16,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '../../setup/test-utils';
 import { InsightsView } from '../../../src/views/InsightsView';
-import { Timestamp } from 'firebase/firestore';
+import { createMockTimestampDaysAgo } from '../../helpers';
 
 // ============================================================================
 // Mocks
@@ -73,26 +73,6 @@ vi.mock('../../../src/shared/stores/useNavigationStore', () => ({
 import { useAuth } from '../../../src/hooks/useAuth';
 import { getUserInsightProfile } from '../../../src/services/insightEngineService';
 
-// ============================================================================
-// Mock Helpers
-// ============================================================================
-
-/**
- * Creates a mock Firestore Timestamp
- */
-function createMockTimestamp(daysAgo: number): Timestamp {
-  const date = new Date();
-  date.setDate(date.getDate() - daysAgo);
-  return {
-    toDate: () => date,
-    seconds: Math.floor(date.getTime() / 1000),
-    nanoseconds: 0,
-    toMillis: () => date.getTime(),
-    isEqual: () => false,
-    valueOf: () => '',
-    toJSON: () => ({ seconds: Math.floor(date.getTime() / 1000), nanoseconds: 0 }),
-  } as unknown as Timestamp;
-}
 
 const mockUser = { uid: 'test-user-id' };
 const mockServices = { db: {}, appId: 'test-app' };
@@ -134,7 +114,7 @@ const defaultProps = {
 const mockInsightsThisWeek = [
   {
     insightId: 'merchant_frequency',
-    shownAt: createMockTimestamp(2),
+    shownAt: createMockTimestampDaysAgo(2),
     transactionId: 'tx-1',
     title: 'Visita frecuente',
     message: '3ra vez en Jumbo',
@@ -142,7 +122,7 @@ const mockInsightsThisWeek = [
   },
   {
     insightId: 'biggest_item',
-    shownAt: createMockTimestamp(3),
+    shownAt: createMockTimestampDaysAgo(3),
     transactionId: 'tx-2',
     title: 'Item grande',
     message: 'TV 55 pulgadas',
@@ -153,7 +133,7 @@ const mockInsightsThisWeek = [
 const mockInsightsLastWeek = [
   {
     insightId: 'category_trend',
-    shownAt: createMockTimestamp(10),
+    shownAt: createMockTimestampDaysAgo(10),
     transactionId: 'tx-3',
     title: 'Tendencia',
     message: 'Gastos en restaurantes',
@@ -164,7 +144,7 @@ const mockInsightsLastWeek = [
 const mockInsightsEarlier = [
   {
     insightId: 'new_merchant',
-    shownAt: createMockTimestamp(20),
+    shownAt: createMockTimestampDaysAgo(20),
     transactionId: 'tx-4',
     title: 'Nuevo comercio',
     message: 'Primera vez en Starbucks',
@@ -175,7 +155,7 @@ const mockInsightsEarlier = [
 const mockInsightsOldFormat = [
   {
     insightId: 'weekend_warrior',
-    shownAt: createMockTimestamp(1),
+    shownAt: createMockTimestampDaysAgo(1),
     transactionId: 'tx-5',
     // No title, message, icon - old format
   },
@@ -294,12 +274,12 @@ describe('InsightsView', () => {
         recentInsights: [
           {
             insightId: 'older',
-            shownAt: createMockTimestamp(3),
+            shownAt: createMockTimestampDaysAgo(3),
             title: 'Older Insight',
           },
           {
             insightId: 'newer',
-            shownAt: createMockTimestamp(1),
+            shownAt: createMockTimestampDaysAgo(1),
             title: 'Newer Insight',
           },
         ],
@@ -391,7 +371,7 @@ describe('InsightsView', () => {
         recentInsights: [
           {
             insightId: 'no_tx',
-            shownAt: createMockTimestamp(1),
+            shownAt: createMockTimestampDaysAgo(1),
             title: 'No Transaction',
             message: 'A test message',
             // No transactionId
@@ -597,7 +577,7 @@ describe('InsightsView', () => {
         recentInsights: [
           {
             insightId: 'old_insight',
-            shownAt: createMockTimestamp(400), // ~13 months ago
+            shownAt: createMockTimestampDaysAgo(400), // ~13 months ago
             title: 'Old Insight',
           },
         ],

@@ -67,10 +67,7 @@ import { batchReviewActions, atomicBatchActions } from '@features/batch-review';
 // Types
 // =============================================================================
 
-/**
- * View mode for determining shared group behavior
- */
-type ViewMode = 'personal' | 'group';
+import type { ViewMode } from '@/shared/stores/useViewModeStore';
 
 /**
  * Toast message configuration

@@ -16,6 +16,7 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { User } from 'firebase/auth';
 import type { SharedGroup } from '../../../src/types/sharedGroup';
+import { createMockGroup } from '@helpers/sharedGroupFactory';
 
 // =============================================================================
 // Mocks
@@ -75,27 +76,6 @@ function createMockServices() {
         auth: {} as any,
         storage: {} as any,
         functions: {} as any,
-    };
-}
-
-function createMockGroup(overrides: Partial<SharedGroup> = {}): SharedGroup {
-    return {
-        id: `group-${Math.random().toString(36).slice(2, 9)}`,
-        name: 'Test Group',
-        ownerId: 'user-123',
-        appId: 'boletapp',
-        color: '#10b981',
-        shareCode: 'MockShareCode12345',
-        shareCodeExpiresAt: { toDate: () => new Date() } as any,
-        members: ['user-123'],
-        memberUpdates: {},
-        createdAt: { toDate: () => new Date() } as any,
-        updatedAt: { toDate: () => new Date() } as any,
-        timezone: 'America/Santiago',
-        transactionSharingEnabled: true,
-        transactionSharingLastToggleAt: null,
-        transactionSharingToggleCountToday: 0,
-        ...overrides,
     };
 }
 

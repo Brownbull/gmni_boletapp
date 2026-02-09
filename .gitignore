@@ -114,3 +114,6 @@ bun.lock
 
 # Archive files
 docs/archive/
+
+# MCP config (machine-specific paths)
+.mcp.json

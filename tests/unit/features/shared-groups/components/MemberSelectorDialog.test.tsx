@@ -21,6 +21,7 @@ import userEvent from '@testing-library/user-event';
 import { Timestamp } from 'firebase/firestore';
 import { MemberSelectorDialog } from '@/features/shared-groups/components/MemberSelectorDialog';
 import type { SharedGroup } from '@/types/sharedGroup';
+import { createMockGroup as createMockGroupBase } from '@helpers/sharedGroupFactory';
 
 // =============================================================================
 // Mock Setup
@@ -40,43 +41,31 @@ const mockT = (key: string) => {
     return translations[key] || key;
 };
 
-// Helper to create a mock SharedGroup
-const createMockGroup = (overrides?: Partial<SharedGroup>): SharedGroup => ({
-    id: 'group-123',
-    name: 'Test Group',
-    ownerId: 'owner-1',
-    appId: 'boletapp',
-    color: '#10b981',
-    shareCode: 'ABC123',
-    shareCodeExpiresAt: Timestamp.fromDate(new Date('2026-12-31')),
-    members: ['owner-1', 'member-2', 'member-3'],
-    memberUpdates: {},
-    memberProfiles: {
-        'owner-1': {
-            displayName: 'Owner User',
-            email: 'owner@example.com',
-            // ECC Review Session 4: Using valid Google domain for photoURL validation
-            photoURL: 'https://lh3.googleusercontent.com/a/owner-photo',
+// Wrap shared factory with member-selector-specific defaults
+const createMockGroup = (overrides?: Partial<SharedGroup>): SharedGroup =>
+    createMockGroupBase({
+        ownerId: 'owner-1',
+        members: ['owner-1', 'member-2', 'member-3'],
+        memberProfiles: {
+            'owner-1': {
+                displayName: 'Owner User',
+                email: 'owner@example.com',
+                // ECC Review Session 4: Using valid Google domain for photoURL validation
+                photoURL: 'https://lh3.googleusercontent.com/a/owner-photo',
+            },
+            'member-2': {
+                displayName: 'John Doe',
+                email: 'john@example.com',
+                // ECC Review Session 4: Using valid Google domain for photoURL validation
+                photoURL: 'https://lh3.googleusercontent.com/a/john-photo',
+            },
+            'member-3': {
+                displayName: 'Jane Smith',
+                email: 'jane@example.com',
+            },
         },
-        'member-2': {
-            displayName: 'John Doe',
-            email: 'john@example.com',
-            // ECC Review Session 4: Using valid Google domain for photoURL validation
-            photoURL: 'https://lh3.googleusercontent.com/a/john-photo',
-        },
-        'member-3': {
-            displayName: 'Jane Smith',
-            email: 'jane@example.com',
-        },
-    },
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
-    timezone: 'America/Santiago',
-    transactionSharingEnabled: true,
-    transactionSharingLastToggleAt: null,
-    transactionSharingToggleCountToday: 0,
-    ...overrides,
-});
+        ...overrides,
+    });
 
 const defaultProps = {
     isOpen: true,

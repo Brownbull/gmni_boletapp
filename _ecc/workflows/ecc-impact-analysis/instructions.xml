@@ -67,8 +67,10 @@
     <action>Run: `npx madge --json --ts-config tsconfig.json --extensions ts,tsx src/ > /tmp/dep-graph.json`</action>
 
     <check if="madge fails or output is empty">
-      <output>Madge failed to generate dependency graph. Falling back to grep-based analysis.</output>
-      <action>For each file in {{input_files}}, grep the codebase for import statements referencing that file</action>
+      <output>Madge failed to generate dependency graph. Falling back to ast-grep structural analysis.</output>
+      <action>Use ast-grep MCP `find_code` to search for import statements referencing each input file:
+        Pattern: `import {$$$} from "{{relative_path}}"` with language=typescript
+        This is more accurate than text grep because it matches only valid import AST nodes.</action>
       <action>Set {{fallback_mode}} = true</action>
     </check>
 
@@ -79,6 +81,14 @@
     </check>
 
     <output>Dependency graph: {{graph_size}} files indexed</output>
+
+    <!-- OPTIONAL: ast-grep structural pattern analysis -->
+    <action>If analyzing refactoring stories (R-* stories from CODEBASE-REFACTOR-ANALYSIS.md),
+      use ast-grep MCP `find_code_by_rule` to detect structural patterns that madge cannot:
+      - Duplicated code patterns (e.g., identical CRUD service shapes)
+      - Missing safety patterns (e.g., batch.commit() without chunking)
+      - Hardcoded magic strings (e.g., Firestore collection paths)
+      See .claude/skills/ast-grep/SKILL.md for BoletApp-specific patterns.</action>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->

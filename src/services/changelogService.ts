@@ -36,6 +36,7 @@ import {
     Firestore,
     Timestamp,
 } from 'firebase/firestore';
+import { validateGroupId } from '@/utils/validationUtils';
 import type { ChangelogEntry } from '../types/changelog';
 
 /**
@@ -99,9 +100,12 @@ export async function getChangelogSince(
     limitCount: number = DEFAULT_CHANGELOG_LIMIT
 ): Promise<ChangelogEntry[]> {
     // AC #2: Invalid groupId handling
-    if (!groupId || typeof groupId !== 'string' || groupId.trim() === '') {
+    // TD-CONSOLIDATED-6: Use standard validation (rejects path separators, dots, special chars)
+    try {
+        validateGroupId(groupId);
+    } catch (err) {
         throw new ChangelogQueryError(
-            'Invalid groupId: must be a non-empty string',
+            err instanceof Error ? err.message : 'Invalid groupId format',
             'INVALID_GROUP_ID'
         );
     }

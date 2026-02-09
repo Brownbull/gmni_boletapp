@@ -20,15 +20,13 @@
  * This file focuses on service layer integration testing.
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
-    setupFirebaseEmulator,
-    teardownFirebaseEmulator,
-    clearFirestoreData,
     withSecurityRulesDisabled,
     TEST_USERS,
     SHARED_GROUPS_PATH,
 } from '../../setup/firebase-emulator';
+import { useFirebaseEmulatorLifecycle } from '../../helpers';
 import {
     doc,
     setDoc,
@@ -103,17 +101,7 @@ function createTestTransaction(sharedGroupId: string | null) {
 // =============================================================================
 
 describe('leaveGroup Integration Tests (Story 14d-v2-1-7f)', () => {
-    beforeAll(async () => {
-        await setupFirebaseEmulator();
-    });
-
-    afterAll(async () => {
-        await teardownFirebaseEmulator();
-    });
-
-    beforeEach(async () => {
-        await clearFirestoreData();
-    });
+    useFirebaseEmulatorLifecycle();
 
     // =========================================================================
     // Test 1: Remove member from group successfully

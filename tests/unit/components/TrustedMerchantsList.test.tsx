@@ -2,21 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TrustedMerchantsList } from '../../../src/components/TrustedMerchantsList';
 import { TrustedMerchant } from '../../../src/types/trust';
-import { Timestamp } from 'firebase/firestore';
-
-// Mock Timestamp
-function createMockTimestamp(): Timestamp {
-    const date = new Date();
-    return {
-        toDate: () => date,
-        seconds: Math.floor(date.getTime() / 1000),
-        nanoseconds: 0,
-        toMillis: () => date.getTime(),
-        isEqual: () => false,
-        valueOf: () => '',
-        toJSON: () => ({ seconds: Math.floor(date.getTime() / 1000), nanoseconds: 0 }),
-    } as unknown as Timestamp;
-}
+import { createMockTimestamp } from '../../helpers';
 
 describe('TrustedMerchantsList', () => {
     const mockT = (key: string) => {

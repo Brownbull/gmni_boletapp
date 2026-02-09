@@ -60,6 +60,12 @@ export type {
     UserGroupPreferenceServices,
 } from './useUserGroupPreference';
 
-// Placeholder - additional hooks will be added in stories:
-// - 14d-v2-1-5: useInviteMembers
-// - 14d-v2-2-2: useGroupTransactions
+// Story TD-CONSOLIDATED-12: Group Mutation Hooks
+export {
+    useDeleteGroup,
+    useLeaveGroup,
+    useTransferOwnership,
+    useAcceptInvitation,
+    useDeclineInvitation,
+    useToggleTransactionSharing,
+} from './useGroupMutations';

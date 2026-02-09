@@ -18,24 +18,8 @@ import {
   InsightsTemporalFilter,
   InsightTemporalFilter,
 } from '../../../../src/components/insights/InsightsTemporalFilter';
-import { Timestamp } from 'firebase/firestore';
 import { InsightRecord } from '../../../../src/types/insight';
-
-// ============================================================================
-// Mock Helpers
-// ============================================================================
-
-function createMockTimestamp(date: Date): Timestamp {
-  return {
-    toDate: () => date,
-    seconds: Math.floor(date.getTime() / 1000),
-    nanoseconds: 0,
-    toMillis: () => date.getTime(),
-    isEqual: () => false,
-    valueOf: () => '',
-    toJSON: () => ({ seconds: Math.floor(date.getTime() / 1000), nanoseconds: 0 }),
-  } as unknown as Timestamp;
-}
+import { createMockTimestamp } from '../../../helpers';
 
 const defaultTranslations: Record<string, string> = {
   allTime: 'All Time',

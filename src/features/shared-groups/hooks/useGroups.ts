@@ -336,6 +336,7 @@ export function useCreateGroup(
                 transactionSharingLastToggleAt: null,
                 transactionSharingToggleCountToday: 0,
                 transactionSharingToggleCountResetAt: null,
+                lastSettingsUpdateAt: null,
             };
 
             // Optimistically update the groups list

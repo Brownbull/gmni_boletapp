@@ -204,7 +204,7 @@ export interface HistoryNavigationPayload {
  * Story 14e-25b.1: TrendsView props interface.
  *
  * The view now owns its data via useTrendsViewData() hook internally.
- * Props are ONLY used for test data injection via __testData.
+ * Props are ONLY used for test data injection via _testOverrides.
  * In production, App.tsx renders <TrendsView /> with no props.
  */
 export interface TrendsViewProps {
@@ -213,7 +213,7 @@ export interface TrendsViewProps {
      * When provided, these values override the hook data.
      * Production code should NOT pass this prop.
      */
-    __testData?: Partial<TrendsViewData>;
+    _testOverrides?: Partial<TrendsViewData>;
 }
 
 // ============================================================================
@@ -2761,7 +2761,7 @@ const TrendListItem: React.FC<{
 // Main Component
 // ============================================================================
 
-export const TrendsView: React.FC<TrendsViewProps> = ({ __testData }) => {
+export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
     // Story 14e-25b.1: Get all data from internal hook
     const hookData = useTrendsViewData();
 
@@ -2791,7 +2791,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ __testData }) => {
         groupName: _groupName,
         groupMembers = [],
         spendingByMember: _spendingByMember,
-    } = { ...hookData, ...__testData } as TrendsViewData;
+    } = { ...hookData, ..._testOverrides } as TrendsViewData;
     const isDark = theme === 'dark';
     const prefersReducedMotion = useReducedMotion();
     const carouselRef = useRef<HTMLDivElement>(null);

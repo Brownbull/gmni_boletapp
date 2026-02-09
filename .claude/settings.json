@@ -1,7 +1,9 @@
 {
+  "enabledMcpjsonServers": ["ast-grep"],
   "permissions": {
     "allow": [
-      "mcp__plugin_superpowers-chrome_*"
+      "mcp__plugin_superpowers-chrome_*",
+      "mcp__ast-grep_*"
     ]
   },
   "hooks": {

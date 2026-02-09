@@ -9,50 +9,12 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Timestamp } from 'firebase/firestore';
 import {
     isInvitationExpired,
     getInvitationTimeRemaining,
     type PendingInvitation,
 } from '../../../src/types/sharedGroup';
-
-// =============================================================================
-// Test Helpers
-// =============================================================================
-
-/**
- * Create a mock Timestamp for testing
- */
-function createMockTimestamp(date: Date): Timestamp {
-    return {
-        toDate: () => date,
-        seconds: Math.floor(date.getTime() / 1000),
-        nanoseconds: 0,
-    } as unknown as Timestamp;
-}
-
-/**
- * Create a mock PendingInvitation for testing
- */
-function createMockInvitation(overrides: Partial<PendingInvitation> = {}): PendingInvitation {
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
-
-    return {
-        id: 'test-invitation-id',
-        groupId: 'test-group-id',
-        groupName: 'Test Group',
-        groupColor: '#10b981',
-        shareCode: 'MockShareCode12345', // Story 14d-v2-1-5b-1: Added shareCode
-        invitedEmail: 'invitee@example.com',
-        invitedByUserId: 'inviter-user-id',
-        invitedByName: 'John Doe',
-        createdAt: createMockTimestamp(now),
-        expiresAt: createMockTimestamp(expiresAt),
-        status: 'pending',
-        ...overrides,
-    };
-}
+import { createMockInvitation, createMockTimestamp } from '../../helpers';
 
 // =============================================================================
 // Tests

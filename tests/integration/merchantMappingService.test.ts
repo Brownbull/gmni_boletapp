@@ -10,11 +10,8 @@
  * AC #7: Integration tests for Firestore operations
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import {
-    setupFirebaseEmulator,
-    teardownFirebaseEmulator,
-    clearFirestoreData,
     getAuthedFirestore,
     getUnauthFirestore,
     TEST_USERS,
@@ -22,6 +19,7 @@ import {
     assertSucceeds,
     assertFails,
 } from '../setup/firebase-emulator'
+import { useFirebaseEmulatorLifecycle } from '../helpers'
 import { collection, getDocs } from 'firebase/firestore'
 import {
     normalizeMerchantName,
@@ -35,17 +33,7 @@ import { NewMerchantMapping } from '../../src/types/merchantMapping'
 describe('Merchant Mapping Service with Emulator', () => {
     const APP_ID = 'boletapp-d609f'
 
-    beforeAll(async () => {
-        await setupFirebaseEmulator()
-    })
-
-    afterAll(async () => {
-        await teardownFirebaseEmulator()
-    })
-
-    beforeEach(async () => {
-        await clearFirestoreData()
-    })
+    useFirebaseEmulatorLifecycle()
 
     describe('saveMerchantMapping', () => {
         it('should create a new mapping', async () => {

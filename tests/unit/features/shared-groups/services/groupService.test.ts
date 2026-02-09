@@ -25,6 +25,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Firestore, DocumentReference, DocumentSnapshot } from 'firebase/firestore';
 import { Timestamp } from 'firebase/firestore';
 import type { SharedGroup } from '@/types/sharedGroup';
+import { createMockGroup } from '@helpers/sharedGroupFactory';
 
 // =============================================================================
 // Mocks
@@ -83,26 +84,13 @@ function createMockDb(): Firestore {
     return {} as Firestore;
 }
 
-function createMockGroup(overrides: Partial<SharedGroup> = {}): SharedGroup {
-    return {
-        id: 'group-123',
+// Wrap shared factory with groupService-specific defaults
+function createServiceMockGroup(overrides: Partial<SharedGroup> = {}): SharedGroup {
+    return createMockGroup({
         ownerId: 'owner-user-123',
-        appId: 'boletapp',
-        name: 'Test Group',
-        color: '#10b981',
-        icon: '🏠',
-        shareCode: 'TestShareCode1234',
-        shareCodeExpiresAt: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
         members: ['owner-user-123', 'member-456'],
-        memberUpdates: {},
-        createdAt: Timestamp.fromDate(new Date()),
-        updatedAt: Timestamp.fromDate(new Date()),
-        timezone: 'America/Santiago',
-        transactionSharingEnabled: true,
-        transactionSharingLastToggleAt: null,
-        transactionSharingToggleCountToday: 0,
         ...overrides,
-    };
+    });
 }
 
 function createMockDocRef(): DocumentReference {
@@ -124,7 +112,7 @@ function createMockDocSnapshot(exists: boolean, data?: SharedGroup): DocumentSna
 describe('updateGroup (Story 14d-v2-1-7g)', () => {
     const mockDb = createMockDb();
     const mockDocRef = createMockDocRef();
-    const mockGroup = createMockGroup();
+    const mockGroup = createServiceMockGroup();
     const mockTimestamp = { toDate: () => new Date() };
 
     beforeEach(() => {
@@ -155,6 +143,7 @@ describe('updateGroup (Story 14d-v2-1-7g)', () => {
             expect(mockTransactionUpdate).toHaveBeenCalledWith(mockDocRef, {
                 name: 'New Group Name',
                 updatedAt: mockTimestamp,
+                lastSettingsUpdateAt: mockTimestamp,
             });
         });
 
@@ -166,6 +155,7 @@ describe('updateGroup (Story 14d-v2-1-7g)', () => {
             expect(mockTransactionUpdate).toHaveBeenCalledWith(mockDocRef, {
                 icon: '🎉',
                 updatedAt: mockTimestamp,
+                lastSettingsUpdateAt: mockTimestamp,
             });
         });
 
@@ -177,6 +167,7 @@ describe('updateGroup (Story 14d-v2-1-7g)', () => {
             expect(mockTransactionUpdate).toHaveBeenCalledWith(mockDocRef, {
                 color: '#3b82f6',
                 updatedAt: mockTimestamp,
+                lastSettingsUpdateAt: mockTimestamp,
             });
         });
 
@@ -194,6 +185,7 @@ describe('updateGroup (Story 14d-v2-1-7g)', () => {
                 icon: '🚗',
                 color: '#ef4444',
                 updatedAt: mockTimestamp,
+                lastSettingsUpdateAt: mockTimestamp,
             });
         });
     });
@@ -255,6 +247,7 @@ describe('updateGroup (Story 14d-v2-1-7g)', () => {
             expect(mockTransactionUpdate).toHaveBeenCalledWith(mockDocRef, {
                 name: 'Clean Name',
                 updatedAt: mockTimestamp,
+                lastSettingsUpdateAt: mockTimestamp,
             });
         });
     });
@@ -365,6 +358,7 @@ describe('updateGroup (Story 14d-v2-1-7g)', () => {
             expect(mockTransactionUpdate).toHaveBeenCalledWith(mockDocRef, {
                 name: 'New Name',
                 updatedAt: mockTimestamp,
+                lastSettingsUpdateAt: mockTimestamp,
             });
         });
 
@@ -483,7 +477,7 @@ describe('updateTransactionSharingEnabled (Story 14d-v2-1-11b)', () => {
 
     describe('successful updates', () => {
         it('enables transaction sharing when cooldown allows', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 transactionSharingEnabled: false,
                 transactionSharingToggleCountToday: 1,
             });
@@ -500,7 +494,7 @@ describe('updateTransactionSharingEnabled (Story 14d-v2-1-11b)', () => {
         });
 
         it('disables transaction sharing when cooldown allows', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 transactionSharingEnabled: true,
                 transactionSharingToggleCountToday: 0,
             });
@@ -517,7 +511,7 @@ describe('updateTransactionSharingEnabled (Story 14d-v2-1-11b)', () => {
         });
 
         it('atomically updates all toggle-related fields', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 transactionSharingEnabled: false,
                 transactionSharingToggleCountToday: 1,
             });
@@ -543,7 +537,7 @@ describe('updateTransactionSharingEnabled (Story 14d-v2-1-11b)', () => {
 
     describe('authorization', () => {
         it('throws error if user is not the group owner', async () => {
-            const group = createMockGroup({ ownerId: 'owner-user-123' });
+            const group = createServiceMockGroup({ ownerId: 'owner-user-123' });
             mockTransactionGet.mockResolvedValue(createMockDocSnapshot(true, group));
 
             await expect(
@@ -566,7 +560,7 @@ describe('updateTransactionSharingEnabled (Story 14d-v2-1-11b)', () => {
 
     describe('cooldown enforcement', () => {
         it('throws error with wait time when cooldown is active', async () => {
-            const group = createMockGroup();
+            const group = createServiceMockGroup();
             mockTransactionGet.mockResolvedValue(createMockDocSnapshot(true, group));
             mockCanToggleTransactionSharing.mockReturnValue({
                 allowed: false,
@@ -580,7 +574,7 @@ describe('updateTransactionSharingEnabled (Story 14d-v2-1-11b)', () => {
         });
 
         it('throws error when daily toggle limit reached', async () => {
-            const group = createMockGroup();
+            const group = createServiceMockGroup();
             mockTransactionGet.mockResolvedValue(createMockDocSnapshot(true, group));
             mockCanToggleTransactionSharing.mockReturnValue({
                 allowed: false,
@@ -593,7 +587,7 @@ describe('updateTransactionSharingEnabled (Story 14d-v2-1-11b)', () => {
         });
 
         it('resets daily count when toggling on a new day', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 transactionSharingEnabled: false,
                 transactionSharingToggleCountToday: 2, // Previous day's count
             });
@@ -657,7 +651,7 @@ describe('leaveGroupWithCleanup (Story 14d-v2-1-12d)', () => {
     describe('AC#5: preference cleanup after leave', () => {
         it('calls removeGroupPreference after successful leaveGroup', async () => {
             // Setup: User is a non-owner member of the group
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
                 members: ['owner-user-123', 'member-456'],
             });
@@ -679,7 +673,7 @@ describe('leaveGroupWithCleanup (Story 14d-v2-1-12d)', () => {
         });
 
         it('calls removeGroupPreference exactly once', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
                 members: ['owner-user-123', 'member-456'],
             });
@@ -698,7 +692,7 @@ describe('leaveGroupWithCleanup (Story 14d-v2-1-12d)', () => {
 
     describe('AC#7: cleanup errors do not block leave', () => {
         it('succeeds even when removeGroupPreference throws an error', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
                 members: ['owner-user-123', 'member-456'],
             });
@@ -714,7 +708,7 @@ describe('leaveGroupWithCleanup (Story 14d-v2-1-12d)', () => {
         });
 
         it('logs warning when cleanup fails in dev mode', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
                 members: ['owner-user-123', 'member-456'],
             });
@@ -740,7 +734,7 @@ describe('leaveGroupWithCleanup (Story 14d-v2-1-12d)', () => {
 
     describe('edge cases', () => {
         it('handles already-deleted preference gracefully', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
                 members: ['owner-user-123', 'member-456'],
             });
@@ -767,7 +761,7 @@ describe('leaveGroupWithCleanup (Story 14d-v2-1-12d)', () => {
         });
 
         it('throws if user is the owner (cannot leave without transfer)', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
                 members: ['owner-user-123', 'member-456'],
             });
@@ -815,10 +809,11 @@ describe('leaveGroupWithCleanup (Story 14d-v2-1-12d)', () => {
 });
 
 // =============================================================================
-// transferAndLeaveWithCleanup Tests (Story 14d-v2-1-12d)
+// transferAndLeaveWithCleanup Tests (Story 14d-v2-1-12d, TD-CONSOLIDATED-10)
+// TD-CONSOLIDATED-10: Updated to verify single atomic transaction (was 2 separate)
 // =============================================================================
 
-describe('transferAndLeaveWithCleanup (Story 14d-v2-1-12d)', () => {
+describe('transferAndLeaveWithCleanup (Story 14d-v2-1-12d, TD-CONSOLIDATED-10)', () => {
     const mockDb = createMockDb();
     const mockDocRef = createMockDocRef();
     const mockTimestamp = { toDate: () => new Date() };
@@ -834,45 +829,17 @@ describe('transferAndLeaveWithCleanup (Story 14d-v2-1-12d)', () => {
     });
 
     // =========================================================================
-    // AC#6: Full transfer+leave+cleanup flow
+    // TD-CONSOLIDATED-10: Single atomic transaction for transfer+leave
     // =========================================================================
 
-    describe('AC#6: transfer, leave, and cleanup in order', () => {
-        it('calls transferOwnership, leaveGroup, then removeGroupPreference in sequence', async () => {
-            // Track call order
-            const callOrder: string[] = [];
-
-            // First call: transferOwnership transaction
-            // Second call: leaveGroup transaction
-            let transactionCallCount = 0;
-
-            mockRunTransaction.mockImplementation(async (_db, callback) => {
-                transactionCallCount++;
-                if (transactionCallCount === 1) {
-                    // First transaction: transferOwnership
-                    // Mock group where current user is owner
-                    const transferGroup = createMockGroup({
-                        ownerId: 'owner-user-123',
-                        members: ['owner-user-123', 'new-owner-456'],
-                    });
-                    mockTransactionGet.mockResolvedValueOnce(createMockDocSnapshot(true, transferGroup));
-                    callOrder.push('transferOwnership');
-                } else if (transactionCallCount === 2) {
-                    // Second transaction: leaveGroup
-                    // After transfer, ownerId is now new-owner-456, so old owner can leave
-                    const leaveGroup = createMockGroup({
-                        ownerId: 'new-owner-456', // Already transferred
-                        members: ['owner-user-123', 'new-owner-456'],
-                    });
-                    mockTransactionGet.mockResolvedValueOnce(createMockDocSnapshot(true, leaveGroup));
-                    callOrder.push('leaveGroup');
-                }
-                return callback(mockTransaction);
+    describe('AC#6 + TD-CONSOLIDATED-10: atomic transfer+leave in single transaction', () => {
+        it('performs transfer and leave in a SINGLE runTransaction call, then calls cleanup', async () => {
+            const group = createServiceMockGroup({
+                ownerId: 'owner-user-123',
+                members: ['owner-user-123', 'new-owner-456'],
             });
-
-            mockRemoveGroupPreference.mockImplementation(async () => {
-                callOrder.push('removeGroupPreference');
-            });
+            mockTransactionGet.mockResolvedValueOnce(createMockDocSnapshot(true, group));
+            mockRemoveGroupPreference.mockResolvedValue(undefined);
 
             await transferAndLeaveWithCleanup(
                 mockDb,
@@ -882,35 +849,51 @@ describe('transferAndLeaveWithCleanup (Story 14d-v2-1-12d)', () => {
                 'boletapp'            // appId
             );
 
-            // Verify call order: transfer -> leave -> cleanup
-            expect(callOrder).toEqual([
-                'transferOwnership',
-                'leaveGroup',
-                'removeGroupPreference',
-            ]);
+            // TD-CONSOLIDATED-10: Must be exactly ONE transaction call (not two)
+            expect(mockRunTransaction).toHaveBeenCalledTimes(1);
+
+            // Transaction reads group once and performs atomic update
+            expect(mockTransactionGet).toHaveBeenCalledTimes(1);
+            expect(mockTransactionUpdate).toHaveBeenCalledTimes(1);
+            expect(mockTransactionUpdate).toHaveBeenCalledWith(
+                mockDocRef,
+                expect.objectContaining({
+                    ownerId: 'new-owner-456',
+                    members: expect.anything(), // arrayRemove sentinel
+                    updatedAt: mockTimestamp,
+                })
+            );
+
+            // Cleanup called after transaction
+            expect(mockRemoveGroupPreference).toHaveBeenCalledTimes(1);
         });
 
-        it('passes correct arguments to removeGroupPreference', async () => {
-            // Setup both transactions to succeed
-            const group = createMockGroup({
+        it('validates ownership and membership atomically within the transaction', async () => {
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
                 members: ['owner-user-123', 'new-owner-456'],
             });
+            mockTransactionGet.mockResolvedValueOnce(createMockDocSnapshot(true, group));
+            mockRemoveGroupPreference.mockResolvedValue(undefined);
 
-            // First transaction (transfer): owner is original
-            // Second transaction (leave): owner is new (post-transfer)
-            let callCount = 0;
-            mockRunTransaction.mockImplementation(async (_db, callback) => {
-                callCount++;
-                if (callCount === 1) {
-                    mockTransactionGet.mockResolvedValueOnce(createMockDocSnapshot(true, group));
-                } else {
-                    const postTransferGroup = { ...group, ownerId: 'new-owner-456' };
-                    mockTransactionGet.mockResolvedValueOnce(createMockDocSnapshot(true, postTransferGroup));
-                }
-                return callback(mockTransaction);
+            await transferAndLeaveWithCleanup(
+                mockDb,
+                'owner-user-123',
+                'new-owner-456',
+                'group-123',
+                'boletapp'
+            );
+
+            // Reads group doc in transaction for snapshot isolation
+            expect(mockTransactionGet).toHaveBeenCalledWith(mockDocRef);
+        });
+
+        it('passes correct arguments to removeGroupPreference', async () => {
+            const group = createServiceMockGroup({
+                ownerId: 'owner-user-123',
+                members: ['owner-user-123', 'new-owner-456'],
             });
-
+            mockTransactionGet.mockResolvedValueOnce(createMockDocSnapshot(true, group));
             mockRemoveGroupPreference.mockResolvedValue(undefined);
 
             await transferAndLeaveWithCleanup(
@@ -935,23 +918,12 @@ describe('transferAndLeaveWithCleanup (Story 14d-v2-1-12d)', () => {
     // =========================================================================
 
     describe('AC#7: cleanup failure after transfer+leave does not throw', () => {
-        it('succeeds even when removeGroupPreference throws after successful transfer+leave', async () => {
-            const group = createMockGroup({
+        it('succeeds even when removeGroupPreference throws after successful transaction', async () => {
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
                 members: ['owner-user-123', 'new-owner-456'],
             });
-
-            let callCount = 0;
-            mockRunTransaction.mockImplementation(async (_db, callback) => {
-                callCount++;
-                if (callCount === 1) {
-                    mockTransactionGet.mockResolvedValueOnce(createMockDocSnapshot(true, group));
-                } else {
-                    const postTransferGroup = { ...group, ownerId: 'new-owner-456' };
-                    mockTransactionGet.mockResolvedValueOnce(createMockDocSnapshot(true, postTransferGroup));
-                }
-                return callback(mockTransaction);
-            });
+            mockTransactionGet.mockResolvedValueOnce(createMockDocSnapshot(true, group));
 
             // Cleanup fails but shouldn't throw
             mockRemoveGroupPreference.mockRejectedValue(new Error('Preference cleanup failed'));
@@ -968,24 +940,12 @@ describe('transferAndLeaveWithCleanup (Story 14d-v2-1-12d)', () => {
             ).resolves.not.toThrow();
         });
 
-        it('transfer and leave complete successfully even if cleanup fails', async () => {
-            const group = createMockGroup({
+        it('transaction completes successfully even if cleanup fails', async () => {
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
                 members: ['owner-user-123', 'new-owner-456'],
             });
-
-            let callCount = 0;
-            mockRunTransaction.mockImplementation(async (_db, callback) => {
-                callCount++;
-                if (callCount === 1) {
-                    mockTransactionGet.mockResolvedValueOnce(createMockDocSnapshot(true, group));
-                } else {
-                    const postTransferGroup = { ...group, ownerId: 'new-owner-456' };
-                    mockTransactionGet.mockResolvedValueOnce(createMockDocSnapshot(true, postTransferGroup));
-                }
-                return callback(mockTransaction);
-            });
-
+            mockTransactionGet.mockResolvedValueOnce(createMockDocSnapshot(true, group));
             mockRemoveGroupPreference.mockRejectedValue(new Error('Cleanup error'));
 
             await transferAndLeaveWithCleanup(
@@ -996,21 +956,20 @@ describe('transferAndLeaveWithCleanup (Story 14d-v2-1-12d)', () => {
                 'boletapp'
             );
 
-            // Both transactions should have been called
-            expect(callCount).toBe(2);
+            // Single transaction was called
+            expect(mockRunTransaction).toHaveBeenCalledTimes(1);
             // Cleanup was attempted
             expect(mockRemoveGroupPreference).toHaveBeenCalled();
         });
     });
 
     // =========================================================================
-    // Error Propagation Tests
+    // Error Propagation Tests (TD-CONSOLIDATED-10: within single transaction)
     // =========================================================================
 
     describe('error propagation', () => {
-        it('throws if transferOwnership fails (user not owner)', async () => {
-            // Group exists but user is not the owner
-            const group = createMockGroup({
+        it('throws if user is not the owner', async () => {
+            const group = createServiceMockGroup({
                 ownerId: 'different-owner',
                 members: ['different-owner', 'new-owner-456'],
             });
@@ -1026,29 +985,32 @@ describe('transferAndLeaveWithCleanup (Story 14d-v2-1-12d)', () => {
                 )
             ).rejects.toThrow('Only the group owner can transfer ownership');
 
-            // Cleanup should NOT be called if transfer fails
+            // Cleanup should NOT be called if transaction fails
             expect(mockRemoveGroupPreference).not.toHaveBeenCalled();
         });
 
-        it('throws if leaveGroup fails after successful transfer', async () => {
-            const group = createMockGroup({
+        it('throws if new owner is not a member', async () => {
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
-                members: ['owner-user-123', 'new-owner-456'],
+                members: ['owner-user-123'], // new-owner-456 is NOT a member
             });
+            mockTransactionGet.mockResolvedValue(createMockDocSnapshot(true, group));
 
-            let callCount = 0;
-            mockRunTransaction.mockImplementation(async (_db, callback) => {
-                callCount++;
-                if (callCount === 1) {
-                    // Transfer succeeds
-                    mockTransactionGet.mockResolvedValueOnce(createMockDocSnapshot(true, group));
-                    return callback(mockTransaction);
-                } else {
-                    // Leave fails - group not found (simulating race condition)
-                    mockTransactionGet.mockResolvedValueOnce(createMockDocSnapshot(false));
-                    return callback(mockTransaction);
-                }
-            });
+            await expect(
+                transferAndLeaveWithCleanup(
+                    mockDb,
+                    'owner-user-123',
+                    'new-owner-456',  // Not a member
+                    'group-123',
+                    'boletapp'
+                )
+            ).rejects.toThrow('Selected user is not a member of this group');
+
+            expect(mockRemoveGroupPreference).not.toHaveBeenCalled();
+        });
+
+        it('throws if group not found', async () => {
+            mockTransactionGet.mockResolvedValue(createMockDocSnapshot(false));
 
             await expect(
                 transferAndLeaveWithCleanup(
@@ -1060,7 +1022,6 @@ describe('transferAndLeaveWithCleanup (Story 14d-v2-1-12d)', () => {
                 )
             ).rejects.toThrow('Group not found');
 
-            // Cleanup should NOT be called if leave fails
             expect(mockRemoveGroupPreference).not.toHaveBeenCalled();
         });
     });
@@ -1101,6 +1062,79 @@ describe('transferAndLeaveWithCleanup (Story 14d-v2-1-12d)', () => {
             ).rejects.toThrow('Invalid application ID');
         });
     });
+
+    // =========================================================================
+    // TD-CONSOLIDATED-10: Concurrent Operation Protection (AC-5)
+    // =========================================================================
+
+    describe('concurrent operation protection (TOCTOU)', () => {
+        it('atomically catches ownership change during transaction', async () => {
+            // Simulates: user A is owner, but between validation and mutation,
+            // user B's transfer completes first, making user A no longer the owner.
+            // Single transaction ensures the read + validate + write are atomic.
+            const group = createServiceMockGroup({
+                ownerId: 'user-B', // Ownership already transferred to user-B
+                members: ['user-B', 'new-owner-456'],
+            });
+            mockTransactionGet.mockResolvedValue(createMockDocSnapshot(true, group));
+
+            await expect(
+                transferAndLeaveWithCleanup(
+                    mockDb,
+                    'user-A',  // User A thinks they're owner, but they're not
+                    'new-owner-456',
+                    'group-123',
+                    'boletapp'
+                )
+            ).rejects.toThrow('Only the group owner can transfer ownership');
+
+            // Transaction was called exactly once — atomic check
+            expect(mockRunTransaction).toHaveBeenCalledTimes(1);
+        });
+
+        it('atomically catches member removal during transaction', async () => {
+            // Simulates: new-owner was a member, but was removed concurrently.
+            // Transaction reads current state, so removal is caught atomically.
+            const group = createServiceMockGroup({
+                ownerId: 'owner-user-123',
+                members: ['owner-user-123'], // new-owner-456 removed concurrently
+            });
+            mockTransactionGet.mockResolvedValue(createMockDocSnapshot(true, group));
+
+            await expect(
+                transferAndLeaveWithCleanup(
+                    mockDb,
+                    'owner-user-123',
+                    'new-owner-456', // Was removed from group concurrently
+                    'group-123',
+                    'boletapp'
+                )
+            ).rejects.toThrow('Selected user is not a member of this group');
+
+            expect(mockRunTransaction).toHaveBeenCalledTimes(1);
+        });
+
+        it('single transaction prevents interleaved operations', async () => {
+            const group = createServiceMockGroup({
+                ownerId: 'owner-user-123',
+                members: ['owner-user-123', 'new-owner-456'],
+            });
+            mockTransactionGet.mockResolvedValue(createMockDocSnapshot(true, group));
+
+            await transferAndLeaveWithCleanup(
+                mockDb,
+                'owner-user-123',
+                'new-owner-456',
+                'group-123',
+                'boletapp'
+            );
+
+            // Verify EXACTLY one transaction — no gap between transfer and leave
+            expect(mockRunTransaction).toHaveBeenCalledTimes(1);
+            // Both mutations happen in the same transaction.update() call
+            expect(mockTransactionUpdate).toHaveBeenCalledTimes(1);
+        });
+    });
 });
 
 // =============================================================================
@@ -1117,7 +1151,7 @@ describe('joinGroupDirectly - user group preference (Story 14d-v2-1-13+14)', () 
     const validAppId = 'boletapp';
 
     function createJoinableGroup(overrides: Partial<SharedGroup> = {}): SharedGroup {
-        return createMockGroup({
+        return createServiceMockGroup({
             id: validGroupId,
             ownerId: 'owner-user-123',
             members: ['owner-user-123'], // User not yet a member

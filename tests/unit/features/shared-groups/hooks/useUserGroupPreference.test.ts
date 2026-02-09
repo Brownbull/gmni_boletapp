@@ -9,8 +9,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { useUserGroupPreference } from '@/features/shared-groups/hooks/useUserGroupPreference';
 import type { User } from 'firebase/auth';
-import type { Timestamp } from 'firebase/firestore';
 import type { UserGroupPreference } from '@/types/sharedGroup';
+import { createMockTimestamp } from '../../../../helpers';
 
 // Mock services
 const mockSubscribe = vi.fn();
@@ -27,16 +27,6 @@ const mockCanToggle = vi.fn();
 vi.mock('@/utils/userSharingCooldown', () => ({
   canToggleUserSharingPreference: (pref: UserGroupPreference) => mockCanToggle(pref),
 }));
-
-// Test fixtures
-const createMockTimestamp = (date: Date): Timestamp => ({
-  toDate: () => date,
-  toMillis: () => date.getTime(),
-  seconds: Math.floor(date.getTime() / 1000),
-  nanoseconds: 0,
-  isEqual: () => false,
-  valueOf: () => '',
-} as Timestamp);
 
 const createMockUser = (uid = 'test-user-id'): User => ({
   uid,

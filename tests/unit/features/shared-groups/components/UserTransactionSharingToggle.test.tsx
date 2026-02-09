@@ -22,23 +22,11 @@ import { UserTransactionSharingToggle } from '@/features/shared-groups/component
 import type { UserTransactionSharingToggleProps } from '@/features/shared-groups/components/UserTransactionSharingToggle';
 import type { UserGroupPreference } from '@/types/sharedGroup';
 import type { UserToggleCooldownResult } from '@/utils/userSharingCooldown';
-import type { Timestamp } from 'firebase/firestore';
+import { createMockTimestamp } from '../../../../helpers';
 
 // =============================================================================
 // Test Fixtures
 // =============================================================================
-
-/**
- * Creates a mock Timestamp for testing.
- */
-const createMockTimestamp = (date: Date): Timestamp => ({
-  toDate: () => date,
-  toMillis: () => date.getTime(),
-  seconds: Math.floor(date.getTime() / 1000),
-  nanoseconds: 0,
-  isEqual: () => false,
-  valueOf: () => '',
-} as Timestamp);
 
 /**
  * Creates a mock UserGroupPreference with customizable properties.

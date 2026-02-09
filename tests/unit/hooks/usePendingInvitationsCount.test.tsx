@@ -26,7 +26,7 @@ vi.mock('firebase/firestore', () => ({
 // Import after mocks
 import { usePendingInvitationsCount } from '@/hooks/usePendingInvitationsCount';
 import { getPendingInvitationsForUser } from '@/services/invitationService';
-import type { PendingInvitation } from '@/types/sharedGroup';
+import { createMockInvitation } from '@helpers/sharedGroupFactory';
 
 // =============================================================================
 // Test Helpers
@@ -74,34 +74,6 @@ function createMockUser(overrides: Partial<User> = {}): User {
         providerId: 'firebase',
         ...overrides,
     } as User;
-}
-
-function createMockInvitation(overrides: Partial<PendingInvitation> = {}): PendingInvitation {
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
-
-    return {
-        id: `inv-${Math.random().toString(36).substr(2, 9)}`,
-        groupId: 'group-123',
-        groupName: '🏠 Gastos del Hogar',
-        groupColor: '#10b981',
-        shareCode: 'ABC123DEF456GHI7',
-        invitedEmail: 'test@example.com',
-        invitedByUserId: 'inviter-456',
-        invitedByName: 'Alice',
-        createdAt: {
-            toDate: () => now,
-            seconds: Math.floor(now.getTime() / 1000),
-            nanoseconds: 0,
-        } as PendingInvitation['createdAt'],
-        expiresAt: {
-            toDate: () => expiresAt,
-            seconds: Math.floor(expiresAt.getTime() / 1000),
-            nanoseconds: 0,
-        } as PendingInvitation['expiresAt'],
-        status: 'pending',
-        ...overrides,
-    };
 }
 
 // =============================================================================
