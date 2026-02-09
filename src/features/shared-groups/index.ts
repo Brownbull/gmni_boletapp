@@ -127,6 +127,13 @@ export {
   useUpdateGroup,
   // Story 14d-v2-1-12c: User Group Preference Hook
   useUserGroupPreference,
+  // Story TD-CONSOLIDATED-12: Group Mutation Hooks
+  useDeleteGroup,
+  useLeaveGroup,
+  useTransferOwnership,
+  useAcceptInvitation,
+  useDeclineInvitation,
+  useToggleTransactionSharing,
 } from './hooks';
 
 export type {

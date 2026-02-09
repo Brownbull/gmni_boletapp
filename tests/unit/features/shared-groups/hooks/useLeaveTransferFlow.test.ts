@@ -2,9 +2,10 @@
  * useLeaveTransferFlow Hook Tests
  *
  * Story 14d-v2-1-7d: Tech Debt - Extract Firestore operations
+ * Story TD-CONSOLIDATED-12: React Query Cache Staleness
  *
- * Tests for the hook that extracts leave/transfer/invitation handlers
- * from GruposView, eliminating direct getFirestore() calls.
+ * Tests for the hook that provides leave/transfer/invitation handlers
+ * using injected mutation async functions from React Query mutation hooks.
  *
  * Test Cases:
  * 1. handleConfirmLeave - success path
@@ -13,50 +14,23 @@
  * 4. handleConfirmLeave - no auto-switch when viewing different group
  * 5. handleConfirmTransfer - success path
  * 6. handleConfirmTransfer - error path
- * 7. handleAcceptInvitation - real invitation success
- * 8. handleAcceptInvitation - synthetic invitation success
+ * 7. handleAcceptInvitation - success path
+ * 8. handleAcceptInvitation - with shareMyTransactions=true
  * 9. handleAcceptInvitation - error path
- * 10. handleDeclineInvitation - real invitation success
- * 11. handleDeclineInvitation - synthetic invitation (no-op)
- * 12. handleDeclineInvitation - error path
+ * 10. handleDeclineInvitation - success path
+ * 11. handleDeclineInvitation - error path
+ * 12. Edge cases (null user, missing id, Spanish locale, optional callbacks)
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import type { User } from 'firebase/auth';
-import type { Firestore } from 'firebase/firestore';
 import type { SharedGroup, PendingInvitation } from '@/types/sharedGroup';
-import { Timestamp } from 'firebase/firestore';
 import { createMockGroup as createMockGroupBase, createMockInvitation } from '@helpers/sharedGroupFactory';
 
 // =============================================================================
 // Mocks
 // =============================================================================
-
-// Mock groupService functions
-const mockLeaveGroup = vi.fn();
-const mockTransferOwnership = vi.fn();
-const mockJoinGroupDirectly = vi.fn();
-
-vi.mock('@/features/shared-groups/services/groupMemberService', () => ({
-    leaveGroup: (...args: unknown[]) => mockLeaveGroup(...args),
-    transferOwnership: (...args: unknown[]) => mockTransferOwnership(...args),
-    joinGroupDirectly: (...args: unknown[]) => mockJoinGroupDirectly(...args),
-}));
-
-// Mock invitationService functions
-const mockAcceptInvitation = vi.fn();
-const mockDeclineInvitation = vi.fn();
-
-vi.mock('@/services/invitationService', () => ({
-    acceptInvitation: (...args: unknown[]) => mockAcceptInvitation(...args),
-    declineInvitation: (...args: unknown[]) => mockDeclineInvitation(...args),
-}));
-
-// Mock config/constants
-vi.mock('@/config/constants', () => ({
-    APP_ID: 'boletapp',
-}));
 
 // Mock view mode store
 const mockSetPersonalMode = vi.fn();
@@ -111,12 +85,21 @@ function createMockGroup(overrides: Partial<SharedGroup> = {}): SharedGroup {
     });
 }
 
-function createMockDb(): Firestore {
-    return {} as Firestore;
-}
-
 function createMockTranslation() {
     return (key: string, _params?: Record<string, string | number>) => key;
+}
+
+// =============================================================================
+// Mutation Async Mock Factories
+// =============================================================================
+
+function createMockMutationFunctions() {
+    return {
+        leaveGroupAsync: vi.fn().mockResolvedValue(undefined),
+        transferOwnershipAsync: vi.fn().mockResolvedValue(undefined),
+        acceptInvitationAsync: vi.fn().mockResolvedValue(undefined),
+        declineInvitationAsync: vi.fn().mockResolvedValue(undefined),
+    };
 }
 
 // =============================================================================
@@ -124,15 +107,15 @@ function createMockTranslation() {
 // =============================================================================
 
 describe('useLeaveTransferFlow', () => {
-    const mockDb = createMockDb();
     const mockUser = createMockUser();
     const mockT = createMockTranslation();
     const mockShowToast = vi.fn();
-    const mockRefetchGroups = vi.fn();
-    const mockRefetchInvitations = vi.fn();
+
+    let mocks: ReturnType<typeof createMockMutationFunctions>;
 
     beforeEach(() => {
         vi.clearAllMocks();
+        mocks = createMockMutationFunctions();
         // Reset view mode state to default
         mockViewModeState.mode = 'personal';
         mockViewModeState.groupId = null;
@@ -146,18 +129,14 @@ describe('useLeaveTransferFlow', () => {
     // handleConfirmLeave Tests
     // =========================================================================
     describe('handleConfirmLeave', () => {
-        it('success path - calls leaveGroup and shows success toast', async () => {
-            mockLeaveGroup.mockResolvedValue(undefined);
-
+        it('success path - calls leaveGroupAsync and shows success toast', async () => {
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: mockUser,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
-                    refetchInvitations: mockRefetchInvitations,
+                    ...mocks,
                 })
             );
 
@@ -169,8 +148,7 @@ describe('useLeaveTransferFlow', () => {
             });
 
             expect(success).toBe(true);
-            expect(mockLeaveGroup).toHaveBeenCalledWith(mockDb, mockUser.uid, group.id);
-            expect(mockRefetchGroups).toHaveBeenCalled();
+            expect(mocks.leaveGroupAsync).toHaveBeenCalledWith({ groupId: group.id });
             expect(mockShowToast).toHaveBeenCalledWith(
                 expect.stringContaining('leftGroup'),
                 'success'
@@ -178,16 +156,15 @@ describe('useLeaveTransferFlow', () => {
         });
 
         it('error path - returns false and shows error toast', async () => {
-            mockLeaveGroup.mockRejectedValue(new Error('Network error'));
+            mocks.leaveGroupAsync.mockRejectedValue(new Error('Network error'));
 
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: mockUser,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
+                    ...mocks,
                 })
             );
 
@@ -203,24 +180,20 @@ describe('useLeaveTransferFlow', () => {
                 expect.stringContaining('errorLeavingGroup'),
                 'error'
             );
-            expect(mockRefetchGroups).not.toHaveBeenCalled();
         });
 
         it('auto-switches view mode when leaving current viewed group', async () => {
-            mockLeaveGroup.mockResolvedValue(undefined);
-
             // Set view mode to the group being left
             mockViewModeState.mode = 'group';
             mockViewModeState.groupId = 'group-abc123';
 
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: mockUser,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
+                    ...mocks,
                 })
             );
 
@@ -239,20 +212,17 @@ describe('useLeaveTransferFlow', () => {
         });
 
         it('does not auto-switch when viewing different group', async () => {
-            mockLeaveGroup.mockResolvedValue(undefined);
-
             // Set view mode to a different group
             mockViewModeState.mode = 'group';
             mockViewModeState.groupId = 'different-group-id';
 
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: mockUser,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
+                    ...mocks,
                 })
             );
 
@@ -273,12 +243,11 @@ describe('useLeaveTransferFlow', () => {
         it('returns false when user is null', async () => {
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: null,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
+                    ...mocks,
                 })
             );
 
@@ -290,18 +259,17 @@ describe('useLeaveTransferFlow', () => {
             });
 
             expect(success).toBe(false);
-            expect(mockLeaveGroup).not.toHaveBeenCalled();
+            expect(mocks.leaveGroupAsync).not.toHaveBeenCalled();
         });
 
         it('returns false when group has no id', async () => {
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: mockUser,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
+                    ...mocks,
                 })
             );
 
@@ -313,7 +281,7 @@ describe('useLeaveTransferFlow', () => {
             });
 
             expect(success).toBe(false);
-            expect(mockLeaveGroup).not.toHaveBeenCalled();
+            expect(mocks.leaveGroupAsync).not.toHaveBeenCalled();
         });
     });
 
@@ -321,17 +289,14 @@ describe('useLeaveTransferFlow', () => {
     // handleConfirmTransfer Tests
     // =========================================================================
     describe('handleConfirmTransfer', () => {
-        it('success path - calls transferOwnership and shows success toast', async () => {
-            mockTransferOwnership.mockResolvedValue(undefined);
-
+        it('success path - calls transferOwnershipAsync and shows success toast', async () => {
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: mockUser,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
+                    ...mocks,
                 })
             );
 
@@ -343,13 +308,10 @@ describe('useLeaveTransferFlow', () => {
             });
 
             expect(success).toBe(true);
-            expect(mockTransferOwnership).toHaveBeenCalledWith(
-                mockDb,
-                mockUser.uid,
-                'new-owner-id',
-                group.id
-            );
-            expect(mockRefetchGroups).toHaveBeenCalled();
+            expect(mocks.transferOwnershipAsync).toHaveBeenCalledWith({
+                groupId: group.id,
+                newOwnerId: 'new-owner-id',
+            });
             expect(mockShowToast).toHaveBeenCalledWith(
                 expect.stringContaining('ownershipTransferred'),
                 'success'
@@ -357,16 +319,15 @@ describe('useLeaveTransferFlow', () => {
         });
 
         it('error path - returns false and shows error toast', async () => {
-            mockTransferOwnership.mockRejectedValue(new Error('Not the owner'));
+            mocks.transferOwnershipAsync.mockRejectedValue(new Error('Not the owner'));
 
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: mockUser,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
+                    ...mocks,
                 })
             );
 
@@ -382,18 +343,16 @@ describe('useLeaveTransferFlow', () => {
                 expect.stringContaining('errorTransferringOwnership'),
                 'error'
             );
-            expect(mockRefetchGroups).not.toHaveBeenCalled();
         });
 
         it('returns false when user is null', async () => {
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: null,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
+                    ...mocks,
                 })
             );
 
@@ -405,18 +364,17 @@ describe('useLeaveTransferFlow', () => {
             });
 
             expect(success).toBe(false);
-            expect(mockTransferOwnership).not.toHaveBeenCalled();
+            expect(mocks.transferOwnershipAsync).not.toHaveBeenCalled();
         });
 
         it('returns false when group has no id', async () => {
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: mockUser,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
+                    ...mocks,
                 })
             );
 
@@ -428,7 +386,7 @@ describe('useLeaveTransferFlow', () => {
             });
 
             expect(success).toBe(false);
-            expect(mockTransferOwnership).not.toHaveBeenCalled();
+            expect(mocks.transferOwnershipAsync).not.toHaveBeenCalled();
         });
     });
 
@@ -436,18 +394,14 @@ describe('useLeaveTransferFlow', () => {
     // handleAcceptInvitation Tests
     // =========================================================================
     describe('handleAcceptInvitation', () => {
-        it('real invitation success - calls acceptInvitation', async () => {
-            mockAcceptInvitation.mockResolvedValue(undefined);
-
+        it('success path - calls acceptInvitationAsync and shows toast', async () => {
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: mockUser,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
-                    refetchInvitations: mockRefetchInvitations,
+                    ...mocks,
                 })
             );
 
@@ -459,38 +413,70 @@ describe('useLeaveTransferFlow', () => {
             });
 
             expect(success).toBe(true);
-            expect(mockAcceptInvitation).toHaveBeenCalledWith(
-                mockDb,
-                invitation.id,
-                mockUser.uid,
-                expect.objectContaining({
-                    displayName: mockUser.displayName,
-                    email: mockUser.email,
-                }),
-                'boletapp', // APP_ID (Story 14d-v2-1-13+14)
-                false       // shareMyTransactions default
-            );
-            expect(mockJoinGroupDirectly).not.toHaveBeenCalled();
-            expect(mockRefetchGroups).toHaveBeenCalled();
-            expect(mockRefetchInvitations).toHaveBeenCalled();
+            expect(mocks.acceptInvitationAsync).toHaveBeenCalledWith({
+                invitation,
+                shareMyTransactions: undefined,
+            });
             expect(mockShowToast).toHaveBeenCalledWith(
                 expect.stringContaining('acceptInvitationSuccess'),
                 'success'
             );
         });
 
-        it('synthetic invitation success - calls joinGroupDirectly', async () => {
-            mockJoinGroupDirectly.mockResolvedValue(createMockGroup());
-
+        it('passes shareMyTransactions=true to acceptInvitationAsync', async () => {
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: mockUser,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
-                    refetchInvitations: mockRefetchInvitations,
+                    ...mocks,
+                })
+            );
+
+            const invitation = createMockInvitation({ id: 'real-invitation-123' });
+
+            await act(async () => {
+                await result.current.handleAcceptInvitation(invitation, true);
+            });
+
+            expect(mocks.acceptInvitationAsync).toHaveBeenCalledWith({
+                invitation,
+                shareMyTransactions: true,
+            });
+        });
+
+        it('passes shareMyTransactions=false to acceptInvitationAsync', async () => {
+            const { result } = renderHook(() =>
+                useLeaveTransferFlow({
+                    user: mockUser,
+                    onShowToast: mockShowToast,
+                    t: mockT,
+                    lang: 'en',
+                    ...mocks,
+                })
+            );
+
+            const invitation = createMockInvitation({ id: 'real-invitation-123' });
+
+            await act(async () => {
+                await result.current.handleAcceptInvitation(invitation, false);
+            });
+
+            expect(mocks.acceptInvitationAsync).toHaveBeenCalledWith({
+                invitation,
+                shareMyTransactions: false,
+            });
+        });
+
+        it('calls acceptInvitationAsync for synthetic invitation (routing handled by mutation hook)', async () => {
+            const { result } = renderHook(() =>
+                useLeaveTransferFlow({
+                    user: mockUser,
+                    onShowToast: mockShowToast,
+                    t: mockT,
+                    lang: 'en',
+                    ...mocks,
                 })
             );
 
@@ -506,34 +492,23 @@ describe('useLeaveTransferFlow', () => {
             });
 
             expect(success).toBe(true);
-            expect(mockJoinGroupDirectly).toHaveBeenCalledWith(
-                mockDb,
-                invitation.groupId,
-                mockUser.uid,
-                expect.objectContaining({
-                    displayName: mockUser.displayName,
-                    email: mockUser.email,
-                }),
-                'boletapp', // APP_ID (Story 14d-v2-1-13+14)
-                false       // shareMyTransactions default
-            );
-            expect(mockAcceptInvitation).not.toHaveBeenCalled();
-            expect(mockRefetchGroups).toHaveBeenCalled();
-            expect(mockRefetchInvitations).toHaveBeenCalled();
+            // Mutation hook handles real vs synthetic routing internally
+            expect(mocks.acceptInvitationAsync).toHaveBeenCalledWith({
+                invitation,
+                shareMyTransactions: undefined,
+            });
         });
 
         it('error path - returns false and shows error toast', async () => {
-            mockAcceptInvitation.mockRejectedValue(new Error('Invitation expired'));
+            mocks.acceptInvitationAsync.mockRejectedValue(new Error('Invitation expired'));
 
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: mockUser,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
-                    refetchInvitations: mockRefetchInvitations,
+                    ...mocks,
                 })
             );
 
@@ -549,18 +524,16 @@ describe('useLeaveTransferFlow', () => {
                 expect.stringContaining('errorAcceptingInvitation'),
                 'error'
             );
-            expect(mockRefetchGroups).not.toHaveBeenCalled();
         });
 
         it('returns false when user is null', async () => {
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: null,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
+                    ...mocks,
                 })
             );
 
@@ -572,19 +545,17 @@ describe('useLeaveTransferFlow', () => {
             });
 
             expect(success).toBe(false);
-            expect(mockAcceptInvitation).not.toHaveBeenCalled();
-            expect(mockJoinGroupDirectly).not.toHaveBeenCalled();
+            expect(mocks.acceptInvitationAsync).not.toHaveBeenCalled();
         });
 
         it('returns false when invitation has no id', async () => {
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: mockUser,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
+                    ...mocks,
                 })
             );
 
@@ -596,121 +567,7 @@ describe('useLeaveTransferFlow', () => {
             });
 
             expect(success).toBe(false);
-            expect(mockAcceptInvitation).not.toHaveBeenCalled();
-        });
-
-        // ---------------------------------------------------------------------
-        // Story 14d-v2-1-13+14: shareMyTransactions passthrough
-        // ---------------------------------------------------------------------
-        describe('user group preference passthrough (Story 14d-v2-1-13+14)', () => {
-            it('passes APP_ID and shareMyTransactions=true to acceptInvitation for real invitations', async () => {
-                mockAcceptInvitation.mockResolvedValue(undefined);
-
-                const { result } = renderHook(() =>
-                    useLeaveTransferFlow({
-                        db: mockDb,
-                        user: mockUser,
-                        onShowToast: mockShowToast,
-                        t: mockT,
-                        lang: 'en',
-                        refetchGroups: mockRefetchGroups,
-                        refetchInvitations: mockRefetchInvitations,
-                    })
-                );
-
-                const invitation = createMockInvitation({ id: 'real-invitation-123' });
-
-                let success: boolean | undefined;
-                await act(async () => {
-                    success = await result.current.handleAcceptInvitation(invitation, true);
-                });
-
-                expect(success).toBe(true);
-                // The underlying acceptInvitation should receive APP_ID and shareMyTransactions
-                expect(mockAcceptInvitation).toHaveBeenCalledWith(
-                    mockDb,
-                    invitation.id,
-                    mockUser.uid,
-                    expect.objectContaining({
-                        displayName: mockUser.displayName,
-                        email: mockUser.email,
-                    }),
-                    'boletapp', // APP_ID
-                    true        // shareMyTransactions
-                );
-            });
-
-            it('passes APP_ID and shareMyTransactions=false to joinGroupDirectly for synthetic invitations', async () => {
-                mockJoinGroupDirectly.mockResolvedValue(createMockGroup());
-
-                const { result } = renderHook(() =>
-                    useLeaveTransferFlow({
-                        db: mockDb,
-                        user: mockUser,
-                        onShowToast: mockShowToast,
-                        t: mockT,
-                        lang: 'en',
-                        refetchGroups: mockRefetchGroups,
-                        refetchInvitations: mockRefetchInvitations,
-                    })
-                );
-
-                const invitation = createMockInvitation({
-                    id: 'group-abc123',
-                    groupId: 'abc123',
-                });
-
-                let success: boolean | undefined;
-                await act(async () => {
-                    success = await result.current.handleAcceptInvitation(invitation, false);
-                });
-
-                expect(success).toBe(true);
-                expect(mockJoinGroupDirectly).toHaveBeenCalledWith(
-                    mockDb,
-                    invitation.groupId,
-                    mockUser.uid,
-                    expect.objectContaining({
-                        displayName: mockUser.displayName,
-                        email: mockUser.email,
-                    }),
-                    'boletapp', // APP_ID
-                    false       // shareMyTransactions
-                );
-            });
-
-            it('defaults shareMyTransactions to false when not provided', async () => {
-                mockAcceptInvitation.mockResolvedValue(undefined);
-
-                const { result } = renderHook(() =>
-                    useLeaveTransferFlow({
-                        db: mockDb,
-                        user: mockUser,
-                        onShowToast: mockShowToast,
-                        t: mockT,
-                        lang: 'en',
-                        refetchGroups: mockRefetchGroups,
-                        refetchInvitations: mockRefetchInvitations,
-                    })
-                );
-
-                const invitation = createMockInvitation({ id: 'real-invitation-123' });
-
-                await act(async () => {
-                    // Call without shareMyTransactions parameter
-                    await result.current.handleAcceptInvitation(invitation);
-                });
-
-                // Should default to false
-                expect(mockAcceptInvitation).toHaveBeenCalledWith(
-                    mockDb,
-                    invitation.id,
-                    mockUser.uid,
-                    expect.any(Object),
-                    'boletapp', // APP_ID
-                    false       // shareMyTransactions defaults to false
-                );
-            });
+            expect(mocks.acceptInvitationAsync).not.toHaveBeenCalled();
         });
     });
 
@@ -718,18 +575,14 @@ describe('useLeaveTransferFlow', () => {
     // handleDeclineInvitation Tests
     // =========================================================================
     describe('handleDeclineInvitation', () => {
-        it('real invitation success - calls declineInvitation', async () => {
-            mockDeclineInvitation.mockResolvedValue(undefined);
-
+        it('success path - calls declineInvitationAsync and shows toast', async () => {
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: mockUser,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
-                    refetchInvitations: mockRefetchInvitations,
+                    ...mocks,
                 })
             );
 
@@ -741,24 +594,21 @@ describe('useLeaveTransferFlow', () => {
             });
 
             expect(success).toBe(true);
-            expect(mockDeclineInvitation).toHaveBeenCalledWith(mockDb, invitation.id);
-            expect(mockRefetchInvitations).toHaveBeenCalled();
+            expect(mocks.declineInvitationAsync).toHaveBeenCalledWith({ invitation });
             expect(mockShowToast).toHaveBeenCalledWith(
                 expect.stringContaining('declineInvitationSuccess'),
                 'success'
             );
         });
 
-        it('synthetic invitation - no-op (just closes without Firestore call)', async () => {
+        it('calls declineInvitationAsync for synthetic invitation (routing handled internally)', async () => {
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: mockUser,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
-                    refetchInvitations: mockRefetchInvitations,
+                    ...mocks,
                 })
             );
 
@@ -771,8 +621,8 @@ describe('useLeaveTransferFlow', () => {
             });
 
             expect(success).toBe(true);
-            expect(mockDeclineInvitation).not.toHaveBeenCalled();
-            expect(mockRefetchInvitations).toHaveBeenCalled();
+            // Mutation hook handles synthetic vs real routing internally
+            expect(mocks.declineInvitationAsync).toHaveBeenCalledWith({ invitation });
             expect(mockShowToast).toHaveBeenCalledWith(
                 expect.stringContaining('declineInvitationSuccess'),
                 'success'
@@ -780,17 +630,15 @@ describe('useLeaveTransferFlow', () => {
         });
 
         it('error path - returns false and shows error toast', async () => {
-            mockDeclineInvitation.mockRejectedValue(new Error('Invitation not found'));
+            mocks.declineInvitationAsync.mockRejectedValue(new Error('Invitation not found'));
 
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: mockUser,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
-                    refetchInvitations: mockRefetchInvitations,
+                    ...mocks,
                 })
             );
 
@@ -806,18 +654,16 @@ describe('useLeaveTransferFlow', () => {
                 expect.stringContaining('errorDecliningInvitation'),
                 'error'
             );
-            expect(mockRefetchInvitations).not.toHaveBeenCalled();
         });
 
         it('returns false when invitation has no id', async () => {
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: mockUser,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
+                    ...mocks,
                 })
             );
 
@@ -829,7 +675,7 @@ describe('useLeaveTransferFlow', () => {
             });
 
             expect(success).toBe(false);
-            expect(mockDeclineInvitation).not.toHaveBeenCalled();
+            expect(mocks.declineInvitationAsync).not.toHaveBeenCalled();
         });
     });
 
@@ -838,8 +684,6 @@ describe('useLeaveTransferFlow', () => {
     // =========================================================================
     describe('edge cases', () => {
         it('uses Spanish messages when lang is es', async () => {
-            mockLeaveGroup.mockResolvedValue(undefined);
-
             const spanishT = (key: string) => {
                 const translations: Record<string, string> = {
                     leftGroup: 'Saliste del grupo',
@@ -849,12 +693,11 @@ describe('useLeaveTransferFlow', () => {
 
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: mockUser,
                     onShowToast: mockShowToast,
                     t: spanishT,
                     lang: 'es',
-                    refetchGroups: mockRefetchGroups,
+                    ...mocks,
                 })
             );
 
@@ -870,17 +713,14 @@ describe('useLeaveTransferFlow', () => {
             );
         });
 
-        it('works without optional callbacks', async () => {
-            mockLeaveGroup.mockResolvedValue(undefined);
-
+        it('works without optional onShowToast callback', async () => {
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: mockUser,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
-                    // onShowToast and refetchInvitations are optional
+                    ...mocks,
+                    // onShowToast is optional
                 })
             );
 
@@ -893,11 +733,10 @@ describe('useLeaveTransferFlow', () => {
 
             // Should succeed even without toast callback
             expect(success).toBe(true);
-            expect(mockRefetchGroups).toHaveBeenCalled();
+            expect(mocks.leaveGroupAsync).toHaveBeenCalledWith({ groupId: group.id });
         });
 
         it('handles both soft and hard leave modes (captures mode for future use)', async () => {
-            mockLeaveGroup.mockResolvedValue(undefined);
             const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
             // Set DEV mode for console.log to work
@@ -906,12 +745,11 @@ describe('useLeaveTransferFlow', () => {
 
             const { result } = renderHook(() =>
                 useLeaveTransferFlow({
-                    db: mockDb,
                     user: mockUser,
                     onShowToast: mockShowToast,
                     t: mockT,
                     lang: 'en',
-                    refetchGroups: mockRefetchGroups,
+                    ...mocks,
                 })
             );
 
@@ -927,8 +765,8 @@ describe('useLeaveTransferFlow', () => {
                 await result.current.handleConfirmLeave(group, 'hard');
             });
 
-            // Both should call leaveGroup (hard mode Cloud Function not yet implemented)
-            expect(mockLeaveGroup).toHaveBeenCalledTimes(2);
+            // Both should call leaveGroupAsync (hard mode Cloud Function not yet implemented)
+            expect(mocks.leaveGroupAsync).toHaveBeenCalledTimes(2);
 
             // Restore
             (import.meta.env as { DEV: boolean }).DEV = originalDev;

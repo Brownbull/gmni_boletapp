@@ -2,10 +2,11 @@
  * useLeaveTransferFlow Hook
  *
  * Story 14d-v2-1-7d: Tech Debt - Extract Firestore operations
+ * Story TD-CONSOLIDATED-12: React Query Cache Staleness
  *
- * Provides handlers for leave/transfer/invitation flows using dependency injection.
- * This hook extracts Firestore operations from GruposView, eliminating direct
- * getFirestore() calls in favor of injected Firestore instance.
+ * Provides handlers for leave/transfer/invitation flows using injected mutation functions.
+ * Mutation hooks (useLeaveGroup, useTransferOwnership, etc.) are called at the component
+ * level and their mutateAsync functions are passed in for proper React Query cache management.
  *
  * Features:
  * - Leave group with auto-switch view mode when leaving current viewed group
@@ -18,33 +19,25 @@
  *
  * @example
  * ```typescript
- * const { handleConfirmLeave, handleConfirmTransfer, handleAcceptInvitation } =
+ * const { mutateAsync: leaveGroupAsync } = useLeaveGroup(user, services);
+ * const { handleConfirmLeave, handleConfirmTransfer } =
  *   useLeaveTransferFlow({
- *     db: services.db,
  *     user,
  *     onShowToast,
  *     t,
  *     lang,
- *     refetchGroups,
- *     refetchInvitations,
+ *     leaveGroupAsync,
+ *     transferOwnershipAsync,
+ *     acceptInvitationAsync,
+ *     declineInvitationAsync,
  *   });
- *
- * // Use in dialog handlers
- * const success = await handleConfirmLeave(group, 'soft');
  * ```
  */
 
 import { useCallback } from 'react';
 import type { User } from 'firebase/auth';
-import type { Firestore } from 'firebase/firestore';
-import type { SharedGroup, PendingInvitation, MemberProfile } from '@/types/sharedGroup';
-import { leaveGroup, transferOwnership } from '../services/groupMemberService';
-import {
-    handleAcceptInvitationService,
-    handleDeclineInvitationService,
-} from '../services/invitationHandlers';
+import type { SharedGroup, PendingInvitation } from '@/types/sharedGroup';
 import { useViewMode } from '@/shared/stores/useViewModeStore';
-import { APP_ID } from '@/config/constants';
 import { sanitizeInput } from '@/utils/sanitize';
 import type { LeaveMode } from '../types';
 
@@ -59,8 +52,6 @@ export type { LeaveMode } from '../types';
  * Options for useLeaveTransferFlow hook.
  */
 export interface UseLeaveTransferFlowOptions {
-    /** Firestore instance (injected for testability, null when services not ready) */
-    db: Firestore | null;
     /** Current authenticated user (null if not logged in) */
     user: User | null;
     /** Toast notification callback */
@@ -69,10 +60,14 @@ export interface UseLeaveTransferFlowOptions {
     t: (key: string, params?: Record<string, string | number>) => string;
     /** Language preference */
     lang: 'en' | 'es';
-    /** Callback to refetch groups list after mutations */
-    refetchGroups: () => void;
-    /** Callback to refetch invitations list after mutations (optional) */
-    refetchInvitations?: () => void;
+    /** Mutation: leave group (from useLeaveGroup hook) */
+    leaveGroupAsync: (input: { groupId: string }) => Promise<void>;
+    /** Mutation: transfer ownership (from useTransferOwnership hook) */
+    transferOwnershipAsync: (input: { groupId: string; newOwnerId: string }) => Promise<void>;
+    /** Mutation: accept invitation (from useAcceptInvitation hook) */
+    acceptInvitationAsync: (input: { invitation: PendingInvitation; shareMyTransactions?: boolean }) => Promise<void>;
+    /** Mutation: decline invitation (from useDeclineInvitation hook) */
+    declineInvitationAsync: (input: { invitation: PendingInvitation }) => Promise<void>;
 }
 
 /**
@@ -134,13 +129,14 @@ export function useLeaveTransferFlow(
     options: UseLeaveTransferFlowOptions
 ): UseLeaveTransferFlowReturn {
     const {
-        db,
         user,
         onShowToast,
         t,
         lang,
-        refetchGroups,
-        refetchInvitations,
+        leaveGroupAsync,
+        transferOwnershipAsync,
+        acceptInvitationAsync,
+        declineInvitationAsync,
     } = options;
 
     // Get view mode state for auto-switch on leave
@@ -180,7 +176,7 @@ export function useLeaveTransferFlow(
     const handleConfirmLeave = useCallback(
         async (group: SharedGroup, mode: LeaveMode): Promise<boolean> => {
             const groupId = group.id;
-            if (!db || !user || !groupId) {
+            if (!user || !groupId) {
                 return false;
             }
 
@@ -191,7 +187,7 @@ export function useLeaveTransferFlow(
 
             try {
                 // TODO (Story 14d-v2-1-7c): Pass mode to Cloud Function for hard leave support
-                await leaveGroup(db, user.uid, groupId);
+                await leaveGroupAsync({ groupId });
 
                 // Check and switch view mode if needed (returns true if auto-switch toast was shown)
                 const didAutoSwitch = handleAutoSwitchViewMode(groupId, group.name);
@@ -207,7 +203,6 @@ export function useLeaveTransferFlow(
                     );
                 }
 
-                refetchGroups();
                 return true;
             } catch (err) {
                 if (import.meta.env.DEV) console.error('[useLeaveTransferFlow] Error leaving group:', err);
@@ -221,7 +216,7 @@ export function useLeaveTransferFlow(
                 return false;
             }
         },
-        [db, user, onShowToast, t, lang, refetchGroups, handleAutoSwitchViewMode]
+        [user, onShowToast, t, lang, leaveGroupAsync, handleAutoSwitchViewMode]
     );
 
     // =========================================================================
@@ -235,12 +230,12 @@ export function useLeaveTransferFlow(
             memberName: string
         ): Promise<boolean> => {
             const groupId = group.id;
-            if (!db || !user || !groupId) {
+            if (!user || !groupId) {
                 return false;
             }
 
             try {
-                await transferOwnership(db, user.uid, memberId, groupId);
+                await transferOwnershipAsync({ groupId, newOwnerId: memberId });
 
                 onShowToast?.(
                     t('ownershipTransferred', { name: memberName }) ||
@@ -250,7 +245,6 @@ export function useLeaveTransferFlow(
                     'success'
                 );
 
-                refetchGroups();
                 return true;
             } catch (err) {
                 if (import.meta.env.DEV) console.error('[useLeaveTransferFlow] Error transferring ownership:', err);
@@ -264,7 +258,7 @@ export function useLeaveTransferFlow(
                 return false;
             }
         },
-        [db, user, onShowToast, t, lang, refetchGroups]
+        [user, onShowToast, t, lang, transferOwnershipAsync]
     );
 
     // =========================================================================
@@ -273,18 +267,12 @@ export function useLeaveTransferFlow(
 
     const handleAcceptInvitation = useCallback(
         async (invitation: PendingInvitation, shareMyTransactions?: boolean): Promise<boolean> => {
-            if (!db || !user || !invitation.id) {
+            if (!user || !invitation.id) {
                 return false;
             }
 
             try {
-                const userProfile: MemberProfile = {
-                    displayName: user.displayName || undefined,
-                    email: user.email || undefined,
-                    photoURL: user.photoURL || undefined,
-                };
-
-                await handleAcceptInvitationService(db, invitation, user.uid, userProfile, APP_ID, shareMyTransactions ?? false);
+                await acceptInvitationAsync({ invitation, shareMyTransactions });
 
                 // ECC Review #2: Sanitize group name before toast display (defense-in-depth)
                 const safeName = sanitizeInput(invitation.groupName, { maxLength: 100 });
@@ -296,8 +284,6 @@ export function useLeaveTransferFlow(
                     'success'
                 );
 
-                refetchGroups();
-                refetchInvitations?.();
                 return true;
             } catch (err) {
                 if (import.meta.env.DEV) console.error('[useLeaveTransferFlow] Error accepting invitation:', err);
@@ -311,7 +297,7 @@ export function useLeaveTransferFlow(
                 return false;
             }
         },
-        [db, user, onShowToast, t, lang, refetchGroups, refetchInvitations]
+        [user, onShowToast, t, lang, acceptInvitationAsync]
     );
 
     // =========================================================================
@@ -322,12 +308,12 @@ export function useLeaveTransferFlow(
         async (invitation: PendingInvitation): Promise<boolean> => {
             // Note: user check added for consistency with other handlers
             // and future-proofing for audit logging
-            if (!db || !user || !invitation.id) {
+            if (!user || !invitation.id) {
                 return false;
             }
 
             try {
-                await handleDeclineInvitationService(db, invitation);
+                await declineInvitationAsync({ invitation });
 
                 onShowToast?.(
                     t('declineInvitationSuccess') ||
@@ -337,7 +323,6 @@ export function useLeaveTransferFlow(
                     'success'
                 );
 
-                refetchInvitations?.();
                 return true;
             } catch (err) {
                 if (import.meta.env.DEV) console.error('[useLeaveTransferFlow] Error declining invitation:', err);
@@ -351,7 +336,7 @@ export function useLeaveTransferFlow(
                 return false;
             }
         },
-        [db, user, onShowToast, t, lang, refetchInvitations]
+        [user, onShowToast, t, lang, declineInvitationAsync]
     );
 
     // =========================================================================

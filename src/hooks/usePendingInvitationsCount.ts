@@ -24,6 +24,7 @@ import { getFirestore } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
 import { getPendingInvitationsForUser } from '@/services/invitationService';
 import type { PendingInvitation } from '@/types/sharedGroup';
+import { QUERY_KEYS } from '@/lib/queryKeys';
 
 // =============================================================================
 // Types
@@ -53,7 +54,7 @@ export interface UsePendingInvitationsCountReturn {
 
 /**
  * Query key for pending invitations.
- * Key format: ['pendingInvitations', userEmail]
+ * @deprecated Use QUERY_KEYS.pendingInvitations.byEmail() instead
  */
 export const pendingInvitationsQueryKey = (email: string) =>
     ['pendingInvitations', email] as const;
@@ -93,7 +94,7 @@ export function usePendingInvitationsCount(
         error,
         refetch,
     } = useQuery({
-        queryKey: pendingInvitationsQueryKey(email ?? ''),
+        queryKey: QUERY_KEYS.pendingInvitations.byEmail(email ?? ''),
         queryFn: async () => {
             if (!email) return [];
 

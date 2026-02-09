@@ -14,6 +14,12 @@ import {
     useCanCreateGroup,
     useGroupCount,
     useLeaveTransferFlow,
+    useDeleteGroup,
+    useLeaveGroup,
+    useTransferOwnership,
+    useAcceptInvitation,
+    useDeclineInvitation,
+    useToggleTransactionSharing,
     PendingInvitationsSection,
     JoinGroupByCode,
 } from '@/features/shared-groups';
@@ -59,17 +65,26 @@ export const GruposView: React.FC<GruposViewProps> = ({
     const { dialogs, actions } = useGroupDialogs();
 
     // Groups query (Story 14d-v2-1-7d: added refetch for leave/transfer operations)
-    const { data: groups, isLoading: groupsLoading, refetch: refetchGroups } = useGroups(user, services);
+    const { data: groups, isLoading: groupsLoading } = useGroups(user, services);
+
+    // TD-CONSOLIDATED-12: Mutation hooks (called at component level per Rules of Hooks)
+    const { mutateAsync: deleteGroupAsync } = useDeleteGroup(user, services);
+    const { mutateAsync: leaveGroupAsync } = useLeaveGroup(user, services);
+    const { mutateAsync: transferOwnershipAsync } = useTransferOwnership(user, services);
+    const { mutateAsync: acceptInvitationAsync } = useAcceptInvitation(user, services);
+    const { mutateAsync: declineInvitationAsync } = useDeclineInvitation(user, services);
+    const { mutateAsync: toggleTransactionSharingAsync } = useToggleTransactionSharing(user, services);
 
     // TD-7d-1: Leave/Transfer flow handlers via useLeaveTransferFlow hook
     const leaveTransferHandlers = useLeaveTransferFlow({
-        db: services?.db ?? null,
         user,
         onShowToast,
         t,
         lang,
-        refetchGroups,
-        refetchInvitations,
+        leaveGroupAsync,
+        transferOwnershipAsync,
+        acceptInvitationAsync,
+        declineInvitationAsync,
     });
 
     // BC-1 limit check (Story 14d-v2-1-4c-2: AC #1)
@@ -94,8 +109,10 @@ export const GruposView: React.FC<GruposViewProps> = ({
         createGroupAsync,
         isCreating,
         resetCreate,
-        refetchGroups,
         refetchInvitations,
+        deleteGroupAsync,
+        toggleTransactionSharingAsync,
+        acceptInvitationAsync,
         onShowToast,
         t,
         lang,

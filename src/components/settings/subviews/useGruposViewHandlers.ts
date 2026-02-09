@@ -3,14 +3,10 @@
 import { useCallback, useState } from 'react';
 import type { User } from 'firebase/auth';
 import type { Services } from '@/contexts/AuthContext';
-import { APP_ID } from '@/config/constants';
 import { trackEvent } from '@/services/analyticsService';
 import { sanitizeInput } from '@/utils/sanitize';
 import {
-    deleteGroupAsOwner,
     useUpdateGroup,
-    updateTransactionSharingEnabled,
-    handleAcceptInvitationService,
 } from '@/features/shared-groups';
 import type {
     CreateGroupInput,
@@ -20,7 +16,7 @@ import type {
     GroupDialogsActions,
     UseLeaveTransferFlowReturn,
 } from '@/features/shared-groups';
-import type { SharedGroup, PendingInvitation, MemberProfile } from '@/types/sharedGroup';
+import type { SharedGroup, PendingInvitation } from '@/types/sharedGroup';
 
 const OPT_IN_TOAST_KEYS: Record<string, string> = {
     yes: 'joinedGroupWithSharing',
@@ -38,8 +34,13 @@ export interface UseGruposViewHandlersOptions {
     createGroupAsync: (input: CreateGroupInput) => Promise<SharedGroup>;
     isCreating: boolean;
     resetCreate: () => void;
-    refetchGroups: () => void;
     refetchInvitations: () => void;
+    /** Mutation: delete group (from useDeleteGroup hook) */
+    deleteGroupAsync: (input: { groupId: string }) => Promise<void>;
+    /** Mutation: toggle transaction sharing (from useToggleTransactionSharing hook) */
+    toggleTransactionSharingAsync: (input: { groupId: string; enabled: boolean }) => Promise<void>;
+    /** Mutation: accept invitation (from useAcceptInvitation hook) */
+    acceptInvitationAsync: (input: { invitation: PendingInvitation; shareMyTransactions?: boolean }) => Promise<void>;
     onShowToast?: (message: string, type?: 'success' | 'error') => void;
     t: (key: string, params?: Record<string, string | number>) => string;
     lang: 'en' | 'es';
@@ -49,7 +50,8 @@ export function useGruposViewHandlers(options: UseGruposViewHandlersOptions) {
     const {
         dialogs, actions, user, services, isOnline,
         leaveTransferHandlers, createGroupAsync, isCreating,
-        resetCreate, refetchGroups, refetchInvitations,
+        resetCreate, refetchInvitations,
+        deleteGroupAsync, toggleTransactionSharingAsync, acceptInvitationAsync,
         onShowToast, t, lang,
     } = options;
 
@@ -191,16 +193,14 @@ export function useGruposViewHandlers(options: UseGruposViewHandlersOptions) {
         }
     }, [dialogs.selectedGroupForAction, dialogs.selectedMemberForTransfer, dialogs.selectedMemberName, actions, leaveTransferHandlers]);
 
-    // Delete Group Handler (Story 14d-v2-1-7e)
+    // Delete Group Handler (Story 14d-v2-1-7e, TD-CONSOLIDATED-12: uses mutation hook)
     const handleConfirmDelete = useCallback(async () => {
-        if (!dialogs.selectedGroupForAction?.id || !user || !services?.db) return;
+        if (!dialogs.selectedGroupForAction?.id) return;
         const groupName = sanitizeInput(dialogs.selectedGroupForAction.name, { maxLength: 100 });
         actions.setIsDeleting(true);
         try {
-            await deleteGroupAsOwner(services.db, user.uid, dialogs.selectedGroupForAction.id, APP_ID);
+            await deleteGroupAsync({ groupId: dialogs.selectedGroupForAction.id });
             actions.closeDeleteDialog();
-            refetchGroups();
-            refetchInvitations();
             onShowToast?.(
                 t('groupDeletedSuccess', { name: groupName }) ||
                     (lang === 'es' ? `Grupo "${groupName}" eliminado` : `Group "${groupName}" deleted`),
@@ -212,7 +212,7 @@ export function useGruposViewHandlers(options: UseGruposViewHandlersOptions) {
         } finally {
             actions.setIsDeleting(false);
         }
-    }, [dialogs.selectedGroupForAction, user, services?.db, actions, refetchGroups, refetchInvitations, onShowToast, t, lang]);
+    }, [dialogs.selectedGroupForAction, actions, deleteGroupAsync, onShowToast, t, lang]);
 
     const handleCloseDeleteDialog = useCallback(() => {
         if (dialogs.isDeleting) return;
@@ -264,13 +264,12 @@ export function useGruposViewHandlers(options: UseGruposViewHandlersOptions) {
         actions.closeEditDialog();
     }, [isUpdatingGroup, actions]);
 
-    // Transaction Sharing Toggle (Story 14d-v2-1-11c)
+    // Transaction Sharing Toggle (Story 14d-v2-1-11c, TD-CONSOLIDATED-12: uses mutation hook)
     const handleToggleTransactionSharing = useCallback(async (enabled: boolean) => {
-        if (!dialogs.editingGroup?.id || !user?.uid || !services?.db) return;
+        if (!dialogs.editingGroup?.id) return;
         setIsTogglePending(true);
         try {
-            await updateTransactionSharingEnabled(services.db, dialogs.editingGroup.id, user.uid, enabled);
-            refetchGroups();
+            await toggleTransactionSharingAsync({ groupId: dialogs.editingGroup.id, enabled });
             onShowToast?.(
                 enabled
                     ? (t('transactionSharingEnabled') || (lang === 'es' ? 'Compartir transacciones habilitado' : 'Transaction sharing enabled'))
@@ -290,7 +289,7 @@ export function useGruposViewHandlers(options: UseGruposViewHandlersOptions) {
         } finally {
             setIsTogglePending(false);
         }
-    }, [dialogs.editingGroup?.id, user?.uid, services?.db, refetchGroups, onShowToast, t, lang]);
+    }, [dialogs.editingGroup?.id, toggleTransactionSharingAsync, onShowToast, t, lang]);
 
     // Transaction Sharing Opt-In Flow (Story 14d-v2-1-13+14)
     // Note: handleAcceptInvitation and handleOptInJoin are intentionally separate code paths
@@ -304,27 +303,19 @@ export function useGruposViewHandlers(options: UseGruposViewHandlersOptions) {
         trackEvent('group_join_optin_shown', { groupId: group.id || '', transactionSharingEnabled: true });
     }, [actions, isOnline, showOfflineError]);
 
+    // TD-CONSOLIDATED-12: Uses acceptInvitationAsync mutation hook for cache management
     const handleOptInJoin = useCallback(async (shareMyTransactions: boolean, explicitChoice?: 'yes' | 'no' | 'dismiss') => {
         const choice = explicitChoice ?? (shareMyTransactions ? 'yes' : 'no');
-        if (!optInInvitation || !user || !services?.db) return;
+        if (!optInInvitation) return;
         actions.setIsAccepting(true);
         try {
-            const userProfile: MemberProfile = {
-                displayName: user.displayName || undefined,
-                email: user.email || undefined,
-                photoURL: user.photoURL || undefined,
-            };
-            await handleAcceptInvitationService(
-                services.db, optInInvitation, user.uid, userProfile, APP_ID, shareMyTransactions
-            );
+            await acceptInvitationAsync({ invitation: optInInvitation, shareMyTransactions });
             const rawGroupName = optInGroup?.name || optInInvitation.groupName;
             const groupName = sanitizeInput(rawGroupName, { maxLength: 100 });
             trackEvent('group_join_optin_choice', { groupId: optInGroup?.id || '', choice });
             setIsOptInDialogOpen(false);
             setOptInInvitation(null);
             setOptInGroup(null);
-            refetchGroups();
-            refetchInvitations();
             const toastMessage = t(OPT_IN_TOAST_KEYS[choice], { groupName });
             if (toastMessage) onShowToast?.(toastMessage, 'success');
         } catch (err: unknown) {
@@ -337,7 +328,7 @@ export function useGruposViewHandlers(options: UseGruposViewHandlersOptions) {
         } finally {
             actions.setIsAccepting(false);
         }
-    }, [optInInvitation, optInGroup, user, services?.db, actions, refetchGroups, refetchInvitations, onShowToast, t, lang]);
+    }, [optInInvitation, optInGroup, actions, acceptInvitationAsync, onShowToast, t, lang]);
 
     const handleOptInCancel = useCallback(() => {
         setIsOptInDialogOpen(false);

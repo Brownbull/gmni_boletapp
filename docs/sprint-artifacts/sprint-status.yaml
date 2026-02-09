@@ -172,8 +172,8 @@ development_status:
 
   # TIER 5: Technical Improvements (BACKLOG) - 12-17 hrs optional
   TD-CONSOLIDATED-10-toctou-atomic-transactions: done  # 2-3 hrs - Wrap membership validation in Firestore transaction [from: TD-14d-11] - ECC Code Review 2026-02-08: APPROVED (9/10, 3 quick fixes applied)
-  TD-CONSOLIDATED-11-server-side-rate-limiting: review  # 3-4 hrs - Rate limiting for destructive operations [from: TD-14d-6, 39] - ECC Dev Story 2026-02-08
-  TD-CONSOLIDATED-12-react-query-cache-staleness: ready-for-dev  # 3-4 hrs - Fix optimistic cache update [from: TD-14d-47] - ECC Story Created 2026-02-08 (Planner + Architect, upgraded to 5 pts MEDIUM)
+  TD-CONSOLIDATED-11-server-side-rate-limiting: done  # 3-4 hrs - Rate limiting for destructive operations [from: TD-14d-6, 39] - ECC Code Review 2026-02-08: APPROVED (7/10 STANDARD, 4 quick fixes applied: bypass prevention + ownership transfer path + magic numbers + JSDoc, 1 TD story created: TD-23)
+  TD-CONSOLIDATED-12-react-query-cache-staleness: review  # 3-4 hrs - Fix optimistic cache update [from: TD-14d-47] - ECC Dev Story 2026-02-08: 6 mutation hooks, query key centralization, handler refactoring, 140 tests
   TD-CONSOLIDATED-13-dialog-focus-management: ready-for-dev  # 3-4 hrs - Consistent focus cleanup across dialogs [from: TD-14d-17, 18] - ECC Story Created 2026-02-08 (Planner + Architect, upgraded to 3 pts MEDIUM)
   TD-CONSOLIDATED-14-cloud-function-type-sync-ci: ready-for-dev  # 1-2 hrs - CI validation for type synchronization [from: TD-14d-9] - ECC Story Created 2026-02-08 (Planner + Architect, 1 pt XS)
   TD-CONSOLIDATED-15-dependency-vulnerability-tracking: ready-for-dev  # 1-2 hrs - npm audit remediation [from: TD-14d-7]
@@ -193,6 +193,9 @@ development_status:
 
   # Added from TD-CONSOLIDATED-8 code review (2026-02-08)
   TD-CONSOLIDATED-22-test-helper-migration-completion: ready-for-dev  # 2-3 hrs - Complete lifecycle adoption, import standardization, constants consumption, ESLint guard [from: TD-CONSOLIDATED-8 review #4-7]
+
+  # Added from TD-CONSOLIDATED-11 code review (2026-02-08)
+  TD-CONSOLIDATED-23-toggle-server-side-cooldown: ready-for-dev  # 2-3 hrs - Add server-side cooldown enforcement for transaction sharing toggle path [from: TD-CONSOLIDATED-11 review #3/4]
 
   # ARCHIVED (42+ items) - Fix inline if encountered, not tracked individually
   # See: stories/TD-ARCHIVED/ and TD-CONSOLIDATED-PLAN.md for full archive list
