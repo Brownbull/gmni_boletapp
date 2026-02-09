@@ -73,13 +73,7 @@ import { applyItemNameMappings as pureApplyItemNameMappings } from '@/features/c
 // Types
 // =============================================================================
 
-/**
- * Toast message configuration
- */
-interface ToastMessage {
-    text: string;
-    type: 'success' | 'info';
-}
+import type { ToastMessage } from '@/shared/hooks';
 
 /**
  * Batch session interface for tracking multi-receipt scans

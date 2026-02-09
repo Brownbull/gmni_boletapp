@@ -9,6 +9,7 @@
 
 import type { Transaction, TransactionItem, StoreCategory } from '@/types/transaction';
 import type { FindItemNameMatchFn } from '@/features/categories';
+import type { ToastMessage } from '@/shared/hooks';
 
 /**
  * Result from Gemini AI scan (subset of Transaction fields returned by analyzeReceipt).
@@ -326,7 +327,7 @@ export interface UIDependencies {
    * Set toast message.
    * **Required** - No toast store exists. This is still injected from App.tsx.
    */
-  setToastMessage: (message: { text: string; type: 'success' | 'info' }) => void;
+  setToastMessage: (message: ToastMessage) => void;
 
   /**
    * Set whether analyzing is in progress.

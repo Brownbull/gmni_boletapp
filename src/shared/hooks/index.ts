@@ -1,6 +1,6 @@
 // Shared hooks used across multiple features
 
-export { useToast, type ToastMessage } from './useToast';
+export { useToast, type ToastMessage, type ToastType } from './useToast';
 export { useHistoryNavigation } from './useHistoryNavigation';
 
 // Dialog utility hooks

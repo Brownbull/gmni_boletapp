@@ -30,14 +30,8 @@ import { useNavigationStore } from '@/shared/stores/useNavigationStore';
 // Types
 // =============================================================================
 
-/**
- * Message type for toast notifications.
- * Note: Uses 'success' | 'info' to match App.tsx's toast system.
- */
-export interface ToastMessage {
-  text: string;
-  type: 'success' | 'info';
-}
+import type { ToastMessage } from '@/shared/hooks';
+export type { ToastMessage };
 
 /**
  * User credits state.

@@ -31,7 +31,7 @@ import { migrateCreatedAt } from './utils/migrateCreatedAt';
 import { useRecentScans } from './hooks/useRecentScans';
 import { usePaginatedTransactions } from './hooks/usePaginatedTransactions';
 import { CategoriesFeature } from '@features/categories';
-import { useToast } from '@/shared/hooks';
+import { useToast, type ToastMessage } from '@/shared/hooks';
 import { Toast } from '@/shared/ui';
 import {
     useSettingsStore,
@@ -494,7 +494,7 @@ function App() {
     const [wiping, _setWiping] = useState(false);
     const [exporting, _setExporting] = useState(false);
     const { toastMessage, showToast, dismissToast } = useToast();
-    const setToastMessage = useCallback((msg: { text: string; type: 'success' | 'info' } | null) => {
+    const setToastMessage = useCallback((msg: ToastMessage | null) => {
         if (msg) {
             showToast(msg.text, msg.type);
         } else {

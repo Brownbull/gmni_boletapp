@@ -64,13 +64,7 @@ import { batchReviewActions, atomicBatchActions } from '@features/batch-review';
 // Types
 // =============================================================================
 
-/**
- * Toast message configuration
- */
-interface ToastMessage {
-    text: string;
-    type: 'success' | 'info';
-}
+import type { ToastMessage } from '@/shared/hooks';
 
 /**
  * Session context for insight display

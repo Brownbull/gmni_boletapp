@@ -38,10 +38,10 @@ describe('byNumberDesc', () => {
         expect(sorted[0].name).toBe('Apple');
     });
 
-    it('should handle equal values (stable sort)', () => {
+    it('should handle equal values (stable sort preserves insertion order)', () => {
         const sorted = [...items].sort(byNumberDesc('amount'));
         const ties = sorted.filter((i) => i.amount === 200);
-        expect(ties).toHaveLength(2);
+        expect(ties.map(t => t.name)).toEqual(['Banana', 'Cherry']);
     });
 });
 

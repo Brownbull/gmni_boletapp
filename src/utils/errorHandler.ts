@@ -25,7 +25,7 @@ export type ErrorCode =
     | 'VALIDATION_ERROR'
     | 'UNKNOWN_ERROR';
 
-interface ErrorInfo {
+export interface ErrorInfo {
     code: ErrorCode;
     titleKey: string;
     messageKey: string;
@@ -174,6 +174,10 @@ export function classifyAndGetErrorInfo(error: unknown): ErrorInfo {
 
 /**
  * Safely extract a human-readable message from any thrown value.
+ *
+ * WARNING: Returns raw error text. Do NOT display the result directly
+ * to users. Use classifyAndGetErrorInfo() for user-facing messages,
+ * which maps to translation keys instead of exposing internals.
  */
 export function extractErrorMessage(error: unknown): string {
     if (error instanceof Error) return error.message;

@@ -82,13 +82,3 @@ export function formatCompact(value: number, prefix: string = ''): string {
 // Decimal formatting
 // =============================================================================
 
-/**
- * Format a number with a fixed number of decimal places.
- * Unlike `.toFixed()`, returns a number (not string).
- *
- * @example formatDecimal(3.14159, 2) → 3.14
- * @example formatDecimal(100, 0) → 100
- */
-export function formatDecimal(value: number, decimals: number = 2): number {
-    return roundTo(value, decimals);
-}

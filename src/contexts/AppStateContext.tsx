@@ -34,19 +34,13 @@ import {
     type ReactNode,
 } from 'react';
 
+import type { ToastMessage } from '@/shared/hooks/useToast';
+
 // =============================================================================
-// Types
+// Types — ToastMessage re-exported from @/shared/hooks/useToast (Story 15-2h)
 // =============================================================================
 
-/**
- * Toast message configuration
- */
-export interface ToastMessage {
-    /** Message text to display */
-    text: string;
-    /** Toast type for styling — error/warning added in Story 15-2h */
-    type: 'success' | 'info' | 'error' | 'warning';
-}
+export type { ToastMessage };
 
 /**
  * Context value provided to consumers
@@ -116,10 +110,11 @@ export function AppStateProvider({
     // Auto-dismiss Toast Effect
     // ===========================================================================
 
-    // Auto-dismiss toast after specified duration
+    // Auto-dismiss toast — errors stay longer for readability (Story 15-2h)
     useEffect(() => {
         if (toastMessage) {
-            const timer = setTimeout(() => setToastMessageState(null), toastDuration);
+            const duration = toastMessage.type === 'error' ? toastDuration * 2 : toastDuration;
+            const timer = setTimeout(() => setToastMessageState(null), duration);
             return () => clearTimeout(timer);
         }
     }, [toastMessage, toastDuration]);

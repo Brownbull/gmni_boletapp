@@ -5,7 +5,7 @@
  *
  * Test Categories:
  * - Conditional rendering (null when no message)
- * - Message type styling (success vs info)
+ * - Message type styling (success, info, error, warning)
  * - Content display
  * - Accessibility
  */
@@ -97,6 +97,52 @@ describe('Toast', () => {
       const style = toast.getAttribute('style') || '';
       expect(style).toContain('background-color: var(--accent)');
     });
+
+    it('should render X-circle icon for error type', () => {
+      const message: ToastMessage = { text: 'Error!', type: 'error' };
+
+      render(<Toast message={message} />);
+
+      const svg = document.querySelector('svg');
+      expect(svg).toBeInTheDocument();
+      // Error icon has circle + two crossing lines (X shape)
+      const circle = svg?.querySelector('circle');
+      expect(circle).toBeInTheDocument();
+      const lines = svg?.querySelectorAll('line');
+      expect(lines).toHaveLength(2);
+    });
+
+    it('should apply red background color for error type', () => {
+      const message: ToastMessage = { text: 'Error!', type: 'error' };
+
+      render(<Toast message={message} />);
+
+      const toast = screen.getByRole('status');
+      const style = toast.getAttribute('style') || '';
+      expect(style).toContain('background-color: #ef4444');
+    });
+
+    it('should render triangle icon for warning type', () => {
+      const message: ToastMessage = { text: 'Warning!', type: 'warning' };
+
+      render(<Toast message={message} />);
+
+      const svg = document.querySelector('svg');
+      expect(svg).toBeInTheDocument();
+      // Warning icon has a path (triangle) element
+      const path = svg?.querySelector('path');
+      expect(path).toBeInTheDocument();
+    });
+
+    it('should apply amber background color for warning type', () => {
+      const message: ToastMessage = { text: 'Warning!', type: 'warning' };
+
+      render(<Toast message={message} />);
+
+      const toast = screen.getByRole('status');
+      const style = toast.getAttribute('style') || '';
+      expect(style).toContain('background-color: #f59e0b');
+    });
   });
 
   describe('accessibility', () => {
@@ -108,12 +154,20 @@ describe('Toast', () => {
       expect(screen.getByRole('status')).toBeInTheDocument();
     });
 
-    it('should have aria-live="polite"', () => {
+    it('should have aria-live="polite" for non-error types', () => {
       const message: ToastMessage = { text: 'Test', type: 'success' };
 
       render(<Toast message={message} />);
 
       expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'polite');
+    });
+
+    it('should have aria-live="assertive" for error type', () => {
+      const message: ToastMessage = { text: 'Error!', type: 'error' };
+
+      render(<Toast message={message} />);
+
+      expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'assertive');
     });
   });
 

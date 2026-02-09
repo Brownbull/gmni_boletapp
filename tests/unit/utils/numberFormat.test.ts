@@ -10,7 +10,6 @@ import {
     calcPercent,
     formatPercent,
     formatCompact,
-    formatDecimal,
 } from '../../../src/utils/numberFormat';
 
 describe('roundTo', () => {
@@ -40,6 +39,14 @@ describe('roundTo', () => {
 
     it('should handle whole numbers', () => {
         expect(roundTo(42, 2)).toBe(42);
+    });
+
+    it('should return NaN for NaN input', () => {
+        expect(roundTo(NaN)).toBeNaN();
+    });
+
+    it('should return Infinity for Infinity input', () => {
+        expect(roundTo(Infinity)).toBe(Infinity);
     });
 });
 
@@ -129,16 +136,3 @@ describe('formatCompact', () => {
     });
 });
 
-describe('formatDecimal', () => {
-    it('should format to 2 decimal places by default', () => {
-        expect(formatDecimal(3.14159)).toBe(3.14);
-    });
-
-    it('should format to 0 decimal places', () => {
-        expect(formatDecimal(3.7, 0)).toBe(4);
-    });
-
-    it('should return number type', () => {
-        expect(typeof formatDecimal(3.14)).toBe('number');
-    });
-});
