@@ -11,16 +11,16 @@ import { toDateSafe } from '@/utils/timestamp';
 // Data Parsing
 // =============================================================================
 
-export const parseStrictNumber = (val: any): number => {
+export const parseStrictNumber = (val: unknown): number => {
     const clean = String(val).replace(/[^0-9]/g, '');
     const num = parseInt(clean, 10);
     return isNaN(num) ? 0 : num;
 };
 
-export const getSafeDate = (val: any): string => {
+export const getSafeDate = (val: unknown): string => {
     const today = new Date().toISOString().split('T')[0];
     if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
-    const date = toDateSafe(val);
+    const date = toDateSafe(val as Parameters<typeof toDateSafe>[0]);
     return date ? date.toISOString().split('T')[0] : today;
 };
 

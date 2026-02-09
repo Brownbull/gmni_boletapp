@@ -100,7 +100,7 @@ export interface UseDashboardViewDataReturn {
     /** Date formatting function (compatible with TransactionCard) */
     formatDate: (date: string, format: string) => string;
     /** Safe date extraction function (handles Firestore Timestamp) */
-    getSafeDate: (val: any) => string;
+    getSafeDate: (val: unknown) => string;
 
     // === Callbacks (stub - override via _testOverrides) ===
     /** Create new transaction handler */

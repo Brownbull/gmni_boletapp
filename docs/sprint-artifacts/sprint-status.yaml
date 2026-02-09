@@ -76,12 +76,12 @@ development_status:
   15-1g-consolidate-validation: done    # 1 pt  - Merge validation.ts + validationUtils.ts
 
   # Phase 2: Business Logic Centralization
-  15-2a-currency-formatting: backlog    # 2 pts - DEFAULT_CURRENCY + formatCurrency() (56 occurrences)
-  15-2b-date-utilities: backlog         # 2 pts - Merge date.ts + dateHelpers.ts + periodUtils.ts
-  15-2c-timestamp-utils: backlog        # 2 pts - Unified TimestampLike → Date/millis
-  15-2d-transaction-validation: backlog # 2 pts - Shared validation predicates (11+ files)
+  15-2a-currency-formatting: done       # 2 pts - DEFAULT_CURRENCY + formatCurrency() (56 occurrences)
+  15-2b-date-utilities: done            # 2 pts - Merge date.ts + dateHelpers.ts + periodUtils.ts
+  15-2c-timestamp-utils: done           # 2 pts - Unified TimestampLike → Date/millis
+  15-2d-transaction-validation: done    # 2 pts - Shared validation predicates (11+ files)
   15-2e-comparators: backlog            # 2 pts - Typed sort comparators (132 calls, 43 files)
-  15-2f-storage-wrapper: backlog        # 2 pts - Typed localStorage wrapper (22 files)
+  15-2f-storage-wrapper: done           # 2 pts - Typed localStorage wrapper (22 files)
   15-2g-number-format: backlog          # 2 pts - formatDecimal(), formatPercent()
   15-2h-error-handling: backlog         # 3 pts - Error code mapping + toast service (37 files)
 

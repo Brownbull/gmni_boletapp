@@ -91,7 +91,7 @@ interface EditViewProps {
     t: (key: string) => string;
     storeCategories: string[];
     formatCurrency: (amount: number, currency: string) => string;
-    parseStrictNumber: (val: any) => number;
+    parseStrictNumber: (val: unknown) => number;
     onBack: () => void;
     onDelete: (id: string) => void;
     onSave: () => Promise<void>;

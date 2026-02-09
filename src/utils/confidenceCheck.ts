@@ -88,8 +88,6 @@ function isValidDate(dateStr: string): boolean {
   }
 }
 
-// hasValidItems imported from @/utils/transactionValidation
-
 /**
  * Determine if Quick Save should be shown based on confidence.
  *
