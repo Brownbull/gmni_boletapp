@@ -12,6 +12,7 @@ on:
       - '!docs/team-standards.md'  # team-standards.md should trigger full CI
       - '.claude/**'
       - '_bmad/**'
+      - '_ecc/**'
       - 'LICENSE'
       - '.gitignore'
       - '.vscode/**'
@@ -23,6 +24,7 @@ on:
       - '!docs/team-standards.md'
       - '.claude/**'
       - '_bmad/**'
+      - '_ecc/**'
       - 'LICENSE'
       - '.gitignore'
       - '.vscode/**'
@@ -45,7 +47,7 @@ jobs:
           echo "Files that trigger this workflow:"
           echo "  - docs/**"
           echo "  - *.md (except docs/team-standards.md)"
-          echo "  - .claude/**"
+          echo "  - .claude/**, _bmad/**, _ecc/**"
           echo "  - LICENSE, .gitignore, .vscode/**"
           echo ""
           echo "Status: PASSED (no code changes)"
