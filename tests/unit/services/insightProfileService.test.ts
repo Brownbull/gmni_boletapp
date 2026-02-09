@@ -19,7 +19,7 @@ import {
   recordInsightShown,
   clearRecentInsights,
   resetInsightProfile,
-} from '../../../src/services/insightProfileService';
+} from '@features/insights/services/insightProfileService';
 import type { UserInsightProfile, InsightRecord } from '../../../src/types/insight';
 import { MAX_RECENT_INSIGHTS } from '../../../src/types/insight';
 
@@ -649,7 +649,7 @@ describe('recordIntentionalResponse', () => {
   });
 
   it('should update matching insight with intentional response', async () => {
-    const { recordIntentionalResponse } = await import('../../../src/services/insightProfileService');
+    const { recordIntentionalResponse } = await import('@features/insights/services/insightProfileService');
 
     const targetInsight = createInsightRecord('category_trend', 0);
     const profile = createUserProfile({ recentInsights: [targetInsight] });
@@ -675,7 +675,7 @@ describe('recordIntentionalResponse', () => {
   });
 
   it('should update matching insight with unintentional response', async () => {
-    const { recordIntentionalResponse } = await import('../../../src/services/insightProfileService');
+    const { recordIntentionalResponse } = await import('@features/insights/services/insightProfileService');
 
     const targetInsight = createInsightRecord('spending_velocity', 0);
     const profile = createUserProfile({ recentInsights: [targetInsight] });
@@ -700,7 +700,7 @@ describe('recordIntentionalResponse', () => {
   });
 
   it('should store null response when dismissed without answering', async () => {
-    const { recordIntentionalResponse } = await import('../../../src/services/insightProfileService');
+    const { recordIntentionalResponse } = await import('@features/insights/services/insightProfileService');
 
     const targetInsight = createInsightRecord('category_trend', 0);
     const profile = createUserProfile({ recentInsights: [targetInsight] });
@@ -725,7 +725,7 @@ describe('recordIntentionalResponse', () => {
   });
 
   it('should only update matching insight, leaving others unchanged', async () => {
-    const { recordIntentionalResponse } = await import('../../../src/services/insightProfileService');
+    const { recordIntentionalResponse } = await import('@features/insights/services/insightProfileService');
 
     const insight1 = createInsightRecord('category_trend', 1);
     const insight2 = createInsightRecord('merchant_frequency', 0);

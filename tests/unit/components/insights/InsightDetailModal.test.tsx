@@ -14,7 +14,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '../../../setup/test-utils';
-import { InsightDetailModal } from '../../../../src/components/insights/InsightDetailModal';
+import { InsightDetailModal } from '@features/insights/components/InsightDetailModal';
 import { InsightRecord } from '../../../../src/types/insight';
 import { createMockTimestamp } from '../../../helpers';
 

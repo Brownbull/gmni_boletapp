@@ -13,7 +13,7 @@ import {
   AirlockTemporalFilter,
   filterAirlocksByTemporal,
   type AirlockTemporalFilterState,
-} from '../../../../src/components/insights/AirlockTemporalFilter';
+} from '@features/insights/components/AirlockTemporalFilter';
 import { AirlockRecord } from '../../../../src/types/airlock';
 import { createMockTimestamp } from '../../../helpers';
 

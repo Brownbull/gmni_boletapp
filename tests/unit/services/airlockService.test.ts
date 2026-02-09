@@ -16,7 +16,7 @@ import {
   markAirlockViewed,
   hasEnoughCredits,
   deductCredits,
-} from '../../../src/services/airlockService';
+} from '@features/insights/services/airlockService';
 import type { AirlockRecord } from '../../../src/types/airlock';
 
 // Mock Firebase Firestore

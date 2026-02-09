@@ -28,7 +28,7 @@ vi.mock('../../../../src/services/firestore', () => ({
 }));
 
 // Mock the insight engine service
-vi.mock('../../../../src/services/insightEngineService', () => ({
+vi.mock('@features/insights/services/insightEngineService', () => ({
     generateInsightForTransaction: vi.fn(() =>
         Promise.resolve({
             id: 'test-insight',
@@ -71,7 +71,7 @@ vi.mock('@features/batch-review', () => ({
 // Import after mocking
 import { useTransactionHandlers } from '../../../../src/hooks/app/useTransactionHandlers';
 import * as firestoreService from '../../../../src/services/firestore';
-import * as insightService from '../../../../src/services/insightEngineService';
+import * as insightService from '@features/insights/services/insightEngineService';
 import * as csvExport from '../../../../src/utils/csvExport';
 
 describe('useTransactionHandlers', () => {

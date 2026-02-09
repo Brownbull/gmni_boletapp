@@ -13,7 +13,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import {
   InsightsViewSwitcher,
   InsightsViewMode,
-} from '../../../../src/components/insights/InsightsViewSwitcher';
+} from '@features/insights/components/InsightsViewSwitcher';
 
 // Simple translation mock
 const mockT = (key: string) => {

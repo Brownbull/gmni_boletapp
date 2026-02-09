@@ -60,7 +60,7 @@ import {
     generateInsightForTransaction,
     isInsightsSilenced,
     getDefaultCache,
-} from '../../services/insightEngineService';
+} from '@features/insights/services/insightEngineService';
 import { shouldShowQuickSave, calculateConfidence } from '../../utils/confidenceCheck';
 import { parseStrictNumber } from '../../utils/validation';
 import { hasValidItems } from '@/utils/transactionValidation';

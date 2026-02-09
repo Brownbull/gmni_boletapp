@@ -59,7 +59,7 @@ import { useTrustedMerchants } from './hooks/useTrustedMerchants';
 import { useUserPreferences } from './hooks/useUserPreferences';
 import { useUserCredits } from './hooks/useUserCredits';
 import { useReducedMotion } from './hooks/useReducedMotion';
-import { useInsightProfile } from './hooks/useInsightProfile';
+import { useInsightProfile } from '@features/insights/hooks/useInsightProfile';
 import { useBatchSession } from './hooks/useBatchSession';
 import { usePersonalRecords } from './hooks/usePersonalRecords';
 import { useInAppNotifications } from './hooks/useInAppNotifications';
@@ -120,7 +120,7 @@ import {
     isInsightsSilenced,
     getLastWeekTotal,
     setLocalCache,
-} from './services/insightEngineService';
+} from '@features/insights/services/insightEngineService';
 import { Transaction } from './types/transaction';
 import { Insight } from './types/insight';
 import {

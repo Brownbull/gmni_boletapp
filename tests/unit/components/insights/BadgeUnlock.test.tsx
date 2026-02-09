@@ -13,7 +13,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { BadgeUnlock } from '../../../../src/components/insights/BadgeUnlock';
+import { BadgeUnlock } from '@features/insights/components/BadgeUnlock';
 
 // Simple translation mock
 const mockT = (key: string) => {

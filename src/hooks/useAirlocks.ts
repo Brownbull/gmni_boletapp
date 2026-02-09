@@ -23,7 +23,7 @@ import {
   deductCredits,
   deleteAirlock,
   deleteAirlocks,
-} from '../services/airlockService';
+} from '@features/insights/services/airlockService';
 import { AirlockRecord, AirlockTransaction, AIRLOCK_CREDIT_COST } from '../types/airlock';
 
 interface UseAirlocksOptions {

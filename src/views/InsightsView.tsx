@@ -36,22 +36,22 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { ChevronLeft, Lightbulb, Trash2, X } from 'lucide-react';
-import { getUserInsightProfile } from '../services/insightEngineService';
-import { InsightHistoryCard } from '../components/insights/InsightHistoryCard';
-import { InsightDetailModal } from '../components/insights/InsightDetailModal';
+import { getUserInsightProfile } from '@features/insights/services/insightEngineService';
+import { InsightHistoryCard } from '@features/insights/components/InsightHistoryCard';
+import { InsightDetailModal } from '@features/insights/components/InsightDetailModal';
 import {
   InsightsTemporalFilter,
   type InsightTemporalFilter,
-} from '../components/insights/InsightsTemporalFilter';
+} from '@features/insights/components/InsightsTemporalFilter';
 import {
   InsightsViewSwitcher,
   InsightsViewMode,
-} from '../components/insights/InsightsViewSwitcher';
-import { InsightsCarousel, selectHighlightedInsights } from '../components/insights/InsightsCarousel';
-import { CelebrationView } from '../components/insights/CelebrationView';
+} from '@features/insights/components/InsightsViewSwitcher';
+import { InsightsCarousel, selectHighlightedInsights } from '@features/insights/components/InsightsCarousel';
+import { CelebrationView } from '@features/insights/components/CelebrationView';
 import { InsightRecord } from '../types/insight';
 import { useAuth } from '../hooks/useAuth';
-import { useInsightProfile } from '../hooks/useInsightProfile';
+import { useInsightProfile } from '@features/insights/hooks/useInsightProfile';
 import { getISOWeekNumber } from '../utils/date';
 import { getStorageString, setStorageString } from '@/utils/storage';
 import { toDateSafe } from '@/utils/timestamp';

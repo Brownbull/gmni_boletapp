@@ -19,7 +19,7 @@ import {
     updateRecordCooldowns,
     getDefaultCooldowns,
     generateRecordMessage,
-} from '../../../src/services/recordsService';
+} from '@features/insights/services/recordsService';
 import type { Transaction } from '../../../src/types/transaction';
 import type { RecordCooldowns, PersonalRecordType } from '../../../src/types/personalRecord';
 import { RECORD_COOLDOWNS_KEY, RECORD_TYPE_COOLDOWN_MS } from '../../../src/types/personalRecord';

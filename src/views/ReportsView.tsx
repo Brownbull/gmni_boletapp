@@ -23,13 +23,13 @@ import {
   ReportRow,
   ReportDetailOverlay,
   type ReportDetailData,
-} from '../components/reports';
+} from '@features/reports/components';
 import { ProfileDropdown, ProfileAvatar, getInitials } from '../components/ProfileDropdown';
 import {
   getAvailableReportsForYear,
   getMaxReportsForYear,
   type ReportRowData,
-} from '../utils/reportUtils';
+} from '@features/reports/utils/reportUtils';
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 // Story 14e-25c.2: Internal data hooks

@@ -17,7 +17,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Timestamp } from 'firebase/firestore';
-import { AirlockSequence } from '../../../../src/components/insights/AirlockSequence';
+import { AirlockSequence } from '@features/insights/components/AirlockSequence';
 import { InsightRecord, InsightCategory } from '../../../../src/types/insight';
 
 // Mock Firebase Timestamp

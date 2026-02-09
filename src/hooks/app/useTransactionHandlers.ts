@@ -52,7 +52,7 @@ import {
     generateInsightForTransaction,
     isInsightsSilenced,
     getDefaultCache,
-} from '../../services/insightEngineService';
+} from '@features/insights/services/insightEngineService';
 import { parseStrictNumber, getSafeDate } from '../../utils/validation';
 import { downloadBasicData } from '../../utils/csvExport';
 import { DEFAULT_CURRENCY } from '../../utils/currency';

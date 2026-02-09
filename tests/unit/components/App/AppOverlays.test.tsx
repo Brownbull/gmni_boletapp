@@ -27,7 +27,7 @@ import { AppOverlays, type AppOverlaysProps } from '../../../../src/components/A
 // These components are now rendered directly in App.tsx
 // Story 14e-23a: Scan overlays moved to ScanFeature - mocks removed
 
-vi.mock('../../../../src/components/insights/InsightCard', () => ({
+vi.mock('@features/insights/components/InsightCard', () => ({
     InsightCard: ({ insight }: { insight: { id: string } }) => (
         <div data-testid="insight-card" data-insight-id={insight.id}>
             InsightCard
@@ -35,11 +35,11 @@ vi.mock('../../../../src/components/insights/InsightCard', () => ({
     ),
 }));
 
-vi.mock('../../../../src/components/insights/BuildingProfileCard', () => ({
+vi.mock('@features/insights/components/BuildingProfileCard', () => ({
     BuildingProfileCard: () => <div data-testid="building-profile-card">BuildingProfileCard</div>,
 }));
 
-vi.mock('../../../../src/components/insights/BatchSummary', () => ({
+vi.mock('@features/insights/components/BatchSummary', () => ({
     BatchSummary: () => <div data-testid="batch-summary">BatchSummary</div>,
 }));
 

@@ -10,7 +10,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ReportCarousel } from '../../../../src/components/reports/ReportCarousel';
+import { ReportCarousel } from '@features/reports/components/ReportCarousel';
 import type { ReportCard as ReportCardType } from '../../../../src/types/report';
 
 // Mock useReducedMotion hook
@@ -220,7 +220,7 @@ describe('ReportCarousel', () => {
       }));
 
       const { ReportCarousel: ReportCarouselWithReducedMotion } = await import(
-        '../../../../src/components/reports/ReportCarousel'
+        '@features/reports/components/ReportCarousel'
       );
 
       render(<ReportCarouselWithReducedMotion cards={mockCards} />);
