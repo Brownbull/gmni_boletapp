@@ -18,49 +18,12 @@
 import React, { useState, useRef } from 'react';
 import { ArrowLeft, ChevronLeft } from 'lucide-react';
 import { ProfileDropdown, ProfileAvatar, getInitials } from './ProfileDropdown';
-import { safeCSSColor } from '@/utils/validationUtils';
-import type { ViewMode } from '@/shared/stores/useViewModeStore';
-
-/**
- * Helper to extract emoji from group name (e.g., "🏠 Family" → "🏠")
- */
-function extractGroupEmoji(name: string): string | null {
-    if (!name) return null;
-    const firstChar = name.codePointAt(0);
-    if (firstChar && firstChar > 0x1F300) {
-        const match = name.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
-        return match ? match[0] : null;
-    }
-    return null;
-}
-
-/**
- * Helper to extract label from group name (e.g., "🏠 Family" → "Family")
- */
-function extractGroupLabel(name: string): string {
-    if (!name) return '';
-    const emoji = extractGroupEmoji(name);
-    if (emoji) {
-        return name.slice(emoji.length).trim();
-    }
-    return name;
-}
 
 export type HeaderVariant = 'home' | 'detail' | 'settings';
 
 // View-specific titles for the home variant (when showing logo + title)
 // Story 14.11: Added 'alerts' for the new alerts view
 export type ViewTitle = 'home' | 'analytics' | 'history' | 'insights' | 'alerts' | 'gastify';
-
-/**
- */
-export interface ActiveGroupInfo {
-    id: string;
-    name: string;
-    icon?: string;
-    color: string;
-    members: string[];
-}
 
 export interface TopHeaderProps {
     /**
@@ -127,15 +90,6 @@ export interface TopHeaderProps {
     /**
      */
     onLogoClick?: () => void;
-
-    /**
-     */
-    viewMode?: ViewMode;
-
-    /**
-     */
-    activeGroup?: ActiveGroupInfo;
-
 }
 
 /**
@@ -146,47 +100,9 @@ export interface TopHeaderProps {
  */
 interface AppLogoProps {
     theme: string;
-    viewMode?: ViewMode;
-    activeGroup?: ActiveGroupInfo;
 }
 
-const AppLogo: React.FC<AppLogoProps> = ({ viewMode, activeGroup }) => {
-    const isGroupMode = viewMode === 'group' && activeGroup;
-
-    // Logo uses --primary color which changes per theme:
-    // - Professional: blue (#2563eb)
-    // - Mono: black (#18181b)
-    // - Ni No Kuni: green (#4a7c59)
-    // In group mode, uses the group's color instead
-
-    if (isGroupMode) {
-        // Group mode: Show group icon with group color - larger 44px for visibility
-        return (
-            <div
-                data-testid="group-mode-icon"
-                className="rounded-full flex items-center justify-center flex-shrink-0 transition-colors duration-300"
-                style={{
-                    width: '44px',
-                    height: '44px',
-                    background: safeCSSColor(activeGroup.color, 'var(--primary, #2563eb)'),
-                }}
-            >
-                <span
-                    style={{
-                        fontSize: '24px',
-                        fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", sans-serif',
-                        lineHeight: 1,
-                    }}
-                    role="img"
-                    aria-label={activeGroup.name}
-                >
-                    {activeGroup.icon || '👥'}
-                </span>
-            </div>
-        );
-    }
-
-    // Personal mode: Show default "G" logo
+const AppLogo: React.FC<AppLogoProps> = () => {
     return (
         <div
             data-testid="app-logo"
@@ -226,8 +142,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     theme,
     t,
     onLogoClick,
-    viewMode = 'personal',
-    activeGroup,
 }) => {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const profileButtonRef = useRef<HTMLButtonElement>(null);
@@ -384,10 +298,10 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                                     aria-label="Switch view mode"
                                     aria-haspopup="true"
                                 >
-                                    <AppLogo theme={theme} viewMode={viewMode} activeGroup={activeGroup} />
+                                    <AppLogo theme={theme} />
                                 </button>
                             ) : (
-                                <AppLogo theme={theme} viewMode={viewMode} activeGroup={activeGroup} />
+                                <AppLogo theme={theme} />
                             )
                         )}
                     </div>
@@ -396,37 +310,17 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 {/* Center: Title/Wordmark (not for settings - title is in left section) */}
                 {variant !== 'settings' && (
                     <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-col items-center">
-                        {viewMode === 'group' && activeGroup ? (
-                            <div data-testid="group-mode-indicator" className="flex flex-col items-center">
-                                <span
-                                    className="font-semibold"
-                                    style={{
-                                        fontFamily: 'var(--font-family)',
-                                        color: 'var(--text-primary, #0f172a)',
-                                        fontWeight: 700,
-                                        fontSize: '18px',
-                                        maxWidth: '180px',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                    }}
-                                >
-                                    {extractGroupLabel(activeGroup.name)}
-                                </span>
-                            </div>
-                        ) : (
-                            <span
-                                className="font-semibold"
-                                style={{
-                                    fontFamily: isWordmark ? "var(--font-family-wordmark, 'Baloo 2', cursive)" : 'var(--font-family)',
-                                    color: 'var(--text-primary, #0f172a)',
-                                    fontWeight: 700,
-                                    fontSize: isWordmark ? '28px' : '20px',
-                                }}
-                            >
-                                {getDisplayTitle()}
-                            </span>
-                        )}
+                        <span
+                            className="font-semibold"
+                            style={{
+                                fontFamily: isWordmark ? "var(--font-family-wordmark, 'Baloo 2', cursive)" : 'var(--font-family)',
+                                color: 'var(--text-primary, #0f172a)',
+                                fontWeight: 700,
+                                fontSize: isWordmark ? '28px' : '20px',
+                            }}
+                        >
+                            {getDisplayTitle()}
+                        </span>
                     </div>
                 )}
 

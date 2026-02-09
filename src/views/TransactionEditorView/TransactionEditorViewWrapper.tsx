@@ -152,10 +152,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
             // Cross-store suggestions
             itemNameMappings={data.itemNameMappings}
 
-            // Shared groups
-            availableGroups={data.availableGroups}
-            groupsLoading={data.groupsLoading}
-
             // Transaction operations (map handle* to on*)
             onUpdateTransaction={handlers.handleUpdateTransaction}
             onSave={handlers.handleSave}
@@ -172,9 +168,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
             onBatchPrevious={handlers.handleBatchPrevious}
             onBatchNext={handlers.handleBatchNext}
             onBatchModeClick={handlers.handleBatchModeClick}
-
-            // Group operations
-            onGroupsChange={handlers.handleGroupsChange}
 
             // Read-only mode
             onRequestEdit={handlers.handleRequestEdit}

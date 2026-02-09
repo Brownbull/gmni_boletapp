@@ -1,46 +1,19 @@
 /**
  * Tests for useAnalyticsTransactions Hook
  *
- * Story 14c.9: Shared Group Analytics
- * Epic 14c: Shared Groups (Household Sharing)
- *
- * Tests the unified analytics data source that switches between
- * personal and shared group transactions based on useViewModeStore.
+ * Tests the unified analytics data source that returns
+ * personal transactions for analytics views.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import React from 'react';
 import {
     useAnalyticsTransactions,
     calculateMemberContributions,
     aggregateCategoriesWithMembers,
-    type UseAnalyticsTransactionsOptions,
-    type MemberContribution,
 } from '../../../src/hooks/useAnalyticsTransactions';
 import type { Transaction } from '../../../src/types/transaction';
-import type { SharedGroup } from '../../../src/types/sharedGroup';
 import type { AnalyticsMember } from '../../../src/hooks/useAnalyticsTransactions';
-import { createMockGroup } from '@helpers/sharedGroupFactory';
-
-// ============================================================================
-// Mocks
-// ============================================================================
-
-// Mock ViewModeStore (Story 14d-v2-0: Migrated from ViewModeContext to Zustand store)
-const mockViewModeStore = {
-    mode: 'personal' as 'personal' | 'group',
-    groupId: null as string | null,
-    group: null as SharedGroup | null,
-    isGroupMode: false,
-    setPersonalMode: vi.fn(),
-    setGroupMode: vi.fn(),
-    updateGroupData: vi.fn(),
-};
-
-vi.mock('@/shared/stores/useViewModeStore', () => ({
-    useViewMode: () => mockViewModeStore,
-}));
 
 // ============================================================================
 // Test Fixtures
@@ -65,30 +38,11 @@ const createMockMember = (overrides: Partial<AnalyticsMember> = {}): AnalyticsMe
     ...overrides,
 });
 
-/** Analytics-specific mock group defaults */
-const createAnalyticsMockGroup = (overrides: Partial<SharedGroup> = {}): SharedGroup =>
-    createMockGroup({
-        name: 'Test Family',
-        icon: '👨‍👩‍👧',
-        color: '#3B82F6',
-        ownerId: 'user-1',
-        members: ['user-1', 'user-2'],
-        ...overrides,
-    });
-
 // ============================================================================
 // Hook Tests
 // ============================================================================
 
 describe('useAnalyticsTransactions', () => {
-    beforeEach(() => {
-        // Reset to personal mode
-        mockViewModeStore.mode = 'personal';
-        mockViewModeStore.isGroupMode = false;
-        mockViewModeStore.groupId = null;
-        mockViewModeStore.group = null;
-    });
-
     afterEach(() => {
         vi.clearAllMocks();
     });
@@ -138,117 +92,6 @@ describe('useAnalyticsTransactions', () => {
         });
     });
 
-    describe('Group Mode', () => {
-        const mockGroup = createAnalyticsMockGroup();
-
-        beforeEach(() => {
-            mockViewModeStore.mode = 'group';
-            mockViewModeStore.isGroupMode = true;
-            mockViewModeStore.groupId = 'group-123';
-            mockViewModeStore.group = mockGroup;
-        });
-
-        it('should return group transactions when in group mode', () => {
-            const groupTx = [
-                createMockTransaction({ id: 'group-1', total: 150, _ownerId: 'user-1' }),
-                createMockTransaction({ id: 'group-2', total: 250, _ownerId: 'user-2' }),
-            ];
-
-            const { result } = renderHook(() =>
-                useAnalyticsTransactions({
-                    personalTransactions: [],
-                    groupTransactions: groupTx,
-                })
-            );
-
-            expect(result.current.transactions).toHaveLength(2);
-            expect(result.current.transactions[0].id).toBe('group-1');
-            expect(result.current.isGroupMode).toBe(true);
-        });
-
-        it('should include group metadata', () => {
-            const { result } = renderHook(() =>
-                useAnalyticsTransactions({
-                    personalTransactions: [],
-                    groupTransactions: [],
-                })
-            );
-
-            expect(result.current.groupName).toBe('Test Family');
-            expect(result.current.groupId).toBe('group-123');
-            expect(result.current.groupIcon).toBe('👨‍👩‍👧');
-            expect(result.current.groupColor).toBe('#3B82F6');
-        });
-
-        it('should include group members', () => {
-            const { result } = renderHook(() =>
-                useAnalyticsTransactions({
-                    personalTransactions: [],
-                    groupTransactions: [],
-                })
-            );
-
-            expect(result.current.memberIds).toHaveLength(2);
-            // memberIds is just string[] (user IDs), not full member objects
-            expect(result.current.memberIds![0]).toBe('user-1');
-            expect(result.current.memberIds![1]).toBe('user-2');
-        });
-
-        it('should include spending by member data', () => {
-            const spendingByMember = new Map([
-                ['user-1', 500],
-                ['user-2', 300],
-            ]);
-
-            const { result } = renderHook(() =>
-                useAnalyticsTransactions({
-                    personalTransactions: [],
-                    groupTransactions: [],
-                    spendingByMember,
-                })
-            );
-
-            expect(result.current.spendingByMember).toBe(spendingByMember);
-            expect(result.current.spendingByMember?.get('user-1')).toBe(500);
-        });
-
-        it('should reflect loading state in group mode', () => {
-            const { result } = renderHook(() =>
-                useAnalyticsTransactions({
-                    personalTransactions: [],
-                    groupTransactions: [],
-                    isGroupLoading: true,
-                })
-            );
-
-            expect(result.current.isLoading).toBe(true);
-        });
-
-        it('should use group name as context label', () => {
-            const { result } = renderHook(() =>
-                useAnalyticsTransactions({
-                    personalTransactions: [],
-                    groupTransactions: [],
-                })
-            );
-
-            expect(result.current.contextLabel).toBe('Test Family');
-        });
-
-        it('should fallback to "Shared Group" if no group name', () => {
-            mockViewModeStore.group = { ...mockGroup, name: undefined as unknown as string };
-
-            const { result } = renderHook(() =>
-                useAnalyticsTransactions({
-                    personalTransactions: [],
-                    groupTransactions: [],
-                })
-            );
-
-            expect(result.current.contextLabel).toBe('Shared Group');
-        });
-    });
-
     describe('Edge Cases', () => {
         it('should return empty array when no transactions', () => {
             const { result } = renderHook(() =>
@@ -261,23 +104,6 @@ describe('useAnalyticsTransactions', () => {
             expect(result.current.transactions).toEqual([]);
         });
 
-        it('should handle undefined group in group mode gracefully', () => {
-            mockViewModeStore.mode = 'group';
-            mockViewModeStore.isGroupMode = true;
-            mockViewModeStore.groupId = 'group-123';
-            mockViewModeStore.group = undefined;
-
-            const { result } = renderHook(() =>
-                useAnalyticsTransactions({
-                    personalTransactions: [],
-                    groupTransactions: [],
-                })
-            );
-
-            expect(result.current.isGroupMode).toBe(true);
-            expect(result.current.groupName).toBeUndefined();
-            expect(result.current.memberIds).toEqual([]);
-        });
     });
 });
 

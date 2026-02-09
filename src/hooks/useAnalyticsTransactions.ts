@@ -1,47 +1,19 @@
 /**
  * useAnalyticsTransactions Hook
  *
- * Epic 14d-v2: Shared Groups v2 (Household Sharing)
- *
- * Unified data source for analytics components that automatically provides
- * either personal transactions or shared group transactions based on the
- * current view mode state (useViewModeStore Zustand store).
- *
- * Architecture:
- * - In personal mode: Returns user's personal transactions
- * - In group mode: Returns shared group transactions from all members
- * - Provides isGroupMode flag for UI adjustments
- * - Includes member data for contribution breakdowns
- *
- * This hook abstracts away the data source switching logic, allowing analytics
- * components to receive transactions without knowing whether they're viewing
- * personal or group data.
+ * Unified data source for analytics components.
+ * Returns personal transactions for analytics views.
  *
  * @example
  * ```tsx
  * function AnalyticsChart() {
- *   const {
- *     transactions,
- *     isGroupMode,
- *     groupName,
- *     members,
- *     spendingByMember,
- *   } = useAnalyticsTransactions();
- *
- *   return (
- *     <div>
- *       <h2>{isGroupMode ? groupName : 'Your Spending'}</h2>
- *       <Chart data={transactions} />
- *       {isGroupMode && <MemberBreakdown members={members} />}
- *     </div>
- *   );
+ *   const { transactions } = useAnalyticsTransactions();
+ *   return <Chart data={transactions} />;
  * }
  * ```
  */
 
 import { useMemo } from 'react';
-// Story 14d-v2-0: ViewMode migrated from Context to Zustand store
-import { useViewMode } from '@/shared/stores/useViewModeStore';
 import type { Transaction } from '../types/transaction';
 
 // ============================================================================
@@ -75,13 +47,11 @@ export interface AnalyticsMember {
 export interface UseAnalyticsTransactionsOptions {
     /**
      * Personal transactions (from parent/App.tsx).
-     * Used when in personal mode.
      */
     personalTransactions: Transaction[];
 
     /**
-     * Shared group transactions (from useSharedGroupTransactions).
-     * Used when in group mode.
+     * Shared group transactions (legacy - unused).
      */
     groupTransactions: Transaction[];
 
@@ -91,7 +61,7 @@ export interface UseAnalyticsTransactionsOptions {
     isGroupLoading?: boolean;
 
     /**
-     * Spending breakdown by member ID (from useSharedGroupTransactions)
+     * Spending breakdown by member ID (legacy - unused)
      */
     spendingByMember?: Map<string, number>;
 }
@@ -101,52 +71,52 @@ export interface UseAnalyticsTransactionsOptions {
  */
 export interface UseAnalyticsTransactionsResult {
     /**
-     * The active transactions (either personal or group based on view mode)
+     * The active transactions
      */
     transactions: Transaction[];
 
     /**
-     * Whether currently viewing group data
+     * Whether currently viewing group data (always false)
      */
     isGroupMode: boolean;
 
     /**
-     * Loading state (only true for group mode initial load)
+     * Loading state
      */
     isLoading: boolean;
 
     /**
-     * Group name (if in group mode)
+     * Group name (always undefined)
      */
     groupName?: string;
 
     /**
-     * Group ID (if in group mode)
+     * Group ID (always undefined)
      */
     groupId?: string;
 
     /**
-     * Group member IDs (if in group mode)
+     * Group member IDs (always undefined)
      */
     memberIds?: string[];
 
     /**
-     * Spending breakdown by member ID (if in group mode)
+     * Spending breakdown by member ID (always undefined)
      */
     spendingByMember?: Map<string, number>;
 
     /**
-     * Context label for analytics UI (e.g., "Your Analytics" or "Family Group")
+     * Context label for analytics UI
      */
     contextLabel: string;
 
     /**
-     * Group icon (if in group mode)
+     * Group icon (always undefined)
      */
     groupIcon?: string;
 
     /**
-     * Group color (if in group mode)
+     * Group color (always undefined)
      */
     groupColor?: string;
 }
@@ -157,8 +127,6 @@ export interface UseAnalyticsTransactionsResult {
 
 /** Empty array constant to avoid creating new references */
 const EMPTY_TRANSACTIONS: Transaction[] = [];
-const EMPTY_MEMBER_IDS: string[] = [];
-const EMPTY_SPENDING_MAP = new Map<string, number>();
 
 // ============================================================================
 // Hook Implementation
@@ -166,44 +134,20 @@ const EMPTY_SPENDING_MAP = new Map<string, number>();
 
 /**
  * Hook that provides a unified transaction source for analytics.
- * Automatically switches between personal and group transactions
- * based on ViewModeContext.
+ * Returns personal transactions.
  *
- * @param options Configuration with personal and group transaction sources
- * @returns Unified analytics data with mode indicators
+ * @param options Configuration with personal transaction source
+ * @returns Unified analytics data
  */
 export function useAnalyticsTransactions(
     options: UseAnalyticsTransactionsOptions
 ): UseAnalyticsTransactionsResult {
     const {
         personalTransactions,
-        groupTransactions,
-        isGroupLoading = false,
-        spendingByMember,
     } = options;
-
-    // Get view mode context
-    const { groupId, group, isGroupMode } = useViewMode();
 
     // Memoize the result to avoid unnecessary re-renders
     const result = useMemo<UseAnalyticsTransactionsResult>(() => {
-        if (isGroupMode && groupId) {
-            // Group mode: use shared group transactions
-            return {
-                transactions: groupTransactions || EMPTY_TRANSACTIONS,
-                isGroupMode: true,
-                isLoading: isGroupLoading,
-                groupName: group?.name,
-                groupId,
-                memberIds: group?.members ?? EMPTY_MEMBER_IDS,
-                spendingByMember: spendingByMember ?? EMPTY_SPENDING_MAP,
-                contextLabel: group?.name || 'Shared Group',
-                groupIcon: group?.icon,
-                groupColor: group?.color,
-            };
-        }
-
-        // Personal mode: use personal transactions
         return {
             transactions: personalTransactions || EMPTY_TRANSACTIONS,
             isGroupMode: false,
@@ -212,21 +156,12 @@ export function useAnalyticsTransactions(
             groupId: undefined,
             memberIds: undefined,
             spendingByMember: undefined,
-            contextLabel: 'personal', // Translation key
+            contextLabel: 'personal',
             groupIcon: undefined,
             groupColor: undefined,
         };
     }, [
-        isGroupMode,
-        groupId,
-        group?.name,
-        group?.members,
-        group?.icon,
-        group?.color,
-        groupTransactions,
         personalTransactions,
-        isGroupLoading,
-        spendingByMember,
     ]);
 
     return result;

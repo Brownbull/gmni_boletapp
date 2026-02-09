@@ -43,7 +43,7 @@ import { TransitionChild } from '@/components/animation/TransitionChild';
 import { useDerivedItems } from '@/hooks/useDerivedItems';
 import { useHistoryFilters } from '@/hooks/useHistoryFilters';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { useAllUserGroups } from '@/hooks/useAllUserGroups';
+
 // Story 14.31 Session 2: Item aggregation (group same products together)
 // Story 14.31 Session 3: Added sortAggregatedItems for sort control
 import { aggregateItems, sortAggregatedItems, sortItemsByPrice, sortItemsByName, sortItemsByDate } from '@/hooks/useItems';
@@ -194,7 +194,7 @@ export const ItemsView: React.FC<ItemsViewProps> = ({
         transactions,
         userName,
         userEmail,
-        userId,
+        userId: _userId,
         theme,
         colorTheme,
         lang,
@@ -248,8 +248,6 @@ export const ItemsView: React.FC<ItemsViewProps> = ({
         dispatch: filterDispatch,
         hasActiveFilters: hasTemporalOrCategoryFilters,
     } = useHistoryFilters();
-
-    const { groups, isLoading: groupsLoading } = useAllUserGroups(userId);
 
     // Items hook - uses React Query caching for derived items
     const {
@@ -695,8 +693,7 @@ export const ItemsView: React.FC<ItemsViewProps> = ({
                                 availableFilters={availableFilters}
                                 t={t}
                                 locale={lang}
-                                groups={groups}
-                                groupsLoading={groupsLoading}
+
                             />
                             {/* Profile Avatar with Dropdown */}
                             <ProfileAvatar

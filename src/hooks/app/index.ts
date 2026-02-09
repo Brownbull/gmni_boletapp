@@ -54,12 +54,6 @@ export {
     type UseAppInitializationResult,
 } from './useAppInitialization';
 
-// Deep link URL handling
-export {
-    useDeepLinking,
-    type UseDeepLinkingResult,
-} from './useDeepLinking';
-
 // Push notifications coordination
 export {
     useAppPushNotifications,

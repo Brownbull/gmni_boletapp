@@ -125,13 +125,6 @@ export interface ReviewProps {
  * Active group info for quick save tagging
  * Story 14e-23a: Migrated from AppOverlays
  */
-export interface ActiveGroupInfo {
-  id: string;
-  name: string;
-  color: string;
-  icon?: string;
-}
-
 /**
  * Main props for ScanFeature orchestrator
  */
@@ -269,9 +262,6 @@ export interface ScanFeatureProps {
 
   /** User's default country for foreign location detection */
   userDefaultCountry?: string;
-
-  /** Active group info for quick save tagging */
-  activeGroupForQuickSave?: ActiveGroupInfo | null;
 
   // =========================================================================
   // Currency/Total Mismatch Dialog Props (Story 14e-23a)
@@ -411,7 +401,6 @@ export function ScanFeature({
   currency = 'CLP',
   formatCurrency,
   userDefaultCountry = 'CL',
-  activeGroupForQuickSave,
   // Story 14e-23a: Currency/Total mismatch dialog props
   userCurrency = 'CLP',
   onCurrencyUseDetected,
@@ -520,7 +509,7 @@ export function ScanFeature({
             isSaving={isQuickSaving}
             lang={lang}
             userDefaultCountry={userDefaultCountry}
-            activeGroup={activeGroupForQuickSave || undefined}
+
           />
         )}
 
