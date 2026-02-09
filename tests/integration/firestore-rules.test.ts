@@ -760,7 +760,8 @@ describe('Shared Group Security Rules (Epic 14d-v2)', () => {
         await assertSucceeds(
             updateDoc(groupDoc, {
                 name: 'Updated Group Name',
-                updatedAt: Timestamp.now(),
+                updatedAt: serverTimestamp(),
+                lastSettingsUpdateAt: serverTimestamp(),
             })
         );
     });
@@ -1636,7 +1637,8 @@ describe('Member Leave Security Rules (Epic 14d-v2 Story 1.7)', () => {
         await assertSucceeds(
             updateDoc(groupDoc, {
                 members: [TEST_USERS.USER_2], // Owner removes self but keeps ownership
-                updatedAt: Timestamp.now(),
+                updatedAt: serverTimestamp(),
+                lastSettingsUpdateAt: serverTimestamp(),
             })
         );
     });
@@ -1760,7 +1762,8 @@ describe('Member Leave Security Rules (Epic 14d-v2 Story 1.7)', () => {
         await assertSucceeds(
             updateDoc(groupDoc, {
                 members: [TEST_USERS.USER_1],
-                updatedAt: Timestamp.now(),
+                updatedAt: serverTimestamp(),
+                lastSettingsUpdateAt: serverTimestamp(),
             })
         );
     });
@@ -1976,7 +1979,8 @@ describe('Member Leave Security Rules (Epic 14d-v2 Story 1.7)', () => {
                 name: 'Updated Group Name',
                 color: '#ff5733',
                 shareCode: 'new-share-code-123',
-                updatedAt: Timestamp.now(),
+                updatedAt: serverTimestamp(),
+                lastSettingsUpdateAt: serverTimestamp(),
             })
         );
     });
