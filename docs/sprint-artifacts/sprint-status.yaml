@@ -67,13 +67,13 @@ development_status:
   15-0b-sanitize-input-audit: done      # 1 pt  - Audit + extend sanitizeInput() coverage
 
   # Phase 1: Foundation — Dead Code + Shared Utilities
-  15-1a-delete-dead-services: backlog   # 1 pt  - Delete fcmToken, pushNotifications, transactionQuery (~1,193 lines)
-  15-1b-centralize-paths: backlog       # 2 pts - Collection path builder (35+ inline → 1 file)
-  15-1c-generic-mapping-service: backlog # 3 pts - Parameterized mapping service (828 → ~250 lines)
-  15-1d-normalize-for-mapping: backlog  # 2 pts - Unified normalization with Unicode NFD (5 copies → 1)
-  15-1e-base-duplicate-detection: backlog # 2 pts - Configurable comparator (742 → ~400 lines)
-  15-1f-batch-operations-util: backlog  # 2 pts - Auto-chunking at 500 ops
-  15-1g-consolidate-validation: backlog # 1 pt  - Merge validation.ts + validationUtils.ts
+  15-1a-delete-dead-services: done      # 1 pt  - Delete fcmToken, pushNotifications, transactionQuery (~1,193 lines)
+  15-1b-centralize-paths: done          # 2 pts - Collection path builder (35+ inline → 1 file)
+  15-1c-generic-mapping-service: done   # 3 pts - Parameterized mapping service (828 → ~250 lines)
+  15-1d-normalize-for-mapping: done     # 2 pts - Folded into 15-1c (normalizeForMapping in mappingServiceBase)
+  15-1e-base-duplicate-detection: done  # 2 pts - Configurable comparator via duplicateGrouping.ts
+  15-1f-batch-operations-util: done     # 2 pts - Auto-chunking batchDelete/batchWrite at 500 ops
+  15-1g-consolidate-validation: done    # 1 pt  - Merge validation.ts + validationUtils.ts
 
   # Phase 2: Business Logic Centralization
   15-2a-currency-formatting: backlog    # 2 pts - DEFAULT_CURRENCY + formatCurrency() (56 occurrences)
