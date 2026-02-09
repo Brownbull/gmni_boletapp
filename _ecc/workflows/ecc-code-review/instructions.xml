@@ -931,6 +931,16 @@
     <action>Search tests/e2e/staging/*.spec.ts for TestIds matching those components</action>
     <action>Set {{ui_missing_e2e}} = true if UI changes found without matching E2E specs</action>
 
+    <!-- MANDATORY: Check for Firebase backend changes that need separate deployment -->
+    <action>Check if any {{files_to_review}} match Firebase backend patterns:
+      - "firestore.rules" → needs `firebase deploy --only firestore:rules`
+      - "firestore.indexes.json" → needs `firebase deploy --only firestore:indexes`
+      - "storage.rules" → needs `firebase deploy --only storage`
+      - "functions/src/**" → needs `cd functions && npm run build && firebase deploy --only functions`
+    </action>
+    <action>Set {{has_firebase_backend_changes}} = true/false</action>
+    <action>Set {{firebase_deploy_targets}} = comma-separated list of targets (e.g., "firestore:rules,firestore:indexes")</action>
+
     <output>**✅ ECC Code Review Complete!**
 
       **Story:** {{story_key}}
@@ -947,6 +957,13 @@
       {{#each review_agents}}
       - {{agent}} ✓
       {{/each}}
+
+      {{#if has_firebase_backend_changes}}
+      **⚠️ Firebase Backend Changes Detected:**
+      This story modifies Firebase backend files that do NOT auto-deploy with Hosting.
+      When deploying, you MUST run `firebase deploy --only {{firebase_deploy_targets}}` separately.
+      The `/deploy-story` workflow handles this automatically (Step 5).
+      {{/if}}
 
       **Next Steps:**
       - Run `/workflow-close` to verify tests, status files, and branch state
