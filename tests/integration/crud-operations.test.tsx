@@ -423,58 +423,5 @@ describe('Transaction CRUD Operations', () => {
       expect(data.periods.year).toBe('2026');
     });
 
-    /**
-     * Test 13: Subscription excludes soft-deleted transactions
-     * Story 14d-v2-1-2c: Soft delete filtering
-     */
-    it('should exclude soft-deleted transactions from subscription', async () => {
-      const db = getAuthedFirestore(TEST_USERS.USER_1);
-
-      // Create two transactions
-      const tx1: Omit<Transaction, 'id' | 'createdAt'> = {
-        date: '2026-01-22',
-        merchant: 'Active Store',
-        category: 'Supermarket',
-        total: 100.00,
-        items: []
-      };
-
-      const tx2: Omit<Transaction, 'id' | 'createdAt'> = {
-        date: '2026-01-23',
-        merchant: 'Soon Deleted Store',
-        category: 'Restaurante',
-        total: 50.00,
-        items: []
-      };
-
-      await addTransaction(db, TEST_USERS.USER_1, APP_ID, tx1);
-      const docId2 = await addTransaction(db, TEST_USERS.USER_1, APP_ID, tx2);
-
-      // Soft delete the second transaction (simulate by updating with deletedAt)
-      await updateTransaction(db, TEST_USERS.USER_1, APP_ID, docId2, {
-        deletedAt: new Date() as any, // Firestore Timestamp simulation
-        deletedBy: TEST_USERS.USER_1,
-      });
-
-      // Subscribe to transactions
-      let receivedTransactions: Transaction[] = [];
-      const unsubscribe = subscribeToTransactions(
-        db,
-        TEST_USERS.USER_1,
-        APP_ID,
-        (transactions) => {
-          receivedTransactions = transactions;
-        }
-      );
-
-      // Wait for subscription to receive data
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Verify only non-deleted transaction is returned
-      expect(receivedTransactions).toHaveLength(1);
-      expect(receivedTransactions[0].merchant).toBe('Active Store');
-
-      unsubscribe();
-    });
   });
 });

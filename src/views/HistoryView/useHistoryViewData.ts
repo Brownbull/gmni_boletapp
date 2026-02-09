@@ -56,14 +56,6 @@ export interface UserInfo {
 }
 
 /**
- * Active group info for group mode display
- */
-export interface ActiveGroupInfo {
-    id: string;
-    memberProfiles?: Record<string, { displayName?: string; photoURL?: string }>;
-}
-
-/**
  * Return type for useHistoryViewData hook.
  *
  * Story 14e-25a.2b: Extended to include ALL data HistoryView needs:
@@ -131,8 +123,6 @@ export interface UseHistoryViewDataReturn {
     // === Group Mode ===
     /** Whether viewing shared group transactions */
     isGroupMode: boolean;
-    /** Active shared group (if in group mode) */
-    activeGroup: ActiveGroupInfo | null;
 
     // === Filter State ===
     /** Pending history filters (consumed from navigation store) */
@@ -296,7 +286,6 @@ export function useHistoryViewData(): UseHistoryViewDataReturn {
 
         // Group mode
         isGroupMode: false,
-        activeGroup: null,
 
         // Filter state
         pendingFilters: pendingHistoryFilters,

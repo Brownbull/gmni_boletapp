@@ -11,7 +11,6 @@
  * - Calls useRecentScans() for recent scan merge
  * - Calls useUserPreferences() for user defaults
  * - Calls useTheme() for theme/locale settings (via ThemeContext)
- * - Calls useUserSharedGroups() for shared groups
  * - Provides formatters (t, formatCurrency, formatDate, getSafeDate) internally
  *
  * Pattern: Follows HistoryView (14e-25a.2a/b) and TrendsView (14e-25b.1)

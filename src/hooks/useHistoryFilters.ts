@@ -16,7 +16,6 @@ import {
   type TemporalFilterState,
   type CategoryFilterState,
   type LocationFilterState,
-  type GroupFilterState,
 } from '../contexts/HistoryFiltersContext';
 import {
   getNextTemporalPeriod,
@@ -56,8 +55,6 @@ export interface UseHistoryFiltersReturn {
   category: CategoryFilterState;
   /** Current location filter */
   location: LocationFilterState;
-  /** Story 14.15b: Current group filter */
-  group: GroupFilterState;
 
   // Boolean helpers
   /** True if any filter is active */
@@ -70,8 +67,6 @@ export interface UseHistoryFiltersReturn {
   hasCategoryFilter: boolean;
   /** True if location filter is active */
   hasLocationFilter: boolean;
-  /** Story 14.15b: True if group filter is active */
-  hasGroupFilter: boolean;
 
   // Time navigation helpers (Story 14.9)
   /** Navigate to next time period at current granularity level */
@@ -121,8 +116,6 @@ export function useHistoryFilters(): UseHistoryFiltersReturn {
     const hasCategoryFilter = state.category.level !== 'all' || Boolean(state.category.drillDownPath);
     // Story 14.36: Check for multi-select cities (selectedCities) or legacy country/city
     const hasLocationFilter = Boolean(state.location.selectedCities) || Boolean(state.location.country);
-    // Story 14.15b: Check if group filter is active (multi-select)
-    const hasGroupFilter = Boolean(state.group.groupIds);
 
     let activeFilterCount = 0;
     if (hasTemporalFilter) activeFilterCount++;
@@ -138,7 +131,6 @@ export function useHistoryFilters(): UseHistoryFiltersReturn {
       }
     }
     if (hasLocationFilter) activeFilterCount++;
-    if (hasGroupFilter) activeFilterCount++;
 
     // Story 14.9: Calculate if navigation is possible
     const canGoNext = getNextTemporalPeriod(state.temporal) !== null;
@@ -148,11 +140,9 @@ export function useHistoryFilters(): UseHistoryFiltersReturn {
       temporal: state.temporal,
       category: state.category,
       location: state.location,
-      group: state.group,
       hasTemporalFilter,
       hasCategoryFilter,
       hasLocationFilter,
-      hasGroupFilter,
       hasActiveFilters: activeFilterCount > 0,
       activeFilterCount,
       canGoNext,

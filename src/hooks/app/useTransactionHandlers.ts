@@ -6,16 +6,15 @@
  *
  * Features:
  * - Transaction save with insight generation (async, fire-and-forget)
- * - Update with member timestamp updates for shared groups
+ * - Update with cascade (Firestore document update)
  * - Delete with cascade (Firestore document removal)
  * - Wipe all transactions with confirmation
  * - CSV export for data portability
- * - Default transaction factory with view mode support
+ * - Default transaction factory
  *
  * Architecture Reference: Epic 14c-refactor - App.tsx Handler Extraction
  * Dependencies:
  * - AuthContext (user, services)
- * - useViewModeStore (viewMode, activeGroup for shared group tagging - Zustand)
  * - useUserPreferences (location, currency defaults)
  * - React Query (cache invalidation)
  *
@@ -25,8 +24,6 @@
  *   const { saveTransaction, deleteTransaction, createDefaultTransaction } = useTransactionHandlers({
  *     user,
  *     services,
- *     viewMode,
- *     activeGroup,
  *     userPreferences,
  *     setToastMessage,
  *     setCurrentTransaction,

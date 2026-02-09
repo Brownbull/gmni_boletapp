@@ -33,7 +33,6 @@ tests/e2e/
 │   ├── join-flow-opt-in.spec.ts
 │   └── E2E-TEST-CONVENTIONS.md (this file)
 ├── multi-user/                 # Multi-user fixture-based tests
-│   └── shared-groups.spec.ts
 ├── fixtures/                   # Test fixtures
 │   └── multi-user.ts
 ├── helpers/                    # Auth and utility helpers

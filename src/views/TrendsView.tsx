@@ -3224,17 +3224,16 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
         // First filter by TrendsView's period selection
         const periodFiltered = filterByPeriod(transactions, timePeriod, currentPeriod);
 
-        // Then apply category/location/group filters from filterState (but NOT temporal since we handle that above)
+        // Then apply category/location filters from filterState (but NOT temporal since we handle that above)
         // Create a filter state with 'all' temporal to avoid double-filtering by period
         const filtersWithoutTemporal: HistoryFilterState = {
             temporal: { level: 'all' },  // Skip temporal filtering (already done by filterByPeriod)
             category: filterState.category,
             location: filterState.location,
-            group: filterState.group,
         };
 
         return filterTransactionsByHistoryFilters(periodFiltered, filtersWithoutTemporal);
-    }, [transactions, timePeriod, currentPeriod, filterState.category, filterState.location, filterState.group]);
+    }, [transactions, timePeriod, currentPeriod, filterState.category, filterState.location]);
 
     // All category data (raw, for treemap logic)
     const allCategoryData = useMemo(
@@ -3644,16 +3643,15 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
             return isDateInPeriod(txDate, prevPeriod, timePeriod);
         });
 
-        // Apply category/location/group filters (same as filteredTransactions)
+        // Apply category/location filters (same as filteredTransactions)
         const filtersWithoutTemporal: HistoryFilterState = {
             temporal: { level: 'all' },
             category: filterState.category,
             location: filterState.location,
-            group: filterState.group,
         };
 
         return filterTransactionsByHistoryFilters(periodFiltered, filtersWithoutTemporal);
-    }, [transactions, currentPeriod, timePeriod, filterState.category, filterState.location, filterState.group]);
+    }, [transactions, currentPeriod, timePeriod, filterState.category, filterState.location]);
 
     /**
      * Story 14.13.2: Compute previous period category totals for comparison

@@ -1,6 +1,6 @@
 # Architecture Document - Boletapp
 
-**Last Updated:** 2026-02-01 (Epic 14e: Feature Architecture + Zustand State Management)
+**Last Updated:** 2026-02-09 (Shared groups feature removed)
 
 ## Executive Summary
 
@@ -241,7 +241,6 @@ src/
 │   ├── NotificationContext.tsx      # In-app notifications
 │   ├── AppStateContext.tsx          # App lifecycle (online, foreground)
 │   ├── ScanContext.tsx              # PRESERVED from Epic 14d
-│   ├── ViewModeContext.tsx          # Personal/Group view mode
 │   ├── AnalyticsContext.tsx         # Analytics navigation state
 │   └── HistoryFiltersContext.tsx    # History filtering state
 │
@@ -311,8 +310,6 @@ Providers are composed in a specific order to satisfy dependency requirements:
 | **NotificationContext** | In-app notifications, toast messages, unread count | `notifications`, `addNotification()`, `unreadCount` |
 | **AppStateContext** | Online status, foreground/background, beforeunload guards | `isOnline`, `isInForeground`, `registerGuard()` |
 | **ScanContext** | Scan state machine, batch processing, scan mode | `phase`, `mode`, `dispatch()` (from Epic 14d) |
-| **ViewModeContext** | Personal vs Group view mode, active group | `viewMode`, `activeGroupId`, `setViewMode()` |
-
 ### View-Scoped Providers (Not in AppProviders)
 
 These providers are scoped to specific views to prevent unnecessary re-renders:
@@ -807,12 +804,7 @@ VITE_GEMINI_API_KEY=...
    - Offline-first architecture
 
 ### Long-Term (v2.0+)
-1. **Multi-User Features**
-   - Shared households
-   - Budget collaboration
-   - Role-based permissions
-
-2. **Advanced Features**
+1. **Advanced Features**
    - Receipt duplicate detection
    - Recurring expense tracking
    - Export to accounting software
@@ -1231,94 +1223,6 @@ Transaction deleted → Firestore onDelete trigger
 
 ---
 
-### ADR-011: Household Sharing Architecture (Epic 14c)
-
-**Decision:** Implement shared groups using top-level Firestore collections with Cloud Function for secure cross-user transaction queries
-**Context:** Users need to share expense tracking with family members while maintaining data isolation
-**Date:** 2026-01-15 (Epic 14c), **Updated:** 2026-01-17 (Security hardening)
-
-**Architecture Pattern (Hybrid Model - Option 4):**
-```
-Top-level collections (cross-user access):
-├── /sharedGroups/{groupId}           ← Group metadata + member list
-└── /pendingInvitations/{invitationId} ← Email-based invitations
-
-User-level collections (isolated):
-└── /artifacts/{appId}/users/{userId}/transactions/{txId}
-    └── sharedGroupIds?: string[]     ← References to shared groups (max 5)
-```
-
-**Key Design Decisions:**
-
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Collection Location | Top-level | Enables cross-user read access for members |
-| Membership Model | UID array in document | Simple queries, Firestore rules compatible |
-| Invitation Flow | Email-based + pending status | Supports inviting non-registered users |
-| Max Members | 10 per group | Performance + UI complexity limits |
-| Cross-User Queries | **Cloud Function** | Server-side membership validation (see below) |
-
-**Critical Security Decision (2026-01-17):**
-
-Firestore collection group queries **CANNOT** evaluate `resource.data.*` conditions. This is a fundamental platform limitation that prevents client-side membership validation for cross-user transaction queries.
-
-**Solution:** Cloud Function with server-side validation
-
-```
-Client Request
-     │
-     ▼
-┌─────────────────────────────────────┐
-│  getSharedGroupTransactions (CF)    │
-│  1. Validate auth token             │
-│  2. Fetch group, check membership   │
-│  3. Execute query (admin SDK)       │
-│  4. Return transactions w/ _ownerId │
-└─────────────────────────────────────┘
-     │
-     ▼
-Firestore (admin SDK bypasses rules)
-```
-
-**Detailed Documentation:** See [Shared Groups Architecture](./shared-groups-architecture.md)
-
-**Security Rules Pattern:**
-```javascript
-// sharedGroups - Members can read, only owner can write
-match /sharedGroups/{groupId} {
-  allow create: if isValidNewGroup();
-  allow read: if isGroupMember() || (isAuthenticated() && resource.data.shareCode != null);
-  allow update: if isGroupOwner() || isJoiningGroup();
-  allow delete: if isGroupOwner();
-}
-
-// pendingInvitations - Invited user can accept/decline
-match /pendingInvitations/{invitationId} {
-  allow create: if invitedByUserId == auth.uid;
-  allow read: if invitedEmail == auth.token.email.lower();
-  allow update: if isInvitedUser() && statusUpdateOnly();
-  allow delete: if false;  // Kept for audit trail
-}
-
-// Collection group queries - DENIED (handled by Cloud Function)
-match /{path=**}/transactions/{transactionId} {
-  allow read: if false;
-}
-```
-
-**Consequences:**
-- ✅ Family members can view shared expenses
-- ✅ Owner controls group membership
-- ✅ Invitation flow works for non-registered users
-- ✅ **Proper security** via server-side membership validation
-- ✅ Cloud Function free tier covers MVP scale
-- ⚠️ Requires careful handling of user deletion (orphan prevention)
-- ⚠️ Slight latency increase (~100-200ms) vs direct Firestore queries
-
-**Status:** Accepted (Epic 14c Complete)
-
----
-
 ### ADR-012: Feature-Based Architecture with Zustand (Epic 14e)
 
 **Decision:** Adopt Zustand for client state management and reorganize codebase into feature-based modules
@@ -1384,55 +1288,6 @@ Epic 14e included an adversarial review that prevented 12 points of unnecessary 
 - ⚠️ Migration of remaining NavigationContext consumers pending (Story 14e-45)
 
 **Status:** Accepted (Epic 14e Complete, Story 14e-45 pending)
-
----
-
-### ADR-021: View Mode Client-Side Filtering (Epic 14d-v2)
-
-**Decision:** Use client-side filtering for view mode (Personal vs Group) transaction display
-**Context:** View mode filtering could use Firestore `where` clauses or client-side filtering. Client-side chosen for consistency with soft-delete pattern, legacy data support, and single-subscription cost savings.
-**Date:** 2026-02-04 (Epic 14d-v2, Story 14d-v2-1-10d)
-
-**Security Model:**
-- Client-side filtering is a **UI convenience, not a security boundary**
-- Firestore rules enforce user data isolation (`request.auth.uid == userId`)
-- `sharedGroupId` is a UI annotation, not an access control field
-
-**Consequences:**
-- ✅ Consistent with existing soft-delete filtering pattern
-- ✅ No compound index or migration required for legacy data
-- ✅ Instant view switching (single subscription)
-- ⚠️ If cross-user shared transactions are added (Sub-Epic 2+), server-side filtering must replace this
-
-**Full ADR:** `docs/architecture/decisions/ADR-021-view-mode-client-side-filtering.md`
-
-**Status:** Accepted
-
----
-
-### ADR-022: Client-Side Rate Limiting for Sharing Toggles (Epic 14d-v2)
-
-**Decision:** Enforce cooldown and daily limits for transaction sharing toggles in client-side JavaScript
-**Context:** Sharing toggles need rate limiting to prevent excessive Firestore writes and changelog noise. Server-side options (Firestore rules, Cloud Functions) are over-engineered for owner-only operations.
-**Date:** 2026-02-04 (Epic 14d-v2, Stories 14d-v2-1-11a/b, 14d-v2-1-12a/b)
-
-**Rate Limits (FR-21):**
-
-| Level | Cooldown | Daily Limit | Reset |
-|-------|----------|-------------|-------|
-| Group | 15 min | 3x/day | Midnight (group IANA timezone) |
-| User | 5 min | 3x/day | Midnight (device local timezone) |
-
-**Consequences:**
-- ✅ Simple implementation (~110 LOC shared engine in `cooldownCore.ts`)
-- ✅ Instant UX feedback with clear messages
-- ✅ No Cloud Function infrastructure needed
-- ⚠️ Technically bypassable by group owner (acceptable: owner-only impact)
-- ⚠️ TD-CONSOLIDATED-11 planned for server-side enforcement if needed
-
-**Full ADR:** `docs/architecture/decisions/ADR-022-client-side-rate-limiting.md`
-
-**Status:** Accepted
 
 ---
 
@@ -1512,6 +1367,6 @@ Component → useFirestoreSubscription → React Query Cache + Firestore onSnaps
 
 ---
 
-**Document Version:** 8.1
-**Last Updated:** 2026-02-08
-**Epic:** Epic 14d-v2 Tech Debt (ADR-021, ADR-022)
+**Document Version:** 9.0
+**Last Updated:** 2026-02-09
+**Update:** Shared groups feature removed

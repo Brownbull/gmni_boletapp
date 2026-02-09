@@ -13,8 +13,6 @@ import { AppErrorBoundary } from './components/App';
 // Story 14c-refactor.9: AuthProvider for app-wide authentication context
 import { AuthProvider } from './contexts/AuthContext';
 // Story 14e-11: ScanProvider removed - Zustand store is global, no provider needed
-// Story 14d-v2-0: ViewModeProvider removed - view mode state now managed by Zustand store
-// (useViewModeStore from @/shared/stores)
 // Story 14.35: Preload localized country data
 import { preloadCountries } from './services/locationService';
 // Story 14.35b: Flag icons CSS for foreign location display

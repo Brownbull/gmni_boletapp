@@ -59,15 +59,6 @@ export interface GroupMemberInfo {
 }
 
 /**
- * Active group info for group mode display
- */
-export interface ActiveGroupInfo {
-    id: string;
-    name?: string;
-    memberProfiles?: Record<string, { displayName?: string; email?: string; photoURL?: string }>;
-}
-
-/**
  * Return type for useTrendsViewData hook.
  *
  * Story 14e-25b.1: Complete data for TrendsView:

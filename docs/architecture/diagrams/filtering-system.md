@@ -1,13 +1,13 @@
 # Filtering System
 
-> Transaction filtering by temporal, category, location, and groups
+> Transaction filtering by temporal, category, and location
 > **Last Updated:** 2026-01-15
 
 ---
 
 ## Overview
 
-The filtering system uses **four independent filter dimensions** combined with AND logic. Filters are managed via React Context and composed at query time.
+The filtering system uses **three independent filter dimensions** combined with AND logic. Filters are managed via React Context and composed at query time.
 
 ---
 
@@ -15,11 +15,10 @@ The filtering system uses **four independent filter dimensions** combined with A
 
 ```mermaid
 flowchart TB
-    subgraph Filters["Four Filter Dimensions"]
+    subgraph Filters["Three Filter Dimensions"]
         TF[🕐 Temporal Filter]
         CF[🏷️ Category Filter]
         LF[📍 Location Filter]
-        GF[📁 Group Filter]
     end
 
     subgraph Composition["Filter Composition"]
@@ -33,7 +32,6 @@ flowchart TB
     TF --> AND
     CF --> AND
     LF --> AND
-    GF --> AND
     AND --> R
 ```
 
@@ -46,7 +44,6 @@ interface HistoryFilterState {
   temporal: TemporalFilterState;     // Time-based
   category: CategoryFilterState;     // Store & item
   location: LocationFilterState;     // Country/city
-  group: GroupFilterState;           // Custom groups
 }
 ```
 
@@ -194,33 +191,6 @@ flowchart LR
 
 ---
 
-## Group Filter
-
-```mermaid
-flowchart LR
-    subgraph Input["Group IDs"]
-        GID["groupIds: 'abc,def,ghi'"]
-    end
-
-    subgraph Matching["Matching"]
-        M{tx.groupId in list?}
-    end
-
-    subgraph Result["Result"]
-        PASS[✓ Include]
-        FAIL[✗ Exclude]
-    end
-
-    GID --> M
-    M -->|"Yes"| PASS
-    M -->|"No"| FAIL
-
-    style PASS fill:#d1fae5
-    style FAIL fill:#fee2e2
-```
-
----
-
 ## Complete Filter Flow
 
 ```mermaid
@@ -233,10 +203,9 @@ flowchart TB
         F1[Apply Temporal Filter]
         F2[Apply Category Filter]
         F3[Apply Location Filter]
-        F4[Apply Group Filter]
-        F5[Apply Search Query]
-        F6[Apply Sorting]
-        F7[Paginate Results]
+        F4[Apply Search Query]
+        F5[Apply Sorting]
+        F6[Paginate Results]
     end
 
     subgraph Output["Output"]
@@ -249,8 +218,7 @@ flowchart TB
     F3 --> F4
     F4 --> F5
     F5 --> F6
-    F6 --> F7
-    F7 --> PAGE
+    F6 --> PAGE
 ```
 
 ---
@@ -265,8 +233,8 @@ flowchart LR
     end
 
     subgraph Effect["State Effect"]
-        E1["Temporal updated<br/>Category PRESERVED"]
-        E2["Category updated<br/>Temporal PRESERVED"]
+        E1["Temporal updated<br/>Category, Location PRESERVED"]
+        E2["Category updated<br/>Temporal, Location PRESERVED"]
     end
 
     C1 --> E1
@@ -290,7 +258,6 @@ flowchart TB
         TC[Temporal Chip]
         CC[Category Chip]
         LC[Location Chip]
-        GC[Group Chip]
     end
 
     subgraph Search["SearchBar"]
@@ -394,14 +361,12 @@ flowchart TD
 
 | Action | Effect | Preserves |
 |--------|--------|-----------|
-| `SET_TEMPORAL_FILTER` | Update temporal state | Category, Location, Group |
-| `SET_CATEGORY_FILTER` | Update category state | Temporal, Location, Group |
-| `SET_LOCATION_FILTER` | Update location state | Temporal, Category, Group |
-| `SET_GROUP_FILTER` | Update group state | Temporal, Category, Location |
+| `SET_TEMPORAL_FILTER` | Update temporal state | Category, Location |
+| `SET_CATEGORY_FILTER` | Update category state | Temporal, Location |
+| `SET_LOCATION_FILTER` | Update location state | Temporal, Category |
 | `CLEAR_TEMPORAL` | Reset to current month | Others |
 | `CLEAR_CATEGORY` | Reset to 'all' | Others |
 | `CLEAR_LOCATION` | Remove location filter | Others |
-| `CLEAR_GROUP` | Remove group filter | Others |
 | `CLEAR_ALL_FILTERS` | Reset everything | None |
 
 ---
@@ -420,9 +385,6 @@ const DEFAULT_STATE: HistoryFilterState = {
     level: 'all',
   },
   location: {
-    // No filter by default
-  },
-  group: {
     // No filter by default
   },
 };

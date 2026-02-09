@@ -51,9 +51,6 @@ vi.mock('@/services/itemNameMappingService', () => ({
   incrementItemNameMappingUsage: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Story 14d-v2-1.1: sharedGroupService mock removed (Epic 14c cleanup)
-// updateMemberTimestampsForTransaction has been removed from the service
-
 // Import mocked functions for assertions
 import { addTransaction } from '@/services/firestore';
 import { incrementMappingUsage } from '@/services/categoryMappingService';
@@ -490,22 +487,6 @@ describe('saveBatchTransaction', () => {
     });
   });
 
-  // Story 14d-v2-1.1: Shared group handling removed (Epic 14c cleanup)
-  // Epic 14d will use sharedGroupId (single nullable string) instead
-  // updateMemberTimestampsForTransaction has been removed
-  describe.skip('shared group handling (REMOVED - Epic 14c cleanup)', () => {
-    it('should update member timestamps for shared groups', async () => {
-      // This functionality has been removed in Epic 14c cleanup
-    });
-
-    it('should not update member timestamps when no shared groups', async () => {
-      // This functionality has been removed in Epic 14c cleanup
-    });
-
-    it('should not update member timestamps when shared groups is empty', async () => {
-      // This functionality has been removed in Epic 14c cleanup
-    });
-  });
 });
 
 // =============================================================================

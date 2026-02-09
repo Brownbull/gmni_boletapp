@@ -195,8 +195,6 @@ export interface BatchReviewHandlersProps {
   scanCurrency: string;
   /** Store type for scan processing ('auto' or specific type) */
   scanStoreType: string;
-  /** Active group for tagging transactions (legacy - unused) */
-  activeGroup?: { id?: string } | null;
   /** Extended batch processing controller with startProcessing */
   batchProcessingExtended: ExtendedBatchProcessingController;
   /** Function to set images in scan context (for single mode switch) */
@@ -324,7 +322,6 @@ export function useBatchReviewHandlers(props: BatchReviewHandlersProps): BatchRe
     // Story 14e-34a: batchImages removed - now uses useScanStore.images
     scanCurrency,
     scanStoreType,
-    activeGroup,
     batchProcessingExtended,
     setScanImages,
     // Story 14e-33: Trust prompt clearing
@@ -692,7 +689,6 @@ export function useBatchReviewHandlers(props: BatchReviewHandlersProps): BatchRe
     dispatchBatchItemSuccess,
     dispatchBatchItemError,
     dispatchBatchComplete,
-    activeGroup,
     batchProcessing,
     resetScanContext,
   ]);

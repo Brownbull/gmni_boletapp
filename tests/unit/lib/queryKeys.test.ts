@@ -82,9 +82,6 @@ describe('QUERY_KEYS', () => {
         });
     });
 
-    // Note: sharedGroupTransactions and sharedGroups tests removed in Story 14c-refactor.12
-    // The shared groups feature is stubbed pending Epic 14d redesign.
-
     describe('trustedMerchants', () => {
         it('generates correct key structure', () => {
             const key = QUERY_KEYS.trustedMerchants(userId, appId);

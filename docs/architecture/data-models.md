@@ -45,13 +45,7 @@ interface Transaction {
     imageUrls?: string[];          // Full-size image download URLs (Firebase Storage)
     thumbnailUrl?: string;         // Thumbnail download URL (120x160, 70% JPEG quality)
 
-    // Shared Groups (Epic 14d-v2 - added 2026-02-05)
-    sharedGroupId?: string | null; // Associated shared group ID (null = personal)
-    deletedAt?: Timestamp | null;  // Soft delete timestamp for shared group sync
-    deletedBy?: string | null;     // UID of who deleted (audit trail for shared txns)
-    version?: number;              // Optimistic concurrency version (starts at 1)
     periods?: TransactionPeriods;  // Pre-computed temporal keys for efficient filtering
-    _ownerId?: string;             // Client-side only: set when merging cross-user txns
 
     // Timestamps
     createdAt: Timestamp;          // Firestore server timestamp (auto-generated)
@@ -426,7 +420,8 @@ Since there's no migration system, schema changes must be backward-compatible:
 |---------|------|---------|
 | v1.0 | 2025-11-20 | Initial schema with all fields documented |
 | v2.0 | 2025-12-01 | Epic 4.5: Added `imageUrls`, `thumbnailUrl` fields, Firebase Storage rules |
-| v3.0 | 2026-02-05 | Epic 14d-v2: Added `sharedGroupId`, `deletedAt`, `deletedBy`, `version`, `periods` to Transaction. Expanded SharedGroup/PendingInvitation. Added Changelog subcollection, UserGroupPreferences. |
+| v3.0 | 2026-02-05 | Epic 14d-v2: Added `periods` to Transaction. |
+| v4.0 | 2026-02-09 | Shared groups feature removed: Removed `sharedGroupId`, `deletedAt`, `deletedBy`, `version`, `_ownerId` from Transaction. Removed SharedGroup, PendingInvitation, Changelog, UserGroupPreferences collections. |
 
 ---
 
@@ -523,189 +518,6 @@ interface TrustedMerchant {
 
 ---
 
-## Top-Level Collections (Epic 14d-v2: Shared Groups)
-
-> **Note:** These collections are at the Firestore root level (NOT under `/artifacts/{appId}/users/{userId}/`) to enable cross-user access for shared household features.
-
-### Shared Groups Collection
-
-**Path:** `/sharedGroups/{groupId}`
-
-Stores shared household groups that multiple users can access.
-
-```typescript
-interface SharedGroup {
-    id: string;                    // Firestore document ID
-    appId: string;                 // Application identifier
-    name: string;                  // Group display name (e.g., "Smith Family")
-    description?: string;          // Optional description
-    color: string;                 // Group color (hex or named)
-    icon?: string;                 // Optional emoji icon
-    ownerId: string;               // UID of group creator/owner
-    members: string[];             // Array of member UIDs (includes owner)
-    memberProfiles?: Record<string, MemberProfile>; // Public profile info per member
-    memberUpdates?: Record<string, MemberUpdate>;   // Sync state per member
-    shareCode: string;             // 6-char invite code (required)
-    shareCodeExpiresAt: Timestamp; // Code expiration (required)
-    timezone: string;              // Group timezone
-    transactionSharingEnabled: boolean; // Group-level sharing toggle
-    transactionSharingLastToggleAt?: Timestamp;
-    transactionSharingToggleCountToday?: number;
-    transactionSharingToggleCountResetAt?: Timestamp;
-    createdAt: Timestamp;
-    updatedAt: Timestamp;
-}
-
-interface MemberProfile {
-    displayName?: string;
-    email?: string;
-    photoURL?: string;
-}
-
-interface MemberUpdate {
-    lastSyncAt: Timestamp;
-    unreadCount?: number;
-}
-
-interface SharedGroupMember {
-    id: string;
-    displayName: string;
-    email: string;
-    photoURL?: string;
-    role: 'owner' | 'member';
-    joinedAt: Timestamp;
-}
-```
-
-**Field Specifications:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `appId` | string | Application identifier for multi-tenancy |
-| `ownerId` | string | Firebase Auth UID of the group creator. Only owner can delete or modify group settings. |
-| `members` | string[] | Array of Firebase Auth UIDs. Max 10 contributors, 200 viewers. |
-| `shareCode` | string | 6-character alphanumeric code for invitations |
-| `shareCodeExpiresAt` | Timestamp | When the share code expires (typically 7 days) |
-| `transactionSharingEnabled` | boolean | Group-level toggle for transaction sharing |
-
-**Security Rules:**
-- **Create:** User must be owner and only member initially
-- **Read:** User must be in `members` array
-- **Update:** Owner can update anything; non-owners can only add themselves (accepting invite)
-- **Delete:** Only owner can delete
-
-### Pending Invitations Collection
-
-**Path:** `/pendingInvitations/{invitationId}`
-
-Stores email-based invitations for users to join shared groups.
-
-```typescript
-interface PendingInvitation {
-    id: string;                    // Firestore document ID
-    groupId: string;               // Reference to sharedGroups document
-    groupName: string;             // Denormalized for display
-    groupColor: string;            // Denormalized group color
-    groupIcon?: string;            // Denormalized group icon
-    shareCode: string;             // Share code used for invitation
-    invitedEmail: string;          // Lowercase email of invited user
-    invitedByUserId: string;       // UID of user who sent invitation
-    invitedByName: string;         // Denormalized inviter name (required)
-    status: 'pending' | 'accepted' | 'declined' | 'expired';
-    createdAt: Timestamp;
-    expiresAt: Timestamp;          // Expiration timestamp (required)
-}
-```
-
-**Field Specifications:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `invitedEmail` | string | Always stored lowercase for case-insensitive matching |
-| `status` | enum | `pending` → `accepted` or `declined` (one-way transitions) |
-| `groupName` | string | Denormalized to avoid join queries when displaying invitations |
-
-**Security Rules:**
-- **Create:** Any authenticated user can create (invitedByUserId must match auth.uid)
-- **Read:** Only the invited user can read (email matches auth.token.email)
-- **Update:** Invited user can only change `status` field to `accepted` or `declined`
-- **Delete:** Not allowed (kept for audit trail)
-
-**Workflow:**
-```
-1. Owner creates invitation → pendingInvitations document created
-2. Invited user logs in → sees invitation in their pending list
-3. User accepts → status='accepted', user added to sharedGroups.members
-4. User declines → status='declined', invitation remains for audit
-```
-
-### Changelog Subcollection (Epic 14d-v2)
-
-**Path:** `/sharedGroups/{groupId}/changelog/{entryId}`
-
-Stores transaction change events for shared group sync. This is the PRIMARY sync mechanism (AD-2/AD-3).
-
-```typescript
-type ChangelogEntryType = 'TRANSACTION_ADDED' | 'TRANSACTION_MODIFIED' | 'TRANSACTION_REMOVED';
-
-interface ChangelogEntry {
-    id: string;                    // Deterministic: "{eventId}-{changeType}"
-    type: ChangelogEntryType;
-    transactionId: string;
-    timestamp: Timestamp;
-    actorId: string;               // UID of user who made the change
-    groupId: string;
-    data: Transaction | null;      // Full transaction data (null for removals)
-    summary: ChangelogSummary;     // For notifications
-    _ttl: Timestamp;               // Auto-expire after 30 days
-}
-
-interface ChangelogSummary {
-    amount: number;
-    currency: string;
-    description: string;
-    category: string;
-}
-```
-
-**Key Design Decisions:**
-- Deterministic IDs enable idempotent retries from Cloud Functions
-- 30-day TTL prevents unbounded collection growth
-- Written by `onTransactionWrite` and `onMemberRemoved` Cloud Functions
-- Clients read changelog for sync, not direct cross-user transaction access
-
-### User Shared Groups Preferences (Epic 14d-v2)
-
-**Path:** `/artifacts/{appId}/users/{userId}/preferences/sharedGroups`
-
-Per-user, per-group sharing controls with rate-limiting.
-
-```typescript
-interface UserSharedGroupsPreferences {
-    groupPreferences: Record<string, UserGroupPreference>;
-}
-
-interface UserGroupPreference {
-    shareMyTransactions: boolean;  // Default: false (privacy-first)
-    lastToggleAt?: Timestamp;
-    toggleCountToday?: number;
-    toggleCountResetAt?: Timestamp;
-}
-```
-
-**Rate Limits (SHARED_GROUP_LIMITS):**
-
-| Limit | Value |
-|-------|-------|
-| Max contributors per group | 10 |
-| Max viewers per group | 200 |
-| Transaction sharing cooldown | 15 minutes |
-| Transaction sharing daily limit | 3 toggles |
-| User sharing cooldown | 5 minutes |
-| User sharing daily limit | 3 toggles |
-
----
-
 ## Data Caching (Story 14.29)
 
 ### React Query Cache
@@ -735,4 +547,4 @@ const QUERY_KEYS = {
 ---
 
 **Generated by BMAD Document Project Workflow**
-*Last Updated: 2026-01-15 (Epic 14c - Household Sharing)*
+*Last Updated: 2026-02-09 (Shared groups feature removed)*

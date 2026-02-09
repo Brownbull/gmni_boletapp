@@ -409,22 +409,6 @@ describe('processScan utilities', () => {
       expect(result.category).toBe('Other');
     });
 
-    it('should not include sharedGroupIds in personal mode', () => {
-      const result = buildInitialTransaction(
-        mockScanResult,
-        mockParsedItems,
-        mockLocation,
-        15000,
-        '2026-01-25',
-        personalConfig
-      );
-      expect(result.sharedGroupIds).toBeUndefined();
-    });
-
-    // Story 14d-v2-1.1: sharedGroupIds removed (Epic 14c cleanup)
-    // Epic 14d will use sharedGroupId (single nullable string) instead
-    // Group mode tests removed - shared groups feature removed entirely
-
     it('should use provided location over scan result location', () => {
       const customLocation = { country: 'Argentina', city: 'Buenos Aires' };
       const result = buildInitialTransaction(

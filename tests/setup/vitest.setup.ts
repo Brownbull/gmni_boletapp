@@ -43,17 +43,7 @@ vi.mock('../src/hooks/useAllUserGroups', () => ({
     isLoading: false,
     error: undefined,
     hasGroups: false,
-    sharedGroupCount: 0,
     personalGroupCount: 0,
-  })),
-}));
-
-// Group consolidation: Mock useUserSharedGroups hook (used by useAllUserGroups)
-vi.mock('../src/hooks/useUserSharedGroups', () => ({
-  useUserSharedGroups: vi.fn(() => ({
-    groups: [],
-    isLoading: false,
-    error: undefined,
   })),
 }));
 

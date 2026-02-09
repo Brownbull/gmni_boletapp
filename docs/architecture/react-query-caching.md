@@ -306,7 +306,6 @@ With React Query in place, we can now implement:
 1. **Optimistic updates** - Show changes immediately, rollback on error
 2. **Infinite queries** - Paginated transaction loading (Story 14.27)
 3. **Query prefetching** - Pre-load data before navigation
-4. **Household sharing** - Multi-user cache management (Epic 14d - will use simplified architecture)
 
 ## Troubleshooting
 

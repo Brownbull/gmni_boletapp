@@ -553,7 +553,6 @@ describe('useNavigationHandlers', () => {
                 temporal: { level: 'month', year: 2026, month: 1 },
                 category: { level: 'category', category: 'Supermarket' },
                 location: {},
-                group: {},
             };
             const props = createDefaultProps({
                 view: 'history',
@@ -582,7 +581,6 @@ describe('useNavigationHandlers', () => {
                 temporal: { level: 'month', year: 2026, month: 1 },
                 category: { level: 'category', category: 'Supermarket' },
                 location: {},
-                group: {},
             };
             const props = createDefaultProps({
                 view: 'history',
@@ -601,7 +599,6 @@ describe('useNavigationHandlers', () => {
                 temporal: { level: 'all' },
                 category: { level: 'all' },
                 location: {},
-                group: {},
             };
             const props = createDefaultProps({
                 view: 'items',

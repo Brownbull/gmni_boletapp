@@ -168,8 +168,6 @@ const mockHandlersConfig = {
   batchImages: [],
   scanCurrency: 'USD',
   scanStoreType: 'grocery',
-  viewMode: 'personal',
-  activeGroup: null,
   batchProcessingExtended: { isProcessing: false, states: [], progress: { current: 0, total: 0 }, cancel: vi.fn() } as any,
   setScanImages: vi.fn(),
 };

@@ -12,7 +12,6 @@
  *    - AuthProvider (Firebase auth state)
  *
  * State managed by Zustand stores (no providers needed):
- *    - View mode: useViewModeStore (Story 14d-v2-0)
  *    - Scan state: useScanStore (Story 14e-11)
  *    - Navigation: useNavigationStore (Story 14e-45)
  *
