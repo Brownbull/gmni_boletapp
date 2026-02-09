@@ -114,7 +114,7 @@ describe('useLeaveTransferFlow', () => {
     let mocks: ReturnType<typeof createMockMutationFunctions>;
 
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.resetAllMocks();
         mocks = createMockMutationFunctions();
         // Reset view mode state to default
         mockViewModeState.mode = 'personal';

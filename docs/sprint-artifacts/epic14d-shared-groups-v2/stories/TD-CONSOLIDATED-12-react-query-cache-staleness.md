@@ -1,6 +1,6 @@
 # Story: TD-CONSOLIDATED-12: React Query Cache Staleness
 
-## Status: review
+## Status: done
 ## Epic: Epic 14d-v2 Shared Groups (Tech Debt - Tier 5)
 
 > **Consolidated from:** TD-14d-47

@@ -49,17 +49,6 @@ export interface UsePendingInvitationsCountReturn {
 }
 
 // =============================================================================
-// Query Keys
-// =============================================================================
-
-/**
- * Query key for pending invitations.
- * @deprecated Use QUERY_KEYS.pendingInvitations.byEmail() instead
- */
-export const pendingInvitationsQueryKey = (email: string) =>
-    ['pendingInvitations', email] as const;
-
-// =============================================================================
 // Hook Implementation
 // =============================================================================
 

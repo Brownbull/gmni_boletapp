@@ -155,11 +155,12 @@ export function useLeaveTransferFlow(
             // If user was viewing the group they just left, switch to Personal mode
             if (viewMode === 'group' && viewModeGroupId === leftGroupId) {
                 setPersonalMode();
+                const safeName = sanitizeInput(leftGroupName, { maxLength: 100 });
                 onShowToast?.(
-                    t('leftGroupSwitchedToPersonal', { groupName: leftGroupName }) ||
+                    t('leftGroupSwitchedToPersonal', { groupName: safeName }) ||
                         (lang === 'es'
-                            ? `Saliste de "${leftGroupName}". Viendo datos personales.`
-                            : `You left "${leftGroupName}". Viewing personal data.`),
+                            ? `Saliste de "${safeName}". Viendo datos personales.`
+                            : `You left "${safeName}". Viewing personal data.`),
                     'success'
                 );
                 return true; // Indicates auto-switch toast was shown
@@ -194,11 +195,12 @@ export function useLeaveTransferFlow(
 
                 // Only show regular "left group" toast if we didn't show the auto-switch toast
                 if (!didAutoSwitch) {
+                    const safeName = sanitizeInput(group.name, { maxLength: 100 });
                     onShowToast?.(
-                        t('leftGroup', { groupName: group.name }) ||
+                        t('leftGroup', { groupName: safeName }) ||
                             (lang === 'es'
-                                ? `Saliste de "${group.name}"`
-                                : `Left "${group.name}"`),
+                                ? `Saliste de "${safeName}"`
+                                : `Left "${safeName}"`),
                         'success'
                     );
                 }
@@ -237,11 +239,12 @@ export function useLeaveTransferFlow(
             try {
                 await transferOwnershipAsync({ groupId, newOwnerId: memberId });
 
+                const safeMemberName = sanitizeInput(memberName, { maxLength: 100 });
                 onShowToast?.(
-                    t('ownershipTransferred', { name: memberName }) ||
+                    t('ownershipTransferred', { name: safeMemberName }) ||
                         (lang === 'es'
-                            ? `Propiedad transferida a ${memberName}`
-                            : `Ownership transferred to ${memberName}`),
+                            ? `Propiedad transferida a ${safeMemberName}`
+                            : `Ownership transferred to ${safeMemberName}`),
                     'success'
                 );
 

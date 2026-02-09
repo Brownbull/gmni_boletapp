@@ -215,7 +215,7 @@ export function useAcceptInvitation(user: User | null, services: Services | null
             );
         },
 
-        onMutate: async (): Promise<InvitationsRollbackContext> => {
+        onMutate: async (input): Promise<InvitationsRollbackContext> => {
             await queryClient.cancelQueries({ queryKey: QUERY_KEYS.groups.all() });
             await queryClient.cancelQueries({ queryKey: QUERY_KEYS.pendingInvitations.all() });
 
@@ -224,6 +224,14 @@ export function useAcceptInvitation(user: User | null, services: Services | null
                     QUERY_KEYS.pendingInvitations.byEmail(user.email)
                 )
                 : undefined;
+
+            // Optimistically remove the accepted invitation from the list
+            if (user?.email) {
+                queryClient.setQueryData<PendingInvitation[]>(
+                    QUERY_KEYS.pendingInvitations.byEmail(user.email),
+                    (old) => old ? old.filter(inv => inv.id !== input.invitation.id) : old
+                );
+            }
 
             return { previousInvitations };
         },

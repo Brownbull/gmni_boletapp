@@ -759,7 +759,7 @@ const defaultProps = {
 
 describe('GruposView', () => {
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.resetAllMocks();
         mockGroups = [];
         mockGroupsLoading = false;
         mockIsCreating = false;
@@ -2056,18 +2056,17 @@ describe('GruposView', () => {
 
             await userEvent.click(screen.getByTestId('mock-delete-confirm'));
 
-            // Wait for deleteGroupAsync to be called first
+            // Wait for deleteGroupAsync to be called with correct args
             await waitFor(() => {
-                expect(mockDeleteGroupAsync).toHaveBeenCalled();
+                expect(mockDeleteGroupAsync).toHaveBeenCalledWith({ groupId: 'group-owned' });
             });
 
-            // Wait a bit for async operation to complete
+            // Wait for async operation to complete
             await waitFor(() => {
-                expect(mockDialogActions.closeDeleteDialog).toHaveBeenCalled();
+                expect(mockDialogActions.closeDeleteDialog).toHaveBeenCalledWith();
             });
 
-            // Then verify toast was shown
-            expect(onShowToast).toHaveBeenCalled();
+            // Then verify toast was shown with correct content
             expect(onShowToast).toHaveBeenCalledWith(
                 expect.stringContaining('My Group'),
                 'success'
@@ -2172,7 +2171,7 @@ describe('GruposView', () => {
         };
 
         beforeEach(() => {
-            vi.clearAllMocks();
+            vi.resetAllMocks();
             mockDialogActions.resetAll();
             mockGroupsLoading = false;
             mockIsUpdating = false;
