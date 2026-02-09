@@ -13,6 +13,8 @@ describe('TrustedMerchantsList', () => {
             scansFromMerchant: '{count} scans',
             removeTrust: 'Remove Trust',
             removeTrustConfirm: 'Stop auto-saving for this merchant?',
+            confirm: 'Confirm',
+            cancel: 'Cancel',
             loading: 'Loading...',
             trusted: 'Trusted',
         };
@@ -44,17 +46,12 @@ describe('TrustedMerchantsList', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        // Mock window.confirm - assign directly since window.confirm may not exist in jsdom
-        window.confirm = vi.fn().mockReturnValue(true);
     });
 
     describe('Rendering (AC #6)', () => {
         it('should render list of trusted merchants', () => {
             render(<TrustedMerchantsList {...defaultProps} />);
-
-            // Component displays merchant name in quotes
             expect(screen.getByText('"Jumbo"')).toBeInTheDocument();
-            // Component displays scan count as "Nx" format
             expect(screen.getByText('5x')).toBeInTheDocument();
         });
 
@@ -63,13 +60,9 @@ describe('TrustedMerchantsList', () => {
                 createMerchant({ id: 'jumbo', merchantName: 'Jumbo' }),
                 createMerchant({ id: 'lider', merchantName: 'Lider', scanCount: 10 }),
             ];
-
             render(<TrustedMerchantsList {...defaultProps} merchants={merchants} />);
-
-            // Component displays merchant names in quotes
             expect(screen.getByText('"Jumbo"')).toBeInTheDocument();
             expect(screen.getByText('"Lider"')).toBeInTheDocument();
-            // Component displays scan count as "Nx" format
             expect(screen.getByText('5x')).toBeInTheDocument();
             expect(screen.getByText('10x')).toBeInTheDocument();
         });
@@ -79,10 +72,7 @@ describe('TrustedMerchantsList', () => {
                 createMerchant({ id: 'jumbo', merchantName: 'Jumbo', trusted: true }),
                 createMerchant({ id: 'lider', merchantName: 'Lider', trusted: false }),
             ];
-
             render(<TrustedMerchantsList {...defaultProps} merchants={merchants} />);
-
-            // Component displays merchant name in quotes
             expect(screen.getByText('"Jumbo"')).toBeInTheDocument();
             expect(screen.queryByText('"Lider"')).not.toBeInTheDocument();
         });
@@ -91,18 +81,13 @@ describe('TrustedMerchantsList', () => {
     describe('Empty State', () => {
         it('should show empty state when no trusted merchants', () => {
             render(<TrustedMerchantsList {...defaultProps} merchants={[]} />);
-
             expect(screen.getByText('No trusted merchants yet')).toBeInTheDocument();
             expect(screen.getByText('Merchants you trust will auto-save on scan')).toBeInTheDocument();
         });
 
         it('should show empty state when all merchants are not trusted', () => {
-            const merchants = [
-                createMerchant({ id: 'jumbo', trusted: false }),
-            ];
-
+            const merchants = [createMerchant({ id: 'jumbo', trusted: false })];
             render(<TrustedMerchantsList {...defaultProps} merchants={merchants} />);
-
             expect(screen.getByText('No trusted merchants yet')).toBeInTheDocument();
         });
     });
@@ -110,8 +95,6 @@ describe('TrustedMerchantsList', () => {
     describe('Loading State', () => {
         it('should show loading indicator when loading', () => {
             const { container } = render(<TrustedMerchantsList {...defaultProps} loading={true} />);
-
-            // Component shows animate-pulse skeleton, not text
             expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
         });
     });
@@ -119,57 +102,58 @@ describe('TrustedMerchantsList', () => {
     describe('Revoke Trust (AC #7)', () => {
         it('should show revoke button for each merchant', () => {
             render(<TrustedMerchantsList {...defaultProps} />);
-
             const revokeButton = screen.getByRole('button', { name: 'Remove Trust' });
             expect(revokeButton).toBeInTheDocument();
         });
 
-        it('should show confirmation dialog when revoking', async () => {
-            window.confirm = vi.fn().mockReturnValue(false);
+        it('should show confirmation dialog when revoke button is clicked', () => {
             render(<TrustedMerchantsList {...defaultProps} />);
 
             const revokeButton = screen.getByRole('button', { name: 'Remove Trust' });
             fireEvent.click(revokeButton);
 
-            expect(window.confirm).toHaveBeenCalledWith('Stop auto-saving for this merchant?');
+            // ConfirmationDialog should appear
+            expect(screen.getByTestId('confirmation-dialog')).toBeInTheDocument();
             expect(defaultProps.onRevokeTrust).not.toHaveBeenCalled();
         });
 
-        it('should call onRevokeTrust when confirmed', async () => {
-            window.confirm = vi.fn().mockReturnValue(true);
+        it('should call onRevokeTrust when confirmed via dialog', async () => {
             render(<TrustedMerchantsList {...defaultProps} />);
 
-            const revokeButton = screen.getByRole('button', { name: 'Remove Trust' });
-            fireEvent.click(revokeButton);
+            // Click revoke to show dialog
+            fireEvent.click(screen.getByRole('button', { name: 'Remove Trust' }));
+
+            // Click confirm in dialog
+            fireEvent.click(screen.getByTestId('confirm-button'));
 
             await waitFor(() => {
                 expect(defaultProps.onRevokeTrust).toHaveBeenCalledWith('Jumbo');
             });
         });
 
-        it('should not call onRevokeTrust when cancelled', async () => {
-            window.confirm = vi.fn().mockReturnValue(false);
+        it('should not call onRevokeTrust when cancelled via dialog', () => {
             render(<TrustedMerchantsList {...defaultProps} />);
 
-            const revokeButton = screen.getByRole('button', { name: 'Remove Trust' });
-            fireEvent.click(revokeButton);
+            // Click revoke to show dialog
+            fireEvent.click(screen.getByRole('button', { name: 'Remove Trust' }));
+
+            // Click cancel in dialog
+            fireEvent.click(screen.getByTestId('cancel-button'));
 
             expect(defaultProps.onRevokeTrust).not.toHaveBeenCalled();
+            // Dialog should be closed
+            expect(screen.queryByTestId('confirmation-dialog')).not.toBeInTheDocument();
         });
     });
 
     describe('Theme Support', () => {
         it('should apply light theme styling', () => {
             render(<TrustedMerchantsList {...defaultProps} theme="light" />);
-
-            // Component displays merchant name in quotes
             expect(screen.getByText('"Jumbo"')).toBeInTheDocument();
         });
 
         it('should apply dark theme styling', () => {
             render(<TrustedMerchantsList {...defaultProps} theme="dark" />);
-
-            // Component displays merchant name in quotes
             expect(screen.getByText('"Jumbo"')).toBeInTheDocument();
         });
     });

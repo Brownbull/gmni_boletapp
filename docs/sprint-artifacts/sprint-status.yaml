@@ -87,8 +87,8 @@ development_status:
   15-2i-error-handler-integration: done   # 3 pts - Integrate errorHandler into catch blocks + tighten classifyError (7 files)
 
   # Phase 3: Component Deduplication
-  15-3a-confirm-dialog-shared: backlog  # 2 pts - Promote ConfirmationDialog, replace window.confirm
-  15-3b-generic-mappings-list: backlog  # 3 pts - MappingsList<T> replaces 4 components (2,238 → ~400 lines)
+  15-3a-confirm-dialog-shared: done    # 2 pts - Promoted ConfirmationDialog to shared, replaced window.confirm
+  15-3b-generic-mappings-list: done    # 3 pts - MappingsList<T> replaces 4 components (2,238 → 797 lines, -64%)
 
   # Phase 4: Feature Modules
   15-4a-feature-analytics: backlog      # 2 pts - Create features/analytics/ (~15 files)
