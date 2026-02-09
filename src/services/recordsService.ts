@@ -693,20 +693,22 @@ export async function deletePersonalRecords(
 ): Promise<void> {
     if (recordIds.length === 0) return;
 
-    const batch = writeBatch(db);
-
-    for (const recordId of recordIds) {
-        const recordRef = doc(
-            db,
-            'artifacts',
-            appId,
-            'users',
-            userId,
-            'personalRecords',
-            recordId
-        );
-        batch.delete(recordRef);
+    const BATCH_SIZE = 500;
+    for (let i = 0; i < recordIds.length; i += BATCH_SIZE) {
+        const chunk = recordIds.slice(i, i + BATCH_SIZE);
+        const batch = writeBatch(db);
+        for (const recordId of chunk) {
+            const recordRef = doc(
+                db,
+                'artifacts',
+                appId,
+                'users',
+                userId,
+                'personalRecords',
+                recordId
+            );
+            batch.delete(recordRef);
+        }
+        await batch.commit();
     }
-
-    await batch.commit();
 }

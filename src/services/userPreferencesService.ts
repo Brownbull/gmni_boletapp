@@ -12,6 +12,7 @@ import {
   serverTimestamp,
   Firestore,
 } from 'firebase/firestore';
+import { sanitizeInput, sanitizeLocation } from '@/utils/sanitize';
 
 /**
  * Supported currencies for the application
@@ -137,14 +138,27 @@ export async function saveUserPreferences(
   try {
     const docRef = getPreferencesDocRef(db, appId, userId);
 
-    await setDoc(
-      docRef,
-      {
-        ...preferences,
-        updatedAt: serverTimestamp(),
-      },
-      { merge: true }
-    );
+    const sanitized = {
+      ...preferences,
+      ...(preferences.displayName !== undefined && {
+        displayName: sanitizeInput(preferences.displayName, { maxLength: 100 }),
+      }),
+      ...(preferences.phoneNumber !== undefined && {
+        phoneNumber: sanitizeInput(preferences.phoneNumber, { maxLength: 20 }),
+      }),
+      ...(preferences.birthDate !== undefined && {
+        birthDate: sanitizeInput(preferences.birthDate, { maxLength: 10 }),
+      }),
+      ...(preferences.defaultCountry !== undefined && {
+        defaultCountry: sanitizeLocation(preferences.defaultCountry),
+      }),
+      ...(preferences.defaultCity !== undefined && {
+        defaultCity: sanitizeLocation(preferences.defaultCity),
+      }),
+      updatedAt: serverTimestamp(),
+    };
+
+    await setDoc(docRef, sanitized, { merge: true });
   } catch (error) {
     console.error('Error saving user preferences:', error);
     throw error;

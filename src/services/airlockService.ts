@@ -389,13 +389,16 @@ export async function deleteAirlocks(
 ): Promise<void> {
   if (airlockIds.length === 0) return;
 
+  const BATCH_SIZE = 500;
   const collectionPath = getAirlocksCollectionPath(appId, userId);
-  const batch = writeBatch(db);
 
-  for (const airlockId of airlockIds) {
-    const docRef = doc(db, collectionPath, airlockId);
-    batch.delete(docRef);
+  for (let i = 0; i < airlockIds.length; i += BATCH_SIZE) {
+    const chunk = airlockIds.slice(i, i + BATCH_SIZE);
+    const batch = writeBatch(db);
+    for (const airlockId of chunk) {
+      const docRef = doc(db, collectionPath, airlockId);
+      batch.delete(docRef);
+    }
+    await batch.commit();
   }
-
-  await batch.commit();
 }

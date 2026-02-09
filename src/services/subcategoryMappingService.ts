@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore';
 import { SubcategoryMapping, NewSubcategoryMapping } from '../types/subcategoryMapping';
 import { LISTENER_LIMITS } from './firestore';
+import { sanitizeSubcategory } from '@/utils/sanitize';
 
 /**
  * Get the collection path for a user's subcategory mappings
@@ -51,6 +52,10 @@ export async function saveSubcategoryMapping(
 ): Promise<string> {
     const collectionPath = getMappingsCollectionPath(appId, userId);
     const mappingsRef = collection(db, collectionPath);
+    const sanitizedMapping = {
+        ...mapping,
+        targetSubcategory: sanitizeSubcategory(mapping.targetSubcategory),
+    };
 
     // Check if mapping with same normalizedItem already exists
     // Story 14.26: Add limit(1) to reduce reads - we only need one match
@@ -65,7 +70,7 @@ export async function saveSubcategoryMapping(
         // Update existing mapping
         const existingDoc = existingDocs.docs[0];
         await updateDoc(existingDoc.ref, {
-            ...mapping,
+            ...sanitizedMapping,
             updatedAt: serverTimestamp()
         });
         return existingDoc.id;
@@ -73,7 +78,7 @@ export async function saveSubcategoryMapping(
 
     // Create new mapping
     const docRef = await addDoc(mappingsRef, {
-        ...mapping,
+        ...sanitizedMapping,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
     });
@@ -175,7 +180,7 @@ export async function updateSubcategoryMappingTarget(
     const collectionPath = getMappingsCollectionPath(appId, userId);
     const docRef = doc(db, collectionPath, mappingId);
     return updateDoc(docRef, {
-        targetSubcategory: newTargetSubcategory,
+        targetSubcategory: sanitizeSubcategory(newTargetSubcategory),
         updatedAt: serverTimestamp()
     });
 }

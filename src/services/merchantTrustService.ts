@@ -21,6 +21,7 @@ import {
     TRUST_THRESHOLDS,
 } from '../types/trust';
 import { LISTENER_LIMITS } from './firestore';
+import { sanitizeMerchantName } from '@/utils/sanitize';
 
 /**
  * Get the collection path for a user's trusted merchants
@@ -136,7 +137,8 @@ export async function recordScan(
     merchantName: string,
     wasEdited: boolean
 ): Promise<TrustPromptEligibility> {
-    const normalizedName = normalizeMerchantNameForTrust(merchantName);
+    const sanitizedMerchant = sanitizeMerchantName(merchantName);
+    const normalizedName = normalizeMerchantNameForTrust(sanitizedMerchant);
 
     // Use normalized name as document ID for consistent lookups
     const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
@@ -170,7 +172,7 @@ export async function recordScan(
     } else {
         // Create new record - use TrustedMerchantCreate for proper serverTimestamp() typing
         const newRecord: TrustedMerchantCreate = {
-            merchantName,
+            merchantName: sanitizedMerchant,
             normalizedName,
             scanCount: 1,
             editCount: wasEdited ? 1 : 0,
@@ -189,7 +191,7 @@ export async function recordScan(
             shouldShowPrompt: false,
             merchant: {
                 id: normalizedName,
-                merchantName,
+                merchantName: sanitizedMerchant,
                 normalizedName,
                 scanCount: 1,
                 editCount: wasEdited ? 1 : 0,

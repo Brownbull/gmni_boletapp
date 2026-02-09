@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore'
 import { MerchantMapping, NewMerchantMapping } from '../types/merchantMapping'
 import { LISTENER_LIMITS } from './firestore'
+import { sanitizeMerchantName } from '@/utils/sanitize'
 
 /**
  * Get the collection path for a user's merchant mappings
@@ -52,6 +53,10 @@ export async function saveMerchantMapping(
 ): Promise<string> {
     const collectionPath = getMappingsCollectionPath(appId, userId)
     const mappingsRef = collection(db, collectionPath)
+    const sanitizedMapping = {
+        ...mapping,
+        targetMerchant: sanitizeMerchantName(mapping.targetMerchant),
+    }
 
     // Check if mapping with same normalizedMerchant already exists
     // Story 14.26: Add limit(1) to reduce reads - we only need one match
@@ -66,7 +71,7 @@ export async function saveMerchantMapping(
         // Update existing mapping
         const existingDoc = existingDocs.docs[0]
         await updateDoc(existingDoc.ref, {
-            ...mapping,
+            ...sanitizedMapping,
             updatedAt: serverTimestamp()
         })
         return existingDoc.id
@@ -74,7 +79,7 @@ export async function saveMerchantMapping(
 
     // Create new mapping
     const docRef = await addDoc(mappingsRef, {
-        ...mapping,
+        ...sanitizedMapping,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
     })
@@ -194,7 +199,7 @@ export async function updateMerchantMappingTarget(
     const collectionPath = getMappingsCollectionPath(appId, userId)
     const docRef = doc(db, collectionPath, mappingId)
     return updateDoc(docRef, {
-        targetMerchant: newTargetMerchant,
+        targetMerchant: sanitizeMerchantName(newTargetMerchant),
         updatedAt: serverTimestamp()
     })
 }

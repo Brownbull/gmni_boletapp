@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore'
 import { ItemNameMapping, NewItemNameMapping } from '../types/itemNameMapping'
 import { LISTENER_LIMITS } from './firestore'
+import { sanitizeItemName } from '@/utils/sanitize'
 
 /**
  * Get the collection path for a user's item name mappings
@@ -54,6 +55,10 @@ export async function saveItemNameMapping(
 ): Promise<string> {
     const collectionPath = getMappingsCollectionPath(appId, userId)
     const mappingsRef = collection(db, collectionPath)
+    const sanitizedMapping = {
+        ...mapping,
+        targetItemName: sanitizeItemName(mapping.targetItemName),
+    }
 
     // Check if mapping with same normalizedMerchant + normalizedItemName already exists
     // Compound query for upsert by merchant scope + item name
@@ -69,7 +74,7 @@ export async function saveItemNameMapping(
         // Update existing mapping
         const existingDoc = existingDocs.docs[0]
         await updateDoc(existingDoc.ref, {
-            ...mapping,
+            ...sanitizedMapping,
             updatedAt: serverTimestamp()
         })
         return existingDoc.id
@@ -77,7 +82,7 @@ export async function saveItemNameMapping(
 
     // Create new mapping
     const docRef = await addDoc(mappingsRef, {
-        ...mapping,
+        ...sanitizedMapping,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
     })
@@ -225,7 +230,7 @@ export async function updateItemNameMappingTarget(
     const collectionPath = getMappingsCollectionPath(appId, userId)
     const docRef = doc(db, collectionPath, mappingId)
     return updateDoc(docRef, {
-        targetItemName: newTargetItemName,
+        targetItemName: sanitizeItemName(newTargetItemName),
         updatedAt: serverTimestamp()
     })
 }

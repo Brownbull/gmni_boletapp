@@ -55,35 +55,73 @@ development_status:
 
   # Epic 14d shared groups: REMOVED (2026-02-09) — feature will be redesigned
 
-  # Epic 15: Advanced Features (~38 points - revised after mockup verification 2025-12-31)
-  # Goals system, learned thresholds, out-of-character detection, treemap, themeable skins
-  # Key features: Savings GPS, Emotional Airlock, Treemap, Themeable Skins (Sankey/Sharing REMOVED - not in mockups)
-  # BLOCKED by Epic 14 - Requires animation framework and polygon
-  # Atlas Feature Mapping: Goals system, Pattern detection, Treemap viz
-  # Workflow Chains: Extends Insight Gen (#5), Analytics (#2)
-  epic-15: backlog
+  # ============================================================================
+  # Epic 15: Codebase Refactoring (~87 points, 8 phases)
+  # Full analysis: docs/architecture/proposals/CODEBASE-REFACTOR-ANALYSIS.md
+  # Replaces previous Epic 15 (Advanced Features, deferred to Epic 19)
+  # ============================================================================
+  epic-15: in-progress
 
-  # Goals System (new feature area)
-  15-1-custom-goals-crud: backlog  # 3 pts - Name, emoji, amount, currency [NEW FEATURE: Goals] [MOCKUP: goals-gps.html]
-  15-2-savings-gps-visualization: backlog  # 5 pts - ETA, alternate routes [DEPENDS: 15.1] [MOCKUP: goals-gps.html]
-  15-3-hybrid-income-mode: backlog  # 3 pts - Smart + Precision modes [NEW FEATURE: Income tracking]
-  15-4-goal-connected-insights: backlog  # 3 pts - "Coffee = 1 day from Tokyo" [EXTENDS: Insight Gen #5]
+  # Phase 0: Critical Bugs (immediate)
+  15-0a-batch-chunking-fix: done        # 2 pts - Fix missing 500-op chunking in recordsService + airlockService
+  15-0b-sanitize-input-audit: done      # 1 pt  - Audit + extend sanitizeInput() coverage
 
-  # Learned Behavior (extends Insight Engine)
-  15-5-learned-budget-thresholds: backlog  # 3 pts - App suggests limits [EXTENDS: Insight Gen #5] [MOCKUP: goals-gps.html budget-limit]
-  15-6-threshold-proximity-alerts: backlog  # 2 pts - 75%, 90%, 100% warnings [DEPENDS: 15.5]
-  15-7-out-of-character-detection: backlog  # 5 pts - Pattern deviation [EXTENDS: Insight Gen #5]
-  15-8-emotional-airlock-flow: backlog  # 3 pts - Curiosity → Playful → Reveal [DEPENDS: 15.7] [MOCKUP: insights.html airlock sequence]
+  # Phase 1: Foundation — Dead Code + Shared Utilities
+  15-1a-delete-dead-services: backlog   # 1 pt  - Delete fcmToken, pushNotifications, transactionQuery (~1,193 lines)
+  15-1b-centralize-paths: backlog       # 2 pts - Collection path builder (35+ inline → 1 file)
+  15-1c-generic-mapping-service: backlog # 3 pts - Parameterized mapping service (828 → ~250 lines)
+  15-1d-normalize-for-mapping: backlog  # 2 pts - Unified normalization with Unicode NFD (5 copies → 1)
+  15-1e-base-duplicate-detection: backlog # 2 pts - Configurable comparator (742 → ~400 lines)
+  15-1f-batch-operations-util: backlog  # 2 pts - Auto-chunking at 500 ops
+  15-1g-consolidate-validation: backlog # 1 pt  - Merge validation.ts + validationUtils.ts
 
-  # Advanced Visualizations
-  15-9-treemap-implementation: backlog  # 5 pts - Proportional breakdown [MOCKUP: analytics-polygon.html, home-dashboard.html]
-  # REMOVED 15.9-Sankey (CSS defined but not rendered), 15.12-Sharing (not in mockups)
+  # Phase 2: Business Logic Centralization
+  15-2a-currency-formatting: backlog    # 2 pts - DEFAULT_CURRENCY + formatCurrency() (56 occurrences)
+  15-2b-date-utilities: backlog         # 2 pts - Merge date.ts + dateHelpers.ts + periodUtils.ts
+  15-2c-timestamp-utils: backlog        # 2 pts - Unified TimestampLike → Date/millis
+  15-2d-transaction-validation: backlog # 2 pts - Shared validation predicates (11+ files)
+  15-2e-comparators: backlog            # 2 pts - Typed sort comparators (132 calls, 43 files)
+  15-2f-storage-wrapper: backlog        # 2 pts - Typed localStorage wrapper (22 files)
+  15-2g-number-format: backlog          # 2 pts - formatDecimal(), formatPercent()
+  15-2h-error-handling: backlog         # 3 pts - Error code mapping + toast service (37 files)
 
-  # Engagement & Personalization
-  15-10-monthly-milestone-view: backlog  # 3 pts - Progress celebrations [DEPENDS: 14.12] [MOCKUP: goals-gps.html milestone markers]
-  15-11-themeable-skins: backlog  # 3 pts - 3 themes: Professional Blue, Mono, Ni No Kuni [MOCKUP: settings.html PALETA DE COLOR]
+  # Phase 3: Component Deduplication
+  15-3a-confirm-dialog-shared: backlog  # 2 pts - Promote ConfirmationDialog, replace window.confirm
+  15-3b-generic-mappings-list: backlog  # 3 pts - MappingsList<T> replaces 4 components (2,238 → ~400 lines)
+
+  # Phase 4: Feature Modules
+  15-4a-feature-analytics: backlog      # 2 pts - Create features/analytics/ (~15 files)
+  15-4b-feature-history: backlog        # 2 pts - Create features/history/ (~10 files)
+  15-4c-feature-insights: backlog       # 2 pts - Create features/insights/ (~12 files)
+  15-4d-feature-reports: backlog        # 2 pts - Create features/reports/ (~8 files)
+  15-4e-feature-dashboard: backlog      # 2 pts - Create features/dashboard/ (~5 files)
+  15-4f-feature-settings: backlog       # 2 pts - Create features/settings/ (~5 files)
+  15-4g-hooks-to-features: backlog      # 2 pts - Move 15+ feature-specific hooks + barrel exports
+
+  # Phase 5: Mega-View Decomposition
+  15-5a-category-aggregation: backlog   # 2 pts - Shared categoryAggregation.ts
+  15-5b-decompose-trends-view: backlog  # 5 pts - TrendsView 5,901 → 800 + sub-files
+  15-5c-decompose-dashboard-view: backlog # 3 pts - DashboardView 3,412 → 800 + sub-files
+  15-5d-decompose-editor-view: backlog  # 3 pts - TransactionEditorView 2,721 → 800 + sub-files
+  15-5e-decompose-icon-filter-bar: backlog # 2 pts - IconFilterBar 1,797 → 200 + dropdowns
+  15-5f-decompose-app-tsx: backlog      # 3 pts - App.tsx 2,069 → 800 + feature roots
+
+  # Phase 6: Data Access Layer
+  15-6a-repository-interfaces: backlog  # 2 pts - 7 repository interfaces
+  15-6b-firestore-repositories: backlog # 3 pts - Firestore implementations (46 → 7-10 imports)
+  15-6c-migrate-consumers: backlog      # 3 pts - Hooks/views → repository pattern
+
+  # Phase 7: State Management Alignment
+  15-7a-history-filters-zustand: backlog # 2 pts - HistoryFiltersContext → Zustand
+  15-7b-app-state-zustand: backlog      # 2 pts - AppStateContext → Zustand
+  15-7c-theme-zustand: backlog          # 2 pts - ThemeContext → Zustand
+  15-7d-separate-client-server: backlog # 2 pts - Separate mixed hooks
 
   epic-15-retrospective: optional
+
+  # ============================================================================
+  # Deferred Epics (renumbered after Epic 15 replacement)
+  # ============================================================================
 
   # Epic 16: Onboarding & Progressive Disclosure (~15 points)
   # Time-to-value <60 seconds, demo walkthrough, feature unlocking
@@ -102,6 +140,13 @@ development_status:
   # (Formerly Epic 16, renumbered after brainstorming expansion)
   epic-18: backlog
   epic-18-retrospective: optional
+
+  # Epic 19: Advanced Features (~38 points)
+  # Goals system, learned thresholds, out-of-character detection, treemap, themeable skins
+  # (Formerly Epic 15, deferred 2026-02-09 — replaced by Codebase Refactoring)
+  # Full definition preserved in: docs/sprint-artifacts/epic15/epic-15-advanced-features.md
+  epic-19: backlog
+  epic-19-retrospective: optional
 
   # ============================================================================
   # FUTURE BACKLOG (Post-Launch)
