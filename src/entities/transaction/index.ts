@@ -38,7 +38,6 @@ export {
     // Type guards
     hasTransactionImages,
     hasTransactionThumbnail,
-    isOwnTransaction,
 } from './types';
 
 // Re-export category types
@@ -66,8 +65,6 @@ export {
     // Story 14d-v2-1-2b: Epic 14d-v2 field defaults
     ensureTransactionDefaults,
     ensureTransactionsDefaults,
-    isDeleted,
-    isSharedTransaction,
     // Story 14e-41: Reconciliation utility
     reconcileItemsTotal,
     type ReconcileResult,

@@ -671,7 +671,6 @@ function App() {
                 : { level: 'all' },
             category: categoryFilter,
             location: {},
-            group: {},
         };
 
         // Store filters and navigate
@@ -1076,7 +1075,6 @@ function App() {
                 batchSession,
                 // Story 14e-43: onShowInsight/onShowBatchSummary removed - now use insightActions directly
             },
-            viewMode: 'personal',
             prefersReducedMotion,
             processingTimeoutMs: PROCESSING_TIMEOUT_MS,
         });
@@ -1748,8 +1746,6 @@ function App() {
                                         onItemError: dispatchBatchItemError,
                                         // Atomic state update with phase transition
                                         onComplete: (processingResults, imageUrls) => {
-                                            // Story 14d-v2-1.1: sharedGroupIds[] tagging removed (Epic 14c cleanup)
-                                            // Epic 14d will use sharedGroupId (single nullable string) instead
                                             const receipts = createBatchReceiptsFromResults(processingResults, imageUrls);
                                             // Story 14e-16: Load into both scan store (for legacy) and batch review store (for orchestrator)
                                             dispatchBatchComplete(receipts);

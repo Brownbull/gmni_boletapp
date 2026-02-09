@@ -1,10 +1,10 @@
 # Source Tree Analysis: Boletapp
 
-**Last Updated:** 2026-02-05 (Post-Epic 14d-v2 - Shared Groups)
+**Last Updated:** 2026-02-09 (Shared groups feature removed)
 
 ## Executive Summary
 
-Boletapp has evolved from a **single-file application** (621 lines) to a **feature-based architecture** with **539 TypeScript files** organized into feature modules and shared layers. Epic 14e introduced **Zustand** for client state management with 7 stores. Epic 14d-v2 added the **Shared Groups** feature with changelog-driven sync.
+Boletapp has evolved from a **single-file application** (621 lines) to a **feature-based architecture** with **539 TypeScript files** organized into feature modules and shared layers. Epic 14e introduced **Zustand** for client state management with 7 stores.
 
 **Architecture Pattern:** Feature-Based PWA (React + TypeScript + Zustand + TanStack Query)
 **State Management:** 7 Zustand stores + TanStack Query for server state
@@ -35,11 +35,7 @@ boletapp/                                    # Project root
 │   │   │   └── store/                      # useTransactionEditorStore
 │   │   ├── categories/                     # Category management
 │   │   │   └── utils/                      # itemNameMappings
-│   │   ├── credit/                         # Credit tracking
-│   │   └── shared-groups/                  # Shared groups (Epic 14d-v2)
-│   │       ├── components/                 # EditGroupDialog, ViewModeSwitcher, etc.
-│   │       ├── hooks/                      # useGroups, useUserGroupPreference
-│   │       └── services/                   # groupService
+│   │   └── credit/                         # Credit tracking
 │   │
 │   ├── entities/                           # Domain entities (FSD pattern)
 │   │   └── transaction/
@@ -65,14 +61,11 @@ boletapp/                                    # Project root
 │   ├── types/                              # TypeScript type definitions
 │   │   ├── settings.ts                     # Language, currency, theme types
 │   │   ├── transaction.ts                  # Transaction and item interfaces
-│   │   ├── sharedGroup.ts                  # SharedGroup, Invitation, Changelog types
-│   │   ├── changelog.ts                    # ChangelogEntry, sync types
 │   │   └── index.ts                        # Barrel exports
 │   │
 │   ├── services/                           # Business logic & API integrations (25 files)
 │   │   ├── firestore.ts                    # Firestore CRUD operations
 │   │   ├── gemini.ts                       # Gemini AI receipt analysis
-│   │   ├── sharedGroupService.ts           # Shared groups CRUD (Epic 14c)
 │   │   ├── creditService.ts                # User credits management
 │   │   ├── insightEngineService.ts         # AI-powered insights
 │   │   ├── batchProcessingService.ts       # Batch receipt processing
@@ -95,8 +88,6 @@ boletapp/                                    # Project root
 │   │   ├── useTrustedMerchants.ts          # Auto-trust merchants
 │   │   ├── useUserCredits.ts               # Credit balance
 │   │   ├── useUserPreferences.ts           # User settings
-│   │   ├── useSharedGroups.ts              # Shared groups (Epic 14c)
-│   │   ├── usePendingInvitations.ts        # Group invitations (Epic 14c)
 │   │   ├── useScanStateMachine.ts          # Scan state machine (Epic 14d)
 │   │   ├── useBatchProcessing.ts           # Batch receipt processing
 │   │   ├── useInsightProfile.ts            # AI insights profile
@@ -118,7 +109,6 @@ boletapp/                                    # Project root
 │   │   ├── NotificationContext.tsx         # In-app notifications
 │   │   ├── AppStateContext.tsx             # App lifecycle (online, foreground)
 │   │   ├── ScanContext.tsx                 # Scan state machine (from Epic 14d)
-│   │   ├── ViewModeContext.tsx             # Personal/Group view mode
 │   │   ├── AnalyticsContext.tsx            # Analytics navigation (view-scoped)
 │   │   └── HistoryFiltersContext.tsx       # History filtering (view-scoped)
 │   │
@@ -841,7 +831,6 @@ Epic 14c-refactor decomposed the monolithic App.tsx (~5074 lines) into modular c
 | `NotificationContext.tsx` | In-app notifications, toast messages, unread count |
 | `AppStateContext.tsx` | Online status, foreground/background, beforeunload guards |
 | `ScanContext.tsx` | Scan state machine (PRESERVED from Epic 14d) |
-| `ViewModeContext.tsx` | Personal vs Group view mode |
 | `AnalyticsContext.tsx` | Analytics navigation state (view-scoped) |
 | `HistoryFiltersContext.tsx` | History filtering state (view-scoped) |
 | `index.ts` | Barrel exports |
@@ -896,7 +885,6 @@ Epic 14e introduced a feature-based architecture, organizing code by domain feat
 | `src/features/transaction-editor/` | Transaction editing | useTransactionEditorStore |
 | `src/features/categories/` | Category management | itemNameMappings |
 | `src/features/credit/` | Credit tracking | CreditFeature |
-| `src/features/shared-groups/` | Shared groups (Epic 14d-v2) | useGroups, groupService, EditGroupDialog, ViewModeSwitcher |
 | `src/entities/transaction/` | Transaction domain | reconciliation utils |
 | `src/shared/stores/` | Shared Zustand stores | useNavigationStore, useSettingsStore |
 | `src/managers/modal/` | Modal infrastructure | useModalStore |

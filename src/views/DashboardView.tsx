@@ -432,7 +432,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
         formatCurrency,
         formatDate,
         getSafeDate: _getSafeDate,
-        sharedGroups: _sharedGroups,
         onCreateNew: _onCreateNew,
         onViewTrends,
         onEditTransaction,

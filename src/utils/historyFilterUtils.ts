@@ -13,7 +13,6 @@ import type {
   TemporalFilterState,
   CategoryFilterState,
   LocationFilterState,
-  GroupFilterState,
 } from '../contexts/HistoryFiltersContext';
 // Story 14.15b: Category normalization for legacy data compatibility
 import { normalizeItemCategory } from './categoryNormalizer';
@@ -489,31 +488,6 @@ function matchesLocationFilter(
   return true;
 }
 
-// ============================================================================
-// Group Filter Helpers (Story 14.15b)
-// ============================================================================
-
-/**
- * Check if a transaction matches a group filter.
- * Story 14.15b: Transaction Selection Mode & Groups (AC #7)
- * Supports multi-select (comma-separated groupIds)
- */
-function matchesGroupFilter(
-  _tx: Transaction,
-  filter: GroupFilterState
-): boolean {
-  // No group filter applied - include all transactions
-  if (!filter.groupIds) return true;
-
-  // Parse comma-separated group IDs
-  const selectedGroupIds = filter.groupIds.split(',').map(id => id.trim()).filter(Boolean);
-  if (selectedGroupIds.length === 0) return true;
-
-  // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
-  // Epic 14d will use sharedGroupId (single nullable string) instead
-  // For now, return false - no group-based filtering possible without field
-  return false;
-}
 
 // ============================================================================
 // Main Filtering Function
@@ -542,11 +516,6 @@ export function filterTransactionsByHistoryFilters(
 
     // Location filter (AC #4)
     if (!matchesLocationFilter(tx, filters.location)) {
-      return false;
-    }
-
-    // Story 14.15b: Group filter (AC #7)
-    if (!matchesGroupFilter(tx, filters.group)) {
       return false;
     }
 

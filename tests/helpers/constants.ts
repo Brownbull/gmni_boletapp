@@ -17,5 +17,3 @@ export const ONE_HOUR_MS = 60 * 60 * 1000;
 /** 1 minute in milliseconds */
 export const ONE_MINUTE_MS = 60 * 1000;
 
-// Re-export source-of-truth limits for test convenience
-export { SHARED_GROUP_LIMITS } from '../../src/types/sharedGroup';

@@ -45,14 +45,14 @@ function MyComponent({ user }: Props) {
 Hooks that belong to a feature module go in `src/features/{name}/hooks/`, NOT `src/hooks/`:
 
 ```
-src/features/shared-groups/
+src/features/scan/
   hooks/
-    useGroups.ts           # Feature-scoped hook
-    useUserGroupPreference.ts
+    useScanInitiation.ts   # Feature-scoped hook
+    useScanFlow.ts
     index.ts               # Barrel export
-  components/
-  services/
-  index.ts                 # Re-exports hooks, components, services
+  handlers/
+  store/
+  index.ts                 # Re-exports hooks, handlers, store
 ```
 
 This achieves 100% architecture compliance per FSD rules.
@@ -65,13 +65,13 @@ Pass dependencies as parameters instead of relying on global state. This enables
 
 ```typescript
 // BAD: Hook reaches for global auth
-function useGroupActions() {
+function useFeatureActions() {
   const user = useAuth(); // Hard to test
   // ...
 }
 
 // GOOD: Dependencies injected
-function useGroupActions(user: User, services: GroupServices, groupId: string) {
+function useFeatureActions(user: User, services: FeatureServices) {
   // Easy to test with mock user, mock services
 }
 ```
@@ -86,15 +86,14 @@ Separate data ownership from data consumption:
 // useViewData owns the data (fetching, caching, transforms)
 function useDashboardViewData() {
   const transactions = useTransactions();
-  const groups = useGroups();
-  return { transactions, groups, isLoading: !transactions };
+  return { transactions, isLoading: !transactions };
 }
 
 // Component receives data, handles UI only
 function DashboardView() {
-  const { transactions, groups, isLoading } = useDashboardViewData();
+  const { transactions, isLoading } = useDashboardViewData();
   if (isLoading) return <Skeleton />;
-  return <Dashboard data={transactions} groups={groups} />;
+  return <Dashboard data={transactions} />;
 }
 ```
 

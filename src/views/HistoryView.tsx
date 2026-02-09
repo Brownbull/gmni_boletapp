@@ -200,7 +200,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
         t,
         formatCurrency,
         formatDate,
-        activeGroup: _activeGroup,
         onEditTransaction,
     } = { ...hookData, ..._testOverrides };
 

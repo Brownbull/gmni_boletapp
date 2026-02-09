@@ -9,11 +9,8 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import {
     useAnalyticsTransactions,
-    calculateMemberContributions,
-    aggregateCategoriesWithMembers,
 } from '../../../src/hooks/useAnalyticsTransactions';
 import type { Transaction } from '../../../src/types/transaction';
-import type { AnalyticsMember } from '../../../src/hooks/useAnalyticsTransactions';
 
 // ============================================================================
 // Test Fixtures
@@ -29,14 +26,6 @@ const createMockTransaction = (overrides: Partial<Transaction> = {}): Transactio
     ...overrides,
 });
 
-const createMockMember = (overrides: Partial<AnalyticsMember> = {}): AnalyticsMember => ({
-    uid: `user-${Math.random().toString(36).slice(2, 9)}`,
-    email: 'member@test.com',
-    displayName: 'Test Member',
-    avatarColor: '#FF5722',
-    joinedAt: Date.now(),
-    ...overrides,
-});
 
 // ============================================================================
 // Hook Tests
@@ -104,166 +93,5 @@ describe('useAnalyticsTransactions', () => {
             expect(result.current.transactions).toEqual([]);
         });
 
-    });
-});
-
-// ============================================================================
-// Utility Function Tests
-// ============================================================================
-
-describe('calculateMemberContributions', () => {
-    const members: AnalyticsMember[] = [
-        createMockMember({ uid: 'user-1', displayName: 'Alice', avatarColor: '#FF5722' }),
-        createMockMember({ uid: 'user-2', displayName: 'Bob', avatarColor: '#4CAF50' }),
-        createMockMember({ uid: 'user-3', displayName: 'Charlie', avatarColor: '#2196F3' }),
-    ];
-
-    it('should calculate contributions correctly', () => {
-        const transactions: Transaction[] = [
-            createMockTransaction({ total: 100, _ownerId: 'user-1' }),
-            createMockTransaction({ total: 200, _ownerId: 'user-1' }),
-            createMockTransaction({ total: 150, _ownerId: 'user-2' }),
-            createMockTransaction({ total: 50, _ownerId: 'user-3' }),
-        ];
-
-        const contributions = calculateMemberContributions(transactions, members);
-
-        expect(contributions).toHaveLength(3);
-
-        // Sorted by total (highest first)
-        expect(contributions[0].memberId).toBe('user-1');
-        expect(contributions[0].total).toBe(300);
-        expect(contributions[0].transactionCount).toBe(2);
-
-        expect(contributions[1].memberId).toBe('user-2');
-        expect(contributions[1].total).toBe(150);
-        expect(contributions[1].transactionCount).toBe(1);
-
-        expect(contributions[2].memberId).toBe('user-3');
-        expect(contributions[2].total).toBe(50);
-        expect(contributions[2].transactionCount).toBe(1);
-    });
-
-    it('should calculate percentages correctly', () => {
-        const transactions: Transaction[] = [
-            createMockTransaction({ total: 500, _ownerId: 'user-1' }), // 50%
-            createMockTransaction({ total: 300, _ownerId: 'user-2' }), // 30%
-            createMockTransaction({ total: 200, _ownerId: 'user-3' }), // 20%
-        ];
-
-        const contributions = calculateMemberContributions(transactions, members);
-
-        expect(contributions[0].percentage).toBe(50);
-        expect(contributions[1].percentage).toBe(30);
-        expect(contributions[2].percentage).toBe(20);
-    });
-
-    it('should handle members with no transactions', () => {
-        const transactions: Transaction[] = [
-            createMockTransaction({ total: 100, _ownerId: 'user-1' }),
-        ];
-
-        const contributions = calculateMemberContributions(transactions, members);
-
-        // User-1 has 100, others have 0
-        const user1 = contributions.find(c => c.memberId === 'user-1');
-        const user2 = contributions.find(c => c.memberId === 'user-2');
-        const user3 = contributions.find(c => c.memberId === 'user-3');
-
-        expect(user1?.total).toBe(100);
-        expect(user1?.percentage).toBe(100);
-        expect(user2?.total).toBe(0);
-        expect(user2?.percentage).toBe(0);
-        expect(user3?.total).toBe(0);
-    });
-
-    it('should handle empty transactions', () => {
-        const contributions = calculateMemberContributions([], members);
-
-        expect(contributions).toHaveLength(3);
-        expect(contributions[0].total).toBe(0);
-        expect(contributions[0].percentage).toBe(0);
-    });
-
-    it('should handle transactions with no _ownerId', () => {
-        const transactions: Transaction[] = [
-            createMockTransaction({ total: 100 }), // No _ownerId
-        ];
-
-        // The transaction won't match any member
-        const contributions = calculateMemberContributions(transactions, members);
-
-        // All members should have 0 (transaction assigned to 'unknown')
-        expect(contributions.every(c => c.total === 0)).toBe(true);
-    });
-
-    it('should use email prefix if no displayName', () => {
-        const membersNoName: AnalyticsMember[] = [
-            createMockMember({
-                uid: 'user-1',
-                displayName: undefined as unknown as string,
-                email: 'alice@example.com',
-            }),
-        ];
-
-        const contributions = calculateMemberContributions([], membersNoName);
-
-        expect(contributions[0].memberName).toBe('alice');
-    });
-});
-
-describe('aggregateCategoriesWithMembers', () => {
-    it('should aggregate categories with member breakdown', () => {
-        const transactions: Transaction[] = [
-            createMockTransaction({ category: 'Supermercado', total: 100, _ownerId: 'user-1' }),
-            createMockTransaction({ category: 'Supermercado', total: 200, _ownerId: 'user-2' }),
-            createMockTransaction({ category: 'Restaurante', total: 150, _ownerId: 'user-1' }),
-        ];
-
-        const result = aggregateCategoriesWithMembers(transactions);
-
-        expect(result.size).toBe(2);
-
-        const supermarket = result.get('Supermercado');
-        expect(supermarket).toBeDefined();
-        expect(supermarket!.total).toBe(300);
-        expect(supermarket!.count).toBe(2);
-        expect(supermarket!.byMember.get('user-1')?.total).toBe(100);
-        expect(supermarket!.byMember.get('user-2')?.total).toBe(200);
-
-        const restaurant = result.get('Restaurante');
-        expect(restaurant).toBeDefined();
-        expect(restaurant!.total).toBe(150);
-        expect(restaurant!.count).toBe(1);
-    });
-
-    it('should handle transactions with no category', () => {
-        const transactions: Transaction[] = [
-            createMockTransaction({ category: undefined as unknown as string, total: 100 }),
-        ];
-
-        const result = aggregateCategoriesWithMembers(transactions);
-
-        expect(result.has('Other')).toBe(true);
-        expect(result.get('Other')!.total).toBe(100);
-    });
-
-    it('should handle empty transactions', () => {
-        const result = aggregateCategoriesWithMembers([]);
-        expect(result.size).toBe(0);
-    });
-
-    it('should track transaction counts per member', () => {
-        const transactions: Transaction[] = [
-            createMockTransaction({ category: 'Supermercado', total: 50, _ownerId: 'user-1' }),
-            createMockTransaction({ category: 'Supermercado', total: 75, _ownerId: 'user-1' }),
-            createMockTransaction({ category: 'Supermercado', total: 100, _ownerId: 'user-1' }),
-        ];
-
-        const result = aggregateCategoriesWithMembers(transactions);
-        const supermarket = result.get('Supermercado');
-
-        expect(supermarket!.byMember.get('user-1')?.count).toBe(3);
-        expect(supermarket!.byMember.get('user-1')?.total).toBe(225);
     });
 });

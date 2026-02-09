@@ -28,5 +28,3 @@ export const STORE_CATEGORIES = [
 ] as const;
 
 export const ITEMS_PER_PAGE = 20;
-
-export { SHARED_GROUP_LIMITS } from '../types/sharedGroup';

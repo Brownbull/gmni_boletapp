@@ -135,7 +135,6 @@ flowchart LR
             Users[(users)]
             Transactions[(transactions)]
             Mappings[(mappings)]
-            SharedGroups[(sharedGroups)]
         end
 
         subgraph Storage["Storage"]
@@ -293,15 +292,6 @@ flowchart TB
 ```
 /artifacts/{appId}/users/{userId}/**
   → User can only access own data
-
-/sharedGroups/{groupId}
-  → Members can read
-  → Owner can write
-  → User can add self (accepting invite)
-
-/pendingInvitations/{invitationId}
-  → Invited user can read/update status
-  → Creator can create
 ```
 
 ---

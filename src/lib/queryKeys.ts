@@ -86,30 +86,6 @@ export const QUERY_KEYS = {
         ['items', 'derived', userId, appId] as const,
 
     /**
-     * Story TD-CONSOLIDATED-12: Pending Invitations Query Keys
-     * Centralized keys for invitation queries and mutation invalidation
-     */
-    pendingInvitations: {
-        /** All pending invitations queries (for bulk invalidation) */
-        all: () => ['pendingInvitations'] as const,
-        /** Pending invitations for a specific email */
-        byEmail: (email: string) => ['pendingInvitations', email] as const,
-    },
-
-    /**
-     * Story 14d-v2-1-4b: Shared Groups Query Keys
-     * Hierarchical keys for group queries and mutations
-     */
-    groups: {
-        /** All groups queries (for bulk invalidation) */
-        all: () => ['groups'] as const,
-        /** List of groups user belongs to */
-        list: (userId: string) => ['groups', 'list', userId] as const,
-        /** Group count for BC-1 limit checks */
-        count: (userId: string) => ['groups', 'count', userId] as const,
-    },
-
-    /**
      * Story 14.35: Localized location data
      * Not user-specific - same data for all users
      * Key: ['locations', 'countries']

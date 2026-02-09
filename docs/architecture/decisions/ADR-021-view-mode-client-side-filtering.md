@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted (2026-02-04)
+**SUPERSEDED** - Shared groups feature removed (2026-02-09). This ADR is historical.
+
+Originally accepted: 2026-02-04
 
 ## Context
 

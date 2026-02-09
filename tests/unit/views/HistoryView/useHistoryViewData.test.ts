@@ -57,10 +57,6 @@ const mockState = {
         defaultCountry: 'US',
         foreignLocationFormat: 'code' as const,
     },
-    // View mode
-    viewMode: 'personal' as const,
-    viewModeGroup: null as any,
-    sharedGroups: [] as any[],
 };
 
 const mockLoadMore = vi.fn();
@@ -137,27 +133,6 @@ vi.mock('@/hooks/useUserPreferences', () => ({
     })),
 }));
 
-// Mock ViewModeStore (Story 14d-v2-0: Migrated from ViewModeContext to Zustand store)
-vi.mock('@/shared/stores/useViewModeStore', () => ({
-    useViewMode: vi.fn(() => ({
-        mode: mockState.viewMode,
-        group: mockState.viewModeGroup,
-        isGroupMode: mockState.viewMode === 'group',
-        setPersonalMode: vi.fn(),
-        setGroupMode: vi.fn(),
-        updateGroupData: vi.fn(),
-    })),
-}));
-
-// Mock useUserSharedGroups
-vi.mock('@/hooks/useUserSharedGroups', () => ({
-    useUserSharedGroups: vi.fn(() => ({
-        groups: mockState.sharedGroups,
-        isLoading: false,
-        getGroupById: vi.fn(),
-    })),
-}));
-
 // Mock Firebase
 vi.mock('firebase/firestore', () => ({
     getFirestore: vi.fn(() => ({})),
@@ -211,9 +186,6 @@ describe('useHistoryViewData', () => {
             defaultCountry: 'US',
             foreignLocationFormat: 'code',
         };
-        mockState.viewMode = 'personal';
-        mockState.viewModeGroup = null;
-        mockState.sharedGroups = [];
     });
 
     afterEach(() => {
@@ -556,7 +528,6 @@ describe('useHistoryViewData', () => {
             const { result } = renderHook(() => useHistoryViewData());
 
             expect(result.current.isGroupMode).toBe(false);
-            expect(result.current.activeGroup).toBeNull();
         });
 
         it('provides onEditTransaction callback', () => {

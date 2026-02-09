@@ -143,7 +143,7 @@ export function validateScanDate(dateString: string | undefined): string {
  * @param location - Validated location from parseLocationResult
  * @param total - Validated total (already parsed through parseStrictNumber)
  * @param date - Validated date (already processed through validateScanDate)
- * @param config - Build configuration (viewMode, activeGroupId)
+ * @param config - Build configuration (language)
  * @returns Initial transaction object ready for further processing
  *
  * @example
@@ -154,7 +154,7 @@ export function validateScanDate(dateString: string | undefined): string {
  *   { country: 'Chile', city: 'Santiago' },
  *   15000,
  *   '2026-01-25',
- *   { viewMode: 'personal', activeGroupId: undefined, language: 'es' }
+ *   { language: 'es' }
  * );
  * ```
  */
@@ -164,7 +164,7 @@ export function buildInitialTransaction(
   location: ParsedLocation,
   total: number,
   date: string,
-  _config: BuildTransactionConfig  // Story 14d-v2-1.1: Unused until Epic 14d adds sharedGroupId support
+  _config: BuildTransactionConfig
 ): Transaction {
   const merchant = scanResult.merchant || 'Unknown';
   const category = (scanResult.category || 'Other') as StoreCategory;
@@ -188,9 +188,6 @@ export function buildInitialTransaction(
     merchantSource: scanResult.merchantSource,
   };
 
-  // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
-  // Epic 14d will use sharedGroupId (single nullable string) instead
-  // Group mode support will be re-added in Epic 14d
 
   return transaction;
 }

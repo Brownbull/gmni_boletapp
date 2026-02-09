@@ -70,7 +70,6 @@ export function useHistoryNavigation() {
                 : { level: 'all' },
             category: categoryFilter,
             location: {},
-            group: {},
         };
 
         // Store filters and navigate

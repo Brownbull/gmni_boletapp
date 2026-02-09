@@ -41,7 +41,6 @@ const mockHistoryViewData: UseHistoryViewDataReturn = {
   formatCurrency: (amount: number) => `$${amount.toFixed(2)}`,
   formatDate: (date: string) => date,
   isGroupMode: false,
-  activeGroup: null,
   pendingFilters: null,
   onEditTransaction: vi.fn(),
 }
@@ -98,7 +97,6 @@ vi.mock('../../../src/hooks/useAllUserGroups', () => ({
     isLoading: false,
     error: undefined,
     hasGroups: false,
-    sharedGroupCount: 0,
     personalGroupCount: 0,
   })),
 }))
@@ -118,7 +116,6 @@ const testFilterState: HistoryFilterState = {
   temporal: { level: 'all' },
   category: { level: 'all' },
   location: {},
-  group: {},
 }
 
 /**

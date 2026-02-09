@@ -1,67 +1,6 @@
 {
-  "_comment": "Firestore Composite Indexes - Updated for Epic 14d-v2 (2026-02-01)",
-  "_note_1": "Story 14d-v2-1-5b-1: Added pendingInvitations indexes for invitation service",
-  "_note_2": "Changelog TTL: sharedGroups/{groupId}/changelog collection uses _ttl field for 30-day auto-expiration",
-  "_ttl_setup_required": "TTL policy must be enabled manually in Firebase Console: Firestore > Time-to-live policies > Add policy: Collection=changelog, Field=_ttl",
-  "indexes": [
-    {
-      "_comment": "getInvitationByShareCode: shareCode + status (TD-CONSOLIDATED-5: retained for Cloud Functions that bypass security rules)",
-      "collectionGroup": "pendingInvitations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "shareCode", "order": "ASCENDING" },
-        { "fieldPath": "status", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "_comment": "checkDuplicateInvitation: groupId + invitedEmail + status",
-      "collectionGroup": "pendingInvitations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "groupId", "order": "ASCENDING" },
-        { "fieldPath": "invitedEmail", "order": "ASCENDING" },
-        { "fieldPath": "status", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "_comment": "getInvitationByShareCode with email filter (TD-CONSOLIDATED-5): shareCode + invitedEmail + status",
-      "collectionGroup": "pendingInvitations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "shareCode", "order": "ASCENDING" },
-        { "fieldPath": "invitedEmail", "order": "ASCENDING" },
-        { "fieldPath": "status", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "_comment": "deletePendingInvitationsForGroup (TD-CONSOLIDATED-5): groupId + invitedByUserId",
-      "collectionGroup": "pendingInvitations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "groupId", "order": "ASCENDING" },
-        { "fieldPath": "invitedByUserId", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "_comment": "getInvitationsForEmail: invitedEmail + status",
-      "collectionGroup": "pendingInvitations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "invitedEmail", "order": "ASCENDING" },
-        { "fieldPath": "status", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "_comment": "getPendingInvitationsForUser: invitedEmail + status + createdAt (orderBy desc)",
-      "collectionGroup": "pendingInvitations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "invitedEmail", "order": "ASCENDING" },
-        { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
-      ]
-    }
-  ],
+  "_comment": "Firestore Composite Indexes",
+  "indexes": [],
   "fieldOverrides": [
     {
       "collectionGroup": "fcmTokens",

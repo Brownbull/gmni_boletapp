@@ -1,4 +1,3 @@
-export { createMockGroup, createMockInvitation } from './sharedGroupFactory';
 export {
     createMockTimestamp,
     createMockTimestampDaysAgo,
@@ -11,5 +10,4 @@ export {
     ONE_DAY_MS,
     ONE_HOUR_MS,
     ONE_MINUTE_MS,
-    SHARED_GROUP_LIMITS,
 } from './constants';

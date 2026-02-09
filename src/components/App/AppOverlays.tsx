@@ -59,8 +59,6 @@ interface BatchSession {
     totalAmount: number;
 }
 
-// Story 14e-23a: ActiveGroupInfo moved to ScanFeature
-
 /**
  * Props for AppOverlays component
  * Story 14e-23a: Scan-related props migrated to ScanFeature

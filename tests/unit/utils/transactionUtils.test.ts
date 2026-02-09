@@ -9,8 +9,6 @@ import { describe, it, expect } from 'vitest';
 import {
     ensureTransactionDefaults,
     ensureTransactionsDefaults,
-    isDeleted,
-    isSharedTransaction,
 } from '../../../src/utils/transactionUtils';
 import type { Transaction } from '../../../src/types/transaction';
 
@@ -25,27 +23,7 @@ describe('ensureTransactionDefaults', () => {
         items: [],
     };
 
-    describe('default values for missing Epic 14d-v2 fields', () => {
-        it('should set sharedGroupId to null when missing', () => {
-            const result = ensureTransactionDefaults(baseTransaction);
-            expect(result.sharedGroupId).toBe(null);
-        });
-
-        it('should set deletedAt to null when missing', () => {
-            const result = ensureTransactionDefaults(baseTransaction);
-            expect(result.deletedAt).toBe(null);
-        });
-
-        it('should set deletedBy to null when missing', () => {
-            const result = ensureTransactionDefaults(baseTransaction);
-            expect(result.deletedBy).toBe(null);
-        });
-
-        it('should set version to 1 when missing', () => {
-            const result = ensureTransactionDefaults(baseTransaction);
-            expect(result.version).toBe(1);
-        });
-
+    describe('default values for missing fields', () => {
         it('should compute periods from date when missing', () => {
             const result = ensureTransactionDefaults(baseTransaction);
 
@@ -68,18 +46,6 @@ describe('ensureTransactionDefaults', () => {
     });
 
     describe('preserve existing values', () => {
-        it('should preserve existing sharedGroupId when present', () => {
-            const tx = { ...baseTransaction, sharedGroupId: 'group-abc' };
-            const result = ensureTransactionDefaults(tx);
-            expect(result.sharedGroupId).toBe('group-abc');
-        });
-
-        it('should preserve existing version when present', () => {
-            const tx = { ...baseTransaction, version: 5 };
-            const result = ensureTransactionDefaults(tx);
-            expect(result.version).toBe(5);
-        });
-
         it('should preserve existing periods when present', () => {
             const existingPeriods = {
                 day: '2025-12-31',
@@ -104,18 +70,6 @@ describe('ensureTransactionDefaults', () => {
             const result = ensureTransactionDefaults(tx);
             expect(result.updatedAt).toBe('2026-01-20T12:00:00Z');
         });
-
-        it('should preserve explicit null values for soft delete fields', () => {
-            const tx = {
-                ...baseTransaction,
-                deletedAt: null,
-                deletedBy: null,
-            };
-
-            const result = ensureTransactionDefaults(tx);
-            expect(result.deletedAt).toBe(null);
-            expect(result.deletedBy).toBe(null);
-        });
     });
 
     describe('edge cases', () => {
@@ -130,10 +84,8 @@ describe('ensureTransactionDefaults', () => {
         it('should handle completely empty transaction', () => {
             const result = ensureTransactionDefaults({});
 
-            expect(result.sharedGroupId).toBe(null);
-            expect(result.deletedAt).toBe(null);
-            expect(result.deletedBy).toBe(null);
-            expect(result.version).toBe(1);
+            // Just verify it doesn't throw and returns an object
+            expect(result).toBeDefined();
         });
 
         it('should preserve all original fields', () => {
@@ -169,42 +121,12 @@ describe('ensureTransactionsDefaults', () => {
         const results = ensureTransactionsDefaults(transactions);
 
         expect(results).toHaveLength(2);
-        expect(results[0].version).toBe(1);
-        expect(results[1].version).toBe(1);
-        expect(results[0].sharedGroupId).toBe(null);
-        expect(results[1].sharedGroupId).toBe(null);
+        expect(results[0].periods).toBeDefined();
+        expect(results[1].periods).toBeDefined();
     });
 
     it('should handle empty array', () => {
         const results = ensureTransactionsDefaults([]);
         expect(results).toEqual([]);
-    });
-});
-
-describe('isDeleted', () => {
-    it('should return false when deletedAt is null', () => {
-        expect(isDeleted({ deletedAt: null })).toBe(false);
-    });
-
-    it('should return false when deletedAt is undefined', () => {
-        expect(isDeleted({})).toBe(false);
-    });
-
-    it('should return true when deletedAt has a value', () => {
-        expect(isDeleted({ deletedAt: new Date() as any })).toBe(true);
-    });
-});
-
-describe('isSharedTransaction', () => {
-    it('should return false when sharedGroupId is null', () => {
-        expect(isSharedTransaction({ sharedGroupId: null })).toBe(false);
-    });
-
-    it('should return false when sharedGroupId is undefined', () => {
-        expect(isSharedTransaction({})).toBe(false);
-    });
-
-    it('should return true when sharedGroupId has a value', () => {
-        expect(isSharedTransaction({ sharedGroupId: 'group-123' })).toBe(true);
     });
 });

@@ -41,7 +41,6 @@ function createFilterWithDrillDownPath(
       drillDownPath,
     },
     location: {},
-    group: {},
   };
 }
 
@@ -373,8 +372,7 @@ describe('matchesCategoryFilter with drillDownPath', () => {
           },
         },
         location: {},
-        group: {},
-      };
+          };
 
       const result = filterTransactionsByHistoryFilters(transactions, filters);
       expect(result).toHaveLength(1);

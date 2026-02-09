@@ -11,7 +11,6 @@
  * - Calls useRecentScans() for recent scan merge
  * - Calls useUserPreferences() for user defaults
  * - Calls useTheme() for theme/locale settings (via ThemeContext)
- * - Calls useUserSharedGroups() for shared groups
  * - Provides formatters (t, formatCurrency, formatDate, getSafeDate) internally
  *
  * Pattern: Follows HistoryView (14e-25a.2a/b) and TrendsView (14e-25b.1)
@@ -47,14 +46,6 @@ import type { ThemeName } from '@/config/categoryColors';
 // =============================================================================
 
 /**
- * Shared group info for DashboardView (id + color for dynamic lookup)
- */
-export interface SharedGroupForDashboard {
-    id: string;
-    color: string;
-}
-
-/**
  * Return type for useDashboardViewData hook.
  *
  * Story 14e-25b.2: Complete data for DashboardView:
@@ -63,7 +54,6 @@ export interface SharedGroupForDashboard {
  * - Theme/locale settings
  * - User preferences (defaults)
  * - Formatters (t, formatCurrency, formatDate, getSafeDate)
- * - Shared groups
  * - Callbacks (stub with DEV warning)
  */
 export interface UseDashboardViewDataReturn {
@@ -110,10 +100,6 @@ export interface UseDashboardViewDataReturn {
     formatDate: (date: string, format: string) => string;
     /** Safe date extraction function (handles Firestore Timestamp) */
     getSafeDate: (val: any) => string;
-
-    // === Shared Groups ===
-    /** Shared groups for dynamic group color lookup */
-    sharedGroups: SharedGroupForDashboard[];
 
     // === Callbacks (stub - override via _testOverrides) ===
     /** Create new transaction handler */
@@ -169,7 +155,6 @@ function createGetSafeDate(): (val: any) => string {
  * 3. useRecentScans() - recent scan merge
  * 4. useTheme() - theme/locale settings
  * 5. useUserPreferences() - user defaults
- * 6. useUserSharedGroups() - shared groups
  *
  * @returns UseDashboardViewDataReturn - All data needed by DashboardView
  */
@@ -308,9 +293,6 @@ export function useDashboardViewData(): UseDashboardViewDataReturn {
         formatCurrency,
         formatDate,
         getSafeDate,
-
-        // Shared groups (empty - feature removed)
-        sharedGroups: [],
 
         // Callbacks - stub implementation
         onCreateNew,

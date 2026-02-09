@@ -419,17 +419,6 @@ describe('useDashboardViewData', () => {
         });
     });
 
-    // =========================================================================
-    // AC2: Shared Groups
-    // =========================================================================
-
-    describe('shared groups (AC2)', () => {
-        it('returns empty sharedGroups array (feature removed)', () => {
-            const { result } = renderHook(() => useDashboardViewData());
-
-            expect(result.current.sharedGroups).toEqual([]);
-        });
-    });
 
     // =========================================================================
     // AC5: Callbacks with DEV Warning
@@ -553,9 +542,6 @@ describe('useDashboardViewData', () => {
             expect(result.current).toHaveProperty('formatDate');
             expect(result.current).toHaveProperty('getSafeDate');
 
-            // Shared groups
-            expect(result.current).toHaveProperty('sharedGroups');
-
             // Callbacks
             expect(result.current).toHaveProperty('onCreateNew');
             expect(result.current).toHaveProperty('onViewTrends');
@@ -599,7 +585,6 @@ describe('useDashboardViewData', () => {
             expect(result.current.appId).toBe('');
             expect(result.current.transactions).toEqual([]);
             expect(result.current.recentScans).toEqual([]);
-            expect(result.current.sharedGroups).toEqual([]);
         });
     });
 });

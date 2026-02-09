@@ -134,7 +134,6 @@ describe('useNavigationStore', () => {
                 temporal: { level: 'month', year: '2026', month: '2026-01' },
                 category: { level: 'all' },
                 location: {},
-                group: {},
             };
             const { navigateToView } = useNavigationStore.getState();
             navigateToView('history', { historyFilters: filters });
@@ -169,7 +168,6 @@ describe('useNavigationStore', () => {
                 temporal: { level: 'all' },
                 category: { level: 'all' },
                 location: {},
-                group: {},
             });
 
             navigateToView('history'); // No historyFilters option
@@ -272,7 +270,6 @@ describe('useNavigationStore', () => {
                 temporal: { level: 'month', year: '2026', month: '2026-01' },
                 category: { level: 'all' },
                 location: {},
-                group: {},
             });
             clearPendingFilters();
             expect(getNavigationState().pendingHistoryFilters).toBeNull();
@@ -381,7 +378,6 @@ describe('useNavigationStore', () => {
                 temporal: { level: 'all' },
                 category: { level: 'all' },
                 location: {},
-                group: {},
             };
             navigationActions.navigateToView('history', { historyFilters: filters });
             expect(getNavigationState().view).toBe('history');
@@ -403,7 +399,6 @@ describe('useNavigationStore', () => {
                 temporal: { level: 'month', year: '2026', month: '2026-01' },
                 category: { level: 'all' },
                 location: {},
-                group: {},
             };
             setPendingHistoryFilters(filters);
             expect(getNavigationState().pendingHistoryFilters).toEqual(filters);
@@ -418,7 +413,6 @@ describe('useNavigationStore', () => {
                 temporal: { level: 'month', year: '2026', month: '2026-01' },
                 category: { level: 'all' },
                 location: {},
-                group: {},
             };
             setPendingHistoryFilters(filters);
             navigateToView('items'); // No historyFilters option
