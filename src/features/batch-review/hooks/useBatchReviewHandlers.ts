@@ -665,8 +665,6 @@ export function useBatchReviewHandlers(props: BatchReviewHandlersProps): BatchRe
           onItemSuccess: dispatchBatchItemSuccess,
           onItemError: dispatchBatchItemError,
           onComplete: (processingResults, imageUrls) => {
-            // Story 14d-v2-1.1: sharedGroupIds[] tagging removed (Epic 14c cleanup)
-            // Epic 14d will use sharedGroupId (single nullable string) instead
             const receipts = createBatchReceiptsFromResults(processingResults, imageUrls);
             dispatchBatchComplete(receipts);
             batchReviewActions.loadBatch(receipts);

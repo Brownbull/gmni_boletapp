@@ -160,8 +160,7 @@ export interface UseTrendsViewDataReturn {
  * 3. useTheme() - theme/locale settings
  * 4. useUserPreferences() - user defaults
  * 5. useViewMode() - group mode state
- * 6. useUserSharedGroups() - active group info
- * 7. Navigation store - analytics initial state
+ * 6. Navigation store - analytics initial state
  *
  * @returns UseTrendsViewDataReturn - All data needed by TrendsView
  */

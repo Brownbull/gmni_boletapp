@@ -91,7 +91,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
     // Story 14e-36c: Editor state/actions now from store, only external deps passed
     const handlerProps: UseTransactionEditorHandlersProps = {
         user: _testOverrides.user,
-        db: _testOverrides.db,
         transactions: _testOverrides.transactions,
         saveTransaction: _testOverrides.saveTransaction,
         deleteTransaction: _testOverrides.deleteTransaction,

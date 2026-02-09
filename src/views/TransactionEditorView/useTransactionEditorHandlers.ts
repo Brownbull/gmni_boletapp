@@ -26,7 +26,6 @@
  * function TransactionEditorView(props) {
  *   const handlers = useTransactionEditorHandlers({
  *     user,
- *     db,
  *     transactions,
  *     saveTransaction,
  *     deleteTransaction,
@@ -45,7 +44,6 @@
 import { useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { User } from 'firebase/auth';
-import type { Firestore } from 'firebase/firestore';
 import type { Transaction } from '@/types/transaction';
 
 // Store imports
@@ -81,7 +79,6 @@ import {
 export interface UseTransactionEditorHandlersProps {
     // User and auth
     user: User | null;
-    db: Firestore;
 
     // Transaction data for list navigation (not in editor store)
     transactions: Transaction[];
@@ -154,7 +151,6 @@ export function useTransactionEditorHandlers(
     // Story 14e-36c: Only external dependencies come from props
     const {
         user,
-        db,
         transactions,
         saveTransaction,
         deleteTransaction,
@@ -464,77 +460,16 @@ export function useTransactionEditorHandlers(
     const handleGroupsChange = useCallback(async (groupIds: string[]) => {
         if (!user?.uid || !currentTransaction) return;
 
-        // Story 14d-v2-1.1: sharedGroupIds[] removed, will use sharedGroupId in Epic 14d
-        const previousGroupIds: string[] = [];
-
         if (import.meta.env.DEV) {
             console.log('[TransactionEditor] onGroupsChange:', {
                 transactionId: currentTransaction.id,
-                previousGroupIds,
                 newGroupIds: groupIds,
             });
         }
 
-        // Story 14d-v2-1.1: updateMemberTimestampsForTransaction removed (Epic 14c cleanup)
-        // Epic 14d will use changelog-based sync instead
-
-        // Groups the transaction was REMOVED from
-        const removedFromGroups = previousGroupIds.filter(id => !groupIds.includes(id));
-        // Groups the transaction was ADDED to
-        const addedToGroups = groupIds.filter(id => !previousGroupIds.includes(id));
-
-        // Optimistic cache update for affected groups
-        const affectedGroupIds = new Set([...previousGroupIds, ...groupIds]);
-
-        if (import.meta.env.DEV) {
-            console.log('[TransactionEditor] Clearing cache for groups:', Array.from(affectedGroupIds));
-        }
-
-        const updateCachesForGroup = (groupId: string) => {
-            queryClient.setQueriesData(
-                { queryKey: ['sharedGroupTransactions', groupId], exact: false },
-                (oldData: Transaction[] | undefined) => {
-                    if (!oldData || !currentTransaction.id) return oldData;
-
-                    if (removedFromGroups.includes(groupId)) {
-                        const filtered = oldData.filter(tx => tx.id !== currentTransaction.id);
-                        if (import.meta.env.DEV) {
-                            console.log(`[TransactionEditor] Optimistic update: removed txn from group ${groupId}`, {
-                                before: oldData.length,
-                                after: filtered.length,
-                            });
-                        }
-                        return filtered;
-                    }
-
-                    if (addedToGroups.includes(groupId)) {
-                        // Story 14d-v2-1.1: sharedGroupIds removed, Epic 14d will use sharedGroupId
-                        const updatedTxn = {
-                            ...currentTransaction,
-                            _ownerId: user.uid,
-                        };
-                        const exists = oldData.some(tx => tx.id === currentTransaction.id);
-                        if (exists) {
-                            return oldData.map(tx =>
-                                tx.id === currentTransaction.id ? updatedTxn : tx
-                            );
-                        }
-                        if (import.meta.env.DEV) {
-                            console.log(`[TransactionEditor] Optimistic update: added txn to group ${groupId}`);
-                        }
-                        return [updatedTxn, ...oldData];
-                    }
-
-                    // Story 14d-v2-1.1: sharedGroupIds removed, Epic 14d will use sharedGroupId
-                    // Transaction stayed in group, no update needed for now
-                    return oldData;
-                }
-            );
-        };
-
-        // Process all groups
-        affectedGroupIds.forEach(updateCachesForGroup);
-    }, [user?.uid, currentTransaction, db, queryClient]);
+        // Invalidate transaction cache
+        queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    }, [user?.uid, currentTransaction, queryClient]);
 
     // ==========================================================================
     // Read-Only Mode Handler

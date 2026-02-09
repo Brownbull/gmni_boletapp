@@ -221,7 +221,6 @@ function createMockParams(
     services: createMockServiceDeps(overrides.services),
     t: vi.fn().mockImplementation((key: string) => key),
     lang: 'es',
-    viewMode: 'personal',
     trustedAutoSave:
       overrides.trustedAutoSave === null
         ? undefined

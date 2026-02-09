@@ -177,8 +177,7 @@ export const MODAL_REGISTRY: Record<ModalType, LazyModalComponent> = {
   signOut: React.lazy(() => import('@/components/settings/SignOutDialog')),
 
   // ---------------------------------------------------------------------------
-  // Shared group modals (READY - Epic 14c-refactor components)
-  // Components exist at src/components/SharedGroups/
+  // Group modals (READY)
   // ---------------------------------------------------------------------------
   joinGroup: createLazyStub('joinGroup'), // READY
   leaveGroup: createLazyStub('leaveGroup'), // READY

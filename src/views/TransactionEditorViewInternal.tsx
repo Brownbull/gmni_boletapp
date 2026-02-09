@@ -260,7 +260,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   onRequestEdit,
   isOtherUserTransaction = false,
   ownerProfile,
-  ownerId: _ownerId, // Reserved for future ProfileIndicator in header
+  ownerId: _ownerId,
   scanButtonState,
   isProcessing,
   processingEta,
