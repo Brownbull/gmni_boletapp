@@ -31,7 +31,6 @@ const defaultInitialState: HistoryFilterState = {
   temporal: { level: 'all' },
   category: { level: 'all' },
   location: {},
-  group: {},
 };
 
 const renderWithProvider = (
@@ -94,8 +93,7 @@ describe('FilterChips', () => {
         temporal: { level: 'year', year: '2024' },
         category: { level: 'category', category: 'Supermarket' },
         location: {},
-        group: {},
-      });
+            });
 
       // Clear All is now an X icon button with aria-label
       expect(screen.getByRole('button', { name: 'Limpiar todos los filtros' })).toBeInTheDocument();

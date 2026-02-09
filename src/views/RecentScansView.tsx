@@ -19,7 +19,6 @@ import { ChevronLeft } from 'lucide-react';
 import { Transaction } from '../types/transaction';
 import { TransactionCard } from '../components/transactions';
 import { SelectionBar } from '../components/history/SelectionBar';
-import { useAllUserGroups } from '../hooks/useAllUserGroups';
 import { useSelectionMode } from '../hooks/useSelectionMode';
 
 // ============================================================================
@@ -155,7 +154,7 @@ export function RecentScansView({
     lang = 'es',
     defaultCountry = '',
     foreignLocationFormat = 'code',
-    userId = null,
+    userId: _userId = null,
     onGroupSelected,
     onDeleteSelected,
 }: RecentScansViewProps) {
@@ -199,15 +198,6 @@ export function RecentScansView({
         longPressMoved.current = true;
         handleLongPressEnd();
     }, [handleLongPressEnd]);
-
-    // Story 14d-v2-1.1: groups unused - group colors disabled (Epic 14c cleanup)
-    useAllUserGroups(userId || undefined);
-
-    // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
-    // Epic 14d will use sharedGroupId (single nullable string) instead
-    const getGroupColorForTransaction = useCallback((_tx: Transaction): string | undefined => {
-        return undefined;
-    }, []);
 
     // Sort transactions by createdAt descending
     const sortedTransactions = useMemo(
@@ -405,7 +395,6 @@ export function RecentScansView({
                                     onEditTransaction(tx);
                                 }
                             }}
-                            groupColor={getGroupColorForTransaction(tx)}
                             selection={isSelectionMode ? {
                                 isSelectionMode,
                                 isSelected: tx.id ? isSelected(tx.id) : false,

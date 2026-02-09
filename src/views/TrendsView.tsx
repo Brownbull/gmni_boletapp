@@ -38,9 +38,6 @@ import {
     filterTransactionsByHistoryFilters,
 } from '../utils/historyFilterUtils';
 import type { HistoryFilterState } from '../contexts/HistoryFiltersContext';
-import { useAllUserGroups } from '../hooks/useAllUserGroups';
-import { MemberContributionChart } from '@/features/shared-groups';
-import { calculateMemberContributions, type AnalyticsMember } from '../hooks/useAnalyticsTransactions';
 // Story 14.13: Hooks
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
 import { useReducedMotion } from '../hooks/useReducedMotion';
@@ -119,7 +116,7 @@ interface CurrentPeriod {
 
 /** Carousel slide index */
 // 0 = Distribution, 1 = Tendencia, 2 = Contribuciones (group mode only)
-type CarouselSlide = 0 | 1 | 2;
+type CarouselSlide = 0 | 1;
 
 /** View toggle state per slide */
 type DistributionView = 'treemap' | 'donut';
@@ -230,9 +227,7 @@ const MONTH_NAMES_EN = [
     'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-// Base carousel titles - Contribuciones (slide 2) only shown in group mode
 const CAROUSEL_TITLES_BASE = ['Distribución', 'Tendencia'] as const;
-const CAROUSEL_TITLES_GROUP = ['Distribución', 'Tendencia', 'Contribuciones'] as const;
 
 // Note: ALL_FILTER_CATEGORIES and ALL_FILTER_GROUPS moved to IconFilterBar
 
@@ -2780,17 +2775,13 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
         // Story 14.14b: User info for header consistency
         userName = '',
         userEmail = '',
-        userId = '',
+        userId: _userId = '',
         appId: _appId = '',
         // Story 14.13 Session 7: Initial distribution view for back navigation
         initialDistributionView,
         // Story 14.13: Font color mode - receiving this prop triggers re-render when setting changes
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         fontColorMode: _fontColorMode,
-        isGroupMode = false,
-        groupName: _groupName,
-        groupMembers = [],
-        spendingByMember: _spendingByMember,
     } = { ...hookData, ..._testOverrides } as TrendsViewData;
     const isDark = theme === 'dark';
     const prefersReducedMotion = useReducedMotion();
@@ -2803,8 +2794,8 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
     const onBack = navigateBack;
     const navigateToView = setView;
 
-    const carouselTitles = isGroupMode ? CAROUSEL_TITLES_GROUP : CAROUSEL_TITLES_BASE;
-    const maxCarouselSlide = isGroupMode ? 2 : 1;
+    const carouselTitles = CAROUSEL_TITLES_BASE;
+    const maxCarouselSlide = 1;
 
     // =========================================================================
     // State
@@ -2816,8 +2807,6 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
 
     // Story 14.14b: Use HistoryFilters context for IconFilterBar and bidirectional sync
     const { state: filterState, dispatch: filterDispatch } = useHistoryFilters();
-
-    const { groups, isLoading: groupsLoading } = useAllUserGroups(userId);
 
     // Story 14.14b: Extract available filters from transactions for IconFilterBar
     const availableFilters = useMemo(
@@ -3235,17 +3224,16 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
         // First filter by TrendsView's period selection
         const periodFiltered = filterByPeriod(transactions, timePeriod, currentPeriod);
 
-        // Then apply category/location/group filters from filterState (but NOT temporal since we handle that above)
+        // Then apply category/location filters from filterState (but NOT temporal since we handle that above)
         // Create a filter state with 'all' temporal to avoid double-filtering by period
         const filtersWithoutTemporal: HistoryFilterState = {
             temporal: { level: 'all' },  // Skip temporal filtering (already done by filterByPeriod)
             category: filterState.category,
             location: filterState.location,
-            group: filterState.group,
         };
 
         return filterTransactionsByHistoryFilters(periodFiltered, filtersWithoutTemporal);
-    }, [transactions, timePeriod, currentPeriod, filterState.category, filterState.location, filterState.group]);
+    }, [transactions, timePeriod, currentPeriod, filterState.category, filterState.location]);
 
     // All category data (raw, for treemap logic)
     const allCategoryData = useMemo(
@@ -3655,16 +3643,15 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
             return isDateInPeriod(txDate, prevPeriod, timePeriod);
         });
 
-        // Apply category/location/group filters (same as filteredTransactions)
+        // Apply category/location filters (same as filteredTransactions)
         const filtersWithoutTemporal: HistoryFilterState = {
             temporal: { level: 'all' },
             category: filterState.category,
             location: filterState.location,
-            group: filterState.group,
         };
 
         return filterTransactionsByHistoryFilters(periodFiltered, filtersWithoutTemporal);
-    }, [transactions, currentPeriod, timePeriod, filterState.category, filterState.location, filterState.group]);
+    }, [transactions, currentPeriod, timePeriod, filterState.category, filterState.location]);
 
     /**
      * Story 14.13.2: Compute previous period category totals for comparison
@@ -4781,21 +4768,6 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
     // =========================================================================
     // =========================================================================
 
-    // Calculate member contributions for group analytics (AC4)
-    const memberContributions = useMemo(() => {
-        if (!isGroupMode || groupMembers.length === 0) {
-            return [];
-        }
-        // Convert groupMembers to AnalyticsMember format
-        const analyticsMembers: AnalyticsMember[] = groupMembers.map(m => ({
-            uid: m.uid,
-            displayName: m.displayName,
-            email: m.email,
-            avatarColor: m.avatarColor,
-        }));
-        return calculateMemberContributions(filteredTransactions, analyticsMembers);
-    }, [isGroupMode, groupMembers, filteredTransactions]);
-
     // =========================================================================
     // Story 14.40: Category Statistics Calculation
     // =========================================================================
@@ -4890,8 +4862,6 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
                                 availableFilters={availableFilters}
                                 t={t}
                                 locale={locale}
-                                groups={groups}
-                                groupsLoading={groupsLoading}
                                 viewMode={donutViewMode}
                                 onViewModeChange={setDonutViewMode}
                             />
@@ -5051,46 +5021,44 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
                                 {/* Left side buttons container */}
                                 <div className="flex items-center gap-1.5 z-10">
                                     {/* View Toggle Button (AC #7) with icon morphing animation */}
-                                    {carouselSlide !== 2 && (
-                                        <button
-                                            onClick={toggleView}
-                                            className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200"
-                                            aria-label="Toggle view"
-                                            data-testid="view-toggle"
+                                    <button
+                                        onClick={toggleView}
+                                        className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200"
+                                        aria-label="Toggle view"
+                                        data-testid="view-toggle"
+                                        style={{
+                                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                                            backgroundColor: carouselSlide === 0 && distributionView === 'donut'
+                                                ? 'var(--primary)'
+                                                : 'var(--bg-tertiary)',
+                                            color: carouselSlide === 0 && distributionView === 'donut'
+                                                ? 'white'
+                                                : 'var(--text-secondary)',
+                                        }}
+                                    >
+                                        <span
+                                            className="inline-flex transition-transform duration-200 ease-out"
                                             style={{
-                                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                                                backgroundColor: carouselSlide === 0 && distributionView === 'donut'
-                                                    ? 'var(--primary)'
-                                                    : 'var(--bg-tertiary)',
-                                                color: carouselSlide === 0 && distributionView === 'donut'
-                                                    ? 'white'
-                                                    : 'var(--text-secondary)',
+                                                transform: prefersReducedMotion ? 'none' : 'rotate(0deg)',
                                             }}
+                                            key={`${carouselSlide}-${distributionView}-${tendenciaView}`}
                                         >
-                                            <span
-                                                className="inline-flex transition-transform duration-200 ease-out"
-                                                style={{
-                                                    transform: prefersReducedMotion ? 'none' : 'rotate(0deg)',
-                                                }}
-                                                key={`${carouselSlide}-${distributionView}-${tendenciaView}`}
-                                            >
-                                                {carouselSlide === 0 ? (
-                                                    distributionView === 'treemap' ? (
-                                                        <PieChart size={16} className="transition-opacity duration-150" />
-                                                    ) : (
-                                                        <LayoutGrid size={16} className="transition-opacity duration-150" />
-                                                    )
+                                            {carouselSlide === 0 ? (
+                                                distributionView === 'treemap' ? (
+                                                    <PieChart size={16} className="transition-opacity duration-150" />
                                                 ) : (
-                                                    // Story 14.13.3: Sankey toggle - show flow icon when on list, list icon when on sankey
-                                                    tendenciaView === 'list' ? (
-                                                        <GitBranch size={16} className="transition-opacity duration-150" />
-                                                    ) : (
-                                                        <List size={16} className="transition-opacity duration-150" />
-                                                    )
-                                                )}
-                                            </span>
-                                        </button>
-                                    )}
+                                                    <LayoutGrid size={16} className="transition-opacity duration-150" />
+                                                )
+                                            ) : (
+                                                // Story 14.13.3: Sankey toggle - show flow icon when on list, list icon when on sankey
+                                                tendenciaView === 'list' ? (
+                                                    <GitBranch size={16} className="transition-opacity duration-150" />
+                                                ) : (
+                                                    <List size={16} className="transition-opacity duration-150" />
+                                                )
+                                            )}
+                                        </span>
+                                    </button>
 
                                     </div>
 
@@ -5235,10 +5203,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
 
                                 {/* Right side buttons - Story 14.13.3: Show nav buttons for Sankey, count toggle for others */}
                                 <div className="flex items-center gap-1 z-10">
-                                    {carouselSlide === 2 ? (
-                                        /* Slide 2 (Contribuciones): No right-side buttons - empty placeholder for layout balance */
-                                        <div className="w-8 h-8" aria-hidden="true" />
-                                    ) : carouselSlide === 1 && tendenciaView === 'sankey' ? (
+                                    {carouselSlide === 1 && tendenciaView === 'sankey' ? (
                                         <>
                                             {/* Story 14.13.3: Left/Right buttons NOW navigate carousel slides (swipe scrolls diagram) */}
                                             {/* Enhanced styling with border and pulse animation to draw attention */}
@@ -5855,30 +5820,6 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
                                     </div>
                                 )}
 
-                                {carouselSlide === 2 && isGroupMode && memberContributions.length > 0 && (
-                                    <div className="relative flex flex-col h-full">
-                                        {/* Title */}
-                                        <div className="flex items-center justify-center min-h-7 mb-2">
-                                            <span
-                                                className={`text-xs font-semibold uppercase tracking-wider ${
-                                                    isDark ? 'text-slate-400' : 'text-slate-500'
-                                                }`}
-                                            >
-                                                {t('memberContributions')}
-                                            </span>
-                                        </div>
-                                        {/* Chart */}
-                                        <div className="flex-1 overflow-y-auto px-1">
-                                            <MemberContributionChart
-                                                contributions={memberContributions}
-                                                currency={currency}
-                                                theme={theme}
-                                                showTransactionCount={true}
-                                                t={t}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
                                 </div>
                                 {/* End of swipe transform wrapper */}
                             </div>

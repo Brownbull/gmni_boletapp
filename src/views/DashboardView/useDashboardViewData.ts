@@ -11,7 +11,6 @@
  * - Calls useRecentScans() for recent scan merge
  * - Calls useUserPreferences() for user defaults
  * - Calls useTheme() for theme/locale settings (via ThemeContext)
- * - Calls useUserSharedGroups() for shared groups
  * - Provides formatters (t, formatCurrency, formatDate, getSafeDate) internally
  *
  * Pattern: Follows HistoryView (14e-25a.2a/b) and TrendsView (14e-25b.1)
@@ -27,23 +26,17 @@
  */
 
 import { useMemo, useCallback } from 'react';
-import { getFirestore } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { usePaginatedTransactions } from '@/hooks/usePaginatedTransactions';
 import { useRecentScans } from '@/hooks/useRecentScans';
 import { mergeTransactionsWithRecentScans } from '@/utils/transactionMerge';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useUserSharedGroups } from '@/hooks/useUserSharedGroups';
 // Story 14e-25d: Direct navigation hooks (ViewHandlersContext deleted)
 import { useNavigationActions } from '@/shared/stores';
 import { formatCurrency as formatCurrencyUtil } from '@/utils/currency';
 import { formatDate as formatDateUtil } from '@/utils/date';
 import { TRANSLATIONS } from '@/utils/translations';
-// Story 14d-v2-1-10d: View mode filtering utility
-import { filterTransactionsByViewMode } from '@/utils/viewModeFilterUtils';
-// Story 14d-v2-1-10d: ViewMode store for filtering
-import { useViewMode } from '@/shared/stores/useViewModeStore';
 import type { Transaction } from '@/types/transaction';
 import type { Language, Theme, FontColorMode } from '@/types/settings';
 import type { ThemeName } from '@/config/categoryColors';
@@ -51,14 +44,6 @@ import type { ThemeName } from '@/config/categoryColors';
 // =============================================================================
 // Types
 // =============================================================================
-
-/**
- * Shared group info for DashboardView (id + color for dynamic lookup)
- */
-export interface SharedGroupForDashboard {
-    id: string;
-    color: string;
-}
 
 /**
  * Return type for useDashboardViewData hook.
@@ -69,7 +54,6 @@ export interface SharedGroupForDashboard {
  * - Theme/locale settings
  * - User preferences (defaults)
  * - Formatters (t, formatCurrency, formatDate, getSafeDate)
- * - Shared groups
  * - Callbacks (stub with DEV warning)
  */
 export interface UseDashboardViewDataReturn {
@@ -116,10 +100,6 @@ export interface UseDashboardViewDataReturn {
     formatDate: (date: string, format: string) => string;
     /** Safe date extraction function (handles Firestore Timestamp) */
     getSafeDate: (val: any) => string;
-
-    // === Shared Groups ===
-    /** Shared groups for dynamic group color lookup */
-    sharedGroups: SharedGroupForDashboard[];
 
     // === Callbacks (stub - override via _testOverrides) ===
     /** Create new transaction handler */
@@ -175,7 +155,6 @@ function createGetSafeDate(): (val: any) => string {
  * 3. useRecentScans() - recent scan merge
  * 4. useTheme() - theme/locale settings
  * 5. useUserPreferences() - user defaults
- * 6. useUserSharedGroups() - shared groups
  *
  * @returns UseDashboardViewDataReturn - All data needed by DashboardView
  */
@@ -198,9 +177,6 @@ export function useDashboardViewData(): UseDashboardViewDataReturn {
     const defaultCountry = preferences?.defaultCountry || '';
     const foreignLocationFormat = preferences?.foreignLocationFormat || 'code';
 
-    // === View Mode (Story 14d-v2-1-10d) ===
-    const { mode: viewMode, group: viewModeGroup } = useViewMode();
-
     // === Transaction Data ===
     const { transactions: paginatedTransactions } = usePaginatedTransactions(user, services);
 
@@ -213,41 +189,13 @@ export function useDashboardViewData(): UseDashboardViewDataReturn {
         [paginatedTransactions, rawRecentScans]
     );
 
-    // Story 14d-v2-1-10d: Filter transactions by view mode (personal vs group)
-    const viewModeFilteredTransactions = useMemo(() => {
-        return filterTransactionsByViewMode(
-            transactionsWithRecentScans,
-            viewMode,
-            viewModeGroup?.id ?? null
-        );
-    }, [transactionsWithRecentScans, viewMode, viewModeGroup?.id]);
-
-    // Story 14d-v2-1-10d: Filter recentScans by view mode
+    // Recent scans
     const recentScans = useMemo(() => {
-        const scans = rawRecentScans || [];
-        return filterTransactionsByViewMode(
-            scans,
-            viewMode,
-            viewModeGroup?.id ?? null
-        );
-    }, [rawRecentScans, viewMode, viewModeGroup?.id]);
-
-    // === Shared Groups ===
-    const db = getFirestore();
-    const { groups: sharedGroups } = useUserSharedGroups(db, user?.uid);
+        return rawRecentScans || [];
+    }, [rawRecentScans]);
 
     // === Navigation Actions (Story 14e-25d) ===
     const { setView } = useNavigationActions();
-
-    // Map shared groups to id/color pairs for DashboardView
-    const sharedGroupsForDashboard: SharedGroupForDashboard[] = useMemo(() => {
-        return sharedGroups
-            .filter((g): g is typeof g & { id: string } => !!g.id)
-            .map((g) => ({
-                id: g.id,
-                color: g.color || '',
-            }));
-    }, [sharedGroups]);
 
     // === Formatters ===
     // Translation function - memoized to prevent unnecessary re-renders
@@ -319,9 +267,9 @@ export function useDashboardViewData(): UseDashboardViewDataReturn {
 
     // === Return Complete Data ===
     return {
-        // Transaction data - Story 14d-v2-1-10d: Use filtered transactions
-        transactions: viewModeFilteredTransactions,
-        allTransactions: viewModeFilteredTransactions,
+        // Transaction data
+        transactions: transactionsWithRecentScans,
+        allTransactions: transactionsWithRecentScans,
         recentScans: recentScans,
 
         // User info
@@ -345,9 +293,6 @@ export function useDashboardViewData(): UseDashboardViewDataReturn {
         formatCurrency,
         formatDate,
         getSafeDate,
-
-        // Shared groups
-        sharedGroups: sharedGroupsForDashboard,
 
         // Callbacks - stub implementation
         onCreateNew,

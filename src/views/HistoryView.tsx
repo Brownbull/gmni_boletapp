@@ -31,8 +31,6 @@ import { FilterChips } from '../components/history/FilterChips';
 import { SortControl } from '../components/history/SortControl';
 import type { SortOption } from '../components/history/SortControl';
 import { SelectionBar } from '../components/history/SelectionBar';
-// Group consolidation: Replaced personal group modals with TransactionGroupSelector
-import { TransactionGroupSelector } from '@/features/shared-groups';
 // Story 14e-5: DeleteTransactionsModal now uses Modal Manager
 import type { TransactionPreview } from '../components/history/DeleteTransactionsModal';
 import { useModalActions } from '@managers/ModalManager';
@@ -49,8 +47,6 @@ import { useHistoryFilters } from '../hooks/useHistoryFilters';
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useSelectionMode } from '../hooks/useSelectionMode';
-// Group consolidation: Use useAllUserGroups instead of useGroups for shared groups
-import { useAllUserGroups } from '../hooks/useAllUserGroups';
 import { getFirestore } from 'firebase/firestore';
 import { deleteTransactionsBatch } from '../services/firestore';
 // Story 9.12: Category translations (AC #1, #2)
@@ -204,7 +200,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
         t,
         formatCurrency,
         formatDate,
-        activeGroup,
         onEditTransaction,
     } = { ...hookData, ..._testOverrides };
 
@@ -242,8 +237,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
         handleLongPressEnd,
         handleLongPressMove,
     } = useSelectionMode();
-    // Group consolidation: Modal states for group assignment
-    const [showGroupSelector, setShowGroupSelector] = useState(false);
     // Story 14e-5: Delete modal now uses Modal Manager
     const { openModal, closeModal } = useModalActions();
     // Story 14.15c: Export state
@@ -263,15 +256,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
         // Story 14c-refactor.27: Cast string to View type for navigation
         onNavigateToView(view as View);
     }, [onNavigateToView]);
-
-    // Group consolidation: Use shared groups hook instead of personal groups
-    const { groups, isLoading: groupsLoading } = useAllUserGroups(userId || undefined);
-
-    // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
-    // Epic 14d will use sharedGroupId (single nullable string) instead
-    const getGroupColorForTransaction = useCallback((_tx: Transaction): string | undefined => {
-        return undefined;
-    }, []);
 
     const lastScrollY = useRef(0);
     const scrollThreshold = 80; // Pixels to scroll before collapsing (increased for stability)
@@ -584,15 +568,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
         }));
     }, [getSelectedTransactions, currency]);
 
-    // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
-    // Epic 14d will use sharedGroupId (single nullable string) instead
-    // Group assignment functionality disabled until Epic 14d
-    const handleGroupSelect = useCallback(async (_groupIds: string[]) => {
-        console.warn('[HistoryView] Group assignment disabled - Epic 14c cleanup');
-        setShowGroupSelector(false);
-        exitSelectionMode();
-    }, [exitSelectionMode]);
-
     // Story 14.15: Handle batch delete
     // Story 14e-5: Now uses Modal Manager
     const handleDeleteTransactions = useCallback(async () => {
@@ -679,8 +654,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
                                 availableFilters={availableFilters}
                                 t={t}
                                 locale={lang}
-                                groups={groups as any}
-                                groupsLoading={groupsLoading}
                             />
                             {/* Profile Avatar with Dropdown */}
                             <ProfileAvatar
@@ -847,7 +820,7 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
                             <SelectionBar
                             selectedCount={selectedCount}
                             onClose={exitSelectionMode}
-                            onGroup={() => setShowGroupSelector(true)}
+                            onGroup={() => { /* shared groups removed */ }}
                             onDelete={() => {
                                 // Story 14e-5: Use Modal Manager for delete confirmation
                                 openModal('deleteTransactions', {
@@ -1032,9 +1005,7 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
                                                         thumbnailUrl: tx.thumbnailUrl,
                                                         imageUrls: tx.imageUrls,
                                                         items: tx.items || [],
-                                                        // Story 14d-v2-1.1: sharedGroupIds removed (Epic 14c cleanup)
                                                     }}
-                                                    groupColor={getGroupColorForTransaction(tx)}
                                                     formatters={{
                                                         formatCurrency,
                                                         formatDate: formatDate as (date: string, format: string) => string,
@@ -1057,11 +1028,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
                                                         isSelected: isSelected(tx.id!),
                                                         onToggleSelect: () => toggleSelection(tx.id!),
                                                     }}
-                                                    ownership={tx._ownerId && userId ? {
-                                                        ownerId: tx._ownerId,
-                                                        isOwn: tx._ownerId === userId,
-                                                        ownerProfile: activeGroup?.memberProfiles?.[tx._ownerId],
-                                                    } : undefined}
                                                 />
                                             </div>
                                         </TransitionChild>
@@ -1181,19 +1147,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
                         images={selectedTransaction.imageUrls}
                         merchantName={selectedTransaction.alias || selectedTransaction.merchant}
                         onClose={handleCloseViewer}
-                    />
-                )}
-
-                {/* Group consolidation: TransactionGroupSelector replaces personal group modals */}
-                {showGroupSelector && (
-                    <TransactionGroupSelector
-                        groups={groups}
-                        selectedIds={[]}
-                        onSelect={handleGroupSelect}
-                        onClose={() => setShowGroupSelector(false)}
-                        t={t}
-                        theme={theme === 'dark' ? 'dark' : 'light'}
-                        isLoading={groupsLoading}
                     />
                 )}
 

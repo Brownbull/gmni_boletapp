@@ -91,7 +91,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
     // Story 14e-36c: Editor state/actions now from store, only external deps passed
     const handlerProps: UseTransactionEditorHandlersProps = {
         user: _testOverrides.user,
-        db: _testOverrides.db,
         transactions: _testOverrides.transactions,
         saveTransaction: _testOverrides.saveTransaction,
         deleteTransaction: _testOverrides.deleteTransaction,
@@ -152,10 +151,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
             // Cross-store suggestions
             itemNameMappings={data.itemNameMappings}
 
-            // Shared groups
-            availableGroups={data.availableGroups}
-            groupsLoading={data.groupsLoading}
-
             // Transaction operations (map handle* to on*)
             onUpdateTransaction={handlers.handleUpdateTransaction}
             onSave={handlers.handleSave}
@@ -172,9 +167,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
             onBatchPrevious={handlers.handleBatchPrevious}
             onBatchNext={handlers.handleBatchNext}
             onBatchModeClick={handlers.handleBatchModeClick}
-
-            // Group operations
-            onGroupsChange={handlers.handleGroupsChange}
 
             // Read-only mode
             onRequestEdit={handlers.handleRequestEdit}

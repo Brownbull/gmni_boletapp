@@ -64,7 +64,6 @@ describe('useHistoryNavigation', () => {
                 temporal: { level: 'all' },
                 category: { level: 'all' },
                 location: {},
-                group: {},
             });
             expect(mockSetView).toHaveBeenCalledWith('history');
         });

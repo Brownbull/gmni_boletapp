@@ -34,7 +34,6 @@ const baseFilterState: HistoryFilterState = {
   temporal: { level: 'all' },
   category: { level: 'all' },
   location: {},
-  group: {},
 };
 
 // Sample transactions with various locations

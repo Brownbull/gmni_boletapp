@@ -52,7 +52,7 @@ import { getFABColorScheme, shouldShowShineAnimation, shouldShowPulseAnimation }
 // Story 14e-11: ScanMode/ScanPhase types now inferred from Zustand hooks
 // Story 14e-4: Modal Manager for credit info modal
 import { useModalActions } from '../managers/ModalManager';
-import { safeCSSColor } from '@/utils/validationUtils';
+
 
 // Story 12.3: Scan status for nav icon indicator
 export type ScanStatus = 'idle' | 'processing' | 'ready';
@@ -81,10 +81,9 @@ interface NavProps {
     /** Story 14d.7: Toast message callback for "scan in progress" */
     onShowToast?: (message: string) => void;
     alertsBadgeCount?: number;
-    activeGroupColor?: string;
 }
 
-export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchClick, onStatementClick, onTrendsClick, theme, t, scanStatus = 'idle', scanCredits, superCredits, onCreditInfoClick, isBatchMode = false, onShowToast, alertsBadgeCount = 0, activeGroupColor }) => {
+export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchClick, onStatementClick, onTrendsClick, theme, t, scanStatus = 'idle', scanCredits, superCredits, onCreditInfoClick, isBatchMode = false, onShowToast, alertsBadgeCount = 0 }) => {
     // Story 14.11: Reduced motion preference for AC #5
     const prefersReducedMotion = useReducedMotion();
 
@@ -294,12 +293,7 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
     // Story 14.11 AC #1: Nav bar styling from mockup
     // Story 14.12: Use --bg to match header, --border-medium for accent top border (1px to match button outlines)
     const navStyle: React.CSSProperties = {
-        // When in group mode, use gradient background from bottom to top
-        // 70% from bottom is normal bg color, then gradient to group color at top
-        // safeCSSColor guarantees #RRGGBB or #RGB; appending "20" hex suffix = valid 8-digit hex with ~12% alpha
-        background: activeGroupColor
-            ? `linear-gradient(to top, var(--bg) 0%, var(--bg) 70%, ${safeCSSColor(activeGroupColor)}20 100%)`
-            : 'var(--bg)',
+        background: 'var(--bg)',
         borderTop: '1px solid var(--border-medium)',
     };
 

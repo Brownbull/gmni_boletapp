@@ -401,77 +401,6 @@ function initializeFirebaseAdmin() {
     };
 }
 
-// ============================================================================
-// Group Cleanup Functions
-// ============================================================================
-
-/**
- * Delete all groups where user is owner or member.
- * Cleans up subcollections (changelog, analytics) and related invitations.
- */
-async function deleteUserGroups(db: Firestore, userId: string): Promise<number> {
-    // Query groups where user is owner
-    const ownedGroupsQuery = db.collection('sharedGroups').where('ownerId', '==', userId);
-    const ownedSnapshot = await ownedGroupsQuery.get();
-
-    // Query groups where user is a member
-    const memberGroupsQuery = db.collection('sharedGroups').where('memberIds', 'array-contains', userId);
-    const memberSnapshot = await memberGroupsQuery.get();
-
-    // Combine unique group IDs
-    const groupIdSet = new Set<string>();
-    ownedSnapshot.docs.forEach(doc => groupIdSet.add(doc.id));
-    memberSnapshot.docs.forEach(doc => groupIdSet.add(doc.id));
-
-    const groupIds = Array.from(groupIdSet);
-
-    if (groupIds.length === 0) {
-        return 0;
-    }
-
-    let deleted = 0;
-
-    for (const groupId of groupIds) {
-        const groupRef = db.collection('sharedGroups').doc(groupId);
-
-        // Delete changelog subcollection
-        const changelogSnapshot = await groupRef.collection('changelog').get();
-        for (const changelogDoc of changelogSnapshot.docs) {
-            await changelogDoc.ref.delete();
-        }
-
-        // Delete analytics subcollection
-        const analyticsSnapshot = await groupRef.collection('analytics').get();
-        for (const analyticsDoc of analyticsSnapshot.docs) {
-            await analyticsDoc.ref.delete();
-        }
-
-        // Delete the group document itself
-        await groupRef.delete();
-        deleted++;
-    }
-
-    return deleted;
-}
-
-/**
- * Delete all pending invitations for a user (as invitee)
- */
-async function deleteUserInvitations(db: Firestore, userEmail: string): Promise<number> {
-    const invitationsQuery = db.collection('pendingInvitations').where('inviteeEmail', '==', userEmail);
-    const snapshot = await invitationsQuery.get();
-
-    if (snapshot.empty) {
-        return 0;
-    }
-
-    for (const doc of snapshot.docs) {
-        await doc.ref.delete();
-    }
-
-    return snapshot.docs.length;
-}
-
 /**
  * Delete all transactions for a user.
  * Used with --force flag to reseed with updated data structure.
@@ -544,32 +473,6 @@ async function main() {
     if (Object.keys(userUids).length === 0) {
         log('\n❌ No users found! Create test users in Firebase Console first.', 'red');
         process.exit(1);
-    }
-
-    // Clean up groups and invitations first
-    log('\n🧹 Cleaning up groups & invitations...', 'blue');
-    let totalGroupsDeleted = 0;
-    let totalInvitationsDeleted = 0;
-
-    for (const [name, uid] of Object.entries(userUids)) {
-        const groupsDeleted = await deleteUserGroups(db, uid);
-        if (groupsDeleted > 0) {
-            log(`   Deleted ${groupsDeleted} groups for ${name}`, 'yellow');
-        }
-        totalGroupsDeleted += groupsDeleted;
-
-        const email = STAGING_USERS[name as keyof typeof STAGING_USERS].email;
-        const invitationsDeleted = await deleteUserInvitations(db, email);
-        if (invitationsDeleted > 0) {
-            log(`   Deleted ${invitationsDeleted} invitations for ${name}`, 'yellow');
-        }
-        totalInvitationsDeleted += invitationsDeleted;
-    }
-
-    if (totalGroupsDeleted > 0 || totalInvitationsDeleted > 0) {
-        log(`✅ Cleaned: ${totalGroupsDeleted} groups, ${totalInvitationsDeleted} invitations`, 'green');
-    } else {
-        log('   No groups or invitations to clean', 'yellow');
     }
 
     // Seed transactions for each user

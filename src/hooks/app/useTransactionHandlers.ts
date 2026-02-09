@@ -6,16 +6,15 @@
  *
  * Features:
  * - Transaction save with insight generation (async, fire-and-forget)
- * - Update with member timestamp updates for shared groups
+ * - Update with cascade (Firestore document update)
  * - Delete with cascade (Firestore document removal)
  * - Wipe all transactions with confirmation
  * - CSV export for data portability
- * - Default transaction factory with view mode support
+ * - Default transaction factory
  *
  * Architecture Reference: Epic 14c-refactor - App.tsx Handler Extraction
  * Dependencies:
  * - AuthContext (user, services)
- * - useViewModeStore (viewMode, activeGroup for shared group tagging - Zustand)
  * - useUserPreferences (location, currency defaults)
  * - React Query (cache invalidation)
  *
@@ -25,8 +24,6 @@
  *   const { saveTransaction, deleteTransaction, createDefaultTransaction } = useTransactionHandlers({
  *     user,
  *     services,
- *     viewMode,
- *     activeGroup,
  *     userPreferences,
  *     setToastMessage,
  *     setCurrentTransaction,
@@ -42,7 +39,6 @@ import { useCallback, useMemo } from 'react';
 import type { User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import type { Transaction } from '../../types/transaction';
-import type { SharedGroup } from '../../types/sharedGroup';
 import type { UserPreferences } from '../../services/userPreferencesService';
 import type { Insight, UserInsightProfile, LocalInsightCache } from '../../types/insight';
 import type { View } from '../../components/App';
@@ -66,8 +62,6 @@ import { batchReviewActions, atomicBatchActions } from '@features/batch-review';
 // =============================================================================
 // Types
 // =============================================================================
-
-import type { ViewMode } from '@/shared/stores/useViewModeStore';
 
 /**
  * Toast message configuration
@@ -111,10 +105,6 @@ export interface UseTransactionHandlersProps {
     user: User | null;
     /** Firebase services (db, appId) */
     services: { db: Firestore; appId: string } | null;
-    /** Current view mode (personal or group) */
-    viewMode: ViewMode;
-    /** Active shared group (null if in personal mode) */
-    activeGroup: SharedGroup | null;
     /** User preferences for defaults */
     userPreferences: UserPreferences;
     /** All transactions for insight generation context */
@@ -235,8 +225,6 @@ export function useTransactionHandlers(
     const {
         user,
         services,
-        viewMode,
-        activeGroup,
         userPreferences,
         transactions,
         currency,
@@ -279,17 +267,11 @@ export function useTransactionHandlers(
             currency: userPreferences.defaultCurrency || 'CLP',
         };
 
-        // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
-        // Epic 14d will use sharedGroupId (single nullable string) instead
-        // Group mode auto-assignment will be re-added in Epic 14d
-
         return baseTransaction;
     }, [
         userPreferences.defaultCountry,
         userPreferences.defaultCity,
         userPreferences.defaultCurrency,
-        viewMode,
-        activeGroup,
     ]);
 
     /**

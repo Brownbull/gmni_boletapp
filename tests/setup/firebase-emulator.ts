@@ -168,16 +168,6 @@ export function getAuthedFirestoreWithEmail(userId: string, email: string) {
 export const TEST_COLLECTION_PATH = 'artifacts/boletapp-d609f/users';
 
 /**
- * Shared groups collection path (Epic 14d-v2)
- */
-export const SHARED_GROUPS_PATH = 'sharedGroups';
-
-/**
- * Pending invitations collection path (Epic 14d-v2 Story 1.5b-2)
- */
-export const PENDING_INVITATIONS_PATH = 'pendingInvitations';
-
-/**
  * Run a callback with security rules disabled to set up test data.
  * Use this to create documents that the test user doesn't have permission to create.
  *

@@ -47,10 +47,6 @@ const mockState = {
         defaultCountry: 'US',
         defaultCurrency: 'USD',
     },
-    // View mode
-    viewMode: 'personal' as const,
-    viewModeGroup: null as any,
-    sharedGroups: [] as any[],
     // Navigation store
     analyticsInitialState: null as any,
     pendingDistributionView: null as 'treemap' | 'donut' | null,
@@ -95,28 +91,6 @@ vi.mock('@/contexts/ThemeContext', () => ({
         setFontColorMode: vi.fn(),
         setLang: vi.fn(),
         setCurrency: vi.fn(),
-    })),
-}));
-
-// Mock ViewModeStore (Story 14d-v2-0: Migrated from ViewModeContext to Zustand store)
-vi.mock('@/shared/stores/useViewModeStore', () => ({
-    useViewMode: vi.fn(() => ({
-        mode: mockState.viewMode,
-        group: mockState.viewModeGroup,
-        groupId: mockState.viewModeGroup?.id ?? null,
-        isGroupMode: mockState.viewMode === 'group',
-        setPersonalMode: vi.fn(),
-        setGroupMode: vi.fn(),
-        updateGroupData: vi.fn(),
-    })),
-}));
-
-// Mock useUserSharedGroups
-vi.mock('@/hooks/useUserSharedGroups', () => ({
-    useUserSharedGroups: vi.fn(() => ({
-        groups: mockState.sharedGroups,
-        isLoading: false,
-        getGroupById: vi.fn(),
     })),
 }));
 
@@ -173,9 +147,6 @@ describe('useTrendsViewData', () => {
             defaultCountry: 'US',
             defaultCurrency: 'USD',
         };
-        mockState.viewMode = 'personal';
-        mockState.viewModeGroup = null;
-        mockState.sharedGroups = [];
         mockState.analyticsInitialState = null;
         mockState.pendingDistributionView = null;
     });
@@ -360,41 +331,12 @@ describe('useTrendsViewData', () => {
     // =========================================================================
 
     describe('group mode (AC2)', () => {
-        it('returns isGroupMode as false in personal mode', () => {
-            mockState.viewMode = 'personal';
-            mockState.viewModeGroup = null;
-
+        it('returns isGroupMode as false (feature removed)', () => {
             const { result } = renderHook(() => useTrendsViewData());
 
             expect(result.current.isGroupMode).toBe(false);
             expect(result.current.groupName).toBeUndefined();
             expect(result.current.groupMembers).toEqual([]);
-        });
-
-        it('returns isGroupMode as true when in group mode', () => {
-            mockState.viewMode = 'group';
-            mockState.viewModeGroup = { id: 'group-1', name: 'Family' };
-            mockState.sharedGroups = [
-                {
-                    id: 'group-1',
-                    name: 'Family',
-                    memberProfiles: {
-                        'user-1': { displayName: 'Alice', email: 'alice@test.com' },
-                        'user-2': { displayName: 'Bob', email: 'bob@test.com' },
-                    },
-                },
-            ];
-
-            const { result } = renderHook(() => useTrendsViewData());
-
-            expect(result.current.isGroupMode).toBe(true);
-            expect(result.current.groupName).toBe('Family');
-            expect(result.current.groupMembers).toHaveLength(2);
-            expect(result.current.groupMembers).toContainEqual({
-                uid: 'user-1',
-                displayName: 'Alice',
-                email: 'alice@test.com',
-            });
         });
 
         it('returns empty spendingByMember map', () => {
@@ -476,18 +418,6 @@ describe('useTrendsViewData', () => {
 
             // Should fall back to theme currency
             expect(result.current.currency).toBe('USD');
-        });
-
-        it('handles missing group in sharedGroups list', () => {
-            mockState.viewMode = 'group';
-            mockState.viewModeGroup = { id: 'non-existent', name: 'Missing' };
-            mockState.sharedGroups = []; // Group not in list
-
-            const { result } = renderHook(() => useTrendsViewData());
-
-            expect(result.current.isGroupMode).toBe(true);
-            expect(result.current.groupName).toBe('Missing');
-            expect(result.current.groupMembers).toEqual([]);
         });
     });
 });

@@ -94,7 +94,6 @@ const DEFAULT_PROCESSING_TIMEOUT_MS = 120000;
  *   scanOverlay,
  *   t,
  *   lang: 'es',
- *   viewMode: 'personal',
  * });
  *
  * if (result.success && result.route === 'edit-view') {
@@ -112,8 +111,6 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
     services,
     t,
     lang,
-    viewMode,
-    activeGroupId,
     trustedAutoSave,
     prefersReducedMotion = false,
     processingTimeoutMs = DEFAULT_PROCESSING_TIMEOUT_MS,
@@ -258,7 +255,7 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
       location,
       finalTotal,
       date,
-      { viewMode, activeGroupId, language: lang }
+      { language: lang }
     );
 
     // ========================================================================

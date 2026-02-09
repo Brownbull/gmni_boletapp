@@ -51,10 +51,6 @@ const mockState = {
         defaultCurrency: 'USD',
         foreignLocationFormat: 'code' as const,
     },
-    // View mode
-    viewMode: 'personal' as const,
-    viewModeGroup: null as any,
-    sharedGroups: [] as any[],
     // Pagination
     hasMore: true,
     loadMore: vi.fn(),
@@ -113,27 +109,6 @@ vi.mock('@/contexts/ThemeContext', () => ({
         setFontColorMode: vi.fn(),
         setLang: vi.fn(),
         setCurrency: vi.fn(),
-    })),
-}));
-
-// Mock ViewModeStore (Story 14d-v2-0: Migrated from ViewModeContext to Zustand store)
-vi.mock('@/shared/stores/useViewModeStore', () => ({
-    useViewMode: vi.fn(() => ({
-        mode: mockState.viewMode,
-        group: mockState.viewModeGroup,
-        isGroupMode: mockState.viewMode === 'group',
-        setPersonalMode: vi.fn(),
-        setGroupMode: vi.fn(),
-        updateGroupData: vi.fn(),
-    })),
-}));
-
-// Mock useUserSharedGroups
-vi.mock('@/hooks/useUserSharedGroups', () => ({
-    useUserSharedGroups: vi.fn(() => ({
-        groups: mockState.sharedGroups,
-        isLoading: false,
-        getGroupById: vi.fn(),
     })),
 }));
 
@@ -203,9 +178,6 @@ describe('useDashboardViewData', () => {
             defaultCurrency: 'USD',
             foreignLocationFormat: 'code',
         };
-        mockState.viewMode = 'personal';
-        mockState.viewModeGroup = null;
-        mockState.sharedGroups = [];
         mockState.hasMore = true;
         mockState.loadMore = vi.fn();
         mockState.isLoadingMore = false;
@@ -447,42 +419,6 @@ describe('useDashboardViewData', () => {
         });
     });
 
-    // =========================================================================
-    // AC2: Shared Groups
-    // =========================================================================
-
-    describe('shared groups (AC2)', () => {
-        it('returns empty sharedGroups array by default', () => {
-            const { result } = renderHook(() => useDashboardViewData());
-
-            expect(result.current.sharedGroups).toEqual([]);
-        });
-
-        it('returns sharedGroups with id and color', () => {
-            mockState.sharedGroups = [
-                { id: 'group-1', name: 'Family', color: '#FF0000' },
-                { id: 'group-2', name: 'Work', color: '#00FF00' },
-            ];
-
-            const { result } = renderHook(() => useDashboardViewData());
-
-            expect(result.current.sharedGroups).toHaveLength(2);
-            expect(result.current.sharedGroups).toEqual([
-                { id: 'group-1', color: '#FF0000' },
-                { id: 'group-2', color: '#00FF00' },
-            ]);
-        });
-
-        it('handles groups with missing color', () => {
-            mockState.sharedGroups = [
-                { id: 'group-1', name: 'Family' },
-            ];
-
-            const { result } = renderHook(() => useDashboardViewData());
-
-            expect(result.current.sharedGroups[0].color).toBe('');
-        });
-    });
 
     // =========================================================================
     // AC5: Callbacks with DEV Warning
@@ -606,9 +542,6 @@ describe('useDashboardViewData', () => {
             expect(result.current).toHaveProperty('formatDate');
             expect(result.current).toHaveProperty('getSafeDate');
 
-            // Shared groups
-            expect(result.current).toHaveProperty('sharedGroups');
-
             // Callbacks
             expect(result.current).toHaveProperty('onCreateNew');
             expect(result.current).toHaveProperty('onViewTrends');
@@ -644,7 +577,6 @@ describe('useDashboardViewData', () => {
             mockState.services = null;
             mockState.paginatedTransactions = [];
             mockState.recentScans = [];
-            mockState.sharedGroups = [];
             mockState.preferences = undefined as any;
 
             const { result } = renderHook(() => useDashboardViewData());
@@ -653,7 +585,6 @@ describe('useDashboardViewData', () => {
             expect(result.current.appId).toBe('');
             expect(result.current.transactions).toEqual([]);
             expect(result.current.recentScans).toEqual([]);
-            expect(result.current.sharedGroups).toEqual([]);
         });
     });
 });

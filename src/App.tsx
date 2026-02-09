@@ -62,18 +62,10 @@ import { useReducedMotion } from './hooks/useReducedMotion';
 import { useInsightProfile } from './hooks/useInsightProfile';
 import { useBatchSession } from './hooks/useBatchSession';
 import { usePersonalRecords } from './hooks/usePersonalRecords';
-import { usePendingInvitations } from './hooks/usePendingInvitations';
 import { useInAppNotifications } from './hooks/useInAppNotifications';
-// Story 14d-v2-0: ViewMode migrated from Context to Zustand store
-import { useViewMode } from '@/shared/stores/useViewModeStore';
-// Story 14d-v2-1-10d: useUserSharedGroups stub replaced with useGroups for ViewModeSwitcher
-import { ViewModeSwitcher, useGroups } from '@/features/shared-groups';
-import { useJoinLinkHandler } from './hooks/useJoinLinkHandler';
 // App-level handler hooks
 import { useTransactionHandlers, useScanHandlers, useDialogHandlers } from './hooks/app';
 import { AppProviders } from '@app/AppProviders';
-import { JoinGroupDialog } from '@/features/shared-groups';
-import type { SharedGroup } from './types/sharedGroup';
 import { getFirestore } from 'firebase/firestore';
 import { useBatchProcessing } from './hooks/useBatchProcessing';
 import { DIALOG_TYPES } from './types/scanStateMachine';
@@ -255,33 +247,7 @@ function App() {
         appId: services?.appId ?? null,
     });
 
-    const { pendingInvitations, pendingCount: pendingInvitationsCount } = usePendingInvitations(user?.email);
-    const { mode: viewMode, group: activeGroup, setGroupMode } = useViewMode();
     const db = getFirestore();
-
-    const {
-        state: joinLinkState,
-        groupPreview: joinGroupPreview,
-        error: joinError,
-        joinedGroupId,
-        confirmJoin,
-        cancelJoin,
-        dismissError: dismissJoinError,
-    } = useJoinLinkHandler({
-        db,
-        userId: user?.uid ?? null,
-        isAuthenticated: !!user,
-        userProfile: user ? { displayName: user.displayName ?? undefined, email: user.email ?? undefined, photoURL: user.photoURL ?? undefined } : null,
-        appId: services?.appId,
-    });
-
-    // Auto-switch to newly joined group
-    useEffect(() => {
-        if (joinLinkState === 'success' && joinedGroupId && joinGroupPreview) {
-            setGroupMode(joinedGroupId, joinGroupPreview as unknown as SharedGroup);
-            setView('dashboard');
-        }
-    }, [joinLinkState, joinedGroupId, joinGroupPreview, setGroupMode]);
 
     const {
         notifications: inAppNotifications,
@@ -291,12 +257,6 @@ function App() {
         deleteNotification: deleteInAppNotification,
         deleteAllNotifications: deleteAllInAppNotifications,
     } = useInAppNotifications(db, user?.uid || null, services?.appId || null);
-    // Story 14d-v2-1-10d: Use actual useGroups hook instead of stubbed useUserSharedGroups
-    const { data: userSharedGroups = [], isLoading: sharedGroupsLoading } = useGroups(user, services);
-    const [showViewModeSwitcher, setShowViewModeSwitcher] = useState(false);
-
-    // Stub for shared group transactions (feature disabled - see Epic 14d-v2)
-    const sharedGroupRawTransactions: any[] = [];
 
     // Scan state from Zustand store
     const scanState = useScanStore();
@@ -527,12 +487,8 @@ function App() {
             currency: userPreferences.defaultCurrency || 'CLP',
         };
 
-        // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
-        // Epic 14d will use sharedGroupId (single nullable string) instead
-        // Group mode auto-assignment will be re-added in Epic 14d
-
         return baseTransaction;
-    }, [defaultCountry, defaultCity, userPreferences.defaultCurrency, viewMode, activeGroup]);
+    }, [defaultCountry, defaultCity, userPreferences.defaultCurrency]);
 
     // UI loading states
     const [wiping, _setWiping] = useState(false);
@@ -563,8 +519,6 @@ function App() {
     } = useTransactionHandlers({
         user,
         services,
-        viewMode,
-        activeGroup: activeGroup ?? null,  // Convert undefined to null for type safety
         userPreferences,
         transactions,
         currency,
@@ -717,7 +671,6 @@ function App() {
                 : { level: 'all' },
             category: categoryFilter,
             location: {},
-            group: {},
         };
 
         // Store filters and navigate
@@ -1105,8 +1058,6 @@ function App() {
             },
             t,
             lang,
-            viewMode,
-            activeGroupId: activeGroup?.id,
             trustedAutoSave: {
                 checkTrusted,
                 saveTransaction: async (transaction: Transaction) => {
@@ -1147,8 +1098,6 @@ function App() {
         addUserCredits,
         t,
         lang,
-        viewMode,
-        activeGroup?.id,
         checkTrusted,
         addToBatch,
         recordMerchantScan,
@@ -1196,8 +1145,6 @@ function App() {
         // Story 14e-34a: batchImages removed - now uses useScanStore.images directly
         scanCurrency,
         scanStoreType,
-        viewMode,
-        activeGroup: activeGroup ?? null,
         batchProcessingExtended: batchProcessing,
         setScanImages,
         // Story 14e-39: Trust prompt clearing via CreditFeature actions ref
@@ -1228,8 +1175,6 @@ function App() {
         // Story 14e-34a: batchImages removed - now uses useScanStore.images
         scanCurrency,
         scanStoreType,
-        viewMode,
-        activeGroup,
         setScanImages,
     ]);
 
@@ -1378,12 +1323,7 @@ function App() {
     // Computed values and composition hooks (MUST be before early returns for hooks)
     // ==========================================================================
 
-    // When in group mode, use shared group transactions; otherwise use personal transactions
-    const isGroupMode = viewMode === 'group' && !!activeGroup;
-    const safeSharedGroupRawTransactions = Array.isArray(sharedGroupRawTransactions)
-        ? sharedGroupRawTransactions
-        : [];
-    const activeTransactions = isGroupMode ? safeSharedGroupRawTransactions : transactions;
+    const activeTransactions = transactions;
 
     // ==========================================================================
     // View Props Composition (views own data via internal hooks)
@@ -1608,12 +1548,6 @@ function App() {
                     currency,
                     formatCurrency,
                     userDefaultCountry: defaultCountry,
-                    activeGroupForQuickSave: viewMode === 'group' && activeGroup ? {
-                        id: activeGroup.id!,
-                        name: activeGroup.name,
-                        color: activeGroup.color,
-                        icon: activeGroup.icon || undefined,
-                    } : null,
                     // Story 14e-23a: Currency/Total mismatch dialog props (migrated from AppOverlays)
                     userCurrency: userPreferences.defaultCurrency || 'CLP',
                     onCurrencyUseDetected: handleCurrencyUseDetected,
@@ -1700,28 +1634,8 @@ function App() {
                     userEmail={user?.email || ''}
                     theme={theme}
                     t={t}
-                    onLogoClick={() => setShowViewModeSwitcher(true)}
-                    viewMode={viewMode}
-                    activeGroup={activeGroup ? {
-                        id: activeGroup.id!,
-                        name: activeGroup.name,
-                        icon: activeGroup.icon || undefined,
-                        color: activeGroup.color,
-                        members: activeGroup.members,
-                    } : undefined}
+                    onLogoClick={() => {}}
                 />
-            )}
-
-            {view !== 'settings' && (
-                <div className="fixed top-0 left-4 z-[60]" style={{ marginTop: 'calc(72px + max(env(safe-area-inset-top, 0px), 8px))' }}>
-                    <ViewModeSwitcher
-                        isOpen={showViewModeSwitcher}
-                        onClose={() => setShowViewModeSwitcher(false)}
-                        groups={userSharedGroups}
-                        isLoading={sharedGroupsLoading}
-                        t={t}
-                    />
-                </div>
             )}
 
             {/* Main content area:
@@ -1832,8 +1746,6 @@ function App() {
                                         onItemError: dispatchBatchItemError,
                                         // Atomic state update with phase transition
                                         onComplete: (processingResults, imageUrls) => {
-                                            // Story 14d-v2-1.1: sharedGroupIds[] tagging removed (Epic 14c cleanup)
-                                            // Epic 14d will use sharedGroupId (single nullable string) instead
                                             const receipts = createBatchReceiptsFromResults(processingResults, imageUrls);
                                             // Story 14e-16: Load into both scan store (for legacy) and batch review store (for orchestrator)
                                             dispatchBatchComplete(receipts);
@@ -1932,8 +1844,6 @@ function App() {
                             // Story 14e-34a: batchImages removed - now uses useScanStore.images directly
                             scanCurrency,
                             scanStoreType,
-                            viewMode,
-                            activeGroup: activeGroup ?? null,
                             batchProcessingExtended: batchProcessing,
                             setScanImages,
                             // Story 14e-39: Trust prompt clearing via CreditFeature actions ref
@@ -1966,13 +1876,8 @@ function App() {
                     setView: (v: string) => setView(v as View),
                     t,
                     theme,
-                    pendingInvitations,
-                    services,
                     lang: lang as 'en' | 'es',
-                    setToastMessage: (msg) => setToastMessage({ text: msg.text, type: msg.type as 'success' | 'info' }),
                     inAppNotifications,
-                    userSharedGroups,
-                    setGroupMode,
                     markNotificationAsRead,
                     markAllNotificationsAsRead,
                     deleteInAppNotification,
@@ -2119,8 +2024,7 @@ function App() {
                 // Story 14e-4: onCreditInfoClick removed - Nav uses Modal Manager directly
                 // Batch mode from ScanContext - tracks all phases (capturing, processing, reviewing)
                 isBatchMode={isBatchModeFromContext || hasBatchReceipts}
-                alertsBadgeCount={pendingInvitationsCount + inAppNotificationsUnreadCount}
-                activeGroupColor={viewMode === 'group' && activeGroup ? activeGroup.color : undefined}
+                alertsBadgeCount={inAppNotificationsUnreadCount}
             />
 
             {/* Story 14e-23: Toast component (extracted from inline JSX) */}
@@ -2157,17 +2061,6 @@ function App() {
 
             {/* Story 14e-23: BatchDiscardDialog now rendered by ScanFeature via FeatureOrchestrator */}
 
-            <JoinGroupDialog
-                isOpen={joinLinkState !== 'idle' && joinLinkState !== 'pending_auth' && joinLinkState !== 'success'}
-                state={joinLinkState}
-                groupPreview={joinGroupPreview}
-                error={joinError}
-                onConfirm={confirmJoin}
-                onCancel={cancelJoin}
-                onDismissError={dismissJoinError}
-                t={t}
-                // Story 14e-35: lang prop removed - JoinGroupDialog's lang prop is deprecated and unused
-            />
             </AppLayout>
         </>
     );

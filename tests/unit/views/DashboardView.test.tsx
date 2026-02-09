@@ -48,7 +48,6 @@ const mockHookData = {
   formatCurrency: (amount: number) => `$${amount.toFixed(2)}`,
   formatDate: (date: string) => date,
   getSafeDate: (val: any) => val || new Date().toISOString().split('T')[0],
-  sharedGroups: [] as any[],
   onCreateNew: vi.fn(),
   onViewTrends: vi.fn(),
   onEditTransaction: vi.fn(),
@@ -91,7 +90,6 @@ vi.mock('../../../src/hooks/useAllUserGroups', () => ({
     isLoading: false,
     error: undefined,
     hasGroups: false,
-    sharedGroupCount: 0,
     personalGroupCount: 0,
   })),
 }));
@@ -237,7 +235,6 @@ describe('DashboardView', () => {
       formatCurrency: (amount: number) => `$${amount.toFixed(2)}`,
       formatDate: (date: string) => date,
       getSafeDate: (val: any) => val || new Date().toISOString().split('T')[0],
-      sharedGroups: [],
       onCreateNew: vi.fn(),
       onViewTrends: vi.fn(),
       onEditTransaction: vi.fn(),

@@ -15,7 +15,6 @@
 | [Filtering System](./filtering-system.md) | Transaction filtering (temporal, category, location, groups) | High |
 | [Data Caching](./data-caching.md) | React Query + Firestore real-time integration | High |
 | [Tech Stack Overview](./tech-stack.md) | Technology layers and integrations | Medium |
-| [Shared Groups Flow](./shared-groups-flow.md) | Cross-user transaction access with Cloud Function security | High |
 
 ---
 

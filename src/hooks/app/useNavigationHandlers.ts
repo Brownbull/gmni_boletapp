@@ -343,8 +343,7 @@ export function useNavigationHandlers(props: UseNavigationHandlersProps): UseNav
                 ? { ...payload.temporal, level: payload.temporal.level as TemporalFilterState['level'] }
                 : { level: 'all' },
             category: categoryFilter,
-            location: {}, // Location filter not set from analytics navigation
-            group: {}, // Story 14.15b: Group filter not set from analytics navigation
+            location: {},
         };
 
         // Store the filters to be applied when History/Items view loads

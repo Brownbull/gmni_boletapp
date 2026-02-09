@@ -92,8 +92,6 @@ import { DIALOG_TYPES } from '../types/scanStateMachine';
 import { useToast } from '@/shared/hooks';
 // Note: useModalActions imported above from @managers/ModalManager
 import { ItemViewToggle, type ItemViewMode } from '../components/items/ItemViewToggle';
-// Story 14d-v2-1.1: TransactionGroupSelector removed - group UI disabled (Epic 14c cleanup)
-import type { GroupWithMeta } from '@/features/shared-groups';
 
 /**
  * Scan button state machine
@@ -247,13 +245,6 @@ export interface TransactionEditorViewProps {
   /** Callback when user clicks batch scan button */
   onBatchModeClick?: () => void;
 
-  /** Available shared groups for selection */
-  availableGroups?: GroupWithMeta[];
-  /** Whether groups are loading */
-  groupsLoading?: boolean;
-  /** Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
-   * Epic 14d will use sharedGroupId (single nullable string) instead */
-  onGroupsChange?: (groupIds: string[]) => void;
 }
 
 // Note: Item categories are used via CategoryCombobox component which handles the full list internally
@@ -269,7 +260,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   onRequestEdit,
   isOtherUserTransaction = false,
   ownerProfile,
-  ownerId: _ownerId, // Reserved for future ProfileIndicator in header
+  ownerId: _ownerId,
   scanButtonState,
   isProcessing,
   processingEta,
@@ -314,10 +305,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   itemNameMappings = [],
   // Batch mode
   onBatchModeClick,
-  // Story 14d-v2-1.1: Group props disabled (Epic 14c cleanup)
-  availableGroups: _availableGroups = [],
-  groupsLoading: _groupsLoading = false,
-  onGroupsChange: _onGroupsChange,
 }) => {
   const isDark = theme === 'dark';
   const prefersReducedMotion = useReducedMotion();
@@ -1912,8 +1899,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                 </button>
               )}
 
-              {/* Story 14d-v2-1.1: Group selector UI disabled (Epic 14c cleanup)
-                  Epic 14d will use sharedGroupId (single nullable string) instead */}
             </div>
           </div>
 
@@ -2729,21 +2714,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
         </div>
       )}
 
-      {/* Story 14d-v2-1.1: TransactionGroupSelector disabled (Epic 14c cleanup)
-          Epic 14d will use sharedGroupId (single nullable string) instead
-      {showGroupSelector && (
-        <TransactionGroupSelector
-          groups={availableGroups}
-          selectedIds={[]}
-          onSelect={() => {}}
-          onClose={() => setShowGroupSelector(false)}
-          t={t}
-          theme={theme}
-          isLoading={groupsLoading}
-          readOnly={readOnly}
-        />
-      )}
-      */}
     </div>
   );
 };

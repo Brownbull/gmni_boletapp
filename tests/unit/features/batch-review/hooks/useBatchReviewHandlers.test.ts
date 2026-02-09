@@ -89,10 +89,6 @@ vi.mock('../../../../../src/services/itemNameMappingService', () => ({
   incrementItemNameMappingUsage: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('../../../../../src/services/sharedGroupService', () => ({
-  updateMemberTimestampsForTransaction: vi.fn().mockResolvedValue(undefined),
-}));
-
 // =============================================================================
 // Test Helpers
 // =============================================================================
@@ -212,8 +208,6 @@ function createMockProps(overrides: Partial<BatchReviewHandlersProps> = {}): Bat
     // Story 14e-34a: batchImages removed - now uses useScanStore.images directly
     scanCurrency: 'CLP',
     scanStoreType: 'auto',
-    viewMode: 'personal' as const,
-    activeGroup: null,
     batchProcessingExtended: {
       reset: vi.fn(),
       startProcessing: vi.fn().mockResolvedValue([]),

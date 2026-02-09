@@ -8,8 +8,7 @@
  * @see docs/sprint-artifacts/epic9/story-9.19-history-transaction-filters.md
  */
 
-import React, { createContext, useReducer, useMemo, useEffect, useCallback } from 'react';
-import { useViewModeFilterSync } from '@/hooks/useViewModeFilterSync';
+import React, { createContext, useReducer, useMemo, useEffect } from 'react';
 
 // ============================================================================
 // Types
@@ -77,24 +76,12 @@ export interface LocationFilterState {
 }
 
 /**
- * Group filter state for filtering by custom transaction groups.
- * Story 14.15b: Transaction Selection Mode & Groups
- * Supports multi-select (comma-separated group IDs like category filter)
- */
-export interface GroupFilterState {
-  /** Comma-separated group IDs to filter by, or undefined for no filter */
-  groupIds?: string;
-}
-
-/**
  * Complete history filter state.
  */
 export interface HistoryFilterState {
   temporal: TemporalFilterState;
   category: CategoryFilterState;
   location: LocationFilterState;
-  /** Story 14.15b: Group filter for custom transaction groups */
-  group: GroupFilterState;
 }
 
 /**
@@ -104,11 +91,9 @@ export type HistoryFilterAction =
   | { type: 'SET_TEMPORAL_FILTER'; payload: TemporalFilterState }
   | { type: 'SET_CATEGORY_FILTER'; payload: CategoryFilterState }
   | { type: 'SET_LOCATION_FILTER'; payload: LocationFilterState }
-  | { type: 'SET_GROUP_FILTER'; payload: GroupFilterState }
   | { type: 'CLEAR_TEMPORAL' }
   | { type: 'CLEAR_CATEGORY' }
   | { type: 'CLEAR_LOCATION' }
-  | { type: 'CLEAR_GROUP' }
   | { type: 'CLEAR_ALL_FILTERS' };
 
 /**
@@ -160,7 +145,6 @@ export function getDefaultFilterState(): HistoryFilterState {
     },
     category: { level: 'all' },
     location: {},
-    group: {},
   };
 }
 
@@ -216,19 +200,6 @@ function historyFiltersReducer(
         location: {},
       };
 
-    case 'SET_GROUP_FILTER':
-      // Story 14.15b: Update group while PRESERVING other filters
-      return {
-        ...state,
-        group: action.payload,
-      };
-
-    case 'CLEAR_GROUP':
-      return {
-        ...state,
-        group: {},
-      };
-
     case 'CLEAR_ALL_FILTERS':
       return getDefaultFilterState();
 
@@ -275,15 +246,6 @@ export function HistoryFiltersProvider({
     initialState ?? getDefaultFilterState()
   );
 
-  // Story 14d-v2-1-10d: Clear filters when view mode changes
-  // AC#3: Filters cleared when switching from Personal to Group mode
-  // AC#5: Filters cleared but scroll position preserved
-  const handleModeChange = useCallback(() => {
-    dispatch({ type: 'CLEAR_ALL_FILTERS' });
-  }, []);
-
-  useViewModeFilterSync(handleModeChange);
-
   // Story 14.13b: Sync state changes to parent for persistence across navigation
   useEffect(() => {
     if (onStateChange) {
@@ -327,14 +289,6 @@ export function setCategoryFilter(payload: CategoryFilterState): HistoryFilterAc
  */
 export function setLocationFilter(payload: LocationFilterState): HistoryFilterAction {
   return { type: 'SET_LOCATION_FILTER', payload };
-}
-
-/**
- * Creates a SET_GROUP_FILTER action.
- * Story 14.15b: Transaction Selection Mode & Groups
- */
-export function setGroupFilter(payload: GroupFilterState): HistoryFilterAction {
-  return { type: 'SET_GROUP_FILTER', payload };
 }
 
 /**

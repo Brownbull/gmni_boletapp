@@ -9,7 +9,7 @@ export { PreferenciasView } from './PreferenciasView';
 export { EscaneoView } from './EscaneoView';
 export { SuscripcionView } from './SuscripcionView';
 export { LearnedDataView, DatosAprendidosView } from './LearnedDataView';
-export { GruposView } from './GruposView';
+
 export { AppView } from './AppView';
 export { CuentaView } from './CuentaView';
 export { NotificacionesView } from './NotificacionesView';

@@ -16,7 +16,6 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import type { User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import type { Transaction } from '../../../../src/types/transaction';
-import type { SharedGroup } from '../../../../src/types/sharedGroup';
 import type { UserPreferences } from '../../../../src/services/userPreferencesService';
 import type { UseTransactionHandlersProps } from '../../../../src/hooks/app/useTransactionHandlers';
 
@@ -96,17 +95,6 @@ describe('useTransactionHandlers', () => {
         },
     };
 
-    // Mock shared group
-    const mockSharedGroup: SharedGroup = {
-        id: 'group-123',
-        name: 'Family',
-        ownerId: 'test-user-123',
-        memberEmails: ['user@example.com'],
-        memberIds: ['test-user-123'],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    };
-
     // Mock insight profile
     const mockInsightProfile = {
         schemaVersion: 1 as const,
@@ -130,8 +118,6 @@ describe('useTransactionHandlers', () => {
     const createDefaultProps = (overrides: Partial<UseTransactionHandlersProps> = {}): UseTransactionHandlersProps => ({
         user: mockUser,
         services: mockServices,
-        viewMode: 'personal',
-        activeGroup: null,
         userPreferences: mockUserPreferences,
         transactions: [],
         currency: 'CLP',
@@ -195,42 +181,6 @@ describe('useTransactionHandlers', () => {
             expect(tx.currency).toBe('CLP');
             expect(tx.total).toBe(0);
             expect(tx.date).toBeDefined();
-        });
-
-        it('should return transaction without sharedGroupIds in personal view mode', () => {
-            const props = createDefaultProps({ viewMode: 'personal' });
-            const { result } = renderHook(() => useTransactionHandlers(props));
-
-            const tx = result.current.createDefaultTransaction();
-
-            expect(tx.sharedGroupIds).toBeUndefined();
-        });
-
-        // Story 14d-v2-1.1: sharedGroupIds removed (Epic 14c cleanup)
-        // Epic 14d will use sharedGroupId (single nullable string) instead
-        it('should NOT include sharedGroupIds in group view mode (Epic 14c cleanup)', () => {
-            const props = createDefaultProps({
-                viewMode: 'group',
-                activeGroup: mockSharedGroup,
-            });
-            const { result } = renderHook(() => useTransactionHandlers(props));
-
-            const tx = result.current.createDefaultTransaction();
-
-            // Story 14d-v2-1.1: sharedGroupIds no longer assigned
-            expect(tx.sharedGroupIds).toBeUndefined();
-        });
-
-        it('should not include sharedGroupIds in group mode without activeGroup', () => {
-            const props = createDefaultProps({
-                viewMode: 'group',
-                activeGroup: null,
-            });
-            const { result } = renderHook(() => useTransactionHandlers(props));
-
-            const tx = result.current.createDefaultTransaction();
-
-            expect(tx.sharedGroupIds).toBeUndefined();
         });
 
         it('should use empty strings when user preferences are missing', () => {
