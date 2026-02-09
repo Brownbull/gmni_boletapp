@@ -23,15 +23,15 @@ import {
   serverTimestamp,
   Firestore,
   Timestamp,
-  writeBatch,
 } from 'firebase/firestore';
+import { batchDelete } from '@/lib/firestoreBatch';
 import {
   AirlockRecord,
   AirlockGenerationResult,
   AirlockTransaction,
-  AIRLOCKS_COLLECTION,
   MAX_AIRLOCK_HISTORY,
 } from '../types/airlock';
+import { airlocksPath } from '@/lib/firestorePaths';
 
 // ============================================================================
 // Mock Insights Data (AC4: Placeholder until AI ready)
@@ -183,13 +183,6 @@ function getRandomMockInsight(): AirlockGenerationResult {
 // Firestore Path Helpers
 // ============================================================================
 
-/**
- * Get the Firestore path for user's airlocks collection.
- */
-function getAirlocksCollectionPath(appId: string, userId: string): string {
-  return `artifacts/${appId}/users/${userId}/${AIRLOCKS_COLLECTION}`;
-}
-
 // ============================================================================
 // CRUD Operations
 // ============================================================================
@@ -244,7 +237,7 @@ export async function generateAirlock(
   };
 
   // Save to Firestore
-  const collectionPath = getAirlocksCollectionPath(appId, userId);
+  const collectionPath = airlocksPath(appId, userId);
   const docRef = await addDoc(collection(db, collectionPath), airlockData);
 
   // Return the complete record with generated ID
@@ -282,7 +275,7 @@ export async function getUserAirlocks(
   userId: string,
   appId: string
 ): Promise<AirlockRecord[]> {
-  const collectionPath = getAirlocksCollectionPath(appId, userId);
+  const collectionPath = airlocksPath(appId, userId);
   const q = query(
     collection(db, collectionPath),
     orderBy('createdAt', 'desc'),
@@ -314,7 +307,7 @@ export async function markAirlockViewed(
   appId: string,
   airlockId: string
 ): Promise<void> {
-  const collectionPath = getAirlocksCollectionPath(appId, userId);
+  const collectionPath = airlocksPath(appId, userId);
   const docRef = doc(db, collectionPath, airlockId);
 
   await updateDoc(docRef, {
@@ -368,7 +361,7 @@ export async function deleteAirlock(
   appId: string,
   airlockId: string
 ): Promise<void> {
-  const collectionPath = getAirlocksCollectionPath(appId, userId);
+  const collectionPath = airlocksPath(appId, userId);
   const docRef = doc(db, collectionPath, airlockId);
   await deleteDoc(docRef);
 }
@@ -389,16 +382,6 @@ export async function deleteAirlocks(
 ): Promise<void> {
   if (airlockIds.length === 0) return;
 
-  const BATCH_SIZE = 500;
-  const collectionPath = getAirlocksCollectionPath(appId, userId);
-
-  for (let i = 0; i < airlockIds.length; i += BATCH_SIZE) {
-    const chunk = airlockIds.slice(i, i + BATCH_SIZE);
-    const batch = writeBatch(db);
-    for (const airlockId of chunk) {
-      const docRef = doc(db, collectionPath, airlockId);
-      batch.delete(docRef);
-    }
-    await batch.commit();
-  }
+  const refs = airlockIds.map(id => doc(db, airlocksPath(appId, userId), id));
+  await batchDelete(db, refs);
 }

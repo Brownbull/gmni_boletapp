@@ -22,14 +22,7 @@ import {
 } from '../types/trust';
 import { LISTENER_LIMITS } from './firestore';
 import { sanitizeMerchantName } from '@/utils/sanitize';
-
-/**
- * Get the collection path for a user's trusted merchants
- * Story 11.4: AC #8 - Trust data stored per-user in Firestore
- */
-function getTrustedMerchantsCollectionPath(appId: string, userId: string): string {
-    return `artifacts/${appId}/users/${userId}/trusted_merchants`;
-}
+import { trustedMerchantsPath } from '@/lib/firestorePaths';
 
 /**
  * Normalize a merchant name for trust matching
@@ -141,7 +134,7 @@ export async function recordScan(
     const normalizedName = normalizeMerchantNameForTrust(sanitizedMerchant);
 
     // Use normalized name as document ID for consistent lookups
-    const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
+    const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
     const existingDoc = await getDoc(docRef);
@@ -214,7 +207,7 @@ export async function isMerchantTrusted(
     merchantName: string
 ): Promise<boolean> {
     const normalizedName = normalizeMerchantNameForTrust(merchantName);
-    const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
+    const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
     const docSnap = await getDoc(docRef);
@@ -235,7 +228,7 @@ export async function trustMerchant(
     merchantName: string
 ): Promise<void> {
     const normalizedName = normalizeMerchantNameForTrust(merchantName);
-    const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
+    const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
     await updateDoc(docRef, {
@@ -258,7 +251,7 @@ export async function declineTrust(
     merchantName: string
 ): Promise<void> {
     const normalizedName = normalizeMerchantNameForTrust(merchantName);
-    const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
+    const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
     await updateDoc(docRef, {
@@ -279,7 +272,7 @@ export async function revokeTrust(
     merchantName: string
 ): Promise<void> {
     const normalizedName = normalizeMerchantNameForTrust(merchantName);
-    const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
+    const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
     await updateDoc(docRef, {
@@ -299,7 +292,7 @@ export async function deleteTrustedMerchant(
     appId: string,
     merchantId: string
 ): Promise<void> {
-    const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
+    const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, merchantId);
     await deleteDoc(docRef);
 }
@@ -313,7 +306,7 @@ export async function getTrustedMerchants(
     userId: string,
     appId: string
 ): Promise<TrustedMerchant[]> {
-    const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
+    const collectionPath = trustedMerchantsPath(appId, userId);
     const colRef = collection(db, collectionPath);
     const snapshot = await getDocs(colRef);
 
@@ -347,7 +340,7 @@ export function subscribeToTrustedMerchants(
     appId: string,
     callback: (merchants: TrustedMerchant[]) => void
 ): Unsubscribe {
-    const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
+    const collectionPath = trustedMerchantsPath(appId, userId);
     const colRef = collection(db, collectionPath);
 
     // Story 14.25: Add limit to reduce Firestore reads
@@ -385,7 +378,7 @@ export async function getMerchantTrustRecord(
     merchantName: string
 ): Promise<TrustedMerchant | null> {
     const normalizedName = normalizeMerchantNameForTrust(merchantName);
-    const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
+    const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
     const docSnap = await getDoc(docRef);

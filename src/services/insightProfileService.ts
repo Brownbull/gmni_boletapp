@@ -25,8 +25,11 @@ import {
   FieldValue,
 } from 'firebase/firestore';
 import { UserInsightProfile, InsightRecord, MAX_RECENT_INSIGHTS } from '../types/insight';
+import { insightProfileDocSegments } from '@/lib/firestorePaths';
 
-const PROFILE_DOC_ID = 'profile';
+function getProfileDocRef(db: Firestore, appId: string, userId: string) {
+  return doc(db, ...insightProfileDocSegments(appId, userId));
+}
 
 // ============================================================================
 // Profile CRUD Operations
@@ -45,15 +48,7 @@ export async function getOrCreateInsightProfile(
   userId: string,
   appId: string
 ): Promise<UserInsightProfile> {
-  const profileRef = doc(
-    db,
-    'artifacts',
-    appId,
-    'users',
-    userId,
-    'insightProfile',
-    PROFILE_DOC_ID
-  );
+  const profileRef = getProfileDocRef(db, appId, userId);
 
   const snapshot = await getDoc(profileRef);
 
@@ -88,15 +83,7 @@ export async function getInsightProfile(
   userId: string,
   appId: string
 ): Promise<UserInsightProfile | null> {
-  const profileRef = doc(
-    db,
-    'artifacts',
-    appId,
-    'users',
-    userId,
-    'insightProfile',
-    PROFILE_DOC_ID
-  );
+  const profileRef = getProfileDocRef(db, appId, userId);
 
   const snapshot = await getDoc(profileRef);
 
@@ -129,15 +116,7 @@ export async function trackTransactionForProfile(
   transactionDate: Date
 ): Promise<void> {
   const profile = await getOrCreateInsightProfile(db, userId, appId);
-  const profileRef = doc(
-    db,
-    'artifacts',
-    appId,
-    'users',
-    userId,
-    'insightProfile',
-    PROFILE_DOC_ID
-  );
+  const profileRef = getProfileDocRef(db, appId, userId);
 
   // Build update object
   const updateData: Record<string, FieldValue | Timestamp> = {
@@ -167,15 +146,7 @@ export async function setFirstTransactionDate(
   appId: string,
   firstDate: Date
 ): Promise<void> {
-  const profileRef = doc(
-    db,
-    'artifacts',
-    appId,
-    'users',
-    userId,
-    'insightProfile',
-    PROFILE_DOC_ID
-  );
+  const profileRef = getProfileDocRef(db, appId, userId);
 
   // Ensure profile exists
   await getOrCreateInsightProfile(db, userId, appId);
@@ -215,15 +186,7 @@ export async function recordInsightShown(
   fullInsight?: { title?: string; message?: string; icon?: string; category?: string }
 ): Promise<void> {
   const profile = await getOrCreateInsightProfile(db, userId, appId);
-  const profileRef = doc(
-    db,
-    'artifacts',
-    appId,
-    'users',
-    userId,
-    'insightProfile',
-    PROFILE_DOC_ID
-  );
+  const profileRef = getProfileDocRef(db, appId, userId);
 
   // Create new insight record with full content (Story 10a.5)
   const newRecord: InsightRecord = {
@@ -261,15 +224,7 @@ export async function deleteInsight(
   shownAtSeconds: number
 ): Promise<void> {
   const profile = await getOrCreateInsightProfile(db, userId, appId);
-  const profileRef = doc(
-    db,
-    'artifacts',
-    appId,
-    'users',
-    userId,
-    'insightProfile',
-    PROFILE_DOC_ID
-  );
+  const profileRef = getProfileDocRef(db, appId, userId);
 
   // Filter out the insight matching both insightId and shownAt timestamp
   const updatedInsights = profile.recentInsights.filter(
@@ -297,15 +252,7 @@ export async function deleteInsights(
   insightsToDelete: Array<{ insightId: string; shownAtSeconds: number }>
 ): Promise<void> {
   const profile = await getOrCreateInsightProfile(db, userId, appId);
-  const profileRef = doc(
-    db,
-    'artifacts',
-    appId,
-    'users',
-    userId,
-    'insightProfile',
-    PROFILE_DOC_ID
-  );
+  const profileRef = getProfileDocRef(db, appId, userId);
 
   // Create a Set for fast lookup
   const deleteSet = new Set(
@@ -335,15 +282,7 @@ export async function clearRecentInsights(
   userId: string,
   appId: string
 ): Promise<void> {
-  const profileRef = doc(
-    db,
-    'artifacts',
-    appId,
-    'users',
-    userId,
-    'insightProfile',
-    PROFILE_DOC_ID
-  );
+  const profileRef = getProfileDocRef(db, appId, userId);
 
   // Ensure profile exists
   await getOrCreateInsightProfile(db, userId, appId);
@@ -370,15 +309,7 @@ export async function resetInsightProfile(
   userId: string,
   appId: string
 ): Promise<void> {
-  const profileRef = doc(
-    db,
-    'artifacts',
-    appId,
-    'users',
-    userId,
-    'insightProfile',
-    PROFILE_DOC_ID
-  );
+  const profileRef = getProfileDocRef(db, appId, userId);
 
   // Ensure profile exists and get current firstTransactionDate
   const profile = await getOrCreateInsightProfile(db, userId, appId);
@@ -415,15 +346,7 @@ export async function recordIntentionalResponse(
   response: 'intentional' | 'unintentional' | null
 ): Promise<void> {
   const profile = await getOrCreateInsightProfile(db, userId, appId);
-  const profileRef = doc(
-    db,
-    'artifacts',
-    appId,
-    'users',
-    userId,
-    'insightProfile',
-    PROFILE_DOC_ID
-  );
+  const profileRef = getProfileDocRef(db, appId, userId);
 
   // Find and update the matching insight record
   const updatedInsights = profile.recentInsights.map((insight) => {

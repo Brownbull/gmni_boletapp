@@ -13,6 +13,7 @@ import {
   Firestore,
 } from 'firebase/firestore';
 import { sanitizeInput, sanitizeLocation } from '@/utils/sanitize';
+import { preferencesDocSegments } from '@/lib/firestorePaths';
 
 /**
  * Supported currencies for the application
@@ -74,7 +75,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
  * Get the Firestore document reference for user preferences
  */
 function getPreferencesDocRef(db: Firestore, appId: string, userId: string) {
-  return doc(db, 'artifacts', appId, 'users', userId, 'preferences', 'settings');
+  return doc(db, ...preferencesDocSegments(appId, userId));
 }
 
 /**

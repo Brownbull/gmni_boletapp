@@ -15,6 +15,7 @@
 
 import Fuse from 'fuse.js';
 import type { FlattenedItem } from '../types/item';
+import { filterAndGroupDuplicates } from '@/utils/duplicateGrouping';
 
 /**
  * Threshold for fuzzy matching (0 = exact match, 1 = match anything).
@@ -287,80 +288,19 @@ export function filterToDuplicates(items: FlattenedItem[]): FlattenedItem[] {
  * @returns Array of items with duplicates grouped together
  */
 export function filterToDuplicatesGrouped(items: FlattenedItem[]): FlattenedItem[] {
-    const duplicateMap = findItemDuplicates(items);
-
-    // If no duplicates, return empty
-    if (duplicateMap.size === 0) return [];
-
-    // Build groups of related duplicates using Union-Find approach
-    const itemIdToGroup = new Map<string, Set<string>>();
-
-    // Initialize each item with its own group
-    for (const [itemId, duplicateIds] of duplicateMap) {
-        // Get or create group for this item
-        let group = itemIdToGroup.get(itemId);
-        if (!group) {
-            group = new Set([itemId]);
-            itemIdToGroup.set(itemId, group);
-        }
-
-        // Add all duplicates to the same group
-        for (const dupId of duplicateIds) {
-            // Check if duplicate already has a group
-            const existingGroup = itemIdToGroup.get(dupId);
-            if (existingGroup && existingGroup !== group) {
-                // Merge groups
-                for (const id of existingGroup) {
-                    group.add(id);
-                    itemIdToGroup.set(id, group);
-                }
-            } else {
-                group.add(dupId);
-                itemIdToGroup.set(dupId, group);
-            }
-        }
-    }
-
-    // Get unique groups
-    const uniqueGroups = new Set<Set<string>>();
-    for (const group of itemIdToGroup.values()) {
-        uniqueGroups.add(group);
-    }
-
-    // Create item lookup
-    const itemById = new Map<string, FlattenedItem>();
-    for (const item of items) {
-        itemById.set(item.id, item);
-    }
-
-    // Build result array with duplicates grouped together
-    const result: FlattenedItem[] = [];
-    const addedIds = new Set<string>();
-
-    // Sort groups by the normalized name of the first item in each group
-    const sortedGroups = Array.from(uniqueGroups).sort((a, b) => {
-        const aFirst = itemById.get(Array.from(a)[0]);
-        const bFirst = itemById.get(Array.from(b)[0]);
-        const aName = normalizeItemName(aFirst?.name || '');
-        const bName = normalizeItemName(bFirst?.name || '');
-        return aName.localeCompare(bName);
-    });
-
-    // Add items group by group
-    for (const group of sortedGroups) {
-        // Sort items within group by name for consistent ordering
-        const groupItems = Array.from(group)
-            .map(id => itemById.get(id))
-            .filter((item): item is FlattenedItem => item !== undefined && !addedIds.has(item.id))
-            .sort((a, b) => a.name.localeCompare(b.name));
-
-        for (const item of groupItems) {
-            result.push(item);
-            addedIds.add(item.id);
-        }
-    }
-
-    return result;
+    return filterAndGroupDuplicates(
+        items,
+        findItemDuplicates(items),
+        item => item.id,
+        // Sort groups by normalized name
+        (a, b) => {
+            const aName = normalizeItemName(a?.name || '');
+            const bName = normalizeItemName(b?.name || '');
+            return aName.localeCompare(bName);
+        },
+        // Sort within group by name
+        (a, b) => a.name.localeCompare(b.name),
+    );
 }
 
 /**

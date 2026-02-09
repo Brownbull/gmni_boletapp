@@ -9,7 +9,6 @@ import {
     Firestore,
     Unsubscribe,
     getDocs,
-    writeBatch,
     query,
     orderBy,
     limit,
@@ -21,6 +20,8 @@ import {
 import { Transaction } from '../types/transaction';
 import { computePeriods } from '../utils/periodUtils';
 import { ensureTransactionsDefaults } from '../utils/transactionUtils';
+import { transactionsPath } from '@/lib/firestorePaths';
+import { batchDelete, batchWrite } from '@/lib/firestoreBatch';
 
 /**
  * Removes undefined values from an object (Firestore doesn't accept undefined).
@@ -72,7 +73,7 @@ export async function addTransaction(
     };
 
     const docRef = await addDoc(
-        collection(db, 'artifacts', appId, 'users', userId, 'transactions'),
+        collection(db, transactionsPath(appId, userId)),
         transactionWithDefaults
     );
     // Story 14.31: Debug logging for transaction save
@@ -105,7 +106,7 @@ export async function updateTransaction(
 
     // Story 14d-v2-1.2b: Increment version for optimistic concurrency
     // Use Firestore increment() for atomic version updates
-    const docRef = doc(db, 'artifacts', appId, 'users', userId, 'transactions', transactionId);
+    const docRef = doc(db, transactionsPath(appId, userId), transactionId);
     return updateDoc(docRef, {
         ...cleanedUpdates,
         updatedAt: serverTimestamp(),
@@ -120,7 +121,7 @@ export async function deleteTransaction(
     appId: string,
     transactionId: string
 ): Promise<void> {
-    const docRef = doc(db, 'artifacts', appId, 'users', userId, 'transactions', transactionId);
+    const docRef = doc(db, transactionsPath(appId, userId), transactionId);
     return deleteDoc(docRef);
 }
 
@@ -162,7 +163,7 @@ export function subscribeToTransactions(
     appId: string,
     callback: (transactions: Transaction[]) => void
 ): Unsubscribe {
-    const collectionRef = collection(db, 'artifacts', appId, 'users', userId, 'transactions');
+    const collectionRef = collection(db, transactionsPath(appId, userId));
 
     // Story 14.25: Add orderBy + limit to reduce Firestore reads
     const q = query(
@@ -217,7 +218,7 @@ export function subscribeToRecentScans(
     appId: string,
     callback: (transactions: Transaction[]) => void
 ): Unsubscribe {
-    const collectionRef = collection(db, 'artifacts', appId, 'users', userId, 'transactions');
+    const collectionRef = collection(db, transactionsPath(appId, userId));
 
     // Order by createdAt (scan timestamp) descending, limit to 10
     const q = query(
@@ -275,21 +276,13 @@ export async function wipeAllTransactions(
     userId: string,
     appId: string
 ): Promise<void> {
-    const q = collection(db, 'artifacts', appId, 'users', userId, 'transactions');
+    const q = collection(db, transactionsPath(appId, userId));
     const snap = await getDocs(q);
 
     if (snap.empty) return;
 
-    // Story 14.26: Use writeBatch with chunking (500 ops per batch)
-    const BATCH_SIZE = 500;
-    const docs = snap.docs;
-
-    for (let i = 0; i < docs.length; i += BATCH_SIZE) {
-        const chunk = docs.slice(i, i + BATCH_SIZE);
-        const batch = writeBatch(db);
-        chunk.forEach(d => batch.delete(d.ref));
-        await batch.commit();
-    }
+    // Story 14.26: Atomic batch deletion with auto-chunking at 500 ops
+    await batchDelete(db, snap.docs.map(d => d.ref));
 }
 
 /**
@@ -344,7 +337,7 @@ export async function getTransactionPage(
     cursor?: QueryDocumentSnapshot<DocumentData> | null,
     pageSize: number = PAGINATION_PAGE_SIZE
 ): Promise<TransactionPage> {
-    const collectionRef = collection(db, 'artifacts', appId, 'users', userId, 'transactions');
+    const collectionRef = collection(db, transactionsPath(appId, userId));
 
     // Build query with orderBy and limit
     // Request one extra document to check if more pages exist
@@ -412,20 +405,8 @@ export async function deleteTransactionsBatch(
 ): Promise<void> {
     if (transactionIds.length === 0) return;
 
-    // Firestore batch limit is 500 operations
-    const BATCH_SIZE = 500;
-
-    for (let i = 0; i < transactionIds.length; i += BATCH_SIZE) {
-        const chunk = transactionIds.slice(i, i + BATCH_SIZE);
-        const batch = writeBatch(db);
-
-        for (const txId of chunk) {
-            const docRef = doc(db, 'artifacts', appId, 'users', userId, 'transactions', txId);
-            batch.delete(docRef);
-        }
-
-        await batch.commit();
-    }
+    const refs = transactionIds.map(id => doc(db, transactionsPath(appId, userId), id));
+    await batchDelete(db, refs);
 }
 
 /**
@@ -453,24 +434,13 @@ export async function updateTransactionsBatch(
     // Story 14d-v2-1.2b: Recompute periods if date changed
     const periods = updates.date ? computePeriods(updates.date) : undefined;
 
-    // Firestore batch limit is 500 operations
-    const BATCH_SIZE = 500;
-
-    for (let i = 0; i < transactionIds.length; i += BATCH_SIZE) {
-        const chunk = transactionIds.slice(i, i + BATCH_SIZE);
-        const batch = writeBatch(db);
-
-        for (const txId of chunk) {
-            const docRef = doc(db, 'artifacts', appId, 'users', userId, 'transactions', txId);
-            // Story 14d-v2-1.2b: Increment version and update timestamp
-            batch.update(docRef, {
-                ...cleanedUpdates,
-                updatedAt: serverTimestamp(),
-                version: increment(1),
-                ...(periods && { periods }),
-            });
-        }
-
-        await batch.commit();
-    }
+    const refs = transactionIds.map(id => doc(db, transactionsPath(appId, userId), id));
+    await batchWrite(db, refs, (batch, ref) => {
+        batch.update(ref, {
+            ...cleanedUpdates,
+            updatedAt: serverTimestamp(),
+            version: increment(1),
+            ...(periods && { periods }),
+        });
+    });
 }

@@ -17,6 +17,7 @@ import {
   Firestore,
 } from 'firebase/firestore';
 import { UserCredits, DEFAULT_CREDITS } from '../types/scan';
+import { creditsDocSegments } from '@/lib/firestorePaths';
 
 /**
  * Firestore document structure for credits
@@ -40,7 +41,7 @@ interface CreditsDocument {
  * Get the Firestore document reference for user credits
  */
 function getCreditsDocRef(db: Firestore, appId: string, userId: string) {
-  return doc(db, 'artifacts', appId, 'users', userId, 'credits', 'balance');
+  return doc(db, ...creditsDocSegments(appId, userId));
 }
 
 /**

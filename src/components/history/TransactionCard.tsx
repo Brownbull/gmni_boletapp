@@ -20,7 +20,7 @@ import { ChevronDown, AlertTriangle, Receipt, Package, Check } from 'lucide-reac
 import { getCategoryEmoji } from '../../utils/categoryEmoji';
 import { getCategoryColors, getCategoryColorsAuto, type ThemeName, type ModeName } from '../../config/categoryColors';
 import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';
-import { safeCSSColor } from '@/utils/validationUtils';
+import { safeCSSColor } from '@/utils/validation';
 
 // ============================================================================
 // Types

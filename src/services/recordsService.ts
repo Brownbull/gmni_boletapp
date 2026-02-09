@@ -21,8 +21,9 @@ import {
     limit,
     Firestore,
     Timestamp,
-    writeBatch,
 } from 'firebase/firestore';
+import { personalRecordsPath } from '@/lib/firestorePaths';
+import { batchDelete } from '@/lib/firestoreBatch';
 import type { Transaction } from '../types/transaction';
 import type {
     PersonalRecord,
@@ -558,14 +559,7 @@ export async function storePersonalRecord(
     appId: string,
     record: PersonalRecord
 ): Promise<string> {
-    const recordsRef = collection(
-        db,
-        'artifacts',
-        appId,
-        'users',
-        userId,
-        'personalRecords'
-    );
+    const recordsRef = collection(db, personalRecordsPath(appId, userId));
 
     const storedRecord: StoredPersonalRecord = {
         type: record.type,
@@ -595,14 +589,7 @@ export async function getRecentPersonalRecords(
     appId: string,
     maxRecords: number = 10
 ): Promise<StoredPersonalRecord[]> {
-    const recordsRef = collection(
-        db,
-        'artifacts',
-        appId,
-        'users',
-        userId,
-        'personalRecords'
-    );
+    const recordsRef = collection(db, personalRecordsPath(appId, userId));
 
     const q = query(recordsRef, orderBy('achievedAt', 'desc'), limit(maxRecords));
     const snapshot = await getDocs(q);
@@ -665,15 +652,7 @@ export async function deletePersonalRecord(
     appId: string,
     recordId: string
 ): Promise<void> {
-    const recordRef = doc(
-        db,
-        'artifacts',
-        appId,
-        'users',
-        userId,
-        'personalRecords',
-        recordId
-    );
+    const recordRef = doc(db, personalRecordsPath(appId, userId), recordId);
     await deleteDoc(recordRef);
 }
 
@@ -693,22 +672,6 @@ export async function deletePersonalRecords(
 ): Promise<void> {
     if (recordIds.length === 0) return;
 
-    const BATCH_SIZE = 500;
-    for (let i = 0; i < recordIds.length; i += BATCH_SIZE) {
-        const chunk = recordIds.slice(i, i + BATCH_SIZE);
-        const batch = writeBatch(db);
-        for (const recordId of chunk) {
-            const recordRef = doc(
-                db,
-                'artifacts',
-                appId,
-                'users',
-                userId,
-                'personalRecords',
-                recordId
-            );
-            batch.delete(recordRef);
-        }
-        await batch.commit();
-    }
+    const refs = recordIds.map(id => doc(db, personalRecordsPath(appId, userId), id));
+    await batchDelete(db, refs);
 }
