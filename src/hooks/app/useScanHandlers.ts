@@ -74,6 +74,7 @@ import { applyItemNameMappings as pureApplyItemNameMappings } from '@/features/c
 // =============================================================================
 
 import type { ToastMessage } from '@/shared/hooks';
+import { classifyError, getErrorInfo } from '@/utils/errorHandler';
 
 /**
  * Batch session interface for tracking multi-receipt scans
@@ -550,7 +551,8 @@ export function useScanHandlers(
 
         } catch (error) {
             console.error('Quick save failed:', error);
-            setToastMessage({ text: t('scanFailed'), type: 'info' });
+            const errorInfo = getErrorInfo(classifyError(error));
+            setToastMessage({ text: t(errorInfo.messageKey), type: errorInfo.toastType });
             dismissScanDialog();
         } finally {
             setIsQuickSaving(false);

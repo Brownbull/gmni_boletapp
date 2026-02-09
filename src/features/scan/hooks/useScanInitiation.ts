@@ -21,6 +21,7 @@ import { MAX_BATCH_IMAGES } from '@/components/scan';
 import { DEFAULT_CURRENCY } from '@/utils/currency';
 import { analyzeReceipt } from '@/services/gemini';
 import { getSafeDate, parseStrictNumber } from '@/utils/validation';
+import { classifyError, getErrorInfo } from '@/utils/errorHandler';
 
 // Store imports
 import { useScanStore } from '../store/useScanStore';
@@ -488,11 +489,12 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
       } else {
         setToastMessage({ text: t('rescanSuccess'), type: 'success' });
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Re-scan failed:', e);
       // Restore credit on API error only
       await addUserCredits(1);
-      setToastMessage({ text: t('scanFailedCreditRefunded'), type: 'info' });
+      const errorInfo = getErrorInfo(classifyError(e));
+      setToastMessage({ text: t('scanFailedCreditRefunded'), type: errorInfo.toastType });
     } finally {
       setIsRescanning(false);
     }

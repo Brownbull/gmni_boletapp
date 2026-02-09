@@ -52,6 +52,7 @@ import {
     WEB_PUSH_CONSTANTS,
 } from '../services/webPushService';
 import { getStorageString } from '@/utils/storage';
+import { classifyError, getErrorInfo } from '@/utils/errorHandler';
 
 // =============================================================================
 // Types
@@ -147,8 +148,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const unsubscribe = onAuthStateChanged(auth, setUser);
             return unsubscribe;
         } catch (e: unknown) {
-            const error = e as Error;
-            setInitError(error.message);
+            const info = getErrorInfo(classifyError(e));
+            setInitError(info.messageKey);
         }
     }, []);
 
@@ -168,8 +169,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             provider.setCustomParameters({ prompt: 'select_account' });
             await signInWithPopup(services.auth, provider);
         } catch (e: unknown) {
-            const error = e as Error;
-            alert('Login Failed: ' + error.message);
+            const info = getErrorInfo(classifyError(e));
+            alert(info.titleKey);
         }
     }, [services]);
 
@@ -203,11 +204,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
             try {
                 await signInWithEmailAndPassword(services.auth, email, password);
             } catch (e: unknown) {
-                const error = e as Error & { code?: string };
                 if (import.meta.env.DEV) {
+                    const error = e as Error & { code?: string };
                     console.error('[AuthContext] Test login failed:', error.code, error.message);
                 }
-                alert('Test Login Failed: ' + error.message);
+                const info = getErrorInfo(classifyError(e));
+                alert(info.titleKey);
             }
         },
         [services]

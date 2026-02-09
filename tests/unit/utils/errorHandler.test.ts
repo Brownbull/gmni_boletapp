@@ -47,11 +47,22 @@ describe('classifyError', () => {
 
     it('should return STORAGE_QUOTA for storage errors', () => {
         expect(classifyError(new Error('Quota exceeded'))).toBe('STORAGE_QUOTA');
-        expect(classifyError(new Error('Storage limit reached'))).toBe('STORAGE_QUOTA');
+        expect(classifyError(new Error('Storage quota reached'))).toBe('STORAGE_QUOTA');
+        expect(classifyError(new Error('Disk quota exceeded'))).toBe('STORAGE_QUOTA');
+        expect(classifyError(new Error('Disk full'))).toBe('STORAGE_QUOTA');
     });
 
     it('should return STORAGE_QUOTA for Firebase resource-exhausted code', () => {
         expect(classifyError({ code: 'resource-exhausted', message: '' })).toBe('STORAGE_QUOTA');
+    });
+
+    it('should NOT false-positive on ambiguous keywords', () => {
+        // 'storage' alone (e.g. "storage key updated") should NOT match
+        expect(classifyError(new Error('storage key updated'))).toBe('UNKNOWN_ERROR');
+        // 'disk' alone should NOT match
+        expect(classifyError(new Error('disk cache cleared'))).toBe('UNKNOWN_ERROR');
+        // 'fetch' alone (e.g. "fetch user preferences") should NOT match
+        expect(classifyError(new Error('fetch user preferences'))).toBe('UNKNOWN_ERROR');
     });
 
     it('should return NOT_FOUND for not-found errors', () => {

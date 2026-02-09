@@ -65,6 +65,7 @@ import { batchReviewActions, atomicBatchActions } from '@features/batch-review';
 // =============================================================================
 
 import type { ToastMessage } from '@/shared/hooks';
+import { classifyError, getErrorInfo } from '@/utils/errorHandler';
 
 /**
  * Session context for insight display
@@ -494,7 +495,8 @@ export function useTransactionHandlers(
             await wipeAllTransactions(services.db, user.uid, services.appId);
             alert(t('cleaned'));
         } catch (e) {
-            alert(t('wipeFailed') || 'Failed to wipe');
+            const info = getErrorInfo(classifyError(e));
+            alert(t(info.titleKey));
         }
     }, [services, user, t]);
 
@@ -516,7 +518,8 @@ export function useTransactionHandlers(
             setToastMessage({ text: t('exportSuccess'), type: 'success' });
         } catch (e) {
             console.error('Export failed:', e);
-            setToastMessage({ text: t('exportFailed') || 'Export failed', type: 'info' });
+            const info = getErrorInfo(classifyError(e));
+            setToastMessage({ text: t(info.messageKey), type: info.toastType });
         }
     }, [transactions, setToastMessage, t]);
 

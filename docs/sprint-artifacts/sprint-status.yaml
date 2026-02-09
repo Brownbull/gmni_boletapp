@@ -56,7 +56,7 @@ development_status:
   # Epic 14d shared groups: REMOVED (2026-02-09) — feature will be redesigned
 
   # ============================================================================
-  # Epic 15: Codebase Refactoring (~87 points, 8 phases)
+  # Epic 15: Codebase Refactoring (~90 points, 8 phases)
   # Full analysis: docs/architecture/proposals/CODEBASE-REFACTOR-ANALYSIS.md
   # Replaces previous Epic 15 (Advanced Features, deferred to Epic 19)
   # ============================================================================
@@ -84,6 +84,7 @@ development_status:
   15-2f-storage-wrapper: done           # 2 pts - Typed localStorage wrapper (22 files)
   15-2g-number-format: done             # 2 pts - formatDecimal(), formatPercent()
   15-2h-error-handling: done            # 3 pts - Error code mapping + toast service (37 files)
+  15-2i-error-handler-integration: done   # 3 pts - Integrate errorHandler into catch blocks + tighten classifyError (7 files)
 
   # Phase 3: Component Deduplication
   15-3a-confirm-dialog-shared: backlog  # 2 pts - Promote ConfirmationDialog, replace window.confirm

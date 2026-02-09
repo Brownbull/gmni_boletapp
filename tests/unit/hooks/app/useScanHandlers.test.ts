@@ -513,7 +513,8 @@ describe('useScanHandlers', () => {
                 await result.current.handleQuickSave(mockDialogData);
             });
 
-            expect(setToastMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'info' }));
+            // errorHandler classifies "Save failed" as UNKNOWN_ERROR → toastType 'error'
+            expect(setToastMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
             expect(dismissScanDialog).toHaveBeenCalled();
             expect(setIsQuickSaving).toHaveBeenLastCalledWith(false);
         });

@@ -10,6 +10,7 @@
 
 import { analyzeReceipt, ReceiptType } from './gemini';
 import { Transaction } from '../types/transaction';
+import { extractErrorMessage } from '@/utils/errorHandler';
 
 /**
  * Status of an individual image in the batch.
@@ -202,7 +203,7 @@ export async function processImagesInParallel(
         // Error handling (AC #4: Individual errors don't block others)
         state.status = 'error';
         state.progress = 0;
-        state.error = error instanceof Error ? error.message : 'Unknown error';
+        state.error = extractErrorMessage(error);
         state.completedAt = new Date();
 
         results[state.index] = {
@@ -266,7 +267,7 @@ export async function retryImage(
       id,
       index: 0,
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: extractErrorMessage(error),
     };
   }
 }

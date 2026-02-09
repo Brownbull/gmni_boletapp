@@ -89,10 +89,9 @@ export function classifyError(error: unknown): ErrorCode {
     const message = extractErrorMessage(error).toLowerCase();
     const code = extractErrorCode(error);
 
-    // Network errors
+    // Network errors — 'fetch' alone is too broad (e.g. "fetch user preferences")
     if (
         message.includes('network') ||
-        message.includes('fetch') ||
         message.includes('failed to fetch') ||
         message.includes('net::err') ||
         message.includes('econnrefused') ||
@@ -122,11 +121,12 @@ export function classifyError(error: unknown): ErrorCode {
         return 'PERMISSION_DENIED';
     }
 
-    // Storage quota
+    // Storage quota — match specific phrases, not bare 'storage'/'disk'
     if (
         message.includes('quota') ||
-        message.includes('storage') ||
-        message.includes('disk') ||
+        message.includes('storage quota') ||
+        message.includes('disk quota') ||
+        message.includes('disk full') ||
         code === 'resource-exhausted'
     ) {
         return 'STORAGE_QUOTA';

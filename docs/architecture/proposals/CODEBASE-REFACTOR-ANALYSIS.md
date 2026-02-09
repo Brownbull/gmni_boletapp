@@ -431,6 +431,17 @@ The 2 shared-groups clipboard implementations (`ShareCodeDisplay`, `InviteMember
 | **15-2g** | Create `numberFormat.ts` — `formatDecimal()`, `formatPercent()` | 22 files |
 | **15-2h** | Standardize error handling → error code mapping + toast service | 37 files |
 
+| **15-2i** | Integrate `errorHandler` into production catch blocks + tighten `classifyError` | 37 files |
+
+#### Phase 2 Code Review Dev Notes (2026-02-09)
+
+The following items were identified during Phase 2 code review and deferred to later phases:
+
+- **15-2e (comparators):** Add `NumericKeys<T>` type constraint for compile-time safety when `byNumberDesc<T>()` is used. Apply when comparators are adopted in mega-views (Phase 5).
+- **15-2g (numberFormat):** `roundTo(1.005, 2)` returns `1` not `1.01` due to IEEE 754 binary representation. Fix with multiply-before-round trick if needed — preserves current behavior, low priority. Apply during Phase 5 decomposition where heavy numeric logic is extracted.
+- **15-2h (errorHandler):** `classifyError()` string matching is too broad for `'storage'` and `'disk'` keywords (false positives possible). Tighten patterns when integrating into production flows (story 15-2i).
+- **Top-5 file migration not done:** TrendsView (10 sorts), DashboardView (11 sorts), reportUtils (14 sorts) were intentionally left unmigrated — these files are scheduled for decomposition in Phase 5 (15-5b, 15-5c) and feature extraction in Phase 4 (15-4d). Migrating now would mean touching files twice.
+
 ### Phase 3: Component Deduplication (Low Risk — 2 stories, ~5 pts)
 
 | Story | What | Lines Saved |
@@ -450,6 +461,8 @@ The 2 shared-groups clipboard implementations (`ShareCodeDisplay`, `InviteMember
 | **15-4f** | Create `features/settings/` module | ~5 files |
 | **15-4g** | Move feature-specific hooks to their feature modules + barrel exports | ~15 hooks |
 
+> **Dev Note (15-4d):** When creating `features/reports/`, migrate `reportUtils.ts` 14 inline sorts to use `comparators.ts` imports.
+
 ### Phase 5: Mega-View Decomposition (Higher Risk — 6 stories, ~18 pts)
 
 | Story | What | Lines Before → After |
@@ -460,6 +473,11 @@ The 2 shared-groups clipboard implementations (`ShareCodeDisplay`, `InviteMember
 | **15-5d** | Decompose TransactionEditorViewInternal.tsx | 2,721 → 800 + sub-files |
 | **15-5e** | Decompose IconFilterBar.tsx | 1,797 → 200 + dropdown files |
 | **15-5f** | Decompose App.tsx | 2,069 → 800 + feature roots |
+
+> **Dev Notes (15-5b, 15-5c):**
+> - Migrate inline sorts to `comparators.ts` during decomposition (TrendsView: 10 sorts, DashboardView: 11 sorts).
+> - Add `NumericKeys<T>` type constraint to comparator generics if type inference is insufficient for extracted sub-components.
+> - Consider `roundTo` IEEE 754 fix (multiply-before-round) if numeric precision surfaces during testing of extracted calculation modules.
 
 ### Phase 6: Data Access Layer (Medium Risk — 3 stories, ~8 pts)
 
@@ -478,6 +496,10 @@ The 2 shared-groups clipboard implementations (`ShareCodeDisplay`, `InviteMember
 | **15-7c** | Migrate `ThemeContext` → Zustand store | Reduce provider nesting |
 | **15-7d** | Separate client/server state in mixed hooks | ECC compliance |
 
+> **Dev Notes (15-7b):**
+> - **Toast convergence:** Two independent toast providers exist — `useToast` hook (used by views) and `AppStateContext.toastMessage` (legacy). When migrating `AppStateContext` → Zustand, unify into a single toast store. Both now support `error`/`warning` types with 2x auto-dismiss.
+> - **CSS variable alignment:** Toast error/warning colors are hardcoded hex (`#ef4444`, `#f59e0b`) while success/info use CSS vars (`--primary`, `--accent`). Define `--error` and `--warning` CSS variables in the design system and use them in `Toast.tsx` for theme consistency.
+
 ---
 
 ## Epic 15 Summary
@@ -486,13 +508,13 @@ The 2 shared-groups clipboard implementations (`ShareCodeDisplay`, `InviteMember
 |-------|---------|-------------|------|------------|
 | **Phase 0: Bugs** | 2 | 3 | Low | None |
 | **Phase 1: Foundation** | 7 | 15 | Low | None |
-| **Phase 2: Business Logic** | 8 | 16 | Low | Phase 1 |
+| **Phase 2: Business Logic** | 9 | 19 | Low | Phase 1 |
 | **Phase 3: Components** | 2 | 5 | Low | Phase 1c (generic mapping) |
 | **Phase 4: Feature Modules** | 7 | 14 | Medium | Phase 2 |
 | **Phase 5: Mega-Views** | 6 | 18 | Higher | Phase 4 |
 | **Phase 6: DAL** | 3 | 8 | Medium | Phase 1b (PATHS) |
 | **Phase 7: State Mgmt** | 4 | 8 | Medium | Phase 4 |
-| **Total** | **39** | **~87** | — | — |
+| **Total** | **40** | **~90** | — | — |
 
 ### Phase Dependencies (Execution Order)
 
@@ -589,3 +611,4 @@ ast-grep MCP server configured (`.mcp.json`). Key refactoring queries pre-built 
 |------|--------|
 | 2026-02-07 | Initial analysis created |
 | 2026-02-09 | Updated post shared-groups removal: revised all metrics, removed resolved findings (cooldown utils, dead services already deleted, clipboard, GroupFilterState), updated file counts, restructured roadmap as Epic 15 with story IDs and sprint breakdown, verified dead services with import analysis |
+| 2026-02-09 | Phase 2 code review dev notes: added dev notes to stories 15-4d, 15-5b, 15-5c, 15-7b. Created story 15-2i (errorHandler integration + classifyError tightening). Total: 40 stories, ~90 pts |

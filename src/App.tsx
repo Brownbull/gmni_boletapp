@@ -140,6 +140,7 @@ import {
     type ItemCategoryGroup,
 } from './config/categoryColors';
 import { applyCategoryMappings } from './utils/categoryMatcher';
+import { classifyError, getErrorInfo } from './utils/errorHandler';
 import { incrementMappingUsage } from './services/categoryMappingService';
 import { incrementMerchantMappingUsage } from './services/merchantMappingService';
 import { incrementItemNameMappingUsage } from './services/itemNameMappingService';
@@ -1767,7 +1768,8 @@ function App() {
                                 // Restore credit on complete batch failure
                                 console.error('Batch processing failed:', e);
                                 await addUserSuperCredits(1);
-                                setToastMessage({ text: t('scanFailedCreditRefunded'), type: 'info' });
+                                const errorInfo = getErrorInfo(classifyError(e));
+                                setToastMessage({ text: t('scanFailedCreditRefunded'), type: errorInfo.toastType });
                             }
                         }}
                         onSwitchToIndividual={() => {

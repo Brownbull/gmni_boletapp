@@ -670,7 +670,8 @@ describe('useTransactionHandlers', () => {
                 await result.current.wipeDB();
             });
 
-            expect(window.alert).toHaveBeenCalledWith('wipeFailed');
+            // errorHandler classifies "Wipe failed" as UNKNOWN_ERROR → titleKey 'errorUnknownTitle'
+            expect(window.alert).toHaveBeenCalledWith('errorUnknownTitle');
         });
     });
 
@@ -741,9 +742,10 @@ describe('useTransactionHandlers', () => {
                 await result.current.handleExportData();
             });
 
+            // errorHandler classifies "Export failed" as UNKNOWN_ERROR → error type
             expect(setToastMessage).toHaveBeenCalledWith({
-                text: 'exportFailed',
-                type: 'info',
+                text: 'errorUnknownMessage',
+                type: 'error',
             });
         });
     });
