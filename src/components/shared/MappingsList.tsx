@@ -40,7 +40,6 @@ export interface MappingsListConfig<T> {
   deleteAriaLabelKey: string;
   tagStyle: { bg: string; darkBg?: string; text: string };
   editGradient: string; // Tailwind classes: e.g., 'from-blue-500 to-blue-600'
-  editHoverGradient: string;
   editButtonColor: string; // CSS color for edit icon
 
   // Edit mode
@@ -144,7 +143,7 @@ function EditMappingModal<T>({ isOpen, item, config, onSave, onCancel, t, theme 
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && config.editMode === 'text') {
       e.preventDefault();
       handleSave();
@@ -222,7 +221,8 @@ function EditMappingModal<T>({ isOpen, item, config, onSave, onCancel, t, theme 
               type="text"
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
+              maxLength={200}
               className="w-full px-4 py-3 rounded-xl mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500"
               style={{
                 backgroundColor: isDark ? '#1e293b' : '#f8fafc',
@@ -238,7 +238,7 @@ function EditMappingModal<T>({ isOpen, item, config, onSave, onCancel, t, theme 
             <button
               onClick={handleSave}
               disabled={!editValue.trim()}
-              className={`w-full py-3 px-4 rounded-xl bg-gradient-to-r ${config.editGradient} text-white font-semibold hover:${config.editHoverGradient} transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
+              className={`w-full py-3 px-4 rounded-xl bg-gradient-to-r ${config.editGradient} text-white font-semibold hover:opacity-90 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
               data-testid="edit-save-button"
             >
               <Check size={20} aria-hidden="true" />
@@ -267,7 +267,6 @@ function EditMappingModal<T>({ isOpen, item, config, onSave, onCancel, t, theme 
 
 interface ListItemProps<T> {
   item: T;
-  index: number;
   isLast: boolean;
   isDark: boolean;
   config: MappingsListConfig<T>;
@@ -446,12 +445,11 @@ export function MappingsList<T>({
                 <span className="text-xs font-medium uppercase tracking-wider">{group.label}</span>
                 <span className="text-xs">({group.items.length})</span>
               </div>
-              <div className="space-y-0">
+              <div role="list">
                 {group.items.map((item, index) => (
                   <MappingListItem
                     key={config.getId(item) || index}
                     item={item}
-                    index={index}
                     isLast={index === group.items.length - 1}
                     isDark={isDark}
                     config={config}
@@ -500,7 +498,6 @@ export function MappingsList<T>({
           <MappingListItem
             key={config.getId(item) || index}
             item={item}
-            index={index}
             isLast={index === mappings.length - 1}
             isDark={isDark}
             config={config}

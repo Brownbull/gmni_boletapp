@@ -41,7 +41,7 @@ export const categoryMappingsConfig: MappingsListConfig<CategoryMapping> = {
   deleteAriaLabelKey: 'deleteMapping',
   tagStyle: { bg: '#dbeafe', text: '#2563eb' },
   editGradient: 'from-blue-400 to-blue-600',
-  editHoverGradient: 'from-blue-600 to-blue-700',
+
   editButtonColor: '#22c55e',
 
   editMode: 'select',
@@ -69,7 +69,7 @@ export const merchantMappingsConfig: MappingsListConfig<MerchantMapping> = {
   deleteAriaLabelKey: 'deleteMapping',
   tagStyle: { bg: '#fef3c7', darkBg: 'rgba(254, 243, 199, 0.2)', text: '#d97706' },
   editGradient: 'from-green-400 to-green-600',
-  editHoverGradient: 'from-green-600 to-green-700',
+
   editButtonColor: '#22c55e',
 
   editMode: 'text',
@@ -99,7 +99,7 @@ export const subcategoryMappingsConfig: MappingsListConfig<SubcategoryMapping> =
   deleteAriaLabelKey: 'deleteMapping',
   tagStyle: { bg: '#fce7f3', text: '#db2777' },
   editGradient: 'from-green-500 to-green-600',
-  editHoverGradient: 'from-green-600 to-green-700',
+
   editButtonColor: '#22c55e',
 
   editMode: 'text',
@@ -127,7 +127,7 @@ export const itemNameMappingsConfig: MappingsListConfig<ItemNameMapping> = {
   deleteAriaLabelKey: 'deleteMapping',
   tagStyle: { bg: '#dbeafe', darkBg: 'rgba(59, 130, 246, 0.2)', text: '#3b82f6' },
   editGradient: 'from-blue-400 to-blue-600',
-  editHoverGradient: 'from-blue-600 to-blue-700',
+
   editButtonColor: '#3b82f6',
 
   editMode: 'text',
