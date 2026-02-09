@@ -12,6 +12,7 @@
  */
 
 import React from 'react';
+import { DEFAULT_CURRENCY } from '../../utils/currency';
 
 // ============================================================================
 // Types
@@ -39,7 +40,7 @@ export interface DateGroupHeaderProps {
 export const DateGroupHeader: React.FC<DateGroupHeaderProps> = ({
   label,
   total,
-  currency = 'CLP',
+  currency = DEFAULT_CURRENCY,
   formatCurrency,
   sticky = true,
 }) => {

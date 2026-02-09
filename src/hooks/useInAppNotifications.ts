@@ -29,9 +29,9 @@ import {
     deleteDoc,
     writeBatch,
     type Firestore,
-    type Timestamp,
 } from 'firebase/firestore';
 import type { InAppNotification, InAppNotificationClient } from '../types/notification';
+import { toDateSafe } from '@/utils/timestamp';
 
 // ============================================================================
 // Types
@@ -114,7 +114,7 @@ export function useInAppNotifications(
                     return {
                         ...data,
                         id: doc.id,
-                        createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
+                        createdAt: toDateSafe(data.createdAt) || new Date(),
                     };
                 });
                 setNotifications(notifs);

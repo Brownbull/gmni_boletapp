@@ -17,6 +17,8 @@ import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 import { devtools, persist, createJSONStorage } from 'zustand/middleware';
 import type { Theme, ColorTheme, FontColorMode, FontSize, Language, Currency } from '@/types/settings';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
+import { getStorageString, setStorageString } from '@/utils/storage';
 
 // =============================================================================
 // Types
@@ -55,7 +57,7 @@ export const defaultSettingsState: SettingsState = {
   fontSize: 'small',
   // Story 14e-35: Default locale settings (target market: Chile)
   lang: 'es',
-  currency: 'CLP',
+  currency: DEFAULT_CURRENCY as Currency,
   dateFormat: 'LatAm',
 };
 
@@ -78,15 +80,10 @@ export const defaultSettingsState: SettingsState = {
  * Note: 'theme' (light/dark) is not persisted in legacy format, uses default.
  */
 const migrateFromLegacyKeys = (): Partial<SettingsState> => {
-  // Guard for SSR/test environments
-  if (typeof localStorage === 'undefined') {
-    return {};
-  }
-
   const result: Partial<SettingsState> = {};
 
   // Migrate colorTheme (handles ghibli->normal, default->professional)
-  const savedColorTheme = localStorage.getItem('colorTheme');
+  const savedColorTheme = getStorageString('colorTheme', '');
   if (savedColorTheme === 'ghibli') {
     result.colorTheme = 'normal';
   } else if (savedColorTheme === 'default') {
@@ -100,32 +97,29 @@ const migrateFromLegacyKeys = (): Partial<SettingsState> => {
   }
 
   // Migrate fontColorMode
-  const savedFontColorMode = localStorage.getItem('fontColorMode');
+  const savedFontColorMode = getStorageString('fontColorMode', '');
   if (savedFontColorMode === 'colorful' || savedFontColorMode === 'plain') {
     result.fontColorMode = savedFontColorMode;
   }
 
   // Migrate fontSize
-  const savedFontSize = localStorage.getItem('fontSize');
+  const savedFontSize = getStorageString('fontSize', '');
   if (savedFontSize === 'small' || savedFontSize === 'normal') {
     result.fontSize = savedFontSize;
   }
 
   // Story 14e-35: Migrate locale settings from legacy keys
-  // lang (Language)
-  const savedLang = localStorage.getItem('lang');
+  const savedLang = getStorageString('lang', '');
   if (savedLang === 'es' || savedLang === 'en') {
     result.lang = savedLang;
   }
 
-  // currency (Currency)
-  const savedCurrency = localStorage.getItem('currency');
+  const savedCurrency = getStorageString('currency', '');
   if (savedCurrency === 'CLP' || savedCurrency === 'USD' || savedCurrency === 'EUR') {
     result.currency = savedCurrency;
   }
 
-  // dateFormat
-  const savedDateFormat = localStorage.getItem('dateFormat');
+  const savedDateFormat = getStorageString('dateFormat', '');
   if (savedDateFormat === 'LatAm' || savedDateFormat === 'US') {
     result.dateFormat = savedDateFormat;
   }
@@ -148,38 +142,38 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
         // Note: We also write to plain localStorage keys for backward compatibility
         // with code that reads directly (e.g., categoryColors.ts getFontColorMode())
         setTheme: (theme) => {
-          try { localStorage.setItem('theme', theme); } catch { /* SSR/test safety */ }
+          setStorageString('theme', theme);
           set({ theme }, false, 'settings/setTheme');
         },
 
         setColorTheme: (colorTheme) => {
-          try { localStorage.setItem('colorTheme', colorTheme); } catch { /* SSR/test safety */ }
+          setStorageString('colorTheme', colorTheme);
           set({ colorTheme }, false, 'settings/setColorTheme');
         },
 
         setFontColorMode: (fontColorMode) => {
-          try { localStorage.setItem('fontColorMode', fontColorMode); } catch { /* SSR/test safety */ }
+          setStorageString('fontColorMode', fontColorMode);
           set({ fontColorMode }, false, 'settings/setFontColorMode');
         },
 
         setFontSize: (fontSize) => {
-          try { localStorage.setItem('fontSize', fontSize); } catch { /* SSR/test safety */ }
+          setStorageString('fontSize', fontSize);
           set({ fontSize }, false, 'settings/setFontSize');
         },
 
         // Story 14e-35: Locale setting actions
         setLang: (lang) => {
-          try { localStorage.setItem('lang', lang); } catch { /* SSR/test safety */ }
+          setStorageString('lang', lang);
           set({ lang }, false, 'settings/setLang');
         },
 
         setCurrency: (currency) => {
-          try { localStorage.setItem('currency', currency); } catch { /* SSR/test safety */ }
+          setStorageString('currency', currency);
           set({ currency }, false, 'settings/setCurrency');
         },
 
         setDateFormat: (dateFormat) => {
-          try { localStorage.setItem('dateFormat', dateFormat); } catch { /* SSR/test safety */ }
+          setStorageString('dateFormat', dateFormat);
           set({ dateFormat }, false, 'settings/setDateFormat');
         },
       }),

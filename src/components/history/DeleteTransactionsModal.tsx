@@ -17,6 +17,7 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Trash2 } from 'lucide-react';
+import { DEFAULT_CURRENCY } from '../../utils/currency';
 
 // ============================================================================
 // Types
@@ -64,7 +65,7 @@ export const DeleteTransactionsModal: React.FC<DeleteTransactionsModalProps> = (
     formatCurrency,
     t,
     lang = 'es',
-    currency = 'CLP',
+    currency = DEFAULT_CURRENCY,
 }) => {
     const [isDeleting, setIsDeleting] = React.useState(false);
     const modalRef = useRef<HTMLDivElement>(null);

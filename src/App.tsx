@@ -129,7 +129,7 @@ import {
     clearPersistedScanState,
     clearLegacyBatchStorage,
 } from './services/pendingScanStorage';
-import { formatCurrency } from './utils/currency';
+import { formatCurrency, DEFAULT_CURRENCY } from './utils/currency';
 import { formatDate } from './utils/date';
 import { getSafeDate } from './utils/validation';
 import { TRANSLATIONS } from './utils/translations';
@@ -346,7 +346,7 @@ function App() {
     }, [setScanContextStoreType]);
 
     // scanCurrency wrapper
-    const scanCurrency = (scanState.currency || 'CLP') as SupportedCurrency;
+    const scanCurrency = (scanState.currency || DEFAULT_CURRENCY) as SupportedCurrency;
     const setScanCurrency = useCallback((currency: SupportedCurrency) => {
         setScanContextCurrency(currency);
     }, [setScanContextCurrency]);
@@ -484,7 +484,7 @@ function App() {
             items: [],
             country: defaultCountry,
             city: defaultCity,
-            currency: userPreferences.defaultCurrency || 'CLP',
+            currency: userPreferences.defaultCurrency || DEFAULT_CURRENCY,
         };
 
         return baseTransaction;
@@ -1018,7 +1018,7 @@ function App() {
             user: {
                 userId: user?.uid || '',
                 creditsRemaining: userCredits.remaining,
-                defaultCurrency: userPreferences.defaultCurrency || 'CLP',
+                defaultCurrency: userPreferences.defaultCurrency || DEFAULT_CURRENCY,
                 transactions,
             },
             mapping: {
@@ -1200,7 +1200,7 @@ function App() {
         currentTransaction,
         createDefaultTransaction,
         // User preferences
-        defaultCurrency: userPreferences.defaultCurrency || 'CLP',
+        defaultCurrency: userPreferences.defaultCurrency || DEFAULT_CURRENCY,
         userCredits,
         lang: lang as 'en' | 'es',
         // Actions
@@ -1549,7 +1549,7 @@ function App() {
                     formatCurrency,
                     userDefaultCountry: defaultCountry,
                     // Story 14e-23a: Currency/Total mismatch dialog props (migrated from AppOverlays)
-                    userCurrency: userPreferences.defaultCurrency || 'CLP',
+                    userCurrency: userPreferences.defaultCurrency || DEFAULT_CURRENCY,
                     onCurrencyUseDetected: handleCurrencyUseDetected,
                     onCurrencyUseDefault: handleCurrencyUseDefault,
                     onCurrencyMismatchCancel: handleCurrencyMismatchCancel,

@@ -55,6 +55,7 @@ import {
 } from '../../services/insightEngineService';
 import { parseStrictNumber, getSafeDate } from '../../utils/validation';
 import { downloadBasicData } from '../../utils/csvExport';
+import { DEFAULT_CURRENCY } from '../../utils/currency';
 // Story 14e-16: Import batch review actions to sync removal when saving from edit mode
 // Story 14e-34b: Import atomic batch actions for race condition prevention
 import { batchReviewActions, atomicBatchActions } from '@features/batch-review';
@@ -264,7 +265,7 @@ export function useTransactionHandlers(
             items: [],
             country: userPreferences.defaultCountry || '',
             city: userPreferences.defaultCity || '',
-            currency: userPreferences.defaultCurrency || 'CLP',
+            currency: userPreferences.defaultCurrency || DEFAULT_CURRENCY,
         };
 
         return baseTransaction;

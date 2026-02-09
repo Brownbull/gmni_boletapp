@@ -18,6 +18,7 @@ import {
   getVisualType,
   getVisualConfig,
 } from '../../utils/insightTypeConfig';
+import { toDateSafe, type TimestampLike } from '@/utils/timestamp';
 
 interface InsightDetailModalProps {
   insight: InsightRecord;
@@ -58,22 +59,17 @@ export const InsightDetailModal: React.FC<InsightDetailModalProps> = ({
   const visualConfig = getVisualConfig(visualType);
 
   // Format date
-  const formatDate = (timestamp: { toDate?: () => Date }) => {
-    try {
-      if (!timestamp?.toDate) return '';
-      const date = timestamp.toDate();
-      if (!(date instanceof Date) || isNaN(date.getTime())) return '';
-      return date.toLocaleDateString(undefined, {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return '';
-    }
+  const formatDate = (timestamp: unknown) => {
+    const date = toDateSafe(timestamp as TimestampLike);
+    if (!date) return '';
+    return date.toLocaleDateString(undefined, {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   // Fallback for old records - generate a meaningful message based on insight type

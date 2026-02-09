@@ -16,6 +16,7 @@ import React from 'react';
 import { ChevronRight, Check } from 'lucide-react';
 import { AirlockRecord } from '../../types/airlock';
 import { Timestamp } from 'firebase/firestore';
+import { toDateSafe } from '@/utils/timestamp';
 
 interface AirlockHistoryCardProps {
   /** The airlock to display */
@@ -39,17 +40,10 @@ interface AirlockHistoryCardProps {
  * Shows relative time for recent dates, full date for older ones.
  */
 function formatDate(timestamp: Timestamp | Date | undefined, t: (key: string) => string): string {
-  if (!timestamp) return '';
+  const date = toDateSafe(timestamp);
+  if (!date) return '';
 
   try {
-    const date = timestamp instanceof Date
-      ? timestamp
-      : (timestamp as Timestamp).toDate?.() || new Date();
-
-    if (!(date instanceof Date) || isNaN(date.getTime())) {
-      return '';
-    }
-
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));

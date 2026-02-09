@@ -22,6 +22,7 @@ import {
   SupportedFontFamily,
   ForeignLocationDisplayFormat,
 } from '../services/userPreferencesService';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
 
 interface UseUserPreferencesResult {
   /** Current user preferences */
@@ -53,7 +54,7 @@ interface FirebaseServices {
 
 /** Default preferences used when no preferences exist */
 const DEFAULT_PREFERENCES: UserPreferences = {
-  defaultCurrency: 'CLP',
+  defaultCurrency: DEFAULT_CURRENCY as SupportedCurrency,
   defaultCountry: '',
   defaultCity: '',
   displayName: '',

@@ -18,7 +18,8 @@ import {
     increment,
 } from 'firebase/firestore';
 import { Transaction } from '../types/transaction';
-import { computePeriods } from '../utils/periodUtils';
+import { toMillis } from '@/utils/timestamp';
+import { computePeriods } from '../utils/date';
 import { ensureTransactionsDefaults } from '../utils/transactionUtils';
 import { transactionsPath } from '@/lib/firestorePaths';
 import { batchDelete, batchWrite } from '@/lib/firestoreBatch';
@@ -239,20 +240,9 @@ export function subscribeToRecentScans(
         const activeTxs = normalizedTxs;
 
         // Sort client-side as backup (Firestore should already sort, but ensure order)
-        // createdAt can be a Firestore Timestamp (with .seconds) or a Date string
-        const sortedTxs = [...activeTxs].sort((a, b) => {
-            const getTime = (tx: Transaction): number => {
-                const ca = tx.createdAt;
-                if (!ca) return 0;
-                // Firestore Timestamp has seconds/nanoseconds
-                if (typeof ca === 'object' && 'seconds' in ca) {
-                    return ca.seconds * 1000 + (ca.nanoseconds || 0) / 1000000;
-                }
-                // Fallback to Date parsing
-                return new Date(ca).getTime();
-            };
-            return getTime(b) - getTime(a); // Descending order
-        });
+        const sortedTxs = [...activeTxs].sort((a, b) =>
+            toMillis(b.createdAt) - toMillis(a.createdAt)
+        );
 
         callback(sortedTxs);
     }, (error) => {

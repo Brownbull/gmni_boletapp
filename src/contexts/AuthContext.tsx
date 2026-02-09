@@ -51,6 +51,7 @@ import {
     disableWebPushNotifications,
     WEB_PUSH_CONSTANTS,
 } from '../services/webPushService';
+import { getStorageString } from '@/utils/storage';
 
 // =============================================================================
 // Types
@@ -238,7 +239,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // If we don't delete the subscription, notifications will be sent to the wrong user
         try {
             // Check if user had notifications enabled
-            const wasEnabled = localStorage.getItem(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_KEY) === 'true';
+            const wasEnabled = getStorageString(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_KEY, 'false') === 'true';
 
             if (wasEnabled) {
                 // Disable web push notifications (unsubscribes and deletes from server)

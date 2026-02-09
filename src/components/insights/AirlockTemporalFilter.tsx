@@ -10,7 +10,8 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Calendar, ChevronLeft, ChevronDown, X } from 'lucide-react';
 import { AirlockRecord } from '../../types/airlock';
-import { getISOWeekNumber } from '../../utils/dateHelpers';
+import { getISOWeekNumber } from '../../utils/date';
+import { toDateSafe } from '@/utils/timestamp';
 
 // ============================================================================
 // Types
@@ -43,14 +44,8 @@ type NavigationLevel = 'root' | 'year' | 'quarter' | 'month';
 function getAvailableYears(airlocks: AirlockRecord[]): number[] {
   const years = new Set<number>();
   airlocks.forEach((airlock) => {
-    try {
-      const date = airlock.createdAt?.toDate?.();
-      if (date instanceof Date && !isNaN(date.getTime())) {
-        years.add(date.getFullYear());
-      }
-    } catch {
-      // Skip corrupted timestamps
-    }
+    const date = toDateSafe(airlock.createdAt);
+    if (date) years.add(date.getFullYear());
   });
   return Array.from(years).sort((a, b) => b - a); // Most recent first
 }
@@ -58,13 +53,9 @@ function getAvailableYears(airlocks: AirlockRecord[]): number[] {
 function getQuartersInYear(airlocks: AirlockRecord[], year: number): number[] {
   const quarters = new Set<number>();
   airlocks.forEach((airlock) => {
-    try {
-      const date = airlock.createdAt?.toDate?.();
-      if (date instanceof Date && !isNaN(date.getTime()) && date.getFullYear() === year) {
-        quarters.add(Math.floor(date.getMonth() / 3) + 1);
-      }
-    } catch {
-      // Skip corrupted timestamps
+    const date = toDateSafe(airlock.createdAt);
+    if (date && date.getFullYear() === year) {
+      quarters.add(Math.floor(date.getMonth() / 3) + 1);
     }
   });
   return Array.from(quarters).sort((a, b) => b - a);
@@ -74,18 +65,12 @@ function getMonthsInQuarter(airlocks: AirlockRecord[], year: number, quarter: nu
   const months = new Set<number>();
   const quarterStartMonth = (quarter - 1) * 3;
   airlocks.forEach((airlock) => {
-    try {
-      const date = airlock.createdAt?.toDate?.();
-      if (date instanceof Date && !isNaN(date.getTime())) {
-        if (date.getFullYear() === year) {
-          const month = date.getMonth();
-          if (month >= quarterStartMonth && month < quarterStartMonth + 3) {
-            months.add(month);
-          }
-        }
+    const date = toDateSafe(airlock.createdAt);
+    if (date && date.getFullYear() === year) {
+      const month = date.getMonth();
+      if (month >= quarterStartMonth && month < quarterStartMonth + 3) {
+        months.add(month);
       }
-    } catch {
-      // Skip corrupted timestamps
     }
   });
   return Array.from(months).sort((a, b) => b - a);
@@ -94,15 +79,9 @@ function getMonthsInQuarter(airlocks: AirlockRecord[], year: number, quarter: nu
 function getWeeksInMonth(airlocks: AirlockRecord[], year: number, month: number): number[] {
   const weeks = new Set<number>();
   airlocks.forEach((airlock) => {
-    try {
-      const date = airlock.createdAt?.toDate?.();
-      if (date instanceof Date && !isNaN(date.getTime())) {
-        if (date.getFullYear() === year && date.getMonth() === month) {
-          weeks.add(getISOWeekNumber(date));
-        }
-      }
-    } catch {
-      // Skip corrupted timestamps
+    const date = toDateSafe(airlock.createdAt);
+    if (date && date.getFullYear() === year && date.getMonth() === month) {
+      weeks.add(getISOWeekNumber(date));
     }
   });
   return Array.from(weeks).sort((a, b) => b - a);
@@ -128,8 +107,8 @@ export function filterAirlocksByTemporal(
 
   return airlocks.filter((airlock) => {
     try {
-      const date = airlock.createdAt?.toDate?.();
-      if (!(date instanceof Date) || isNaN(date.getTime())) return false;
+      const date = toDateSafe(airlock.createdAt);
+      if (!date) return false;
 
       const year = date.getFullYear();
       const month = date.getMonth();

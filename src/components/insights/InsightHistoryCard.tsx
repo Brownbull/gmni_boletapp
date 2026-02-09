@@ -26,6 +26,7 @@ import {
   getVisualType,
   getVisualConfig,
 } from '../../utils/insightTypeConfig';
+import { toDateSafe, type TimestampLike } from '@/utils/timestamp';
 
 interface InsightHistoryCardProps {
   insight: InsightRecord;
@@ -58,27 +59,16 @@ export const InsightHistoryCard: React.FC<InsightHistoryCardProps> = ({
   const IconComponent = getIconByName(insight.icon || config.icon);
 
   // Format date - show year only if different from current year
-  const formatDate = (timestamp: { toDate?: () => Date }) => {
-    try {
-      // Defensive: handle corrupted Timestamp
-      if (!timestamp?.toDate) {
-        return '';
-      }
-      const date = timestamp.toDate();
-      if (!(date instanceof Date) || isNaN(date.getTime())) {
-        return '';
-      }
-      const currentYear = new Date().getFullYear();
-      const options: Intl.DateTimeFormatOptions = {
-        month: 'short',
-        day: 'numeric',
-        ...(date.getFullYear() !== currentYear && { year: 'numeric' }),
-      };
-      return date.toLocaleDateString(undefined, options);
-    } catch {
-      // Corrupted Timestamp - return empty string
-      return '';
-    }
+  const formatDate = (timestamp: unknown) => {
+    const date = toDateSafe(timestamp as TimestampLike);
+    if (!date) return '';
+    const currentYear = new Date().getFullYear();
+    const options: Intl.DateTimeFormatOptions = {
+      month: 'short',
+      day: 'numeric',
+      ...(date.getFullYear() !== currentYear && { year: 'numeric' }),
+    };
+    return date.toLocaleDateString(undefined, options);
   };
 
   const formattedDate = formatDate(insight.shownAt);

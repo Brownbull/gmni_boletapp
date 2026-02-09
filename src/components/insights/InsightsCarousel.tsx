@@ -18,6 +18,7 @@
  */
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { toMillis } from '@/utils/timestamp';
 import { MoveRight } from 'lucide-react';
 import { InsightRecord, InsightCategory } from '../../types/insight';
 import { InsightCardLarge } from './InsightCardLarge';
@@ -53,9 +54,7 @@ export function selectHighlightedInsights(insights: InsightRecord[]): InsightRec
     }
 
     // Same priority, sort by date descending (most recent first)
-    const aTime = a.shownAt?.seconds ?? 0;
-    const bTime = b.shownAt?.seconds ?? 0;
-    return bTime - aTime;
+    return toMillis(b.shownAt) - toMillis(a.shownAt);
   });
 
   return sorted.slice(0, 3);

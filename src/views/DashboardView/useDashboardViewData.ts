@@ -38,6 +38,7 @@ import { formatCurrency as formatCurrencyUtil } from '@/utils/currency';
 import { formatDate as formatDateUtil } from '@/utils/date';
 import { TRANSLATIONS } from '@/utils/translations';
 import type { Transaction } from '@/types/transaction';
+import { toDateSafe } from '@/utils/timestamp';
 import type { Language, Theme, FontColorMode } from '@/types/settings';
 import type { ThemeName } from '@/config/categoryColors';
 
@@ -126,15 +127,8 @@ function createGetSafeDate(): (val: any) => string {
     return (val: any): string => {
         if (!val) return '';
         if (typeof val === 'string') return val;
-        if (val.toDate) {
-            // Firestore Timestamp
-            const date = val.toDate();
-            return date.toISOString().split('T')[0];
-        }
-        if (val instanceof Date) {
-            return val.toISOString().split('T')[0];
-        }
-        return String(val);
+        const date = toDateSafe(val);
+        return date ? date.toISOString().split('T')[0] : String(val);
     };
 }
 

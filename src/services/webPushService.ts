@@ -12,6 +12,7 @@
  */
 
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getStorageString, setStorageString, removeStorageItem } from '@/utils/storage';
 
 /**
  * VAPID public key for Web Push subscriptions
@@ -240,12 +241,8 @@ export async function enableWebPushNotifications(): Promise<{
   }
 
   // Store in localStorage
-  try {
-    localStorage.setItem(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_KEY, 'true');
-    localStorage.setItem(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_ENDPOINT_KEY, subscription.endpoint);
-  } catch {
-    // Ignore localStorage errors
-  }
+  setStorageString(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_KEY, 'true');
+  setStorageString(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_ENDPOINT_KEY, subscription.endpoint);
 
   return { success: true };
 }
@@ -267,12 +264,8 @@ export async function disableWebPushNotifications(): Promise<{
   await deleteSubscriptionFromServer();
 
   // Clear localStorage
-  try {
-    localStorage.removeItem(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_KEY);
-    localStorage.removeItem(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_ENDPOINT_KEY);
-  } catch {
-    // Ignore localStorage errors
-  }
+  removeStorageItem(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_KEY);
+  removeStorageItem(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_ENDPOINT_KEY);
 
   return { success: true };
 }
@@ -281,9 +274,5 @@ export async function disableWebPushNotifications(): Promise<{
  * Check if web push is enabled in localStorage
  */
 export function isWebPushEnabledLocal(): boolean {
-  try {
-    return localStorage.getItem(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_KEY) === 'true';
-  } catch {
-    return false;
-  }
+  return getStorageString(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_KEY, 'false') === 'true';
 }

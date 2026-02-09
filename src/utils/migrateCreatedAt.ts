@@ -25,30 +25,13 @@ import {
     Timestamp,
     doc,
 } from 'firebase/firestore';
+import { isFirestoreTimestamp } from '@/utils/timestamp';
 
 interface TransactionDoc {
     id: string;
     date?: string;
     createdAt?: any;
     merchant?: string;
-}
-
-/**
- * Check if a value is a valid Firestore Timestamp
- */
-function isValidTimestamp(value: any): boolean {
-    if (!value) return false;
-    // Firestore Timestamp has seconds and nanoseconds as numbers
-    if (typeof value === 'object' &&
-        typeof value.seconds === 'number' &&
-        typeof value.nanoseconds === 'number') {
-        return true;
-    }
-    // Also check for toDate method (Timestamp instance)
-    if (value && typeof value.toDate === 'function') {
-        return true;
-    }
-    return false;
 }
 
 /**
@@ -110,7 +93,7 @@ export async function migrateCreatedAt(
         const { createdAt, date, merchant } = data;
 
         // Check if createdAt needs fixing
-        if (isValidTimestamp(createdAt)) {
+        if (isFirestoreTimestamp(createdAt)) {
             result.skipped++;
             continue;
         }

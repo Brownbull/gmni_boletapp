@@ -52,7 +52,12 @@ import { CelebrationView } from '../components/insights/CelebrationView';
 import { InsightRecord } from '../types/insight';
 import { useAuth } from '../hooks/useAuth';
 import { useInsightProfile } from '../hooks/useInsightProfile';
-import { getISOWeekNumber, LONG_PRESS_DELAY_MS } from '../utils/dateHelpers';
+import { getISOWeekNumber } from '../utils/date';
+import { getStorageString, setStorageString } from '@/utils/storage';
+import { toDateSafe } from '@/utils/timestamp';
+
+/** Long press delay for batch selection activation. */
+const LONG_PRESS_DELAY_MS = 500;
 import { ProfileDropdown, ProfileAvatar, getInitials } from '../components/ProfileDropdown';
 // Story 14e-25c.2: Navigation via Zustand store
 import { useNavigation } from '../shared/stores/useNavigationStore';
@@ -96,27 +101,17 @@ function groupByWeek(insights: InsightRecord[], t: (key: string) => string): Ins
   const earlier: InsightRecord[] = [];
 
   insights.forEach((insight) => {
-    try {
-      // Defensive: handle corrupted Timestamp
-      if (!insight.shownAt?.toDate) {
-        earlier.push(insight);
-        return;
-      }
-      const date = insight.shownAt.toDate();
-      if (!(date instanceof Date) || isNaN(date.getTime())) {
-        earlier.push(insight);
-        return;
-      }
+    const date = toDateSafe(insight.shownAt);
+    if (!date) {
+      earlier.push(insight);
+      return;
+    }
 
-      if (date >= oneWeekAgo) {
-        thisWeek.push(insight);
-      } else if (date >= twoWeeksAgo) {
-        lastWeek.push(insight);
-      } else {
-        earlier.push(insight);
-      }
-    } catch {
-      // Corrupted Timestamp - put in earlier bucket
+    if (date >= oneWeekAgo) {
+      thisWeek.push(insight);
+    } else if (date >= twoWeeksAgo) {
+      lastWeek.push(insight);
+    } else {
       earlier.push(insight);
     }
   });
@@ -146,8 +141,8 @@ function filterInsightsByTemporal(
 
   return insights.filter((insight) => {
     try {
-      const date = insight.shownAt?.toDate?.();
-      if (!(date instanceof Date) || isNaN(date.getTime())) return false;
+      const date = toDateSafe(insight.shownAt);
+      if (!date) return false;
 
       const year = date.getFullYear();
       const month = date.getMonth();
@@ -185,31 +180,19 @@ function getInsightKey(insight: InsightRecord): InsightKey {
  * Load saved view preference from localStorage
  */
 function loadSavedView(): InsightsViewMode {
-  try {
-    const saved = localStorage.getItem(INSIGHTS_VIEW_KEY);
-    // Valid views: list, airlock, celebration (carousel was merged into list)
-    if (saved && ['list', 'airlock', 'celebration'].includes(saved)) {
-      return saved as InsightsViewMode;
-    }
-    // If user had 'carousel' saved, redirect to 'list' (now includes highlighted section)
-    if (saved === 'carousel') {
-      return 'list';
-    }
-  } catch {
-    // localStorage unavailable
+  const saved = getStorageString(INSIGHTS_VIEW_KEY, 'list');
+  if (['list', 'airlock', 'celebration'].includes(saved)) {
+    return saved as InsightsViewMode;
+  }
+  // If user had 'carousel' saved, redirect to 'list' (now includes highlighted section)
+  if (saved === 'carousel') {
+    return 'list';
   }
   return 'list';
 }
 
-/**
- * Save view preference to localStorage
- */
 function saveViewPreference(view: InsightsViewMode): void {
-  try {
-    localStorage.setItem(INSIGHTS_VIEW_KEY, view);
-  } catch {
-    // localStorage unavailable
-  }
+  setStorageString(INSIGHTS_VIEW_KEY, view);
 }
 
 export const InsightsView: React.FC<InsightsViewProps> = ({

@@ -7,7 +7,7 @@
  */
 
 import type { Transaction, TransactionPeriods } from '../types/transaction';
-import { computePeriods } from './periodUtils';
+import { computePeriods } from './date';
 
 /**
  * Ensure a transaction has all Epic 14d-v2 fields with sensible defaults.

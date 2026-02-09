@@ -12,6 +12,7 @@
 import React, { memo } from 'react';
 // Story 14.21: Use unified category colors
 import { getCategoryBackgroundAuto } from '../../config/categoryColors';
+import { formatCurrency, DEFAULT_CURRENCY } from '@/utils/currency';
 
 // ============================================================================
 // Types
@@ -63,24 +64,6 @@ export interface DrillDownCardProps {
 // Helper Functions
 // ============================================================================
 
-/**
- * Formats a currency value.
- * Note: CLP (Chilean Peso) has no decimal places - values are stored as-is.
- * Do NOT divide by 100 - the value is already in the main unit.
- */
-function formatCurrency(value: number, locale: string = 'en', currency: string = 'CLP'): string {
-  try {
-    return new Intl.NumberFormat(locale === 'es' ? 'es-CL' : 'en-US', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  } catch {
-    // Fallback if currency code is invalid
-    return `$${value.toLocaleString()}`;
-  }
-}
 
 /**
  * Formats a percentage value.
@@ -127,7 +110,7 @@ export const DrillDownCard = memo(function DrillDownCard({
   emptyMessage,
   theme = 'light',
   locale = 'en',
-  currency = 'CLP',
+  currency = DEFAULT_CURRENCY,
   isClickable = true,
   transactionCount,
   onBadgeClick,
@@ -227,8 +210,8 @@ export const DrillDownCard = memo(function DrillDownCard({
         isEmpty
           ? `${label}: ${emptyMessage || 'No transactions'}`
           : canClick
-            ? `View ${label}: ${formatCurrency(value, locale, currency)}${percentage !== undefined ? ` (${formatPercentage(percentage)})` : ''}`
-            : `${label}: ${formatCurrency(value, locale, currency)}${percentage !== undefined ? ` (${formatPercentage(percentage)})` : ''} - No further breakdown available`
+            ? `View ${label}: ${formatCurrency(value, currency)}${percentage !== undefined ? ` (${formatPercentage(percentage)})` : ''}`
+            : `${label}: ${formatCurrency(value, currency)}${percentage !== undefined ? ` (${formatPercentage(percentage)})` : ''} - No further breakdown available`
       }
       className={buttonClasses}
       style={{ borderColor }}
@@ -303,7 +286,7 @@ export const DrillDownCard = memo(function DrillDownCard({
         ) : (
           <>
             <div className={valueClasses}>
-              {formatCurrency(value, locale, currency)}
+              {formatCurrency(value, currency)}
             </div>
             {percentage !== undefined && (
               <div className={percentageClasses}>

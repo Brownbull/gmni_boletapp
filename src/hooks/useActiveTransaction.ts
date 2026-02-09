@@ -31,6 +31,7 @@ import type {
   ActiveTransaction,
   CanStartEditingResult,
 } from '../types/scan';
+import { DEFAULT_CURRENCY } from '../utils/currency';
 import {
   createIdleActiveTransaction,
   createNewActiveTransaction,
@@ -149,7 +150,7 @@ export function useActiveTransaction(props: UseActiveTransactionProps): UseActiv
     deductCredits,
     addCredits,
     creditsRemaining,
-    defaultCurrency = 'CLP',
+    defaultCurrency = DEFAULT_CURRENCY,
     defaultCountry = '',
     defaultCity = '',
   } = props;

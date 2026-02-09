@@ -8,7 +8,7 @@
  */
 
 import React from 'react';
-import { formatCurrency } from '../../utils/currency';
+import { formatCurrency, DEFAULT_CURRENCY } from '../../utils/currency';
 
 // ============================================================================
 // Types
@@ -41,7 +41,7 @@ export interface TotalDisplayProps {
 export function TotalDisplay({
   amount,
   period,
-  currency = 'CLP',
+  currency = DEFAULT_CURRENCY,
   theme = 'light',
 }: TotalDisplayProps): React.ReactElement {
   const isDark = theme === 'dark';

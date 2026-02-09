@@ -5,6 +5,8 @@
  * Contains data parsing helpers and security validation functions.
  */
 
+import { toDateSafe } from '@/utils/timestamp';
+
 // =============================================================================
 // Data Parsing
 // =============================================================================
@@ -17,15 +19,9 @@ export const parseStrictNumber = (val: any): number => {
 
 export const getSafeDate = (val: any): string => {
     const today = new Date().toISOString().split('T')[0];
-    if (val && typeof val.toDate === 'function') {
-        try {
-            return val.toDate().toISOString().split('T')[0];
-        } catch (e) {
-            return today;
-        }
-    }
     if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
-    return today;
+    const date = toDateSafe(val);
+    return date ? date.toISOString().split('T')[0] : today;
 };
 
 // =============================================================================

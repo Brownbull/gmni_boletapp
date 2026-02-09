@@ -67,6 +67,7 @@ import {
     type ItemCategoryGroup,
 } from '../config/categoryColors';
 import { formatCurrency } from '../utils/currency';
+import { getStorageString, setStorageString, getStorageJSON, setStorageJSON } from '@/utils/storage';
 import { getCategoryEmoji } from '../utils/categoryEmoji';
 import { calculateTreemapLayout, categoryDataToTreemapItems } from '../utils/treemapLayout';
 import {
@@ -2817,15 +2818,9 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
     // Time period selection (AC #2)
     // Story 14.14b Session 7: Persist time period to localStorage so it's retained on back navigation
     const [timePeriod, setTimePeriodLocal] = useState<TimePeriod>(() => {
-        try {
-            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.getItem) {
-                const saved = localStorage.getItem('boletapp-analytics-timeperiod');
-                if (saved && ['year', 'quarter', 'month', 'week'].includes(saved)) {
-                    return saved as TimePeriod;
-                }
-            }
-        } catch {
-            // localStorage not available
+        const saved = getStorageString('boletapp-analytics-timeperiod', 'month');
+        if (['year', 'quarter', 'month', 'week'].includes(saved)) {
+            return saved as TimePeriod;
         }
         return 'month';
     });
@@ -2834,28 +2829,19 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
     // Story 14.14b Session 7: Persist current period to localStorage so it's retained on back navigation
     const now = new Date();
     const [currentPeriod, setCurrentPeriodLocal] = useState<CurrentPeriod>(() => {
-        try {
-            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.getItem) {
-                const saved = localStorage.getItem('boletapp-analytics-currentperiod');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    // Validate the parsed object has required fields
-                    if (parsed && typeof parsed.year === 'number' && typeof parsed.month === 'number' &&
-                        typeof parsed.quarter === 'number' && typeof parsed.week === 'number') {
-                        return parsed as CurrentPeriod;
-                    }
-                }
-            }
-        } catch {
-            // localStorage not available or invalid JSON
-        }
-        // Default to current date
-        return {
+        const defaultPeriod: CurrentPeriod = {
             year: now.getFullYear(),
             month: now.getMonth() + 1,
             quarter: Math.ceil((now.getMonth() + 1) / 3),
             week: Math.ceil(now.getDate() / 7),
         };
+        const parsed = getStorageJSON<CurrentPeriod | null>('boletapp-analytics-currentperiod', null);
+        // Validate the parsed object has required fields
+        if (parsed && typeof parsed.year === 'number' && typeof parsed.month === 'number' &&
+            typeof parsed.quarter === 'number' && typeof parsed.week === 'number') {
+            return parsed;
+        }
+        return defaultPeriod;
     });
 
     // Track if we're updating from context to prevent loops
@@ -3016,27 +3002,12 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
                 quarter: adjustedQuarter,
                 week: adjustedWeek,
             };
-            // Persist to localStorage
-            try {
-                if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.setItem) {
-                    localStorage.setItem('boletapp-analytics-currentperiod', JSON.stringify(updated));
-                }
-            } catch {
-                // localStorage not available
-            }
+            setStorageJSON('boletapp-analytics-currentperiod', updated);
             return updated;
         });
 
         setTimePeriodLocal(newPeriod);
-
-        // Persist to localStorage
-        try {
-            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.setItem) {
-                localStorage.setItem('boletapp-analytics-timeperiod', newPeriod);
-            }
-        } catch {
-            // localStorage not available
-        }
+        setStorageString('boletapp-analytics-timeperiod', newPeriod);
 
         // Don't dispatch if we're updating from context
         if (isUpdatingFromContext.current) return;
@@ -3067,14 +3038,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
         setCurrentPeriodLocal(prev => {
             const newPeriod = typeof updater === 'function' ? updater(prev) : updater;
 
-            // Persist to localStorage
-            try {
-                if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.setItem) {
-                    localStorage.setItem('boletapp-analytics-currentperiod', JSON.stringify(newPeriod));
-                }
-            } catch {
-                // localStorage not available
-            }
+            setStorageJSON('boletapp-analytics-currentperiod', newPeriod);
 
             // Don't dispatch if we're updating from context
             if (!isUpdatingFromContext.current) {
@@ -3109,15 +3073,9 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
     // Carousel state (AC #4)
     // Story 14.13.2: Persist carousel position so navigating back returns to same slide
     const [carouselSlide, setCarouselSlideLocal] = useState<CarouselSlide>(() => {
-        try {
-            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.getItem) {
-                const saved = localStorage.getItem('boletapp-analytics-carousel');
-                if (saved === '0' || saved === '1') {
-                    return parseInt(saved) as CarouselSlide;
-                }
-            }
-        } catch {
-            // localStorage not available
+        const saved = getStorageString('boletapp-analytics-carousel', '0');
+        if (saved === '0' || saved === '1') {
+            return parseInt(saved) as CarouselSlide;
         }
         return 0;
     });
@@ -3126,13 +3084,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
     const setCarouselSlide = useCallback((value: CarouselSlide | ((prev: CarouselSlide) => CarouselSlide)) => {
         setCarouselSlideLocal(prev => {
             const newValue = typeof value === 'function' ? value(prev) : value;
-            try {
-                if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.setItem) {
-                    localStorage.setItem('boletapp-analytics-carousel', String(newValue));
-                }
-            } catch {
-                // localStorage not available
-            }
+            setStorageString('boletapp-analytics-carousel', String(newValue));
             return newValue;
         });
     }, []);
@@ -3247,17 +3199,9 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
     // Story 14.14b Session 4: View mode state for donut chart (lifted from DonutChart component)
     // Story 14.14b Session 6: Add localStorage persistence for view mode
     const [donutViewMode, setDonutViewModeLocal] = useState<DonutViewMode>(() => {
-        // Initialize from localStorage if available
-        // Note: Use try-catch for test environments where localStorage may be mocked
-        try {
-            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.getItem) {
-                const saved = localStorage.getItem('boletapp-analytics-viewmode');
-                if (saved && ['store-groups', 'store-categories', 'item-groups', 'item-categories'].includes(saved)) {
-                    return saved as DonutViewMode;
-                }
-            }
-        } catch {
-            // localStorage not available (e.g., SSR or test environment)
+        const saved = getStorageString('boletapp-analytics-viewmode', 'store-categories');
+        if (['store-groups', 'store-categories', 'item-groups', 'item-categories'].includes(saved)) {
+            return saved as DonutViewMode;
         }
         return 'store-categories';
     });
@@ -3266,14 +3210,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
     const setDonutViewMode = useCallback((newMode: DonutViewMode) => {
         setDonutViewModeLocal(newMode);
 
-        // Persist to localStorage (with defensive check for test environments)
-        try {
-            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.setItem) {
-                localStorage.setItem('boletapp-analytics-viewmode', newMode);
-            }
-        } catch {
-            // localStorage not available
-        }
+        setStorageString('boletapp-analytics-viewmode', newMode);
 
         // Reverse sync: When switching to "groups" mode, clear category filters
         // This ensures the analytics show all data when viewing group-level aggregations
@@ -3286,15 +3223,9 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
     // 'transactions' = count transactions, navigate to Compras (Receipt icon)
     // 'items' = count items/products, navigate to Productos (Package icon)
     const [countMode, setCountModeLocal] = useState<'transactions' | 'items'>(() => {
-        try {
-            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.getItem) {
-                const saved = localStorage.getItem('boletapp-analytics-countmode');
-                if (saved === 'transactions' || saved === 'items') {
-                    return saved;
-                }
-            }
-        } catch {
-            // localStorage not available
+        const saved = getStorageString('boletapp-analytics-countmode', 'transactions');
+        if (saved === 'transactions' || saved === 'items') {
+            return saved;
         }
         return 'transactions'; // Default to counting transactions
     });
@@ -3303,13 +3234,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
     const toggleCountMode = useCallback(() => {
         setCountModeLocal(prev => {
             const newMode = prev === 'transactions' ? 'items' : 'transactions';
-            try {
-                if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.setItem) {
-                    localStorage.setItem('boletapp-analytics-countmode', newMode);
-                }
-            } catch {
-                // localStorage not available
-            }
+            setStorageString('boletapp-analytics-countmode', newMode);
             return newMode;
         });
     }, []);

@@ -59,6 +59,8 @@ import {
     useDateFormat,
     settingsActions,
 } from '../shared/stores/useSettingsStore';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
+import { getStorageString, setStorageString } from '@/utils/storage';
 
 // =============================================================================
 // Types
@@ -120,76 +122,60 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
  * Story 14.12: Added 'mono' as new default, migrated from 'normal' default
  */
 function loadColorTheme(): ColorTheme {
-    const saved = localStorage.getItem('colorTheme');
+    const saved = getStorageString('colorTheme', '');
     // Migration: treat old 'ghibli' as 'normal', old 'default' as 'professional'
     if (saved === 'ghibli') return 'normal';
     if (saved === 'default') return 'professional';
-    // Keep explicit preferences
     if (saved === 'normal' || saved === 'professional' || saved === 'mono') return saved;
-    return 'mono'; // Default to 'mono' (monochrome minimal)
+    return 'mono';
 }
 
-/**
- * Load font color mode from localStorage.
- * Story 14.21: Font color mode for category text
- */
 function loadFontColorMode(): FontColorMode {
-    const saved = localStorage.getItem('fontColorMode');
+    const saved = getStorageString('fontColorMode', '');
     if (saved === 'colorful' || saved === 'plain') return saved;
-    return 'colorful'; // Default to colorful
+    return 'colorful';
 }
 
-/**
- * Load font size from localStorage.
- * Story 14.37: Font size scaling
- */
 function loadFontSize(): FontSize {
-    const saved = localStorage.getItem('fontSize');
+    const saved = getStorageString('fontSize', '');
     if (saved === 'small' || saved === 'normal') return saved;
-    return 'small'; // Default to small (current sizes) for backwards compatibility
+    return 'small';
 }
 
-/**
- * Load theme (light/dark) from localStorage.
- * Story 14c-refactor.9: Theme persistence
- */
 function loadTheme(): Theme {
-    const saved = localStorage.getItem('theme');
+    const saved = getStorageString('theme', '');
     if (saved === 'light' || saved === 'dark') return saved;
-    return 'light'; // Default to light mode
+    return 'light';
 }
 
 /**
  * Load language from localStorage.
- * Story 14c-refactor.9: Language persistence
  * Exported for use in App.tsx (before ThemeProvider is available)
  */
 export function loadLanguage(): Language {
-    const saved = localStorage.getItem('lang');
+    const saved = getStorageString('lang', '');
     if (saved === 'es' || saved === 'en') return saved as Language;
-    return 'es'; // Default to Spanish (target market: Chile)
+    return 'es';
 }
 
 /**
  * Load currency from localStorage.
- * Story 14c-refactor.9: Currency persistence
  * Exported for use in App.tsx (before ThemeProvider is available)
  */
 export function loadCurrency(): Currency {
-    const saved = localStorage.getItem('currency');
+    const saved = getStorageString('currency', '');
     if (saved === 'CLP' || saved === 'USD' || saved === 'EUR') return saved as Currency;
-    return 'CLP'; // Default to Chilean Pesos (target market)
+    return DEFAULT_CURRENCY as Currency;
 }
 
 /**
  * Load date format from localStorage.
- * Story 14c-refactor.9: Date format persistence
  * Exported for use in App.tsx (before ThemeProvider is available)
  */
 export function loadDateFormat(): 'LatAm' | 'US' {
-    const saved = localStorage.getItem('dateFormat');
+    const saved = getStorageString('dateFormat', '');
     if (saved === 'LatAm' || saved === 'US') return saved;
-    return 'LatAm'; // Default to Latin American format (target market)
+    return 'LatAm';
 }
 
 // =============================================================================
@@ -238,25 +224,10 @@ export function ThemeProvider({
     // localStorage Persistence Effects
     // ===========================================================================
 
-    // Story 14c-refactor.9: Persist theme (light/dark) to localStorage
-    useEffect(() => {
-        localStorage.setItem('theme', theme);
-    }, [theme]);
-
-    // Story 7.12: Persist color theme to localStorage
-    useEffect(() => {
-        localStorage.setItem('colorTheme', colorTheme);
-    }, [colorTheme]);
-
-    // Story 14.21: Persist font color mode to localStorage
-    useEffect(() => {
-        localStorage.setItem('fontColorMode', fontColorMode);
-    }, [fontColorMode]);
-
-    // Story 14.37: Persist font size to localStorage
-    useEffect(() => {
-        localStorage.setItem('fontSize', fontSize);
-    }, [fontSize]);
+    useEffect(() => { setStorageString('theme', theme); }, [theme]);
+    useEffect(() => { setStorageString('colorTheme', colorTheme); }, [colorTheme]);
+    useEffect(() => { setStorageString('fontColorMode', fontColorMode); }, [fontColorMode]);
+    useEffect(() => { setStorageString('fontSize', fontSize); }, [fontSize]);
 
     // Story 14e-35: Locale settings persistence removed
     // Now handled by useSettingsStore (Zustand persist middleware)

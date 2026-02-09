@@ -11,20 +11,9 @@ import type {
   TemporalPosition,
   CategoryPosition,
 } from '../types/analytics';
-
-/**
- * Get the quarter string (Q1-Q4) from a month string (YYYY-MM format).
- *
- * @param month - Month in YYYY-MM format (e.g., "2024-10")
- * @returns Quarter string ("Q1", "Q2", "Q3", or "Q4")
- */
-export function getQuarterFromMonth(month: string): string {
-  const monthNum = parseInt(month.split('-')[1], 10);
-  if (monthNum >= 1 && monthNum <= 3) return 'Q1';
-  if (monthNum >= 4 && monthNum <= 6) return 'Q2';
-  if (monthNum >= 7 && monthNum <= 9) return 'Q3';
-  return 'Q4';
-}
+import { getQuarterFromMonth } from './date';
+// Re-export for backward compatibility
+export { getQuarterFromMonth };
 
 /**
  * Creates the default navigation state for a given year.

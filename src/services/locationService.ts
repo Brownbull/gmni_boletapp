@@ -27,6 +27,7 @@ import type {
     SupportedLanguage,
 } from '../types/location';
 import { COUNTRIES, CITIES_BY_COUNTRY } from '../data/locations';
+import { getStorageJSON, setStorageJSON } from '@/utils/storage';
 
 // ============================================================================
 // Configuration
@@ -333,33 +334,17 @@ function isCacheValid(cache: LocationCache | null): cache is LocationCache {
  * Load cache from localStorage
  */
 function loadCache(): LocationCache | null {
-    try {
-        const raw = localStorage.getItem(DEFAULT_CONFIG.cacheKey);
-        if (!raw) return null;
-        return JSON.parse(raw) as LocationCache;
-    } catch {
-        return null;
-    }
+    return getStorageJSON<LocationCache | null>(DEFAULT_CONFIG.cacheKey, null);
 }
 
-/**
- * Save cache to localStorage
- */
 function saveCache(countries: LocalizedCountry[]): void {
-    try {
-        const cache: LocationCache = {
-            version: DEFAULT_CONFIG.cacheVersion,
-            timestamp: Date.now(),
-            ttl: DEFAULT_CONFIG.cacheTtlMs,
-            countries,
-        };
-        localStorage.setItem(DEFAULT_CONFIG.cacheKey, JSON.stringify(cache));
-    } catch {
-        // Silently fail - cache is optional
-        if (import.meta.env.DEV) {
-            console.warn('[LocationService] Failed to save cache to localStorage');
-        }
-    }
+    const cache: LocationCache = {
+        version: DEFAULT_CONFIG.cacheVersion,
+        timestamp: Date.now(),
+        ttl: DEFAULT_CONFIG.cacheTtlMs,
+        countries,
+    };
+    setStorageJSON(DEFAULT_CONFIG.cacheKey, cache);
 }
 
 // ============================================================================

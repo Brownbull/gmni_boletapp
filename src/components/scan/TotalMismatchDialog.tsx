@@ -23,6 +23,7 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { AlertTriangle, Calculator, ArrowRight, X } from 'lucide-react';
 import { TotalValidationResult } from '../../utils/totalValidation';
+import { formatCurrency, DEFAULT_CURRENCY } from '@/utils/currency';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
 import { useScanActiveDialog, useScanActions } from '@features/scan/store';
 import { DIALOG_TYPES } from '../../types/scanStateMachine';
@@ -63,26 +64,6 @@ export interface TotalMismatchDialogProps {
   onCancel?: (data?: TotalMismatchDialogData) => void;
 }
 
-/**
- * Format a number as currency string for display.
- */
-function formatCurrency(amount: number, currency: string): string {
-  // For CLP, COP, JPY, KRW - no decimals
-  const noDecimalCurrencies = ['CLP', 'COP', 'JPY', 'KRW'];
-  const useDecimals = !noDecimalCurrencies.includes(currency);
-
-  try {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: useDecimals ? 2 : 0,
-      maximumFractionDigits: useDecimals ? 2 : 0,
-    }).format(useDecimals ? amount / 100 : amount);
-  } catch {
-    // Fallback if currency code is invalid
-    return `$${amount.toLocaleString()}`;
-  }
-}
 
 // Default validation result for when no data is available
 const DEFAULT_VALIDATION_RESULT: TotalValidationResult = {
@@ -130,7 +111,7 @@ export const TotalMismatchDialog: React.FC<TotalMismatchDialogProps> = ({
 
   // Story 14.34: Use transaction's detected currency if available, otherwise fall back to prop/default
   // This ensures foreign currencies (USD, EUR, GBP) are formatted correctly with cents/decimals
-  const currency = contextDialogData?.pendingTransaction?.currency ?? currencyProp ?? 'CLP';
+  const currency = contextDialogData?.pendingTransaction?.currency ?? currencyProp ?? DEFAULT_CURRENCY;
 
   // Story 14d.6: Create handlers that pass dialog data to callbacks
   // Story 14e-11: Use Zustand actions directly (always available)

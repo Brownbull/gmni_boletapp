@@ -37,6 +37,7 @@ import {
     RECORD_COOLDOWNS_KEY,
     RECORD_TYPE_COOLDOWN_MS,
 } from '../types/personalRecord';
+import { getStorageJSON, setStorageJSON } from '@/utils/storage';
 
 // ============================================================================
 // Date Parsing Utilities
@@ -396,37 +397,18 @@ export function getDefaultCooldowns(): RecordCooldowns {
  * @returns Current cooldowns state
  */
 export function getRecordCooldowns(): RecordCooldowns {
-    try {
-        const stored = localStorage.getItem(RECORD_COOLDOWNS_KEY);
-        if (stored) {
-            const parsed = JSON.parse(stored) as RecordCooldowns;
-            // Validate structure
-            if (
-                typeof parsed === 'object' &&
-                parsed !== null &&
-                'recordTypeCooldowns' in parsed
-            ) {
-                return parsed;
-            }
-        }
-    } catch {
-        // Corrupted storage - return default
+    const parsed = getStorageJSON<RecordCooldowns | null>(RECORD_COOLDOWNS_KEY, null);
+    if (parsed && typeof parsed === 'object' && 'recordTypeCooldowns' in parsed) {
+        return parsed;
     }
-
     return getDefaultCooldowns();
 }
 
 /**
  * Saves record cooldowns to localStorage.
- *
- * @param cooldowns - Cooldowns state to save
  */
 export function setRecordCooldowns(cooldowns: RecordCooldowns): void {
-    try {
-        localStorage.setItem(RECORD_COOLDOWNS_KEY, JSON.stringify(cooldowns));
-    } catch {
-        // localStorage might be full or disabled
-    }
+    setStorageJSON(RECORD_COOLDOWNS_KEY, cooldowns);
 }
 
 /**

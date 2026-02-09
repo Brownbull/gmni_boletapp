@@ -68,6 +68,7 @@ import type {
     FontSize,
     FontFamily,
 } from '@/types/settings';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
 
 // =============================================================================
 // Types
@@ -437,7 +438,7 @@ export function useSettingsViewData(): UseSettingsViewDataReturn {
             dateFormat,
             defaultCountry: preferences.defaultCountry || '',
             defaultCity: preferences.defaultCity || '',
-            defaultScanCurrency: preferences.defaultCurrency || 'CLP',
+            defaultScanCurrency: preferences.defaultCurrency || DEFAULT_CURRENCY,
             foreignLocationFormat: preferences.foreignLocationFormat || 'code',
             setLang: (l: Language) => setLang(l),
             setCurrency: (c: string) => setCurrency(c as typeof currency),

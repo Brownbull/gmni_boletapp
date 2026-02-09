@@ -30,6 +30,7 @@ import {
   type PolygonMode,
 } from '../../hooks/usePolygonMode';
 import type { Transaction } from '../../types/transaction';
+import { DEFAULT_CURRENCY } from '../../utils/currency';
 
 /**
  * Props for PolygonWithModeToggle component
@@ -57,7 +58,7 @@ export function PolygonWithModeToggle({
   maxVertices = 6,
   breathing = true,
   onVertexClick,
-  currency = 'CLP',
+  currency = DEFAULT_CURRENCY,
   className = '',
 }: PolygonWithModeToggleProps): JSX.Element {
   const { mode, setMode } = usePolygonMode();

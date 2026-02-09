@@ -63,6 +63,7 @@ import {
 } from '../../services/insightEngineService';
 import { shouldShowQuickSave, calculateConfidence } from '../../utils/confidenceCheck';
 import { parseStrictNumber } from '../../utils/validation';
+import { hasValidItems } from '@/utils/transactionValidation';
 // Story 14e-41: reconcileItemsTotal moved to entity (single source of truth)
 import { reconcileItemsTotal as entityReconcileItemsTotal } from '@entities/transaction';
 // Story 14e-42: applyItemNameMappings moved to @features/categories (single source of truth)
@@ -470,11 +471,8 @@ export function useScanHandlers(
         const transaction = dialogData?.transaction;
         if (!services || !user || !transaction || isQuickSaving) return;
 
-        // Validate transaction has at least one item
-        const hasValidItem = transaction.items?.some(
-            item => item.name && item.name.trim().length > 0 && typeof item.price === 'number' && item.price >= 0
-        );
-        if (!hasValidItem) {
+        // Validate transaction has at least one valid item
+        if (!hasValidItems(transaction.items)) {
             setCurrentTransaction(transaction);
             setToastMessage({ text: t('itemsRequired') || 'Add at least one item', type: 'info' });
             navigateToView('transaction-editor');

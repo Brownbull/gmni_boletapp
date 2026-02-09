@@ -23,6 +23,7 @@ import { getCategoryColors, getCategoryColorsAuto, type ThemeName, type ModeName
 import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';
 import { useLocationDisplay } from '../../hooks/useLocations';
 import type { ForeignLocationDisplayFormat } from '../../services/userPreferencesService';
+import { DEFAULT_CURRENCY } from '../../utils/currency';
 import type { Language } from '../../types/settings';
 
 
@@ -242,7 +243,7 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
   transaction,
   formatters,
   theme,
-  defaultCurrency = 'CLP',
+  defaultCurrency = DEFAULT_CURRENCY,
   userDefaultCountry,
   foreignLocationFormat = 'code',
   lang = 'es',

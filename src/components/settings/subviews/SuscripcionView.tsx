@@ -17,6 +17,7 @@
 
 import React from 'react';
 import { Camera, Sparkles, Check } from 'lucide-react';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
 
 // Plan tier configuration - placeholder for future implementation
 interface PlanTier {
@@ -39,7 +40,7 @@ const PLAN_TIERS: PlanTier[] = [
         normalCredits: 60,
         superCredits: 0,
         price: 0,
-        currency: 'CLP',
+        currency: DEFAULT_CURRENCY,
     },
     {
         id: 'pro',
@@ -49,7 +50,7 @@ const PLAN_TIERS: PlanTier[] = [
         normalCredits: 500,
         superCredits: 10,
         price: 4990,
-        currency: 'CLP',
+        currency: DEFAULT_CURRENCY,
     },
     {
         id: 'business',
@@ -59,7 +60,7 @@ const PLAN_TIERS: PlanTier[] = [
         normalCredits: 'unlimited',
         superCredits: 50,
         price: 14990,
-        currency: 'CLP',
+        currency: DEFAULT_CURRENCY,
     },
 ];
 

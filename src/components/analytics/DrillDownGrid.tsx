@@ -22,6 +22,7 @@ import {
   createCategoryNavigationPayload,
   type HistoryNavigationPayload,
 } from '../../utils/analyticsToHistoryFilters';
+import { DEFAULT_CURRENCY } from '../../utils/currency';
 
 // ============================================================================
 // Types
@@ -497,7 +498,7 @@ export function DrillDownGrid({
   transactions,
   theme = 'light',
   locale = 'en',
-  currency = 'CLP',
+  currency = DEFAULT_CURRENCY,
   onNavigateToHistory,
 }: DrillDownGridProps): React.ReactElement {
   // Story 7.16: Get drillDownMode to control which section to show

@@ -32,6 +32,7 @@ import {
   MAX_AIRLOCK_HISTORY,
 } from '../types/airlock';
 import { airlocksPath } from '@/lib/firestorePaths';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
 
 // ============================================================================
 // Mock Insights Data (AC4: Placeholder until AI ready)
@@ -52,7 +53,7 @@ const MOCK_AIRLOCKS: AirlockGenerationResult[] = [
       dateRange: { start: new Date(), end: new Date() },
       categories: ['Cafetería'],
       totalAmount: 45,
-      currency: 'CLP',
+      currency: DEFAULT_CURRENCY,
     },
   },
   {
@@ -65,7 +66,7 @@ const MOCK_AIRLOCKS: AirlockGenerationResult[] = [
       dateRange: { start: new Date(), end: new Date() },
       categories: ['Supermercado', 'Delivery'],
       totalAmount: 89000,
-      currency: 'CLP',
+      currency: DEFAULT_CURRENCY,
     },
   },
   {
@@ -78,7 +79,7 @@ const MOCK_AIRLOCKS: AirlockGenerationResult[] = [
       dateRange: { start: new Date(), end: new Date() },
       categories: ['Delivery', 'Restaurante'],
       totalAmount: 64000,
-      currency: 'CLP',
+      currency: DEFAULT_CURRENCY,
     },
   },
   {
@@ -91,7 +92,7 @@ const MOCK_AIRLOCKS: AirlockGenerationResult[] = [
       dateRange: { start: new Date(), end: new Date() },
       categories: ['Supermercado'],
       totalAmount: 156000,
-      currency: 'CLP',
+      currency: DEFAULT_CURRENCY,
     },
   },
   {
@@ -104,7 +105,7 @@ const MOCK_AIRLOCKS: AirlockGenerationResult[] = [
       dateRange: { start: new Date(), end: new Date() },
       categories: ['Entretenimiento', 'Restaurante'],
       totalAmount: 120000,
-      currency: 'CLP',
+      currency: DEFAULT_CURRENCY,
     },
   },
   {
@@ -117,7 +118,7 @@ const MOCK_AIRLOCKS: AirlockGenerationResult[] = [
       dateRange: { start: new Date(), end: new Date() },
       categories: ['Supermercado'],
       totalAmount: 89000,
-      currency: 'CLP',
+      currency: DEFAULT_CURRENCY,
     },
   },
   {
@@ -130,7 +131,7 @@ const MOCK_AIRLOCKS: AirlockGenerationResult[] = [
       dateRange: { start: new Date(), end: new Date() },
       categories: ['Varios'],
       totalAmount: 45000,
-      currency: 'CLP',
+      currency: DEFAULT_CURRENCY,
     },
   },
   {
@@ -143,7 +144,7 @@ const MOCK_AIRLOCKS: AirlockGenerationResult[] = [
       dateRange: { start: new Date(), end: new Date() },
       categories: ['Varios'],
       totalAmount: 200000,
-      currency: 'CLP',
+      currency: DEFAULT_CURRENCY,
     },
   },
 ];

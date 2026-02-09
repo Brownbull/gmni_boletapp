@@ -24,6 +24,7 @@ import type { Transaction } from '../types/transaction';
 import type { CategorySpending } from '../components/polygon/DynamicPolygon';
 // Story 14.21: Use unified category colors
 import { getCategoryBackgroundAuto } from '../config/categoryColors';
+import { getStorageString, setStorageString } from '@/utils/storage';
 
 /**
  * Available polygon view modes
@@ -33,25 +34,16 @@ export type PolygonMode = 'categories' | 'groups';
 const STORAGE_KEY = 'boletapp:polygon-mode';
 const VALID_MODES: PolygonMode[] = ['categories', 'groups'];
 
-/**
- * Load mode from localStorage with validation
- */
 function loadModeFromStorage(): PolygonMode {
-  if (typeof window === 'undefined') return 'categories';
-
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored && VALID_MODES.includes(stored as PolygonMode)) {
+  const stored = getStorageString(STORAGE_KEY, 'categories');
+  if (VALID_MODES.includes(stored as PolygonMode)) {
     return stored as PolygonMode;
   }
   return 'categories';
 }
 
-/**
- * Save mode to localStorage
- */
 function saveModeToStorage(mode: PolygonMode): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(STORAGE_KEY, mode);
+  setStorageString(STORAGE_KEY, mode);
 }
 
 /**

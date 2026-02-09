@@ -93,6 +93,8 @@ import { useNavigationActions } from '@/shared/stores';
 import { useDashboardViewData, type UseDashboardViewDataReturn } from './DashboardView/useDashboardViewData';
 // Story 14.15b: Use consolidated TransactionCard from shared transactions folder
 import { TransactionCard } from '../components/transactions';
+import { getStorageString, setStorageString } from '@/utils/storage';
+import { toMillis } from '@/utils/timestamp';
 // Story 14.12: Radar chart uses inline SVG (matching mockup hexagonal design)
 
 // Story 11.1: Sort type for dashboard transactions
@@ -483,56 +485,32 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
     // Story 14.13 Session 9: Synced with Analytics view using shared localStorage key
     const [treemapViewMode, setTreemapViewMode] = useState<TreemapViewMode>(() => {
         // Restore from localStorage if available (shared with TrendsView for sync)
-        try {
-            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.getItem) {
-                const saved = localStorage.getItem('boletapp-analytics-viewmode');
-                if (saved && ['store-groups', 'store-categories', 'item-groups', 'item-categories'].includes(saved)) {
-                    return saved as TreemapViewMode;
-                }
-            }
-        } catch {
-            // localStorage not available (e.g., SSR or test environment)
+        const saved = getStorageString('boletapp-analytics-viewmode', 'store-categories');
+        if (['store-groups', 'store-categories', 'item-groups', 'item-categories'].includes(saved)) {
+            return saved as TreemapViewMode;
         }
         return 'store-categories';
     });
 
     // Story 14.13 Session 9: Persist view mode to localStorage (shared with TrendsView)
     useEffect(() => {
-        try {
-            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.setItem) {
-                localStorage.setItem('boletapp-analytics-viewmode', treemapViewMode);
-            }
-        } catch {
-            // localStorage not available
-        }
+        setStorageString('boletapp-analytics-viewmode', treemapViewMode);
     }, [treemapViewMode]);
 
     // Story 14.13 Session 10: Count mode toggle - transactions vs items (synced with TrendsView)
     // 'transactions' = count transactions, navigate to Compras (Receipt icon)
     // 'items' = count items/products, navigate to Productos (Package icon)
     const [countMode, setCountMode] = useState<'transactions' | 'items'>(() => {
-        try {
-            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.getItem) {
-                const saved = localStorage.getItem('boletapp-analytics-countmode');
-                if (saved === 'transactions' || saved === 'items') {
-                    return saved;
-                }
-            }
-        } catch {
-            // localStorage not available
+        const saved = getStorageString('boletapp-analytics-countmode', 'transactions');
+        if (saved === 'transactions' || saved === 'items') {
+            return saved;
         }
         return 'transactions';
     });
 
     // Story 14.13 Session 10: Persist count mode to localStorage (shared with TrendsView)
     useEffect(() => {
-        try {
-            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.setItem) {
-                localStorage.setItem('boletapp-analytics-countmode', countMode);
-            }
-        } catch {
-            // localStorage not available
-        }
+        setStorageString('boletapp-analytics-countmode', countMode);
     }, [countMode]);
 
     // Story 14.13 Session 10: Toggle count mode between transactions and items
@@ -1763,19 +1741,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
         // Story 11.1: Sort by selected sort type
         return [...result].sort((a, b) => {
             if (sortType === 'scanDate') {
-                // Sort by createdAt (scan date) - newest first
-                const getCreatedTime = (tx: any): number => {
-                    if (!tx.createdAt) return 0;
-                    // Firestore Timestamp has toDate() method
-                    if (typeof tx.createdAt.toDate === 'function') {
-                        return tx.createdAt.toDate().getTime();
-                    }
-                    // Fallback to Date parsing
-                    return new Date(tx.createdAt).getTime();
-                };
-                return getCreatedTime(b) - getCreatedTime(a);
+                return toMillis(b.createdAt) - toMillis(a.createdAt);
             } else {
-                // Sort by transaction date - newest first
                 return new Date(b.date).getTime() - new Date(a.date).getTime();
             }
         });

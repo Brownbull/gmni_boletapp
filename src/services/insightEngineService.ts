@@ -25,6 +25,7 @@ import {
   PHASE_THRESHOLDS,
 } from '../types/insight';
 import { generateAllCandidates } from '../utils/insightGenerators';
+import { getStorageJSON, setStorageJSON } from '@/utils/storage';
 // Story 10a.4: Re-export for convenience in InsightsView
 export { getInsightProfile as getUserInsightProfile } from './insightProfileService';
 
@@ -311,45 +312,23 @@ export function getFallbackInsight(): Insight {
  * @returns The local insight cache
  */
 export function getLocalCache(): LocalInsightCache {
-  try {
-    const cached = localStorage.getItem(INSIGHT_CACHE_KEY);
-    if (cached) {
-      const parsed = JSON.parse(cached) as LocalInsightCache;
-
-      // Validate required fields
-      if (
-        typeof parsed.weekdayScanCount === 'number' &&
-        typeof parsed.weekendScanCount === 'number' &&
-        typeof parsed.lastCounterReset === 'string'
-      ) {
-        // Check if counters need weekly reset
-        return maybeResetCounters(parsed);
-      }
-    }
-  } catch (error) {
-    // Corrupted cache - will return default
-    if (isDebugMode()) {
-      console.warn('[InsightEngine] Cache corrupted, resetting', error);
-    }
+  const parsed = getStorageJSON<LocalInsightCache | null>(INSIGHT_CACHE_KEY, null);
+  if (
+    parsed &&
+    typeof parsed.weekdayScanCount === 'number' &&
+    typeof parsed.weekendScanCount === 'number' &&
+    typeof parsed.lastCounterReset === 'string'
+  ) {
+    return maybeResetCounters(parsed);
   }
-
   return getDefaultCache();
 }
 
 /**
  * Saves the local insight cache to localStorage.
- *
- * @param cache - The cache to save
  */
 export function setLocalCache(cache: LocalInsightCache): void {
-  try {
-    localStorage.setItem(INSIGHT_CACHE_KEY, JSON.stringify(cache));
-  } catch (error) {
-    // localStorage might be full or disabled
-    if (isDebugMode()) {
-      console.warn('[InsightEngine] Failed to save cache', error);
-    }
-  }
+  setStorageJSON(INSIGHT_CACHE_KEY, cache);
 }
 
 /**

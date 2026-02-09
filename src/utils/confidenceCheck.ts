@@ -15,6 +15,7 @@
  */
 
 import { Transaction } from '../types/transaction';
+import { hasValidItems } from '@/utils/transactionValidation';
 
 /** Confidence threshold for showing Quick Save Card */
 export const QUICK_SAVE_CONFIDENCE_THRESHOLD = 0.85;
@@ -87,23 +88,7 @@ function isValidDate(dateStr: string): boolean {
   }
 }
 
-/**
- * Check if transaction has at least one valid item.
- */
-function hasValidItems(items: Transaction['items']): boolean {
-  if (!Array.isArray(items) || items.length === 0) {
-    return false;
-  }
-
-  // At least one item must have a name and valid price
-  return items.some(
-    (item) =>
-      item.name &&
-      item.name.trim().length > 0 &&
-      typeof item.price === 'number' &&
-      item.price >= 0
-  );
-}
+// hasValidItems imported from @/utils/transactionValidation
 
 /**
  * Determine if Quick Save should be shown based on confidence.

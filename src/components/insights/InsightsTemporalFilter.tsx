@@ -9,7 +9,8 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Calendar, ChevronLeft, ChevronDown, X } from 'lucide-react';
 import { InsightRecord } from '../../types/insight';
-import { getISOWeekNumber } from '../../utils/dateHelpers';
+import { getISOWeekNumber } from '../../utils/date';
+import { toDateSafe } from '@/utils/timestamp';
 
 // ============================================================================
 // Types
@@ -42,14 +43,8 @@ type NavigationLevel = 'root' | 'year' | 'quarter' | 'month';
 function getAvailableYears(insights: InsightRecord[]): number[] {
   const years = new Set<number>();
   insights.forEach((insight) => {
-    try {
-      const date = insight.shownAt?.toDate?.();
-      if (date instanceof Date && !isNaN(date.getTime())) {
-        years.add(date.getFullYear());
-      }
-    } catch {
-      // Skip corrupted timestamps
-    }
+    const date = toDateSafe(insight.shownAt);
+    if (date) years.add(date.getFullYear());
   });
   return Array.from(years).sort((a, b) => b - a); // Most recent first
 }
@@ -57,13 +52,9 @@ function getAvailableYears(insights: InsightRecord[]): number[] {
 function getQuartersInYear(insights: InsightRecord[], year: number): number[] {
   const quarters = new Set<number>();
   insights.forEach((insight) => {
-    try {
-      const date = insight.shownAt?.toDate?.();
-      if (date instanceof Date && !isNaN(date.getTime()) && date.getFullYear() === year) {
-        quarters.add(Math.floor(date.getMonth() / 3) + 1);
-      }
-    } catch {
-      // Skip corrupted timestamps
+    const date = toDateSafe(insight.shownAt);
+    if (date && date.getFullYear() === year) {
+      quarters.add(Math.floor(date.getMonth() / 3) + 1);
     }
   });
   return Array.from(quarters).sort((a, b) => b - a);
@@ -73,18 +64,12 @@ function getMonthsInQuarter(insights: InsightRecord[], year: number, quarter: nu
   const months = new Set<number>();
   const quarterStartMonth = (quarter - 1) * 3;
   insights.forEach((insight) => {
-    try {
-      const date = insight.shownAt?.toDate?.();
-      if (date instanceof Date && !isNaN(date.getTime())) {
-        if (date.getFullYear() === year) {
-          const month = date.getMonth();
-          if (month >= quarterStartMonth && month < quarterStartMonth + 3) {
-            months.add(month);
-          }
-        }
+    const date = toDateSafe(insight.shownAt);
+    if (date && date.getFullYear() === year) {
+      const month = date.getMonth();
+      if (month >= quarterStartMonth && month < quarterStartMonth + 3) {
+        months.add(month);
       }
-    } catch {
-      // Skip corrupted timestamps
     }
   });
   return Array.from(months).sort((a, b) => b - a);
@@ -93,16 +78,9 @@ function getMonthsInQuarter(insights: InsightRecord[], year: number, quarter: nu
 function getWeeksInMonth(insights: InsightRecord[], year: number, month: number): number[] {
   const weeks = new Set<number>();
   insights.forEach((insight) => {
-    try {
-      const date = insight.shownAt?.toDate?.();
-      if (date instanceof Date && !isNaN(date.getTime())) {
-        if (date.getFullYear() === year && date.getMonth() === month) {
-          // Get ISO week number using shared utility
-          weeks.add(getISOWeekNumber(date));
-        }
-      }
-    } catch {
-      // Skip corrupted timestamps
+    const date = toDateSafe(insight.shownAt);
+    if (date && date.getFullYear() === year && date.getMonth() === month) {
+      weeks.add(getISOWeekNumber(date));
     }
   });
   return Array.from(weeks).sort((a, b) => b - a);

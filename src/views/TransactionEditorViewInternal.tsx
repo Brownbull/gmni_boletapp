@@ -61,6 +61,7 @@ import type { ItemNameMapping } from '../types/itemNameMapping';
 import { LocationSelect } from '../components/LocationSelect';
 import { DateTimeTag } from '../components/DateTimeTag';
 import { CurrencyTag } from '../components/CurrencyTag';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
 import { ProcessingOverlay } from '../components/scan/ProcessingOverlay';
 import { ScanCompleteModal } from '@features/scan/components';
 import { celebrateSuccess } from '../utils/confetti';
@@ -90,6 +91,7 @@ import { useIsProcessing as useScanIsProcessing, useScanActiveDialog } from '@fe
 import { DIALOG_TYPES } from '../types/scanStateMachine';
 // Story 14e-25d: Direct hooks (ViewHandlersContext deleted)
 import { useToast } from '@/shared/hooks';
+import { hasItemWithPrice } from '@/utils/transactionValidation';
 // Note: useModalActions imported above from @managers/ModalManager
 import { ItemViewToggle, type ItemViewMode } from '../components/items/ItemViewToggle';
 
@@ -1229,8 +1231,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
 
   // Validation
   const hasValidTotal = calculatedTotal > 0;
-  const hasValidItem = transaction?.items?.some(item => item.price > 0) ?? false;
-  const canSave = hasValidTotal && hasValidItem;
+  const canSave = hasValidTotal && hasItemWithPrice(transaction?.items);
 
   // Create default transaction for rendering if none provided
   const displayTransaction = transaction || {
@@ -1656,7 +1657,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                   disabled={readOnly}
                 />
                 <CurrencyTag
-                  currency={displayTransaction.currency || 'CLP'}
+                  currency={displayTransaction.currency || DEFAULT_CURRENCY}
                   onCurrencyChange={currency => transaction && onUpdateTransaction({ ...transaction, currency })}
                   t={t}
                   disabled={readOnly}

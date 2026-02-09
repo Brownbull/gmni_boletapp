@@ -45,8 +45,8 @@ describe('DrillDownCard - AC #6: Displays label, value, percentage', () => {
   it('renders value as formatted currency', () => {
     renderCard({ value: 125000, locale: 'en', currency: 'CLP' });
 
-    // 125000 CLP displays as "CLP 125,000" (CLP has no decimals)
-    const valueElement = screen.getByText(/CLP.*125[.,]000/);
+    // 125000 CLP displays as "$125.000" (es-CL locale, no decimals)
+    const valueElement = screen.getByText(/\$125[.,]000/);
     expect(valueElement).toBeInTheDocument();
   });
 
@@ -432,23 +432,23 @@ describe('DrillDownCard - Currency formatting', () => {
   it('formats with default currency (CLP)', () => {
     renderCard({ value: 125000 });
 
-    // CLP uses no decimals, 125000 CLP displays as "CLP 125,000"
-    expect(screen.getByText(/CLP.*125[.,]000/)).toBeInTheDocument();
+    // CLP uses no decimals, 125000 CLP displays as "$125.000" (es-CL locale)
+    expect(screen.getByText(/\$125[.,]000/)).toBeInTheDocument();
   });
 
   it('formats value as integer (no decimals for CLP)', () => {
     renderCard({ value: 125050, currency: 'CLP' });
 
-    // CLP has no decimals, 125050 CLP displays as "CLP 125,050"
-    const valueElement = screen.getByText(/CLP.*125[.,]050/);
+    // CLP has no decimals, 125050 CLP displays as "$125.050" (es-CL locale)
+    const valueElement = screen.getByText(/\$125[.,]050/);
     expect(valueElement).toBeInTheDocument();
   });
 
   it('handles zero value', () => {
     renderCard({ value: 0 });
 
-    // CLP 0 format
-    expect(screen.getByText(/CLP.*0/)).toBeInTheDocument();
+    // CLP $0 format (es-CL locale)
+    expect(screen.getByText(/\$0/)).toBeInTheDocument();
   });
 });
 

@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore';
 import { sanitizeInput, sanitizeLocation } from '@/utils/sanitize';
 import { preferencesDocSegments } from '@/lib/firestorePaths';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
 
 /**
  * Supported currencies for the application
@@ -66,7 +67,7 @@ export interface UserPreferences {
  * Story 14.35b: Added foreignLocationFormat default to 'code'
  */
 const DEFAULT_PREFERENCES: UserPreferences = {
-  defaultCurrency: 'CLP',
+  defaultCurrency: DEFAULT_CURRENCY as SupportedCurrency,
   fontFamily: 'outfit',
   foreignLocationFormat: 'code',
 };

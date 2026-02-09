@@ -9,6 +9,8 @@
  * - Handling edge cases (new categories, year boundaries)
  */
 
+import { toDateSafe } from '@/utils/timestamp';
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -274,8 +276,8 @@ export function filterTransactionsByPeriod<T extends { date: Date | { toDate: ()
     timePeriod: TimePeriod
 ): T[] {
     return transactions.filter(tx => {
-        const date = tx.date instanceof Date ? tx.date : tx.date.toDate();
-        return isDateInPeriod(date, period, timePeriod);
+        const date = toDateSafe(tx.date);
+        return date ? isDateInPeriod(date, period, timePeriod) : false;
     });
 }
 

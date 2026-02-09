@@ -21,6 +21,7 @@ import { getCategoryEmoji } from '../../utils/categoryEmoji';
 import { getCategoryColors, getCategoryColorsAuto, type ThemeName, type ModeName } from '../../config/categoryColors';
 import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';
 import { safeCSSColor } from '@/utils/validation';
+import { DEFAULT_CURRENCY } from '../../utils/currency';
 
 // ============================================================================
 // Types
@@ -250,7 +251,7 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
   city,
   country,
   userDefaultCountry,
-  currency = 'CLP',
+  currency = DEFAULT_CURRENCY,
   thumbnailUrl,
   imageUrls,
   items = [],

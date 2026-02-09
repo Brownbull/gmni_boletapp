@@ -18,6 +18,7 @@ import type { ReceiptType } from '@/services/gemini';
 import type { ScanState } from '@/types/scanStateMachine';
 import { DIALOG_TYPES } from '@/types/scanStateMachine';
 import { MAX_BATCH_IMAGES } from '@/components/scan';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
 import { analyzeReceipt } from '@/services/gemini';
 import { getSafeDate, parseStrictNumber } from '@/utils/validation';
 
@@ -280,7 +281,7 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
     setScanImages([]);
     setScanError(null);
     setScanStoreType('auto');
-    setScanCurrency(defaultCurrency || 'CLP');
+    setScanCurrency(defaultCurrency || DEFAULT_CURRENCY);
     setCurrentTransaction(createDefaultTransaction());
 
     // Camera button opens file picker, manual "+" goes directly to editor
