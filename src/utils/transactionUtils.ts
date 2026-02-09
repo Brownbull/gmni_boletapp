@@ -13,8 +13,7 @@ import { computePeriods } from './periodUtils';
  * Ensure a transaction has all Epic 14d-v2 fields with sensible defaults.
  *
  * This ensures backward compatibility with existing transactions that were created
- * before the Epic 14d-v2 fields (sharedGroupId, deletedAt, deletedBy, updatedAt, version, periods)
- * were introduced.
+ * before the Epic 14d-v2 fields (updatedAt, periods) were introduced.
  *
  * Note: This function handles DATA INTEGRITY defaults (Epic 14d-v2 fields).
  * For DISPLAY defaults (time, city, country), see transactionNormalizer.ts.
@@ -29,7 +28,7 @@ import { computePeriods } from './periodUtils';
  *
  * // With Epic 14d-v2 defaults applied
  * const normalized = ensureTransactionDefaults(legacy);
- * // { ...legacy, sharedGroupId: null, deletedAt: null, deletedBy: null, version: 1, periods: {...} }
+ * // { ...legacy, periods: {...} }
  * ```
  */
 export function ensureTransactionDefaults(tx: Partial<Transaction>): Transaction {
@@ -43,12 +42,6 @@ export function ensureTransactionDefaults(tx: Partial<Transaction>): Transaction
     return {
         // Spread all existing fields first
         ...(tx as Transaction),
-
-        // Epic 14d-v2 field defaults
-        sharedGroupId: tx.sharedGroupId ?? null,
-        deletedAt: tx.deletedAt ?? null,
-        deletedBy: tx.deletedBy ?? null,
-        version: tx.version ?? 1,
 
         // updatedAt falls back to createdAt (or undefined for truly old data)
         ...(updatedAt !== undefined && { updatedAt }),
@@ -67,24 +60,4 @@ export function ensureTransactionDefaults(tx: Partial<Transaction>): Transaction
  */
 export function ensureTransactionsDefaults(transactions: Partial<Transaction>[]): Transaction[] {
     return transactions.map(ensureTransactionDefaults);
-}
-
-/**
- * Check if a transaction has been soft-deleted.
- *
- * @param tx - Transaction to check
- * @returns true if the transaction has been soft-deleted
- */
-export function isDeleted(tx: Partial<Transaction>): boolean {
-    return tx.deletedAt !== null && tx.deletedAt !== undefined;
-}
-
-/**
- * Check if a transaction belongs to a shared group.
- *
- * @param tx - Transaction to check
- * @returns true if the transaction is tagged to a shared group
- */
-export function isSharedTransaction(tx: Partial<Transaction>): boolean {
-    return tx.sharedGroupId !== null && tx.sharedGroupId !== undefined;
 }

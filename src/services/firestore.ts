@@ -20,7 +20,7 @@ import {
 } from 'firebase/firestore';
 import { Transaction } from '../types/transaction';
 import { computePeriods } from '../utils/periodUtils';
-import { ensureTransactionsDefaults, isDeleted } from '../utils/transactionUtils';
+import { ensureTransactionsDefaults } from '../utils/transactionUtils';
 
 /**
  * Removes undefined values from an object (Firestore doesn't accept undefined).
@@ -62,7 +62,7 @@ export async function addTransaction(
     const periods = transaction.date ? computePeriods(transaction.date) : undefined;
 
     // Story 14d-v2-1.2b: Set version: 1 for new transactions (optimistic concurrency)
-    // Also set updatedAt, periods for changelog tracking and efficient queries
+    // Also set updatedAt, periods for efficient queries
     const transactionWithDefaults = {
         ...cleanedTransaction,
         createdAt: serverTimestamp(),
@@ -180,10 +180,7 @@ export function subscribeToTransactions(
         // Story 14d-v2-1-2b: Apply Epic 14d-v2 defaults to legacy transactions
         const normalizedTxs = ensureTransactionsDefaults(txs);
 
-        // Story 14d-v2-1-2c: Filter out soft-deleted transactions
-        // Uses client-side filtering after normalization to support legacy transactions
-        // that don't have deletedAt field (normalized to deletedAt: null)
-        const activeTxs = normalizedTxs.filter(tx => !isDeleted(tx));
+        const activeTxs = normalizedTxs;
 
         // Dev-mode logging for snapshot size monitoring (AC #6)
         if (import.meta.env.DEV && snapshot.size >= LISTENER_LIMITS.TRANSACTIONS) {
@@ -238,8 +235,7 @@ export function subscribeToRecentScans(
         // Story 14d-v2-1-2b: Apply Epic 14d-v2 defaults to legacy transactions
         const normalizedTxs = ensureTransactionsDefaults(txs);
 
-        // Story 14d-v2-1-2c: Filter out soft-deleted transactions
-        const activeTxs = normalizedTxs.filter(tx => !isDeleted(tx));
+        const activeTxs = normalizedTxs;
 
         // Sort client-side as backup (Firestore should already sort, but ensure order)
         // createdAt can be a Firestore Timestamp (with .seconds) or a Date string
@@ -379,8 +375,7 @@ export async function getTransactionPage(
     // Story 14d-v2-1-2b: Apply Epic 14d-v2 defaults to legacy transactions
     const normalizedTransactions = ensureTransactionsDefaults(rawTransactions);
 
-    // Story 14d-v2-1-2c: Filter out soft-deleted transactions
-    const transactions = normalizedTransactions.filter(tx => !isDeleted(tx));
+    const transactions = normalizedTransactions;
 
     // Last document for next page cursor (null if no more pages)
     const lastDoc = docs.length > 0 ? docs[docs.length - 1] : null;

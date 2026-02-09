@@ -33,6 +33,5 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src", "tests/helpers"],
-  "exclude": ["src/features/shared-groups"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

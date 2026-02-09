@@ -32,7 +32,6 @@ export { SearchBar } from './SearchBar';
 // Story 14.15: Selection mode components
 export { SelectionBar } from './SelectionBar';
 export type { SelectionBarProps } from './SelectionBar';
-// Use TransactionGroupSelector from SharedGroups for group assignment
 export { DeleteTransactionsModal } from './DeleteTransactionsModal';
 export type { DeleteTransactionsModalProps, TransactionPreview } from './DeleteTransactionsModal';
 // Story 14.31 Session 3: Sort control for ItemsView and HistoryView

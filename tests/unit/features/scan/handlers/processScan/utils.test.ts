@@ -352,8 +352,6 @@ describe('processScan utilities', () => {
 
     const mockLocation = { country: 'Chile', city: 'Santiago' };
     const personalConfig: BuildTransactionConfig = {
-      viewMode: 'personal',
-      activeGroupId: undefined,
       language: 'es',
     };
 
@@ -425,40 +423,7 @@ describe('processScan utilities', () => {
 
     // Story 14d-v2-1.1: sharedGroupIds removed (Epic 14c cleanup)
     // Epic 14d will use sharedGroupId (single nullable string) instead
-    it('should NOT include sharedGroupIds in group mode (Epic 14c cleanup)', () => {
-      const groupConfig: BuildTransactionConfig = {
-        viewMode: 'group',
-        activeGroupId: 'group-123',
-        language: 'es',
-      };
-      const result = buildInitialTransaction(
-        mockScanResult,
-        mockParsedItems,
-        mockLocation,
-        15000,
-        '2026-01-25',
-        groupConfig
-      );
-      // Story 14d-v2-1.1: sharedGroupIds no longer assigned
-      expect(result.sharedGroupIds).toBeUndefined();
-    });
-
-    it('should not include sharedGroupIds in group mode without activeGroupId', () => {
-      const groupConfigNoId: BuildTransactionConfig = {
-        viewMode: 'group',
-        activeGroupId: undefined,
-        language: 'es',
-      };
-      const result = buildInitialTransaction(
-        mockScanResult,
-        mockParsedItems,
-        mockLocation,
-        15000,
-        '2026-01-25',
-        groupConfigNoId
-      );
-      expect(result.sharedGroupIds).toBeUndefined();
-    });
+    // Group mode tests removed - shared groups feature removed entirely
 
     it('should use provided location over scan result location', () => {
       const customLocation = { country: 'Argentina', city: 'Buenos Aires' };

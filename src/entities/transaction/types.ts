@@ -21,5 +21,4 @@ export {
     // Type guards
     hasTransactionImages,
     hasTransactionThumbnail,
-    isOwnTransaction,
 } from '../../types/transaction';

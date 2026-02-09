@@ -66,10 +66,6 @@ export interface LocationDefaults {
  * Configuration for building initial transaction.
  */
 export interface BuildTransactionConfig {
-  /** View mode ('personal' or 'group') */
-  viewMode: 'personal' | 'group';
-  /** Active shared group ID (if in group mode) */
-  activeGroupId?: string;
   /** Language for UI text ('en' or 'es') */
   language: 'en' | 'es';
 }
@@ -570,10 +566,6 @@ export interface ProcessScanParams {
   t: (key: string) => string;
   /** Language code */
   lang: 'en' | 'es';
-  /** View mode (personal or group) */
-  viewMode: 'personal' | 'group';
-  /** Active group ID (if in group mode) */
-  activeGroupId?: string;
   /** Trusted auto-save dependencies (optional - if not provided, returns route decision) */
   trustedAutoSave?: TrustedAutoSaveDependencies;
   /** Reduced motion preference (for haptic feedback) */

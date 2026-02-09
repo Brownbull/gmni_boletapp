@@ -8,14 +8,10 @@
  * Shows permission status and enable/disable toggle.
  */
 
-import { useState, useEffect } from 'react';
-import { Bell, Clock, Send, AlertCircle, Loader2, Users } from 'lucide-react';
+import { useState } from 'react';
+import { Bell, Clock, Send, AlertCircle, Loader2 } from 'lucide-react';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { Firestore } from 'firebase/firestore';
-import {
-  isWebPushEnabledLocal,
-  WEB_PUSH_CONSTANTS,
-} from '../services/webPushService';
 
 interface NotificationSettingsProps {
   t: (key: string) => string;
@@ -96,9 +92,7 @@ export function NotificationSettings({
   onShowToast
 }: NotificationSettingsProps) {
   const [isSendingTest, setIsSendingTest] = useState(false);
-  const [isSendingGroupTest, setIsSendingGroupTest] = useState(false);
   const [spendingRemindersEnabled, setSpendingRemindersEnabled] = useState(false);
-  const [sharedGroupNotificationsEnabled, setSharedGroupNotificationsEnabled] = useState(false);
 
   const {
     isSupported,
@@ -120,15 +114,6 @@ export function NotificationSettings({
   });
 
   const isDark = theme === 'dark';
-
-  // Only show as enabled if main push is enabled AND localStorage flag is true
-  useEffect(() => {
-    const localEnabled = isWebPushEnabledLocal();
-    // Shared group notifications require main push to be working
-    // isEnabled = permission === 'granted' && !!token
-    const effectiveEnabled = localEnabled && permission === 'granted' && !!token;
-    setSharedGroupNotificationsEnabled(effectiveEnabled);
-  }, [permission, token]);
 
   // Card styling matching mockup .settings-row with CSS variables
   const cardStyle: React.CSSProperties = {
@@ -204,80 +189,6 @@ export function NotificationSettings({
     }
   };
 
-  const handleSharedGroupNotificationsToggle = async () => {
-    if (sharedGroupNotificationsEnabled) {
-      // Disable - just update localStorage (subscriptions are managed by main push toggle)
-      try {
-        localStorage.setItem(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_KEY, 'false');
-      } catch {
-        // Ignore localStorage errors
-      }
-      setSharedGroupNotificationsEnabled(false);
-      if (onShowToast) {
-        onShowToast(t('sharedGroupNotificationsDisabled'));
-      }
-    } else {
-      // Enable - if main push is already enabled, just flip the flag
-      // Otherwise, enable main push first
-      if (!isEnabled) {
-        const success = await enableNotifications();
-        if (!success) {
-          return;
-        }
-      }
-      try {
-        localStorage.setItem(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_KEY, 'true');
-      } catch {
-        // Ignore localStorage errors
-      }
-      setSharedGroupNotificationsEnabled(true);
-      if (onShowToast) {
-        onShowToast(t('sharedGroupNotificationsEnabled'));
-      }
-    }
-  };
-
-  const handleTestSharedGroupNotification = async () => {
-    setIsSendingGroupTest(true);
-    try {
-      const uniqueTag = `shared-group-test-${Date.now()}`;
-
-      if ('serviceWorker' in navigator && Notification.permission === 'granted') {
-        const registration = await navigator.serviceWorker.ready;
-        await registration.showNotification(t('testSharedGroupNotificationTitle'), {
-          body: t('testSharedGroupNotificationBody'),
-          icon: '/pwa-192x192.png',
-          badge: '/pwa-192x192.png',
-          tag: uniqueTag,
-          data: {
-            type: 'TRANSACTION_ADDED',
-            groupId: 'test-group',
-          },
-        } as NotificationOptions);
-        if (onShowToast) {
-          onShowToast(t('testNotificationSent'));
-        }
-      } else if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(t('testSharedGroupNotificationTitle'), {
-          body: t('testSharedGroupNotificationBody'),
-          icon: '/pwa-192x192.png',
-          badge: '/pwa-192x192.png',
-          tag: uniqueTag,
-        });
-        if (onShowToast) {
-          onShowToast(t('testNotificationSent'));
-        }
-      }
-    } catch (err) {
-      console.error('Failed to send test shared group notification:', err);
-      if (onShowToast) {
-        onShowToast(t('testNotificationFailed'));
-      }
-    } finally {
-      setIsSendingGroupTest(false);
-    }
-  };
-
   return (
     <>
       {/* Push Notifications Card */}
@@ -346,39 +257,6 @@ export function NotificationSettings({
             {error}
           </div>
         )}
-      </div>
-
-      <div style={cardStyle}>
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2.5">
-            <Users
-              size={20}
-              strokeWidth={2}
-              style={{ color: 'var(--text-secondary)' }}
-            />
-            <div>
-              <span
-                className="text-sm font-medium block"
-                style={{ color: 'var(--text-primary)' }}
-              >
-                {t('sharedGroupNotifications')}
-              </span>
-              <span
-                className="text-xs"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                {t('sharedGroupNotificationsHint')}
-              </span>
-            </div>
-          </div>
-
-          <ToggleSwitch
-            enabled={sharedGroupNotificationsEnabled}
-            onChange={handleSharedGroupNotificationsToggle}
-            disabled={isDenied}
-            loading={isLoading}
-          />
-        </div>
       </div>
 
       {/* Spending Reminders Card */}
@@ -453,50 +331,6 @@ export function NotificationSettings({
               aria-label={t('testNotification')}
             >
               {isSendingTest && <Loader2 size={14} className="animate-spin" />}
-              {t('send')}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {sharedGroupNotificationsEnabled && (
-        <div style={cardStyle}>
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2.5">
-              <Users
-                size={20}
-                strokeWidth={2}
-                style={{ color: 'var(--text-secondary)' }}
-              />
-              <div>
-                <span
-                  className="text-sm font-medium block"
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  {t('testSharedGroupNotification')}
-                </span>
-                <span
-                  className="text-xs"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  {t('testSharedGroupNotificationHint')}
-                </span>
-              </div>
-            </div>
-
-            {/* Secondary Button - uses primary color for text */}
-            <button
-              onClick={handleTestSharedGroupNotification}
-              disabled={isSendingGroupTest}
-              className="px-3.5 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
-              style={{
-                backgroundColor: 'var(--bg-tertiary)',
-                border: '1px solid var(--border-light)',
-                color: 'var(--primary)',
-              }}
-              aria-label={t('testSharedGroupNotification')}
-            >
-              {isSendingGroupTest && <Loader2 size={14} className="animate-spin" />}
               {t('send')}
             </button>
           </div>

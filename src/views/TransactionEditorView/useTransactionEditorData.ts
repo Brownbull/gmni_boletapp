@@ -241,15 +241,8 @@ export function useTransactionEditorData(
         currentTransaction?.id,
     ]);
 
-    // Determine if viewing another user's transaction
-    const isOtherUserTransaction = useMemo(() => {
-        return Boolean(
-            currentTransaction?._ownerId &&
-            currentTransaction._ownerId !== user?.uid
-        );
-    }, [currentTransaction?._ownerId, user?.uid]);
-
-    // Owner profile (shared groups removed - always undefined)
+    // All transactions are owned by the current user (shared groups removed)
+    const isOtherUserTransaction = false;
     const ownerProfile = undefined;
 
     // === Formatters ===
@@ -275,7 +268,7 @@ export function useTransactionEditorData(
         mode: transactionEditorMode,
         readOnly: isViewingReadOnly,
         isOtherUserTransaction,
-        ownerId: currentTransaction?._ownerId,
+        ownerId: undefined,
         ownerProfile,
 
         // Scan state

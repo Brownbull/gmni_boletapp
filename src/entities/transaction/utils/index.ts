@@ -25,12 +25,10 @@ export {
     type UserDefaults,
 } from '../../../utils/transactionNormalizer';
 
-// Story 14d-v2-1-2b: Epic 14d-v2 field defaults (sharedGroupId, version, periods, etc.)
+// Story 14d-v2-1-2b: Epic 14d-v2 field defaults (periods, updatedAt, etc.)
 export {
     ensureTransactionDefaults,
     ensureTransactionsDefaults,
-    isDeleted,
-    isSharedTransaction,
 } from '../../../utils/transactionUtils';
 
 // Story 14e-41: Transaction reconciliation utility

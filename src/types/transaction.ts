@@ -5,12 +5,6 @@
  * See: shared/schema/categories.ts
  *
  * DO NOT define StoreCategory or ItemCategory here - import from unified schema.
- *
- * Epic 14d-v2 Fields:
- * - sharedGroupId: Single group association (not array) - enables efficient queries
- * - deletedAt/deletedBy: Soft delete for shared group sync
- * - updatedAt/version: Optimistic concurrency control
- * - periods: Pre-computed temporal keys for efficient filtering
  */
 
 // Re-export types from unified schema for convenience
@@ -125,51 +119,12 @@ export interface Transaction {
     /** Source of the merchant name (scan, learned, or user) */
     merchantSource?: MerchantSource;
 
-    // ============================================================================
-    // Epic 14d-v2 Fields: Shared Groups Support
-    // ============================================================================
-
-    /**
-     * Shared group ID this transaction is tagged to.
-     * Epic 14d-v2 AD-1: Single group (not array) eliminates array-contains query limitations.
-     * null = personal transaction (not shared with any group)
-     */
-    sharedGroupId?: string | null;
-
-    /**
-     * Soft delete timestamp for shared group sync.
-     * Epic 14d-v2 AD-8: null = not deleted, Timestamp = when soft-deleted.
-     * Enables changelog-driven sync to propagate deletions to group members.
-     */
-    deletedAt?: Timestamp | null;
-
-    /**
-     * User ID of who deleted this transaction.
-     * Epic 14d-v2 AD-8: Enables audit trail for shared transactions.
-     * Only set when deletedAt is set.
-     */
-    deletedBy?: string | null;
-
-    /**
-     * Optimistic concurrency version number.
-     * Epic 14d-v2 AD-8: Incremented on every update.
-     * Starts at 1 for new transactions.
-     */
-    version?: number;
-
     /**
      * Pre-computed period identifiers for efficient temporal queries.
-     * Epic 14d-v2 AD-5: Computed from date field on save/update.
+     * Computed from date field on save/update.
      * Enables efficient Firestore queries without runtime date parsing.
      */
     periods?: TransactionPeriods;
-
-    /**
-     * Owner's user ID - set client-side when merging transactions from multiple members.
-     * Not stored in Firestore (derived from transaction's document path).
-     * Used to determine if current user can edit (own) or only view (other's).
-     */
-    _ownerId?: string;
 }
 
 /**
@@ -186,19 +141,3 @@ export function hasTransactionThumbnail(transaction: Transaction): boolean {
     return Boolean(transaction.thumbnailUrl)
 }
 
-/**
- *
- * A transaction is considered "owned" by the user if:
- * - No _ownerId is set (personal mode - all transactions are user's own)
- * - _ownerId matches the current user's ID
- *
- * @param transaction Transaction to check
- * @param currentUserId Current user's ID
- * @returns true if the user owns this transaction
- */
-export function isOwnTransaction(transaction: Transaction, currentUserId: string): boolean {
-    // If _ownerId is not set, the transaction is the user's own (personal mode)
-    if (!transaction._ownerId) return true;
-    // In shared group mode, compare owner ID with current user
-    return transaction._ownerId === currentUserId;
-}

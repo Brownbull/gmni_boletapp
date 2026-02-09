@@ -270,10 +270,6 @@ export function useTransactionHandlers(
             currency: userPreferences.defaultCurrency || 'CLP',
         };
 
-        // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
-        // Epic 14d will use sharedGroupId (single nullable string) instead
-        // Group mode auto-assignment will be re-added in Epic 14d
-
         return baseTransaction;
     }, [
         userPreferences.defaultCountry,

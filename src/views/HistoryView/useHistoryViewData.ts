@@ -165,8 +165,7 @@ export interface UseHistoryViewDataReturn {
  * 4. useTheme() - theme/locale settings
  * 5. useUserPreferences() - user defaults
  * 6. useViewMode() - group mode state
- * 7. useUserSharedGroups() - active group info
- * 8. Navigation store - pending filters
+ * 7. Navigation store - pending filters
  *
  * @returns UseHistoryViewDataReturn - All data needed by HistoryView
  */
