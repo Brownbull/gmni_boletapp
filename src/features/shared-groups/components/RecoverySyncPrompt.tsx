@@ -21,6 +21,7 @@ import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { X, RefreshCw, Clock, Loader2, AlertTriangle } from 'lucide-react';
 import { useBodyScrollLock, useEscapeKey, useFocusTrap } from '@/shared/hooks';
 import { Z_INDEX } from '@/constants';
+import { safeCSSColor } from '@/utils/validationUtils';
 
 /**
  * Cooldown duration between sync attempts in milliseconds.
@@ -253,7 +254,7 @@ export const RecoverySyncPrompt: React.FC<RecoverySyncPromptProps> = ({
                     {/* Warning Icon or Group Icon */}
                     <div
                         className="mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center text-2xl"
-                        style={{ backgroundColor: groupColor }}
+                        style={{ backgroundColor: safeCSSColor(groupColor) }}
                         aria-hidden="true"
                     >
                         {groupIcon || <AlertTriangle className="text-white" size={28} />}
@@ -271,7 +272,7 @@ export const RecoverySyncPrompt: React.FC<RecoverySyncPromptProps> = ({
                     {/* Group name */}
                     <p
                         className="text-sm mb-2 font-medium"
-                        style={{ color: groupColor }}
+                        style={{ color: safeCSSColor(groupColor) }}
                     >
                         {groupName}
                     </p>
@@ -321,7 +322,7 @@ export const RecoverySyncPrompt: React.FC<RecoverySyncPromptProps> = ({
                             onClick={handleFullSync}
                             disabled={isSyncing}
                             className="w-full py-3 px-4 rounded-xl text-white font-semibold shadow-md transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                            style={{ backgroundColor: groupColor }}
+                            style={{ backgroundColor: safeCSSColor(groupColor) }}
                             data-testid="recovery-sync-full-btn"
                         >
                             {isSyncing ? (

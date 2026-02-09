@@ -47,14 +47,8 @@ function createMockDoc(id: string, data: Record<string, unknown>) {
     };
 }
 
-// Helper to create mock Firestore Timestamp
-function createMockTimestamp(date: Date = new Date()) {
-    return {
-        seconds: Math.floor(date.getTime() / 1000),
-        nanoseconds: 0,
-        toDate: () => date,
-    };
-}
+// Mock Firestore Timestamp - imported from shared helpers
+import { createMockTimestamp } from '../../helpers';
 
 describe('subscribeToTransactions', () => {
     const mockDb = {} as any;

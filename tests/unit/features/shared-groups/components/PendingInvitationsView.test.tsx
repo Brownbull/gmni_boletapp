@@ -11,6 +11,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { PendingInvitationsView } from '@/features/shared-groups/components/PendingInvitationsView';
 import type { PendingInvitation } from '@/types/sharedGroup';
+import { createMockInvitation } from '@helpers/sharedGroupFactory';
 
 // =============================================================================
 // Mocks
@@ -76,33 +77,6 @@ const defaultProps = {
     onShowToast: vi.fn(),
     appId: 'boletapp',
 };
-
-function createMockInvitation(id: string, groupName: string): PendingInvitation {
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-
-    return {
-        id,
-        groupId: `group-${id}`,
-        groupName,
-        groupColor: '#10b981',
-        shareCode: 'ABC123DEF456GHI7',
-        invitedEmail: 'test@example.com',
-        invitedByUserId: 'inviter-456',
-        invitedByName: 'Alice',
-        createdAt: {
-            toDate: () => now,
-            seconds: Math.floor(now.getTime() / 1000),
-            nanoseconds: 0,
-        } as PendingInvitation['createdAt'],
-        expiresAt: {
-            toDate: () => expiresAt,
-            seconds: Math.floor(expiresAt.getTime() / 1000),
-            nanoseconds: 0,
-        } as PendingInvitation['expiresAt'],
-        status: 'pending',
-    };
-}
 
 // =============================================================================
 // Tests
@@ -182,8 +156,8 @@ describe('PendingInvitationsView', () => {
         it('shows view container when invitations exist', () => {
             mockHasInvitations = true;
             mockInvitations = [
-                createMockInvitation('inv-1', 'Family Expenses'),
-                createMockInvitation('inv-2', 'Office Lunch'),
+                createMockInvitation({ id: 'inv-1', groupName: 'Family Expenses' }),
+                createMockInvitation({ id: 'inv-2', groupName: 'Office Lunch' }),
             ];
 
             render(<PendingInvitationsView {...defaultProps} />);
@@ -193,7 +167,7 @@ describe('PendingInvitationsView', () => {
 
         it('shows header with title', () => {
             mockHasInvitations = true;
-            mockInvitations = [createMockInvitation('inv-1', 'Group 1')];
+            mockInvitations = [createMockInvitation({ id: 'inv-1', groupName: 'Group 1' })];
 
             render(<PendingInvitationsView {...defaultProps} />);
 
@@ -204,8 +178,8 @@ describe('PendingInvitationsView', () => {
         it('renders PendingInvitationsSection with invitations', () => {
             mockHasInvitations = true;
             mockInvitations = [
-                createMockInvitation('inv-1', 'Group 1'),
-                createMockInvitation('inv-2', 'Group 2'),
+                createMockInvitation({ id: 'inv-1', groupName: 'Group 1' }),
+                createMockInvitation({ id: 'inv-2', groupName: 'Group 2' }),
             ];
 
             render(<PendingInvitationsView {...defaultProps} />);
@@ -216,7 +190,7 @@ describe('PendingInvitationsView', () => {
 
         it('does not show empty state when invitations exist', () => {
             mockHasInvitations = true;
-            mockInvitations = [createMockInvitation('inv-1', 'Group 1')];
+            mockInvitations = [createMockInvitation({ id: 'inv-1', groupName: 'Group 1' })];
 
             render(<PendingInvitationsView {...defaultProps} />);
 

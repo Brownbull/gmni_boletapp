@@ -12,7 +12,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { AirlockHistoryCard } from '../../../../src/components/insights/AirlockHistoryCard';
 import { AirlockRecord } from '../../../../src/types/airlock';
-import { Timestamp } from 'firebase/firestore';
+import { createMockTimestamp, createMockTimestampDaysAgo } from '../../../helpers';
 
 // ============================================================================
 // Test Helpers
@@ -30,20 +30,6 @@ const mockT = (key: string) => {
   return translations[key] || key;
 };
 
-function createMockTimestamp(daysAgo: number = 0): Timestamp {
-  const date = new Date();
-  date.setDate(date.getDate() - daysAgo);
-  return {
-    toDate: () => date,
-    seconds: Math.floor(date.getTime() / 1000),
-    nanoseconds: 0,
-    toMillis: () => date.getTime(),
-    isEqual: () => false,
-    valueOf: () => '',
-    toJSON: () => ({ seconds: Math.floor(date.getTime() / 1000), nanoseconds: 0 }),
-  } as unknown as Timestamp;
-}
-
 function createMockAirlock(overrides: Partial<AirlockRecord> = {}): AirlockRecord {
   return {
     id: 'airlock-1',
@@ -51,7 +37,7 @@ function createMockAirlock(overrides: Partial<AirlockRecord> = {}): AirlockRecor
     title: 'Tu café de la semana',
     message: 'Gastaste $45 en café esta semana.',
     emoji: '☕',
-    createdAt: createMockTimestamp(0),
+    createdAt: createMockTimestamp(),
     viewedAt: null,
     ...overrides,
   };
@@ -93,7 +79,7 @@ describe('AirlockHistoryCard - Basic Rendering', () => {
   });
 
   it('displays Today for recent airlocks', () => {
-    const airlock = createMockAirlock({ createdAt: createMockTimestamp(0) });
+    const airlock = createMockAirlock({ createdAt: createMockTimestamp() });
 
     render(
       <AirlockHistoryCard
@@ -108,7 +94,7 @@ describe('AirlockHistoryCard - Basic Rendering', () => {
   });
 
   it('displays Yesterday for 1 day old airlocks', () => {
-    const airlock = createMockAirlock({ createdAt: createMockTimestamp(1) });
+    const airlock = createMockAirlock({ createdAt: createMockTimestampDaysAgo(1) });
 
     render(
       <AirlockHistoryCard
@@ -145,7 +131,7 @@ describe('AirlockHistoryCard - Unviewed State', () => {
 
   it('AC6: does NOT show badge for viewed airlocks', () => {
     const airlock = createMockAirlock({
-      viewedAt: createMockTimestamp(0),
+      viewedAt: createMockTimestamp(),
     });
 
     render(

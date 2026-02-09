@@ -1387,6 +1387,55 @@ Epic 14e included an adversarial review that prevented 12 points of unnecessary 
 
 ---
 
+### ADR-021: View Mode Client-Side Filtering (Epic 14d-v2)
+
+**Decision:** Use client-side filtering for view mode (Personal vs Group) transaction display
+**Context:** View mode filtering could use Firestore `where` clauses or client-side filtering. Client-side chosen for consistency with soft-delete pattern, legacy data support, and single-subscription cost savings.
+**Date:** 2026-02-04 (Epic 14d-v2, Story 14d-v2-1-10d)
+
+**Security Model:**
+- Client-side filtering is a **UI convenience, not a security boundary**
+- Firestore rules enforce user data isolation (`request.auth.uid == userId`)
+- `sharedGroupId` is a UI annotation, not an access control field
+
+**Consequences:**
+- ✅ Consistent with existing soft-delete filtering pattern
+- ✅ No compound index or migration required for legacy data
+- ✅ Instant view switching (single subscription)
+- ⚠️ If cross-user shared transactions are added (Sub-Epic 2+), server-side filtering must replace this
+
+**Full ADR:** `docs/architecture/decisions/ADR-021-view-mode-client-side-filtering.md`
+
+**Status:** Accepted
+
+---
+
+### ADR-022: Client-Side Rate Limiting for Sharing Toggles (Epic 14d-v2)
+
+**Decision:** Enforce cooldown and daily limits for transaction sharing toggles in client-side JavaScript
+**Context:** Sharing toggles need rate limiting to prevent excessive Firestore writes and changelog noise. Server-side options (Firestore rules, Cloud Functions) are over-engineered for owner-only operations.
+**Date:** 2026-02-04 (Epic 14d-v2, Stories 14d-v2-1-11a/b, 14d-v2-1-12a/b)
+
+**Rate Limits (FR-21):**
+
+| Level | Cooldown | Daily Limit | Reset |
+|-------|----------|-------------|-------|
+| Group | 15 min | 3x/day | Midnight (group IANA timezone) |
+| User | 5 min | 3x/day | Midnight (device local timezone) |
+
+**Consequences:**
+- ✅ Simple implementation (~110 LOC shared engine in `cooldownCore.ts`)
+- ✅ Instant UX feedback with clear messages
+- ✅ No Cloud Function infrastructure needed
+- ⚠️ Technically bypassable by group owner (acceptable: owner-only impact)
+- ⚠️ TD-CONSOLIDATED-11 planned for server-side enforcement if needed
+
+**Full ADR:** `docs/architecture/decisions/ADR-022-client-side-rate-limiting.md`
+
+**Status:** Accepted
+
+---
+
 ## Conclusion
 
 Boletapp's architecture has evolved from a **rapid MVP prototype** (single-file SPA) to a **production-ready modular application** while maintaining its core strengths: simplicity, serverless infrastructure, and AI-powered intelligence.
@@ -1463,6 +1512,6 @@ Component → useFirestoreSubscription → React Query Cache + Firestore onSnaps
 
 ---
 
-**Document Version:** 8.0
-**Last Updated:** 2026-02-01
-**Epic:** Epic 14e (Feature Architecture + Zustand State Management)
+**Document Version:** 8.1
+**Last Updated:** 2026-02-08
+**Epic:** Epic 14d-v2 Tech Debt (ADR-021, ADR-022)

@@ -12,7 +12,6 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import type { Timestamp } from 'firebase/firestore';
 import {
     canToggleTransactionSharing,
     getCooldownRemainingMinutes,
@@ -20,15 +19,7 @@ import {
     type ToggleCooldownResult,
 } from '../../../src/utils/sharingCooldown';
 import { SHARED_GROUP_LIMITS } from '../../../src/types/sharedGroup';
-
-// Test helper: Create mock Timestamp
-function createMockTimestamp(date: Date): Timestamp {
-    return {
-        toDate: () => date,
-        seconds: Math.floor(date.getTime() / 1000),
-        nanoseconds: 0,
-    } as unknown as Timestamp;
-}
+import { createMockTimestamp } from '../../helpers';
 
 describe('sharingCooldown', () => {
     // =========================================================================
@@ -36,7 +27,7 @@ describe('sharingCooldown', () => {
     // =========================================================================
     describe('getCooldownRemainingMinutes', () => {
         it('returns 0 when lastToggleAt is null (no previous toggle)', () => {
-            const result = getCooldownRemainingMinutes(null, 15);
+            const result = getCooldownRemainingMinutes(null, SHARED_GROUP_LIMITS.TRANSACTION_SHARING_COOLDOWN_MINUTES);
             expect(result).toBe(0);
         });
 
@@ -46,7 +37,7 @@ describe('sharingCooldown', () => {
 
             const result = getCooldownRemainingMinutes(
                 createMockTimestamp(toggledAt),
-                15,
+                SHARED_GROUP_LIMITS.TRANSACTION_SHARING_COOLDOWN_MINUTES,
                 now
             );
 
@@ -59,7 +50,7 @@ describe('sharingCooldown', () => {
 
             const result = getCooldownRemainingMinutes(
                 createMockTimestamp(toggledAt),
-                15,
+                SHARED_GROUP_LIMITS.TRANSACTION_SHARING_COOLDOWN_MINUTES,
                 now
             );
 
@@ -72,7 +63,7 @@ describe('sharingCooldown', () => {
 
             const result = getCooldownRemainingMinutes(
                 createMockTimestamp(toggledAt),
-                15,
+                SHARED_GROUP_LIMITS.TRANSACTION_SHARING_COOLDOWN_MINUTES,
                 now
             );
 
@@ -85,7 +76,7 @@ describe('sharingCooldown', () => {
 
             const result = getCooldownRemainingMinutes(
                 createMockTimestamp(toggledAt),
-                15,
+                SHARED_GROUP_LIMITS.TRANSACTION_SHARING_COOLDOWN_MINUTES,
                 now
             );
 
@@ -100,7 +91,7 @@ describe('sharingCooldown', () => {
                 },
             } as unknown as Timestamp;
 
-            const result = getCooldownRemainingMinutes(corruptedTimestamp, 15);
+            const result = getCooldownRemainingMinutes(corruptedTimestamp, SHARED_GROUP_LIMITS.TRANSACTION_SHARING_COOLDOWN_MINUTES);
             expect(result).toBe(0);
         });
     });

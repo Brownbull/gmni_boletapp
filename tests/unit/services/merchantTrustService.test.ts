@@ -5,22 +5,7 @@ import {
     calculateEditRate,
 } from '../../../src/services/merchantTrustService';
 import { TrustedMerchant, TRUST_THRESHOLDS } from '../../../src/types/trust';
-import { Timestamp } from 'firebase/firestore';
-
-// Mock Timestamp helper
-function createMockTimestamp(hoursAgo: number = 0): Timestamp {
-    const date = new Date();
-    date.setHours(date.getHours() - hoursAgo);
-    return {
-        toDate: () => date,
-        seconds: Math.floor(date.getTime() / 1000),
-        nanoseconds: 0,
-        toMillis: () => date.getTime(),
-        isEqual: () => false,
-        valueOf: () => '',
-        toJSON: () => ({ seconds: Math.floor(date.getTime() / 1000), nanoseconds: 0 }),
-    } as unknown as Timestamp;
-}
+import { createMockTimestamp, createMockTimestampHoursAgo } from '../../helpers';
 
 describe('merchantTrustService', () => {
     describe('normalizeMerchantNameForTrust', () => {
@@ -80,7 +65,7 @@ describe('merchantTrustService', () => {
                 editRate: 0,
                 trusted: false,
                 lastScanAt: createMockTimestamp(),
-                createdAt: createMockTimestamp(24),
+                createdAt: createMockTimestampHoursAgo(24),
                 updatedAt: createMockTimestamp(),
             };
 
@@ -97,9 +82,9 @@ describe('merchantTrustService', () => {
                 editCount: 0,
                 editRate: 0,
                 trusted: true,
-                trustedAt: createMockTimestamp(24),
+                trustedAt: createMockTimestampHoursAgo(24),
                 lastScanAt: createMockTimestamp(),
-                createdAt: createMockTimestamp(48),
+                createdAt: createMockTimestampHoursAgo(48),
                 updatedAt: createMockTimestamp(),
             };
 
@@ -117,9 +102,9 @@ describe('merchantTrustService', () => {
                 editRate: 0,
                 trusted: false,
                 declined: true,
-                promptShownAt: createMockTimestamp(24),
+                promptShownAt: createMockTimestampHoursAgo(24),
                 lastScanAt: createMockTimestamp(),
-                createdAt: createMockTimestamp(48),
+                createdAt: createMockTimestampHoursAgo(48),
                 updatedAt: createMockTimestamp(),
             };
 
@@ -137,7 +122,7 @@ describe('merchantTrustService', () => {
                 editRate: 0,
                 trusted: false,
                 lastScanAt: createMockTimestamp(),
-                createdAt: createMockTimestamp(24),
+                createdAt: createMockTimestampHoursAgo(24),
                 updatedAt: createMockTimestamp(),
             };
 
@@ -155,7 +140,7 @@ describe('merchantTrustService', () => {
                 editRate: 0.1, // exactly 10%
                 trusted: false,
                 lastScanAt: createMockTimestamp(),
-                createdAt: createMockTimestamp(24),
+                createdAt: createMockTimestampHoursAgo(24),
                 updatedAt: createMockTimestamp(),
             };
 
@@ -173,7 +158,7 @@ describe('merchantTrustService', () => {
                 editRate: 1/11, // ~9.09%
                 trusted: false,
                 lastScanAt: createMockTimestamp(),
-                createdAt: createMockTimestamp(24),
+                createdAt: createMockTimestampHoursAgo(24),
                 updatedAt: createMockTimestamp(),
             };
 

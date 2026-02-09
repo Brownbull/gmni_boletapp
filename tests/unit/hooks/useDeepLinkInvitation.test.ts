@@ -24,7 +24,14 @@ import {
     type DeepLinkInvitationError,
 } from '../../../src/hooks/useDeepLinkInvitation';
 import type { PendingInvitation } from '../../../src/types/sharedGroup';
-import { Timestamp } from 'firebase/firestore';
+import { createMockTimestampDaysAgo, createMockTimestampDaysFromNow } from '../../helpers';
+
+// Mock Firebase Auth (TD-CONSOLIDATED-5: getAuth used for email in security rules)
+vi.mock('firebase/auth', () => ({
+    getAuth: vi.fn(() => ({
+        currentUser: { email: 'friend@example.com' },
+    })),
+}));
 
 // Mock the deep link handler utilities
 vi.mock('../../../src/utils/deepLinkHandler', () => ({
@@ -49,18 +56,6 @@ const mockGetInvitationByShareCode = vi.mocked(getInvitationByShareCode);
 const VALID_SHARE_CODE = 'Ab3dEf7hIj9kLm0p';
 const MOCK_DB = {} as any;
 
-/**
- * Helper to create a mock Timestamp
- */
-function createMockTimestamp(daysFromNow: number = 0): Timestamp {
-    const date = new Date();
-    date.setDate(date.getDate() + daysFromNow);
-    return {
-        toDate: () => date,
-        seconds: Math.floor(date.getTime() / 1000),
-        nanoseconds: 0,
-    } as unknown as Timestamp;
-}
 
 /**
  * Sample pending invitation for tests
@@ -74,8 +69,8 @@ const MOCK_INVITATION: PendingInvitation = {
     invitedEmail: 'friend@example.com',
     invitedByUserId: 'owner-xyz',
     invitedByName: 'Juan García',
-    createdAt: createMockTimestamp(-1), // 1 day ago
-    expiresAt: createMockTimestamp(6),  // Expires in 6 days
+    createdAt: createMockTimestampDaysAgo(1), // 1 day ago
+    expiresAt: createMockTimestampDaysFromNow(6),  // Expires in 6 days
     status: 'pending',
 };
 
@@ -85,7 +80,7 @@ const MOCK_INVITATION: PendingInvitation = {
 const MOCK_EXPIRED_INVITATION: PendingInvitation = {
     ...MOCK_INVITATION,
     id: 'invitation-expired',
-    expiresAt: createMockTimestamp(-1), // Expired 1 day ago
+    expiresAt: createMockTimestampDaysAgo(1), // Expired 1 day ago
 };
 
 // =============================================================================
@@ -239,7 +234,7 @@ describe('useDeepLinkInvitation', () => {
                 expect(result.current.invitation).toEqual(MOCK_INVITATION);
             });
 
-            expect(mockGetInvitationByShareCode).toHaveBeenCalledWith(MOCK_DB, VALID_SHARE_CODE);
+            expect(mockGetInvitationByShareCode).toHaveBeenCalledWith(MOCK_DB, VALID_SHARE_CODE, 'friend@example.com');
         });
 
         it('should set loading state during fetch', async () => {
@@ -438,7 +433,7 @@ describe('useDeepLinkInvitation', () => {
             rerender({ isAuth: true, userId: mockUserId });
 
             await waitFor(() => {
-                expect(mockGetInvitationByShareCode).toHaveBeenCalledWith(MOCK_DB, VALID_SHARE_CODE);
+                expect(mockGetInvitationByShareCode).toHaveBeenCalledWith(MOCK_DB, VALID_SHARE_CODE, 'friend@example.com');
             });
         });
 
@@ -705,7 +700,7 @@ describe('useDeepLinkInvitation', () => {
                 expect(result.current.shareCode).toBe(urlCode);
             });
 
-            expect(mockGetInvitationByShareCode).toHaveBeenCalledWith(MOCK_DB, urlCode);
+            expect(mockGetInvitationByShareCode).toHaveBeenCalledWith(MOCK_DB, urlCode, 'friend@example.com');
         });
     });
 });

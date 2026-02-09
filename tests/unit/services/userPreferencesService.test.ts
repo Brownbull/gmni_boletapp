@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Timestamp } from 'firebase/firestore';
+import { createMockTimestamp, createMockTimestampDaysAgo } from '../../helpers';
 
 // Mock Firestore before importing the module
 vi.mock('firebase/firestore', async () => {
@@ -91,18 +91,6 @@ function createMockDocSnapshotNotExists() {
     };
 }
 
-/**
- * Helper to create a mock Timestamp
- */
-function createMockTimestamp(daysAgo: number = 0): Timestamp {
-    const date = new Date();
-    date.setDate(date.getDate() - daysAgo);
-    return {
-        toDate: () => date,
-        seconds: Math.floor(date.getTime() / 1000),
-        nanoseconds: 0,
-    } as unknown as Timestamp;
-}
 
 // =============================================================================
 // Tests: getUserSharedGroupsPreferences
@@ -516,9 +504,9 @@ describe('updateShareMyTransactions', () => {
         // Arrange: Existing preference with high count from yesterday
         const existingPref: UserGroupPreference = {
             shareMyTransactions: true,
-            lastToggleAt: createMockTimestamp(1), // yesterday
+            lastToggleAt: createMockTimestampDaysAgo(1), // yesterday
             toggleCountToday: 3,
-            toggleCountResetAt: createMockTimestamp(1), // yesterday
+            toggleCountResetAt: createMockTimestampDaysAgo(1), // yesterday
         };
         mockGetDoc.mockResolvedValue(createMockDocSnapshot({
             groupPreferences: { [TEST_GROUP_ID]: existingPref },
@@ -567,9 +555,9 @@ describe('updateShareMyTransactions', () => {
         // Arrange: Existing preference that needs daily reset
         const existingPref: UserGroupPreference = {
             shareMyTransactions: true,
-            lastToggleAt: createMockTimestamp(1),
+            lastToggleAt: createMockTimestampDaysAgo(1),
             toggleCountToday: 2,
-            toggleCountResetAt: createMockTimestamp(1),
+            toggleCountResetAt: createMockTimestampDaysAgo(1),
         };
         mockGetDoc.mockResolvedValue(createMockDocSnapshot({
             groupPreferences: { [TEST_GROUP_ID]: existingPref },
@@ -593,9 +581,9 @@ describe('updateShareMyTransactions', () => {
         // Arrange: Same day, no reset needed
         const existingPref: UserGroupPreference = {
             shareMyTransactions: false,
-            lastToggleAt: createMockTimestamp(0),
+            lastToggleAt: createMockTimestamp(),
             toggleCountToday: 1,
-            toggleCountResetAt: createMockTimestamp(0),
+            toggleCountResetAt: createMockTimestamp(),
         };
         mockGetDoc.mockResolvedValue(createMockDocSnapshot({
             groupPreferences: { [TEST_GROUP_ID]: existingPref },
@@ -660,7 +648,7 @@ describe('updateShareMyTransactions', () => {
         expect(mockSetDoc).not.toHaveBeenCalled();
     });
 
-    it('should throw error on Firestore failure', async () => {
+    it('should throw error on Firestore failure without writing', async () => {
         // Arrange
         mockGetDoc.mockRejectedValue(new Error('Network error'));
 
@@ -668,6 +656,10 @@ describe('updateShareMyTransactions', () => {
         await expect(
             updateShareMyTransactions(mockDb, TEST_USER_ID, TEST_APP_ID, TEST_GROUP_ID, true)
         ).rejects.toThrow('Network error');
+
+        // No partial writes should occur when read fails
+        expect(mockSetDoc).not.toHaveBeenCalled();
+        expect(mockUpdateDoc).not.toHaveBeenCalled();
     });
 
     it('should use correct document path', async () => {

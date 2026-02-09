@@ -29,6 +29,7 @@ import { getFirestore } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { usePaginatedTransactions } from '@/hooks/usePaginatedTransactions';
 import { useRecentScans } from '@/hooks/useRecentScans';
+import { mergeTransactionsWithRecentScans } from '@/utils/transactionMerge';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useTheme } from '@/contexts/ThemeContext';
 // Story 14d-v2-0: ViewMode migrated from Context to Zustand store
@@ -241,23 +242,11 @@ export function useHistoryViewData(): UseHistoryViewDataReturn {
     // Recent scans for merge
     const recentScans = useRecentScans(user, services);
 
-    // Merge recent scans with paginated transactions
-    // Logic moved from App.tsx - deduplicates by transaction ID
-    // Recent scans appear at TOP of list
-    const transactionsWithRecentScans = useMemo(() => {
-        if (!recentScans?.length) return paginatedTransactions;
-
-        // Build set of recent scan IDs for deduplication
-        const recentIds = new Set(recentScans.filter((s) => s.id).map((s) => s.id));
-
-        // Filter paginated to exclude duplicates
-        const filteredPaginated = paginatedTransactions.filter(
-            (tx) => tx.id && !recentIds.has(tx.id)
-        );
-
-        // Recent scans at top, then paginated
-        return [...recentScans, ...filteredPaginated];
-    }, [paginatedTransactions, recentScans]);
+    // Merge recent scans with paginated transactions (deduplication)
+    const transactionsWithRecentScans = useMemo(
+        () => mergeTransactionsWithRecentScans(paginatedTransactions, recentScans),
+        [paginatedTransactions, recentScans]
+    );
 
     // Story 14d-v2-1-10d: Filter transactions by view mode (personal vs group)
     const viewModeFilteredTransactions = useMemo(() => {

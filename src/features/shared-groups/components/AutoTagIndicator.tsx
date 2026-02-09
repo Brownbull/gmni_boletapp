@@ -29,6 +29,7 @@
  */
 
 import { X, Users } from 'lucide-react';
+import { safeCSSColor } from '@/utils/validationUtils';
 
 // =============================================================================
 // Types
@@ -71,6 +72,7 @@ export function AutoTagIndicator({
   size = 'normal',
 }: AutoTagIndicatorProps) {
   const canRemove = showRemove && onRemove;
+  const validatedColor = safeCSSColor(groupColor);
 
   // Size-specific classes
   const sizeClasses = {
@@ -92,8 +94,8 @@ export function AutoTagIndicator({
     <div
       className={`flex items-center gap-2 rounded-lg ${classes.container}`}
       style={{
-        backgroundColor: `${groupColor}15`, // 15 = ~9% opacity
-        border: `1px solid ${groupColor}40`, // 40 = ~25% opacity
+        backgroundColor: `${validatedColor}15`, // 15 = ~9% opacity
+        border: `1px solid ${validatedColor}40`, // 40 = ~25% opacity
       }}
       data-testid={`auto-tag-indicator-${groupId}`}
       role="status"
@@ -103,7 +105,7 @@ export function AutoTagIndicator({
       <span
         className={`${classes.icon} rounded-full flex items-center justify-center font-semibold`}
         style={{
-          backgroundColor: groupColor,
+          backgroundColor: validatedColor,
           color: 'white',
           // Emoji font-family for proper rendering per Atlas Section 6 lessons
           ...(groupIcon ? { fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif' } : {}),
@@ -117,7 +119,7 @@ export function AutoTagIndicator({
         <span className="text-inherit opacity-75">
           {t('willBeSharedTo') || 'Will be shared to'}
         </span>{' '}
-        <strong style={{ color: groupColor }}>{groupName}</strong>
+        <strong style={{ color: validatedColor }}>{groupName}</strong>
       </span>
 
       {/* Remove Button */}
@@ -128,7 +130,7 @@ export function AutoTagIndicator({
             onRemove();
           }}
           className={`${classes.button} ml-auto flex items-center justify-center rounded-full transition-colors hover:bg-black/10`}
-          style={{ color: groupColor }}
+          style={{ color: validatedColor }}
           aria-label={t('removeGroupTag') || 'Remove group tag'}
           data-testid={`auto-tag-remove-${groupId}`}
         >

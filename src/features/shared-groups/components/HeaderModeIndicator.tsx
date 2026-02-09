@@ -19,6 +19,7 @@
 import React from 'react';
 import { ChevronDown, Users } from 'lucide-react';
 import { useViewMode } from '@/shared/stores/useViewModeStore';
+import { safeCSSColor } from '@/utils/validationUtils';
 
 // =============================================================================
 // Types
@@ -117,7 +118,7 @@ export const HeaderModeIndicator: React.FC<HeaderModeIndicatorProps> = ({
             className="rounded-full flex items-center justify-center flex-shrink-0 transition-colors duration-300"
             style={{
               ...STYLES.groupIcon,
-              background: group.color || 'var(--primary, #2563eb)',
+              background: safeCSSColor(group.color, 'var(--primary, #2563eb)'),
             }}
           >
             {group.icon ? (

@@ -25,6 +25,7 @@ import type { View } from '@/components/App';
 import type { CategoryMapping } from '@/types/categoryMapping';
 import type { UserCredits } from '@/types/scan';
 import type { ScanDialogType, BatchCompleteDialogData, ScanState } from '@/types/scanStateMachine';
+import type { ViewMode } from '@/shared/stores/useViewModeStore';
 import { DIALOG_TYPES } from '@/types/scanStateMachine';
 
 // Store imports
@@ -196,7 +197,7 @@ export interface BatchReviewHandlersProps {
   /** Store type for scan processing ('auto' or specific type) */
   scanStoreType: string;
   /** Current view mode (personal or group) */
-  viewMode: 'personal' | 'group';
+  viewMode: ViewMode;
   /** Active group for tagging transactions */
   activeGroup: { id?: string } | null;
   /** Extended batch processing controller with startProcessing */

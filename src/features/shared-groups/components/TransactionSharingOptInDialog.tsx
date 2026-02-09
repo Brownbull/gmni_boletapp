@@ -29,6 +29,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Users, Loader2, Info, Check } from 'lucide-react';
 import { extractGroupEmoji, extractGroupLabel } from '@/types/sharedGroup';
+import { safeCSSColor } from '@/utils/validationUtils';
 
 // =============================================================================
 // Types
@@ -229,7 +230,7 @@ export const TransactionSharingOptInDialog: React.FC<TransactionSharingOptInDial
                         <div
                             className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
                             style={{
-                                backgroundColor: groupColor || '#10b981',
+                                backgroundColor: safeCSSColor(groupColor),
                                 fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", sans-serif',
                             }}
                             data-testid="group-icon"

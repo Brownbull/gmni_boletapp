@@ -22,6 +22,7 @@
  */
 
 // React is used for JSX transformation
+import { safeCSSColor } from '@/utils/validationUtils';
 
 // =============================================================================
 // Types
@@ -90,7 +91,7 @@ export function SharedGroupTotalCard({
     return (
         <div
             className={`rounded-xl p-4 text-white shadow-md ${onClick ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
-            style={{ backgroundColor: groupColor }}
+            style={{ backgroundColor: safeCSSColor(groupColor) }}
             onClick={onClick}
             role={onClick ? 'button' : undefined}
             tabIndex={onClick ? 0 : undefined}

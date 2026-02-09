@@ -13,7 +13,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { AirlockHistoryList } from '../../../../src/components/insights/AirlockHistoryList';
 import { AirlockRecord } from '../../../../src/types/airlock';
-import { Timestamp } from 'firebase/firestore';
+import { createMockTimestamp, createMockTimestampDaysAgo } from '../../../helpers';
 
 // ============================================================================
 // Test Helpers
@@ -35,20 +35,6 @@ const mockT = (key: string) => {
   return translations[key] || key;
 };
 
-function createMockTimestamp(daysAgo: number = 0): Timestamp {
-  const date = new Date();
-  date.setDate(date.getDate() - daysAgo);
-  return {
-    toDate: () => date,
-    seconds: Math.floor(date.getTime() / 1000),
-    nanoseconds: 0,
-    toMillis: () => date.getTime(),
-    isEqual: () => false,
-    valueOf: () => '',
-    toJSON: () => ({ seconds: Math.floor(date.getTime() / 1000), nanoseconds: 0 }),
-  } as unknown as Timestamp;
-}
-
 function createMockAirlock(overrides: Partial<AirlockRecord> = {}): AirlockRecord {
   return {
     id: 'airlock-1',
@@ -56,7 +42,7 @@ function createMockAirlock(overrides: Partial<AirlockRecord> = {}): AirlockRecor
     title: 'Tu café de la semana',
     message: 'Gastaste $45 en café esta semana.',
     emoji: '☕',
-    createdAt: createMockTimestamp(0),
+    createdAt: createMockTimestamp(),
     viewedAt: null,
     ...overrides,
   };
@@ -174,9 +160,9 @@ describe('AirlockHistoryList - List Rendering', () => {
 describe('AirlockHistoryList - Sorting', () => {
   it('AC5: sorts airlocks by most recent first', () => {
     const airlocks = [
-      createMockAirlock({ id: 'old', title: 'Old Airlock', createdAt: createMockTimestamp(5) }),
-      createMockAirlock({ id: 'new', title: 'New Airlock', createdAt: createMockTimestamp(0) }),
-      createMockAirlock({ id: 'mid', title: 'Mid Airlock', createdAt: createMockTimestamp(2) }),
+      createMockAirlock({ id: 'old', title: 'Old Airlock', createdAt: createMockTimestampDaysAgo(5) }),
+      createMockAirlock({ id: 'new', title: 'New Airlock', createdAt: createMockTimestamp() }),
+      createMockAirlock({ id: 'mid', title: 'Mid Airlock', createdAt: createMockTimestampDaysAgo(2) }),
     ];
 
     render(

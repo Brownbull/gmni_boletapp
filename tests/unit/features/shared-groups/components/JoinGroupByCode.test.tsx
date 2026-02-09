@@ -13,6 +13,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { JoinGroupByCode } from '@/features/shared-groups/components/JoinGroupByCode';
 import type { PendingInvitation } from '@/types/sharedGroup';
+import { createMockInvitation } from '@helpers/sharedGroupFactory';
 
 // =============================================================================
 // Mocks
@@ -21,6 +22,13 @@ import type { PendingInvitation } from '@/types/sharedGroup';
 // Mock Firebase
 vi.mock('firebase/firestore', () => ({
     getFirestore: vi.fn(() => ({})),
+}));
+
+// Mock Firebase Auth (TD-CONSOLIDATED-5: getAuth used for email in security rules)
+vi.mock('firebase/auth', () => ({
+    getAuth: vi.fn(() => ({
+        currentUser: { email: 'test@example.com' },
+    })),
 }));
 
 // Mock invitation service
@@ -64,33 +72,6 @@ const defaultProps = {
     onInvitationFound: mockOnInvitationFound,
     onShowToast: mockOnShowToast,
 };
-
-function createMockInvitation(id: string, groupName: string): PendingInvitation {
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-
-    return {
-        id,
-        groupId: `group-${id}`,
-        groupName,
-        groupColor: '#10b981',
-        shareCode: 'aB3dEfGhIjKlMnOp',
-        invitedEmail: 'test@example.com',
-        invitedByUserId: 'inviter-456',
-        invitedByName: 'Alice',
-        createdAt: {
-            toDate: () => now,
-            seconds: Math.floor(now.getTime() / 1000),
-            nanoseconds: 0,
-        } as PendingInvitation['createdAt'],
-        expiresAt: {
-            toDate: () => expiresAt,
-            seconds: Math.floor(expiresAt.getTime() / 1000),
-            nanoseconds: 0,
-        } as PendingInvitation['expiresAt'],
-        status: 'pending',
-    };
-}
 
 // =============================================================================
 // Tests
@@ -227,7 +208,7 @@ describe('JoinGroupByCode', () => {
 
     describe('API Integration', () => {
         it('calls getInvitationByShareCode with valid code', async () => {
-            mockGetInvitationByShareCode.mockResolvedValue(createMockInvitation('inv-1', 'Family'));
+            mockGetInvitationByShareCode.mockResolvedValue(createMockInvitation({ id: 'inv-1', groupName: 'Family' }));
 
             render(<JoinGroupByCode {...defaultProps} />);
 
@@ -240,13 +221,14 @@ describe('JoinGroupByCode', () => {
             await waitFor(() => {
                 expect(mockGetInvitationByShareCode).toHaveBeenCalledWith(
                     expect.anything(),
-                    'aB3dEfGhIjKlMnOp'
+                    'aB3dEfGhIjKlMnOp',
+                    'test@example.com'
                 );
             });
         });
 
         it('calls onInvitationFound when valid invitation is found', async () => {
-            const mockInvitation = createMockInvitation('inv-1', 'Family');
+            const mockInvitation = createMockInvitation({ id: 'inv-1', groupName: 'Family' });
             mockGetInvitationByShareCode.mockResolvedValue(mockInvitation);
 
             render(<JoinGroupByCode {...defaultProps} />);
@@ -263,7 +245,7 @@ describe('JoinGroupByCode', () => {
         });
 
         it('clears input after successful lookup', async () => {
-            mockGetInvitationByShareCode.mockResolvedValue(createMockInvitation('inv-1', 'Family'));
+            mockGetInvitationByShareCode.mockResolvedValue(createMockInvitation({ id: 'inv-1', groupName: 'Family' }));
 
             render(<JoinGroupByCode {...defaultProps} />);
 
@@ -295,7 +277,7 @@ describe('JoinGroupByCode', () => {
         });
 
         it('shows error when invitation is expired', async () => {
-            const expiredInvitation = createMockInvitation('inv-1', 'Family');
+            const expiredInvitation = createMockInvitation({ id: 'inv-1', groupName: 'Family' });
             // Set expiresAt to past
             expiredInvitation.expiresAt = {
                 toDate: () => new Date(Date.now() - 1000),

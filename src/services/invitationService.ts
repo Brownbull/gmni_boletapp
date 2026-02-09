@@ -48,9 +48,8 @@ import {
 import type { PendingInvitation, SharedGroup } from '@/types/sharedGroup';
 import { SHARED_GROUP_LIMITS, isInvitationExpired, createDefaultGroupPreference } from '@/types/sharedGroup';
 import { generateShareCode, isValidShareCode } from '@/utils/shareCodeUtils';
-import { normalizeEmail, validateAppId } from '@/utils/validationUtils';
+import { normalizeEmail, validateAppId, validateGroupId } from '@/utils/validationUtils';
 import { sanitizeInput } from '@/utils/sanitize';
-import { validateGroupId } from '@/services/userPreferencesService';
 
 // =============================================================================
 // Constants
@@ -119,6 +118,9 @@ export async function createInvitation(
     db: Firestore,
     input: CreateInvitationInput
 ): Promise<PendingInvitation> {
+    // TD-CONSOLIDATED-6: Validate groupId before storage (defense-in-depth)
+    validateGroupId(input.groupId);
+
     const now = serverTimestamp();
     const shareCode = generateShareCode();
 
@@ -169,13 +171,19 @@ export async function createInvitation(
  * Used for deep link handling: /invite/{shareCode}
  * Only returns invitations with 'pending' status.
  *
+ * TD-CONSOLIDATED-5: When userEmail is provided, the query includes an email filter
+ * to comply with Firestore security rules that restrict list queries to the
+ * authenticated user's own email. Without userEmail, the query will be denied
+ * by security rules (but still works in Cloud Functions that bypass rules).
+ *
  * @param db - Firestore instance
  * @param shareCode - The 16-character share code
+ * @param userEmail - The authenticated user's email (required for client-side queries)
  * @returns The PendingInvitation if found and pending, null otherwise
  *
  * @example
  * ```typescript
- * const invitation = await getInvitationByShareCode(db, 'Ab3dEf7hIj9kLm0p');
+ * const invitation = await getInvitationByShareCode(db, 'Ab3dEf7hIj9kLm0p', user.email);
  * if (invitation) {
  *   console.log(`Invitation to group: ${invitation.groupName}`);
  * } else {
@@ -185,9 +193,22 @@ export async function createInvitation(
  */
 export async function getInvitationByShareCode(
     db: Firestore,
-    shareCode: string
+    shareCode: string,
+    userEmail?: string | null
 ): Promise<PendingInvitation | null> {
     if (!shareCode) {
+        return null;
+    }
+
+    // TD-CONSOLIDATED-5: Email filter required for client-side queries to comply with
+    // security rules that restrict list queries to the user's own email.
+    // Without email, unfiltered list queries are denied by Firestore rules.
+    if (!userEmail) {
+        return null;
+    }
+
+    const normalizedUserEmail = normalizeEmail(userEmail);
+    if (!normalizedUserEmail) {
         return null;
     }
 
@@ -196,6 +217,7 @@ export async function getInvitationByShareCode(
         invitationsRef,
         where('shareCode', '==', shareCode),
         where('status', '==', 'pending'),
+        where('invitedEmail', '==', normalizedUserEmail),
         limit(1)
     );
 
@@ -205,10 +227,10 @@ export async function getInvitationByShareCode(
         return null;
     }
 
-    const doc = snapshot.docs[0];
+    const docSnap = snapshot.docs[0];
     return {
-        id: doc.id,
-        ...doc.data(),
+        id: docSnap.id,
+        ...docSnap.data(),
     } as PendingInvitation;
 }
 
@@ -217,6 +239,11 @@ export async function getInvitationByShareCode(
  *
  * Used to prevent sending multiple invitations to the same person for the same group.
  * Only checks invitations with 'pending' status.
+ *
+ * @deprecated TD-CONSOLIDATED-5: This function queries by invitee's email which differs
+ * from the calling user's email (group owner checking invitee). Client-side calls will
+ * be denied by security rules unless the queried email matches request.auth.token.email.
+ * Move to a Cloud Function if client-side duplicate checking is needed.
  *
  * @param db - Firestore instance
  * @param groupId - The shared group ID
@@ -236,6 +263,13 @@ export async function checkDuplicateInvitation(
     email: string
 ): Promise<boolean> {
     if (!groupId || !email) {
+        return false;
+    }
+
+    // TD-CONSOLIDATED-6: Validate groupId for consistency with other service entry points
+    try {
+        validateGroupId(groupId);
+    } catch {
         return false;
     }
 
@@ -418,11 +452,14 @@ export async function validateGroupCapacity(
     groupId: string
 ): Promise<GroupCapacityResult> {
     // Validate input
-    if (!groupId) {
+    // TD-CONSOLIDATED-6: Validate groupId format before Firestore path construction
+    try {
+        validateGroupId(groupId);
+    } catch {
         return {
             canAddContributor: false,
             canAddViewer: false,
-            reason: 'Group ID is required',
+            reason: 'Invalid group ID',
         };
     }
 
@@ -531,6 +568,10 @@ export const SHARE_CODE_ERROR_MESSAGES: Record<ShareCodeValidationError, string>
  * Validate a share code and return the invitation if valid.
  *
  * Story 14d-v2-1-6b: Task 5 - Invalid/Expired Share Code Handling
+ *
+ * @deprecated TD-CONSOLIDATED-5: This function queries by shareCode without email filter.
+ * Client-side calls will be denied by security rules. Use getInvitationByShareCode()
+ * with userEmail parameter instead, or move this to a Cloud Function.
  *
  * Validates:
  * - Share code format (16-char alphanumeric) - AC #3
@@ -659,6 +700,9 @@ export async function acceptInvitation(
             ...invitationSnap.data(),
         } as PendingInvitation;
 
+        // TD-CONSOLIDATED-6: Validate groupId early, before any path construction
+        validateGroupId(invitation.groupId);
+
         // Validate invitation status
         if (invitation.status !== 'pending') {
             throw new Error('Invitation has already been processed');
@@ -716,8 +760,6 @@ export async function acceptInvitation(
 
         // Story 14d-v2-1-13+14: Write user group preference atomically (AC15)
         if (appId) {
-            // H-1 fix: Validate groupId before dot-notation field path (prevents path injection)
-            validateGroupId(invitation.groupId);
             const prefsDocRef = doc(db, 'artifacts', appId, 'users', userId, 'preferences', 'sharedGroups');
             const preference = createDefaultGroupPreference({
                 shareMyTransactions: shareMyTransactions ?? false,

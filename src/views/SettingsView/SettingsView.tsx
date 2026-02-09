@@ -235,10 +235,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         <GruposView
                             t={t}
                             theme={themeData.theme}
-                            userId={userId}
-                            userEmail={profile.email}
-                            userDisplayName={profile.displayName}
-                            appId={appId || 'boletapp'}
                             lang={preferences.lang as 'en' | 'es'}
                             onShowToast={onShowToast}
                         />

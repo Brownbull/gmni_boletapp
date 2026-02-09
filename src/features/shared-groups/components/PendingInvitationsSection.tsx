@@ -28,6 +28,7 @@ import type { PendingInvitation } from '@/types/sharedGroup';
 import { isInvitationExpired, getInvitationTimeRemaining } from '@/types/sharedGroup';
 import { acceptInvitation, declineInvitation } from '@/services/sharedGroupService';
 import { classifyError, getErrorConfig, SharedGroupErrorType } from '@/lib/sharedGroupErrors';
+import { safeCSSColor } from '@/utils/validationUtils';
 
 // ============================================================================
 // ============================================================================
@@ -230,7 +231,7 @@ export const PendingInvitationsSection: React.FC<PendingInvitationsSectionProps>
                                 <div
                                     className="w-12 h-12 rounded-lg flex items-center justify-center text-xl flex-shrink-0"
                                     style={{
-                                        backgroundColor: invitation.groupColor || '#10b981',
+                                        backgroundColor: safeCSSColor(invitation.groupColor),
                                     }}
                                 >
                                     {emoji || invitation.groupIcon || ''}

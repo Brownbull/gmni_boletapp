@@ -20,6 +20,7 @@ import { ChevronDown, AlertTriangle, Receipt, Package, Check } from 'lucide-reac
 import { getCategoryEmoji } from '../../utils/categoryEmoji';
 import { getCategoryColors, getCategoryColorsAuto, type ThemeName, type ModeName } from '../../config/categoryColors';
 import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';
+import { safeCSSColor } from '@/utils/validationUtils';
 
 // ============================================================================
 // Types
@@ -333,7 +334,7 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
       return isDark ? '#fbbf24' : '#f59e0b';
     }
     if (groupColor) {
-      return groupColor;
+      return safeCSSColor(groupColor);
     }
     return 'var(--border-light)';
   };

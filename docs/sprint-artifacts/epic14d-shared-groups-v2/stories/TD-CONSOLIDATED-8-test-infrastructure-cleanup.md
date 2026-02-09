@@ -1,6 +1,6 @@
 # TD-CONSOLIDATED-8: Test Infrastructure Cleanup
 
-Status: ready-for-dev
+Status: done
 
 > **Tier:** 3 - Test Quality (DO WHEN TOUCHING)
 > **Consolidated from:** TD-14d-8, TD-14d-31, TD-14d-34, TD-14d-35, TD-14d-37, TD-14d-49
@@ -27,12 +27,12 @@ Multiple test quality issues accumulated across the shared-groups feature:
 
 ## Acceptance Criteria
 
-- [ ] DRY integration test helpers extracted
-- [ ] Replace `as any` with proper TypeScript types in test factories
-- [ ] Standardize test override prop naming convention
-- [ ] Extract `createMockTimestamp` to `tests/helpers/firestore.ts`
-- [ ] Remove magic numbers in cooldown tests, add constants
-- [ ] All tests pass after cleanup
+- [x] DRY integration test helpers extracted
+- [x] Replace `as any` with proper TypeScript types in test factories
+- [x] Standardize test override prop naming convention
+- [x] Extract `createMockTimestamp` to `tests/helpers/firestore.ts`
+- [x] Remove magic numbers in cooldown tests, add constants
+- [x] All tests pass after cleanup
 
 ## Cross-References
 
@@ -47,3 +47,22 @@ Multiple test quality issues accumulated across the shared-groups feature:
 - **ECC Review 14d-v2-1-14 (2026-02-05):** Added 2 items:
   - GruposView.test.tsx at 2679 lines exceeds 300-line test file guideline (split into describe-level files)
   - E2E toast assertions wrapped in try/catch are effectively optional - add retry/waitFor patterns
+- **ECC Review 14d-v2-1-13+14 (2026-02-07):** Added 2 items:
+  - `expect.anything()` used for docRef params in 13+ assertions across userPreferencesService.test.ts — replace with `mockDoc()` return value or `expect.objectContaining` for stronger verification
+  - userPreferencesService.test.ts at 840+ lines — split into domain-specific test files (preference-crud, sharing-toggle, cooldown-logic)
+
+## Senior Developer Review (ECC)
+
+- **Review date:** 2026-02-08
+- **Classification:** COMPLEX (40 files, 6 ACs)
+- **ECC Agents:** code-reviewer (8/10), security-reviewer (9/10 APPROVE), architect (9/10 ALIGNED), tdd-guide (92/100 GOOD)
+- **Overall Score:** 9/10 — APPROVE with minor changes
+- **Quick fixes applied:** 2 (magic number elimination in 2 test files, dead code removal in firebase-emulator.ts)
+- **False positive:** 1 (#3 `as any` in migration tests — intentional for runtime degradation testing)
+- **Deferred items:** 4 complex items → TD-CONSOLIDATED-22
+
+### Tech Debt Stories Created
+
+| TD Story | Description | Priority |
+|----------|-------------|----------|
+| [TD-CONSOLIDATED-22](./TD-CONSOLIDATED-22-test-helper-migration-completion.md) | Complete test helper migration (lifecycle, imports, constants, ESLint guard) | LOW |

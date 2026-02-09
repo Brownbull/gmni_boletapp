@@ -5,7 +5,7 @@
   "_ttl_setup_required": "TTL policy must be enabled manually in Firebase Console: Firestore > Time-to-live policies > Add policy: Collection=changelog, Field=_ttl",
   "indexes": [
     {
-      "_comment": "getInvitationByShareCode: shareCode + status",
+      "_comment": "getInvitationByShareCode: shareCode + status (TD-CONSOLIDATED-5: retained for Cloud Functions that bypass security rules)",
       "collectionGroup": "pendingInvitations",
       "queryScope": "COLLECTION",
       "fields": [
@@ -24,12 +24,41 @@
       ]
     },
     {
+      "_comment": "getInvitationByShareCode with email filter (TD-CONSOLIDATED-5): shareCode + invitedEmail + status",
+      "collectionGroup": "pendingInvitations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "shareCode", "order": "ASCENDING" },
+        { "fieldPath": "invitedEmail", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "_comment": "deletePendingInvitationsForGroup (TD-CONSOLIDATED-5): groupId + invitedByUserId",
+      "collectionGroup": "pendingInvitations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "groupId", "order": "ASCENDING" },
+        { "fieldPath": "invitedByUserId", "order": "ASCENDING" }
+      ]
+    },
+    {
       "_comment": "getInvitationsForEmail: invitedEmail + status",
       "collectionGroup": "pendingInvitations",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "invitedEmail", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "_comment": "getPendingInvitationsForUser: invitedEmail + status + createdAt (orderBy desc)",
+      "collectionGroup": "pendingInvitations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "invitedEmail", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     }
   ],

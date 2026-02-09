@@ -21,6 +21,7 @@ import userEvent from '@testing-library/user-event';
 import { Timestamp } from 'firebase/firestore';
 import { AcceptInvitationDialog } from '@/features/shared-groups/components/AcceptInvitationDialog';
 import type { PendingInvitation, SharedGroup } from '@/types/sharedGroup';
+import { createMockGroup as createMockGroupBase, createMockInvitation as createMockInvitationBase } from '@helpers/sharedGroupFactory';
 
 // =============================================================================
 // Mock Setup
@@ -65,43 +66,27 @@ const mockT = (key: string, _params?: Record<string, string | number>) => {
     return translations[key] || key;
 };
 
-// Create mock invitation
-const createMockInvitation = (overrides?: Partial<PendingInvitation>): PendingInvitation => ({
-    id: 'invitation-123',
-    groupId: 'group-456',
-    groupName: '🏠 Home Expenses',
-    groupColor: '#10b981',
-    groupIcon: '🏠',
-    shareCode: 'ABC123DEF456',
-    invitedEmail: 'user@example.com',
-    invitedByUserId: 'inviter-789',
-    invitedByName: 'Alice Smith',
-    createdAt: Timestamp.now(),
-    expiresAt: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
-    status: 'pending',
-    ...overrides,
-});
+// Wrap shared factories with dialog-specific defaults
+const createMockInvitation = (overrides?: Partial<PendingInvitation>): PendingInvitation =>
+    createMockInvitationBase({
+        groupId: 'group-456',
+        groupName: '🏠 Home Expenses',
+        groupIcon: '🏠',
+        invitedEmail: 'user@example.com',
+        invitedByUserId: 'inviter-789',
+        invitedByName: 'Alice Smith',
+        ...overrides,
+    });
 
-// Create mock group
-const createMockGroup = (overrides?: Partial<SharedGroup>): SharedGroup => ({
-    id: 'group-456',
-    ownerId: 'owner-123',
-    appId: 'boletapp',
-    name: '🏠 Home Expenses',
-    color: '#10b981',
-    icon: '🏠',
-    shareCode: 'XYZ789',
-    shareCodeExpiresAt: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
-    members: ['owner-123', 'member-1', 'member-2'],
-    memberUpdates: {},
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
-    timezone: 'America/Santiago',
-    transactionSharingEnabled: false,
-    transactionSharingLastToggleAt: null,
-    transactionSharingToggleCountToday: 0,
-    ...overrides,
-});
+const createMockGroup = (overrides?: Partial<SharedGroup>): SharedGroup =>
+    createMockGroupBase({
+        id: 'group-456',
+        ownerId: 'owner-123',
+        name: '🏠 Home Expenses',
+        members: ['owner-123', 'member-1', 'member-2'],
+        transactionSharingEnabled: false,
+        ...overrides,
+    });
 
 // Default props
 const defaultProps = {

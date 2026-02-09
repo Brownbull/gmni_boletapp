@@ -14,11 +14,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { User } from 'firebase/auth';
-import { Timestamp } from 'firebase/firestore';
 import { useCategoriesState } from '@features/categories/state/useCategoriesState';
 import { CategoryMapping, MatchResult } from '@/types/categoryMapping';
 import { SubcategoryMapping, SubcategoryMatchResult } from '@/types/subcategoryMapping';
 import { StoreCategory } from '@/types/transaction';
+import { createMockTimestamp } from '../../../../helpers';
 
 // =============================================================================
 // Mocks
@@ -60,14 +60,6 @@ vi.mock('@/hooks/useSubcategoryMappings', () => ({
 
 const mockUser = { uid: 'test-user-123' } as User;
 const mockServices = { db: {}, appId: 'test-app' } as any;
-
-function createMockTimestamp(): Timestamp {
-    return {
-        toDate: () => new Date(),
-        seconds: Math.floor(Date.now() / 1000),
-        nanoseconds: 0,
-    } as Timestamp;
-}
 
 function createMockCategoryMapping(overrides: Partial<CategoryMapping> = {}): CategoryMapping {
     return {

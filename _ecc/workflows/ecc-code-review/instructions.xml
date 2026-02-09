@@ -305,6 +305,26 @@
           6. Complexity analysis
           7. Documentation quality
 
+          **MANDATORY: ast-grep Structural Pattern Scan**
+          Before writing your review output, run these ast-grep checks on the changed files:
+
+          1. **Duplication check**: For each new function/pattern in changed files, use `find_code` to search the
+             full `src/` directory for structurally similar patterns. Flag if the same pattern exists elsewhere
+             (potential DRY violation or missed shared utility).
+             Example: `find_code(pattern="$ARR.sort(($A, $B) => $$$)", project_folder="{project-root}")`
+
+          2. **Known anti-pattern scan**: Run these against changed files:
+             - `$BATCH.commit()` — flag if not inside a chunking loop (batch safety, Finding 9d)
+             - `localStorage.getItem($KEY)` — flag if manual JSON.parse instead of shared utility (Finding 10d)
+             - `collection($DB, "artifacts", $$$)` — flag hardcoded Firestore paths (Finding 9a)
+
+          3. **Import coupling check** (if files touch services/hooks):
+             `find_code(pattern="import {$$$} from 'firebase/firestore'")` — flag direct Firebase SDK imports
+             in new code (should use repository layer per DAL plan)
+
+          Tools: `find_code` for simple patterns, `find_code_by_rule` for relational YAML rules.
+          Full pattern library: .claude/skills/ast-grep/SKILL.md
+
           **Output Format:**
           ```
           ## Code Review Findings
@@ -317,6 +337,11 @@
 
           ### LOW Severity
           - [Finding]: [Description] [file:line]
+
+          ### ast-grep Pattern Scan Results
+          - Duplication matches: X (list files if any)
+          - Anti-pattern hits: X (batch safety, localStorage, hardcoded paths)
+          - Firebase SDK coupling: X direct imports in new code
 
           ### Summary
           - Total issues: X
@@ -924,15 +949,16 @@
       {{/each}}
 
       **Next Steps:**
+      - Run `/workflow-close` to verify tests, status files, and branch state
       {{#if new_status == "done"}}
-      - Run `deploy-story` to deploy
+      - Run `/deploy-story` to deploy — or [C]ommit to branch for batching multiple stories
       {{/if}}
       {{#if ui_missing_e2e}}
       - Recommend: Run `/ecc-e2e` to add E2E coverage for new UI changes
       {{/if}}
       {{#if new_status != "done"}}
       - Address remaining issues
-      - Re-run `ecc-code-review` after fixes
+      - Re-run `/ecc-code-review` after fixes
       {{/if}}
     </output>
   </step>

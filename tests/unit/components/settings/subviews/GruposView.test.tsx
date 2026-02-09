@@ -24,6 +24,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { GruposView } from '@/components/settings/subviews/GruposView';
 import type { SharedGroup, PendingInvitation } from '@/types/sharedGroup';
+import { createMockTimestamp } from '../../../../helpers';
 
 // =============================================================================
 // Mock Setup
@@ -188,11 +189,13 @@ const mockLeaveTransferHandlers = {
     handleDeclineInvitation: vi.fn().mockResolvedValue(true),
 };
 
-// Story 14d-v2-1-7e: Mock deleteGroupAsOwner service
-const mockDeleteGroupAsOwner = vi.fn().mockResolvedValue(undefined);
-
-// Story 14d-v2-1-14-polish: Mock handleAcceptInvitationService (direct service call)
-const mockHandleAcceptInvitationService = vi.fn().mockResolvedValue(undefined);
+// TD-CONSOLIDATED-12: Mock mutation hooks (called at component level in GruposView)
+const mockDeleteGroupAsync = vi.fn().mockResolvedValue(undefined);
+const mockLeaveGroupAsync = vi.fn().mockResolvedValue(undefined);
+const mockTransferOwnershipAsync = vi.fn().mockResolvedValue(undefined);
+const mockAcceptInvitationAsync = vi.fn().mockResolvedValue(undefined);
+const mockDeclineInvitationAsync = vi.fn().mockResolvedValue(undefined);
+const mockToggleTransactionSharingAsync = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('@/features/shared-groups', async (importOriginal) => {
     const original = await importOriginal<typeof import('@/features/shared-groups')>();
@@ -201,7 +204,6 @@ vi.mock('@/features/shared-groups', async (importOriginal) => {
         useGroups: () => ({
             data: mockGroups,
             isLoading: mockGroupsLoading,
-            refetch: mockRefetchGroups,
         }),
         useCreateGroup: () => ({
             mutateAsync: mockCreateGroupAsync,
@@ -231,14 +233,14 @@ vi.mock('@/features/shared-groups', async (importOriginal) => {
             SHARE_CODE_LENGTH: 16,
             SHARE_CODE_EXPIRY_DAYS: 7,
         },
-        joinGroupDirectly: vi.fn(),
-        leaveGroup: (...args: unknown[]) => mockLeaveGroup(...args),
-        transferOwnership: (...args: unknown[]) => mockTransferOwnership(...args),
-        // Story 14d-v2-1-7e: Delete group service
-        deleteGroupAsOwner: (...args: unknown[]) => mockDeleteGroupAsOwner(...args),
+        // TD-CONSOLIDATED-12: Mutation hooks with optimistic updates + cache invalidation
+        useDeleteGroup: () => ({ mutateAsync: mockDeleteGroupAsync }),
+        useLeaveGroup: () => ({ mutateAsync: mockLeaveGroupAsync }),
+        useTransferOwnership: () => ({ mutateAsync: mockTransferOwnershipAsync }),
+        useAcceptInvitation: () => ({ mutateAsync: mockAcceptInvitationAsync }),
+        useDeclineInvitation: () => ({ mutateAsync: mockDeclineInvitationAsync }),
+        useToggleTransactionSharing: () => ({ mutateAsync: mockToggleTransactionSharingAsync }),
         useLeaveTransferFlow: () => mockLeaveTransferHandlers,
-        // Story 14d-v2-1-14-polish: Direct service call for context-specific toasts
-        handleAcceptInvitationService: (...args: unknown[]) => mockHandleAcceptInvitationService(...args),
     };
 });
 
@@ -270,7 +272,6 @@ vi.mock('@/features/shared-groups/components/PendingInvitationsSection', () => (
 // Mock shared-groups hooks
 const mockCreateGroupAsync = vi.fn();
 const mockResetCreate = vi.fn();
-const mockRefetchGroups = vi.fn();
 let mockGroups: SharedGroup[] = [];
 let mockGroupsLoading = false;
 let mockIsCreating = false;
@@ -281,12 +282,6 @@ let mockLimitLoading = false;
 // Story 14d-v2-1-7g: Edit group state
 const mockUpdateGroupAsync = vi.fn();
 let mockIsUpdating = false;
-
-// Story 14d-v2-1-7d: Leave/Transfer service mocks (still used by some tests)
-const mockLeaveGroup = vi.fn().mockResolvedValue(undefined);
-const mockTransferOwnership = vi.fn().mockResolvedValue(undefined);
-
-// Note: @/features/shared-groups is mocked above with useGroupDialogs section
 
 // Story 14d-v2-1-7d AC #5: View Mode store mock
 const mockSetPersonalMode = vi.fn();
@@ -536,9 +531,9 @@ vi.mock('@/features/shared-groups/components/AcceptInvitationDialog', () => ({
                                 members: ['owner-123'],
                                 memberUpdates: {},
                                 shareCode: 'TEST123',
-                                shareCodeExpiresAt: null as any,
-                                createdAt: null as any,
-                                updatedAt: null as any,
+                                shareCodeExpiresAt: createMockTimestamp(),
+                                createdAt: createMockTimestamp(),
+                                updatedAt: createMockTimestamp(),
                                 timezone: 'UTC',
                                 transactionSharingEnabled: true,
                                 transactionSharingLastToggleAt: null,
@@ -764,7 +759,7 @@ const defaultProps = {
 
 describe('GruposView', () => {
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.resetAllMocks();
         mockGroups = [];
         mockGroupsLoading = false;
         mockIsCreating = false;
@@ -776,10 +771,10 @@ describe('GruposView', () => {
         mockPendingCount = 0;
         mockHasInvitations = false;
         mockPendingInvitations = [];
-        // Story 14d-v2-1-7d: Reset service mocks
-        mockLeaveGroup.mockResolvedValue(undefined);
-        mockTransferOwnership.mockResolvedValue(undefined);
-        mockRefetchGroups.mockClear();
+        // TD-CONSOLIDATED-12: Reset mutation async mocks
+        mockDeleteGroupAsync.mockResolvedValue(undefined);
+        mockAcceptInvitationAsync.mockResolvedValue(undefined);
+        mockToggleTransactionSharingAsync.mockResolvedValue(undefined);
         // Story 14d-v2-1-7d AC #5: Reset view mode state
         mockSetPersonalMode.mockClear();
         mockViewModeState = { mode: 'personal', groupId: null };
@@ -811,9 +806,6 @@ describe('GruposView', () => {
             editingGroup: null,
         };
 
-        // Story 14d-v2-1-7e: Reset deleteGroupAsOwner mock
-        mockDeleteGroupAsOwner.mockResolvedValue(undefined);
-
         // TD-7d-1: Reset useLeaveTransferFlow mock handlers
         mockLeaveTransferHandlers.handleConfirmLeave.mockResolvedValue(true);
         mockLeaveTransferHandlers.handleConfirmTransfer.mockResolvedValue(true);
@@ -822,7 +814,6 @@ describe('GruposView', () => {
 
         // Story 14d-v2-1-14-polish: Reset new mocks
         mockIsOnline = true;
-        mockHandleAcceptInvitationService.mockResolvedValue(undefined);
     });
 
     // =========================================================================
@@ -902,9 +893,9 @@ describe('GruposView', () => {
                 members: ['test-user-123', 'user-2'],
                 memberUpdates: {},
                 shareCode: 'ABC123',
-                shareCodeExpiresAt: null as any,
-                createdAt: null as any,
-                updatedAt: null as any,
+                shareCodeExpiresAt: createMockTimestamp(),
+                createdAt: createMockTimestamp(),
+                updatedAt: createMockTimestamp(),
                 timezone: 'UTC',
                 transactionSharingEnabled: true,
                 transactionSharingLastToggleAt: null,
@@ -920,9 +911,9 @@ describe('GruposView', () => {
                 members: ['user-other', 'test-user-123'],
                 memberUpdates: {},
                 shareCode: 'XYZ789',
-                shareCodeExpiresAt: null as any,
-                createdAt: null as any,
-                updatedAt: null as any,
+                shareCodeExpiresAt: createMockTimestamp(),
+                createdAt: createMockTimestamp(),
+                updatedAt: createMockTimestamp(),
                 timezone: 'UTC',
                 transactionSharingEnabled: false,
                 transactionSharingLastToggleAt: null,
@@ -1390,9 +1381,9 @@ describe('GruposView', () => {
                     'user-2': { displayName: 'Other User', email: 'other@example.com' },
                 },
                 shareCode: 'ABC123',
-                shareCodeExpiresAt: null as any,
-                createdAt: null as any,
-                updatedAt: null as any,
+                shareCodeExpiresAt: createMockTimestamp(),
+                createdAt: createMockTimestamp(),
+                updatedAt: createMockTimestamp(),
                 timezone: 'UTC',
                 transactionSharingEnabled: true,
                 transactionSharingLastToggleAt: null,
@@ -1412,9 +1403,9 @@ describe('GruposView', () => {
                     'test-user-123': { displayName: 'Test User', email: 'test@example.com' },
                 },
                 shareCode: 'XYZ789',
-                shareCodeExpiresAt: null as any,
-                createdAt: null as any,
-                updatedAt: null as any,
+                shareCodeExpiresAt: createMockTimestamp(),
+                createdAt: createMockTimestamp(),
+                updatedAt: createMockTimestamp(),
                 timezone: 'UTC',
                 transactionSharingEnabled: false,
                 transactionSharingLastToggleAt: null,
@@ -1561,9 +1552,9 @@ describe('GruposView', () => {
                     'user-2': { displayName: 'Other User', email: 'other@example.com' },
                 },
                 shareCode: 'ABC123',
-                shareCodeExpiresAt: null as any,
-                createdAt: null as any,
-                updatedAt: null as any,
+                shareCodeExpiresAt: createMockTimestamp(),
+                createdAt: createMockTimestamp(),
+                updatedAt: createMockTimestamp(),
                 timezone: 'UTC',
                 transactionSharingEnabled: true,
                 transactionSharingLastToggleAt: null,
@@ -1579,9 +1570,9 @@ describe('GruposView', () => {
                 members: ['test-user-123'],
                 memberUpdates: {},
                 shareCode: 'SOLO123',
-                shareCodeExpiresAt: null as any,
-                createdAt: null as any,
-                updatedAt: null as any,
+                shareCodeExpiresAt: createMockTimestamp(),
+                createdAt: createMockTimestamp(),
+                updatedAt: createMockTimestamp(),
                 timezone: 'UTC',
                 transactionSharingEnabled: true,
                 transactionSharingLastToggleAt: null,
@@ -1597,9 +1588,9 @@ describe('GruposView', () => {
                 members: ['user-other', 'test-user-123'],
                 memberUpdates: {},
                 shareCode: 'XYZ789',
-                shareCodeExpiresAt: null as any,
-                createdAt: null as any,
-                updatedAt: null as any,
+                shareCodeExpiresAt: createMockTimestamp(),
+                createdAt: createMockTimestamp(),
+                updatedAt: createMockTimestamp(),
                 timezone: 'UTC',
                 transactionSharingEnabled: false,
                 transactionSharingLastToggleAt: null,
@@ -1770,9 +1761,9 @@ describe('GruposView', () => {
                 members: ['user-other', 'test-user-123'],
                 memberUpdates: {},
                 shareCode: 'ABC123',
-                shareCodeExpiresAt: null as any,
-                createdAt: null as any,
-                updatedAt: null as any,
+                shareCodeExpiresAt: createMockTimestamp(),
+                createdAt: createMockTimestamp(),
+                updatedAt: createMockTimestamp(),
                 timezone: 'UTC',
                 transactionSharingEnabled: true,
                 transactionSharingLastToggleAt: null,
@@ -1788,9 +1779,9 @@ describe('GruposView', () => {
                 members: ['user-other', 'test-user-123'],
                 memberUpdates: {},
                 shareCode: 'XYZ789',
-                shareCodeExpiresAt: null as any,
-                createdAt: null as any,
-                updatedAt: null as any,
+                shareCodeExpiresAt: createMockTimestamp(),
+                createdAt: createMockTimestamp(),
+                updatedAt: createMockTimestamp(),
                 timezone: 'UTC',
                 transactionSharingEnabled: false,
                 transactionSharingLastToggleAt: null,
@@ -1913,9 +1904,9 @@ describe('GruposView', () => {
                     'user-2': { displayName: 'Other User', email: 'other@example.com' },
                 },
                 shareCode: 'ABC123',
-                shareCodeExpiresAt: null as any,
-                createdAt: null as any,
-                updatedAt: null as any,
+                shareCodeExpiresAt: createMockTimestamp(),
+                createdAt: createMockTimestamp(),
+                updatedAt: createMockTimestamp(),
                 timezone: 'UTC',
                 transactionSharingEnabled: true,
                 transactionSharingLastToggleAt: null,
@@ -2003,9 +1994,9 @@ describe('GruposView', () => {
                     'user-2': { displayName: 'Other User', email: 'other@example.com' },
                 },
                 shareCode: 'ABC123',
-                shareCodeExpiresAt: null as any,
-                createdAt: null as any,
-                updatedAt: null as any,
+                shareCodeExpiresAt: createMockTimestamp(),
+                createdAt: createMockTimestamp(),
+                updatedAt: createMockTimestamp(),
                 timezone: 'UTC',
                 transactionSharingEnabled: true,
                 transactionSharingLastToggleAt: null,
@@ -2037,7 +2028,7 @@ describe('GruposView', () => {
             expect(screen.getByTestId('mock-delete-dialog-member-count')).toHaveTextContent('2');
         });
 
-        it('calls deleteGroupAsOwner service on confirm', async () => {
+        it('calls deleteGroupAsync mutation on confirm', async () => {
             mockGroups = mockGroupData;
             // Pre-set dialog state
             mockDialogState.selectedGroupForAction = mockGroupData[0];
@@ -2048,12 +2039,9 @@ describe('GruposView', () => {
             await userEvent.click(screen.getByTestId('mock-delete-confirm'));
 
             await waitFor(() => {
-                expect(mockDeleteGroupAsOwner).toHaveBeenCalledWith(
-                    expect.anything(), // db
-                    'test-user-123', // userId
-                    'group-owned', // groupId
-                    'boletapp' // appId
-                );
+                expect(mockDeleteGroupAsync).toHaveBeenCalledWith({
+                    groupId: 'group-owned',
+                });
             });
         });
 
@@ -2068,25 +2056,24 @@ describe('GruposView', () => {
 
             await userEvent.click(screen.getByTestId('mock-delete-confirm'));
 
-            // Wait for deleteGroupAsOwner to be called first
+            // Wait for deleteGroupAsync to be called with correct args
             await waitFor(() => {
-                expect(mockDeleteGroupAsOwner).toHaveBeenCalled();
+                expect(mockDeleteGroupAsync).toHaveBeenCalledWith({ groupId: 'group-owned' });
             });
 
-            // Wait a bit for async operation to complete
+            // Wait for async operation to complete
             await waitFor(() => {
-                expect(mockDialogActions.closeDeleteDialog).toHaveBeenCalled();
+                expect(mockDialogActions.closeDeleteDialog).toHaveBeenCalledWith();
             });
 
-            // Then verify toast was shown
-            expect(onShowToast).toHaveBeenCalled();
+            // Then verify toast was shown with correct content
             expect(onShowToast).toHaveBeenCalledWith(
                 expect.stringContaining('My Group'),
                 'success'
             );
         });
 
-        it('closes dialog and refetches data on success', async () => {
+        it('closes dialog on successful deletion (mutation hook handles cache invalidation)', async () => {
             mockGroups = mockGroupData;
             // Pre-set dialog state
             mockDialogState.selectedGroupForAction = mockGroupData[0];
@@ -2098,13 +2085,13 @@ describe('GruposView', () => {
 
             await waitFor(() => {
                 expect(mockDialogActions.closeDeleteDialog).toHaveBeenCalled();
-                expect(mockRefetchGroups).toHaveBeenCalled();
-                expect(mockRefetchInvitations).toHaveBeenCalled();
+                // TD-CONSOLIDATED-12: refetchGroups/refetchInvitations no longer called directly
+                // Cache invalidation handled by useDeleteGroup mutation hook's onSettled
             });
         });
 
         it('keeps dialog open for retry on error', async () => {
-            mockDeleteGroupAsOwner.mockRejectedValueOnce(new Error('Network error'));
+            mockDeleteGroupAsync.mockRejectedValueOnce(new Error('Network error'));
             mockGroups = mockGroupData;
             // Pre-set dialog state
             mockDialogState.selectedGroupForAction = mockGroupData[0];
@@ -2164,11 +2151,11 @@ describe('GruposView', () => {
             color: '#10b981',
             icon: '🏠',
             shareCode: 'TestCode12345678',
-            shareCodeExpiresAt: { toDate: () => new Date() } as any,
+            shareCodeExpiresAt: createMockTimestamp(),
             members: ['test-user-123'],
             memberUpdates: {},
-            createdAt: { toDate: () => new Date() } as any,
-            updatedAt: { toDate: () => new Date() } as any,
+            createdAt: createMockTimestamp(),
+            updatedAt: createMockTimestamp(),
             timezone: 'America/Santiago',
             transactionSharingEnabled: true,
             transactionSharingLastToggleAt: null,
@@ -2184,7 +2171,7 @@ describe('GruposView', () => {
         };
 
         beforeEach(() => {
-            vi.clearAllMocks();
+            vi.resetAllMocks();
             mockDialogActions.resetAll();
             mockGroupsLoading = false;
             mockIsUpdating = false;
@@ -2292,6 +2279,24 @@ describe('GruposView', () => {
 
             expect(mockDialogActions.closeEditDialog).toHaveBeenCalled();
         });
+
+        it('shows error toast when update fails', async () => {
+            mockUpdateGroupAsync.mockRejectedValue(new Error('Update failed'));
+            mockGroups = [mockOwnedGroup];
+            mockDialogState.editingGroup = mockOwnedGroup;
+            mockDialogState.isEditDialogOpen = true;
+
+            render(<GruposView {...defaultProps} />);
+
+            await userEvent.click(screen.getByTestId('mock-edit-save'));
+
+            await waitFor(() => {
+                expect(defaultProps.onShowToast).toHaveBeenCalledWith(
+                    expect.any(String),
+                    'error'
+                );
+            });
+        });
     });
 
     // =========================================================================
@@ -2307,8 +2312,8 @@ describe('GruposView', () => {
             groupIcon: '🏠',
             invitedByName: 'Owner Person',
             invitedByUid: 'owner-123',
-            invitedAt: null as any,
-            expiresAt: null as any,
+            invitedAt: createMockTimestamp(),
+            expiresAt: createMockTimestamp(),
             status: 'pending',
             userId: 'test-user-123',
             appId: 'boletapp',
@@ -2363,8 +2368,8 @@ describe('GruposView', () => {
             });
         });
 
-        // Story 14d-v2-1-14-polish: Updated - handleOptInJoin now calls handleAcceptInvitationService directly
-        it('handles opt-in join with share=true and calls service directly', async () => {
+        // TD-CONSOLIDATED-12: handleOptInJoin now uses acceptInvitationAsync mutation hook
+        it('handles opt-in join with share=true via mutation hook', async () => {
             mockDialogState.isAcceptDialogOpen = true;
             mockDialogState.selectedInvitation = mockInvitation;
 
@@ -2381,19 +2386,14 @@ describe('GruposView', () => {
             await userEvent.click(screen.getByTestId('mock-optin-join-share'));
 
             await waitFor(() => {
-                // Should call the service directly (not the hook handler)
-                expect(mockHandleAcceptInvitationService).toHaveBeenCalledWith(
-                    mockServices.db,
-                    mockInvitation,
-                    'test-user-123',
-                    { displayName: 'Test User', email: 'test@example.com', photoURL: undefined },
-                    'boletapp',
-                    true
-                );
+                expect(mockAcceptInvitationAsync).toHaveBeenCalledWith({
+                    invitation: mockInvitation,
+                    shareMyTransactions: true,
+                });
             });
         });
 
-        it('handles opt-in join with share=false and calls service directly', async () => {
+        it('handles opt-in join with share=false via mutation hook', async () => {
             mockDialogState.isAcceptDialogOpen = true;
             mockDialogState.selectedInvitation = mockInvitation;
 
@@ -2410,14 +2410,10 @@ describe('GruposView', () => {
             await userEvent.click(screen.getByTestId('mock-optin-join-no-share'));
 
             await waitFor(() => {
-                expect(mockHandleAcceptInvitationService).toHaveBeenCalledWith(
-                    mockServices.db,
-                    mockInvitation,
-                    'test-user-123',
-                    { displayName: 'Test User', email: 'test@example.com', photoURL: undefined },
-                    'boletapp',
-                    false
-                );
+                expect(mockAcceptInvitationAsync).toHaveBeenCalledWith({
+                    invitation: mockInvitation,
+                    shareMyTransactions: false,
+                });
             });
         });
 
@@ -2469,8 +2465,8 @@ describe('GruposView', () => {
         });
 
         it('shows pending state in opt-in dialog during join', async () => {
-            // Make the service call hang (never resolve)
-            mockHandleAcceptInvitationService.mockImplementation(
+            // Make the mutation call hang (never resolve)
+            mockAcceptInvitationAsync.mockImplementation(
                 () => new Promise(() => {}) // Never resolves
             );
 
@@ -2576,15 +2572,11 @@ describe('GruposView', () => {
             await userEvent.click(screen.getByTestId('mock-optin-dismiss'));
 
             await waitFor(() => {
-                // Should call service with shareMyTransactions=false
-                expect(mockHandleAcceptInvitationService).toHaveBeenCalledWith(
-                    mockServices.db,
-                    mockInvitation,
-                    'test-user-123',
-                    expect.any(Object),
-                    'boletapp',
-                    false
-                );
+                // Should call mutation with shareMyTransactions=false
+                expect(mockAcceptInvitationAsync).toHaveBeenCalledWith({
+                    invitation: mockInvitation,
+                    shareMyTransactions: false,
+                });
             });
 
             // ECC Review #4: AC3 toast must contain "off by default" to distinguish from AC1/AC2
@@ -2596,9 +2588,9 @@ describe('GruposView', () => {
             });
         });
 
-        // ECC Review #7: Test service failure path during opt-in join
-        it('shows error toast when opt-in join service fails', async () => {
-            mockHandleAcceptInvitationService.mockRejectedValueOnce(new Error('Network error'));
+        // ECC Review #7: Test mutation failure path during opt-in join
+        it('shows error toast when opt-in join mutation fails', async () => {
+            mockAcceptInvitationAsync.mockRejectedValueOnce(new Error('Network error'));
             mockDialogState.isAcceptDialogOpen = true;
             mockDialogState.selectedInvitation = mockInvitation;
 

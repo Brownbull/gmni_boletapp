@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { validateEmail, normalizeEmail, validateAppId } from '../../../src/utils/validationUtils';
+import { validateEmail, normalizeEmail, validateAppId, validateGroupId, validateCSSColor, safeCSSColor } from '../../../src/utils/validationUtils';
 
 describe('validationUtils', () => {
     // =========================================================================
@@ -258,6 +258,301 @@ describe('validationUtils', () => {
                 expect(validateAppId('boletapp ')).toBe(false);
                 expect(validateAppId(' boletapp ')).toBe(false);
             });
+        });
+    });
+
+    // =========================================================================
+    // validateGroupId Tests (TD-CONSOLIDATED-6: GroupId Validation)
+    // =========================================================================
+    describe('validateGroupId', () => {
+        describe('valid groupIds', () => {
+            it('accepts standard alphanumeric IDs', () => {
+                expect(() => validateGroupId('abc123')).not.toThrow();
+                expect(() => validateGroupId('GroupABC123')).not.toThrow();
+            });
+
+            it('accepts IDs with hyphens', () => {
+                expect(() => validateGroupId('group-abc-123')).not.toThrow();
+            });
+
+            it('accepts IDs with underscores', () => {
+                expect(() => validateGroupId('group_abc_123')).not.toThrow();
+            });
+
+            it('accepts Firestore auto-generated IDs (20-char alphanumeric)', () => {
+                expect(() => validateGroupId('AbCdEf1234567890AbCd')).not.toThrow();
+            });
+
+            it('accepts single character (boundary)', () => {
+                expect(() => validateGroupId('a')).not.toThrow();
+            });
+
+            it('accepts 128 characters (max boundary)', () => {
+                expect(() => validateGroupId('a'.repeat(128))).not.toThrow();
+            });
+
+            it('accepts mixed case', () => {
+                expect(() => validateGroupId('GroupABC123')).not.toThrow();
+                expect(() => validateGroupId('ALLCAPS')).not.toThrow();
+                expect(() => validateGroupId('alllower')).not.toThrow();
+            });
+        });
+
+        describe('invalid groupIds - path injection prevention', () => {
+            it('rejects forward slash (path traversal)', () => {
+                expect(() => validateGroupId('group/hack')).toThrow('Invalid groupId');
+                expect(() => validateGroupId('../hack')).toThrow('Invalid groupId');
+                expect(() => validateGroupId('a/b/c')).toThrow('Invalid groupId');
+            });
+
+            it('rejects dot (field path injection)', () => {
+                expect(() => validateGroupId('group.subpath')).toThrow('Invalid groupId');
+                expect(() => validateGroupId('a.b.c')).toThrow('Invalid groupId');
+            });
+
+            it('rejects backtick', () => {
+                expect(() => validateGroupId('group`test')).toThrow('Invalid groupId');
+            });
+
+            it('rejects square brackets', () => {
+                expect(() => validateGroupId('group[0]')).toThrow('Invalid groupId');
+            });
+
+            it('rejects asterisk', () => {
+                expect(() => validateGroupId('group*')).toThrow('Invalid groupId');
+            });
+
+            it('rejects backslash', () => {
+                expect(() => validateGroupId('group\\hack')).toThrow('Invalid groupId');
+            });
+        });
+
+        describe('invalid groupIds - format violations', () => {
+            it('rejects empty string', () => {
+                expect(() => validateGroupId('')).toThrow('Invalid groupId');
+            });
+
+            it('rejects null and undefined', () => {
+                expect(() => validateGroupId(null as unknown as string)).toThrow('Invalid groupId');
+                expect(() => validateGroupId(undefined as unknown as string)).toThrow('Invalid groupId');
+            });
+
+            it('rejects non-string types', () => {
+                expect(() => validateGroupId(123 as unknown as string)).toThrow('Invalid groupId');
+                expect(() => validateGroupId({} as unknown as string)).toThrow('Invalid groupId');
+                expect(() => validateGroupId([] as unknown as string)).toThrow('Invalid groupId');
+                expect(() => validateGroupId(true as unknown as string)).toThrow('Invalid groupId');
+            });
+
+            it('rejects spaces', () => {
+                expect(() => validateGroupId('group id')).toThrow('Invalid groupId');
+                expect(() => validateGroupId('   ')).toThrow('Invalid groupId');
+            });
+
+            it('rejects special characters', () => {
+                expect(() => validateGroupId('group@id')).toThrow('Invalid groupId');
+                expect(() => validateGroupId('group#id')).toThrow('Invalid groupId');
+                expect(() => validateGroupId('group$id')).toThrow('Invalid groupId');
+                expect(() => validateGroupId('group!id')).toThrow('Invalid groupId');
+            });
+
+            it('rejects IDs exceeding 128 characters', () => {
+                expect(() => validateGroupId('a'.repeat(129))).toThrow('Invalid groupId');
+                expect(() => validateGroupId('a'.repeat(256))).toThrow('Invalid groupId');
+            });
+        });
+
+        describe('error message', () => {
+            it('includes descriptive format requirements', () => {
+                expect(() => validateGroupId('')).toThrow(
+                    'must be 1-128 characters containing only letters, numbers, hyphens, or underscores'
+                );
+            });
+        });
+    });
+
+    // =========================================================================
+    // CSS Color Validation Shared Fixtures
+    // =========================================================================
+    const GROUP_COLORS = [
+        '#10b981', '#22c55e', '#84cc16', '#14b8a6',
+        '#3b82f6', '#0ea5e9', '#06b6d4', '#6366f1',
+        '#8b5cf6', '#a855f7', '#d946ef', '#ec4899',
+        '#f43f5e', '#ef4444', '#f97316', '#f59e0b',
+        '#eab308', '#78716c', '#64748b', '#71717a',
+    ];
+
+    // =========================================================================
+    // validateCSSColor Tests (TD-CONSOLIDATED-7: CSS Color Injection Prevention)
+    // =========================================================================
+    describe('validateCSSColor', () => {
+        describe('valid hex colors', () => {
+            it('accepts 6-digit hex colors (lowercase)', () => {
+                expect(validateCSSColor('#10b981')).toBe(true);
+                expect(validateCSSColor('#abcdef')).toBe(true);
+                expect(validateCSSColor('#000000')).toBe(true);
+                expect(validateCSSColor('#ffffff')).toBe(true);
+            });
+
+            it('accepts 6-digit hex colors (uppercase)', () => {
+                expect(validateCSSColor('#ABCDEF')).toBe(true);
+                expect(validateCSSColor('#10B981')).toBe(true);
+                expect(validateCSSColor('#FF0000')).toBe(true);
+            });
+
+            it('accepts 6-digit hex colors (mixed case)', () => {
+                expect(validateCSSColor('#aAbBcC')).toBe(true);
+                expect(validateCSSColor('#10B981')).toBe(true);
+            });
+
+            it('accepts 3-digit hex colors', () => {
+                expect(validateCSSColor('#abc')).toBe(true);
+                expect(validateCSSColor('#ABC')).toBe(true);
+                expect(validateCSSColor('#123')).toBe(true);
+                expect(validateCSSColor('#fff')).toBe(true);
+                expect(validateCSSColor('#000')).toBe(true);
+            });
+
+            it('accepts all GROUP_COLORS from allowlist', () => {
+                for (const color of GROUP_COLORS) {
+                    expect(validateCSSColor(color)).toBe(true);
+                }
+            });
+        });
+
+        describe('invalid - empty/null/undefined', () => {
+            it('rejects empty string', () => {
+                expect(validateCSSColor('')).toBe(false);
+            });
+
+            it('rejects null and undefined', () => {
+                expect(validateCSSColor(null as unknown as string)).toBe(false);
+                expect(validateCSSColor(undefined as unknown as string)).toBe(false);
+            });
+
+            it('rejects non-string types', () => {
+                expect(validateCSSColor(123 as unknown as string)).toBe(false);
+                expect(validateCSSColor({} as unknown as string)).toBe(false);
+                expect(validateCSSColor([] as unknown as string)).toBe(false);
+                expect(validateCSSColor(true as unknown as string)).toBe(false);
+            });
+        });
+
+        describe('invalid - CSS injection attempts', () => {
+            it('rejects CSS property injection via semicolon', () => {
+                expect(validateCSSColor('red; position: fixed')).toBe(false);
+                expect(validateCSSColor('#fff; z-index: 9999')).toBe(false);
+            });
+
+            it('rejects url() function', () => {
+                expect(validateCSSColor('url(evil.css)')).toBe(false);
+                expect(validateCSSColor('url(https://evil.com/track)')).toBe(false);
+            });
+
+            it('rejects expression() function (IE legacy)', () => {
+                expect(validateCSSColor('expression(alert(1))')).toBe(false);
+            });
+
+            it('rejects var() function', () => {
+                expect(validateCSSColor('var(--evil)')).toBe(false);
+                expect(validateCSSColor('var(--primary, #2563eb)')).toBe(false);
+            });
+
+            it('rejects rgba/rgb/hsl functions', () => {
+                expect(validateCSSColor('rgba(255,0,0,1)')).toBe(false);
+                expect(validateCSSColor('rgb(255,0,0)')).toBe(false);
+                expect(validateCSSColor('hsl(0,100%,50%)')).toBe(false);
+            });
+        });
+
+        describe('invalid - near-miss formats', () => {
+            it('rejects hex without # prefix', () => {
+                expect(validateCSSColor('10b981')).toBe(false);
+                expect(validateCSSColor('abcdef')).toBe(false);
+            });
+
+            it('rejects 4-digit hex', () => {
+                expect(validateCSSColor('#abcd')).toBe(false);
+            });
+
+            it('rejects 5-digit hex', () => {
+                expect(validateCSSColor('#abcde')).toBe(false);
+            });
+
+            it('rejects 8-digit hex (with alpha)', () => {
+                expect(validateCSSColor('#abcdef12')).toBe(false);
+            });
+
+            it('rejects hex with spaces', () => {
+                expect(validateCSSColor('# abcdef')).toBe(false);
+                expect(validateCSSColor('#abc def')).toBe(false);
+                expect(validateCSSColor(' #abcdef')).toBe(false);
+            });
+
+            it('rejects hex with invalid characters', () => {
+                expect(validateCSSColor('#abcghi')).toBe(false);
+                expect(validateCSSColor('#xyz123')).toBe(false);
+            });
+        });
+
+        describe('invalid - named CSS colors', () => {
+            it('rejects named colors (not in allowlist)', () => {
+                expect(validateCSSColor('red')).toBe(false);
+                expect(validateCSSColor('blue')).toBe(false);
+                expect(validateCSSColor('green')).toBe(false);
+                expect(validateCSSColor('transparent')).toBe(false);
+                expect(validateCSSColor('inherit')).toBe(false);
+            });
+        });
+    });
+
+    // =========================================================================
+    // safeCSSColor Tests (TD-CONSOLIDATED-7: CSS Color Injection Prevention)
+    // =========================================================================
+    describe('safeCSSColor', () => {
+        it('returns valid hex color unchanged', () => {
+            expect(safeCSSColor('#10b981')).toBe('#10b981');
+            expect(safeCSSColor('#abc')).toBe('#abc');
+            expect(safeCSSColor('#ABCDEF')).toBe('#ABCDEF');
+        });
+
+        it('returns default fallback for invalid input', () => {
+            expect(safeCSSColor('red; position: fixed')).toBe('#10b981');
+            expect(safeCSSColor('url(evil.css)')).toBe('#10b981');
+            expect(safeCSSColor('not-a-color')).toBe('#10b981');
+        });
+
+        it('returns default fallback for empty string', () => {
+            expect(safeCSSColor('')).toBe('#10b981');
+        });
+
+        it('returns default fallback for null/undefined', () => {
+            expect(safeCSSColor(null)).toBe('#10b981');
+            expect(safeCSSColor(undefined)).toBe('#10b981');
+        });
+
+        it('returns custom fallback when provided', () => {
+            expect(safeCSSColor('invalid', 'var(--primary, #2563eb)')).toBe('var(--primary, #2563eb)');
+            expect(safeCSSColor('', '#ff0000')).toBe('#ff0000');
+            expect(safeCSSColor(null, '#333')).toBe('#333');
+        });
+
+        it('ignores custom fallback when color is valid', () => {
+            expect(safeCSSColor('#abcdef', '#000')).toBe('#abcdef');
+        });
+
+        it('handles all GROUP_COLORS correctly', () => {
+            for (const color of GROUP_COLORS) {
+                expect(safeCSSColor(color)).toBe(color);
+            }
+        });
+
+        it('SECURITY: fallback is NOT validated - callers must use hardcoded values only', () => {
+            // Documents that safeCSSColor does NOT validate the fallback parameter.
+            // This is by design (allows var(--primary) fallbacks), but callers must
+            // NEVER pass user-controlled values as the fallback.
+            const maliciousFallback = 'red; position: fixed; z-index: 9999';
+            expect(safeCSSColor('invalid', maliciousFallback)).toBe(maliciousFallback);
         });
     });
 });

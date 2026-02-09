@@ -394,6 +394,17 @@
       Run tests per-edit with `npx vitest run <path>` — do NOT run full suite per subtask.
     </action>
 
+    <!-- AST-GREP STRUCTURAL SEARCH: Mandatory for pattern-touching stories -->
+    <action>BEFORE writing new service functions, hooks, or utility code:
+      1. Run ast-grep MCP `find_code` to check if a similar pattern already exists in `src/`
+         Example: before writing a new sort comparator, search `$ARR.sort(($A, $B) => $$$)`
+      2. If matches found → reuse or extract to shared utility instead of duplicating
+      3. When extracting shared code, use `find_code` to find ALL callers before refactoring
+      4. For complex structural searches, use `find_code_by_rule` with YAML rules
+      5. Prefer ast-grep over text grep when searching for syntactic patterns (function shapes, hook usage)
+      See .claude/skills/ast-grep/SKILL.md for BoletApp-specific patterns and pre-built queries.
+    </action>
+
     <loop for="each incomplete task in {{task_list}}">
       <output>🎭 **Spawning ECC TDD Guide for Task: {{current_task}}**
 
@@ -868,7 +879,8 @@
     <action>Set {{has_ui_changes}} = true/false</action>
 
     <output>**Next Steps:**
-      - Run `ecc-code-review` for external review
+      - Run `/workflow-close` to verify tests, status files, and branch state
+      - Run `/ecc-code-review` for external review
       {{#if has_ui_changes}}
       - Run `/ecc-e2e` for E2E test coverage (UI changes detected)
       {{/if}}

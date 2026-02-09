@@ -18,6 +18,7 @@
 import { useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Check } from 'lucide-react';
+import { safeCSSColor } from '@/utils/validationUtils';
 
 // =============================================================================
 // Types
@@ -183,7 +184,7 @@ export function ColorPicker({
                 disabled={disabled}
                 className={`${sizeClasses[size]} rounded-full flex items-center justify-center transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
                 style={{
-                    backgroundColor: value,
+                    backgroundColor: safeCSSColor(value),
                     border: '2px solid var(--border-light)',
                     opacity: disabled ? 0.5 : 1,
                     cursor: disabled ? 'not-allowed' : 'pointer',

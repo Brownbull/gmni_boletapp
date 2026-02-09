@@ -338,6 +338,31 @@ describe('TransactionSharingOptInDialog', () => {
             expect(mockOnCancel).toHaveBeenCalled();
         });
 
+        it('radio inputs support keyboard navigation (AC11: native radio group)', () => {
+            render(<TransactionSharingOptInDialog {...defaultProps} />);
+
+            const yesRadio = screen.getByTestId('share-yes-btn') as HTMLInputElement;
+            const noRadio = screen.getByTestId('share-no-btn') as HTMLInputElement;
+
+            // Structural prerequisites for native keyboard nav (Tab + Arrow + Space):
+            // 1. Both are type="radio"
+            expect(yesRadio.type).toBe('radio');
+            expect(noRadio.type).toBe('radio');
+
+            // 2. Same name groups them for arrow-key navigation
+            expect(yesRadio.name).toBe('shareMyTransactions');
+            expect(noRadio.name).toBe('shareMyTransactions');
+
+            // 3. Each radio is wrapped in a <label> for click/tap accessibility
+            expect(yesRadio.closest('label')).not.toBeNull();
+            expect(noRadio.closest('label')).not.toBeNull();
+
+            // 4. Click-based selection works (keyboard Space delegates to click in browsers)
+            fireEvent.click(yesRadio);
+            expect(yesRadio.checked).toBe(true);
+            expect(noRadio.checked).toBe(false);
+        });
+
         it('does not close on Escape during pending', () => {
             render(<TransactionSharingOptInDialog {...defaultProps} isPending={true} />);
 

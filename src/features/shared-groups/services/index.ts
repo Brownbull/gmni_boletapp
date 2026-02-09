@@ -1,11 +1,12 @@
 /**
  * Services barrel export for shared-groups feature
  *
+ * TD-CONSOLIDATED-1: Updated to import from canonical module paths.
  * Story 14d-v2-1-4b: Service & Hook Layer
  * Story 14d-v2-1-7d: Invitation Handler Services
- * Moved from src/services/groupService.ts for FSD compliance
  */
 
+// Group CRUD (groupService.ts)
 export {
   createGroup,
   getUserGroups,
@@ -13,23 +14,27 @@ export {
   canCreateGroup,
   getDeviceTimezone,
   getGroupByShareCode,
+  updateGroup,
+  updateTransactionSharingEnabled,
+  DEFAULT_GROUP_COLOR,
+  GROUP_COLORS,
+  GROUP_ICONS,
+} from './groupService';
+
+// Group Deletion (groupDeletionService.ts)
+export {
+  deleteGroupAsLastMember,
+  deleteGroupAsOwner,
+} from './groupDeletionService';
+
+// Group Membership (groupMemberService.ts)
+export {
   joinGroupDirectly,
   leaveGroup,
   transferOwnership,
-  deleteGroupAsLastMember,
-  deleteGroupAsOwner,
-  // ECC Review #2: Default group color constant
-  DEFAULT_GROUP_COLOR,
-  // Story 14d-v2-1-7g: Edit Group Settings
-  updateGroup,
-  GROUP_COLORS,
-  GROUP_ICONS,
-  // Story 14d-v2-1-11c: Transaction Sharing Toggle
-  updateTransactionSharingEnabled,
-  // Story 14d-v2-1-12d: Leave Group with Cleanup
   leaveGroupWithCleanup,
   transferAndLeaveWithCleanup,
-} from './groupService';
+} from './groupMemberService';
 
 // Story 14d-v2-1-7d: Invitation Handler Services
 export {

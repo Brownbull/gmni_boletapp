@@ -25,8 +25,6 @@ import { resolve } from 'path';
 const PROJECT_ID = 'boletapp-d609f';
 const FIRESTORE_HOST = 'localhost';
 const FIRESTORE_PORT = 8080;
-const AUTH_HOST = 'localhost';
-const AUTH_PORT = 9099;
 
 let testEnv: RulesTestEnvironment | null = null;
 

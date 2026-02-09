@@ -1,6 +1,6 @@
 # Story 14d-v2-1.13+14: Join Flow - Foundation + Integration
 
-Status: review
+Status: done
 
 > **Consolidated 2026-02-05:** Merges stories 1-13, 1-14a, 1-14b into a single story.
 > Opus 4.6 handles larger context windows - these three tightly-coupled stories

@@ -96,21 +96,72 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'updatedAt']);
       }
 
-      // Update: Owner can update group settings, member can join, or member can leave
+      // Helper: Is settings update allowed (60s cooldown)?
+      // TD-CONSOLIDATED-11: Server-side rate limiting for owner settings updates
+      // Migration-safe: allows updates when field is missing or null (pre-existing groups)
+      // Timestamp validation: lastSettingsUpdateAt MUST be written and MUST equal
+      // request.time (enforces serverTimestamp(), prevents future timestamp lock-out attack
+      // and prevents bypass via omitting the field from the write)
+      function isSettingsUpdateAllowed() {
+        let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+        // lastSettingsUpdateAt MUST be written and MUST equal request.time
+        // ECC Review Fix: Changed from optional to mandatory to prevent cooldown bypass
+        // where a malicious client omits the field, keeping the old expired value
+        let timestampWritten = changedKeys.hasAny(['lastSettingsUpdateAt'])
+            && request.resource.data.lastSettingsUpdateAt == request.time;
+        // Cooldown check on existing value (migration-safe)
+        let cooldownPassed = !('lastSettingsUpdateAt' in resource.data)
+            || resource.data.lastSettingsUpdateAt == null
+            || request.time > resource.data.lastSettingsUpdateAt + duration.value(60, 's');
+        return timestampWritten && cooldownPassed;
+      }
+
+      // Helper: Is this an ownership transfer? (not subject to settings cooldown)
+      // ECC Review Fix: Ownership transfer writes {ownerId, updatedAt} or
+      // {ownerId, members, updatedAt} (transfer + leave combo). Without a dedicated
+      // path, transfers would be incorrectly blocked by the 60s settings cooldown.
+      // Requires ownerId to be changing (prevents non-transfer member modifications).
+      function isOwnershipTransfer() {
+        let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+        return changedKeys.hasAny(['ownerId'])
+            && changedKeys.hasOnly(['ownerId', 'updatedAt', 'members']);
+      }
+
+      // Helper: Is this a transaction sharing toggle update?
+      // TD-CONSOLIDATED-11: Toggle has its own independent cooldown system
+      // (transactionSharingLastToggleAt, not lastSettingsUpdateAt)
+      // Must be a separate update path to avoid settings cooldown blocking toggles
+      function isTransactionSharingToggle() {
+        return request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['transactionSharingEnabled', 'transactionSharingLastToggleAt',
+                      'transactionSharingToggleCountToday', 'transactionSharingToggleCountResetAt',
+                      'updatedAt']);
+      }
+
+      // Helper: Is delete allowed (30s cooldown)?
+      // TD-CONSOLIDATED-11: Server-side rate limiting for group deletions
+      // Uses existing updatedAt field (set on creation and any modification)
+      // Note: updatedAt is written by ALL operations (settings, toggle, join, leave),
+      // so this enforces "30s since last modification by anyone" — acceptable
+      // trade-off to avoid adding a dedicated lastDeleteAttemptAt field.
+      function isDeleteAllowed() {
+        return !('updatedAt' in resource.data)
+            || resource.data.updatedAt == null
+            || request.time > resource.data.updatedAt + duration.value(30, 's');
+      }
+
+      // Update: Owner can update settings (with cooldown), toggle sharing, transfer ownership, or members can join/leave
       // AC#4: Non-owners cannot update (except to join or leave)
       // Story 14d-v2-1-6c-2: Allow joining via share code
       // Story 14d-v2-1-7a: Allow members to leave group
-      // Story 14d-v2-1-11b: Transaction sharing toggle fields (owner-only via isGroupOwner)
-      //   - transactionSharingEnabled (AC6)
-      //   - transactionSharingLastToggleAt (AC7)
-      //   - transactionSharingToggleCountToday (AC8)
-      //   - transactionSharingToggleCountResetAt
-      //   Non-owners denied write (AC9) - enforced by isGroupOwner() check
-      allow update: if isGroupOwner() || (request.auth != null && isUserJoining()) || (request.auth != null && isUserLeaving());
+      // Story 14d-v2-1-11b: Transaction sharing toggle (owner-only, independent cooldown)
+      // TD-CONSOLIDATED-11: Settings updates gated by 60s cooldown, toggle and transfer have separate paths
+      allow update: if (isGroupOwner() && (isSettingsUpdateAllowed() || isTransactionSharingToggle() || isOwnershipTransfer())) || (request.auth != null && isUserJoining()) || (request.auth != null && isUserLeaving());
 
       // Delete: Only owner can delete group
       // AC#4: Non-owners cannot delete
-      allow delete: if isGroupOwner();
+      // TD-CONSOLIDATED-11: isDeleteAllowed() gates deletes with 30s cooldown
+      allow delete: if isGroupOwner() && isDeleteAllowed();
 
       // ========================================================================
       // Changelog Subcollection - Epic 14d-v2 Story 1.3b
@@ -185,9 +236,22 @@ service cloud.firestore {
         && request.resource.data.groupId is string
         && isGroupOwnerForInvitation(request.resource.data.groupId);
 
-      // Read: Any authenticated user can read invitations (AC #3)
-      // This allows users to see invitations sent to their email
-      allow read: if request.auth != null;
+      // Get (single document by ID): Any authenticated user can read
+      // Needed for accept/decline flows that use document IDs
+      allow get: if request.auth != null;
+
+      // List (collection query): Restricted to own invitations or own-created invitations
+      // TD-CONSOLIDATED-5: Restrict pendingInvitations list to prevent email/status exposure
+      // Two valid query patterns:
+      //   1. Invitee: filter by invitedEmail == auth email (view own invitations)
+      //   2. Inviter: filter by invitedByUserId == auth uid (owner cleanup on group deletion)
+      // Note: App uses Google Sign-In exclusively, so all users have email in token
+      allow list: if request.auth != null
+        && (
+          (request.auth.token.email != null
+            && resource.data.invitedEmail == request.auth.token.email)
+          || resource.data.invitedByUserId == request.auth.uid
+        );
 
       // Update: Only invited user can accept/decline (Story 14d-v2-1-6e AC #1)
       // Validates: email matches, status is pending, new status is terminal

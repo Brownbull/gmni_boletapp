@@ -20,6 +20,7 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { X, Trash2, Loader2, AlertTriangle } from 'lucide-react';
 import { useFocusTrap } from '@/shared/hooks';
+import { safeCSSColor } from '@/utils/validationUtils';
 
 export interface DeleteGroupDialogProps {
     /** Whether the modal is currently open */
@@ -214,7 +215,7 @@ export const DeleteGroupDialog: React.FC<DeleteGroupDialogProps> = ({
                         <div
                             className="w-16 h-16 rounded-full flex items-center justify-center"
                             style={{
-                                backgroundColor: groupColor,
+                                backgroundColor: safeCSSColor(groupColor),
                                 fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", sans-serif',
                                 fontSize: '2rem',
                                 lineHeight: 1,
@@ -243,7 +244,7 @@ export const DeleteGroupDialog: React.FC<DeleteGroupDialogProps> = ({
 
                     <p
                         className="text-sm font-medium mb-3"
-                        style={{ color: groupColor }}
+                        style={{ color: safeCSSColor(groupColor) }}
                     >
                         {groupName}
                     </p>

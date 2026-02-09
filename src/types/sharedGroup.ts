@@ -32,6 +32,7 @@
  *   transactionSharingLastToggleAt: null,
  *   transactionSharingToggleCountToday: 0,
  *   transactionSharingToggleCountResetAt: null,
+ *   lastSettingsUpdateAt: null,
  * };
  * ```
  */
@@ -240,6 +241,15 @@ export interface SharedGroup {
      * Story 14d-v2-1-11: Transaction Sharing Toggle
      */
     transactionSharingToggleCountResetAt: Timestamp | null;
+
+    /**
+     * Last time group settings (name/icon/color) were updated by the owner.
+     * Used for server-side rate limiting via Firestore security rules.
+     * Rules enforce a 60-second cooldown between settings updates.
+     * null if never updated since creation (migration-safe).
+     * TD-CONSOLIDATED-11: Server-Side Rate Limiting
+     */
+    lastSettingsUpdateAt: Timestamp | null;
 }
 
 /**

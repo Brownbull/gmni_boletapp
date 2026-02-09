@@ -86,6 +86,17 @@ export const QUERY_KEYS = {
         ['items', 'derived', userId, appId] as const,
 
     /**
+     * Story TD-CONSOLIDATED-12: Pending Invitations Query Keys
+     * Centralized keys for invitation queries and mutation invalidation
+     */
+    pendingInvitations: {
+        /** All pending invitations queries (for bulk invalidation) */
+        all: () => ['pendingInvitations'] as const,
+        /** Pending invitations for a specific email */
+        byEmail: (email: string) => ['pendingInvitations', email] as const,
+    },
+
+    /**
      * Story 14d-v2-1-4b: Shared Groups Query Keys
      * Hierarchical keys for group queries and mutations
      */

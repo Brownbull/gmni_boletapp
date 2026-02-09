@@ -26,12 +26,14 @@
 
 import React, { useState, useCallback } from 'react';
 import { KeyRound, Search, Loader2, AlertCircle } from 'lucide-react';
+import { getAuth } from 'firebase/auth';
 import { getFirestore, Timestamp } from 'firebase/firestore';
 import { isValidShareCode } from '@/utils/shareCodeUtils';
 import { getInvitationByShareCode } from '@/services/invitationService';
 import { getGroupByShareCode } from '@/features/shared-groups';
 import type { PendingInvitation, SharedGroup } from '@/types/sharedGroup';
 import { isShareCodeExpired } from '@/features/shared-groups';
+import { safeCSSColor } from '@/utils/validationUtils';
 
 // =============================================================================
 // Types
@@ -109,7 +111,7 @@ export const JoinGroupByCode: React.FC<JoinGroupByCodeProps> = ({
             id: `group-${groupId}`, // Synthetic ID to indicate it's from a group
             groupId,
             groupName: group.name,
-            groupColor: group.color || '#10b981',
+            groupColor: safeCSSColor(group.color),
             groupIcon: group.icon,
             shareCode: group.shareCode,
             invitedEmail: '', // No email for direct share code join
@@ -137,8 +139,11 @@ export const JoinGroupByCode: React.FC<JoinGroupByCodeProps> = ({
         try {
             const db = getFirestore();
 
+            // TD-CONSOLIDATED-5: Pass user email to comply with security rules
+            const userEmail = getAuth().currentUser?.email ?? null;
+
             // First, try to find a pending invitation with this share code
-            const invitation = await getInvitationByShareCode(db, code);
+            const invitation = await getInvitationByShareCode(db, code, userEmail);
 
             if (invitation) {
                 // Found an invitation - check if expired
@@ -183,7 +188,9 @@ export const JoinGroupByCode: React.FC<JoinGroupByCodeProps> = ({
             setIsLoading(false);
 
         } catch (err) {
-            console.error('[JoinGroupByCode] Error fetching invitation:', err);
+            if (import.meta.env.DEV) {
+                console.error('[JoinGroupByCode] Error fetching invitation:', err);
+            }
             setError(texts.networkError);
             setIsLoading(false);
             onShowToast?.(texts.networkError, 'error');
