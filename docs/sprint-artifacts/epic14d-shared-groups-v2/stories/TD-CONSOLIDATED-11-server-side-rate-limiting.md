@@ -1,6 +1,6 @@
 # Story: TD-CONSOLIDATED-11: Server-Side Rate Limiting
 
-## Status: review
+## Status: done
 ## Epic: Epic 14d-v2 Shared Groups (Tech Debt - Tier 5)
 
 > **Consolidated from:** TD-14d-6, TD-14d-39
@@ -167,6 +167,36 @@ E2E coverage not critical for this story — rate limiting is tested via integra
 - **Complexity:** Moderate
 - **Sizing:** SMALL-MEDIUM (3 pts) — 3 tasks, 19 subtasks, 4 files
 - **Agents consulted:** Planner, Architect
+
+## Senior Developer Review (ECC)
+
+- **Date:** 2026-02-08
+- **Classification:** STANDARD (2 agents)
+- **Agents:** code-reviewer, security-reviewer
+- **Score:** 7/10 (pre-fix)
+- **Outcome:** APPROVED with 4 quick fixes applied, 1 TD story created
+
+### Quick Fixes Applied
+
+| # | Finding | Severity | Fix |
+|---|---------|----------|-----|
+| 1 | Settings cooldown bypass via omitting `lastSettingsUpdateAt` | HIGH | Made `lastSettingsUpdateAt` write MANDATORY in `isSettingsUpdateAllowed()` |
+| 2 | Ownership transfer blocked by settings cooldown | HIGH | Added `isOwnershipTransfer()` helper as separate update path |
+| 6 | Magic numbers in integration tests | LOW | Extracted `DELETE_COOLDOWN_BYPASS_MS`, `SETTINGS_COOLDOWN_BYPASS_MS`, `WELL_PAST_COOLDOWN_MS` constants |
+| 9 | JSDoc example missing `lastSettingsUpdateAt` | LOW | Added `lastSettingsUpdateAt: null` to type example |
+
+### Deferred to Tech Debt
+
+| # | Finding | Severity | Reason | TD Story |
+|---|---------|----------|--------|----------|
+| 3 | Toggle path has no server-side cooldown enforcement | MEDIUM | Pre-existing gap, not introduced by this story | TD-CONSOLIDATED-23 |
+| 4 | Toggle timestamp not validated as `request.time` | MEDIUM | Companion to #3, same TD story | TD-CONSOLIDATED-23 |
+
+## Tech Debt Stories Created
+
+| Story | Title | Source Findings |
+|-------|-------|-----------------|
+| [TD-CONSOLIDATED-23](TD-CONSOLIDATED-23-toggle-server-side-cooldown.md) | Toggle Server-Side Cooldown | Review findings #3, #4 |
 
 ## Cross-References
 

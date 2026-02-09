@@ -99,18 +99,32 @@ service cloud.firestore {
       // Helper: Is settings update allowed (60s cooldown)?
       // TD-CONSOLIDATED-11: Server-side rate limiting for owner settings updates
       // Migration-safe: allows updates when field is missing or null (pre-existing groups)
-      // Timestamp validation: if lastSettingsUpdateAt is being changed, it MUST equal
-      // request.time (enforces serverTimestamp(), prevents future timestamp lock-out attack)
+      // Timestamp validation: lastSettingsUpdateAt MUST be written and MUST equal
+      // request.time (enforces serverTimestamp(), prevents future timestamp lock-out attack
+      // and prevents bypass via omitting the field from the write)
       function isSettingsUpdateAllowed() {
         let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
-        // If lastSettingsUpdateAt is being written, validate it's server timestamp
-        let timestampValid = !changedKeys.hasAny(['lastSettingsUpdateAt'])
-            || request.resource.data.lastSettingsUpdateAt == request.time;
+        // lastSettingsUpdateAt MUST be written and MUST equal request.time
+        // ECC Review Fix: Changed from optional to mandatory to prevent cooldown bypass
+        // where a malicious client omits the field, keeping the old expired value
+        let timestampWritten = changedKeys.hasAny(['lastSettingsUpdateAt'])
+            && request.resource.data.lastSettingsUpdateAt == request.time;
         // Cooldown check on existing value (migration-safe)
         let cooldownPassed = !('lastSettingsUpdateAt' in resource.data)
             || resource.data.lastSettingsUpdateAt == null
             || request.time > resource.data.lastSettingsUpdateAt + duration.value(60, 's');
-        return timestampValid && cooldownPassed;
+        return timestampWritten && cooldownPassed;
+      }
+
+      // Helper: Is this an ownership transfer? (not subject to settings cooldown)
+      // ECC Review Fix: Ownership transfer writes {ownerId, updatedAt} or
+      // {ownerId, members, updatedAt} (transfer + leave combo). Without a dedicated
+      // path, transfers would be incorrectly blocked by the 60s settings cooldown.
+      // Requires ownerId to be changing (prevents non-transfer member modifications).
+      function isOwnershipTransfer() {
+        let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+        return changedKeys.hasAny(['ownerId'])
+            && changedKeys.hasOnly(['ownerId', 'updatedAt', 'members']);
       }
 
       // Helper: Is this a transaction sharing toggle update?
@@ -136,13 +150,13 @@ service cloud.firestore {
             || request.time > resource.data.updatedAt + duration.value(30, 's');
       }
 
-      // Update: Owner can update settings (with cooldown), toggle sharing, or members can join/leave
+      // Update: Owner can update settings (with cooldown), toggle sharing, transfer ownership, or members can join/leave
       // AC#4: Non-owners cannot update (except to join or leave)
       // Story 14d-v2-1-6c-2: Allow joining via share code
       // Story 14d-v2-1-7a: Allow members to leave group
       // Story 14d-v2-1-11b: Transaction sharing toggle (owner-only, independent cooldown)
-      // TD-CONSOLIDATED-11: Settings updates gated by 60s cooldown, toggle has separate path
-      allow update: if (isGroupOwner() && (isSettingsUpdateAllowed() || isTransactionSharingToggle())) || (request.auth != null && isUserJoining()) || (request.auth != null && isUserLeaving());
+      // TD-CONSOLIDATED-11: Settings updates gated by 60s cooldown, toggle and transfer have separate paths
+      allow update: if (isGroupOwner() && (isSettingsUpdateAllowed() || isTransactionSharingToggle() || isOwnershipTransfer())) || (request.auth != null && isUserJoining()) || (request.auth != null && isUserLeaving());
 
       // Delete: Only owner can delete group
       // AC#4: Non-owners cannot delete

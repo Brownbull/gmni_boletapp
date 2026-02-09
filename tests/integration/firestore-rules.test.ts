@@ -2249,6 +2249,11 @@ describe('User Preferences Security Rules (Story 14d-v2-1-12b)', () => {
 describe('Rate Limiting Security Rules (TD-CONSOLIDATED-11)', () => {
     const TEST_GROUP_ID = 'rate-limit-test-group';
 
+    // ECC Review Fix: Named constants for cooldown bypass margins
+    const DELETE_COOLDOWN_BYPASS_MS = 31000;   // 30s cooldown + 1s margin
+    const SETTINGS_COOLDOWN_BYPASS_MS = 61000; // 60s cooldown + 1s margin
+    const WELL_PAST_COOLDOWN_MS = 120000;      // 2 minutes — well past both cooldowns
+
     beforeAll(async () => {
         await setupFirebaseEmulator();
     });
@@ -2326,7 +2331,7 @@ describe('Rate Limiting Security Rules (TD-CONSOLIDATED-11)', () => {
      */
     it('should allow owner settings update after 60s cooldown elapsed (AC-1)', async () => {
         // Create group with lastSettingsUpdateAt = 61 seconds ago (cooldown expired)
-        const sixtyOneSecondsAgo = Timestamp.fromDate(new Date(Date.now() - 61000));
+        const sixtyOneSecondsAgo = Timestamp.fromDate(new Date(Date.now() - SETTINGS_COOLDOWN_BYPASS_MS));
 
         await withSecurityRulesDisabled(async (firestore) => {
             await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID),
@@ -2447,7 +2452,7 @@ describe('Rate Limiting Security Rules (TD-CONSOLIDATED-11)', () => {
      */
     it('should allow group deletion after 30s cooldown elapsed (AC-2)', async () => {
         // Create group with updatedAt = 31 seconds ago (cooldown expired)
-        const thirtyOneSecondsAgo = Timestamp.fromDate(new Date(Date.now() - 31000));
+        const thirtyOneSecondsAgo = Timestamp.fromDate(new Date(Date.now() - DELETE_COOLDOWN_BYPASS_MS));
 
         await withSecurityRulesDisabled(async (firestore) => {
             await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID),
@@ -2559,12 +2564,68 @@ describe('Rate Limiting Security Rules (TD-CONSOLIDATED-11)', () => {
     // ========================================================================
 
     /**
-     * Test 10: Client CANNOT write far-future lastSettingsUpdateAt to lock out owner
+     * Test 10: Settings update DENIED when lastSettingsUpdateAt is omitted from write
+     * ECC Review Fix: Prevents cooldown bypass by requiring lastSettingsUpdateAt in every settings update
+     */
+    it('should deny settings update that omits lastSettingsUpdateAt (bypass prevention)', async () => {
+        // Create group with expired cooldown (should normally allow update)
+        const twoMinutesAgo = Timestamp.fromDate(new Date(Date.now() - WELL_PAST_COOLDOWN_MS));
+
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID),
+                createGroupData(TEST_USERS.USER_1, [TEST_USERS.USER_1], {
+                    lastSettingsUpdateAt: twoMinutesAgo,
+                })
+            );
+        });
+
+        // Malicious client sends settings update WITHOUT lastSettingsUpdateAt
+        // This would bypass the cooldown because the stored value stays expired
+        const user1Firestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const groupDoc = doc(user1Firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID);
+
+        await assertFails(
+            updateDoc(groupDoc, {
+                name: 'Bypass Attempt',
+                updatedAt: serverTimestamp(),
+                // lastSettingsUpdateAt intentionally omitted — should be DENIED
+            })
+        );
+    });
+
+    /**
+     * Test 11: Ownership transfer ALLOWED even when settings cooldown is active
+     * ECC Review Fix: Transfer path bypasses settings cooldown
+     */
+    it('should allow ownership transfer even when settings cooldown is active', async () => {
+        // Create group with active settings cooldown (lastSettingsUpdateAt = now)
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID),
+                createGroupData(TEST_USERS.USER_1, [TEST_USERS.USER_1, TEST_USERS.USER_2], {
+                    lastSettingsUpdateAt: Timestamp.now(),
+                })
+            );
+        });
+
+        // Owner transfers ownership — should succeed (not subject to settings cooldown)
+        const user1Firestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const groupDoc = doc(user1Firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID);
+
+        await assertSucceeds(
+            updateDoc(groupDoc, {
+                ownerId: TEST_USERS.USER_2,
+                updatedAt: serverTimestamp(),
+            })
+        );
+    });
+
+    /**
+     * Test 12: Client CANNOT write far-future lastSettingsUpdateAt to lock out owner
      * Security fix: lastSettingsUpdateAt must equal request.time when being written
      */
     it('should deny settings update with non-serverTimestamp lastSettingsUpdateAt', async () => {
         // Create group with expired cooldown (should normally allow update)
-        const twoMinutesAgo = Timestamp.fromDate(new Date(Date.now() - 120000));
+        const twoMinutesAgo = Timestamp.fromDate(new Date(Date.now() - WELL_PAST_COOLDOWN_MS));
 
         await withSecurityRulesDisabled(async (firestore) => {
             await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID),

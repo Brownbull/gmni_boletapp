@@ -32,6 +32,7 @@
  *   transactionSharingLastToggleAt: null,
  *   transactionSharingToggleCountToday: 0,
  *   transactionSharingToggleCountResetAt: null,
+ *   lastSettingsUpdateAt: null,
  * };
  * ```
  */
