@@ -3,7 +3,7 @@
 **Epic:** 15 - Codebase Refactoring
 **Points:** 3
 **Priority:** CRITICAL
-**Status:** review
+**Status:** done
 
 ## Description
 
@@ -55,3 +55,23 @@ The `useUserCredits` hook — the only active consumer of credit deduction in th
 - The hook currently: reads credits → computes new balance locally → writes with `setDoc()`. This must change to: calls `deductAndSaveCredits(amount)` → lets transaction handle read-compute-write
 - After this fix, the `_currentCredits` parameter in `deductAndSaveCredits` can be fully removed (it's already `@deprecated` via code review Fix #5)
 - `DEFAULT_CREDITS` returning on error is dangerous: a user with 0 credits who has a network blip would see 1200 credits appear
+
+## Senior Developer Review (ECC)
+
+- **Review date:** 2026-02-10
+- **Classification:** STANDARD
+- **ECC agents used:** code-reviewer, security-reviewer
+- **Outcome:** APPROVED with quick fixes applied
+- **Quick fixes applied (4):**
+  1. addCredits/addSuperCredits error recovery wrapped in nested try/catch (regression from getUserCredits now throwing)
+  2. Visibility change handler now sets/clears error state consistently
+  3. Input validation added to addCredits/addSuperCredits (positive integer check)
+  4. Test assertion `toHaveBeenCalled` upgraded to `toHaveBeenCalledWith`
+- **Overall score:** 8/10
+
+### Tech Debt Stories Created
+
+| TD Story | Description | Priority |
+|----------|-------------|----------|
+| [15-TD-13](./15-TD-13-transactional-credit-additions.md) | Transactional credit additions & airlock deductions | HIGH |
+| [15-TD-14](./15-TD-14-credits-type-safety-cleanup.md) | Credits type safety & dependency cleanup | MEDIUM |

@@ -53,7 +53,7 @@ interface UseUserCreditsResult {
 }
 
 interface FirebaseServices {
-  db: any;
+  db: any; // TODO: TD story — change to Firestore type (requires updating all callers)
   appId: string;
 }
 
@@ -129,8 +129,14 @@ export function useUserCredits(
       if (document.visibilityState === 'visible') {
         // Refresh credits when user returns to app
         getUserCredits(services.db, user.uid, services.appId)
-          .then(setCredits)
-          .catch((error) => console.error('Failed to refresh credits on visibility change:', error));
+          .then((refreshed) => {
+            setCredits(refreshed);
+            setError(null);
+          })
+          .catch((err) => {
+            console.error('Failed to refresh credits on visibility change:', err);
+            setError(err instanceof Error ? err : new Error('Failed to refresh credits'));
+          });
       }
     };
 
@@ -189,6 +195,9 @@ export function useUserCredits(
   const addCredits = useCallback(
     async (amount: number): Promise<void> => {
       if (!user || !services) return;
+      if (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount)) {
+        throw new Error('Amount must be a positive integer');
+      }
 
       // Optimistic update
       const newCredits: UserCredits = {
@@ -203,9 +212,14 @@ export function useUserCredits(
         await saveUserCredits(services.db, user.uid, services.appId, newCredits);
       } catch (error) {
         console.error('Failed to save credits after addition:', error);
-        // Revert on error
-        const savedCredits = await getUserCredits(services.db, user.uid, services.appId);
-        setCredits(savedCredits);
+        // Revert on error — getUserCredits now throws, so catch the recovery too
+        try {
+          const savedCredits = await getUserCredits(services.db, user.uid, services.appId);
+          setCredits(savedCredits);
+        } catch {
+          // Network fully down — revert to pre-optimistic state
+          setCredits(credits);
+        }
       }
     },
     [user, services, credits]
@@ -215,6 +229,9 @@ export function useUserCredits(
   const addSuperCredits = useCallback(
     async (amount: number): Promise<void> => {
       if (!user || !services) return;
+      if (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount)) {
+        throw new Error('Amount must be a positive integer');
+      }
 
       // Optimistic update
       const newCredits: UserCredits = {
@@ -229,9 +246,14 @@ export function useUserCredits(
         await saveUserCredits(services.db, user.uid, services.appId, newCredits);
       } catch (error) {
         console.error('Failed to save super credits after addition:', error);
-        // Revert on error
-        const savedCredits = await getUserCredits(services.db, user.uid, services.appId);
-        setCredits(savedCredits);
+        // Revert on error — getUserCredits now throws, so catch the recovery too
+        try {
+          const savedCredits = await getUserCredits(services.db, user.uid, services.appId);
+          setCredits(savedCredits);
+        } catch {
+          // Network fully down — revert to pre-optimistic state
+          setCredits(credits);
+        }
       }
     },
     [user, services, credits]

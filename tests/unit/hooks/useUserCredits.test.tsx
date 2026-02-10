@@ -382,7 +382,10 @@ describe('useUserCredits', () => {
       });
 
       expect(result.current.credits.remaining).toBe(initialCredits.remaining + 10);
-      expect(mockSaveUserCredits).toHaveBeenCalled();
+      expect(mockSaveUserCredits).toHaveBeenCalledWith(
+        mockServices.db, mockUser.uid, mockServices.appId,
+        expect.objectContaining({ remaining: initialCredits.remaining + 10 })
+      );
     });
   });
 });
