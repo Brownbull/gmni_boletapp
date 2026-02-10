@@ -7,7 +7,7 @@
  *
  * Architecture:
  * - Calls useAuth() for user/services
- * - Calls useTheme() for theme/locale settings
+ * - Calls useThemeSettings() for theme/locale settings
  * - Calls useUserPreferences() for user profile and preferences
  * - Calls useUserCredits() for subscription/credit data
  * - Calls useMerchantMappings() for merchant mappings
@@ -39,7 +39,8 @@ import { useMemo, useCallback } from 'react';
 import { getFirestore } from 'firebase/firestore';
 import { signOut as firebaseSignOut } from 'firebase/auth';
 import { useAuth } from '@/hooks/useAuth';
-import { useTheme } from '@/contexts/ThemeContext';
+// Story 15-7c: Theme settings from Zustand store (ThemeContext removed)
+import { useThemeSettings } from '@/shared/stores';
 import { useSettingsStore } from '@/shared/stores/useSettingsStore';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useUserCredits } from '@/hooks/useUserCredits';
@@ -220,7 +221,7 @@ export interface UseSettingsViewDataReturn {
  *
  * Data sources:
  * 1. useAuth() - user/services
- * 2. useTheme() - theme/locale settings
+ * 2. useThemeSettings() - theme/locale settings
  * 3. useUserPreferences() - profile and preferences
  * 4. useUserCredits() - subscription data
  * 5. useMerchantMappings() - merchant mappings
@@ -239,29 +240,23 @@ export function useSettingsViewData(): UseSettingsViewDataReturn {
     const appId = services?.appId ?? null;
 
     // === Theme/Locale Settings ===
-    // Story 14e-25c.1 FIX: App.tsx reads from useSettingsStore, so we must read/write there too
-    // ThemeContext is only used for lang, currency, dateFormat (locale settings)
-    const {
-        fontFamily,
-        lang,
-        currency,
-        dateFormat,
-        setLang,
-        setCurrency,
-        setDateFormat,
-    } = useTheme();
+    // Story 15-7c: All settings from Zustand store (ThemeContext removed)
+    const { fontFamily, lang, currency, dateFormat } = useThemeSettings();
 
-    // Read theme values from useSettingsStore (same source App.tsx uses)
+    // Read visual settings from useSettingsStore
     const theme = useSettingsStore((state) => state.theme);
     const colorTheme = useSettingsStore((state) => state.colorTheme);
     const fontColorMode = useSettingsStore((state) => state.fontColorMode);
     const fontSize = useSettingsStore((state) => state.fontSize);
 
-    // Get setters from useSettingsStore (App.tsx reads from this store)
+    // Get setters from useSettingsStore
     const setTheme = useSettingsStore((state) => state.setTheme);
     const setColorTheme = useSettingsStore((state) => state.setColorTheme);
     const setFontColorMode = useSettingsStore((state) => state.setFontColorMode);
     const setFontSize = useSettingsStore((state) => state.setFontSize);
+    const setLang = useSettingsStore((state) => state.setLang);
+    const setCurrency = useSettingsStore((state) => state.setCurrency);
+    const setDateFormat = useSettingsStore((state) => state.setDateFormat);
 
     // === User Preferences ===
     const {

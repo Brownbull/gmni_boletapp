@@ -7,7 +7,7 @@
  *
  * Architecture:
  * - Calls useAuth() for user/services
- * - Calls useTheme() for theme/locale settings
+ * - Calls useThemeSettings() for theme/locale settings
  * - Calls useUserPreferences() for user defaults
  * - Calls useUserCredits() for credit display
  * - Accesses ScanStore (Zustand) for scan state
@@ -30,7 +30,8 @@ import { useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useUserCredits } from '@/hooks/useUserCredits';
-import { useTheme } from '@/contexts/ThemeContext';
+// Story 15-7c: Theme settings from Zustand store (ThemeContext removed)
+import { useThemeSettings } from '@/shared/stores';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useCategoryMappings } from '@/hooks/useCategoryMappings';
 import { useMerchantMappings } from '@/hooks/useMerchantMappings';
@@ -152,7 +153,7 @@ export function useTransactionEditorData(
     const { user, services } = useAuth();
 
     // === Theme/Locale Settings ===
-    const { theme, lang, currency } = useTheme();
+    const { theme, lang, currency } = useThemeSettings();
 
     // === User Preferences ===
     const { preferences } = useUserPreferences(user, services);

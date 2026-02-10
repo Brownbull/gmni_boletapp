@@ -31,9 +31,8 @@ import { usePaginatedTransactions } from '@/hooks/usePaginatedTransactions';
 import { useRecentScans } from '@/hooks/useRecentScans';
 import { mergeTransactionsWithRecentScans } from '@/utils/transactionMerge';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
-import { useTheme } from '@/contexts/ThemeContext';
-// Story 14e-25d: Direct navigation hooks (ViewHandlersContext deleted)
-import { useNavigationActions } from '@/shared/stores';
+// Story 15-7c: Theme settings from Zustand store (ThemeContext removed)
+import { useThemeSettings, useNavigationActions } from '@/shared/stores';
 import { formatCurrency as formatCurrencyUtil } from '@/utils/currency';
 import { formatDate as formatDateUtil } from '@/utils/date';
 import { TRANSLATIONS } from '@/utils/translations';
@@ -164,7 +163,7 @@ export function useDashboardViewData(): UseDashboardViewDataReturn {
         lang,
         currency,
         dateFormat,
-    } = useTheme();
+    } = useThemeSettings();
 
     // === User Preferences ===
     const { preferences } = useUserPreferences(user, services);

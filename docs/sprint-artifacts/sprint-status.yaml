@@ -126,10 +126,15 @@ development_status:
   # TD-9: 7 of 8 repository interfaces + all 11 repository hooks unconsumed — migrate consumers as features adopt DAL
 
   # Phase 7: State Management Alignment
-  15-7a-history-filters-zustand: backlog # 2 pts - HistoryFiltersContext → Zustand
-  15-7b-app-state-zustand: backlog      # 2 pts - AppStateContext → Zustand
-  15-7c-theme-zustand: backlog          # 2 pts - ThemeContext → Zustand
-  15-7d-separate-client-server: backlog # 2 pts - Separate mixed hooks
+  15-7a-history-filters-zustand: done   # 2 pts - HistoryFiltersContext → Zustand store (useHistoryFiltersStore)
+  15-7b-app-state-zustand: done         # 2 pts - AppStateContext deprecated (zero consumers, useToast is mechanism)
+  15-7c-theme-zustand: done             # 2 pts - ThemeContext → useSettingsStore (fontFamily, useThemeSettings)
+  15-7d-separate-client-server: done    # 2 pts - Resolved: useHistoryFilters via 15-7a, useLearningPhases is dead code, feature hooks moved in Phase 4
+
+  # Phase 7 Tech Debt (deferred — not blocking):
+  # TD-10: useLearningPhases.ts (477 lines) has zero consumers — candidate for deletion
+  # TD-11: AppProviders.tsx JSDoc still references ThemeProvider/AppStateProvider in hierarchy comment
+  # TD-12: Toast convergence: useToast vs legacy AppStateContext.toastMessage paths — unify into single toast store
 
   epic-15-retrospective: optional
 

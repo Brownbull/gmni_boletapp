@@ -3,10 +3,13 @@
 export {
   useSettingsStore,
   defaultSettingsState,
-  useTheme,
+  useThemeMode,
   useColorTheme,
   useFontColorMode,
   useFontSize,
+  useFontFamily,
+  // Story 15-7c: Combined selector replacing ThemeContext's useTheme()
+  useThemeSettings,
   // Story 14e-35: Locale selectors
   useLang,
   useCurrency,
@@ -34,6 +37,15 @@ export {
   type SettingsSubview,
   type NavigateToViewOptions,
 } from './useNavigationStore';
+
+// Story 15-7a: History filters store (replaces HistoryFiltersContext)
+export {
+    useHistoryFiltersStore,
+    useHistoryFiltersState,
+    useHistoryFiltersDispatch,
+    getDefaultFilterState,
+    historyFiltersActions,
+} from './useHistoryFiltersStore';
 
 // Story 14e-37: Insight store
 export {

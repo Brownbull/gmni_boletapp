@@ -9,11 +9,11 @@
  * - Calls useAuth() for user/services
  * - Calls useTransactions() for transaction data
  * - Calls useUserPreferences() for user defaults
- * - Calls useTheme() for theme/locale settings (via ThemeContext)
+ * - Calls useThemeSettings() for theme/locale settings (via ThemeContext)
  * - Gets analyticsInitialState from useNavigationStore()
  * - Provides formatters (t) internally
  *
- * Note: Theme settings come from useTheme() context (ThemeContext)
+ * Note: Theme settings come from useThemeSettings() context (ThemeContext)
  *
  * @example
  * ```tsx
@@ -28,7 +28,8 @@ import { useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
-import { useTheme } from '@/contexts/ThemeContext';
+// Story 15-7c: Theme settings from Zustand store (ThemeContext removed)
+import { useThemeSettings } from '@/shared/stores';
 import { useAnalyticsInitialState, useNavigationStore } from '@/shared/stores/useNavigationStore';
 import { TRANSLATIONS } from '@/utils/translations';
 import type { Transaction } from '@/types/transaction';
@@ -148,7 +149,7 @@ export interface UseTrendsViewDataReturn {
  * Data sources:
  * 1. useAuth() - user/services
  * 2. useTransactions() - transaction data
- * 3. useTheme() - theme/locale settings
+ * 3. useThemeSettings() - theme/locale settings
  * 4. useUserPreferences() - user defaults
  * 5. useViewMode() - group mode state
  * 6. Navigation store - analytics initial state
@@ -169,7 +170,7 @@ export function useTrendsViewData(): UseTrendsViewDataReturn {
         fontColorMode,
         lang,
         currency,
-    } = useTheme();
+    } = useThemeSettings();
 
     // === User Preferences ===
     const { preferences } = useUserPreferences(user, services);

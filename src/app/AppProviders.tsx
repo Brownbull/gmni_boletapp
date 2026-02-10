@@ -47,12 +47,12 @@
  * @see docs/sprint-artifacts/epic14e-feature-architecture/architecture-decision.md
  */
 
+import { useEffect } from 'react';
 import type { AppProvidersProps } from './types';
 import {
-    ThemeProvider,
-    AppStateProvider,
     NotificationProvider,
 } from '../contexts';
+import { settingsActions } from '../shared/stores';
 
 // =============================================================================
 // Component
@@ -87,18 +87,20 @@ export function AppProviders({
     userId,
     appId,
 }: AppProvidersProps): JSX.Element {
+    // Story 15-7c: Sync fontFamily from Firestore to Zustand store (ThemeProvider removed)
+    useEffect(() => {
+        settingsActions.setFontFamily(fontFamily);
+    }, [fontFamily]);
+
+    // Story 15-7b: AppStateProvider removed (zero consumers, useToast is the toast mechanism)
     return (
-        <ThemeProvider fontFamily={fontFamily}>
-            <AppStateProvider>
-                <NotificationProvider
-                    db={db ?? null}
-                    userId={userId ?? null}
-                    appId={appId ?? null}
-                >
-                    {children}
-                </NotificationProvider>
-            </AppStateProvider>
-        </ThemeProvider>
+        <NotificationProvider
+            db={db ?? null}
+            userId={userId ?? null}
+            appId={appId ?? null}
+        >
+            {children}
+        </NotificationProvider>
     );
 }
 

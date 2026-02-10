@@ -9,7 +9,7 @@
  * - Calls useAuth() for user/services
  * - Calls usePaginatedTransactions() for transaction data
  * - Calls useRecentScans() for recent scan merge
- * - Calls useTheme() for theme/locale settings
+ * - Calls useThemeSettings() for theme/locale settings
  * - Provides formatters (t, formatCurrency, formatDate) internally
  *
  * Note: onEditTransaction handler is provided via _testOverrides from App.tsx
@@ -31,7 +31,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePaginatedTransactions } from '@/hooks/usePaginatedTransactions';
 import { useRecentScans } from '@/hooks/useRecentScans';
 import { mergeTransactionsWithRecentScans } from '@/utils/transactionMerge';
-import { useTheme } from '@/contexts/ThemeContext';
+// Story 15-7c: Theme settings from Zustand store (ThemeContext removed)
+import { useThemeSettings } from '@/shared/stores';
 import { formatCurrency as formatCurrencyUtil } from '@/utils/currency';
 import { formatDate as formatDateUtil } from '@/utils/date';
 import { TRANSLATIONS } from '@/utils/translations';
@@ -129,7 +130,7 @@ export interface UseItemsViewDataReturn {
  * 1. useAuth() - user/services
  * 2. usePaginatedTransactions() - transaction data
  * 3. useRecentScans() - recent scan merge
- * 4. useTheme() - theme/locale settings
+ * 4. useThemeSettings() - theme/locale settings
  *
  * @returns UseItemsViewDataReturn - All data needed by ItemsView
  */
@@ -145,7 +146,7 @@ export function useItemsViewData(): UseItemsViewDataReturn {
         lang,
         currency,
         dateFormat,
-    } = useTheme();
+    } = useThemeSettings();
 
     // User's default country (not in theme context, use preference or default to Chile)
     const defaultCountry = 'CL';

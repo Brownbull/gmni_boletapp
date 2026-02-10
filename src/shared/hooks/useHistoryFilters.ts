@@ -2,21 +2,25 @@
  * useHistoryFilters Hook
  *
  * Custom hook for accessing history filter state and dispatch.
- * This is the ONLY way components should access HistoryFiltersContext.
+ * This is the ONLY way components should access history filter state.
  *
  * Story 9.19: History Transaction Filters
+ * Story 15-7a: Migrated from HistoryFiltersContext to Zustand store.
  * @see docs/sprint-artifacts/epic9/story-9.19-history-transaction-filters.md
  */
 
-import { useContext, useMemo, useCallback } from 'react';
-import {
-  HistoryFiltersContext,
-  type HistoryFilterState,
-  type HistoryFilterAction,
-  type TemporalFilterState,
-  type CategoryFilterState,
-  type LocationFilterState,
+import { useMemo, useCallback } from 'react';
+import type {
+  HistoryFilterState,
+  HistoryFilterAction,
+  TemporalFilterState,
+  CategoryFilterState,
+  LocationFilterState,
 } from '@/contexts/HistoryFiltersContext';
+import {
+  useHistoryFiltersState,
+  useHistoryFiltersDispatch,
+} from '@/shared/stores/useHistoryFiltersStore';
 import {
   getNextTemporalPeriod,
   getPrevTemporalPeriod,
@@ -80,9 +84,11 @@ export interface UseHistoryFiltersReturn {
 }
 
 /**
- * Hook for accessing history filters context.
+ * Hook for accessing history filters.
  *
- * IMPORTANT: Must be used within a HistoryFiltersProvider.
+ * Story 15-7a: Now reads from Zustand store (useHistoryFiltersStore)
+ * instead of React Context. HistoryFiltersProvider still wraps views
+ * to initialize the store on mount.
  *
  * @example
  * function MyComponent() {
@@ -94,20 +100,11 @@ export interface UseHistoryFiltersReturn {
  *
  *   return <div>Filters active: {hasActiveFilters ? 'Yes' : 'No'}</div>;
  * }
- *
- * @throws Error if used outside HistoryFiltersProvider
  */
 export function useHistoryFilters(): UseHistoryFiltersReturn {
-  const context = useContext(HistoryFiltersContext);
-
-  if (context === null) {
-    throw new Error(
-      'useHistoryFilters must be used within a HistoryFiltersProvider. ' +
-        'Wrap your component tree with <HistoryFiltersProvider> from src/contexts/HistoryFiltersContext.tsx'
-    );
-  }
-
-  const { state, dispatch } = context;
+  // Story 15-7a: Read from Zustand store instead of React Context
+  const state = useHistoryFiltersState();
+  const dispatch = useHistoryFiltersDispatch();
 
   // Memoized selectors to prevent unnecessary recalculations (AC #7)
   const selectors = useMemo(() => {

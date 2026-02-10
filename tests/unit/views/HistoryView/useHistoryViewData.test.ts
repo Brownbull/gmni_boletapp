@@ -106,21 +106,17 @@ vi.mock('@/shared/stores/useNavigationStore', () => ({
     usePendingHistoryFilters: vi.fn(() => mockState.pendingHistoryFilters),
 }));
 
-// Story 14e-25a.2b: Mock ThemeContext
-vi.mock('@/contexts/ThemeContext', () => ({
-    useTheme: vi.fn(() => ({
+// Story 15-7c: Mock useThemeSettings (ThemeContext removed)
+vi.mock('@/shared/stores', () => ({
+    useThemeSettings: vi.fn(() => ({
         theme: mockState.theme,
         colorTheme: mockState.colorTheme,
         fontColorMode: mockState.fontColorMode,
+        fontSize: 'small',
+        fontFamily: 'outfit',
         lang: mockState.lang,
         currency: mockState.currency,
         dateFormat: mockState.dateFormat,
-        setTheme: vi.fn(),
-        setColorTheme: vi.fn(),
-        setFontColorMode: vi.fn(),
-        setLang: vi.fn(),
-        setCurrency: vi.fn(),
-        setDateFormat: vi.fn(),
     })),
 }));
 

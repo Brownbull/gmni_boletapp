@@ -78,19 +78,17 @@ vi.mock('@/hooks/useUserPreferences', () => ({
     })),
 }));
 
-// Mock ThemeContext
-vi.mock('@/contexts/ThemeContext', () => ({
-    useTheme: vi.fn(() => ({
+// Story 15-7c: Mock useThemeSettings (ThemeContext removed)
+vi.mock('@/shared/stores', () => ({
+    useThemeSettings: vi.fn(() => ({
         theme: mockState.theme,
         colorTheme: mockState.colorTheme,
         fontColorMode: mockState.fontColorMode,
+        fontSize: 'small',
+        fontFamily: 'outfit',
         lang: mockState.lang,
         currency: mockState.currency,
-        setTheme: vi.fn(),
-        setColorTheme: vi.fn(),
-        setFontColorMode: vi.fn(),
-        setLang: vi.fn(),
-        setCurrency: vi.fn(),
+        dateFormat: 'US',
     })),
 }));
 

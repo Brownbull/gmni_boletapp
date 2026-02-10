@@ -34,11 +34,9 @@ export {
 // - View type: import { View } from '@app/types'
 // - SettingsSubview type: import { SettingsSubview } from '@/shared/stores/useNavigationStore'
 
-// ThemeContext - Theme and locale preferences
+// Story 15-7c: ThemeContext DEPRECATED — theme settings now use useSettingsStore (Zustand)
+// ThemeProvider and useTheme() removed. Use useThemeSettings() from '@/shared/stores'.
 export {
-    ThemeProvider,
-    useTheme,
-    useThemeOptional,
     type ThemeContextValue,
 } from './ThemeContext';
 
@@ -50,11 +48,8 @@ export {
     type NotificationContextValue,
 } from './NotificationContext';
 
-// AppStateContext - Global UI state (toasts, operation status)
+// Story 15-7b: AppStateContext DEPRECATED — zero consumers, useToast() is the toast mechanism
 export {
-    AppStateProvider,
-    useAppState,
-    useAppStateOptional,
     type AppStateContextValue,
     type ToastMessage,
 } from './AppStateContext';
@@ -65,13 +60,15 @@ export {
 // AnalyticsContext - Analytics state
 export { AnalyticsProvider, AnalyticsContext } from './AnalyticsContext';
 
-// HistoryFiltersContext - History view filters
+// Story 15-7a: HistoryFiltersContext migrated to Zustand (useHistoryFiltersStore).
+// HistoryFiltersProvider remains as thin initialization boundary.
+// State access via useHistoryFilters() hook or useHistoryFiltersStore.
 export {
     HistoryFiltersProvider,
-    HistoryFiltersContext,
     getDefaultFilterState,
     type HistoryFilterState,
     type TemporalFilterState,
+    type HistoryFiltersContextValue,
 } from './HistoryFiltersContext';
 
 // =============================================================================

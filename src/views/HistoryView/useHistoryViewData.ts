@@ -30,7 +30,8 @@ import { usePaginatedTransactions } from '@/hooks/usePaginatedTransactions';
 import { useRecentScans } from '@/hooks/useRecentScans';
 import { mergeTransactionsWithRecentScans } from '@/utils/transactionMerge';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
-import { useTheme } from '@/contexts/ThemeContext';
+// Story 15-7c: Theme settings from Zustand store (ThemeContext removed)
+import { useThemeSettings } from '@/shared/stores';
 import {
     useNavigationStore,
     usePendingHistoryFilters,
@@ -171,7 +172,7 @@ export function useHistoryViewData(): UseHistoryViewDataReturn {
         lang,
         currency,
         dateFormat,
-    } = useTheme();
+    } = useThemeSettings();
 
     // === User Preferences ===
     const { preferences } = useUserPreferences(user, services);
