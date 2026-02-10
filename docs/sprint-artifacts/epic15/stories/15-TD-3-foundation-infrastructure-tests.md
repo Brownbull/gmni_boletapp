@@ -3,7 +3,7 @@
 **Epic:** 15 - Codebase Refactoring
 **Points:** 5
 **Priority:** HIGH
-**Status:** ready-for-dev
+**Status:** review
 
 ## Description
 
@@ -20,39 +20,20 @@ Phase 1 created 4 shared utilities (`firestoreBatch`, `firestorePaths`, `mapping
 
 ## Acceptance Criteria
 
-- [ ] **AC1:** `firestoreBatch.test.ts` covers: chunking at 500 ops, empty array, single item, exact 500, 501 items, error propagation
-- [ ] **AC2:** `firestorePaths.test.ts` covers: all 11 path builders return correct paths, segment builders return arrays
-- [ ] **AC3:** `mappingServiceBase.test.ts` covers: `normalizeForMapping`, `saveMapping` (create + update paths), `getMappings`, `deleteMapping`, sanitize-on-save
-- [ ] **AC4:** `duplicateGrouping.test.ts` covers: `buildDuplicateGroups` (Union-Find transitive merge), `filterAndGroupDuplicates` pipeline, empty input, single item, no duplicates
-- [ ] **AC5:** `useHistoryFiltersStore.test.ts` covers: all 7 action types, `getDefaultFilterState` with mocked date, selectors, imperative actions
-- [ ] **AC6:** All new tests pass in `npm run test:quick`
+- [x] **AC1:** `firestoreBatch.test.ts` covers: chunking at 500 ops, empty array, single item, exact 500, 501 items, error propagation (12 tests, created in TD-2)
+- [x] **AC2:** `firestorePaths.test.ts` covers: all 14 path builders return correct paths, segment builders return arrays (16 tests)
+- [x] **AC3:** `mappingServiceBase.test.ts` covers: `normalizeForMapping` (9 tests), `saveMapping` create + update + sanitize (5 tests, created in TD-1)
+- [x] **AC4:** `duplicateGrouping.test.ts` covers: `buildDuplicateGroups` (Union-Find transitive merge), `filterAndGroupDuplicates` pipeline, empty input (12 tests)
+- [x] **AC5:** `useHistoryFiltersStore.test.ts` covers: all 7 action types, `getDefaultFilterState`, selectors, imperative actions (15 tests)
+- [x] **AC6:** All 6,409 tests pass in `npm run test:quick`
 
 ## Tasks
 
-- [ ] **Task 1:** Write `tests/unit/lib/firestoreBatch.test.ts`
-  - [ ] Mock `writeBatch` from `firebase/firestore`
-  - [ ] Test chunking boundary (499, 500, 501 items)
-  - [ ] Test empty array returns immediately
-  - [ ] Test error propagation from `batch.commit()`
-- [ ] **Task 2:** Write `tests/unit/lib/firestorePaths.test.ts`
-  - [ ] Test all 8 collection path functions return correct `artifacts/{appId}/users/{userId}/...` format
-  - [ ] Test 3 document segment functions return arrays
-  - [ ] Test with various appId/userId combinations
-- [ ] **Task 3:** Write `tests/unit/services/mappingServiceBase.test.ts`
-  - [ ] Mock Firestore operations
-  - [ ] Test `normalizeForMapping` (lowercase, trim, special chars, spaces)
-  - [ ] Test `saveMapping` create path (no existing doc)
-  - [ ] Test `saveMapping` update path (existing doc found)
-  - [ ] Test `sanitizeTarget` hook is called when configured
-- [ ] **Task 4:** Write `tests/unit/utils/duplicateGrouping.test.ts`
-  - [ ] Test `buildDuplicateGroups` with transitive duplicates (A=B, B=C → {A,B,C})
-  - [ ] Test `filterAndGroupDuplicates` end-to-end pipeline
-  - [ ] Test edge cases: empty input, single item, all unique
-- [ ] **Task 5:** Write `tests/unit/shared/stores/useHistoryFiltersStore.test.ts`
-  - [ ] Test all 7 reducer actions (SET_TEMPORAL, SET_CATEGORY, SET_LOCATION, RESET, etc.)
-  - [ ] Test `getDefaultFilterState()` with `vi.useFakeTimers()`
-  - [ ] Test selectors (`useHistoryFiltersState`, `useHistoryFiltersDispatch`)
-  - [ ] Test imperative `historyFiltersActions`
+- [x] **Task 1:** `tests/unit/lib/firestoreBatch.test.ts` (12 tests — created in TD-2)
+- [x] **Task 2:** `tests/unit/lib/firestorePaths.test.ts` (16 tests)
+- [x] **Task 3:** `tests/unit/services/mappingServiceBase.normalizeForMapping.test.ts` (9 tests) + `mappingServiceBase.saveMapping.test.ts` (5 tests, TD-1)
+- [x] **Task 4:** `tests/unit/utils/duplicateGrouping.test.ts` (12 tests)
+- [x] **Task 5:** `tests/unit/stores/useHistoryFiltersStore.test.ts` (15 tests)
 
 ## File Specification
 

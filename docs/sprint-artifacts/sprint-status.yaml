@@ -128,7 +128,7 @@ development_status:
   # HIGH priority (9 pts):
   15-TD-1-toctou-security-fixes: review            # 3 pts - TD-6, TD-17, TD-18: TOCTOU races in credits/mapping/trust
   15-TD-2-batch-operations-completion: review          # 3 pts - TD-13, TD-20: Batch bypass + retry/backoff
-  15-TD-3-foundation-infrastructure-tests: ready-for-dev  # 3 pts - TD-15, TD-16: Missing tests for Phase 1 utils + Phase 7 store
+  15-TD-3-foundation-infrastructure-tests: review          # 3 pts - TD-15, TD-16: Missing tests for Phase 1 utils + Phase 7 store
 
   # MEDIUM priority (17 pts):
   15-TD-4-phase5-component-tests: ready-for-dev    # 3 pts - TD-3, TD-26: Missing tests for DonutChart, helpers, extracted components

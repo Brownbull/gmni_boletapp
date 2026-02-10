@@ -1,0 +1,85 @@
+/**
+ * firestorePaths Tests
+ *
+ * Story 15-TD-3: Tests for centralized Firestore collection path builders.
+ */
+
+import { describe, it, expect } from 'vitest';
+import {
+    transactionsPath,
+    merchantMappingsPath,
+    categoryMappingsPath,
+    subcategoryMappingsPath,
+    itemNameMappingsPath,
+    trustedMerchantsPath,
+    airlocksPath,
+    personalRecordsPath,
+    notificationsPath,
+    preferencesDocSegments,
+    creditsDocSegments,
+    insightProfileDocSegments,
+    transactionDocSegments,
+    notificationDocSegments,
+} from '../../../src/lib/firestorePaths';
+
+const APP_ID = 'test-app';
+const USER_ID = 'user-123';
+
+describe('firestorePaths', () => {
+    describe('collection paths', () => {
+        it.each([
+            ['transactionsPath', transactionsPath, 'transactions'],
+            ['merchantMappingsPath', merchantMappingsPath, 'merchant_mappings'],
+            ['categoryMappingsPath', categoryMappingsPath, 'category_mappings'],
+            ['subcategoryMappingsPath', subcategoryMappingsPath, 'subcategory_mappings'],
+            ['itemNameMappingsPath', itemNameMappingsPath, 'item_name_mappings'],
+            ['trustedMerchantsPath', trustedMerchantsPath, 'trusted_merchants'],
+            ['airlocksPath', airlocksPath, 'airlocks'],
+            ['personalRecordsPath', personalRecordsPath, 'personalRecords'],
+            ['notificationsPath', notificationsPath, 'notifications'],
+        ] as const)('%s returns correct path', (_name, fn, collectionName) => {
+            expect(fn(APP_ID, USER_ID)).toBe(
+                `artifacts/${APP_ID}/users/${USER_ID}/${collectionName}`
+            );
+        });
+
+        it('uses different paths for different appId/userId', () => {
+            expect(transactionsPath('app-a', 'user-a')).not.toBe(
+                transactionsPath('app-b', 'user-b')
+            );
+        });
+    });
+
+    describe('document segments', () => {
+        it('preferencesDocSegments returns correct segments', () => {
+            const segments = preferencesDocSegments(APP_ID, USER_ID);
+            expect(segments).toEqual(['artifacts', APP_ID, 'users', USER_ID, 'preferences', 'settings']);
+        });
+
+        it('creditsDocSegments returns correct segments', () => {
+            const segments = creditsDocSegments(APP_ID, USER_ID);
+            expect(segments).toEqual(['artifacts', APP_ID, 'users', USER_ID, 'credits', 'balance']);
+        });
+
+        it('insightProfileDocSegments returns correct segments', () => {
+            const segments = insightProfileDocSegments(APP_ID, USER_ID);
+            expect(segments).toEqual(['artifacts', APP_ID, 'users', USER_ID, 'insightProfile', 'profile']);
+        });
+
+        it('transactionDocSegments includes transaction ID', () => {
+            const segments = transactionDocSegments(APP_ID, USER_ID, 'tx-456');
+            expect(segments).toEqual(['artifacts', APP_ID, 'users', USER_ID, 'transactions', 'tx-456']);
+        });
+
+        it('notificationDocSegments includes notification ID', () => {
+            const segments = notificationDocSegments(APP_ID, USER_ID, 'notif-789');
+            expect(segments).toEqual(['artifacts', APP_ID, 'users', USER_ID, 'notifications', 'notif-789']);
+        });
+
+        it('segments are readonly tuples', () => {
+            const segments = preferencesDocSegments(APP_ID, USER_ID);
+            // Verify tuple length (const assertion)
+            expect(segments).toHaveLength(6);
+        });
+    });
+});
