@@ -10,7 +10,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { NotificacionesView } from '../../../../src/components/settings/subviews/NotificacionesView';
+import { NotificacionesView } from '@features/settings/components/subviews/NotificacionesView';
 
 describe('NotificacionesView', () => {
     const mockEnableNotifications = vi.fn().mockResolvedValue(true);

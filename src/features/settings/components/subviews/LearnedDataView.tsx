@@ -9,16 +9,16 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ChevronDown, ChevronUp, BookOpen, Home, Tag, CheckCircle2, Trash2, ChevronRight, X, AlertTriangle, Package } from 'lucide-react';
-import { CategoryMappingsList } from '../../CategoryMappingsList';
-import { MerchantMappingsList } from '../../MerchantMappingsList';
-import { SubcategoryMappingsList } from '../../SubcategoryMappingsList';
-import { TrustedMerchantsList } from '../../TrustedMerchantsList';
-import { ItemNameMappingsList } from '../../ItemNameMappingsList';
-import type { CategoryMapping } from '../../../types/categoryMapping';
-import type { MerchantMapping } from '../../../types/merchantMapping';
-import type { SubcategoryMapping } from '../../../types/subcategoryMapping';
-import type { TrustedMerchant } from '../../../types/trust';
-import type { ItemNameMapping } from '../../../types/itemNameMapping';
+import { CategoryMappingsList } from '@/components/CategoryMappingsList';
+import { MerchantMappingsList } from '@/components/MerchantMappingsList';
+import { SubcategoryMappingsList } from '@/components/SubcategoryMappingsList';
+import { TrustedMerchantsList } from '@/components/TrustedMerchantsList';
+import { ItemNameMappingsList } from '@/components/ItemNameMappingsList';
+import type { CategoryMapping } from '@/types/categoryMapping';
+import type { MerchantMapping } from '@/types/merchantMapping';
+import type { SubcategoryMapping } from '@/types/subcategoryMapping';
+import type { TrustedMerchant } from '@/types/trust';
+import type { ItemNameMapping } from '@/types/itemNameMapping';
 
 interface LearnedDataViewProps {
     t: (key: string) => string;

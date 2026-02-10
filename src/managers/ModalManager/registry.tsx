@@ -174,7 +174,7 @@ export const MODAL_REGISTRY: Record<ModalType, LazyModalComponent> = {
   creditInfo: React.lazy(() => import('@/components/modals/CreditInfoModal')),
   insightDetail: createLazyStub('insightDetail'), // READY
   upgradePrompt: createLazyStub('upgradePrompt'), // READY
-  signOut: React.lazy(() => import('@/components/settings/SignOutDialog')),
+  signOut: React.lazy(() => import('@features/settings/components/SignOutDialog')),
 
   // ---------------------------------------------------------------------------
   // Group modals (READY)

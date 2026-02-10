@@ -14,7 +14,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
-import { CuentaView } from '../../src/components/settings/subviews/CuentaView';
+import { CuentaView } from '@features/settings/components/subviews/CuentaView';
 import * as csvExport from '../../src/utils/csvExport';
 import type { Transaction } from '../../src/types/transaction';
 

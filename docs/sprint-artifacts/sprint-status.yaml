@@ -91,13 +91,13 @@ development_status:
   15-3b-generic-mappings-list: done    # 3 pts - MappingsList<T> replaces 4 components (2,238 → 797 lines, -64%)
 
   # Phase 4: Feature Modules
-  15-4a-feature-analytics: backlog      # 2 pts - Create features/analytics/ (~15 files)
-  15-4b-feature-history: backlog        # 2 pts - Create features/history/ (~10 files)
-  15-4c-feature-insights: backlog       # 2 pts - Create features/insights/ (~12 files)
-  15-4d-feature-reports: backlog        # 2 pts - Create features/reports/ (~8 files)
-  15-4e-feature-dashboard: backlog      # 2 pts - Create features/dashboard/ (~5 files)
-  15-4f-feature-settings: backlog       # 2 pts - Create features/settings/ (~5 files)
-  15-4g-hooks-to-features: backlog      # 2 pts - Move 15+ feature-specific hooks + barrel exports
+  15-4a-feature-analytics: done         # 2 pts - features/analytics/ (13 components, 6 utils, 3 hooks)
+  15-4b-feature-history: done           # 2 pts - features/history/ (14 components)
+  15-4c-feature-insights: done          # 2 pts - features/insights/ (19 components, 4 services, 1 hook, 2 utils)
+  15-4d-feature-reports: done           # 2 pts - features/reports/ (9 components, 1 util)
+  15-4e-feature-dashboard: done         # 2 pts - features/dashboard/ placeholder (Phase 5 decomposes view)
+  15-4f-feature-settings: done          # 2 pts - features/settings/ (4 components, 10 subviews)
+  15-4g-hooks-to-features: done         # 2 pts - Audit: all remaining hooks are cross-feature, stay in src/hooks/
 
   # Phase 5: Mega-View Decomposition
   15-5a-category-aggregation: backlog   # 2 pts - Shared categoryAggregation.ts

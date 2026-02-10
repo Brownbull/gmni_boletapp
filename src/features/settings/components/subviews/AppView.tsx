@@ -7,8 +7,8 @@
  */
 
 import React from 'react';
-import { PWASettingsSection } from '../../PWASettingsSection';
-import { NotificationSettings } from '../../NotificationSettings';
+import { PWASettingsSection } from '@/components/PWASettingsSection';
+import { NotificationSettings } from '@/components/NotificationSettings';
 import { Firestore } from 'firebase/firestore';
 
 interface AppViewProps {

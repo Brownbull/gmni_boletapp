@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { PerfilView } from '../../../../src/components/settings/subviews/PerfilView';
+import { PerfilView } from '@features/settings/components/subviews/PerfilView';
 
 describe('PerfilView', () => {
     const mockT = (key: string) => {

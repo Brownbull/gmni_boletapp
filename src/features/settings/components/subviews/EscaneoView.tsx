@@ -8,9 +8,9 @@
 
 import React from 'react';
 import { Receipt, MapPin, Globe } from 'lucide-react';
-import { LocationSelect } from '../../LocationSelect';
-import { SupportedCurrency, SUPPORTED_CURRENCIES, ForeignLocationDisplayFormat } from '../../../services/userPreferencesService';
-import { DEFAULT_CURRENCY } from '../../../utils/currency';
+import { LocationSelect } from '@/components/LocationSelect';
+import { SupportedCurrency, SUPPORTED_CURRENCIES, ForeignLocationDisplayFormat } from '@/services/userPreferencesService';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
 
 interface EscaneoViewProps {
     t: (key: string) => string;
