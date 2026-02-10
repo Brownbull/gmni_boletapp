@@ -50,47 +50,43 @@ function getCreditsDocRef(db: Firestore, appId: string, userId: string) {
 /**
  * Load user credits from Firestore.
  * Returns DEFAULT_CREDITS for new users (and saves them).
+ * Throws on network/permission errors — callers must handle failures.
  *
  * @param db - Firestore instance
  * @param userId - User ID from Firebase Auth
  * @param appId - Application ID
  * @returns User credits from Firestore or defaults for new users
+ * @throws Error on Firestore read/write failure
  */
 export async function getUserCredits(
   db: Firestore,
   userId: string,
   appId: string
 ): Promise<UserCredits> {
-  try {
-    const docRef = getCreditsDocRef(db, appId, userId);
-    const docSnap = await getDoc(docRef);
+  const docRef = getCreditsDocRef(db, appId, userId);
+  const docSnap = await getDoc(docRef);
 
-    if (docSnap.exists()) {
-      const data = docSnap.data() as CreditsDocument;
-      return {
-        remaining: data.remaining ?? DEFAULT_CREDITS.remaining,
-        used: data.used ?? 0,
-        superRemaining: data.superRemaining ?? DEFAULT_CREDITS.superRemaining,
-        superUsed: data.superUsed ?? 0,
-      };
-    }
-
-    // New user - grant initial credits and save to Firestore
-    await setDoc(docRef, {
-      remaining: DEFAULT_CREDITS.remaining,
-      used: 0,
-      superRemaining: DEFAULT_CREDITS.superRemaining,
-      superUsed: 0,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-
-    return DEFAULT_CREDITS;
-  } catch (error) {
-    console.error('Error fetching user credits:', error);
-    // Return defaults on error (will try to save on next update)
-    return DEFAULT_CREDITS;
+  if (docSnap.exists()) {
+    const data = docSnap.data() as CreditsDocument;
+    return {
+      remaining: data.remaining ?? DEFAULT_CREDITS.remaining,
+      used: data.used ?? 0,
+      superRemaining: data.superRemaining ?? DEFAULT_CREDITS.superRemaining,
+      superUsed: data.superUsed ?? 0,
+    };
   }
+
+  // New user - grant initial credits and save to Firestore
+  await setDoc(docRef, {
+    remaining: DEFAULT_CREDITS.remaining,
+    used: 0,
+    superRemaining: DEFAULT_CREDITS.superRemaining,
+    superUsed: 0,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
+  return DEFAULT_CREDITS;
 }
 
 /**

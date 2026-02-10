@@ -45,6 +45,7 @@ export function useCreditState(
     [
       creditsResult.credits,
       creditsResult.loading,
+      creditsResult.error,
       creditsResult.hasReservedCredits,
       creditsResult.deductCredits,
       creditsResult.deductSuperCredits,

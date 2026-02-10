@@ -132,7 +132,7 @@ development_status:
   15-TD-3-foundation-infrastructure-tests: done            # 3 pts - TD-15, TD-16: Missing tests for Phase 1 utils + Phase 7 store
 
   # CRITICAL priority — from TD-1/2/3 code review (3 pts):
-  15-TD-10-credits-consumer-safety: ready-for-dev   # 3 pts - CR-1, CR-13: useUserCredits bypasses transaction + silent DEFAULT_CREDITS
+  15-TD-10-credits-consumer-safety: review            # 3 pts - CR-1, CR-13: useUserCredits bypasses transaction + silent DEFAULT_CREDITS
 
   # HIGH priority — from TD-1/2/3 code review (2 pts):
   15-TD-11-trust-service-transactions: ready-for-dev  # 2 pts - CR-8: trustMerchant/declineTrust/revokeTrust not transactional

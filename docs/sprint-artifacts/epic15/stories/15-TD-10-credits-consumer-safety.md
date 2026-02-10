@@ -3,7 +3,7 @@
 **Epic:** 15 - Codebase Refactoring
 **Points:** 3
 **Priority:** CRITICAL
-**Status:** ready-for-dev
+**Status:** review
 
 ## Description
 
@@ -16,28 +16,28 @@ The `useUserCredits` hook — the only active consumer of credit deduction in th
 
 ## Acceptance Criteria
 
-- [ ] **AC1:** `useUserCredits` hook uses `deductAndSaveCredits()` / `deductAndSaveSuperCredits()` from `userCreditsService` for all credit deductions instead of inline `setDoc()` + stale state arithmetic
-- [ ] **AC2:** The hook's deduction path goes through `runTransaction` (verifiable via test mock assertions)
-- [ ] **AC3:** `getUserCredits()` propagates errors to callers instead of silently returning default credits
-- [ ] **AC4:** Callers of `getUserCredits()` handle the error case (loading state, retry, or user-visible error)
-- [ ] **AC5:** Unit tests verify the hook calls `deductAndSaveCredits` (not inline `setDoc`) and that `getUserCredits` propagates errors
-- [ ] **AC6:** All existing tests pass
+- [x] **AC1:** `useUserCredits` hook uses `deductAndSaveCredits()` / `deductAndSaveSuperCredits()` from `userCreditsService` for all credit deductions instead of inline `setDoc()` + stale state arithmetic
+- [x] **AC2:** The hook's deduction path goes through `runTransaction` (verifiable via test mock assertions)
+- [x] **AC3:** `getUserCredits()` propagates errors to callers instead of silently returning default credits
+- [x] **AC4:** Callers of `getUserCredits()` handle the error case (loading state, retry, or user-visible error)
+- [x] **AC5:** Unit tests verify the hook calls `deductAndSaveCredits` (not inline `setDoc`) and that `getUserCredits` propagates errors
+- [x] **AC6:** All existing tests pass
 
 ## Tasks
 
-- [ ] **Task 1:** Migrate `useUserCredits` hook to use service functions
-  - [ ] Replace inline `setDoc` deduction with call to `deductAndSaveCredits()`
-  - [ ] Replace inline super credit deduction with `deductAndSaveSuperCredits()`
-  - [ ] Remove the stale-state arithmetic from the hook
-  - [ ] Verify the returned credits object updates via the hook's subscription, not inline state
-- [ ] **Task 2:** Fix `getUserCredits()` error handling
-  - [ ] Remove `catch` that returns `DEFAULT_CREDITS`
-  - [ ] Let errors propagate to callers
-  - [ ] Update callers to handle the new error path (loading/error states)
-- [ ] **Task 3:** Add/update unit tests
-  - [ ] Test that `useUserCredits.deductCredits()` calls `deductAndSaveCredits` service function
-  - [ ] Test that `getUserCredits` throws on network error instead of returning defaults
-  - [ ] Test that concurrent deductions go through transaction (mock verification)
+- [x] **Task 1:** Migrate `useUserCredits` hook to use service functions
+  - [x]Replace inline `setDoc` deduction with call to `deductAndSaveCredits()`
+  - [x]Replace inline super credit deduction with `deductAndSaveSuperCredits()`
+  - [x]Remove the stale-state arithmetic from the hook
+  - [x]Verify the returned credits object updates via the hook's subscription, not inline state
+- [x] **Task 2:** Fix `getUserCredits()` error handling
+  - [x]Remove `catch` that returns `DEFAULT_CREDITS`
+  - [x]Let errors propagate to callers
+  - [x]Update callers to handle the new error path (loading/error states)
+- [x] **Task 3:** Add/update unit tests
+  - [x]Test that `useUserCredits.deductCredits()` calls `deductAndSaveCredits` service function
+  - [x]Test that `getUserCredits` throws on network error instead of returning defaults
+  - [x]Test that concurrent deductions go through transaction (mock verification)
 
 ## File Specification
 
