@@ -139,7 +139,7 @@ development_status:
 
   # HIGH priority — from TD-10 code review (5 pts):
   15-TD-13-transactional-credit-additions: done     # 3 pts - addCredits/addSuperCredits/useAirlocks non-transactional TOCTOU
-  15-TD-14-credits-type-safety-cleanup: ready-for-dev     # 2 pts - db:any type chain + deprecated _currentCredits param removal
+  15-TD-14-credits-type-safety-cleanup: done        # 2 pts - db:any type chain + deprecated _currentCredits param removal
 
   # MEDIUM priority (19 pts):
   15-TD-4-phase5-component-tests: ready-for-dev    # 3 pts - TD-3, TD-26: Missing tests for DonutChart, helpers, extracted components

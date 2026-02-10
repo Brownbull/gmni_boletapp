@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { User } from 'firebase/auth';
+import { Firestore } from 'firebase/firestore';
 import { UserCredits, DEFAULT_CREDITS } from '../types/scan';
 import {
   getUserCredits,
@@ -54,7 +55,7 @@ interface UseUserCreditsResult {
 }
 
 interface FirebaseServices {
-  db: any; // TODO: TD story — change to Firestore type (requires updating all callers)
+  db: Firestore;
   appId: string;
 }
 
@@ -153,7 +154,7 @@ export function useUserCredits(
 
       try {
         const updatedCredits = await deductAndSaveCredits(
-          services.db, user.uid, services.appId, credits, amount
+          services.db, user.uid, services.appId, amount
         );
         setCredits(updatedCredits);
         return true;
@@ -166,7 +167,7 @@ export function useUserCredits(
         return false;
       }
     },
-    [user, services, credits]
+    [user, services]
   );
 
   // Deduct super credits (tier 2)
@@ -177,7 +178,7 @@ export function useUserCredits(
 
       try {
         const updatedCredits = await deductAndSaveSuperCredits(
-          services.db, user.uid, services.appId, credits, amount
+          services.db, user.uid, services.appId, amount
         );
         setCredits(updatedCredits);
         return true;
@@ -189,7 +190,7 @@ export function useUserCredits(
         return false;
       }
     },
-    [user, services, credits]
+    [user, services]
   );
 
   // Add normal credits (for purchases, promotions, etc.)
@@ -204,9 +205,7 @@ export function useUserCredits(
         );
         setCredits(updatedCredits);
       } catch (error) {
-        if (import.meta.env.DEV) {
-          console.error('Failed to add credits:', error);
-        }
+        console.error('Failed to add credits:', error);
         throw error;
       }
     },
@@ -225,9 +224,7 @@ export function useUserCredits(
         );
         setCredits(updatedCredits);
       } catch (error) {
-        if (import.meta.env.DEV) {
-          console.error('Failed to add super credits:', error);
-        }
+        console.error('Failed to add super credits:', error);
         throw error;
       }
     },
@@ -264,7 +261,7 @@ export function useUserCredits(
 
       // If there's already a reservation, refund it first (shouldn't happen normally)
       if (reservedCredits) {
-        console.warn('reserveCredits called with existing reservation - refunding first');
+        if (import.meta.env.DEV) console.warn('reserveCredits called with existing reservation - refunding first');
         setCredits(reservedCredits.originalCredits);
       }
 
@@ -307,7 +304,7 @@ export function useUserCredits(
     }
 
     if (!reservedCredits) {
-      console.warn('confirmReservedCredits called without reservation');
+      if (import.meta.env.DEV) console.warn('confirmReservedCredits called without reservation');
       return false;
     }
 
@@ -317,7 +314,7 @@ export function useUserCredits(
         ? deductAndSaveSuperCredits
         : deductAndSaveCredits;
       const updatedCredits = await deductFn(
-        services.db, user.uid, services.appId, credits, reservedCredits.amount
+        services.db, user.uid, services.appId, reservedCredits.amount
       );
       setCredits(updatedCredits);
       setReservedCredits(null);
@@ -329,7 +326,7 @@ export function useUserCredits(
       setReservedCredits(null);
       return false;
     }
-  }, [user, services, credits, reservedCredits]);
+  }, [user, services, reservedCredits]);
 
   /**
    * Story 14.24: Refund reserved credits (restore UI state).
@@ -337,7 +334,7 @@ export function useUserCredits(
    */
   const refundReservedCredits = useCallback((): void => {
     if (!reservedCredits) {
-      console.warn('refundReservedCredits called without reservation');
+      if (import.meta.env.DEV) console.warn('refundReservedCredits called without reservation');
       return;
     }
 

@@ -21,8 +21,8 @@ import {
 export interface ICreditsRepository {
   get(): Promise<UserCredits>;
   save(credits: UserCredits): Promise<void>;
-  deduct(currentCredits: UserCredits, amount: number): Promise<UserCredits>;
-  deductSuper(currentCredits: UserCredits, amount: number): Promise<UserCredits>;
+  deduct(amount: number): Promise<UserCredits>;
+  deductSuper(amount: number): Promise<UserCredits>;
 }
 
 // =============================================================================
@@ -34,7 +34,7 @@ export function createCreditsRepository(ctx: RepositoryContext): ICreditsReposit
   return {
     get: () => getUserCredits(db, userId, appId),
     save: (credits) => saveUserCredits(db, userId, appId, credits),
-    deduct: (current, amount) => deductAndSaveCredits(db, userId, appId, current, amount),
-    deductSuper: (current, amount) => deductAndSaveSuperCredits(db, userId, appId, current, amount),
+    deduct: (amount) => deductAndSaveCredits(db, userId, appId, amount),
+    deductSuper: (amount) => deductAndSaveSuperCredits(db, userId, appId, amount),
   };
 }

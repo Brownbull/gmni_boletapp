@@ -161,7 +161,6 @@ describe('useUserCredits', () => {
       expect(result.current.hasReservedCredits).toBe(false);
       expect(mockDeductAndSaveCredits).toHaveBeenCalledWith(
         mockServices.db, mockUser.uid, mockServices.appId,
-        expect.any(Object), // credits param (deprecated, ignored)
         1 // amount
       );
       expect(mockSaveUserCredits).not.toHaveBeenCalled();
@@ -190,7 +189,7 @@ describe('useUserCredits', () => {
 
       expect(mockDeductAndSaveSuperCredits).toHaveBeenCalledWith(
         mockServices.db, mockUser.uid, mockServices.appId,
-        expect.any(Object), 1
+        1
       );
       expect(mockDeductAndSaveCredits).not.toHaveBeenCalled();
       expect(result.current.credits).toEqual(deductedResult);
@@ -288,7 +287,6 @@ describe('useUserCredits', () => {
       expect(deductResult!).toBe(true);
       expect(mockDeductAndSaveCredits).toHaveBeenCalledWith(
         mockServices.db, mockUser.uid, mockServices.appId,
-        expect.any(Object), // credits param (deprecated)
         1
       );
       expect(mockSaveUserCredits).not.toHaveBeenCalled();
@@ -349,7 +347,7 @@ describe('useUserCredits', () => {
       expect(deductResult!).toBe(true);
       expect(mockDeductAndSaveSuperCredits).toHaveBeenCalledWith(
         mockServices.db, mockUser.uid, mockServices.appId,
-        expect.any(Object), 1
+        1
       );
       expect(mockSaveUserCredits).not.toHaveBeenCalled();
       expect(result.current.credits).toEqual(deductedResult);

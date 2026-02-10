@@ -118,10 +118,8 @@ export function useAirlocks({
       // Always deduct from Firestore regardless of callback — prevents free airlocks
       if (user && services) {
         try {
-          // _currentCredits param is deprecated and ignored by transaction (reads fresh data)
-          const _deprecatedCredits = { remaining: 0, used: 0, superRemaining: 0, superUsed: 0 };
           const updatedCredits = await deductAndSaveSuperCredits(
-            services.db, user.uid, services.appId, _deprecatedCredits, AIRLOCK_CREDIT_COST
+            services.db, user.uid, services.appId, AIRLOCK_CREDIT_COST
           );
           onCreditsDeducted?.(updatedCredits);
         } catch (error) {

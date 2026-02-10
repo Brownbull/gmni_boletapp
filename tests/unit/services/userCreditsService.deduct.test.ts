@@ -30,20 +30,12 @@ import {
     deductAndSaveCredits,
     deductAndSaveSuperCredits,
 } from '../../../src/services/userCreditsService';
-import type { UserCredits } from '../../../src/types/scan';
-
 const mockRunTransaction = vi.mocked(runTransaction);
 
 describe('deductAndSaveCredits - TOCTOU transaction safety', () => {
     const mockDb = {} as Firestore;
     const userId = 'test-user';
     const appId = 'test-app';
-    const staleCredits: UserCredits = {
-        remaining: 10,
-        used: 0,
-        superRemaining: 5,
-        superUsed: 0,
-    };
 
     beforeEach(() => {
         vi.resetAllMocks();
@@ -61,15 +53,14 @@ describe('deductAndSaveCredits - TOCTOU transaction safety', () => {
             }),
         });
 
-        await deductAndSaveCredits(mockDb, userId, appId, staleCredits, 1);
+        await deductAndSaveCredits(mockDb, userId, appId, 1);
 
         expect(mockRunTransaction).toHaveBeenCalledTimes(1);
         expect(mockTransaction.get).toHaveBeenCalledWith('mock-credits-ref');
     });
 
-    it('should deduct from fresh balance, not stale parameter', async () => {
-        // Simulate stale parameter: caller thinks 10 remaining
-        // But fresh read shows 3 remaining (concurrent deductions happened)
+    it('should deduct from fresh balance read inside transaction', async () => {
+        // Fresh read shows 3 remaining (concurrent deductions happened)
         mockTransaction.get.mockResolvedValueOnce({
             exists: () => true,
             data: () => ({
@@ -80,9 +71,9 @@ describe('deductAndSaveCredits - TOCTOU transaction safety', () => {
             }),
         });
 
-        const result = await deductAndSaveCredits(mockDb, userId, appId, staleCredits, 1);
+        const result = await deductAndSaveCredits(mockDb, userId, appId, 1);
 
-        // Should deduct from 3 (fresh), not 10 (stale)
+        // Should deduct from 3 (fresh balance from transaction read)
         expect(result.remaining).toBe(2);
         expect(result.used).toBe(8);
         expect(mockTransaction.set).toHaveBeenCalledWith(
@@ -108,7 +99,7 @@ describe('deductAndSaveCredits - TOCTOU transaction safety', () => {
         });
 
         await expect(
-            deductAndSaveCredits(mockDb, userId, appId, staleCredits, 1)
+            deductAndSaveCredits(mockDb, userId, appId, 1)
         ).rejects.toThrow('Insufficient credits');
     });
 
@@ -117,7 +108,7 @@ describe('deductAndSaveCredits - TOCTOU transaction safety', () => {
             exists: () => false,
         });
 
-        const result = await deductAndSaveCredits(mockDb, userId, appId, staleCredits, 1);
+        const result = await deductAndSaveCredits(mockDb, userId, appId, 1);
 
         // DEFAULT_CREDITS has remaining: 1200
         expect(result.remaining).toBe(1199);
@@ -135,7 +126,7 @@ describe('deductAndSaveCredits - TOCTOU transaction safety', () => {
             }),
         });
 
-        await deductAndSaveCredits(mockDb, userId, appId, staleCredits, 2);
+        await deductAndSaveCredits(mockDb, userId, appId, 2);
 
         expect(mockTransaction.set).toHaveBeenCalledWith(
             'mock-credits-ref',
@@ -155,12 +146,6 @@ describe('deductAndSaveSuperCredits - TOCTOU transaction safety', () => {
     const mockDb = {} as Firestore;
     const userId = 'test-user';
     const appId = 'test-app';
-    const staleCredits: UserCredits = {
-        remaining: 10,
-        used: 0,
-        superRemaining: 5,
-        superUsed: 0,
-    };
 
     beforeEach(() => {
         vi.resetAllMocks();
@@ -177,7 +162,7 @@ describe('deductAndSaveSuperCredits - TOCTOU transaction safety', () => {
             }),
         });
 
-        await deductAndSaveSuperCredits(mockDb, userId, appId, staleCredits, 1);
+        await deductAndSaveSuperCredits(mockDb, userId, appId, 1);
 
         expect(mockRunTransaction).toHaveBeenCalledTimes(1);
         expect(mockTransaction.get).toHaveBeenCalledWith('mock-credits-ref');
@@ -194,7 +179,7 @@ describe('deductAndSaveSuperCredits - TOCTOU transaction safety', () => {
             }),
         });
 
-        const result = await deductAndSaveSuperCredits(mockDb, userId, appId, staleCredits, 1);
+        const result = await deductAndSaveSuperCredits(mockDb, userId, appId, 1);
 
         expect(result.superRemaining).toBe(1);
         expect(result.superUsed).toBe(4);
@@ -214,7 +199,7 @@ describe('deductAndSaveSuperCredits - TOCTOU transaction safety', () => {
         });
 
         await expect(
-            deductAndSaveSuperCredits(mockDb, userId, appId, staleCredits, 1)
+            deductAndSaveSuperCredits(mockDb, userId, appId, 1)
         ).rejects.toThrow('Insufficient super credits');
     });
 });
