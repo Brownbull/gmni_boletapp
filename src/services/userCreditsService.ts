@@ -241,6 +241,110 @@ export async function deductAndSaveSuperCredits(
 }
 
 /**
+ * Add normal credits and persist to Firestore atomically.
+ * TOCTOU fix: reads fresh balance inside transaction to prevent lost updates.
+ *
+ * @param db - Firestore instance
+ * @param userId - User ID
+ * @param appId - Application ID
+ * @param amount - Amount to add (must be a positive integer)
+ * @returns Updated credits
+ * @throws Error if invalid amount
+ */
+export async function addAndSaveCredits(
+  db: Firestore,
+  userId: string,
+  appId: string,
+  amount: number
+): Promise<UserCredits> {
+  if (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount)) {
+    throw new Error('Amount must be a positive integer');
+  }
+
+  const docRef = getCreditsDocRef(db, appId, userId);
+
+  return runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(docRef);
+
+    const data = snap.exists() ? (snap.data() as CreditsDocument) : null;
+    const freshCredits: UserCredits = data
+      ? {
+          remaining: data.remaining ?? DEFAULT_CREDITS.remaining,
+          used: data.used ?? 0,
+          superRemaining: data.superRemaining ?? DEFAULT_CREDITS.superRemaining,
+          superUsed: data.superUsed ?? 0,
+        }
+      : DEFAULT_CREDITS;
+
+    const newCredits: UserCredits = {
+      remaining: freshCredits.remaining + amount,
+      used: freshCredits.used,
+      superRemaining: freshCredits.superRemaining,
+      superUsed: freshCredits.superUsed,
+    };
+
+    transaction.set(docRef, {
+      ...newCredits,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+
+    return newCredits;
+  });
+}
+
+/**
+ * Add super credits and persist to Firestore atomically.
+ * TOCTOU fix: reads fresh balance inside transaction to prevent lost updates.
+ *
+ * @param db - Firestore instance
+ * @param userId - User ID
+ * @param appId - Application ID
+ * @param amount - Amount to add (must be a positive integer)
+ * @returns Updated credits
+ * @throws Error if invalid amount
+ */
+export async function addAndSaveSuperCredits(
+  db: Firestore,
+  userId: string,
+  appId: string,
+  amount: number
+): Promise<UserCredits> {
+  if (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount)) {
+    throw new Error('Amount must be a positive integer');
+  }
+
+  const docRef = getCreditsDocRef(db, appId, userId);
+
+  return runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(docRef);
+
+    const data = snap.exists() ? (snap.data() as CreditsDocument) : null;
+    const freshCredits: UserCredits = data
+      ? {
+          remaining: data.remaining ?? DEFAULT_CREDITS.remaining,
+          used: data.used ?? 0,
+          superRemaining: data.superRemaining ?? DEFAULT_CREDITS.superRemaining,
+          superUsed: data.superUsed ?? 0,
+        }
+      : DEFAULT_CREDITS;
+
+    const newCredits: UserCredits = {
+      remaining: freshCredits.remaining,
+      used: freshCredits.used,
+      superRemaining: freshCredits.superRemaining + amount,
+      superUsed: freshCredits.superUsed,
+    };
+
+    transaction.set(docRef, {
+      ...newCredits,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+
+    return newCredits;
+  });
+}
+
+/**
  * Format normal credits for display (max 3 digits, then K notation).
  * - Up to 999: show as-is (e.g., "42", "999")
  * - 1000+: show as K (e.g., "1K", "2K", "10K")

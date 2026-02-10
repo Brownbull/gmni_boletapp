@@ -51,6 +51,10 @@ Phase 7 migrated `HistoryFiltersContext`, `ThemeContext`, and `AppStateContext` 
   - [ ] Ensure all toast calls go through `useToast` hook
   - [ ] Remove any remaining `AppStateContext.toastMessage` references
   - [ ] Update `AppProviders.tsx` if needed
+- [ ] **Task 6:** Remove deprecated pending scan API functions
+  - [ ] Delete `savePendingScan()`, `loadPendingScan()`, `clearPendingScan()` from `pendingScanStorage.ts` (lines 637-686)
+  - [ ] Grep for consumers first — TODO at line 631 says "confirm no other usages"
+  - [ ] Remove associated exports from barrel files if any
 
 ## File Specification
 
@@ -64,6 +68,7 @@ Phase 7 migrated `HistoryFiltersContext`, `ThemeContext`, and `AppStateContext` 
 | `src/contexts/index.ts` | MODIFY | Remove deleted context exports |
 | `tests/unit/contexts/AppStateContext.test.tsx` | DELETE | Context removed |
 | `tests/unit/contexts/ThemeContext.test.tsx` | DELETE | Context removed |
+| `src/services/pendingScanStorage.ts` | MODIFY | Remove deprecated scan API functions (Task 6) |
 
 ## Dev Notes
 

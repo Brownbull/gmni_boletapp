@@ -135,10 +135,10 @@ development_status:
   15-TD-10-credits-consumer-safety: done               # 3 pts - CR-1, CR-13: useUserCredits bypasses transaction + silent DEFAULT_CREDITS
 
   # HIGH priority — from TD-1/2/3 code review (2 pts):
-  15-TD-11-trust-service-transactions: ready-for-dev  # 2 pts - CR-8: trustMerchant/declineTrust/revokeTrust not transactional
+  15-TD-11-trust-service-transactions: done    # 2 pts - CR-8: trustMerchant/declineTrust/revokeTrust not transactional
 
   # HIGH priority — from TD-10 code review (5 pts):
-  15-TD-13-transactional-credit-additions: ready-for-dev  # 3 pts - addCredits/addSuperCredits/useAirlocks non-transactional TOCTOU
+  15-TD-13-transactional-credit-additions: done     # 3 pts - addCredits/addSuperCredits/useAirlocks non-transactional TOCTOU
   15-TD-14-credits-type-safety-cleanup: ready-for-dev     # 2 pts - db:any type chain + deprecated _currentCredits param removal
 
   # MEDIUM priority (19 pts):
@@ -149,6 +149,7 @@ development_status:
   15-TD-8-input-validation-hardening: ready-for-dev  # 2 pts - TD-22, TD-23: validateAppId + data: URI pattern
   15-TD-9-dal-polish: ready-for-dev                 # 3 pts - TD-7, TD-9, CR-2: save() signature + consumer migration + deterministic doc IDs
   15-TD-12-batch-migration-error-surfacing: ready-for-dev  # 2 pts - CR-4, CR-9: migrateCreatedAt raw writeBatch + partial-commit surfacing
+  15-TD-15-standalone-mutation-safety: ready-for-dev       # 2 pts - TD-11 deferred + audit: deleteTrustedMerchant/deleteTransaction/updateTransaction/deleteMapping transaction wrapping
 
   epic-15-retrospective: optional
 

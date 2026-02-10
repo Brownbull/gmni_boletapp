@@ -10,9 +10,10 @@ import { User } from 'firebase/auth';
 import { UserCredits, DEFAULT_CREDITS } from '../types/scan';
 import {
   getUserCredits,
-  saveUserCredits,
   deductAndSaveCredits,
   deductAndSaveSuperCredits,
+  addAndSaveCredits,
+  addAndSaveSuperCredits,
 } from '../services/userCreditsService';
 
 interface UseUserCreditsResult {
@@ -192,71 +193,45 @@ export function useUserCredits(
   );
 
   // Add normal credits (for purchases, promotions, etc.)
+  // Uses transactional addAndSaveCredits to prevent lost updates (TD-13)
   const addCredits = useCallback(
     async (amount: number): Promise<void> => {
       if (!user || !services) return;
-      if (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount)) {
-        throw new Error('Amount must be a positive integer');
-      }
-
-      // Optimistic update
-      const newCredits: UserCredits = {
-        remaining: credits.remaining + amount,
-        used: credits.used,
-        superRemaining: credits.superRemaining,
-        superUsed: credits.superUsed,
-      };
-      setCredits(newCredits);
 
       try {
-        await saveUserCredits(services.db, user.uid, services.appId, newCredits);
+        const updatedCredits = await addAndSaveCredits(
+          services.db, user.uid, services.appId, amount
+        );
+        setCredits(updatedCredits);
       } catch (error) {
-        console.error('Failed to save credits after addition:', error);
-        // Revert on error — getUserCredits now throws, so catch the recovery too
-        try {
-          const savedCredits = await getUserCredits(services.db, user.uid, services.appId);
-          setCredits(savedCredits);
-        } catch {
-          // Network fully down — revert to pre-optimistic state
-          setCredits(credits);
+        if (import.meta.env.DEV) {
+          console.error('Failed to add credits:', error);
         }
+        throw error;
       }
     },
-    [user, services, credits]
+    [user, services]
   );
 
   // Add super credits (for purchases, promotions, etc.)
+  // Uses transactional addAndSaveSuperCredits to prevent lost updates (TD-13)
   const addSuperCredits = useCallback(
     async (amount: number): Promise<void> => {
       if (!user || !services) return;
-      if (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount)) {
-        throw new Error('Amount must be a positive integer');
-      }
-
-      // Optimistic update
-      const newCredits: UserCredits = {
-        remaining: credits.remaining,
-        used: credits.used,
-        superRemaining: credits.superRemaining + amount,
-        superUsed: credits.superUsed,
-      };
-      setCredits(newCredits);
 
       try {
-        await saveUserCredits(services.db, user.uid, services.appId, newCredits);
+        const updatedCredits = await addAndSaveSuperCredits(
+          services.db, user.uid, services.appId, amount
+        );
+        setCredits(updatedCredits);
       } catch (error) {
-        console.error('Failed to save super credits after addition:', error);
-        // Revert on error — getUserCredits now throws, so catch the recovery too
-        try {
-          const savedCredits = await getUserCredits(services.db, user.uid, services.appId);
-          setCredits(savedCredits);
-        } catch {
-          // Network fully down — revert to pre-optimistic state
-          setCredits(credits);
+        if (import.meta.env.DEV) {
+          console.error('Failed to add super credits:', error);
         }
+        throw error;
       }
     },
-    [user, services, credits]
+    [user, services]
   );
 
   // Force refresh credits from Firestore (e.g., after admin changes or app resume)

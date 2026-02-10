@@ -16,12 +16,16 @@ const mockGetUserCredits = vi.fn();
 const mockSaveUserCredits = vi.fn();
 const mockDeductAndSaveCredits = vi.fn();
 const mockDeductAndSaveSuperCredits = vi.fn();
+const mockAddAndSaveCredits = vi.fn();
+const mockAddAndSaveSuperCredits = vi.fn();
 
 vi.mock('../../../src/services/userCreditsService', () => ({
   getUserCredits: (...args: unknown[]) => mockGetUserCredits(...args),
   saveUserCredits: (...args: unknown[]) => mockSaveUserCredits(...args),
   deductAndSaveCredits: (...args: unknown[]) => mockDeductAndSaveCredits(...args),
   deductAndSaveSuperCredits: (...args: unknown[]) => mockDeductAndSaveSuperCredits(...args),
+  addAndSaveCredits: (...args: unknown[]) => mockAddAndSaveCredits(...args),
+  addAndSaveSuperCredits: (...args: unknown[]) => mockAddAndSaveSuperCredits(...args),
 }));
 
 describe('useUserCredits', () => {
@@ -370,7 +374,10 @@ describe('useUserCredits', () => {
   });
 
   describe('addCredits', () => {
-    it('adds credits and persists to Firestore', async () => {
+    it('calls addAndSaveCredits (transactional) instead of saveUserCredits (TD-13)', async () => {
+      const addedResult = { remaining: 110, used: 5, superRemaining: 10, superUsed: 0 };
+      mockAddAndSaveCredits.mockResolvedValueOnce(addedResult);
+
       const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
 
       await waitFor(() => {
@@ -381,11 +388,66 @@ describe('useUserCredits', () => {
         await result.current.addCredits(10);
       });
 
-      expect(result.current.credits.remaining).toBe(initialCredits.remaining + 10);
-      expect(mockSaveUserCredits).toHaveBeenCalledWith(
-        mockServices.db, mockUser.uid, mockServices.appId,
-        expect.objectContaining({ remaining: initialCredits.remaining + 10 })
+      expect(mockAddAndSaveCredits).toHaveBeenCalledWith(
+        mockServices.db, mockUser.uid, mockServices.appId, 10
       );
+      expect(mockSaveUserCredits).not.toHaveBeenCalled();
+      expect(result.current.credits).toEqual(addedResult);
+    });
+
+    it('throws error on failure (TD-13)', async () => {
+      mockAddAndSaveCredits.mockRejectedValueOnce(new Error('Amount must be a positive integer'));
+
+      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      await expect(
+        act(async () => {
+          await result.current.addCredits(-1);
+        })
+      ).rejects.toThrow('Amount must be a positive integer');
+    });
+  });
+
+  describe('addSuperCredits', () => {
+    it('calls addAndSaveSuperCredits (transactional) instead of saveUserCredits (TD-13)', async () => {
+      const addedResult = { remaining: 100, used: 5, superRemaining: 15, superUsed: 0 };
+      mockAddAndSaveSuperCredits.mockResolvedValueOnce(addedResult);
+
+      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      await act(async () => {
+        await result.current.addSuperCredits(5);
+      });
+
+      expect(mockAddAndSaveSuperCredits).toHaveBeenCalledWith(
+        mockServices.db, mockUser.uid, mockServices.appId, 5
+      );
+      expect(mockSaveUserCredits).not.toHaveBeenCalled();
+      expect(result.current.credits).toEqual(addedResult);
+    });
+
+    it('throws error on failure (TD-13)', async () => {
+      mockAddAndSaveSuperCredits.mockRejectedValueOnce(new Error('Amount must be a positive integer'));
+
+      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      await expect(
+        act(async () => {
+          await result.current.addSuperCredits(-1);
+        })
+      ).rejects.toThrow('Amount must be a positive integer');
     });
   });
 });

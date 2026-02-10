@@ -27,7 +27,8 @@ Two related cleanup items from the TD-10 code review:
 - [ ] **AC3:** All callers that construct `FirebaseServices` objects compile without type errors
 - [ ] **AC4:** The deprecated `_currentCredits` parameter is removed from `deductAndSaveCredits` and `deductAndSaveSuperCredits` function signatures
 - [ ] **AC5:** `credits` is removed from `deductCredits`, `deductSuperCredits`, and `confirmReservedCredits` useCallback dependency arrays
-- [ ] **AC6:** All existing tests pass
+- [ ] **AC6:** Extract shared `readFreshCredits(snap)` helper to eliminate 4x duplicated transaction read block in `userCreditsService.ts`
+- [ ] **AC7:** All existing tests pass
 
 ## Tasks / Subtasks
 
@@ -42,6 +43,10 @@ Two related cleanup items from the TD-10 code review:
   - [ ] Update all call sites (useUserCredits hook, tests)
   - [ ] Remove `credits` from useCallback dependency arrays
   - [ ] Update test mocks to match new signatures
+- [ ] **Task 3:** Extract shared transaction read helper
+  - [ ] Create `readFreshCredits(snap: DocumentSnapshot): UserCredits` helper function
+  - [ ] Replace 4 identical read blocks in deductAndSaveCredits, deductAndSaveSuperCredits, addAndSaveCredits, addAndSaveSuperCredits
+  - [ ] Source: TD-13 code review finding #5 (2026-02-10)
 
 ## Dev Notes
 

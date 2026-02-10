@@ -2,7 +2,6 @@ import {
     collection,
     doc,
     getDoc,
-    updateDoc,
     deleteDoc,
     getDocs,
     onSnapshot,
@@ -207,7 +206,7 @@ export async function isMerchantTrusted(
     appId: string,
     merchantName: string
 ): Promise<boolean> {
-    const normalizedName = normalizeMerchantNameForTrust(merchantName);
+    const normalizedName = normalizeMerchantNameForTrust(sanitizeMerchantName(merchantName));
     const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
@@ -221,6 +220,7 @@ export async function isMerchantTrusted(
 /**
  * Mark a merchant as trusted
  * Story 11.4: AC #4 - User can accept trust
+ * Story 15-TD-11: Wrapped in runTransaction for TOCTOU safety
  */
 export async function trustMerchant(
     db: Firestore,
@@ -228,22 +228,36 @@ export async function trustMerchant(
     appId: string,
     merchantName: string
 ): Promise<void> {
-    const normalizedName = normalizeMerchantNameForTrust(merchantName);
+    const sanitizedMerchant = sanitizeMerchantName(merchantName);
+    const normalizedName = normalizeMerchantNameForTrust(sanitizedMerchant);
     const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
-    await updateDoc(docRef, {
-        trusted: true,
-        trustedAt: serverTimestamp(),
-        promptShownAt: serverTimestamp(),
-        declined: false,
-        updatedAt: serverTimestamp(),
+    await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(docRef);
+        if (!snap.exists()) {
+            throw new Error('Merchant trust record not found');
+        }
+
+        const data = snap.data() as TrustedMerchant;
+        if (data.trusted) {
+            return; // Already trusted — no-op
+        }
+
+        transaction.update(docRef, {
+            trusted: true,
+            trustedAt: serverTimestamp(),
+            promptShownAt: serverTimestamp(),
+            declined: false,
+            updatedAt: serverTimestamp(),
+        });
     });
 }
 
 /**
  * Decline trust for a merchant (marks as declined to avoid nagging)
  * Story 11.4: AC #4 - User can decline trust, only show prompt once per merchant
+ * Story 15-TD-11: Wrapped in runTransaction for TOCTOU safety
  */
 export async function declineTrust(
     db: Firestore,
@@ -251,20 +265,34 @@ export async function declineTrust(
     appId: string,
     merchantName: string
 ): Promise<void> {
-    const normalizedName = normalizeMerchantNameForTrust(merchantName);
+    const sanitizedMerchant = sanitizeMerchantName(merchantName);
+    const normalizedName = normalizeMerchantNameForTrust(sanitizedMerchant);
     const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
-    await updateDoc(docRef, {
-        declined: true,
-        promptShownAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+    await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(docRef);
+        if (!snap.exists()) {
+            throw new Error('Merchant trust record not found');
+        }
+
+        const data = snap.data() as TrustedMerchant;
+        if (data.declined || data.trusted) {
+            return; // Already declined or trusted — no-op (prevents contradictory state)
+        }
+
+        transaction.update(docRef, {
+            declined: true,
+            promptShownAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        });
     });
 }
 
 /**
  * Revoke trust for a merchant
  * Story 11.4: AC #7 - Users can revoke trust at any time
+ * Story 15-TD-11: Wrapped in runTransaction for TOCTOU safety
  */
 export async function revokeTrust(
     db: Firestore,
@@ -272,14 +300,27 @@ export async function revokeTrust(
     appId: string,
     merchantName: string
 ): Promise<void> {
-    const normalizedName = normalizeMerchantNameForTrust(merchantName);
+    const sanitizedMerchant = sanitizeMerchantName(merchantName);
+    const normalizedName = normalizeMerchantNameForTrust(sanitizedMerchant);
     const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
-    await updateDoc(docRef, {
-        trusted: false,
-        trustedAt: null,
-        updatedAt: serverTimestamp(),
+    await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(docRef);
+        if (!snap.exists()) {
+            throw new Error('Merchant trust record not found');
+        }
+
+        const data = snap.data() as TrustedMerchant;
+        if (!data.trusted) {
+            return; // Not currently trusted — no-op
+        }
+
+        transaction.update(docRef, {
+            trusted: false,
+            trustedAt: null,
+            updatedAt: serverTimestamp(),
+        });
     });
 }
 
@@ -378,7 +419,7 @@ export async function getMerchantTrustRecord(
     appId: string,
     merchantName: string
 ): Promise<TrustedMerchant | null> {
-    const normalizedName = normalizeMerchantNameForTrust(merchantName);
+    const normalizedName = normalizeMerchantNameForTrust(sanitizeMerchantName(merchantName));
     const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 

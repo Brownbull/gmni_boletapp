@@ -20,11 +20,12 @@ import {
   generateAirlock,
   markAirlockViewed,
   hasEnoughCredits,
-  deductCredits,
   deleteAirlock,
   deleteAirlocks,
 } from '@features/insights/services/airlockService';
+import { deductAndSaveSuperCredits } from '../services/userCreditsService';
 import { AirlockRecord, AirlockTransaction, AIRLOCK_CREDIT_COST } from '../types/airlock';
+import type { UserCredits } from '../types/scan';
 
 interface UseAirlocksOptions {
   /** Current authenticated user */
@@ -33,8 +34,8 @@ interface UseAirlocksOptions {
   services: { db: Firestore; appId: string } | null;
   /** User's current super credit balance */
   credits: number;
-  /** Callback to update credits after generation */
-  onCreditsDeducted?: (newBalance: number) => void;
+  /** Callback to update credits after transactional deduction (TD-13) */
+  onCreditsDeducted?: (updatedCredits: UserCredits) => void;
 }
 
 interface UseAirlocksResult {
@@ -112,11 +113,22 @@ export function useAirlocks({
       }
       return generateAirlock(services.db, user.uid, services.appId, transactions);
     },
-    onSuccess: () => {
-      // Deduct credits on success
-      if (onCreditsDeducted) {
-        const newBalance = deductCredits(credits, AIRLOCK_CREDIT_COST);
-        onCreditsDeducted(newBalance);
+    onSuccess: async () => {
+      // Deduct super credits transactionally on success (TD-13: prevents TOCTOU)
+      // Always deduct from Firestore regardless of callback — prevents free airlocks
+      if (user && services) {
+        try {
+          // _currentCredits param is deprecated and ignored by transaction (reads fresh data)
+          const _deprecatedCredits = { remaining: 0, used: 0, superRemaining: 0, superUsed: 0 };
+          const updatedCredits = await deductAndSaveSuperCredits(
+            services.db, user.uid, services.appId, _deprecatedCredits, AIRLOCK_CREDIT_COST
+          );
+          onCreditsDeducted?.(updatedCredits);
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            console.error('Failed to deduct credits after airlock generation:', error);
+          }
+        }
       }
       // Invalidate airlocks query to refetch
       if (user && services) {

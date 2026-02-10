@@ -814,83 +814,152 @@
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 4.5: Tech Debt Story Creation (Optional)                           -->
+  <!-- STEP 4.5: Deferred Item Audit + Tech Debt Story Creation (MANDATORY)    -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="4.5" goal="Create tech debt stories for deferred items">
-    <critical>🗂️ TECH DEBT TRACKING - Every deferred item becomes a tracked TD story</critical>
+  <step n="4.5" goal="Audit ALL deferred items and ensure every one is tracked by a story">
+    <critical>🗂️ TECH DEBT TRACKING - Every deferred item MUST be tracked by a story</critical>
     <critical>NO dark void — deferred items ALWAYS get stories + sprint-status updates</critical>
+    <critical>This step is MANDATORY even when Step 4 triage has zero deferred items</critical>
 
-    <action>Use {{td_items}} from Step 4 (pre-selected by user in triage)</action>
+    <!-- ─── 4.5a: Collect ALL deferred items from ALL sources ─── -->
+    <action>Build {{all_deferred_items}} by collecting from THREE sources:
 
-    <action>Group deferred items by theme to minimize story count:
-      - Related items in same file/feature → single TD story
-      - Unrelated items → separate TD stories
+      **Source 1: Triage deferrals** (from Step 4)
+      - Use {{td_items}} from Step 4 (items user chose to defer during triage)
+
+      **Source 2: Story pre-existing deferrals**
+      - Search the story's Dev Notes for: "Deferred", "out of scope", "follow-up", "future"
+      - These are items deferred BEFORE this review (e.g., during dev-story)
+      - Add each to {{all_deferred_items}}
+
+      **Source 3: Agent out-of-scope findings**
+      - Search agent review outputs for items flagged as:
+        "out of scope", "pre-existing", "not part of this story", "follow-up recommended"
+      - These are issues agents found but noted as beyond this story's scope
+      - Add each to {{all_deferred_items}}
     </action>
 
-    <!-- Create TD stories -->
-    <action>For each TD story group, create story using template:
+    <!-- ─── 4.5b: Verify existing coverage for each deferred item ─── -->
+    <action>For EACH item in {{all_deferred_items}}, check if already tracked:
 
+      1. Search {sprint_artifacts}/stories/ for story files covering this item
+         - Grep for the function name, file name, or pattern described
+      2. Search {sprint_status} for any story whose description matches
+      3. Check if the item is explicitly listed as a task/AC in an existing story
+
+      Set {{item.tracked}} = true/false for each item
+      Set {{item.tracking_story}} = story ID if tracked
+    </action>
+
+    <!-- ─── 4.5c: Handle tracked items — verify + link ─── -->
+    <check if="any items have {{item.tracked}} = true">
+      <action>For each tracked item:
+        - Verify the tracking story actually covers the deferred work (not just mentions it)
+        - Update the source story's deferred reference to link to the tracking story
+          e.g., "Deferred: X — tracked in [15-TD-Y](./15-TD-Y-slug.md)"
+      </action>
+    </check>
+
+    <!-- ─── 4.5d: Handle untracked items — create stories or add to existing ─── -->
+    <check if="any items have {{item.tracked}} = false">
+      <action>For each UNTRACKED item, decide:
+
+        **Option A: Add to existing story** — if an existing ready-for-dev story covers a related theme
+        - Add as new Task/AC to that story
+        - Update File Specification table if new files affected
+        - Note: "Added from {{story_key}} code review ({{date}})"
+
+        **Option B: Create new TD story** — if no existing story covers this theme
+        - Group related untracked items into a single story (minimize story count)
+        - Use TD story template (below)
+      </action>
+
+      <!-- Create new TD stories when needed -->
+      <action>For each new TD story group, create story using template:
+
+        ```markdown
+        # Tech Debt Story TD-{{epic_id}}-{{td_number}}: {{title}}
+
+        Status: ready-for-dev
+
+        > **Source:** ECC Code Review ({{date}}) on story {{story_key}}
+        > **Priority:** {{priority}}
+        > **Estimated Effort:** {{effort_estimate}}
+
+        ## Story
+
+        As a **developer**,
+        I want **{{what}}**,
+        So that **{{why}}**.
+
+        ## Acceptance Criteria
+
+        {{acceptance_criteria}}
+
+        ## Tasks / Subtasks
+
+        {{tasks}}
+
+        ## Dev Notes
+
+        - Source story: [{{story_key}}](./{{story_filename}})
+        - Review findings: {{finding_indices}}
+        - Files affected: {{affected_files}}
+        ```
+      </action>
+
+      <action>Write story files to: {sprint_artifacts}/stories/TD-{{epic_id}}-{{td_number}}-{{slug}}.md</action>
+    </check>
+
+    <!-- ─── 4.5e: Update sprint-status.yaml + source story (MANDATORY) ─── -->
+    <action>For each NEW TD story created:
+      - Add to sprint-status.yaml with status: ready-for-dev
+      - Add DEPENDS: {{story_key}} (source story)
+    </action>
+
+    <action>Update source story {{story_key}} with tracking table:
       ```markdown
-      # Tech Debt Story TD-{{epic_id}}-{{td_number}}: {{title}}
+      ### Tech Debt Stories Created / Updated
 
-      Status: ready-for-dev
-
-      > **Source:** ECC Code Review ({{date}}) on story {{story_key}}
-      > **Priority:** {{priority}}
-      > **Estimated Effort:** {{effort_estimate}}
-
-      ## Story
-
-      As a **developer**,
-      I want **{{what}}**,
-      So that **{{why}}**.
-
-      ## Acceptance Criteria
-
-      {{acceptance_criteria}}
-
-      ## Tasks / Subtasks
-
-      {{tasks}}
-
-      ## Dev Notes
-
-      - Source story: [{{story_key}}](./{{story_filename}})
-      - Review findings: {{finding_indices}}
-      - Files affected: {{affected_files}}
-      ```
-    </action>
-
-    <action>Write story files to: {sprint_artifacts}/stories/TD-{{epic_id}}-{{td_number}}-{{slug}}.md</action>
-
-    <!-- Update sprint-status.yaml — MANDATORY -->
-    <action>Add each TD story to sprint-status.yaml:
-      - Status: ready-for-dev
-      - DEPENDS: {{story_key}} (source story)
-    </action>
-
-    <!-- Update source story with TD links -->
-    <action>Add to story {{story_key}}:
-      ```markdown
-      ### Tech Debt Stories Created
-
-      | TD Story | Description | Priority |
-      |----------|-------------|----------|
-      {{#each created_td_stories}}
-      | [{{id}}](./{{filename}}) | {{description}} | {{priority}} |
+      | TD Story | Description | Priority | Action |
+      |----------|-------------|----------|--------|
+      {{#each all_resolved_items}}
+      | [{{tracking_id}}](./{{filename}}) | {{description}} | {{priority}} | {{action}} |
       {{/each}}
       ```
+      Where {{action}} is one of: CREATED, ADDED_TO_EXISTING, ALREADY_TRACKED
     </action>
 
-    <output>✅ **Tech Debt Stories Created**
+    <!-- ─── 4.5f: Summary output ─── -->
+    <output>🗂️ **Deferred Item Audit Complete**
 
-      Created {{td_story_count}} TD stories:
-      {{#each created_td_stories}}
+      **Sources scanned:**
+      - Triage deferrals: {{triage_deferred_count}}
+      - Story pre-existing deferrals: {{preexisting_deferred_count}}
+      - Agent out-of-scope findings: {{agent_deferred_count}}
+
+      **Resolution:**
+      - Already tracked by existing stories: {{already_tracked_count}}
+      - Added to existing stories: {{added_to_existing_count}}
+      - New TD stories created: {{new_td_count}}
+      - Total deferred items verified: {{total_deferred}}
+
+      {{#if new_td_count > 0}}
+      **New TD stories:**
+      {{#each new_td_stories}}
       - **{{id}}**: {{title}} ({{priority}}) → `{{filepath}}`
       {{/each}}
+      {{/if}}
 
-      Sprint status updated. Stories ready for sprint planning.
+      {{#if added_to_existing_count > 0}}
+      **Added to existing stories:**
+      {{#each added_to_existing}}
+      - **{{item}}** → added to {{tracking_story}}
+      {{/each}}
+      {{/if}}
+
+      Sprint status updated. All deferred items are now tracked.
     </output>
   </step>
 
