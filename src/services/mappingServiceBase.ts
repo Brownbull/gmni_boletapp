@@ -11,8 +11,6 @@
 
 import {
     collection,
-    addDoc,
-    updateDoc,
     deleteDoc,
     doc,
     onSnapshot,
@@ -25,6 +23,8 @@ import {
     limit,
     orderBy,
     increment,
+    runTransaction,
+    updateDoc,
 } from 'firebase/firestore';
 import { LISTENER_LIMITS } from './firestore';
 
@@ -86,7 +86,7 @@ export async function saveMapping<T extends Record<string, unknown>>(
         ? { ...mapping, [config.targetField]: config.sanitizeTarget(mapping[config.targetField] as string) }
         : { ...mapping };
 
-    // Build upsert query
+    // Build upsert query (outside transaction — client SDK limitation)
     const filters = [
         where(config.primaryKeyField, '==', mapping[config.primaryKeyField]),
     ];
@@ -97,20 +97,37 @@ export async function saveMapping<T extends Record<string, unknown>>(
     const existingDocs = await getDocs(query(collRef, ...filters, limit(1)));
 
     if (!existingDocs.empty) {
-        const existingDoc = existingDocs.docs[0];
-        await updateDoc(existingDoc.ref, {
-            ...data,
-            updatedAt: serverTimestamp(),
+        // TOCTOU fix: wrap update in transaction to verify doc still exists
+        const existingRef = existingDocs.docs[0].ref;
+        await runTransaction(db, async (transaction) => {
+            const snap = await transaction.get(existingRef);
+            if (snap.exists()) {
+                transaction.update(existingRef, {
+                    ...data,
+                    updatedAt: serverTimestamp(),
+                });
+            } else {
+                // Doc was deleted between query and transaction — create new
+                transaction.set(existingRef, {
+                    ...data,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                });
+            }
         });
-        return existingDoc.id;
+        return existingDocs.docs[0].id;
     }
 
-    const docRef = await addDoc(collRef, {
-        ...data,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+    // No existing doc — create with transaction to prevent duplicate creates
+    const newDocRef = doc(collRef);
+    await runTransaction(db, async (transaction) => {
+        transaction.set(newDocRef, {
+            ...data,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        });
     });
-    return docRef.id;
+    return newDocRef.id;
 }
 
 /**

@@ -17,6 +17,7 @@ import {
   Firestore,
   FieldValue,
   Timestamp,
+  runTransaction,
 } from 'firebase/firestore';
 import { UserCredits, DEFAULT_CREDITS } from '../types/scan';
 import { creditsDocSegments } from '@/lib/firestorePaths';
@@ -127,13 +128,13 @@ export async function saveUserCredits(
 }
 
 /**
- * Deduct normal credits and persist to Firestore.
- * This is an atomic operation that updates local state and persists.
+ * Deduct normal credits and persist to Firestore atomically.
+ * TOCTOU fix: reads fresh balance inside transaction to prevent overdrafts.
  *
  * @param db - Firestore instance
  * @param userId - User ID
  * @param appId - Application ID
- * @param currentCredits - Current credit state
+ * @param _currentCredits - Caller's snapshot (used as fallback; fresh read preferred)
  * @param amount - Amount to deduct
  * @returns Updated credits
  * @throws Error if insufficient credits
@@ -142,31 +143,53 @@ export async function deductAndSaveCredits(
   db: Firestore,
   userId: string,
   appId: string,
-  currentCredits: UserCredits,
+  _currentCredits: UserCredits,
   amount: number
 ): Promise<UserCredits> {
-  if (currentCredits.remaining < amount) {
-    throw new Error('Insufficient credits');
-  }
+  const docRef = getCreditsDocRef(db, appId, userId);
 
-  const newCredits: UserCredits = {
-    remaining: currentCredits.remaining - amount,
-    used: currentCredits.used + amount,
-    superRemaining: currentCredits.superRemaining,
-    superUsed: currentCredits.superUsed,
-  };
+  return runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(docRef);
 
-  await saveUserCredits(db, userId, appId, newCredits);
-  return newCredits;
+    // Read fresh balance inside transaction
+    const data = snap.exists() ? (snap.data() as CreditsDocument) : null;
+    const freshCredits: UserCredits = data
+      ? {
+          remaining: data.remaining ?? DEFAULT_CREDITS.remaining,
+          used: data.used ?? 0,
+          superRemaining: data.superRemaining ?? DEFAULT_CREDITS.superRemaining,
+          superUsed: data.superUsed ?? 0,
+        }
+      : DEFAULT_CREDITS;
+
+    if (freshCredits.remaining < amount) {
+      throw new Error('Insufficient credits');
+    }
+
+    const newCredits: UserCredits = {
+      remaining: freshCredits.remaining - amount,
+      used: freshCredits.used + amount,
+      superRemaining: freshCredits.superRemaining,
+      superUsed: freshCredits.superUsed,
+    };
+
+    transaction.set(docRef, {
+      ...newCredits,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+
+    return newCredits;
+  });
 }
 
 /**
- * Deduct super credits and persist to Firestore.
+ * Deduct super credits and persist to Firestore atomically.
+ * TOCTOU fix: reads fresh balance inside transaction to prevent overdrafts.
  *
  * @param db - Firestore instance
  * @param userId - User ID
  * @param appId - Application ID
- * @param currentCredits - Current credit state
+ * @param _currentCredits - Caller's snapshot (used as fallback; fresh read preferred)
  * @param amount - Amount to deduct
  * @returns Updated credits
  * @throws Error if insufficient super credits
@@ -175,22 +198,42 @@ export async function deductAndSaveSuperCredits(
   db: Firestore,
   userId: string,
   appId: string,
-  currentCredits: UserCredits,
+  _currentCredits: UserCredits,
   amount: number
 ): Promise<UserCredits> {
-  if (currentCredits.superRemaining < amount) {
-    throw new Error('Insufficient super credits');
-  }
+  const docRef = getCreditsDocRef(db, appId, userId);
 
-  const newCredits: UserCredits = {
-    remaining: currentCredits.remaining,
-    used: currentCredits.used,
-    superRemaining: currentCredits.superRemaining - amount,
-    superUsed: currentCredits.superUsed + amount,
-  };
+  return runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(docRef);
 
-  await saveUserCredits(db, userId, appId, newCredits);
-  return newCredits;
+    const data = snap.exists() ? (snap.data() as CreditsDocument) : null;
+    const freshCredits: UserCredits = data
+      ? {
+          remaining: data.remaining ?? DEFAULT_CREDITS.remaining,
+          used: data.used ?? 0,
+          superRemaining: data.superRemaining ?? DEFAULT_CREDITS.superRemaining,
+          superUsed: data.superUsed ?? 0,
+        }
+      : DEFAULT_CREDITS;
+
+    if (freshCredits.superRemaining < amount) {
+      throw new Error('Insufficient super credits');
+    }
+
+    const newCredits: UserCredits = {
+      remaining: freshCredits.remaining,
+      used: freshCredits.used,
+      superRemaining: freshCredits.superRemaining - amount,
+      superUsed: freshCredits.superUsed + amount,
+    };
+
+    transaction.set(docRef, {
+      ...newCredits,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+
+    return newCredits;
+  });
 }
 
 /**

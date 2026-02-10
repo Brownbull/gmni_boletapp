@@ -2,7 +2,6 @@ import {
     collection,
     doc,
     getDoc,
-    setDoc,
     updateDoc,
     deleteDoc,
     getDocs,
@@ -13,6 +12,7 @@ import {
     limit,
     Firestore,
     Unsubscribe,
+    runTransaction,
 } from 'firebase/firestore';
 import {
     TrustedMerchant,
@@ -137,63 +137,64 @@ export async function recordScan(
     const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
-    const existingDoc = await getDoc(docRef);
+    // TOCTOU fix: wrap read-then-write in runTransaction for atomic update
+    return runTransaction(db, async (transaction) => {
+        const existingDoc = await transaction.get(docRef);
 
-    if (existingDoc.exists()) {
-        // Update existing record
-        const existing = { id: existingDoc.id, ...existingDoc.data() } as TrustedMerchant;
-        const newScanCount = existing.scanCount + 1;
-        const newEditCount = existing.editCount + (wasEdited ? 1 : 0);
-        const newEditRate = calculateEditRate(newScanCount, newEditCount);
+        if (existingDoc.exists()) {
+            // Update existing record atomically
+            const existing = { id: existingDoc.id, ...existingDoc.data() } as TrustedMerchant;
+            const newScanCount = existing.scanCount + 1;
+            const newEditCount = existing.editCount + (wasEdited ? 1 : 0);
+            const newEditRate = calculateEditRate(newScanCount, newEditCount);
 
-        await updateDoc(docRef, {
-            scanCount: newScanCount,
-            editCount: newEditCount,
-            editRate: newEditRate,
-            lastScanAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        });
+            transaction.update(docRef, {
+                scanCount: newScanCount,
+                editCount: newEditCount,
+                editRate: newEditRate,
+                lastScanAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            });
 
-        const updated: TrustedMerchant = {
-            ...existing,
-            scanCount: newScanCount,
-            editCount: newEditCount,
-            editRate: newEditRate,
-        };
+            const updated: TrustedMerchant = {
+                ...existing,
+                scanCount: newScanCount,
+                editCount: newEditCount,
+                editRate: newEditRate,
+            };
 
-        return shouldShowTrustPrompt(updated);
-    } else {
-        // Create new record - use TrustedMerchantCreate for proper serverTimestamp() typing
-        const newRecord: TrustedMerchantCreate = {
-            merchantName: sanitizedMerchant,
-            normalizedName,
-            scanCount: 1,
-            editCount: wasEdited ? 1 : 0,
-            editRate: wasEdited ? 1 : 0,
-            trusted: false,
-            lastScanAt: serverTimestamp(),
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        };
-
-        await setDoc(docRef, newRecord);
-
-        // Return a TrustedMerchant representation for the eligibility check
-        // Note: Timestamp fields will be populated by Firestore on read
-        return {
-            shouldShowPrompt: false,
-            merchant: {
-                id: normalizedName,
+            return shouldShowTrustPrompt(updated);
+        } else {
+            // Create new record - use TrustedMerchantCreate for proper serverTimestamp() typing
+            const newRecord: TrustedMerchantCreate = {
                 merchantName: sanitizedMerchant,
                 normalizedName,
                 scanCount: 1,
                 editCount: wasEdited ? 1 : 0,
                 editRate: wasEdited ? 1 : 0,
                 trusted: false,
-            } as TrustedMerchant,
-            reason: 'insufficient_scans',
-        };
-    }
+                lastScanAt: serverTimestamp(),
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            };
+
+            transaction.set(docRef, newRecord);
+
+            return {
+                shouldShowPrompt: false,
+                merchant: {
+                    id: normalizedName,
+                    merchantName: sanitizedMerchant,
+                    normalizedName,
+                    scanCount: 1,
+                    editCount: wasEdited ? 1 : 0,
+                    editRate: wasEdited ? 1 : 0,
+                    trusted: false,
+                } as TrustedMerchant,
+                reason: 'insufficient_scans',
+            };
+        }
+    });
 }
 
 /**
