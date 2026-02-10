@@ -52,7 +52,6 @@ import { useReducedMotion } from '../hooks/useReducedMotion';
 // getCategoryPillColors - ALWAYS colorful for pills/badges/legends
 // Story 14.13 Session 4: Added imports for view mode groups and item categories
 import {
-    getCategoryColorsAuto,
     getCategoryBackgroundAuto,
     getCategoryPillColors,
     getStoreGroupColors,
@@ -95,35 +94,18 @@ import { useDashboardViewData, type UseDashboardViewDataReturn } from './Dashboa
 import { TransactionCard } from '../components/transactions';
 import { getStorageString, setStorageString } from '@/utils/storage';
 import { toMillis } from '@/utils/timestamp';
+import { applyMasGrouping, buildProductKey } from '@/utils/categoryAggregation';
 // Story 14.12: Radar chart uses inline SVG (matching mockup hexagonal design)
 
-// Story 11.1: Sort type for dashboard transactions
-type SortType = 'transactionDate' | 'scanDate';
-
-// Story 9.11: Extended transaction interface with v2.6.0 fields for unified display
-interface Transaction {
-    id: string;
-    merchant: string;
-    alias?: string;
-    date: string;
-    total: number;
-    category: string;
-    imageUrls?: string[];
-    thumbnailUrl?: string;
-    items?: Array<{
-        name: string;
-        price: number;
-        category?: string;
-        subcategory?: string;
-    }>;
-    // v2.6.0 fields for unified card display
-    time?: string;
-    city?: string;
-    country?: string;
-    currency?: string;
-    // Story 11.1: createdAt for sort by scan date
-    createdAt?: any; // Firestore Timestamp or Date
-}
+// ============================================================================
+// Types & Constants (extracted to ./DashboardView/types.ts)
+// ============================================================================
+import type { SortType, CarouselSlide, TreemapViewMode } from './DashboardView/types';
+import {
+    Transaction, CAROUSEL_TITLE_KEYS, VIEW_MODE_CONFIG,
+    getTreemapColors, MONTH_SHORT_KEYS,
+    RECENT_TRANSACTIONS_COLLAPSED, RECENT_TRANSACTIONS_EXPANDED,
+} from './DashboardView/types';
 
 /**
  * Story 14e-25b.2: DashboardView Props
@@ -144,271 +126,8 @@ export interface DashboardViewProps {
     }>;
 }
 
-// Story 14.12: Number of recent transactions to show (collapsed/expanded)
-const RECENT_TRANSACTIONS_COLLAPSED = 5;
-const RECENT_TRANSACTIONS_EXPANDED = 10;
-
-// Story 14.12: Carousel slide configuration
-type CarouselSlide = 0 | 1 | 2;
-// CAROUSEL_TITLES keys for translation lookup
-const CAROUSEL_TITLE_KEYS = ['thisMonthCarousel', 'monthToMonth', 'lastFourMonths'] as const;
-
-/**
- * Story 14.13 Session 4: Treemap view mode - controls what data level is displayed
- * - 'store-groups': Transaction category groups (Food & Dining, Health & Wellness, etc.)
- * - 'store-categories': Transaction categories (Supermercado, Restaurante, etc.) - DEFAULT
- * - 'item-groups': Item category groups (Fresh Food, Packaged Food, etc.)
- * - 'item-categories': Item categories (Carnes y Mariscos, Lácteos, etc.)
- */
-type TreemapViewMode = 'store-groups' | 'store-categories' | 'item-groups' | 'item-categories';
-
-// Story 14.13 Session 4: View mode configuration for pill selector
-const VIEW_MODE_CONFIG: Array<{
-    value: TreemapViewMode;
-    emoji: string;
-    labelEs: string;
-    labelEn: string;
-}> = [
-    { value: 'store-groups', emoji: '🏪', labelEs: 'Grupos de Compras', labelEn: 'Purchase Groups' },
-    { value: 'store-categories', emoji: '🛒', labelEs: 'Categorías de Compras', labelEn: 'Purchase Categories' },
-    { value: 'item-groups', emoji: '📦', labelEs: 'Grupos de Productos', labelEn: 'Product Groups' },
-    { value: 'item-categories', emoji: '🏷️', labelEs: 'Categorías de Productos', labelEn: 'Product Categories' },
-];
-
-// Story 14.21: Get category colors for treemap using unified color system
-// Returns both bg (background) and fg (text) colors for proper contrast
-const getTreemapColors = (category: string): { bg: string; fg: string } => {
-    const colors = getCategoryColorsAuto(category);
-    return { bg: colors.bg, fg: colors.fg };
-};
-
-// Story 14.12: Month translation keys (short and full)
-const MONTH_SHORT_KEYS = [
-    'monthJan', 'monthFeb', 'monthMar', 'monthApr', 'monthMay', 'monthJun',
-    'monthJul', 'monthAug', 'monthSep', 'monthOct', 'monthNov', 'monthDec'
-] as const;
-
-// Story 14.12: Circular progress ring component for percentage display with text inside
-// Story 14.21: Added fgColor prop for proper contrast with unified colors
-interface CircularProgressProps {
-    animatedPercent: number;
-    size: number;
-    strokeWidth: number;
-    fontSize?: number;
-    /** Foreground color for stroke and text (defaults to white for backwards compat) */
-    fgColor?: string;
-}
-
-const CircularProgress: React.FC<CircularProgressProps> = ({ animatedPercent, size, strokeWidth, fontSize, fgColor = 'white' }) => {
-    const radius = (size - strokeWidth) / 2;
-    const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = circumference - (animatedPercent / 100) * circumference;
-    // Default font size based on circle size (0.38 multiplier for better readability)
-    const textSize = fontSize || Math.round(size * 0.38);
-    // Story 14.21: Calculate semi-transparent version of fgColor for background ring
-    const bgRingColor = fgColor === 'white' ? 'rgba(255,255,255,0.3)' : `${fgColor}33`; // 33 = 20% opacity in hex
-
-    return (
-        <div style={{ position: 'relative', width: size, height: size }}>
-            <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-                {/* Background circle (soft color - fg with low opacity) */}
-                <circle
-                    cx={size / 2}
-                    cy={size / 2}
-                    r={radius}
-                    fill="none"
-                    stroke={bgRingColor}
-                    strokeWidth={strokeWidth}
-                />
-                {/* Progress circle (bold fg color) */}
-                <circle
-                    cx={size / 2}
-                    cy={size / 2}
-                    r={radius}
-                    fill="none"
-                    stroke={fgColor}
-                    strokeWidth={strokeWidth}
-                    strokeLinecap="round"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={strokeDashoffset}
-                    style={{
-                        transition: 'stroke-dashoffset 0.05s ease-out'
-                    }}
-                />
-            </svg>
-            {/* Percentage text centered inside with % sign */}
-            <span
-                style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    fontSize: `${textSize}px`,
-                    fontWeight: 600,
-                    color: fgColor,
-                    lineHeight: 1
-                }}
-            >
-                {animatedPercent}%
-            </span>
-        </div>
-    );
-};
-
-// Story 14.12: Animated treemap card with count-up effect and circular progress
-// Story 14.21: Updated to use both bg and fg colors for proper contrast
-// Story 14.14: Category emoji in top row, transaction count moved to bottom right
-// Story 14.13 Session 13: Added categoryCount for "Más" aggregated group badge
-interface AnimatedTreemapCardProps {
-    cat: { name: string; amount: number; percent: number; count: number; itemCount: number; bgColor: string; fgColor: string; categoryCount?: number };
-    displayName: string; // Translated category name
-    isMainCell: boolean;
-    gridRow?: string;
-    gridColumn?: string;
-    animationKey: number;
-    getValueFontSize: (percent: number, isMainCell: boolean) => string;
-    style?: React.CSSProperties; // Story 14.13: Support squarified treemap absolute positioning
-    emoji?: string; // Story 14.13 Session 4: Optional emoji override for view mode
-    onClick?: () => void; // Story 14.13 Session 4: Click handler for category navigation
-    iconType?: 'receipt' | 'package'; // Story 14.13 Session 10: Receipt for transactions, Package for items
-    countMode?: 'transactions' | 'items'; // Story 14.13 Session 10: Which count to display
-}
-
-const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
-    cat,
-    displayName,
-    isMainCell,
-    gridRow,
-    gridColumn,
-    animationKey,
-    getValueFontSize,
-    style,
-    emoji: emojiProp,
-    onClick,
-    iconType = 'receipt', // Story 14.13 Session 10: Default to receipt icon
-    countMode = 'transactions', // Story 14.13 Session 10: Default to transactions
-}) => {
-    // Pass animationKey to useCountUp to re-trigger animation when carousel slides
-    const animatedAmount = useCountUp(Math.round(cat.amount / 1000), { duration: 1200, startValue: 0, key: animationKey });
-    const animatedPercent = useCountUp(Math.round(cat.percent), { duration: 1200, startValue: 0, key: animationKey });
-    // Story 14.13 Session 10: Display itemCount when in items mode, otherwise transaction count
-    const displayCount = countMode === 'items' ? (cat.itemCount || 0) : cat.count;
-    const animatedCount = useCountUp(displayCount, { duration: 800, startValue: 0, key: animationKey });
-
-    // Story 14.13 Session 8: Get text color at render time respecting fontColorMode setting
-    // getCategoryColorsAuto returns plain text (black/white) when fontColorMode is 'plain'
-    // and category-specific colors when fontColorMode is 'colorful'
-    // This matches the TrendsView pattern and ensures reactivity to settings changes
-    const textColors = getCategoryColorsAuto(cat.name);
-    const textColor = textColors.fg;
-
-    // Circle sizes - responsive: smaller on narrow screens
-    // Main cell: 36px, Small cells: 28px (increased from 24px for better readability)
-    const circleSize = isMainCell ? 36 : 28;
-    const strokeWidth = isMainCell ? 3 : 2;
-    // Override font size for small cells to improve readability (default 0.38 multiplier is too small)
-    const circleFontSize = isMainCell ? undefined : 11;
-
-    // Story 14.14: Get category emoji for display
-    // Story 14.13 Session 4: Use provided emoji prop if available, otherwise fallback to getCategoryEmoji
-    const emoji = emojiProp ?? getCategoryEmoji(cat.name);
-    const emojiFontSize = isMainCell ? '16px' : '13px';
-
-    return (
-        <div
-            key={`${cat.name}-${animationKey}`}
-            className="rounded-lg flex flex-col justify-between overflow-hidden cursor-pointer hover:opacity-90 active:scale-[0.98] transition-all"
-            style={{
-                backgroundColor: cat.bgColor,
-                gridRow: gridRow,
-                gridColumn: gridColumn,
-                minHeight: 0,
-                // Compact padding for mobile screens
-                padding: isMainCell ? '8px 8px' : '6px 6px',
-                // Story 14.13: Merge with passed style for squarified treemap positioning
-                ...style,
-            }}
-            // Story 14.13 Session 4: Handle click for category navigation
-            onClick={(e) => {
-                e.stopPropagation(); // Prevent triggering parent treemap click
-                onClick?.();
-            }}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onClick?.();
-                }
-            }}
-        >
-            {/* Top row: Emoji + Category name (+ categoryCount badge for "Más") */}
-            {/* Story 14.13: Unified layout for squarified treemap cells */}
-            {/* Story 14.13 Session 13: Added categoryCount badge for "Más" aggregated group */}
-            <div className="flex items-center gap-1.5 min-w-0">
-                <span style={{ fontSize: emojiFontSize, lineHeight: 1 }}>{emoji}</span>
-                {/* Story 14.37: Category name scales with font size setting */}
-                <div className="font-bold truncate flex items-center gap-1" style={{ fontSize: isMainCell ? 'var(--font-size-sm)' : 'var(--font-size-xs)', color: textColor, lineHeight: 1.2 }}>
-                    {displayName}
-                    {/* Badge showing count of categories inside "Más" group */}
-                    {cat.categoryCount && (
-                        <span
-                            className="inline-flex items-center justify-center rounded-full flex-shrink-0"
-                            style={{
-                                backgroundColor: 'transparent',
-                                border: `1.5px solid ${textColor}`,
-                                color: textColor,
-                                fontSize: isMainCell ? '10px' : '9px',
-                                fontWeight: 600,
-                                minWidth: isMainCell ? '18px' : '16px',
-                                height: isMainCell ? '18px' : '16px',
-                                padding: '0 3px',
-                            }}
-                        >
-                            {cat.categoryCount}
-                        </span>
-                    )}
-                </div>
-            </div>
-
-            {/* Bottom section: Count + Amount (left), Percentage circle (bottom right) */}
-            {/* Story 14.13 Session 5: Receipt icon for transactions, Package icon for items */}
-            <div className="flex items-end justify-between">
-                {/* Left side: count above amount */}
-                <div className="flex flex-col gap-0.5">
-                    {/* Count pill - Receipt for transactions, Package for items */}
-                    <span
-                        className="inline-flex items-center gap-[2px] px-[5px] py-[1px] rounded-full self-start"
-                        style={{
-                            backgroundColor: 'var(--bg)',
-                            color: textColor,
-                            fontSize: isMainCell ? '11px' : '10px',
-                        }}
-                    >
-                        {iconType === 'package' ? (
-                            <Package size={isMainCell ? 11 : 10} strokeWidth={2} />
-                        ) : (
-                            <Receipt size={isMainCell ? 11 : 10} strokeWidth={2} />
-                        )}
-                        {animatedCount}
-                    </span>
-                    {/* Amount - left aligned below count */}
-                    <div className="font-bold" style={{ fontSize: getValueFontSize(cat.percent, isMainCell), color: textColor, lineHeight: 1 }}>
-                        ${animatedAmount}k
-                    </div>
-                </div>
-                {/* Right side: Percentage circle - bottom right */}
-                <CircularProgress
-                    animatedPercent={animatedPercent}
-                    size={circleSize}
-                    strokeWidth={strokeWidth}
-                    fontSize={circleFontSize}
-                    fgColor={textColor}
-                />
-            </div>
-        </div>
-    );
-};
+// Sub-Components (extracted to ./DashboardView/)
+import { AnimatedTreemapCard } from './DashboardView/AnimatedTreemapCard';
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) => {
     // Story 14e-25b.2: Get all data from internal hook
@@ -670,15 +389,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
                 categoryTotals[cat] = { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() };
             }
             categoryTotals[cat].amount += tx.total;
-            // Track unique transaction IDs (fallback to index if no id)
             categoryTotals[cat].transactionIds.add(tx.id ?? `tx-${index}`);
-            // Count unique products by normalized name + merchant
-            // Story 14.13: Use normalizeItemNameForGrouping for consistent counting with ItemsView
             (tx.items || []).forEach(item => {
-                const normalizedName = normalizeItemNameForGrouping(item.name || '');
-                const normalizedMerchant = normalizeItemNameForGrouping(tx.merchant || '');
-                const productKey = `${normalizedName}::${normalizedMerchant}`;
-                categoryTotals[cat].uniqueProducts.add(productKey);
+                categoryTotals[cat].uniqueProducts.add(buildProductKey(
+                    normalizeItemNameForGrouping(item.name || ''),
+                    normalizeItemNameForGrouping(tx.merchant || '')
+                ));
             });
         });
 
@@ -714,57 +430,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
             })
             .sort((a, b) => b.amount - a.amount);
 
-        // Apply selection criteria:
-        // 1. All categories >10% (excluding aggregated "Más" group)
-        // 2. First category ≤10% (highest below threshold)
-        // 3. Everything else goes to "Más" (aggregated group)
-        // Helper to check if category is aggregated "Más" group
-        const isAggregatedGroup = (name: string) => name === 'Más' || name === 'More';
-        const aboveThreshold = sorted.filter(c => c.percent > 10 && !isAggregatedGroup(c.name));
-        const belowThreshold = sorted.filter(c => c.percent <= 10 && !isAggregatedGroup(c.name));
-
-        const result: CategoryEntry[] = [...aboveThreshold];
-
-        // Add first category ≤10% if exists
-        if (belowThreshold.length > 0) {
-            result.push(belowThreshold[0]);
-        }
-
-        // Remaining categories that would go into "Más"
-        const otroCategories = belowThreshold.slice(1);
-
-        // If exactly 1 category would go into "Más", show it directly instead
-        if (otroCategories.length === 1) {
-            result.push(otroCategories[0]);
-        } else if (otroCategories.length > 1) {
-            // Multiple categories: aggregate into "Más" (not "Otro" to avoid conflict with real "Otro" category)
-            const masAmount = otroCategories.reduce((sum, cat) => sum + cat.amount, 0);
-            // Story 14.13 Session 14: Merge transactionIds Sets for unique count (prevents double-counting)
-            const masTransactionIds = new Set<string>();
-            otroCategories.forEach(cat => {
-                if (cat.transactionIds) {
-                    cat.transactionIds.forEach(id => masTransactionIds.add(id));
-                }
-            });
-            const masCount = masTransactionIds.size;
-            const masItemCount = otroCategories.reduce((sum, cat) => sum + cat.itemCount, 0);
-            const masPercent = monthTotal > 0 ? (masAmount / monthTotal) * 100 : 0;
-
-            // Use gray color for aggregated "Más" group
-            const masColors = getTreemapColors('Otro');
-            result.push({
-                name: 'Más',
-                amount: masAmount,
-                count: masCount,
-                itemCount: masItemCount,
-                bgColor: masColors.bg,
-                fgColor: masColors.fg,
-                percent: masPercent,
-                categoryCount: otroCategories.length,  // Number of categories inside "Más"
-            });
-        }
-
-        return { displayCategories: result, otroCategories };
+        // Apply "Más" threshold grouping (shared utility)
+        const masColors = getTreemapColors('Otro');
+        return applyMasGrouping(sorted, monthTotal, (stats) => ({
+            name: 'Más',
+            amount: stats.amount,
+            count: stats.count,
+            itemCount: stats.itemCount,
+            bgColor: masColors.bg,
+            fgColor: masColors.fg,
+            percent: stats.percent,
+            categoryCount: stats.categoryCount,
+        }));
     }, [monthTransactions, monthTotal]);
 
     // Extract display categories and otroCategories for expansion
@@ -794,13 +471,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
             const group = STORE_CATEGORY_GROUPS[cat as keyof typeof STORE_CATEGORY_GROUPS] || 'other';
             groupTotals[group].amount += tx.total;
             groupTotals[group].transactionIds.add(tx.id ?? `tx-${index}`);
-            // Count unique products by normalized name + merchant
-            // Story 14.13: Use normalizeItemNameForGrouping for consistent counting with ItemsView
             (tx.items || []).forEach(item => {
-                const normalizedName = normalizeItemNameForGrouping(item.name || '');
-                const normalizedMerchant = normalizeItemNameForGrouping(tx.merchant || '');
-                const productKey = `${normalizedName}::${normalizedMerchant}`;
-                groupTotals[group].uniqueProducts.add(productKey);
+                groupTotals[group].uniqueProducts.add(buildProductKey(
+                    normalizeItemNameForGrouping(item.name || ''),
+                    normalizeItemNameForGrouping(tx.merchant || '')
+                ));
             });
         });
 
@@ -835,45 +510,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
             .filter(g => g.amount > 0)
             .sort((a, b) => b.amount - a.amount);
 
-        // Apply "Más" aggregation: >10% + first ≤10% + "Más" for rest
-        const isAggregatedGroup = (name: string) => name === 'Más' || name === 'More';
-        const aboveThreshold = sorted.filter(c => c.percent > 10 && !isAggregatedGroup(c.name));
-        const belowThreshold = sorted.filter(c => c.percent <= 10 && !isAggregatedGroup(c.name));
-
-        const result: GroupEntry[] = [...aboveThreshold];
-        if (belowThreshold.length > 0) {
-            result.push(belowThreshold[0]);
-        }
-
-        const otroCategories = belowThreshold.slice(1);
-        if (otroCategories.length === 1) {
-            result.push(otroCategories[0]);
-        } else if (otroCategories.length > 1) {
-            const masAmount = otroCategories.reduce((sum, cat) => sum + cat.amount, 0);
-            // Merge transactionIds Sets for unique count
-            const masTransactionIds = new Set<string>();
-            otroCategories.forEach(cat => {
-                if (cat.transactionIds) {
-                    cat.transactionIds.forEach(id => masTransactionIds.add(id));
-                }
-            });
-            const masCount = masTransactionIds.size;
-            const masItemCount = otroCategories.reduce((sum, cat) => sum + cat.itemCount, 0);
-            const masPercent = monthTotal > 0 ? (masAmount / monthTotal) * 100 : 0;
-            const masColors = getTreemapColors('Otro');
-            result.push({
-                name: 'Más',
-                amount: masAmount,
-                count: masCount,
-                itemCount: masItemCount,
-                bgColor: masColors.bg,
-                fgColor: masColors.fg,
-                percent: masPercent,
-                categoryCount: otroCategories.length,
-            });
-        }
-
-        return { displayCategories: result, otroCategories };
+        // Apply "Más" threshold grouping (shared utility)
+        const masColors = getTreemapColors('Otro');
+        return applyMasGrouping(sorted, monthTotal, (stats) => ({
+            name: 'Más',
+            amount: stats.amount,
+            count: stats.count,
+            itemCount: stats.itemCount,
+            bgColor: masColors.bg,
+            fgColor: masColors.fg,
+            percent: stats.percent,
+            categoryCount: stats.categoryCount,
+        }));
     }, [monthTransactions, monthTotal]);
 
     const storeGroupsData = storeGroupsDataResult.displayCategories;
@@ -893,14 +541,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
                     itemCategoryMap[cat] = { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() };
                 }
                 itemCategoryMap[cat].amount += item.price;
-                // Track unique transaction IDs to count transactions, not items
                 itemCategoryMap[cat].transactionIds.add(tx.id ?? `tx-${index}`);
-                // Count unique products by normalized name + merchant
-                // Story 14.13: Use normalizeItemNameForGrouping for consistent counting with ItemsView
-                const normalizedName = normalizeItemNameForGrouping(item.name || '');
-                const normalizedMerchant = normalizeItemNameForGrouping(tx.merchant || '');
-                const productKey = `${normalizedName}::${normalizedMerchant}`;
-                itemCategoryMap[cat].uniqueProducts.add(productKey);
+                itemCategoryMap[cat].uniqueProducts.add(buildProductKey(
+                    normalizeItemNameForGrouping(item.name || ''),
+                    normalizeItemNameForGrouping(tx.merchant || '')
+                ));
             });
         });
 
@@ -935,45 +580,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
             })
             .sort((a, b) => b.amount - a.amount);
 
-        // Apply "Más" aggregation: >10% + first ≤10% + "Más" for rest
-        const isAggregatedGroup = (name: string) => name === 'Más' || name === 'More';
-        const aboveThreshold = sorted.filter(c => c.percent > 10 && !isAggregatedGroup(c.name));
-        const belowThreshold = sorted.filter(c => c.percent <= 10 && !isAggregatedGroup(c.name));
-
-        const result: ItemCatEntry[] = [...aboveThreshold];
-        if (belowThreshold.length > 0) {
-            result.push(belowThreshold[0]);
-        }
-
-        const otroCategories = belowThreshold.slice(1);
-        if (otroCategories.length === 1) {
-            result.push(otroCategories[0]);
-        } else if (otroCategories.length > 1) {
-            const masAmount = otroCategories.reduce((sum, cat) => sum + cat.amount, 0);
-            // Merge transactionIds Sets for unique count
-            const masTransactionIds = new Set<string>();
-            otroCategories.forEach(cat => {
-                if (cat.transactionIds) {
-                    cat.transactionIds.forEach(id => masTransactionIds.add(id));
-                }
-            });
-            const masCount = masTransactionIds.size;
-            const masItemCount = otroCategories.reduce((sum, cat) => sum + cat.itemCount, 0);
-            const masPercent = total > 0 ? (masAmount / total) * 100 : 0;
-            const masColors = getTreemapColors('Otro');
-            result.push({
-                name: 'Más',
-                amount: masAmount,
-                count: masCount,
-                itemCount: masItemCount,
-                bgColor: masColors.bg,
-                fgColor: masColors.fg,
-                percent: masPercent,
-                categoryCount: otroCategories.length,
-            });
-        }
-
-        return { displayCategories: result, otroCategories };
+        // Apply "Más" threshold grouping (shared utility)
+        const masColors = getTreemapColors('Otro');
+        return applyMasGrouping(sorted, total, (stats) => ({
+            name: 'Más',
+            amount: stats.amount,
+            count: stats.count,
+            itemCount: stats.itemCount,
+            bgColor: masColors.bg,
+            fgColor: masColors.fg,
+            percent: stats.percent,
+            categoryCount: stats.categoryCount,
+        }));
     }, [monthTransactions]);
 
     const itemCategoriesData = itemCategoriesDataResult.displayCategories;
@@ -1004,12 +622,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
                 const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
                 groupTotals[group].amount += item.price;
                 groupTotals[group].transactionIds.add(tx.id ?? `tx-${index}`);
-                // Count unique products by normalized name + merchant
-                // Story 14.13: Use normalizeItemNameForGrouping for consistent counting with ItemsView
-                const normalizedName = normalizeItemNameForGrouping(item.name || '');
-                const normalizedMerchant = normalizeItemNameForGrouping(tx.merchant || '');
-                const productKey = `${normalizedName}::${normalizedMerchant}`;
-                groupTotals[group].uniqueProducts.add(productKey);
+                groupTotals[group].uniqueProducts.add(buildProductKey(
+                    normalizeItemNameForGrouping(item.name || ''),
+                    normalizeItemNameForGrouping(tx.merchant || '')
+                ));
             });
         });
 
@@ -1046,45 +662,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
             .filter(g => g.amount > 0)
             .sort((a, b) => b.amount - a.amount);
 
-        // Apply "Más" aggregation: >10% + first ≤10% + "Más" for rest
-        const isAggregatedGroup = (name: string) => name === 'Más' || name === 'More';
-        const aboveThreshold = sorted.filter(c => c.percent > 10 && !isAggregatedGroup(c.name));
-        const belowThreshold = sorted.filter(c => c.percent <= 10 && !isAggregatedGroup(c.name));
-
-        const result: ItemGroupEntry[] = [...aboveThreshold];
-        if (belowThreshold.length > 0) {
-            result.push(belowThreshold[0]);
-        }
-
-        const otroCategories = belowThreshold.slice(1);
-        if (otroCategories.length === 1) {
-            result.push(otroCategories[0]);
-        } else if (otroCategories.length > 1) {
-            const masAmount = otroCategories.reduce((sum, cat) => sum + cat.amount, 0);
-            // Merge transactionIds Sets for unique count
-            const masTransactionIds = new Set<string>();
-            otroCategories.forEach(cat => {
-                if (cat.transactionIds) {
-                    cat.transactionIds.forEach(id => masTransactionIds.add(id));
-                }
-            });
-            const masCount = masTransactionIds.size;
-            const masItemCount = otroCategories.reduce((sum, cat) => sum + cat.itemCount, 0);
-            const masPercent = total > 0 ? (masAmount / total) * 100 : 0;
-            const masColors = getTreemapColors('Otro');
-            result.push({
-                name: 'Más',
-                amount: masAmount,
-                count: masCount,
-                itemCount: masItemCount,
-                bgColor: masColors.bg,
-                fgColor: masColors.fg,
-                percent: masPercent,
-                categoryCount: otroCategories.length,
-            });
-        }
-
-        return { displayCategories: result, otroCategories };
+        // Apply "Más" threshold grouping (shared utility)
+        const masColors = getTreemapColors('Otro');
+        return applyMasGrouping(sorted, total, (stats) => ({
+            name: 'Más',
+            amount: stats.amount,
+            count: stats.count,
+            itemCount: stats.itemCount,
+            bgColor: masColors.bg,
+            fgColor: masColors.fg,
+            percent: stats.percent,
+            categoryCount: stats.categoryCount,
+        }));
     }, [monthTransactions]);
 
     const itemGroupsData = itemGroupsDataResult.displayCategories;

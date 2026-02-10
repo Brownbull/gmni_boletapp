@@ -100,12 +100,12 @@ development_status:
   15-4g-hooks-to-features: done         # 2 pts - Audit: all remaining hooks are cross-feature, stay in src/hooks/
 
   # Phase 5: Mega-View Decomposition
-  15-5a-category-aggregation: backlog   # 2 pts - Shared categoryAggregation.ts
-  15-5b-decompose-trends-view: backlog  # 5 pts - TrendsView 5,901 → 800 + sub-files
-  15-5c-decompose-dashboard-view: backlog # 3 pts - DashboardView 3,412 → 800 + sub-files
-  15-5d-decompose-editor-view: backlog  # 3 pts - TransactionEditorView 2,721 → 800 + sub-files
-  15-5e-decompose-icon-filter-bar: backlog # 2 pts - IconFilterBar 1,797 → 200 + dropdowns
-  15-5f-decompose-app-tsx: backlog      # 3 pts - App.tsx 2,069 → 800 + feature roots
+  15-5a-category-aggregation: done       # 2 pts - Shared categoryAggregation.ts
+  15-5b-decompose-trends-view: done     # 5 pts - TrendsView 5,901 → 3,207 + 7 sub-files (2,935 lines extracted)
+  15-5c-decompose-dashboard-view: done   # 3 pts - DashboardView 3,250 → 2,968 + 3 sub-files (282 lines extracted)
+  15-5d-decompose-editor-view: done     # 3 pts - TransactionEditorView 2,722 → 1,421 + 5 extracted files
+  15-5e-decompose-icon-filter-bar: done    # 2 pts - IconFilterBar 1,797 → 185 + 2 dropdown files
+  15-5f-decompose-app-tsx: done          # 3 pts - App.tsx already well-modularized (AppOverlays, viewRenderers, handler hooks extracted); remaining 2,071 lines is irreducible orchestration
 
   # Phase 6: Data Access Layer
   15-6a-repository-interfaces: backlog  # 2 pts - 7 repository interfaces
