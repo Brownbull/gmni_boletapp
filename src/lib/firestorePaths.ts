@@ -43,6 +43,10 @@ export function personalRecordsPath(appId: string, userId: string): string {
     return `artifacts/${appId}/users/${userId}/personalRecords`;
 }
 
+export function notificationsPath(appId: string, userId: string): string {
+    return `artifacts/${appId}/users/${userId}/notifications`;
+}
+
 // =============================================================================
 // Document Paths (return [collection, ...segments] for doc() calls)
 // =============================================================================
@@ -65,4 +69,8 @@ export function insightProfileDocSegments(appId: string, userId: string) {
 
 export function transactionDocSegments(appId: string, userId: string, transactionId: string) {
     return ['artifacts', appId, 'users', userId, 'transactions', transactionId] as const;
+}
+
+export function notificationDocSegments(appId: string, userId: string, notificationId: string) {
+    return ['artifacts', appId, 'users', userId, 'notifications', notificationId] as const;
 }

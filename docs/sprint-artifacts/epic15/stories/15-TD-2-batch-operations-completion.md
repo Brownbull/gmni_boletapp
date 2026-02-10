@@ -3,7 +3,7 @@
 **Epic:** 15 - Codebase Refactoring
 **Points:** 3
 **Priority:** HIGH
-**Status:** ready-for-dev
+**Status:** review
 
 ## Description
 
@@ -20,26 +20,26 @@ Firestore silently fails when a `writeBatch()` exceeds 500 operations. Phase 0 (
 
 ## Acceptance Criteria
 
-- [ ] **AC1:** `useInAppNotifications.ts` `markAllAsRead()` uses `batchWrite` from `@/lib/firestoreBatch`
-- [ ] **AC2:** `useInAppNotifications.ts` `deleteAllNotifications()` uses `batchDelete` from `@/lib/firestoreBatch`
-- [ ] **AC3:** All 5 hardcoded notification paths in `useInAppNotifications.ts` replaced with `firestorePaths.ts` builder
-- [ ] **AC4:** `notificationsPath()` and `notificationDocSegments()` added to `firestorePaths.ts`
-- [ ] **AC5:** `firestoreBatch.ts` `batchDelete` and `batchWrite` retry failed chunk commits with exponential backoff (1 retry, 1s delay)
-- [ ] **AC6:** JSDoc on `firestoreBatch.ts` documents partial-commit behavior (chunks 1-2 may succeed while chunk 3 fails)
-- [ ] **AC7:** All existing tests pass; new retry behavior has unit tests
+- [x] **AC1:** `useInAppNotifications.ts` `markAllAsRead()` uses `batchWrite` from `@/lib/firestoreBatch`
+- [x] **AC2:** `useInAppNotifications.ts` `deleteAllNotifications()` uses `batchDelete` from `@/lib/firestoreBatch`
+- [x] **AC3:** All 5 hardcoded notification paths replaced with `notificationsPath()` / `notificationDocSegments()`
+- [x] **AC4:** `notificationsPath()` and `notificationDocSegments()` added to `firestorePaths.ts`
+- [x] **AC5:** `commitWithRetry()` retries once with 1s exponential backoff delay
+- [x] **AC6:** JSDoc documents partial-commit behavior on both `batchDelete` and `batchWrite`
+- [x] **AC7:** All 6,357 tests pass; 12 new tests for chunking + retry behavior
 
 ## Tasks
 
-- [ ] **Task 1:** Add notification path builders to `firestorePaths.ts`
-  - [ ] `notificationsCollectionSegments(appId, userId)` returning path segments
-  - [ ] `notificationDocSegments(appId, userId, notificationId)` returning doc segments
-- [ ] **Task 2:** Migrate `useInAppNotifications.ts` to centralized utilities
-  - [ ] Replace `writeBatch` import with `batchWrite`/`batchDelete` from `@/lib/firestoreBatch`
-  - [ ] Replace all 5 inline path constructions with `firestorePaths` builders
-- [ ] **Task 3:** Add retry logic to `firestoreBatch.ts`
-  - [ ] Add exponential backoff retry (1 retry, 1s base delay) on `batch.commit()` failure
-  - [ ] Document partial-commit semantics in JSDoc
-  - [ ] Write unit tests for retry behavior
+- [x] **Task 1:** Add notification path builders to `firestorePaths.ts`
+  - [x] `notificationsPath(appId, userId)` for collection references
+  - [x] `notificationDocSegments(appId, userId, notificationId)` for doc() calls
+- [x] **Task 2:** Migrate `useInAppNotifications.ts` to centralized utilities
+  - [x] Replaced `writeBatch` with `batchWrite`/`batchDelete` from `@/lib/firestoreBatch`
+  - [x] Replaced all 5 inline paths with `firestorePaths` builders
+- [x] **Task 3:** Add retry logic to `firestoreBatch.ts`
+  - [x] `commitWithRetry()` with 1 retry, 1s base delay, exponential backoff
+  - [x] JSDoc documents partial-commit behavior on both functions
+  - [x] 12 unit tests covering chunking, retry success/failure, per-chunk independence
 
 ## File Specification
 

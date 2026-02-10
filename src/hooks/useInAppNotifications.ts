@@ -27,11 +27,12 @@ import {
     doc,
     updateDoc,
     deleteDoc,
-    writeBatch,
     type Firestore,
 } from 'firebase/firestore';
 import type { InAppNotification, InAppNotificationClient } from '../types/notification';
 import { toDateSafe } from '@/utils/timestamp';
+import { batchWrite, batchDelete } from '@/lib/firestoreBatch';
+import { notificationsPath, notificationDocSegments } from '@/lib/firestorePaths';
 
 // ============================================================================
 // Types
@@ -97,7 +98,7 @@ export function useInAppNotifications(
 
         const notificationsRef = collection(
             db,
-            `artifacts/${appId}/users/${userId}/notifications`
+            notificationsPath(appId, userId)
         );
 
         const q = query(
@@ -139,10 +140,7 @@ export function useInAppNotifications(
             if (!db || !userId || !appId) return;
 
             try {
-                const notifRef = doc(
-                    db,
-                    `artifacts/${appId}/users/${userId}/notifications/${notificationId}`
-                );
+                const notifRef = doc(db, ...notificationDocSegments(appId, userId, notificationId));
                 await updateDoc(notifRef, { read: true });
             } catch (err) {
                 console.error('[useInAppNotifications] Failed to mark as read:', err);
@@ -159,15 +157,10 @@ export function useInAppNotifications(
         if (unreadNotifs.length === 0) return;
 
         try {
-            const batch = writeBatch(db);
-            for (const notif of unreadNotifs) {
-                const notifRef = doc(
-                    db,
-                    `artifacts/${appId}/users/${userId}/notifications/${notif.id}`
-                );
+            await batchWrite(db, unreadNotifs, (batch, notif) => {
+                const notifRef = doc(db, ...notificationDocSegments(appId!, userId!, notif.id));
                 batch.update(notifRef, { read: true });
-            }
-            await batch.commit();
+            });
         } catch (err) {
             console.error('[useInAppNotifications] Failed to mark all as read:', err);
         }
@@ -179,10 +172,7 @@ export function useInAppNotifications(
             if (!db || !userId || !appId) return;
 
             try {
-                const notifRef = doc(
-                    db,
-                    `artifacts/${appId}/users/${userId}/notifications/${notificationId}`
-                );
+                const notifRef = doc(db, ...notificationDocSegments(appId, userId, notificationId));
                 await deleteDoc(notifRef);
             } catch (err) {
                 console.error('[useInAppNotifications] Failed to delete notification:', err);
@@ -197,15 +187,10 @@ export function useInAppNotifications(
         if (notifications.length === 0) return;
 
         try {
-            const batch = writeBatch(db);
-            for (const notif of notifications) {
-                const notifRef = doc(
-                    db,
-                    `artifacts/${appId}/users/${userId}/notifications/${notif.id}`
-                );
-                batch.delete(notifRef);
-            }
-            await batch.commit();
+            const refs = notifications.map((notif) =>
+                doc(db, ...notificationDocSegments(appId!, userId!, notif.id))
+            );
+            await batchDelete(db, refs);
         } catch (err) {
             console.error('[useInAppNotifications] Failed to delete all notifications:', err);
         }
