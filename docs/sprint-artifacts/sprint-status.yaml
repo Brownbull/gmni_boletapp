@@ -107,23 +107,10 @@ development_status:
   15-5e-decompose-icon-filter-bar: done    # 2 pts - IconFilterBar 1,797 → 185 + 2 dropdown files
   15-5f-decompose-app-tsx: done          # 3 pts - App.tsx already well-modularized (AppOverlays, viewRenderers, handler hooks extracted); remaining 2,071 lines is irreducible orchestration
 
-  # Phase 5 Review Tech Debt (deferred — not blocking):
-  # TD-1: CircularProgress duplication (TrendsView vs DashboardView versions differ in bgRingColor formula)
-  # TD-2: DashboardView still 2,968 lines (only 13% reduction) — further decomposition possible
-  # TD-3: Missing component isolation tests: DonutChart, TrendListItem, AnimatedTreemapCell
-  # TD-4: TrendsView/helpers.ts at 510 lines — could split by concern (period, aggregation, treemap)
-  # TD-5: DashboardView/types.ts has local Transaction interface — consider using canonical type
-
   # Phase 6: Data Access Layer
   15-6a-repository-interfaces: done     # 2 pts - 8 repository interfaces (Transaction, Mapping, Trust, Preferences, Credits, Records, Airlock, InsightProfile)
   15-6b-firestore-repositories: done    # 3 pts - Factory functions wrapping existing services + React hooks (src/repositories/)
   15-6c-migrate-consumers: done          # 3 pts - 4 mapping hooks migrated to repository pattern
-
-  # Phase 6 Review Tech Debt (deferred — not blocking):
-  # TD-6: TOCTOU race in credits deduction (creditsService.ts) — pre-existing, needs transaction-based fix
-  # TD-7: save() signature needs Omit<T, 'id'|'createdAt'|'updatedAt'> to eliminate `as unknown as T` casts
-  # TD-8: InsightContent/FullInsightContent type duplication (insightProfileRepository vs insightProfileService)
-  # TD-9: 7 of 8 repository interfaces + all 11 repository hooks unconsumed — migrate consumers as features adopt DAL
 
   # Phase 7: State Management Alignment
   15-7a-history-filters-zustand: done   # 2 pts - HistoryFiltersContext → Zustand store (useHistoryFiltersStore)
@@ -131,33 +118,25 @@ development_status:
   15-7c-theme-zustand: done             # 2 pts - ThemeContext → useSettingsStore (fontFamily, useThemeSettings)
   15-7d-separate-client-server: done    # 2 pts - Resolved: useHistoryFilters via 15-7a, useLearningPhases is dead code, feature hooks moved in Phase 4
 
-  # Phase 7 Tech Debt (deferred — not blocking):
-  # TD-10: useLearningPhases.ts (477 lines) has zero consumers — candidate for deletion
-  # TD-11: AppProviders.tsx JSDoc — FIXED in code review (2026-02-10)
-  # TD-12: Toast convergence: useToast vs legacy AppStateContext.toastMessage paths — unify into single toast store
-
   # ============================================================================
-  # Cross-Phase Tech Debt from Code Review (2026-02-10)
-  # Source: ECC code review of Phases 0, 1, 5, 7
+  # Tech Debt Stories — Consolidated from Phase Reviews (2026-02-10)
+  # Source: ECC code review of Phases 0, 1, 5, 6, 7 + Phase 5 review
+  # Stories: docs/sprint-artifacts/epic15/stories/15-TD-*.md
+  # TD items: TD-1 to TD-26 (TD-11 fixed in review, rest consolidated into 9 stories)
   # ============================================================================
 
-  # HIGH priority:
-  # TD-13: useInAppNotifications.ts batch ops bypass centralized firestoreBatch.ts (500-op limit) + hardcoded paths
-  # TD-14: DonutChart.tsx at 1,086 lines — extract drill-down hook, legend component
-  # TD-15: 4 Phase 1 utilities missing unit tests: firestoreBatch, firestorePaths, mappingServiceBase, duplicateGrouping
-  # TD-16: useHistoryFiltersStore missing unit tests (7 action types, date-dependent state)
-  # TD-17: TOCTOU in mappingServiceBase.saveMapping — wrap upsert in runTransaction()
-  # TD-18: TOCTOU in merchantTrustService.recordScan — wrap read-then-write in runTransaction()
+  # HIGH priority (9 pts):
+  15-TD-1-toctou-security-fixes: ready-for-dev    # 3 pts - TD-6, TD-17, TD-18: TOCTOU races in credits/mapping/trust
+  15-TD-2-batch-operations-completion: ready-for-dev  # 3 pts - TD-13, TD-20: Batch bypass + retry/backoff
+  15-TD-3-foundation-infrastructure-tests: ready-for-dev  # 3 pts - TD-15, TD-16: Missing tests for Phase 1 utils + Phase 7 store
 
-  # MEDIUM priority:
-  # TD-19: Deprecated contexts (HistoryFilters, Theme, AppState) — extract types to src/types/, plan removal
-  # TD-20: firestoreBatch.ts lacks retry/backoff on commit failures (security.md pattern)
-  # TD-21: HistoryFiltersProvider calls getState() during render — move to useLayoutEffect
-  # TD-22: validateAppId defined but never called — connect at firestorePaths boundary
-  # TD-23: data: URI sanitizer pattern overly broad (strips legitimate "data:" text)
-  # TD-24: TrendsView.tsx/DashboardView.tsx naming collision with same-name directories — move into dirs
-  # TD-25: normalizeMerchantNameForTrust + normalizeItemName duplicates — compose on normalizeForMapping
-  # TD-26: Phase 5 extracted components/helpers missing tests: TrendsView/helpers.ts, DonutChart, IconCategoryFilter
+  # MEDIUM priority (17 pts):
+  15-TD-4-phase5-component-tests: ready-for-dev    # 3 pts - TD-3, TD-26: Missing tests for DonutChart, helpers, extracted components
+  15-TD-5-mega-view-decomposition-5b: ready-for-dev  # 5 pts - TD-2, TD-4, TD-14, TD-24: Further view decomposition + naming fix
+  15-TD-6-dry-cleanup: ready-for-dev               # 3 pts - TD-1, TD-5, TD-8, TD-25: CircularProgress, types, normalizers
+  15-TD-7-context-cleanup-dead-code: ready-for-dev  # 3 pts - TD-10, TD-12, TD-19, TD-21: Delete dead contexts, unify toast
+  15-TD-8-input-validation-hardening: ready-for-dev  # 2 pts - TD-22, TD-23: validateAppId + data: URI pattern
+  15-TD-9-dal-polish: ready-for-dev                 # 2 pts - TD-7, TD-9: save() signature + consumer migration
 
   epic-15-retrospective: optional
 
