@@ -18,6 +18,7 @@ import {
     type ItemCategoryGroup,
 } from '../../config/categoryColors';
 import { formatCurrency } from '../../utils/currency';
+import { buildProductKey } from '../../utils/categoryAggregation';
 import { normalizeItemCategory } from '../../utils/categoryNormalizer';
 import {
     translateCategory,
@@ -245,11 +246,8 @@ export const DonutChart: React.FC<{
                 groupTotals[group].value += item.price;
                 groupTotals[group].transactionIds.add(tx.id ?? `tx-${index}`);
 
-                // Track unique products by normalized name + merchant
-                const normalizedName = (item.name || 'Unknown').toLowerCase().trim().replace(/\s+/g, ' ');
-                const normalizedMerchant = (tx.merchant || 'unknown').toLowerCase().trim().replace(/\s+/g, ' ');
-                const productKey = `${normalizedName}::${normalizedMerchant}`;
-                groupTotals[group].uniqueProducts.add(productKey);
+                // Track unique products by normalized name + merchant (Story 15-5a: use shared utility)
+                groupTotals[group].uniqueProducts.add(buildProductKey(item.name || '', tx.merchant || ''));
             });
         });
 

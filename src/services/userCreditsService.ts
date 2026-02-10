@@ -15,6 +15,8 @@ import {
   setDoc,
   serverTimestamp,
   Firestore,
+  FieldValue,
+  Timestamp,
 } from 'firebase/firestore';
 import { UserCredits, DEFAULT_CREDITS } from '../types/scan';
 import { creditsDocSegments } from '@/lib/firestorePaths';
@@ -32,9 +34,9 @@ interface CreditsDocument {
   /** Total super credits used (lifetime) */
   superUsed: number;
   /** When credits were last updated */
-  updatedAt?: any;
+  updatedAt?: FieldValue | Timestamp;
   /** When user was created (for initial credit grant) */
-  createdAt?: any;
+  createdAt?: FieldValue | Timestamp;
 }
 
 /**
@@ -208,16 +210,8 @@ export function formatCreditsDisplay(credits: number): string {
 }
 
 /**
- * Format super credits for display (max 3 digits, then K notation).
- * Same rules as normal credits.
- *
+ * Format super credits for display (same rules as normal credits).
  * @param credits - Number of super credits
  * @returns Formatted string (e.g., "42", "999", "1K", "10K")
  */
-export function formatSuperCreditsDisplay(credits: number): string {
-  if (credits >= 1000) {
-    const k = Math.floor(credits / 1000);
-    return `${k}K`;
-  }
-  return credits.toString();
-}
+export const formatSuperCreditsDisplay = formatCreditsDisplay;

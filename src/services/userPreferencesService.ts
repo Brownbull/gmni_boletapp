@@ -11,6 +11,8 @@ import {
   setDoc,
   serverTimestamp,
   Firestore,
+  FieldValue,
+  Timestamp,
 } from 'firebase/firestore';
 import { sanitizeInput, sanitizeLocation } from '@/utils/sanitize';
 import { preferencesDocSegments } from '@/lib/firestorePaths';
@@ -58,7 +60,7 @@ export interface UserPreferences {
   /** Story 14.35b: Foreign location display format ('code' or 'flag') */
   foreignLocationFormat?: ForeignLocationDisplayFormat;
   /** Timestamp when preferences were last updated */
-  updatedAt?: any;
+  updatedAt?: FieldValue | Timestamp;
 }
 
 /**

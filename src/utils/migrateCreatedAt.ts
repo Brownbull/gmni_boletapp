@@ -30,7 +30,7 @@ import { isFirestoreTimestamp } from '@/utils/timestamp';
 interface TransactionDoc {
     id: string;
     date?: string;
-    createdAt?: any;
+    createdAt?: unknown;
     merchant?: string;
 }
 
@@ -82,7 +82,7 @@ export async function migrateCreatedAt(
         errors: [],
     };
 
-    const batch = writeBatch(db);
+    let batch = writeBatch(db);
     let batchCount = 0;
     const BATCH_SIZE = 500; // Firestore batch limit
 
@@ -124,14 +124,16 @@ export async function migrateCreatedAt(
             batch.update(docRef, { createdAt: newCreatedAt });
             batchCount++;
 
-            // Commit batch if we hit the limit
+            // Commit batch if we hit the limit — MUST create new batch after commit
             if (batchCount >= BATCH_SIZE) {
                 try {
                     await batch.commit();
                     console.log(`[migrateCreatedAt] Committed batch of ${batchCount} updates`);
-                } catch (err: any) {
-                    result.errors.push(`Batch commit error: ${err.message}`);
+                } catch (err: unknown) {
+                    const msg = err instanceof Error ? err.message : String(err);
+                    result.errors.push(`Batch commit error: ${msg}`);
                 }
+                batch = writeBatch(db);
                 batchCount = 0;
             }
         }
@@ -150,8 +152,9 @@ export async function migrateCreatedAt(
         try {
             await batch.commit();
             console.log(`[migrateCreatedAt] Committed final batch of ${batchCount} updates`);
-        } catch (err: any) {
-            result.errors.push(`Final batch commit error: ${err.message}`);
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err);
+            result.errors.push(`Final batch commit error: ${msg}`);
         }
     }
 
@@ -164,7 +167,7 @@ export async function migrateCreatedAt(
     return result;
 }
 
-// Export for use in browser console
-if (typeof window !== 'undefined') {
-    (window as any).migrateCreatedAt = migrateCreatedAt;
+// Export for use in browser console (dev only)
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
+    (window as unknown as Record<string, unknown>).migrateCreatedAt = migrateCreatedAt;
 }

@@ -16,9 +16,9 @@
  *    - Navigation: useNavigationStore (Story 14e-45)
  *
  * 2. AppProviders level (this component):
- *    - ThemeProvider (theme + locale preferences)
- *    - AppStateProvider (toasts, operation status)
  *    - NotificationProvider (in-app notifications)
+ *    Note: ThemeProvider removed (Story 15-7c, theme via useSettingsStore)
+ *    Note: AppStateProvider removed (Story 15-7b, toasts via useToast)
  *
  * Note: Navigation state is now managed by useNavigationStore (Zustand).
  * AnalyticsProvider and HistoryFiltersProvider are view-scoped

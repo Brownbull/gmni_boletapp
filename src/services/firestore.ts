@@ -83,7 +83,7 @@ export async function addTransaction(
             id: docRef.id,
             merchant: transaction.merchant,
             date: transaction.date,
-            currency: (transaction as any).currency,
+            currency: (transaction as Record<string, unknown>).currency,
             version: 1,
             periods: periods?.month,
             path: `artifacts/${appId}/users/${userId}/transactions/${docRef.id}`

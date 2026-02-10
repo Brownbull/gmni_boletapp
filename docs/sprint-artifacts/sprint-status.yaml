@@ -133,8 +133,31 @@ development_status:
 
   # Phase 7 Tech Debt (deferred — not blocking):
   # TD-10: useLearningPhases.ts (477 lines) has zero consumers — candidate for deletion
-  # TD-11: AppProviders.tsx JSDoc still references ThemeProvider/AppStateProvider in hierarchy comment
+  # TD-11: AppProviders.tsx JSDoc — FIXED in code review (2026-02-10)
   # TD-12: Toast convergence: useToast vs legacy AppStateContext.toastMessage paths — unify into single toast store
+
+  # ============================================================================
+  # Cross-Phase Tech Debt from Code Review (2026-02-10)
+  # Source: ECC code review of Phases 0, 1, 5, 7
+  # ============================================================================
+
+  # HIGH priority:
+  # TD-13: useInAppNotifications.ts batch ops bypass centralized firestoreBatch.ts (500-op limit) + hardcoded paths
+  # TD-14: DonutChart.tsx at 1,086 lines — extract drill-down hook, legend component
+  # TD-15: 4 Phase 1 utilities missing unit tests: firestoreBatch, firestorePaths, mappingServiceBase, duplicateGrouping
+  # TD-16: useHistoryFiltersStore missing unit tests (7 action types, date-dependent state)
+  # TD-17: TOCTOU in mappingServiceBase.saveMapping — wrap upsert in runTransaction()
+  # TD-18: TOCTOU in merchantTrustService.recordScan — wrap read-then-write in runTransaction()
+
+  # MEDIUM priority:
+  # TD-19: Deprecated contexts (HistoryFilters, Theme, AppState) — extract types to src/types/, plan removal
+  # TD-20: firestoreBatch.ts lacks retry/backoff on commit failures (security.md pattern)
+  # TD-21: HistoryFiltersProvider calls getState() during render — move to useLayoutEffect
+  # TD-22: validateAppId defined but never called — connect at firestorePaths boundary
+  # TD-23: data: URI sanitizer pattern overly broad (strips legitimate "data:" text)
+  # TD-24: TrendsView.tsx/DashboardView.tsx naming collision with same-name directories — move into dirs
+  # TD-25: normalizeMerchantNameForTrust + normalizeItemName duplicates — compose on normalizeForMapping
+  # TD-26: Phase 5 extracted components/helpers missing tests: TrendsView/helpers.ts, DonutChart, IconCategoryFilter
 
   epic-15-retrospective: optional
 
