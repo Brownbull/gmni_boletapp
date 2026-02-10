@@ -108,9 +108,15 @@ describe('firestoreBatch', () => {
     });
 
     describe('retry/backoff', () => {
-        it('should retry once on commit failure then succeed', async () => {
+        function retryableError(msg: string) {
+            const err = new Error(msg) as Error & { code: string };
+            err.code = 'unavailable';
+            return err;
+        }
+
+        it('should retry once on transient commit failure then succeed', async () => {
             mockBatch.commit
-                .mockRejectedValueOnce(new Error('Network error'))
+                .mockRejectedValueOnce(retryableError('Network error'))
                 .mockResolvedValueOnce(undefined);
 
             const refs = [createMockRef('1')];
@@ -125,12 +131,12 @@ describe('firestoreBatch', () => {
             expect(mockBatch.commit).toHaveBeenCalledTimes(2);
         });
 
-        it('should throw after retry exhausted', async () => {
+        it('should throw after retry exhausted on transient error', async () => {
             vi.useRealTimers(); // Use real timers for rejection test to avoid unhandled rejection
 
             mockBatch.commit
-                .mockRejectedValueOnce(new Error('Network error'))
-                .mockRejectedValueOnce(new Error('Still failing'));
+                .mockRejectedValueOnce(retryableError('Network error'))
+                .mockRejectedValueOnce(retryableError('Still failing'));
 
             const refs = [createMockRef('1')];
 
@@ -138,6 +144,18 @@ describe('firestoreBatch', () => {
             expect(mockBatch.commit).toHaveBeenCalledTimes(2);
 
             vi.useFakeTimers(); // Restore for other tests
+        });
+
+        it('should throw immediately on non-retryable error (no retry)', async () => {
+            const permError = new Error('Permission denied') as Error & { code: string };
+            permError.code = 'permission-denied';
+
+            mockBatch.commit.mockRejectedValueOnce(permError);
+
+            const refs = [createMockRef('1')];
+
+            await expect(batchDelete(mockDb, refs)).rejects.toThrow('Permission denied');
+            expect(mockBatch.commit).toHaveBeenCalledTimes(1); // No retry
         });
 
         it('should not retry on first success', async () => {
@@ -152,9 +170,9 @@ describe('firestoreBatch', () => {
         it('should retry each chunk independently', async () => {
             // First chunk succeeds, second chunk needs retry
             mockBatch.commit
-                .mockResolvedValueOnce(undefined)        // chunk 1 - success
-                .mockRejectedValueOnce(new Error('Fail')) // chunk 2 - fail
-                .mockResolvedValueOnce(undefined);        // chunk 2 retry - success
+                .mockResolvedValueOnce(undefined)                // chunk 1 - success
+                .mockRejectedValueOnce(retryableError('Fail'))   // chunk 2 - fail
+                .mockResolvedValueOnce(undefined);               // chunk 2 retry - success
 
             const refs = Array.from({ length: 501 }, (_, i) => createMockRef(`ref-${i}`));
 

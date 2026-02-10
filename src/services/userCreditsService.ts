@@ -134,10 +134,10 @@ export async function saveUserCredits(
  * @param db - Firestore instance
  * @param userId - User ID
  * @param appId - Application ID
- * @param _currentCredits - Caller's snapshot (used as fallback; fresh read preferred)
- * @param amount - Amount to deduct
+ * @param _currentCredits - @deprecated Ignored since TOCTOU fix. Fresh balance read inside transaction.
+ * @param amount - Amount to deduct (must be a positive integer)
  * @returns Updated credits
- * @throws Error if insufficient credits
+ * @throws Error if insufficient credits or invalid amount
  */
 export async function deductAndSaveCredits(
   db: Firestore,
@@ -146,6 +146,10 @@ export async function deductAndSaveCredits(
   _currentCredits: UserCredits,
   amount: number
 ): Promise<UserCredits> {
+  if (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount)) {
+    throw new Error('Amount must be a positive integer');
+  }
+
   const docRef = getCreditsDocRef(db, appId, userId);
 
   return runTransaction(db, async (transaction) => {
@@ -189,10 +193,10 @@ export async function deductAndSaveCredits(
  * @param db - Firestore instance
  * @param userId - User ID
  * @param appId - Application ID
- * @param _currentCredits - Caller's snapshot (used as fallback; fresh read preferred)
- * @param amount - Amount to deduct
+ * @param _currentCredits - @deprecated Ignored since TOCTOU fix. Fresh balance read inside transaction.
+ * @param amount - Amount to deduct (must be a positive integer)
  * @returns Updated credits
- * @throws Error if insufficient super credits
+ * @throws Error if insufficient super credits or invalid amount
  */
 export async function deductAndSaveSuperCredits(
   db: Firestore,
@@ -201,6 +205,10 @@ export async function deductAndSaveSuperCredits(
   _currentCredits: UserCredits,
   amount: number
 ): Promise<UserCredits> {
+  if (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount)) {
+    throw new Error('Amount must be a positive integer');
+  }
+
   const docRef = getCreditsDocRef(db, appId, userId);
 
   return runTransaction(db, async (transaction) => {

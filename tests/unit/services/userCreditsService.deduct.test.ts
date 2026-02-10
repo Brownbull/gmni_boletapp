@@ -46,7 +46,7 @@ describe('deductAndSaveCredits - TOCTOU transaction safety', () => {
     };
 
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should use runTransaction for atomic credit deduction', async () => {
@@ -163,7 +163,7 @@ describe('deductAndSaveSuperCredits - TOCTOU transaction safety', () => {
     };
 
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should use runTransaction for atomic super credit deduction', async () => {

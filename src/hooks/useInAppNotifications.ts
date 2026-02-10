@@ -152,13 +152,16 @@ export function useInAppNotifications(
     // Mark all notifications as read
     const markAllAsRead = useCallback(async () => {
         if (!db || !userId || !appId) return;
+        const currentDb = db;
+        const uid = userId;
+        const aid = appId;
 
         const unreadNotifs = notifications.filter((n) => !n.read);
         if (unreadNotifs.length === 0) return;
 
         try {
-            await batchWrite(db, unreadNotifs, (batch, notif) => {
-                const notifRef = doc(db, ...notificationDocSegments(appId!, userId!, notif.id));
+            await batchWrite(currentDb, unreadNotifs, (batch, notif) => {
+                const notifRef = doc(currentDb, ...notificationDocSegments(aid, uid, notif.id));
                 batch.update(notifRef, { read: true });
             });
         } catch (err) {
@@ -185,12 +188,15 @@ export function useInAppNotifications(
     const deleteAllNotifications = useCallback(async () => {
         if (!db || !userId || !appId) return;
         if (notifications.length === 0) return;
+        const currentDb = db;
+        const uid = userId;
+        const aid = appId;
 
         try {
             const refs = notifications.map((notif) =>
-                doc(db, ...notificationDocSegments(appId!, userId!, notif.id))
+                doc(currentDb, ...notificationDocSegments(aid, uid, notif.id))
             );
-            await batchDelete(db, refs);
+            await batchDelete(currentDb, refs);
         } catch (err) {
             console.error('[useInAppNotifications] Failed to delete all notifications:', err);
         }

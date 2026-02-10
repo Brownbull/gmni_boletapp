@@ -7,6 +7,7 @@
 import { Firestore, Unsubscribe } from 'firebase/firestore';
 import { CategoryMapping, NewCategoryMapping } from '../types/categoryMapping';
 import { categoryMappingsPath } from '@/lib/firestorePaths';
+import { sanitizeInput } from '@/utils/sanitize';
 import {
     type MappingConfig,
     normalizeForMapping,
@@ -23,6 +24,7 @@ export const MAPPING_CONFIG: MappingConfig = {
     serviceName: 'categoryMappingService',
     primaryKeyField: 'normalizedItem',
     targetField: 'targetCategory',
+    sanitizeTarget: (v: string) => sanitizeInput(v, { maxLength: 100 }),
 };
 
 /** Normalize an item name for fuzzy matching */

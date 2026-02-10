@@ -47,7 +47,7 @@ describe('saveMapping - TOCTOU transaction safety', () => {
     const mapping = { normalizedKey: 'foo', targetValue: 'bar' };
 
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should use runTransaction when updating an existing mapping', async () => {

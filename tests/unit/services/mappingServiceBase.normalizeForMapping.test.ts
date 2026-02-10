@@ -40,12 +40,11 @@ describe('normalizeForMapping', () => {
         expect(normalizeForMapping('  Café  Latte!! ')).toBe('caf latte');
     });
 
-    it('handles accented characters by keeping base letter form', () => {
-        // normalizeForMapping does NOT strip accents (unlike normalizeMerchantNameForTrust)
-        // It only removes non-alphanumeric chars via regex — accented chars match [a-z] after lowercase
+    it('strips accented characters because they fall outside [a-z0-9]', () => {
+        // normalizeForMapping does NOT use NFD normalization (unlike normalizeMerchantNameForTrust).
+        // Accented chars like 'é' don't match [a-z0-9\s], so the regex removes them entirely.
+        // This means 'résumé' becomes 'rsum', not 'resume'.
         const result = normalizeForMapping('résumé');
-        // 'é' is not stripped because the regex [^a-z0-9\s] uses 'gi' flag
-        // but 'é' doesn't match [a-z0-9] — it gets removed
         expect(result).toBe('rsum');
     });
 });

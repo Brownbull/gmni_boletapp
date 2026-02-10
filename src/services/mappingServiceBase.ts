@@ -59,7 +59,7 @@ export function normalizeForMapping(name: string): string {
     return name
         .toLowerCase()
         .trim()
-        .replace(/[^a-z0-9\s]/gi, '')
+        .replace(/[^a-z0-9\s]/g, '')
         .replace(/\s+/g, ' ');
 }
 
@@ -86,7 +86,10 @@ export async function saveMapping<T extends Record<string, unknown>>(
         ? { ...mapping, [config.targetField]: config.sanitizeTarget(mapping[config.targetField] as string) }
         : { ...mapping };
 
-    // Build upsert query (outside transaction — client SDK limitation)
+    // Build upsert query (outside transaction — client SDK limitation).
+    // KNOWN LIMITATION: Two concurrent create calls can both see empty results
+    // and create duplicate documents. Mitigation: use deterministic document IDs
+    // (e.g., hash of primary key fields) or enforce uniqueness via Cloud Function.
     const filters = [
         where(config.primaryKeyField, '==', mapping[config.primaryKeyField]),
     ];

@@ -28,17 +28,23 @@ const RETRY_BASE_DELAY_MS = 1000;
 /** Maximum number of retry attempts per chunk */
 const MAX_RETRIES = 1;
 
+/** Firestore error codes that are transient and worth retrying */
+const RETRYABLE_CODES = ['unavailable', 'deadline-exceeded', 'aborted', 'resource-exhausted'];
+
 /**
  * Commit a batch with retry and exponential backoff.
- * Retries once with a 1s delay on failure before propagating the error.
+ * Only retries on transient Firestore errors (unavailable, deadline-exceeded, etc.).
+ * Permanent errors (permission-denied, not-found) are thrown immediately.
  */
 async function commitWithRetry(batch: ReturnType<typeof writeBatch>): Promise<void> {
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
         try {
             await batch.commit();
             return;
-        } catch (error) {
-            if (attempt < MAX_RETRIES) {
+        } catch (error: unknown) {
+            const code = (error as { code?: string })?.code;
+            const isRetryable = code && RETRYABLE_CODES.includes(code);
+            if (attempt < MAX_RETRIES && isRetryable) {
                 const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt);
                 await new Promise(resolve => setTimeout(resolve, delay));
             } else {

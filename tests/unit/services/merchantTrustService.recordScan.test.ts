@@ -36,9 +36,11 @@ vi.mock('@/lib/firestorePaths', () => ({
 }));
 
 import { runTransaction, type Firestore } from 'firebase/firestore';
+import { sanitizeMerchantName } from '@/utils/sanitize';
 import { recordScan } from '../../../src/services/merchantTrustService';
 
 const mockRunTransaction = vi.mocked(runTransaction);
+const mockSanitize = vi.mocked(sanitizeMerchantName);
 
 describe('recordScan - TOCTOU transaction safety', () => {
     const mockDb = {} as Firestore;
@@ -46,7 +48,7 @@ describe('recordScan - TOCTOU transaction safety', () => {
     const appId = 'test-app';
 
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should use runTransaction for atomic read-then-write', async () => {
@@ -57,6 +59,7 @@ describe('recordScan - TOCTOU transaction safety', () => {
 
         await recordScan(mockDb, userId, appId, 'Jumbo', false);
 
+        expect(mockSanitize).toHaveBeenCalledWith('Jumbo');
         expect(mockRunTransaction).toHaveBeenCalledTimes(1);
         expect(mockTransaction.get).toHaveBeenCalledWith('mock-doc-ref');
     });
