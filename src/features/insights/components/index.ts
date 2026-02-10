@@ -72,3 +72,19 @@ export {
   CelebrationView,
   type CelebrationViewProps,
 } from './CelebrationView';
+
+// Story 10.6: Scan Complete Insight Card
+export { InsightCard } from './InsightCard';
+export { BuildingProfileCard } from './BuildingProfileCard';
+
+// Story 10.7: Batch Mode Summary
+export { BatchSummary } from './BatchSummary';
+
+// Story 10a.4: Insights History
+export { InsightHistoryCard } from './InsightHistoryCard';
+export { InsightDetailModal } from './InsightDetailModal';
+export {
+  InsightsTemporalFilter,
+  type InsightTemporalFilter,
+  type InsightTemporalLevel,
+} from './InsightsTemporalFilter';

@@ -20,7 +20,7 @@
 import { useCallback } from 'react';
 import { useNavigationActions } from '@/shared/stores';
 import type { HistoryFilterState, TemporalFilterState } from '@/contexts/HistoryFiltersContext';
-import type { HistoryNavigationPayload } from '@features/analytics/utils/analyticsToHistoryFilters';
+import type { HistoryNavigationPayload } from '@/types/navigation';
 import {
     expandStoreCategoryGroup,
     expandItemCategoryGroup,

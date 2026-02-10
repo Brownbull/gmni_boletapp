@@ -129,76 +129,13 @@ export function categoryPositionToFilter(
 }
 
 // ============================================================================
-// Navigation Payload Type
+// Navigation Payload Type (re-exported from @/types/navigation for backward compat)
 // ============================================================================
 
-/**
- * Story 14.13a: Drill-down path structure for multi-level filter preservation.
- * Contains accumulated context from analytics drill-down navigation.
- */
-export interface DrillDownPath {
-  /** Store category group (e.g., "food-dining") */
-  storeGroup?: string;
-  /** Store category (e.g., "Supermercado") */
-  storeCategory?: string;
-  /** Item category group (e.g., "food-fresh") */
-  itemGroup?: string;
-  /** Item category (e.g., "Carnes y Mariscos") */
-  itemCategory?: string;
-  /** Subcategory (e.g., "Res") */
-  subcategory?: string;
-}
-
-/**
- * Payload structure for navigating to History with pre-applied filters.
- * Used by DrillDownGrid to communicate filter intent to parent components.
- *
- * Story 14.13 Session 5: Extended to support item-based navigation
- * - storeGroup: Filter by store category group (e.g., "Food & Dining")
- * - itemGroup: Filter by item category group (e.g., "Fresh Food")
- * - itemCategory: Filter by item category (e.g., "Carnes y Mariscos")
- *
- * Story 14.13a: Extended to support multi-level drill-down filters
- * - drillDownPath: Accumulated context from the full drill-down hierarchy
- * - targetView: Target view ('history' for transactions, 'items' for products)
- * - sourceDistributionView: Source chart type for back navigation
- *
- * Note: This interface matches TrendsView.HistoryNavigationPayload for compatibility.
- * Both temporal and category use simpler types (string-based) for flexibility.
- */
-export interface HistoryNavigationPayload {
-  /** Store category filter (e.g., "Supermarket", "Restaurant", or comma-separated list) */
-  category?: string;
-  /** Store category group filter (e.g., "Essentials", "Entertainment") */
-  storeGroup?: string;
-  /** Item category group filter (e.g., "Produce", "Beverages") */
-  itemGroup?: string;
-  /** Item category/subcategory filter (e.g., "Fruits", "Soft Drinks") */
-  itemCategory?: string;
-  /** Temporal filter with level and period values */
-  temporal?: {
-    level: string;
-    year?: string;
-    month?: string;
-    quarter?: string;
-  };
-  /**
-   * Story 14.13a: Full drill-down path for multi-dimension filtering.
-   * When present, allows filtering by multiple dimensions simultaneously.
-   */
-  drillDownPath?: DrillDownPath;
-  /**
-   * Story 14.13 Session 5: Target view for navigation.
-   * - 'history': Navigate to Compras (transaction list)
-   * - 'items': Navigate to Productos (item list)
-   */
-  targetView?: 'history' | 'items';
-  /**
-   * Story 14.13 Session 7: Source distribution view for back navigation.
-   * Allows restoring drill-down position when navigating back.
-   */
-  sourceDistributionView?: 'donut' | 'treemap';
-}
+// Canonical definitions in @/types/navigation — re-exported here for backward compatibility
+export type { DrillDownPath, HistoryNavigationPayload } from '@/types/navigation';
+// Local import for use in functions below
+import type { HistoryNavigationPayload } from '@/types/navigation';
 
 /**
  * Create a navigation payload for temporal card badge click.
