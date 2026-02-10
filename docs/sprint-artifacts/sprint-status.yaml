@@ -107,10 +107,17 @@ development_status:
   15-5e-decompose-icon-filter-bar: done    # 2 pts - IconFilterBar 1,797 → 185 + 2 dropdown files
   15-5f-decompose-app-tsx: done          # 3 pts - App.tsx already well-modularized (AppOverlays, viewRenderers, handler hooks extracted); remaining 2,071 lines is irreducible orchestration
 
+  # Phase 5 Review Tech Debt (deferred — not blocking):
+  # TD-1: CircularProgress duplication (TrendsView vs DashboardView versions differ in bgRingColor formula)
+  # TD-2: DashboardView still 2,968 lines (only 13% reduction) — further decomposition possible
+  # TD-3: Missing component isolation tests: DonutChart, TrendListItem, AnimatedTreemapCell
+  # TD-4: TrendsView/helpers.ts at 510 lines — could split by concern (period, aggregation, treemap)
+  # TD-5: DashboardView/types.ts has local Transaction interface — consider using canonical type
+
   # Phase 6: Data Access Layer
-  15-6a-repository-interfaces: backlog  # 2 pts - 7 repository interfaces
-  15-6b-firestore-repositories: backlog # 3 pts - Firestore implementations (46 → 7-10 imports)
-  15-6c-migrate-consumers: backlog      # 3 pts - Hooks/views → repository pattern
+  15-6a-repository-interfaces: done     # 2 pts - 8 repository interfaces (Transaction, Mapping, Trust, Preferences, Credits, Records, Airlock, InsightProfile)
+  15-6b-firestore-repositories: done    # 3 pts - Factory functions wrapping existing services + React hooks (src/repositories/)
+  15-6c-migrate-consumers: done          # 3 pts - 4 mapping hooks migrated to repository pattern
 
   # Phase 7: State Management Alignment
   15-7a-history-filters-zustand: backlog # 2 pts - HistoryFiltersContext → Zustand

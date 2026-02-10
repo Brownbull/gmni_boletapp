@@ -1,0 +1,27 @@
+/**
+ * Repository Layer - Shared Types
+ *
+ * Story 15-6a: Common types for all repository interfaces.
+ * Decouples consumers from Firebase SDK types.
+ */
+
+import type { Firestore } from 'firebase/firestore';
+
+/**
+ * Context required to create any repository.
+ * Encapsulates the Firestore instance and user identity.
+ */
+export interface RepositoryContext {
+  db: Firestore;
+  userId: string;
+  appId: string;
+}
+
+/**
+ * Opaque pagination cursor. Consumers pass it back without inspecting it.
+ * Firestore implementation uses QueryDocumentSnapshot internally.
+ */
+export type PaginationCursor = unknown;
+
+/** Unsubscribe function returned by real-time subscriptions. */
+export type Unsubscribe = () => void;

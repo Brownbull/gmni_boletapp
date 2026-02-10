@@ -21,7 +21,7 @@ import {
     updateMappingTarget,
 } from './mappingServiceBase';
 
-const config: MappingConfig = {
+export const MAPPING_CONFIG: MappingConfig = {
     collectionPath: merchantMappingsPath,
     serviceName: 'merchantMappingService',
     primaryKeyField: 'normalizedMerchant',
@@ -35,35 +35,35 @@ export const normalizeMerchantName = normalizeForMapping;
 export async function saveMerchantMapping(
     db: Firestore, userId: string, appId: string, mapping: NewMerchantMapping
 ): Promise<string> {
-    return saveMapping(db, userId, appId, mapping, config);
+    return saveMapping(db, userId, appId, mapping, MAPPING_CONFIG);
 }
 
 export async function getMerchantMappings(
     db: Firestore, userId: string, appId: string
 ): Promise<MerchantMapping[]> {
-    return getMappings<MerchantMapping>(db, userId, appId, config);
+    return getMappings<MerchantMapping>(db, userId, appId, MAPPING_CONFIG);
 }
 
 export function subscribeToMerchantMappings(
     db: Firestore, userId: string, appId: string, callback: (mappings: MerchantMapping[]) => void
 ): Unsubscribe {
-    return subscribeToMappings<MerchantMapping>(db, userId, appId, callback, config);
+    return subscribeToMappings<MerchantMapping>(db, userId, appId, callback, MAPPING_CONFIG);
 }
 
 export async function deleteMerchantMapping(
     db: Firestore, userId: string, appId: string, mappingId: string
 ): Promise<void> {
-    return deleteMapping(db, userId, appId, mappingId, config);
+    return deleteMapping(db, userId, appId, mappingId, MAPPING_CONFIG);
 }
 
 export async function incrementMerchantMappingUsage(
     db: Firestore, userId: string, appId: string, mappingId: string
 ): Promise<void> {
-    return incrementMappingUsageBase(db, userId, appId, mappingId, config);
+    return incrementMappingUsageBase(db, userId, appId, mappingId, MAPPING_CONFIG);
 }
 
 export async function updateMerchantMappingTarget(
     db: Firestore, userId: string, appId: string, mappingId: string, newTargetMerchant: string
 ): Promise<void> {
-    return updateMappingTarget(db, userId, appId, mappingId, newTargetMerchant, config);
+    return updateMappingTarget(db, userId, appId, mappingId, newTargetMerchant, MAPPING_CONFIG);
 }

@@ -2,15 +2,10 @@
  * useCategoryMappings Hook
  *
  * Story 14.29: React Query Migration
- * Epic 14: Core Implementation
+ * Story 15-6c: Migrated to repository pattern
  *
  * Real-time subscription to user's category mappings with React Query caching.
  * Provides CRUD operations for category learning.
- *
- * Migration benefits:
- * - Settings navigation shows instantly (cached data)
- * - No loading spinner on return visits
- * - Shared cache across components
  */
 
 import { useState, useCallback, useMemo } from 'react';
@@ -18,13 +13,9 @@ import { User } from 'firebase/auth';
 import { Services } from './useAuth';
 import { useFirestoreSubscription } from './useFirestoreSubscription';
 import { QUERY_KEYS } from '../lib/queryKeys';
-import {
-    subscribeToCategoryMappings,
-    saveCategoryMapping,
-    deleteCategoryMapping,
-    updateCategoryMappingTarget,
-    normalizeItemName
-} from '../services/categoryMappingService';
+import { normalizeItemName } from '../services/categoryMappingService';
+import { MAPPING_CONFIG } from '../services/categoryMappingService';
+import { createMappingRepository } from '@/repositories/mappingRepository';
 import { CategoryMapping, MatchResult, NewCategoryMapping } from '../types/categoryMapping';
 import { StoreCategory } from '../types/transaction';
 
@@ -54,7 +45,17 @@ export function useCategoryMappings(
     services: Services | null
 ): UseCategoryMappingsReturn {
     const [error, setError] = useState<Error | null>(null);
-    const enabled = !!user && !!services;
+
+    // Story 15-6c: Create repository instance bound to user context
+    const repo = useMemo(() => {
+        if (!services?.db || !user?.uid) return null;
+        return createMappingRepository<CategoryMapping>(
+            { db: services.db, userId: user.uid, appId: services.appId },
+            MAPPING_CONFIG,
+        );
+    }, [services?.db, services?.appId, user?.uid]);
+
+    const enabled = !!repo;
 
     // Create the query key
     const queryKey = useMemo(
@@ -67,19 +68,14 @@ export function useCategoryMappings(
     // Subscribe to mappings with React Query caching
     const { data: mappings = [], isLoading } = useFirestoreSubscription<CategoryMapping[]>(
         queryKey,
-        (callback) => subscribeToCategoryMappings(
-            services!.db,
-            user!.uid,
-            services!.appId,
-            callback
-        ),
+        (callback) => repo!.subscribe(callback),
         { enabled }
     );
 
     // Save a new mapping or update existing
     const saveMapping = useCallback(
         async (item: string, category: StoreCategory, source: 'user' | 'ai' = 'user'): Promise<string> => {
-            if (!user || !services) {
+            if (!repo) {
                 throw new Error('User must be authenticated to save mappings');
             }
 
@@ -93,79 +89,59 @@ export function useCategoryMappings(
             };
 
             try {
-                const id = await saveCategoryMapping(
-                    services.db,
-                    user.uid,
-                    services.appId,
-                    newMapping
-                );
-                return id;
+                return await repo.save(newMapping as unknown as CategoryMapping);
             } catch (e) {
                 const err = e instanceof Error ? e : new Error('Failed to save mapping');
                 setError(err);
                 throw err;
             }
         },
-        [user, services]
+        [repo]
     );
 
     // Delete a mapping
     const deleteMapping = useCallback(
         async (mappingId: string): Promise<void> => {
-            if (!user || !services) {
+            if (!repo) {
                 throw new Error('User must be authenticated to delete mappings');
             }
 
             try {
-                await deleteCategoryMapping(
-                    services.db,
-                    user.uid,
-                    services.appId,
-                    mappingId
-                );
+                await repo.delete(mappingId);
             } catch (e) {
                 const err = e instanceof Error ? e : new Error('Failed to delete mapping');
                 setError(err);
                 throw err;
             }
         },
-        [user, services]
+        [repo]
     );
 
     // Update a mapping's target category (Story 9.7 enhancement)
     const updateMapping = useCallback(
         async (mappingId: string, newCategory: StoreCategory): Promise<void> => {
-            if (!user || !services) {
+            if (!repo) {
                 throw new Error('User must be authenticated to update mappings');
             }
 
             try {
-                await updateCategoryMappingTarget(
-                    services.db,
-                    user.uid,
-                    services.appId,
-                    mappingId,
-                    newCategory
-                );
+                await repo.updateTarget(mappingId, newCategory);
             } catch (e) {
                 const err = e instanceof Error ? e : new Error('Failed to update mapping');
                 setError(err);
                 throw err;
             }
         },
-        [user, services]
+        [repo]
     );
 
     // Find best match for an item name
-    // Note: Full fuzzy matching implementation will be added in Story 6.2
-    // This is a basic exact-match implementation for now
     const findMatch = useCallback(
         (itemName: string, _merchant?: string): MatchResult | null => {
             if (mappings.length === 0) return null;
 
             const normalizedName = normalizeItemName(itemName);
 
-            // Basic exact match (fuzzy matching in Story 6.2)
             const exactMatch = mappings.find(
                 m => m.normalizedItem === normalizedName
             );
@@ -173,7 +149,7 @@ export function useCategoryMappings(
             if (exactMatch) {
                 return {
                     mapping: exactMatch,
-                    score: 0, // Perfect match
+                    score: 0,
                     confidence: exactMatch.confidence
                 };
             }

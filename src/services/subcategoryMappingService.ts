@@ -19,7 +19,7 @@ import {
     updateMappingTarget,
 } from './mappingServiceBase';
 
-const config: MappingConfig = {
+export const MAPPING_CONFIG: MappingConfig = {
     collectionPath: subcategoryMappingsPath,
     serviceName: 'subcategoryMappingService',
     primaryKeyField: 'normalizedItem',
@@ -33,35 +33,35 @@ export const normalizeItemName = normalizeForMapping;
 export async function saveSubcategoryMapping(
     db: Firestore, userId: string, appId: string, mapping: NewSubcategoryMapping
 ): Promise<string> {
-    return saveMapping(db, userId, appId, mapping, config);
+    return saveMapping(db, userId, appId, mapping, MAPPING_CONFIG);
 }
 
 export async function getSubcategoryMappings(
     db: Firestore, userId: string, appId: string
 ): Promise<SubcategoryMapping[]> {
-    return getMappings<SubcategoryMapping>(db, userId, appId, config);
+    return getMappings<SubcategoryMapping>(db, userId, appId, MAPPING_CONFIG);
 }
 
 export function subscribeToSubcategoryMappings(
     db: Firestore, userId: string, appId: string, callback: (mappings: SubcategoryMapping[]) => void
 ): Unsubscribe {
-    return subscribeToMappings<SubcategoryMapping>(db, userId, appId, callback, config);
+    return subscribeToMappings<SubcategoryMapping>(db, userId, appId, callback, MAPPING_CONFIG);
 }
 
 export async function deleteSubcategoryMapping(
     db: Firestore, userId: string, appId: string, mappingId: string
 ): Promise<void> {
-    return deleteMapping(db, userId, appId, mappingId, config);
+    return deleteMapping(db, userId, appId, mappingId, MAPPING_CONFIG);
 }
 
 export async function updateSubcategoryMappingTarget(
     db: Firestore, userId: string, appId: string, mappingId: string, newTargetSubcategory: string
 ): Promise<void> {
-    return updateMappingTarget(db, userId, appId, mappingId, newTargetSubcategory, config);
+    return updateMappingTarget(db, userId, appId, mappingId, newTargetSubcategory, MAPPING_CONFIG);
 }
 
 export async function incrementSubcategoryMappingUsage(
     db: Firestore, userId: string, appId: string, mappingId: string
 ): Promise<void> {
-    return incrementMappingUsageBase(db, userId, appId, mappingId, config);
+    return incrementMappingUsageBase(db, userId, appId, mappingId, MAPPING_CONFIG);
 }
