@@ -119,6 +119,12 @@ development_status:
   15-6b-firestore-repositories: done    # 3 pts - Factory functions wrapping existing services + React hooks (src/repositories/)
   15-6c-migrate-consumers: done          # 3 pts - 4 mapping hooks migrated to repository pattern
 
+  # Phase 6 Review Tech Debt (deferred — not blocking):
+  # TD-6: TOCTOU race in credits deduction (creditsService.ts) — pre-existing, needs transaction-based fix
+  # TD-7: save() signature needs Omit<T, 'id'|'createdAt'|'updatedAt'> to eliminate `as unknown as T` casts
+  # TD-8: InsightContent/FullInsightContent type duplication (insightProfileRepository vs insightProfileService)
+  # TD-9: 7 of 8 repository interfaces + all 11 repository hooks unconsumed — migrate consumers as features adopt DAL
+
   # Phase 7: State Management Alignment
   15-7a-history-filters-zustand: backlog # 2 pts - HistoryFiltersContext → Zustand
   15-7b-app-state-zustand: backlog      # 2 pts - AppStateContext → Zustand

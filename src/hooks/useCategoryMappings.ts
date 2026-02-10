@@ -13,9 +13,8 @@ import { User } from 'firebase/auth';
 import { Services } from './useAuth';
 import { useFirestoreSubscription } from './useFirestoreSubscription';
 import { QUERY_KEYS } from '../lib/queryKeys';
-import { normalizeItemName } from '../services/categoryMappingService';
-import { MAPPING_CONFIG } from '../services/categoryMappingService';
-import { createMappingRepository } from '@/repositories/mappingRepository';
+import { normalizeItemName, MAPPING_CONFIG } from '../services/categoryMappingService';
+import { createMappingRepository } from '@/repositories';
 import { CategoryMapping, MatchResult, NewCategoryMapping } from '../types/categoryMapping';
 import { StoreCategory } from '../types/transaction';
 

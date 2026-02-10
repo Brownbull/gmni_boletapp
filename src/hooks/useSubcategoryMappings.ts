@@ -13,9 +13,8 @@ import { User } from 'firebase/auth';
 import { Services } from './useAuth';
 import { useFirestoreSubscription } from './useFirestoreSubscription';
 import { QUERY_KEYS } from '../lib/queryKeys';
-import { normalizeItemName } from '../services/subcategoryMappingService';
-import { MAPPING_CONFIG } from '../services/subcategoryMappingService';
-import { createMappingRepository } from '@/repositories/mappingRepository';
+import { normalizeItemName, MAPPING_CONFIG } from '../services/subcategoryMappingService';
+import { createMappingRepository } from '@/repositories';
 import { SubcategoryMapping, SubcategoryMatchResult, NewSubcategoryMapping } from '../types/subcategoryMapping';
 
 export interface UseSubcategoryMappingsReturn {

@@ -2,7 +2,7 @@
  * Repository Layer - Shared Types
  *
  * Story 15-6a: Common types for all repository interfaces.
- * Decouples consumers from Firebase SDK types.
+ * Centralizes Firestore access patterns behind repository interfaces.
  */
 
 import type { Firestore } from 'firebase/firestore';
