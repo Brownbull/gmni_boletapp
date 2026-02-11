@@ -3,7 +3,7 @@
 **Epic:** 15 - Codebase Refactoring
 **Points:** 5
 **Priority:** MEDIUM
-**Status:** ready-for-dev
+**Status:** review
 
 ## Description
 

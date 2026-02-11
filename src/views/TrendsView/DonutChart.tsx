@@ -1,8 +1,7 @@
-/** DonutChart — Story 15-5b: Extracted from TrendsView.tsx */
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Minus } from 'lucide-react';
+/** DonutChart — Story 15-5b: Extracted from TrendsView.tsx, Story 15-TD-5: Further decomposed */
+import React, { useCallback, useMemo } from 'react';
+import { ChevronLeft, Plus, Minus } from 'lucide-react';
 import {
-    getCategoryColorsAuto,
     ALL_STORE_CATEGORY_GROUPS,
     ALL_ITEM_CATEGORY_GROUPS,
     STORE_CATEGORY_GROUPS,
@@ -24,14 +23,10 @@ import {
     translateCategory,
     translateStoreCategoryGroup,
     translateItemCategoryGroup,
-    getStoreCategoryGroupEmoji,
-    getItemCategoryGroupEmoji,
-    getItemCategoryEmoji,
 } from '../../utils/categoryTranslations';
-import { getCategoryEmoji } from '../../utils/categoryEmoji';
 import { useCountUp } from '../../hooks/useCountUp';
 import type { Transaction } from '../../types/transaction';
-import type { HistoryNavigationPayload, DrillDownPath } from '../../types/navigation';
+import type { HistoryNavigationPayload } from '../../types/navigation';
 import type { CategoryData, DonutViewMode, TimePeriod, CurrentPeriod } from './types';
 import {
     computeTreemapCategories,
@@ -40,7 +35,8 @@ import {
     computeItemGroupsForStore,
     computeItemCategoriesInGroup,
 } from './helpers';
-import { AnimatedAmountBar, AnimatedCountPill, AnimatedPercent } from './animationComponents';
+import { useDonutDrillDown } from './useDonutDrillDown';
+import { DonutLegend } from './DonutLegend';
 
 /** Drill-down data for Level 2 (item groups within a category) */
 interface DrillDownGroupData {
@@ -55,49 +51,41 @@ interface DrillDownGroupData {
 /** Donut Chart component with header, interactive segments, and legend */
 export const DonutChart: React.FC<{
     categoryData: CategoryData[];
-    /** Story 14.14b Session 5: All store categories (before treemap processing) for accurate group aggregation */
+    /** All store categories (before treemap processing) for accurate group aggregation */
     allCategoryData: CategoryData[];
     total: number;
-    periodLabel: string;
     currency: string;
     locale: string;
     isDark: boolean;
-    animationKey: number;
-    onCategoryClick: (category: string) => void;
     canExpand: boolean;
     canCollapse: boolean;
     otroCount: number;
-    /** Story 14.14b Session 7: Categories inside "Más" group for navigation expansion */
+    /** Categories inside "Más" group for navigation expansion */
     otroCategories: CategoryData[];
     expandedCount: number;
     onExpand: () => void;
     onCollapse: () => void;
-    /** Story 14.14b Session 4: Transactions for real item/subcategory aggregation */
+    /** Transactions for real item/subcategory aggregation */
     transactions: Transaction[];
-    /** Story 14.14b Session 4: Navigation handler for transaction count pill */
+    /** Navigation handler for transaction count pill */
     onNavigateToHistory?: (payload: HistoryNavigationPayload) => void;
-    /** Story 14.14b Session 4: View mode controlled from parent */
+    /** View mode controlled from parent */
     viewMode: DonutViewMode;
-    /** Story 14.14b Session 4: Callback when view mode needs reset (drill-down changes) */
-    onViewModeReset?: () => void;
-    /** Story 14.22: Time period for navigation filter */
+    /** Time period for navigation filter */
     timePeriod?: TimePeriod;
-    /** Story 14.22: Current period for navigation filter */
+    /** Current period for navigation filter */
     currentPeriod?: CurrentPeriod;
-    /** Story 14.13 Session 7: Count mode for legend display (transactions vs items) */
+    /** Count mode for legend display (transactions vs items) */
     countMode?: 'transactions' | 'items';
-    /** Story 14.40: Open statistics popup on icon click */
+    /** Open statistics popup on icon click */
     onIconClick?: (categoryName: string, emoji: string, color: string) => void;
 }> = ({
     categoryData,
     allCategoryData,
     total,
-    periodLabel: _periodLabel,  // Story 14.14b: No longer used
     currency,
     locale,
     isDark,
-    animationKey: _animationKey,
-    onCategoryClick: _onCategoryClick,
     canExpand: parentCanExpand,
     canCollapse: parentCanCollapse,
     otroCount: parentOtroCount,
@@ -108,64 +96,26 @@ export const DonutChart: React.FC<{
     transactions,
     onNavigateToHistory,
     viewMode,
-    onViewModeReset: _onViewModeReset,
     timePeriod = 'month',
     currentPeriod,
-    countMode = 'transactions',  // Story 14.13 Session 7: Default to transactions
-    onIconClick,  // Story 14.40: Open statistics popup
+    countMode = 'transactions',
+    onIconClick,
 }) => {
-    // State for selected segment
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    // Story 15-TD-5: Drill-down state machine extracted to hook
+    const drillDown = useDonutDrillDown({
+        viewMode,
+        parentOnExpand,
+        parentOnCollapse,
+    });
 
-    // Story 14.13.3: Animation state for donut chart
-    // Tracks animation key to trigger re-animation on drill-down
-    const [donutAnimationKey, setDonutAnimationKey] = useState(0);
-    // Tracks which segments have animated in (for clockwise reveal)
-    const [visibleSegments, setVisibleSegments] = useState<Set<number>>(new Set());
-
-    // Story 14.14b: Enhanced drill-down state to support all view modes
-    // Drill-down path tracks: [storeGroup?, storeCategory?, itemCategory?]
-    // Level 0: Show base view (based on viewMode)
-    // Level 1: First drill-down (group->categories OR category->items)
-    // Story 14.13 Session 7: Updated drill-down levels to support item groups as intermediate level
-    // Level 0: Top level (groups or categories based on viewMode)
-    // Level 1: First drill-down
-    // Level 2: Second drill-down
-    // Level 3: Third drill-down
-    // Level 4: Fourth drill-down (only from store-groups: group -> store cat -> item group -> item cat -> subcat)
-    const [drillDownLevel, setDrillDownLevel] = useState<0 | 1 | 2 | 3 | 4>(0);
-    const [drillDownPath, setDrillDownPath] = useState<string[]>([]); // Stores names at each drill level
-
-    // Internal expand state for drill-down levels
-    const [drillDownExpandedCount, setDrillDownExpandedCount] = useState(0);
-
-    // Story 14.14b Session 4: Reset drill-down when viewMode changes from parent
-    useEffect(() => {
-        setDrillDownLevel(0);
-        setDrillDownPath([]);
-        setSelectedCategory(null);
-        setDrillDownExpandedCount(0);
-        // Story 14.13.3: Reset animation when viewMode changes
-        setDonutAnimationKey(prev => prev + 1);
-        setVisibleSegments(new Set());
-    }, [viewMode]);
-
-    // Story 14.13.3: Effect to animate segments appearing clockwise
-    useEffect(() => {
-        // Get number of segments from displayData length
-        // We'll animate each segment with staggered timing
-        const segmentCount = 10; // Max segments we might have
-        const delays: ReturnType<typeof setTimeout>[] = [];
-
-        for (let i = 0; i < segmentCount; i++) {
-            const timer = setTimeout(() => {
-                setVisibleSegments(prev => new Set([...prev, i]));
-            }, i * 80); // 80ms stagger between segments
-            delays.push(timer);
-        }
-
-        return () => delays.forEach(clearTimeout);
-    }, [donutAnimationKey]);
+    // Destructure for convenience
+    const {
+        selectedCategory, donutAnimationKey, visibleSegments,
+        drillDownLevel, drillDownPath, drillDownExpandedCount,
+        handleSegmentClick, getMaxDrillDownLevel,
+        handleDrillDown, handleBack, handleExpand, handleCollapse,
+        buildSemanticDrillDownPath,
+    } = drillDown;
 
     // Story 14.14b Session 5: Aggregate allCategoryData (not treemap-processed categoryData) by store category groups
     // This ensures all store categories are included, not just those above the treemap threshold
@@ -446,158 +396,10 @@ export const DonutChart: React.FC<{
     const otroCount = drillDownLevel === 0 ? parentOtroCount : drillDownCategorized.otroCategories.length;
     const expandedCount = drillDownLevel === 0 ? parentExpandedCount : drillDownExpandedCount;
 
-    const handleExpand = () => {
-        if (drillDownLevel === 0) {
-            parentOnExpand();
-        } else {
-            setDrillDownExpandedCount(prev => prev + 1);
-        }
-    };
-
-    const handleCollapse = () => {
-        if (drillDownLevel === 0) {
-            parentOnCollapse();
-        } else {
-            setDrillDownExpandedCount(prev => Math.max(0, prev - 1));
-        }
-    };
-
     // Find selected category data
     const selectedData = selectedCategory
         ? displayData.find(c => c.name === selectedCategory)
         : null;
-
-    // Note: centerValue calculation removed - was unused after animation removal
-    // Note: contextLabel removed - replaced by viewMode dropdown in Story 14.14b
-
-    // Handle segment click
-    const handleSegmentClick = (categoryName: string) => {
-        setSelectedCategory(prev => prev === categoryName ? null : categoryName);
-    };
-
-    // Story 14.14b: Get max drill-down level based on viewMode
-    // Story 14.13 Session 7: Updated drill-down paths to include item groups as intermediate level
-    const getMaxDrillDownLevel = useCallback((): number => {
-        switch (viewMode) {
-            case 'store-groups': return 4; // group -> store cat -> item group -> item cat -> subcategory
-            case 'store-categories': return 3; // store cat -> item group -> item cat -> subcategory
-            case 'item-groups': return 2; // item group -> item cat -> subcategory
-            case 'item-categories': return 1; // item cat -> subcategory
-            default: return 2;
-        }
-    }, [viewMode]);
-
-    // Handle drill-down into a category/group
-    // Story 14.13 Session 7: Updated to support level 4 for store-groups mode
-    const handleDrillDown = (name: string) => {
-        setSelectedCategory(null); // Clear selection
-        setDrillDownExpandedCount(0); // Reset expanded count when drilling down
-
-        const maxLevel = getMaxDrillDownLevel();
-        if (drillDownLevel < maxLevel) {
-            // Story 14.13.3: Trigger animation reset for new data
-            setDonutAnimationKey(prev => prev + 1);
-            setVisibleSegments(new Set());
-            // Add name to path and increment level
-            setDrillDownPath(prev => [...prev, name]);
-            setDrillDownLevel(prev => Math.min(prev + 1, 4) as 0 | 1 | 2 | 3 | 4);
-        }
-    };
-
-    // Handle back navigation
-    const handleBack = () => {
-        setSelectedCategory(null);
-        setDrillDownExpandedCount(0); // Reset expanded count when going back
-
-        if (drillDownLevel > 0) {
-            // Story 14.13.3: Trigger animation reset when going back
-            setDonutAnimationKey(prev => prev + 1);
-            setVisibleSegments(new Set());
-            // Remove last item from path and decrement level
-            setDrillDownPath(prev => prev.slice(0, -1));
-            setDrillDownLevel(prev => Math.max(prev - 1, 0) as 0 | 1 | 2 | 3 | 4);
-        }
-    };
-
-    /**
-     * Story 14.13a: Build semantic DrillDownPath from current state.
-     * Converts the string array path and drill-down level into a structured object
-     * with semantic meaning based on the current viewMode.
-     *
-     * @param currentCategoryName - The category being clicked (added to path)
-     * @returns DrillDownPath with all accumulated filter dimensions
-     */
-    const buildSemanticDrillDownPath = useCallback((currentCategoryName?: string): DrillDownPath => {
-        const path: DrillDownPath = {};
-
-        // Map drillDownPath positions to semantic fields based on viewMode
-        // The interpretation depends on which viewMode we're in
-        switch (viewMode) {
-            case 'store-groups':
-                // Path order: storeGroup -> storeCategory -> itemGroup -> itemCategory -> subcategory
-                if (drillDownPath[0]) path.storeGroup = drillDownPath[0];
-                if (drillDownPath[1]) path.storeCategory = drillDownPath[1];
-                if (drillDownPath[2]) path.itemGroup = drillDownPath[2];
-                if (drillDownPath[3]) path.itemCategory = drillDownPath[3];
-                // If we're clicking at level 4, add subcategory
-                if (drillDownLevel === 4 && currentCategoryName) {
-                    path.subcategory = currentCategoryName;
-                } else if (drillDownLevel === 3 && currentCategoryName) {
-                    path.itemCategory = currentCategoryName;
-                } else if (drillDownLevel === 2 && currentCategoryName) {
-                    path.itemGroup = currentCategoryName;
-                } else if (drillDownLevel === 1 && currentCategoryName) {
-                    path.storeCategory = currentCategoryName;
-                } else if (drillDownLevel === 0 && currentCategoryName) {
-                    path.storeGroup = currentCategoryName;
-                }
-                break;
-
-            case 'store-categories':
-                // Path order: storeCategory -> itemGroup -> itemCategory -> subcategory
-                if (drillDownPath[0]) path.storeCategory = drillDownPath[0];
-                if (drillDownPath[1]) path.itemGroup = drillDownPath[1];
-                if (drillDownPath[2]) path.itemCategory = drillDownPath[2];
-                // If we're clicking at level 3, add subcategory
-                if (drillDownLevel === 3 && currentCategoryName) {
-                    path.subcategory = currentCategoryName;
-                } else if (drillDownLevel === 2 && currentCategoryName) {
-                    path.itemCategory = currentCategoryName;
-                } else if (drillDownLevel === 1 && currentCategoryName) {
-                    path.itemGroup = currentCategoryName;
-                } else if (drillDownLevel === 0 && currentCategoryName) {
-                    path.storeCategory = currentCategoryName;
-                }
-                break;
-
-            case 'item-groups':
-                // Path order: itemGroup -> itemCategory -> subcategory
-                if (drillDownPath[0]) path.itemGroup = drillDownPath[0];
-                if (drillDownPath[1]) path.itemCategory = drillDownPath[1];
-                // If we're clicking at level 2, add subcategory
-                if (drillDownLevel === 2 && currentCategoryName) {
-                    path.subcategory = currentCategoryName;
-                } else if (drillDownLevel === 1 && currentCategoryName) {
-                    path.itemCategory = currentCategoryName;
-                } else if (drillDownLevel === 0 && currentCategoryName) {
-                    path.itemGroup = currentCategoryName;
-                }
-                break;
-
-            case 'item-categories':
-                // Path order: itemCategory -> subcategory
-                if (drillDownPath[0]) path.itemCategory = drillDownPath[0];
-                // If we're clicking at level 1, add subcategory
-                if (drillDownLevel === 1 && currentCategoryName) {
-                    path.subcategory = currentCategoryName;
-                } else if (drillDownLevel === 0 && currentCategoryName) {
-                    path.itemCategory = currentCategoryName;
-                }
-                break;
-        }
-
-        return path;
-    }, [viewMode, drillDownPath, drillDownLevel]);
 
     // Story 14.14b Session 4+5: Handle transaction count pill click - navigate to HistoryView with filters
     // Story 14.22: Full support for all view modes and drill-down levels
@@ -897,187 +699,25 @@ export const DonutChart: React.FC<{
                 </button>
             </div>
 
-            {/* Rich Legend Items (Phase 4) - Scrollable within available space */}
-            <div className="flex flex-col gap-1 px-1 flex-1 overflow-y-auto min-h-0">
-                {displayData.map(cat => {
-                    const isSelected = selectedCategory === cat.name;
-                    // "Más" = aggregated small categories group (expandable), not the real "Otro" category
-                    const isMasGroup = cat.name === 'Más' || cat.name === 'More';
-
-                    // Story 14.14b: Get display name and emoji based on viewMode and drillDownLevel
-                    let displayName: string;
-                    let emoji: string;
-
-                    // Determine what type of data we're showing based on viewMode and level
-                    // Story 14.13 Session 7: Updated for new drill-down structure with item groups as intermediate level
-                    const isShowingStoreGroups = viewMode === 'store-groups' && drillDownLevel === 0;
-                    const isShowingStoreCategories =
-                        (viewMode === 'store-categories' && drillDownLevel === 0) ||
-                        (viewMode === 'store-groups' && drillDownLevel === 1);
-                    // Story 14.13 Session 7: Item groups now appear at multiple levels:
-                    // - item-groups mode at level 0
-                    // - store-categories mode at level 1 (drilling into store category shows item groups)
-                    // - store-groups mode at level 2 (drilling into store category shows item groups)
-                    const isShowingItemGroups =
-                        (viewMode === 'item-groups' && drillDownLevel === 0) ||
-                        (viewMode === 'store-categories' && drillDownLevel === 1) ||
-                        (viewMode === 'store-groups' && drillDownLevel === 2);
-                    // Story 14.13 Session 7: Item categories now appear at adjusted levels:
-                    // - item-categories mode at level 0
-                    // - store-categories mode at level 2 (after item groups)
-                    // - store-groups mode at level 3 (after item groups)
-                    // - item-groups mode at level 1 (after drilling into item group)
-                    const isShowingItemCategories =
-                        (viewMode === 'item-categories' && drillDownLevel === 0) ||
-                        (viewMode === 'store-categories' && drillDownLevel === 2) ||
-                        (viewMode === 'store-groups' && drillDownLevel === 3) ||
-                        (viewMode === 'item-groups' && drillDownLevel === 1);
-
-                    // Story 14.14b: Can drill down if not "Más" group and not at max level
-                    // For item categories, also check if subcategories exist
-                    const maxLevel = getMaxDrillDownLevel();
-                    let canDrillDownFurther = !isMasGroup && drillDownLevel < maxLevel;
-
-                    // If showing item categories, only allow drill-down if subcategories exist
-                    if (canDrillDownFurther && isShowingItemCategories) {
-                        canDrillDownFurther = hasSubcategories(cat.name);
-                    }
-
-                    // Handle "Más" aggregated group specially
-                    if (isMasGroup) {
-                        displayName = locale === 'es' ? 'Más' : 'More';
-                        emoji = '📁';
-                    } else if (isShowingStoreGroups) {
-                        displayName = translateStoreCategoryGroup(cat.name, locale as 'en' | 'es');
-                        emoji = getStoreCategoryGroupEmoji(cat.name);
-                    } else if (isShowingStoreCategories) {
-                        displayName = translateCategory(cat.name, locale as 'en' | 'es');
-                        emoji = getCategoryEmoji(cat.name);
-                    } else if (isShowingItemGroups) {
-                        displayName = translateItemCategoryGroup(cat.name, locale as 'en' | 'es');
-                        emoji = getItemCategoryGroupEmoji(cat.name);
-                    } else if (isShowingItemCategories) {
-                        displayName = translateCategory(cat.name, locale as 'en' | 'es');
-                        emoji = getItemCategoryEmoji(cat.name);
-                    } else {
-                        // Subcategories (deepest level) - use as-is
-                        displayName = cat.name;
-                        emoji = '📄';
-                    }
-
-                    // Story 14.13: Get text color respecting fontColorMode setting
-                    const legendTextColor = getCategoryColorsAuto(cat.name).fg;
-
-                    return (
-                        <div
-                            key={cat.name}
-                            className={`flex items-center gap-2 p-2 rounded-xl transition-all ${
-                                isSelected
-                                    ? isDark ? 'bg-slate-600' : 'bg-slate-200'
-                                    : isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'
-                            }`}
-                            data-testid={`legend-item-${cat.name.toLowerCase().replace(/\s+/g, '-')}`}
-                        >
-                            {/* Story 14.40: Icon button opens statistics popup */}
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    // Don't show popup for "Más" aggregated group
-                                    if (cat.name !== 'Más' && cat.name !== 'More') {
-                                        onIconClick?.(cat.name, emoji, cat.fgColor);
-                                    } else {
-                                        handleSegmentClick(cat.name);
-                                    }
-                                }}
-                                className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0 hover:scale-105 active:scale-95 transition-transform"
-                                style={{ backgroundColor: cat.fgColor }}
-                                aria-label={`${displayName} ${locale === 'es' ? 'estadísticas' : 'statistics'}`}
-                            >
-                                <span className="text-white drop-shadow-sm">
-                                    {emoji}
-                                </span>
-                            </button>
-
-                            {/* Name and amount info - two lines layout (spans full height) */}
-                            <div
-                                className="flex-1 flex flex-col items-start min-w-0"
-                            >
-                                {/* Line 1: Category name (clickable to select) */}
-                                <button
-                                    onClick={() => handleSegmentClick(cat.name)}
-                                    className="text-sm font-medium truncate flex items-center gap-1 w-full text-left"
-                                    style={{ color: legendTextColor }}
-                                >
-                                    {displayName}
-                                    {/* Badge showing count of categories inside "Más" group */}
-                                    {cat.categoryCount && (
-                                        <span
-                                            className="inline-flex items-center justify-center rounded-full text-xs"
-                                            style={{
-                                                backgroundColor: 'transparent',
-                                                border: `1.5px solid ${legendTextColor}`,
-                                                color: legendTextColor,
-                                                fontSize: '10px',
-                                                fontWeight: 600,
-                                                minWidth: '18px',
-                                                height: '18px',
-                                                padding: '0 4px',
-                                            }}
-                                        >
-                                            {cat.categoryCount}
-                                        </span>
-                                    )}
-                                </button>
-                                {/* Line 2: Amount with percentage bar */}
-                                <AnimatedAmountBar
-                                    value={cat.value}
-                                    percent={cat.percent}
-                                    animationKey={donutAnimationKey}
-                                    currency={currency}
-                                    legendTextColor={legendTextColor}
-                                    isDark={isDark}
-                                    maxPercent={maxPercent}
-                                    fgColor={cat.fgColor}
-                                />
-                            </div>
-
-                            {/* Right side: Count pill, percentage, chevron - vertically centered */}
-                            <AnimatedCountPill
-                                count={cat.count}
-                                itemCount={cat.itemCount ?? 0}
-                                animationKey={donutAnimationKey}
-                                countMode={countMode}
-                                isDark={isDark}
-                                locale={locale}
-                                onCountClick={() => handleTransactionCountClick(cat.name)}
-                                categoryName={cat.name}
-                            />
-
-                            <AnimatedPercent
-                                percent={cat.percent}
-                                animationKey={donutAnimationKey}
-                                legendTextColor={legendTextColor}
-                            />
-
-                            {/* Drill-down chevron (can drill deeper) */}
-                            {canDrillDownFurther && (
-                                <button
-                                    onClick={() => handleDrillDown(cat.name)}
-                                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
-                                        isDark
-                                            ? 'bg-slate-600 hover:bg-slate-500 text-slate-300'
-                                            : 'bg-slate-200 hover:bg-slate-300 text-slate-600'
-                                    }`}
-                                    aria-label={`Drill down into ${displayName}`}
-                                    data-testid={`drill-down-${cat.name.toLowerCase()}`}
-                                >
-                                    <ChevronRight size={16} />
-                                </button>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
+            {/* Story 15-TD-5: Legend extracted to DonutLegend component */}
+            <DonutLegend
+                displayData={displayData}
+                selectedCategory={selectedCategory}
+                donutAnimationKey={donutAnimationKey}
+                viewMode={viewMode}
+                drillDownLevel={drillDownLevel}
+                currency={currency}
+                locale={locale}
+                isDark={isDark}
+                countMode={countMode}
+                maxPercent={maxPercent}
+                maxDrillDownLevel={getMaxDrillDownLevel()}
+                hasSubcategories={hasSubcategories}
+                onSegmentClick={handleSegmentClick}
+                onDrillDown={handleDrillDown}
+                onIconClick={onIconClick}
+                onCountClick={handleTransactionCountClick}
+            />
 
         </div>
     );

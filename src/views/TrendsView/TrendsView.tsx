@@ -19,13 +19,13 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, PieChart, LayoutGrid, Plus, Minus, Receipt, Package, GitBranch, List } from 'lucide-react';
 // Story 14.13: Animation components
-import { PageTransition } from '../components/animation/PageTransition';
-import { TransitionChild } from '../components/animation/TransitionChild';
+import { PageTransition } from '../../components/animation/PageTransition';
+import { TransitionChild } from '../../components/animation/TransitionChild';
 // Story 14.40: Category statistics popup
 import { CategoryStatisticsPopup } from '@features/analytics/components/CategoryStatisticsPopup';
 import { useCategoryStatistics, type CategoryFilterType } from '@features/analytics/hooks/useCategoryStatistics';
 // Story 14.14b: Profile dropdown for consistent header
-import { ProfileDropdown, ProfileAvatar, getInitials } from '../components/ProfileDropdown';
+import { ProfileDropdown, ProfileAvatar, getInitials } from '../../components/ProfileDropdown';
 // Story 14.14b: IconFilterBar for consistent filter dropdowns
 import { IconFilterBar } from '@features/history/components/IconFilterBar';
 import { useHistoryFilters } from '@shared/hooks/useHistoryFilters';
@@ -37,14 +37,14 @@ import {
     buildWeekFilter,
     filterTransactionsByHistoryFilters,
 } from '@shared/utils/historyFilterUtils';
-import type { HistoryFilterState } from '../contexts/HistoryFiltersContext';
+import type { HistoryFilterState } from '../../contexts/HistoryFiltersContext';
 // Story 14.13: Hooks
-import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
-import { useReducedMotion } from '../hooks/useReducedMotion';
+import { useSwipeNavigation } from '../../hooks/useSwipeNavigation';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 // Utilities
 // Story 14.14b: Category group helpers for donut view mode data transformation
 // Story 14.15b: Category normalization for legacy data compatibility
-import { normalizeItemCategory } from '../utils/categoryNormalizer';
+import { normalizeItemCategory } from '../../utils/categoryNormalizer';
 import {
     getContrastTextColor,
     ALL_STORE_CATEGORY_GROUPS,
@@ -60,15 +60,15 @@ import {
     expandItemCategoryGroup,
     type StoreCategoryGroup,
     type ItemCategoryGroup,
-} from '../config/categoryColors';
+} from '../../config/categoryColors';
 import { getStorageString, setStorageString, getStorageJSON, setStorageJSON } from '@/utils/storage';
-import { calculateTreemapLayout, categoryDataToTreemapItems } from '../utils/treemapLayout';
+import { calculateTreemapLayout, categoryDataToTreemapItems } from '../../utils/treemapLayout';
 import {
     translateCategory,
     translateStoreCategoryGroup,
     translateItemCategoryGroup,
-} from '../utils/categoryTranslations';
-import type { Transaction } from '../types/transaction';
+} from '../../utils/categoryTranslations';
+import type { Transaction } from '../../types/transaction';
 // Story 14.13.3: Sankey chart for flow visualization
 import { SankeyChart, type SankeySelectionData } from '@features/analytics/components/SankeyChart';
 import type { SankeyMode } from '@features/analytics/utils/sankeyDataBuilder';
@@ -84,20 +84,20 @@ import {
 import { useNavigationActions } from '@/shared/stores';
 import { useHistoryNavigation } from '@/shared/hooks';
 // Story 14c-refactor.31a: View type for proper type assertion
-import type { View } from '../components/App/types';
+import type { View } from '../../components/App/types';
 // Story 14e-25b.1: Internal data hook for view-owned data pattern
-import { useTrendsViewData, type TrendsViewData } from './TrendsView/useTrendsViewData';
+import { useTrendsViewData, type TrendsViewData } from './useTrendsViewData';
 
 // ============================================================================
-// Types (extracted to ./TrendsView/types.ts)
+// Types (extracted to ./types.ts)
 // ============================================================================
 import type {
     TimePeriod, CurrentPeriod, CarouselSlide, DistributionView, TendenciaView,
     DonutViewMode, CategoryData, TrendData,
-} from './TrendsView/types';
+} from './types';
 // Re-export canonical types for backward compatibility (consumers import from TrendsView)
-export type { DrillDownPath, HistoryNavigationPayload } from '../types/navigation';
-import type { HistoryNavigationPayload, DrillDownPath } from '../types/navigation';
+export type { DrillDownPath, HistoryNavigationPayload } from '../../types/navigation';
+import type { HistoryNavigationPayload, DrillDownPath } from '../../types/navigation';
 
 /**
  * Story 14e-25b.1: TrendsView props interface.
@@ -116,7 +116,7 @@ export interface TrendsViewProps {
 }
 
 // ============================================================================
-// Constants & Helpers (extracted to ./TrendsView/helpers.ts)
+// Constants & Helpers (extracted to ./helpers.ts)
 // ============================================================================
 import {
     getPeriodLabel, filterByPeriod,
@@ -124,15 +124,15 @@ import {
     computeSubcategoryData, computeItemGroupsForStore, computeItemCategoriesInGroup,
     computeTreemapCategories, computeTrendCategories,
     CAROUSEL_TITLES_BASE,
-} from './TrendsView/helpers';
+} from './helpers';
 
-// Sub-Components (extracted to ./TrendsView/)
-import { AnimatedTreemapCell } from './TrendsView/AnimatedTreemapCell';
-import { DonutChart } from './TrendsView/DonutChart';
-import { TrendListItem } from './TrendsView/TrendListItem';
+// Sub-Components (co-located)
+import { AnimatedTreemapCell } from './AnimatedTreemapCell';
+import { DonutChart } from './DonutChart';
+import { TrendListItem } from './TrendListItem';
 
-// (Helper functions moved to ./TrendsView/helpers.ts)
-// (Sub-components moved to individual files in ./TrendsView/)
+// (Helper functions in ./helpers.ts)
+// (Sub-components in co-located files)
 
 // ============================================================================
 // Main Component
@@ -1640,11 +1640,6 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
         }
     }, [trendDrillDownLevel]);
 
-    // Handle category drill-down (legacy - navigation)
-    const handleCategoryClick = useCallback((category: string) => {
-        onNavigateToHistory?.({ category });
-    }, [onNavigateToHistory]);
-
     // Story 14.13.2: Handle trend count pill click - navigate to HistoryView/ItemsView with filters
     // Works like the donut chart's handleTransactionCountClick, but considers drill-down state
     // Fixed: Now properly builds drillDownPath like donut/treemap handlers do
@@ -2848,12 +2843,9 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
                                         categoryData={categoryData}
                                         allCategoryData={allCategoryData}
                                         total={total}
-                                        periodLabel={periodLabel}
                                         currency={currency}
                                         locale={locale}
                                         isDark={isDark}
-                                        animationKey={animationKey}
-                                        onCategoryClick={handleCategoryClick}
                                         canExpand={canExpand}
                                         canCollapse={canCollapse}
                                         otroCount={otroCategories.length}

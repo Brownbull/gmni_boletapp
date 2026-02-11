@@ -19,34 +19,37 @@
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { Inbox, ArrowUpDown, Filter, ChevronLeft, ChevronRight, Receipt, Package, X, Trash2, CheckSquare } from 'lucide-react';
-import { ImageViewer } from '../components/ImageViewer';
+import { ImageViewer } from '../../components/ImageViewer';
 // Story 10a.1: Filter bar for consolidated home view (AC #2)
 import { HistoryFilterBar } from '@features/history/components/HistoryFilterBar';
 // Story 14.15b: Selection mode and modals for Dashboard
 // Story 14e-5: DeleteTransactionsModal now uses Modal Manager
 import type { TransactionPreview } from '@features/history/components/DeleteTransactionsModal';
 import { useModalActions } from '@managers/ModalManager';
-import { useSelectionMode } from '../hooks/useSelectionMode';
-import { deleteTransactionsBatch } from '../services/firestore';
+import { useSelectionMode } from '../../hooks/useSelectionMode';
+import { deleteTransactionsBatch } from '../../services/firestore';
 import { getFirestore } from 'firebase/firestore';
 // Story 14d-v2-1.1: useQueryClient import removed - group cache invalidation disabled (Epic 14c cleanup)
 // Story 14c-refactor.4: clearGroupCacheById import REMOVED (IndexedDB cache deleted)
 // Story 9.12: Category translations
 // Story 14e-25b.2: Language type now comes from hook (useDashboardViewData)
-import { translateCategory } from '../utils/categoryTranslations';
+import { translateCategory } from '../../utils/categoryTranslations';
+// Story 15-TD-5: Extracted chart slide components
+import { DashboardRadarSlide } from './DashboardRadarSlide';
+import { DashboardBumpSlide } from './DashboardBumpSlide';
 // Story 10a.1: Filter and duplicate detection utilities (AC #2, #4)
 import { useHistoryFilters } from '@shared/hooks/useHistoryFilters';
-import { getDuplicateIds } from '../services/duplicateDetectionService';
+import { getDuplicateIds } from '../../services/duplicateDetectionService';
 import {
     extractAvailableFilters,
     filterTransactionsByHistoryFilters,
 } from '@shared/utils/historyFilterUtils';
-import type { Transaction as TransactionType } from '../types/transaction';
+import type { Transaction as TransactionType } from '../../types/transaction';
 // Story 14.12: Animation framework imports
-import { PageTransition } from '../components/animation/PageTransition';
-import { TransitionChild } from '../components/animation/TransitionChild';
-import { useCountUp } from '../hooks/useCountUp';
-import { useReducedMotion } from '../hooks/useReducedMotion';
+import { PageTransition } from '../../components/animation/PageTransition';
+import { TransitionChild } from '../../components/animation/TransitionChild';
+import { useCountUp } from '../../hooks/useCountUp';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 // Story 14.21: Use unified category colors (both fg and bg for text contrast)
 // getCategoryColorsAuto - respects fontColorMode (colorful/plain) for general text
 // getCategoryPillColors - ALWAYS colorful for pills/badges/legends
@@ -68,8 +71,8 @@ import {
     type StoreCategoryGroup,
     type ItemCategoryGroup,
     // Story 14e-25b.2: ThemeName type now comes from hook (useDashboardViewData)
-} from '../config/categoryColors';
-import { getCategoryEmoji } from '../utils/categoryEmoji';
+} from '../../config/categoryColors';
+import { getCategoryEmoji } from '../../utils/categoryEmoji';
 // Story 14.13 Session 4: Category translations for view mode labels
 import {
     translateStoreCategoryGroup,
@@ -77,35 +80,35 @@ import {
     getStoreCategoryGroupEmoji,
     getItemCategoryGroupEmoji,
     getItemCategoryEmoji,
-} from '../utils/categoryTranslations';
+} from '../../utils/categoryTranslations';
 // Story 14.15b: Category normalization for legacy data compatibility
-import { normalizeItemCategory } from '../utils/categoryNormalizer';
+import { normalizeItemCategory } from '../../utils/categoryNormalizer';
 // Story 14.13: Import normalizeItemNameForGrouping for consistent unique product counting
-import { normalizeItemNameForGrouping } from '../hooks/useItems';
-import { calculateTreemapLayout } from '../utils/treemapLayout';
+import { normalizeItemNameForGrouping } from '../../hooks/useItems';
+import { calculateTreemapLayout } from '../../utils/treemapLayout';
 // Story 14.13 Session 4: Navigation payload for treemap cell clicks
 import { HistoryNavigationPayload, DrillDownPath } from '@features/analytics/utils/analyticsToHistoryFilters';
 // Story 14e-25d: Direct navigation hooks (ViewHandlersContext deleted)
 import { useHistoryNavigation } from '@/shared/hooks';
 import { useNavigationActions } from '@/shared/stores';
 // Story 14e-25b.2: DashboardView data hook
-import { useDashboardViewData, type UseDashboardViewDataReturn } from './DashboardView/useDashboardViewData';
+import { useDashboardViewData, type UseDashboardViewDataReturn } from './useDashboardViewData';
 // Story 14.15b: Use consolidated TransactionCard from shared transactions folder
-import { TransactionCard } from '../components/transactions';
+import { TransactionCard } from '../../components/transactions';
 import { getStorageString, setStorageString } from '@/utils/storage';
 import { toMillis } from '@/utils/timestamp';
 import { applyMasGrouping, buildProductKey } from '@/utils/categoryAggregation';
 // Story 14.12: Radar chart uses inline SVG (matching mockup hexagonal design)
 
 // ============================================================================
-// Types & Constants (extracted to ./DashboardView/types.ts)
+// Types & Constants (extracted to ./types.ts)
 // ============================================================================
-import type { SortType, CarouselSlide, TreemapViewMode } from './DashboardView/types';
+import type { SortType, CarouselSlide, TreemapViewMode } from './types';
 import {
     Transaction, CAROUSEL_TITLE_KEYS, VIEW_MODE_CONFIG,
     getTreemapColors, MONTH_SHORT_KEYS,
     RECENT_TRANSACTIONS_COLLAPSED, RECENT_TRANSACTIONS_EXPANDED,
-} from './DashboardView/types';
+} from './types';
 
 /**
  * Story 14e-25b.2: DashboardView Props
@@ -126,8 +129,8 @@ export interface DashboardViewProps {
     }>;
 }
 
-// Sub-Components (extracted to ./DashboardView/)
-import { AnimatedTreemapCard } from './DashboardView/AnimatedTreemapCard';
+// Sub-Components (co-located)
+import { AnimatedTreemapCard } from './AnimatedTreemapCard';
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) => {
     // Story 14e-25b.2: Get all data from internal hook
@@ -2161,375 +2164,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
                                         }}
                                         onAnimationEnd={() => setSlideDirection(null)}
                                     >
-                                        {radarChartData.categories.length >= 3 ? (
-                                            <>
-                                                {/* SVG Dynamic Polygon Radar Chart with left/right comparison overlays */}
-                                                <div className="flex-1 relative">
-                                                <svg
-                                                    viewBox="0 0 200 150"
-                                                    style={{ width: '100%', height: '100%' }}
-                                                    className="overflow-visible"
-                                                >
-                                                    {/* Dynamic grid rings and data polygons */}
-                                                    {(() => {
-                                                        const center = { x: 100, y: 80 };
-                                                        const maxRadius = 58;
-                                                        const sides = radarChartData.sides;
-
-                                                        // Generate angles for N-sided polygon (starting from top, -90 degrees)
-                                                        const angles = Array.from({ length: sides }, (_, i) =>
-                                                            (-90 + (360 / sides) * i) * Math.PI / 180
-                                                        );
-
-                                                        // Helper to generate polygon points at a given radius
-                                                        const getPolygonPoints = (radius: number) =>
-                                                            angles.map(a => ({
-                                                                x: center.x + radius * Math.cos(a),
-                                                                y: center.y + radius * Math.sin(a)
-                                                            }));
-
-                                                        // Generate 4 concentric grid rings - theme-aware colors
-                                                        const ringRadii = [maxRadius, maxRadius * 0.75, maxRadius * 0.5, maxRadius * 0.25];
-                                                        const gridRings = ringRadii.map((r, i) => ({
-                                                            points: getPolygonPoints(r).map(p => `${p.x},${p.y}`).join(' '),
-                                                            fill: isDark
-                                                                ? (i % 2 === 0 ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)')
-                                                                : (i % 2 === 0 ? '#f1f5f9' : '#f8fafc')
-                                                        }));
-
-                                                        // Axis lines from center to each vertex
-                                                        const axisEndpoints = getPolygonPoints(maxRadius);
-
-                                                        // Data polygons based on category amounts
-                                                        const currPoints = radarChartData.categories.map((cat, i) => {
-                                                            const ratio = cat.currAmount / radarChartData.maxValue;
-                                                            const radius = maxRadius * Math.max(0.1, ratio);
-                                                            return {
-                                                                x: center.x + radius * Math.cos(angles[i]),
-                                                                y: center.y + radius * Math.sin(angles[i])
-                                                            };
-                                                        });
-
-                                                        const prevPoints = radarChartData.categories.map((cat, i) => {
-                                                            const ratio = cat.prevAmount / radarChartData.maxValue;
-                                                            const radius = maxRadius * Math.max(0.1, ratio);
-                                                            return {
-                                                                x: center.x + radius * Math.cos(angles[i]),
-                                                                y: center.y + radius * Math.sin(angles[i])
-                                                            };
-                                                        });
-
-                                                        const currPolygon = currPoints.map(p => `${p.x},${p.y}`).join(' ');
-                                                        const prevPolygon = prevPoints.map(p => `${p.x},${p.y}`).join(' ');
-
-                                                        return (
-                                                            <>
-                                                                {/* Grid rings (dynamic N-sided polygons) - theme-aware */}
-                                                                {gridRings.map((ring, i) => (
-                                                                    <polygon
-                                                                        key={`ring-${i}`}
-                                                                        points={ring.points}
-                                                                        fill={ring.fill}
-                                                                        stroke={isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0'}
-                                                                        strokeWidth="1"
-                                                                    />
-                                                                ))}
-
-                                                                {/* Axis lines from center to each vertex - theme-aware */}
-                                                                {axisEndpoints.map((p, i) => (
-                                                                    <line
-                                                                        key={`axis-${i}`}
-                                                                        x1={center.x}
-                                                                        y1={center.y}
-                                                                        x2={p.x}
-                                                                        y2={p.y}
-                                                                        stroke={isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0'}
-                                                                        strokeWidth="1"
-                                                                        opacity="0.5"
-                                                                    />
-                                                                ))}
-
-                                                                {/* Previous month polygon (orange, back layer) - with expand animation */}
-                                                                {/* opacity: 0 ensures polygon is hidden until animation starts (prevents flash) */}
-                                                                <polygon
-                                                                    key={`prev-${animationKey}`}
-                                                                    points={prevPolygon}
-                                                                    fill="#f59e0b"
-                                                                    fillOpacity="0.12"
-                                                                    stroke="#f59e0b"
-                                                                    strokeWidth="2"
-                                                                    style={{
-                                                                        opacity: 0,
-                                                                        transformOrigin: `${center.x}px ${center.y}px`,
-                                                                        animation: 'radarExpand 1s ease-out forwards',
-                                                                        animationDelay: '0.1s'
-                                                                    }}
-                                                                />
-
-                                                                {/* Current month polygon (primary blue, front layer) - with expand animation */}
-                                                                {/* opacity: 0 ensures polygon is hidden until animation starts (prevents flash) */}
-                                                                <polygon
-                                                                    key={`curr-${animationKey}`}
-                                                                    points={currPolygon}
-                                                                    fill="var(--primary, #2563eb)"
-                                                                    fillOpacity="0.18"
-                                                                    stroke="var(--primary, #2563eb)"
-                                                                    strokeWidth="2"
-                                                                    style={{
-                                                                        opacity: 0,
-                                                                        transformOrigin: `${center.x}px ${center.y}px`,
-                                                                        animation: 'radarExpand 1s ease-out forwards',
-                                                                        animationDelay: '0.3s'
-                                                                    }}
-                                                                />
-
-                                                                {/* Data points for current month - fade in place with polygon */}
-                                                                {currPoints.map((p, i) => (
-                                                                    <circle
-                                                                        key={`curr-dot-${animationKey}-${i}`}
-                                                                        cx={p.x}
-                                                                        cy={p.y}
-                                                                        r="4"
-                                                                        fill="var(--primary, #2563eb)"
-                                                                        stroke="white"
-                                                                        strokeWidth="1.5"
-                                                                        style={{
-                                                                            opacity: 0,
-                                                                            animation: 'fade-in 0.5s ease-out forwards',
-                                                                            animationDelay: '0.8s'
-                                                                        }}
-                                                                    />
-                                                                ))}
-                                                            </>
-                                                        );
-                                                    })()}
-                                                </svg>
-
-                                                {/* Category icons with dual progress rings (outer=current, inner=previous) */}
-                                                {(() => {
-                                                    const sides = radarChartData.sides;
-                                                    // Calculate positions based on polygon sides (top vertex = -90 degrees)
-                                                    const getPositionStyle = (index: number) => {
-                                                        const angle = (-90 + (360 / sides) * index) * Math.PI / 180;
-                                                        const radius = 42; // percent from center
-                                                        const x = 50 + radius * Math.cos(angle);
-                                                        const y = 50 + radius * Math.sin(angle);
-                                                        return {
-                                                            left: `${x}%`,
-                                                            top: `${y}%`,
-                                                            transform: 'translate(-50%, -50%)'
-                                                        };
-                                                    };
-
-                                                    // Calculate percentage for progress ring
-                                                    const getPercent = (amount: number) => {
-                                                        if (radarChartData.maxValue === 0) return 0;
-                                                        return Math.min(100, (amount / radarChartData.maxValue) * 100);
-                                                    };
-
-                                                    const iconSize = 52; // Total size including rings - bigger
-                                                    const strokeWidth = 3.5;
-                                                    const outerRadius = 23; // Outer ring radius
-                                                    // Inner ring touches outer ring (no gap) - outer edge of inner = inner edge of outer
-                                                    const innerRadius = outerRadius - strokeWidth; // = 19.5, so inner ring outer edge = 19.5 + 1.75 = 21.25
-                                                    // Center fill radius touches inner ring inner edge
-                                                    const centerRadius = innerRadius - (strokeWidth / 2); // = 17.75
-
-                                                    // Animation delay per icon for staggered effect
-                                                    const baseDelay = 0.3; // seconds
-                                                    const staggerDelay = 0.1; // seconds per icon
-
-                                                    return radarChartData.categories.map((cat, i) => {
-                                                        const currPercent = getPercent(cat.currAmount);
-                                                        const prevPercent = getPercent(cat.prevAmount);
-                                                        const innerCircum = 2 * Math.PI * innerRadius;
-                                                        const outerCircum = 2 * Math.PI * outerRadius;
-                                                        // Swapped: outer = current month, inner = previous month
-                                                        const innerOffset = innerCircum - (prevPercent / 100) * innerCircum;
-                                                        const outerOffset = outerCircum - (currPercent / 100) * outerCircum;
-                                                        const isSelected = selectedRadarCategory?.name === cat.name;
-                                                        const animDelay = baseDelay + (i * staggerDelay);
-
-                                                        return (
-                                                            <div
-                                                                key={`${cat.name}-${animationKey}`}
-                                                                className="absolute cursor-pointer hover:scale-110 transition-transform"
-                                                                style={{
-                                                                    ...getPositionStyle(i),
-                                                                    width: iconSize,
-                                                                    height: iconSize
-                                                                }}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    if (selectedRadarCategory?.name === cat.name) {
-                                                                        setSelectedRadarCategory(null);
-                                                                    } else {
-                                                                        setSelectedRadarCategory({
-                                                                            name: cat.name,
-                                                                            emoji: cat.emoji,
-                                                                            currAmount: cat.currAmount,
-                                                                            prevAmount: cat.prevAmount,
-                                                                            color: cat.color
-                                                                        });
-                                                                    }
-                                                                }}
-                                                                data-testid={`radar-icon-${cat.name.toLowerCase().replace(/\s+/g, '-')}`}
-                                                            >
-                                                                {/* SVG with dual progress rings - no background circles, only percentage covered */}
-                                                                <svg width={iconSize} height={iconSize} style={{ position: 'absolute', top: 0, left: 0 }}>
-                                                                    {/* Outer ring progress (current month - primary blue) - animated fill */}
-                                                                    <circle
-                                                                        key={`outer-ring-${cat.name}-${animationKey}`}
-                                                                        cx={iconSize / 2}
-                                                                        cy={iconSize / 2}
-                                                                        r={outerRadius}
-                                                                        fill="none"
-                                                                        stroke="var(--primary, #2563eb)"
-                                                                        strokeWidth={strokeWidth}
-                                                                        strokeLinecap="round"
-                                                                        strokeDasharray={outerCircum}
-                                                                        style={{
-                                                                            transform: 'rotate(-90deg)',
-                                                                            transformOrigin: 'center',
-                                                                            // @ts-expect-error - CSS custom properties
-                                                                            '--ring-circumference': outerCircum,
-                                                                            '--target-offset': outerOffset,
-                                                                            strokeDashoffset: outerOffset,
-                                                                            animation: `progressRingFill 0.8s ease-out ${animDelay}s forwards`
-                                                                        }}
-                                                                    />
-                                                                    {/* Inner ring progress (previous month - orange) - animated fill */}
-                                                                    <circle
-                                                                        key={`inner-ring-${cat.name}-${animationKey}`}
-                                                                        cx={iconSize / 2}
-                                                                        cy={iconSize / 2}
-                                                                        r={innerRadius}
-                                                                        fill="none"
-                                                                        stroke="#f59e0b"
-                                                                        strokeWidth={strokeWidth}
-                                                                        strokeLinecap="round"
-                                                                        strokeDasharray={innerCircum}
-                                                                        style={{
-                                                                            transform: 'rotate(-90deg)',
-                                                                            transformOrigin: 'center',
-                                                                            // @ts-expect-error - CSS custom properties
-                                                                            '--ring-circumference': innerCircum,
-                                                                            '--target-offset': innerOffset,
-                                                                            strokeDashoffset: innerOffset,
-                                                                            animation: `progressRingFill 0.8s ease-out ${animDelay + 0.1}s forwards`
-                                                                        }}
-                                                                    />
-                                                                    {/* Center filled circle - fills up to inner ring edge, no gap */}
-                                                                    {/* Story 14.21: Use full category color for visible background */}
-                                                                    <circle
-                                                                        cx={iconSize / 2}
-                                                                        cy={iconSize / 2}
-                                                                        r={centerRadius}
-                                                                        fill={cat.color}
-                                                                        stroke={isSelected ? 'white' : 'none'}
-                                                                        strokeWidth={isSelected ? 2 : 0}
-                                                                    />
-                                                                </svg>
-                                                                {/* Emoji centered - larger */}
-                                                                <span
-                                                                    className="absolute flex items-center justify-center"
-                                                                    style={{
-                                                                        top: '50%',
-                                                                        left: '50%',
-                                                                        transform: 'translate(-50%, -50%)',
-                                                                        fontSize: '18px'
-                                                                    }}
-                                                                >
-                                                                    {cat.emoji}
-                                                                </span>
-                                                            </div>
-                                                        );
-                                                    });
-                                                })()}
-
-                                                {/* Left/Right comparison overlays when category selected */}
-                                                {/* Reading order: Left = Previous month, Right = Current month */}
-                                                {/* Key forces re-animation when category changes */}
-                                                {/* Story 14.13 Session 4: Increased font sizes for better readability */}
-                                                {selectedRadarCategory && (
-                                                    <React.Fragment key={selectedRadarCategory.name}>
-                                                        {/* Left side - Previous month (secondary) */}
-                                                        <div
-                                                            className="absolute left-0 top-1 flex flex-col items-start animate-comparison-left"
-                                                            style={{ maxWidth: '90px' }}
-                                                        >
-                                                            <div
-                                                                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-medium shadow-sm"
-                                                                style={{
-                                                                    backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
-                                                                    color: 'var(--secondary)'
-                                                                }}
-                                                            >
-                                                                <span className="opacity-70">{radarPrevMonthLabel}</span>
-                                                                <span>${Math.round(selectedRadarCategory.prevAmount / 1000)}k</span>
-                                                            </div>
-                                                            <div
-                                                                className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-xs font-semibold"
-                                                                style={{
-                                                                    backgroundColor: selectedRadarCategory.color + '25',
-                                                                    color: 'var(--primary)'
-                                                                }}
-                                                            >
-                                                                <span>{selectedRadarCategory.emoji}</span>
-                                                                <span className="truncate" style={{ maxWidth: '60px' }}>{
-                                                                    // Story 14.13 Session 4: Use view mode-aware translation for category names
-                                                                    selectedRadarCategory.name === 'Otro' || selectedRadarCategory.name === 'Other' ||
-                                                                    selectedRadarCategory.name === 'other' || selectedRadarCategory.name === 'other-item'
-                                                                        ? t('otherCategory')
-                                                                        : translateTreemapName(selectedRadarCategory.name)
-                                                                }</span>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Right side - Current month (primary) + change */}
-                                                        <div
-                                                            className="absolute right-0 top-1 flex flex-col items-end animate-comparison-right"
-                                                            style={{ maxWidth: '90px' }}
-                                                        >
-                                                            <div
-                                                                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-bold shadow-sm"
-                                                                style={{
-                                                                    backgroundColor: 'var(--primary)',
-                                                                    color: 'var(--bg)'
-                                                                }}
-                                                            >
-                                                                <span className="opacity-70">{radarCurrentMonthLabel}</span>
-                                                                <span>${Math.round(selectedRadarCategory.currAmount / 1000)}k</span>
-                                                            </div>
-                                                            {/* Change badge */}
-                                                            {(() => {
-                                                                const change = selectedRadarCategory.prevAmount > 0
-                                                                    ? ((selectedRadarCategory.currAmount - selectedRadarCategory.prevAmount) / selectedRadarCategory.prevAmount) * 100
-                                                                    : 100;
-                                                                const isUp = change >= 0;
-                                                                return (
-                                                                    <span
-                                                                        className="inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-xs font-bold"
-                                                                        style={{
-                                                                            backgroundColor: isUp ? 'var(--negative-bg)' : 'var(--positive-bg)',
-                                                                            color: isUp ? 'var(--negative-primary)' : 'var(--positive-primary)'
-                                                                        }}
-                                                                    >
-                                                                        {isUp ? '↑' : '↓'}{Math.abs(Math.round(change))}%
-                                                                    </span>
-                                                                );
-                                                            })()}
-                                                        </div>
-                                                    </React.Fragment>
-                                                )}
-
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div className="h-full flex items-center justify-center text-sm text-center" style={{ color: 'var(--secondary)' }}>
-                                                {t('needMoreCategories') || 'Se necesitan al menos 3 categorías para mostrar el radar'}
-                                            </div>
-                                        )}
+                                        <DashboardRadarSlide
+                                            radarChartData={radarChartData}
+                                            animationKey={animationKey}
+                                            isDark={isDark}
+                                            selectedRadarCategory={selectedRadarCategory}
+                                            setSelectedRadarCategory={setSelectedRadarCategory}
+                                            radarCurrentMonthLabel={radarCurrentMonthLabel}
+                                            radarPrevMonthLabel={radarPrevMonthLabel}
+                                            translateTreemapName={translateTreemapName}
+                                            t={t}
+                                        />
                                     </div>
                                 )}
 
@@ -2546,149 +2191,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
                                         }}
                                         onAnimationEnd={() => setSlideDirection(null)}
                                     >
-                                        {bumpChartData.categories.length > 0 ? (
-                                            <div>
-                                                {/* Tooltip display area at top */}
-                                                <div className="h-6 flex items-center justify-center mb-1">
-                                                    {bumpTooltip ? (
-                                                        <div className="flex items-center gap-2 text-sm">
-                                                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: bumpTooltip.color }} />
-                                                            <span style={{ color: bumpTooltip.color, fontWeight: 600 }}>{bumpTooltip.category === 'Otro' || bumpTooltip.category === 'Other' ? t('otherCategory') : translateCategory(bumpTooltip.category, lang)}</span>
-                                                            <span style={{ color: 'var(--text-tertiary)' }}>en {bumpTooltip.month}:</span>
-                                                            <span className="font-semibold" style={{ color: 'var(--foreground)' }}>
-                                                                ${Math.round(bumpTooltip.amount).toLocaleString('es-CL')}
-                                                            </span>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                                                            Toca un punto para ver detalles
-                                                        </span>
-                                                    )}
-                                                </div>
-
-                                                {/* SVG Bump Chart */}
-                                                <svg viewBox="0 0 320 110" style={{ width: '100%', height: '110px' }}>
-                                                    {/* Y-axis labels - 5 ranks */}
-                                                    <text x="0" y="6" dominantBaseline="middle" fontSize="10" fill="var(--text-tertiary)" fontWeight="600">#1</text>
-                                                    <text x="0" y="30" dominantBaseline="middle" fontSize="10" fill="var(--text-tertiary)">#2</text>
-                                                    <text x="0" y="54" dominantBaseline="middle" fontSize="10" fill="var(--text-tertiary)">#3</text>
-                                                    <text x="0" y="78" dominantBaseline="middle" fontSize="10" fill="var(--text-tertiary)">#4</text>
-                                                    <text x="0" y="102" dominantBaseline="middle" fontSize="10" fill="var(--text-tertiary)">#5</text>
-
-                                                    {/* Grid lines - 5 ranks */}
-                                                    <line x1="28" y1="6" x2="310" y2="6" stroke="var(--border-light)" strokeWidth="1" />
-                                                    <line x1="28" y1="30" x2="310" y2="30" stroke="var(--border-light)" strokeWidth="1" />
-                                                    <line x1="28" y1="54" x2="310" y2="54" stroke="var(--border-light)" strokeWidth="1" />
-                                                    <line x1="28" y1="78" x2="310" y2="78" stroke="var(--border-light)" strokeWidth="1" />
-                                                    <line x1="28" y1="102" x2="310" y2="102" stroke="var(--border-light)" strokeWidth="1" />
-
-                                                    {/* Category lines and points - with draw animation */}
-                                                    {bumpChartData.categories.map((cat, catIdx) => {
-                                                        const yPositions = [6, 30, 54, 78, 102]; // Y positions for ranks 1-5
-                                                        const xPositions = [28, 122, 216, 310]; // X positions for 4 months
-                                                        const points = cat.ranks.map((rank, monthIdx) => {
-                                                            const y = yPositions[Math.min(rank - 1, 4)];
-                                                            return `${xPositions[monthIdx]},${y}`;
-                                                        }).join(' ');
-
-                                                        return (
-                                                            <g key={`${cat.name}-${animationKey}`}>
-                                                                {/* Line - with draw animation */}
-                                                                <polyline
-                                                                    fill="none"
-                                                                    stroke={cat.color}
-                                                                    strokeWidth="3"
-                                                                    strokeLinecap="round"
-                                                                    strokeLinejoin="round"
-                                                                    points={points}
-                                                                    style={{
-                                                                        strokeDasharray: 1000,
-                                                                        strokeDashoffset: 1000,
-                                                                        animation: 'drawLine 0.8s ease-out forwards',
-                                                                        animationDelay: `${catIdx * 0.1}s`
-                                                                    }}
-                                                                />
-                                                                {/* Points - all same size, clickable, with appear animation */}
-                                                                {cat.ranks.map((rank, monthIdx) => {
-                                                                    const y = yPositions[Math.min(rank - 1, 4)];
-                                                                    const isSelected = bumpTooltip?.category === cat.name && bumpTooltip?.month === bumpChartMonthLabels[monthIdx];
-                                                                    return (
-                                                                        <circle
-                                                                            key={`${cat.name}-${monthIdx}-${animationKey}`}
-                                                                            cx={xPositions[monthIdx]}
-                                                                            cy={y}
-                                                                            r={isSelected ? 8 : 6}
-                                                                            fill={cat.color}
-                                                                            stroke="white"
-                                                                            strokeWidth={isSelected ? 3 : 2}
-                                                                            style={{
-                                                                                cursor: 'pointer',
-                                                                                opacity: 0,
-                                                                                animation: 'dotAppear 0.3s ease-out forwards',
-                                                                                animationDelay: `${catIdx * 0.1 + monthIdx * 0.15 + 0.2}s`
-                                                                            }}
-                                                                            onClick={() => setBumpTooltip({
-                                                                                category: cat.name,
-                                                                                month: bumpChartMonthLabels[monthIdx],
-                                                                                amount: cat.amounts[monthIdx],
-                                                                                color: cat.color
-                                                                            })}
-                                                                        />
-                                                                    );
-                                                                })}
-                                                            </g>
-                                                        );
-                                                    })}
-                                                </svg>
-
-                                                {/* X-axis labels */}
-                                                <div className="flex justify-between mt-1 pl-5">
-                                                    {bumpChartMonthLabels.map((label, idx) => (
-                                                        <span
-                                                            key={label}
-                                                            className="text-xs"
-                                                            style={{
-                                                                color: idx === 3 ? 'var(--primary)' : 'var(--text-tertiary)',
-                                                                fontWeight: idx === 3 ? 600 : 400
-                                                            }}
-                                                        >
-                                                            {label}
-                                                        </span>
-                                                    ))}
-                                                </div>
-
-                                                {/* Legend - with sequential fade-in animation */}
-                                                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t" style={{ borderColor: isDark ? '#334155' : '#e2e8f0' }}>
-                                                    {bumpChartData.categories.map((cat, idx) => (
-                                                        <div
-                                                            key={`${cat.name}-${animationKey}`}
-                                                            className="flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium"
-                                                            style={{
-                                                                backgroundColor: `${cat.color}20`,
-                                                                opacity: 0,
-                                                                animation: 'fade-in 300ms ease-out forwards',
-                                                                animationDelay: `${800 + idx * 100}ms`
-                                                            }}
-                                                        >
-                                                            {/* Story 14.13 Session 4: Use category emoji instead of dot */}
-                                                            <span className="text-sm">{getTreemapEmoji(cat.name)}</span>
-                                                            <span style={{ color: cat.color }}>
-                                                                {/* Story 14.13 Session 4: Use view mode-aware translation */}
-                                                                {cat.name === 'Otro' || cat.name === 'Other' || cat.name === 'other' || cat.name === 'other-item'
-                                                                    ? t('otherCategory')
-                                                                    : translateTreemapName(cat.name)} #{idx + 1}
-                                                            </span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="h-[180px] flex items-center justify-center">
-                                                <p className="text-sm text-center" style={{ color: 'var(--secondary)' }}>
-                                                    {t('noDataForBumpChart') || 'Sin datos suficientes'}
-                                                </p>
-                                            </div>
-                                        )}
+                                        <DashboardBumpSlide
+                                            bumpChartData={bumpChartData}
+                                            bumpChartMonthLabels={bumpChartMonthLabels}
+                                            animationKey={animationKey}
+                                            isDark={isDark}
+                                            lang={lang as 'en' | 'es'}
+                                            bumpTooltip={bumpTooltip}
+                                            setBumpTooltip={setBumpTooltip}
+                                            translateTreemapName={translateTreemapName}
+                                            getTreemapEmoji={getTreemapEmoji}
+                                            t={t}
+                                        />
                                     </div>
                                 )}
                             </div>
