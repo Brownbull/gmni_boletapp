@@ -3,7 +3,7 @@
 **Epic:** 15 - Codebase Refactoring
 **Points:** 3
 **Priority:** MEDIUM
-**Status:** ready-for-dev
+**Status:** done
 
 ## Description
 
@@ -20,27 +20,27 @@ Phase 5 extracted ~4,670 lines from mega-views into sub-components and helpers, 
 
 ## Acceptance Criteria
 
-- [ ] **AC1:** `TrendsView/helpers.test.ts` covers all 12 exported functions with at least happy path + edge cases
-- [ ] **AC2:** `categoryAggregation.test.ts` expanded to cover `buildProductKey` edge cases (empty strings, unicode)
-- [ ] **AC3:** Basic render tests for DonutChart (renders without crash, handles empty data)
-- [ ] **AC4:** Basic render tests for IconCategoryFilter (renders filter chips, handles selection)
-- [ ] **AC5:** All new tests pass in `npm run test:quick`
+- [x] **AC1:** `TrendsView/helpers.test.ts` covers all 12 exported functions with at least happy path + edge cases
+- [x] **AC2:** `categoryAggregation.test.ts` expanded to cover `buildProductKey` edge cases (empty strings, unicode)
+- [x] **AC3:** Basic render tests for DonutChart (renders without crash, handles empty data)
+- [x] **AC4:** Basic render tests for IconCategoryFilter (renders filter chips, handles selection)
+- [x] **AC5:** All new tests pass in `npm run test:quick`
 
 ## Tasks
 
-- [ ] **Task 1:** Write `tests/unit/views/TrendsView/helpers.test.ts` (PRIORITY)
-  - [ ] Test `getPeriodLabel` for all period types
-  - [ ] Test `filterByPeriod` with various date ranges
-  - [ ] Test `computeAllCategoryData` with mock transactions
-  - [ ] Test `computeTreemapCategories` threshold grouping
-  - [ ] Test `computeTrendCategories` with sparkline data
-  - [ ] Test `formatShortCurrency` all formatting cases
-  - [ ] Test remaining helper functions
-- [ ] **Task 2:** Expand `tests/unit/utils/categoryAggregation.test.ts`
-  - [ ] Add `buildProductKey` edge cases (empty name, empty merchant, unicode, whitespace)
-- [ ] **Task 3:** Write basic component tests
-  - [ ] `tests/unit/views/TrendsView/DonutChart.test.tsx` — renders with data, renders empty state
-  - [ ] `tests/unit/features/history/components/IconCategoryFilter.test.tsx` — renders chips, handles click
+- [x] **Task 1:** Write `tests/unit/views/TrendsView/helpers.test.ts` (PRIORITY)
+  - [x] Test `getPeriodLabel` for all period types
+  - [x] Test `filterByPeriod` with various date ranges
+  - [x] Test `computeAllCategoryData` with mock transactions
+  - [x] Test `computeTreemapCategories` threshold grouping
+  - [x] Test `computeTrendCategories` with sparkline data
+  - [x] Test `formatShortCurrency` all formatting cases
+  - [x] Test remaining helper functions
+- [x] **Task 2:** Expand `tests/unit/utils/categoryAggregation.test.ts`
+  - [x] Add `buildProductKey` edge cases (empty name, empty merchant, unicode, whitespace)
+- [x] **Task 3:** Write basic component tests
+  - [x] `tests/unit/views/TrendsView/DonutChart.test.tsx` — renders with data, renders empty state
+  - [x] `tests/unit/features/history/components/IconCategoryFilter.test.tsx` — renders chips, handles click
 
 ## File Specification
 
@@ -57,3 +57,13 @@ Phase 5 extracted ~4,670 lines from mega-views into sub-components and helpers, 
 - `formatShortCurrency` currently hardcodes `$` symbol (noted in TD findings but not blocking)
 - DonutChart is 1,086 lines with 30+ props — test only basic rendering, not drill-down logic
 - Use existing `tests/unit/utils/categoryAggregation.test.ts` (25 existing tests) as the base for expansion
+
+## Senior Developer Review (ECC)
+
+- **Review date:** 2026-02-10
+- **Classification:** SIMPLE
+- **ECC agents used:** code-reviewer, tdd-guide
+- **TEA Score:** 92/100 (GOOD)
+- **Outcome:** APPROVED — 5 quick fixes applied (mock prop names, assertion specificity, callback documentation)
+- **Tests:** 117/117 passing (2.51s)
+- **Deferred items:** 0 new TD stories (all out-of-scope items already tracked by TD-5, TD-6)

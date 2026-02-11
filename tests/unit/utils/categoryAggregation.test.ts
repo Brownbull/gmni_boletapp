@@ -71,6 +71,34 @@ describe('buildProductKey', () => {
     // The function signature takes strings, but callers often pass item.name || ''
     expect(buildProductKey('Unknown', 'unknown')).toBe('unknown::unknown');
   });
+
+  // Story 15-TD-4: Additional edge cases for buildProductKey
+  it('handles unicode characters', () => {
+    expect(buildProductKey('Café', 'Jumbo')).toBe('café::jumbo');
+    expect(buildProductKey('Leche Étiqueté', 'Líder')).toBe('leche étiqueté::líder');
+  });
+
+  it('handles emoji in name', () => {
+    expect(buildProductKey('🍎 Apple', 'Store')).toBe('🍎 apple::store');
+  });
+
+  it('trims leading and trailing whitespace', () => {
+    expect(buildProductKey('  milk  ', '  walmart  ')).toBe('milk::walmart');
+  });
+
+  it('collapses tabs and mixed whitespace', () => {
+    expect(buildProductKey('organic\t  apple', 'super\t  market')).toBe('organic apple::super market');
+  });
+
+  it('handles only whitespace as input (trims to empty)', () => {
+    // '   ' is truthy so || fallback doesn't trigger, but trim() yields ''
+    // This is a known edge case — callers pass `item.name || ''` which catches undefined/null
+    expect(buildProductKey('   ', '   ')).toBe('::');
+  });
+
+  it('preserves accented characters in lowercase', () => {
+    expect(buildProductKey('ÑOQUIS', 'LÍDER')).toBe('ñoquis::líder');
+  });
 });
 
 // ============================================================================
