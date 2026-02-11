@@ -347,7 +347,7 @@ describe('useSettingsViewData', () => {
     // =========================================================================
 
     describe('theme data (AC3)', () => {
-        it('returns theme settings from ThemeContext', () => {
+        it('returns theme settings from useThemeSettings', () => {
             const { result } = renderHook(() => useSettingsViewData());
 
             expect(result.current.theme.theme).toBe('light');

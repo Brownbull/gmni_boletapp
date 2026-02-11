@@ -9,7 +9,8 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { FilterChips } from '@features/history/components/FilterChips';
-import { HistoryFiltersProvider, type HistoryFilterState } from '../../../../src/contexts/HistoryFiltersContext';
+import { HistoryFiltersProvider } from '../../../../src/contexts/HistoryFiltersContext';
+import type { HistoryFilterState } from '@/types/historyFilters';
 
 // ============================================================================
 // Test Fixtures

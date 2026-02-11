@@ -12,7 +12,7 @@ import type { TemporalPosition, CategoryPosition } from '@/types/analytics';
 import type {
   TemporalFilterState,
   CategoryFilterState,
-} from '@/contexts/HistoryFiltersContext';
+} from '@/types/historyFilters';
 
 // ============================================================================
 // Temporal Position → Filter Conversion

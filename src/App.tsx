@@ -108,7 +108,8 @@ import {
     useTransactionEditorActions,
 } from '@features/transaction-editor';
 import { getQuarterFromMonth } from '@features/analytics/utils/analyticsHelpers';
-import { HistoryFiltersProvider, type HistoryFilterState, type TemporalFilterState } from './contexts/HistoryFiltersContext';
+import { HistoryFiltersProvider } from './contexts/HistoryFiltersContext';
+import type { HistoryFilterState, TemporalFilterState } from '@/types/historyFilters';
 import type { HistoryNavigationPayload } from '@features/analytics/utils/analyticsToHistoryFilters';
 import { analyzeReceipt, ReceiptType } from './services/gemini';
 import { SupportedCurrency } from './services/userPreferencesService';
@@ -1661,7 +1662,7 @@ function App() {
                 {/* Story 14e-22: AppProviders consolidates app-level providers.
                   * Story 14e-25d: ViewHandlersProvider removed - views use direct hooks.
                   * Story 14e-45: NavigationProvider removed - navigation via useNavigationStore.
-                  * Includes ThemeProvider, AppStateProvider, NotificationProvider.
+                  * Includes NotificationProvider (ThemeProvider/AppStateProvider removed in 15-7b/15-7c).
                   */}
                 <AppProviders
                     fontFamily={userPreferences?.fontFamily}

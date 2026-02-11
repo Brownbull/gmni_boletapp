@@ -14,7 +14,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type {
     HistoryFilterState,
     HistoryFilterAction,
-} from '@/contexts/HistoryFiltersContext';
+} from '@/types/historyFilters';
 
 // ============================================================================
 // Default State

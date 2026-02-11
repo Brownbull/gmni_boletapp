@@ -6,7 +6,7 @@
  *
  * @example
  * ```tsx
- * import { useAuthContext, useNavigation, useTheme } from './contexts';
+ * import { useAuthContext, HistoryFiltersProvider } from './contexts';
  * ```
  */
 
@@ -34,11 +34,8 @@ export {
 // - View type: import { View } from '@app/types'
 // - SettingsSubview type: import { SettingsSubview } from '@/shared/stores/useNavigationStore'
 
-// Story 15-7c: ThemeContext DEPRECATED — theme settings now use useSettingsStore (Zustand)
-// ThemeProvider and useTheme() removed. Use useThemeSettings() from '@/shared/stores'.
-export {
-    type ThemeContextValue,
-} from './ThemeContext';
+// Story 15-7c: ThemeContext DELETED (15-TD-7) — theme settings use useSettingsStore (Zustand)
+// Use useThemeSettings() from '@/shared/stores'.
 
 // NotificationContext - In-app notifications
 export {
@@ -48,11 +45,7 @@ export {
     type NotificationContextValue,
 } from './NotificationContext';
 
-// Story 15-7b: AppStateContext DEPRECATED — zero consumers, useToast() is the toast mechanism
-export {
-    type AppStateContextValue,
-    type ToastMessage,
-} from './AppStateContext';
+// Story 15-7b: AppStateContext DELETED (15-TD-7) — useToast() is the toast mechanism
 
 // Story 14e-11: ScanContext removed - scan state now managed by Zustand store
 // Use @features/scan/store for scan state and actions
@@ -61,14 +54,12 @@ export {
 export { AnalyticsProvider, AnalyticsContext } from './AnalyticsContext';
 
 // Story 15-7a: HistoryFiltersContext migrated to Zustand (useHistoryFiltersStore).
+// Story 15-TD-7: Types extracted to src/types/historyFilters.ts.
 // HistoryFiltersProvider remains as thin initialization boundary.
 // State access via useHistoryFilters() hook or useHistoryFiltersStore.
 export {
     HistoryFiltersProvider,
     getDefaultFilterState,
-    type HistoryFilterState,
-    type TemporalFilterState,
-    type HistoryFiltersContextValue,
 } from './HistoryFiltersContext';
 
 // =============================================================================

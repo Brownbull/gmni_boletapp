@@ -145,12 +145,13 @@ development_status:
   15-TD-4-phase5-component-tests: done             # 3 pts - TD-3, TD-26: Missing tests for DonutChart, helpers, extracted components
   15-TD-5-mega-view-decomposition-5b: done             # 5 pts - TD-2, TD-4, TD-14, TD-24: Further view decomposition + naming fix
   15-TD-6-dry-cleanup: done                 # 3 pts - TD-1, TD-5, TD-8, TD-25: CircularProgress, types, normalizers (also covers CR-11)
-  15-TD-7-context-cleanup-dead-code: ready-for-dev  # 3 pts - TD-10, TD-12, TD-19, TD-21: Delete dead contexts, unify toast
+  15-TD-7-context-cleanup-dead-code: done    # 3 pts - TD-10, TD-12, TD-19, TD-21: Delete dead contexts, unify toast
   15-TD-8-input-validation-hardening: ready-for-dev  # 2 pts - TD-22, TD-23: validateAppId + data: URI pattern
   15-TD-9-dal-polish: ready-for-dev                 # 3 pts - TD-7, TD-9, CR-2: save() signature + consumer migration + deterministic doc IDs
   15-TD-12-batch-migration-error-surfacing: ready-for-dev  # 2 pts - CR-4, CR-9: migrateCreatedAt raw writeBatch + partial-commit surfacing
   15-TD-15-standalone-mutation-safety: ready-for-dev       # 2 pts - TD-11 deferred + audit: deleteTrustedMerchant/deleteTransaction/updateTransaction/deleteMapping transaction wrapping
   15-TD-16-mega-view-decomposition-5c: ready-for-dev      # 5 pts - Further TrendsView (3,199→2,000) + DashboardView (2,482→1,500) decomposition + i18n fixes in extracted slides
+  15-TD-17-report-innerhtml-sanitization: ready-for-dev   # 1 pt  - ReportDetailOverlay innerHTML → DOM API (pre-existing XSS defense-in-depth)
 
   epic-15-retrospective: optional
 

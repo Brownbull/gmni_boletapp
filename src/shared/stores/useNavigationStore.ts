@@ -20,7 +20,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 import type { View } from '@app/types';
-import type { HistoryFilterState } from '@/contexts/HistoryFiltersContext';
+import type { HistoryFilterState } from '@/types/historyFilters';
 import type { AnalyticsNavigationState } from '@/types/analytics';
 
 // =============================================================================

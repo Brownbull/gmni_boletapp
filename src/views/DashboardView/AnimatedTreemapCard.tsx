@@ -154,6 +154,7 @@ const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
                     strokeWidth={strokeWidth}
                     fontSize={circleFontSize}
                     fgColor={textColor}
+                    bgRingOpacity={0.2}
                 />
             </div>
         </div>

@@ -65,10 +65,9 @@ import { settingsActions } from '../shared/stores';
  * Providers are ordered from outermost (least dependencies) to innermost
  * (may depend on outer providers).
  *
- * Order rationale:
- * - ThemeProvider: No dependencies, provides theme to all children
- * - AppStateProvider: No dependencies on above, provides toast/operation state
- * - NotificationProvider: May show toasts via AppStateProvider
+ * Remaining provider:
+ * - NotificationProvider: Provides in-app notification state
+ * Note: ThemeProvider removed (15-7c), AppStateProvider removed (15-7b)
  *
  * Story 14e-45: NavigationProvider removed - navigation now uses Zustand store:
  * - Navigation state: useNavigationStore from @/shared/stores

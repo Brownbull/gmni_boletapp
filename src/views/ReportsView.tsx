@@ -42,8 +42,8 @@ import { useNavigation, useNavigationActions } from '../shared/stores/useNavigat
 import type { View } from '../app/types';
 import type { Transaction } from '../types/transaction';
 import type { ReportPeriodType } from '../types/report';
-import type { TemporalFilterState, HistoryFilterState } from '../contexts/HistoryFiltersContext';
-import { getDefaultFilterState } from '../contexts/HistoryFiltersContext';
+import type { TemporalFilterState, HistoryFilterState } from '@/types/historyFilters';
+import { getDefaultFilterState } from '@/shared/stores/useHistoryFiltersStore';
 
 /**
  * Story 14e-25c.2: Minimal props interface for ReportsView.

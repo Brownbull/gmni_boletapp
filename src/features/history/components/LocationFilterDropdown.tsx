@@ -14,7 +14,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { MapPin, ChevronLeft } from 'lucide-react';
 import { useHistoryFilters } from '@shared/hooks/useHistoryFilters';
 import { useLocationDisplay } from '@/hooks/useLocations';
-import type { LocationFilterState } from '@/contexts/HistoryFiltersContext';
+import type { LocationFilterState } from '@/types/historyFilters';
 import type { AvailableFilters } from '@shared/utils/historyFilterUtils';
 import type { Language } from '@/types/settings';
 

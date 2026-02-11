@@ -11,7 +11,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Tag, ChevronLeft } from 'lucide-react';
 import { useHistoryFilters } from '@shared/hooks/useHistoryFilters';
-import type { CategoryFilterState } from '@/contexts/HistoryFiltersContext';
+import type { CategoryFilterState } from '@/types/historyFilters';
 import type { AvailableFilters } from '@shared/utils/historyFilterUtils';
 // Story 9.12: Category translations
 import { translateCategory } from '@/utils/categoryTranslations';

@@ -40,7 +40,7 @@ import { formatCurrency as formatCurrencyUtil } from '@/utils/currency';
 import { formatDate as formatDateUtil } from '@/utils/date';
 import { TRANSLATIONS } from '@/utils/translations';
 import type { Transaction } from '@/types/transaction';
-import type { HistoryFilterState } from '@/contexts/HistoryFiltersContext';
+import type { HistoryFilterState } from '@/types/historyFilters';
 import type { Language, Theme, ColorTheme, FontColorMode } from '@/types/settings';
 
 // =============================================================================

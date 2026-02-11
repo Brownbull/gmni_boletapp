@@ -9,7 +9,7 @@
  * - Calls useAuth() for user/services
  * - Calls useTransactions() for transaction data
  * - Calls useUserPreferences() for user defaults
- * - Calls useThemeSettings() for theme/locale settings (via ThemeContext)
+ * - Calls useThemeSettings() for theme/locale settings (via useThemeSettings from useSettingsStore)
  * - Gets analyticsInitialState from useNavigationStore()
  * - Provides formatters (t) internally
  *

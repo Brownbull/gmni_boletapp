@@ -16,7 +16,7 @@ import type {
   TemporalFilterState,
   CategoryFilterState,
   LocationFilterState,
-} from '@/contexts/HistoryFiltersContext';
+} from '@/types/historyFilters';
 import {
   useHistoryFiltersState,
   useHistoryFiltersDispatch,

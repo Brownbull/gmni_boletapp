@@ -12,7 +12,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Calendar, ChevronLeft } from 'lucide-react';
 import { useHistoryFilters } from '@shared/hooks/useHistoryFilters';
-import type { TemporalFilterState } from '@/contexts/HistoryFiltersContext';
+import type { TemporalFilterState } from '@/types/historyFilters';
 import type { AvailableFilters } from '@shared/utils/historyFilterUtils';
 import {
   getWeeksInMonth,

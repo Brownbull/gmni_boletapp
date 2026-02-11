@@ -13,7 +13,7 @@ import type {
   TemporalFilterState,
   CategoryFilterState,
   LocationFilterState,
-} from '@/contexts/HistoryFiltersContext';
+} from '@/types/historyFilters';
 // Story 14.15b: Category normalization for legacy data compatibility
 import { normalizeItemCategory } from '@/utils/categoryNormalizer';
 // Story 14.13a: Category group expansion for multi-dimension filtering

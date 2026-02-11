@@ -221,7 +221,7 @@ describe('useTrendsViewData', () => {
     // =========================================================================
 
     describe('theme and locale settings (AC2)', () => {
-        it('returns theme from ThemeContext', () => {
+        it('returns theme from useThemeSettings', () => {
             const { result } = renderHook(() => useTrendsViewData());
 
             expect(result.current.theme).toBe('light');
@@ -229,7 +229,7 @@ describe('useTrendsViewData', () => {
             expect(result.current.fontColorMode).toBe('colorful');
         });
 
-        it('returns locale settings from ThemeContext', () => {
+        it('returns locale settings from useThemeSettings', () => {
             const { result } = renderHook(() => useTrendsViewData());
 
             expect(result.current.lang).toBe('en');

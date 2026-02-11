@@ -37,7 +37,7 @@ import {
     buildWeekFilter,
     filterTransactionsByHistoryFilters,
 } from '@shared/utils/historyFilterUtils';
-import type { HistoryFilterState } from '../../contexts/HistoryFiltersContext';
+import type { HistoryFilterState } from '@/types/historyFilters';
 // Story 14.13: Hooks
 import { useSwipeNavigation } from '../../hooks/useSwipeNavigation';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
