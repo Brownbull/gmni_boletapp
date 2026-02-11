@@ -66,10 +66,6 @@ vi.mock('../../../../src/utils/categoryTranslations', () => ({
   getItemCategoryEmoji: () => '🥩',
 }));
 
-vi.mock('../../../../src/utils/categoryEmoji', () => ({
-  getCategoryEmoji: () => '🛒',
-}));
-
 vi.mock('../../../../src/hooks/useCountUp', () => ({
   useCountUp: (target: number) => target,
 }));
@@ -80,18 +76,6 @@ vi.mock('../../../../src/views/TrendsView/helpers', () => ({
   computeSubcategoryData: () => [],
   computeItemGroupsForStore: () => [],
   computeItemCategoriesInGroup: () => [],
-}));
-
-vi.mock('../../../../src/views/TrendsView/animationComponents', () => ({
-  AnimatedAmountBar: ({ value }: { value: number }) => (
-    <span data-testid="mock-amount-bar">${value}</span>
-  ),
-  AnimatedCountPill: ({ count }: { count: number }) => (
-    <span data-testid="mock-count-pill">{count}</span>
-  ),
-  AnimatedPercent: ({ percent }: { percent: number }) => (
-    <span data-testid="mock-percent">{percent}%</span>
-  ),
 }));
 
 // =============================================================================
@@ -115,19 +99,16 @@ const defaultProps = {
   categoryData: [makeCategoryData()],
   allCategoryData: [makeCategoryData()],
   total: 100000,
-  periodLabel: 'Enero 2026',
   currency: 'CLP',
   locale: 'es',
   isDark: false,
-  animationKey: 1,
-  onCategoryClick: vi.fn(), // required prop, not under test in basic render suite
   canExpand: false,
   canCollapse: false,
   otroCount: 0,
   otroCategories: [],
   expandedCount: 0,
-  onExpand: vi.fn(), // required prop, not under test in basic render suite
-  onCollapse: vi.fn(), // required prop, not under test in basic render suite
+  onExpand: vi.fn(),
+  onCollapse: vi.fn(),
   transactions: [],
   viewMode: 'store-categories' as DonutViewMode,
   countMode: 'transactions' as const,

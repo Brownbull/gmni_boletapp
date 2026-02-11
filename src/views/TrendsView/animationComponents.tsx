@@ -13,68 +13,10 @@ import { useCountUp } from '../../hooks/useCountUp';
 import { formatCurrency } from '../../utils/currency';
 
 // ============================================================================
-// CircularProgress
+// CircularProgress — re-exported from shared component (Story 15-TD-6)
 // ============================================================================
-
-/** Circular progress badge for percentage display with animated value (matches Dashboard) */
-export const CircularProgress: React.FC<{
-    animatedPercent: number;
-    size: number;
-    strokeWidth: number;
-    fgColor?: string;  // Story 14.21: Foreground color for text/stroke contrast
-    fontSize?: number; // Optional override for percentage text size
-}> = ({ animatedPercent, size, strokeWidth, fgColor = 'white', fontSize }) => {
-    const radius = (size - strokeWidth) / 2;
-    const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = circumference - (animatedPercent / 100) * circumference;
-    // Use provided fontSize or calculate based on size
-    const textSize = fontSize ?? (size <= 24 ? 8 : 10);
-
-    return (
-        <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
-            <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-                {/* Background circle - Story 14.21: Use fgColor with transparency */}
-                <circle
-                    cx={size / 2}
-                    cy={size / 2}
-                    r={radius}
-                    fill="none"
-                    stroke={fgColor}
-                    strokeOpacity={0.3}
-                    strokeWidth={strokeWidth}
-                />
-                {/* Progress circle - Story 14.21: Use fgColor for stroke */}
-                <circle
-                    cx={size / 2}
-                    cy={size / 2}
-                    r={radius}
-                    fill="none"
-                    stroke={fgColor}
-                    strokeWidth={strokeWidth}
-                    strokeDasharray={circumference}
-                    strokeDashoffset={strokeDashoffset}
-                    strokeLinecap="round"
-                    style={{ transition: 'stroke-dashoffset 0.05s ease-out' }}
-                />
-            </svg>
-            {/* Percentage text - Story 14.21: Use fgColor for text */}
-            <span
-                style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    fontSize: `${textSize}px`,
-                    fontWeight: 600,
-                    color: fgColor,
-                    textShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                }}
-            >
-                {animatedPercent}%
-            </span>
-        </div>
-    );
-};
+export { CircularProgress } from '@shared/components/CircularProgress';
+export type { CircularProgressProps } from '@shared/components/CircularProgress';
 
 // ============================================================================
 // AnimatedAmountBar

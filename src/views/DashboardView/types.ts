@@ -3,30 +3,8 @@ import { getCategoryColorsAuto } from '../../config/categoryColors';
 // Story 11.1: Sort type for dashboard transactions
 export type SortType = 'transactionDate' | 'scanDate';
 
-// Story 9.11: Extended transaction interface with v2.6.0 fields for unified display
-export interface Transaction {
-    id: string;
-    merchant: string;
-    alias?: string;
-    date: string;
-    total: number;
-    category: string;
-    imageUrls?: string[];
-    thumbnailUrl?: string;
-    items?: Array<{
-        name: string;
-        price: number;
-        category?: string;
-        subcategory?: string;
-    }>;
-    // v2.6.0 fields for unified card display
-    time?: string;
-    city?: string;
-    country?: string;
-    currency?: string;
-    // Story 11.1: createdAt for sort by scan date
-    createdAt?: any; // Firestore Timestamp or Date
-}
+// Story 15-TD-6: Use canonical Transaction type instead of local definition
+export type { Transaction } from '@/types/transaction';
 
 // Story 14.12: Carousel slide configuration
 export type CarouselSlide = 0 | 1 | 2;

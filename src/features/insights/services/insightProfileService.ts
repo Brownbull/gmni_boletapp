@@ -24,7 +24,7 @@ import {
   increment,
   FieldValue,
 } from 'firebase/firestore';
-import { UserInsightProfile, InsightRecord, MAX_RECENT_INSIGHTS } from '@/types/insight';
+import { UserInsightProfile, InsightRecord, InsightContent, MAX_RECENT_INSIGHTS } from '@/types/insight';
 import { insightProfileDocSegments } from '@/lib/firestorePaths';
 
 function getProfileDocRef(db: Firestore, appId: string, userId: string) {
@@ -183,7 +183,7 @@ export async function recordInsightShown(
   appId: string,
   insightId: string,
   transactionId?: string,
-  fullInsight?: { title?: string; message?: string; icon?: string; category?: string }
+  fullInsight?: InsightContent
 ): Promise<void> {
   const profile = await getOrCreateInsightProfile(db, userId, appId);
   const profileRef = getProfileDocRef(db, appId, userId);

@@ -11,7 +11,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { User } from 'firebase/auth';
 import { Firestore } from 'firebase/firestore';
-import { UserInsightProfile, LocalInsightCache } from '@/types/insight';
+import { UserInsightProfile, LocalInsightCache, FullInsightContent } from '@/types/insight';
 import {
   getOrCreateInsightProfile,
   recordInsightShown,
@@ -24,14 +24,6 @@ import {
   setLocalCache,
   incrementScanCounter,
 } from '../services/insightEngineService';
-
-/** Full insight content for storage */
-interface FullInsightContent {
-  title?: string;
-  message?: string;
-  icon?: string;
-  category?: string;
-}
 
 interface UseInsightProfileResult {
   profile: UserInsightProfile | null;

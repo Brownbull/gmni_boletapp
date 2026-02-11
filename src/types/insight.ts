@@ -168,6 +168,22 @@ export interface PrecomputedAggregates {
 }
 
 // ============================================================================
+// Insight Content Types (shared by repository and hooks)
+// Story 15-TD-6: Consolidated from insightProfileRepository + useInsightProfile
+// ============================================================================
+
+/** Content payload for recording/displaying insights */
+export interface InsightContent {
+  title?: string;
+  message?: string;
+  icon?: string;
+  category?: string;
+}
+
+/** Full insight content — alias for semantic clarity in hook APIs */
+export type FullInsightContent = InsightContent;
+
+// ============================================================================
 // Constants
 // ============================================================================
 

@@ -22,29 +22,22 @@ import {
 import { LISTENER_LIMITS } from './firestore';
 import { sanitizeMerchantName } from '@/utils/sanitize';
 import { trustedMerchantsPath } from '@/lib/firestorePaths';
+import { normalizeForMapping } from './mappingServiceBase';
 
 /**
- * Normalize a merchant name for trust matching
- * - Lowercase
- * - Trim whitespace
- * - Remove special characters except alphanumeric and spaces
- * - Collapse multiple spaces
- * - Remove accents/diacritics
+ * Normalize a merchant name for trust matching.
+ * Composes on normalizeForMapping with an additional NFD diacritics step.
  *
  * Story 11.4: Task 2 - Handle merchant name normalization
+ * Story 15-TD-6: Compose on normalizeForMapping base
  */
 export function normalizeMerchantNameForTrust(name: string): string {
-    return name
-        .toLowerCase()
-        .trim()
-        // Remove accents/diacritics
+    // NFD diacritics removal (the step normalizeForMapping lacks)
+    const withoutDiacritics = name
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        // Remove non-alphanumeric except spaces
-        .replace(/[^a-z0-9\s]/gi, '')
-        // Collapse multiple spaces
-        .replace(/\s+/g, ' ')
-        .trim();
+        .replace(/[\u0300-\u036f]/g, '');
+    // Shared normalization: lowercase, trim, remove non-alnum, collapse spaces
+    return normalizeForMapping(withoutDiacritics);
 }
 
 /**

@@ -3,73 +3,7 @@ import { Receipt, Package } from 'lucide-react';
 import { useCountUp } from '../../hooks/useCountUp';
 import { getCategoryColorsAuto } from '../../config/categoryColors';
 import { getCategoryEmoji } from '../../utils/categoryEmoji';
-
-// Story 14.12: Circular progress ring component for percentage display with text inside
-// Story 14.21: Added fgColor prop for proper contrast with unified colors
-interface CircularProgressProps {
-    animatedPercent: number;
-    size: number;
-    strokeWidth: number;
-    fontSize?: number;
-    /** Foreground color for stroke and text (defaults to white for backwards compat) */
-    fgColor?: string;
-}
-
-const CircularProgress: React.FC<CircularProgressProps> = ({ animatedPercent, size, strokeWidth, fontSize, fgColor = 'white' }) => {
-    const radius = (size - strokeWidth) / 2;
-    const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = circumference - (animatedPercent / 100) * circumference;
-    // Default font size based on circle size (0.38 multiplier for better readability)
-    const textSize = fontSize || Math.round(size * 0.38);
-    // Story 14.21: Calculate semi-transparent version of fgColor for background ring
-    const bgRingColor = fgColor === 'white' ? 'rgba(255,255,255,0.3)' : `${fgColor}33`; // 33 = 20% opacity in hex
-
-    return (
-        <div style={{ position: 'relative', width: size, height: size }}>
-            <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-                {/* Background circle (soft color - fg with low opacity) */}
-                <circle
-                    cx={size / 2}
-                    cy={size / 2}
-                    r={radius}
-                    fill="none"
-                    stroke={bgRingColor}
-                    strokeWidth={strokeWidth}
-                />
-                {/* Progress circle (bold fg color) */}
-                <circle
-                    cx={size / 2}
-                    cy={size / 2}
-                    r={radius}
-                    fill="none"
-                    stroke={fgColor}
-                    strokeWidth={strokeWidth}
-                    strokeLinecap="round"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={strokeDashoffset}
-                    style={{
-                        transition: 'stroke-dashoffset 0.05s ease-out'
-                    }}
-                />
-            </svg>
-            {/* Percentage text centered inside with % sign */}
-            <span
-                style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    fontSize: `${textSize}px`,
-                    fontWeight: 600,
-                    color: fgColor,
-                    lineHeight: 1
-                }}
-            >
-                {animatedPercent}%
-            </span>
-        </div>
-    );
-};
+import { CircularProgress } from '@shared/components/CircularProgress';
 
 // Story 14.12: Animated treemap card with count-up effect and circular progress
 // Story 14.21: Updated to use both bg and fg colors for proper contrast
@@ -226,5 +160,5 @@ const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
     );
 };
 
-export { CircularProgress, AnimatedTreemapCard };
-export type { CircularProgressProps, AnimatedTreemapCardProps };
+export { AnimatedTreemapCard };
+export type { AnimatedTreemapCardProps };

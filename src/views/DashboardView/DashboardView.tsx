@@ -44,7 +44,6 @@ import {
     extractAvailableFilters,
     filterTransactionsByHistoryFilters,
 } from '@shared/utils/historyFilterUtils';
-import type { Transaction as TransactionType } from '../../types/transaction';
 // Story 14.12: Animation framework imports
 import { PageTransition } from '../../components/animation/PageTransition';
 import { TransitionChild } from '../../components/animation/TransitionChild';
@@ -103,9 +102,9 @@ import { applyMasGrouping, buildProductKey } from '@/utils/categoryAggregation';
 // ============================================================================
 // Types & Constants (extracted to ./types.ts)
 // ============================================================================
-import type { SortType, CarouselSlide, TreemapViewMode } from './types';
+import type { SortType, CarouselSlide, TreemapViewMode, Transaction } from './types';
 import {
-    Transaction, CAROUSEL_TITLE_KEYS, VIEW_MODE_CONFIG,
+    CAROUSEL_TITLE_KEYS, VIEW_MODE_CONFIG,
     getTreemapColors, MONTH_SHORT_KEYS,
     RECENT_TRANSACTIONS_COLLAPSED, RECENT_TRANSACTIONS_EXPANDED,
 } from './types';
@@ -1312,18 +1311,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
 
     // Story 10a.1: Extract available filters from transactions (AC #2)
     const availableFilters = useMemo(() => {
-        return extractAvailableFilters(allTx as unknown as TransactionType[]);
+        return extractAvailableFilters(allTx as Transaction[]);
     }, [allTx]);
 
     // Story 10a.1: Duplicate detection (AC #4) - moved before filtering for duplicatesOnly filter
     const duplicateIds = useMemo(() => {
-        return getDuplicateIds(allTx as unknown as TransactionType[]);
+        return getDuplicateIds(allTx as Transaction[]);
     }, [allTx]);
 
     // Story 10a.1: Apply filters to transactions (AC #2)
     // Story 11.1: Extended to support duplicates-only filter and sort by createdAt
     const filteredTransactions = useMemo(() => {
-        let result = filterTransactionsByHistoryFilters(allTx as unknown as TransactionType[], filterState);
+        let result = filterTransactionsByHistoryFilters(allTx as Transaction[], filterState);
 
         // Story 11.1: Apply duplicates-only filter
         if (showDuplicatesOnly) {
@@ -1548,16 +1547,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
     // Story 14.15b: Get selected transactions for delete modal preview
     const getSelectedTransactions = useCallback((): TransactionPreview[] => {
         return recentTransactions
-            .filter(tx => selectedIds.has((tx as Transaction).id))
-            .map(tx => {
-                const transaction = tx as Transaction;
-                return {
-                    id: transaction.id,
-                    displayName: transaction.alias || transaction.merchant,
-                    total: transaction.total,
-                    currency: transaction.currency || currency,
-                };
-            });
+            .filter((tx): tx is Transaction & { id: string } => {
+                const id = (tx as Transaction).id;
+                return id != null && selectedIds.has(id);
+            })
+            .map(tx => ({
+                id: tx.id,
+                displayName: tx.alias || tx.merchant,
+                total: tx.total,
+                currency: tx.currency || currency,
+            }));
     }, [recentTransactions, selectedIds, currency]);
 
     // Story 14e-5: handleOpenDelete uses Modal Manager (defined after getSelectedTransactions)
@@ -1588,23 +1587,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
 
     // Story 14.15b: Use consolidated TransactionCard with simplified props interface
     // Includes selection mode and long-press handlers
-    const renderTransactionItem = (tx: Transaction | TransactionType, _index: number) => {
-        const transaction = tx as Transaction;
-        const isDuplicate = transaction.id ? duplicateIds.has(transaction.id) : false;
+    const renderTransactionItem = (transaction: Transaction, _index: number) => {
+        if (!transaction.id) return null;
+        const txId = transaction.id;
+        const isDuplicate = duplicateIds.has(txId);
 
         return (
             <div
-                key={transaction.id}
-                onTouchStart={() => handleLongPressStart(transaction.id)}
+                key={txId}
+                onTouchStart={() => handleLongPressStart(txId)}
                 onTouchEnd={handleLongPressEnd}
                 onTouchMove={handleLongPressMove}
-                onMouseDown={() => handleLongPressStart(transaction.id)}
+                onMouseDown={() => handleLongPressStart(txId)}
                 onMouseUp={handleLongPressEnd}
                 onMouseLeave={handleLongPressEnd}
             >
                 <TransactionCard
                     transaction={{
-                        id: transaction.id,
+                        id: txId,
                         merchant: transaction.merchant,
                         alias: transaction.alias,
                         date: transaction.date,
@@ -1636,8 +1636,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
                     onThumbnailClick={() => handleThumbnailClick(transaction)}
                     selection={isSelectionMode ? {
                         isSelectionMode,
-                        isSelected: isSelected(transaction.id),
-                        onToggleSelect: () => toggleSelection(transaction.id),
+                        isSelected: isSelected(txId),
+                        onToggleSelect: () => toggleSelection(txId),
                     } : undefined}
                 />
             </div>

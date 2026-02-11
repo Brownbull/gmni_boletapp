@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from 'vitest';
 import {
-    normalizeItemName,
+    normalizeForDuplicateDetection,
     areNamesIdentical,
     findItemDuplicates,
     getItemDuplicateIds,
@@ -36,21 +36,21 @@ function createItem(
 }
 
 describe('itemDuplicateDetectionService', () => {
-    describe('normalizeItemName', () => {
+    describe('normalizeForDuplicateDetection', () => {
         it('should lowercase and trim', () => {
-            expect(normalizeItemName('  LECHE ENTERA  ')).toBe('leche entera');
+            expect(normalizeForDuplicateDetection('  LECHE ENTERA  ')).toBe('leche entera');
         });
 
         it('should collapse multiple spaces', () => {
-            expect(normalizeItemName('ARROZ   INTEGRAL   1KG')).toBe('arroz integral 1kg');
+            expect(normalizeForDuplicateDetection('ARROZ   INTEGRAL   1KG')).toBe('arroz integral 1kg');
         });
 
         it('should remove punctuation', () => {
-            expect(normalizeItemName('LECHE (1L):')).toBe('leche 1l');
+            expect(normalizeForDuplicateDetection('LECHE (1L):')).toBe('leche 1l');
         });
 
         it('should replace hyphens with spaces', () => {
-            expect(normalizeItemName('PAN-INTEGRAL-500G')).toBe('pan integral 500g');
+            expect(normalizeForDuplicateDetection('PAN-INTEGRAL-500G')).toBe('pan integral 500g');
         });
     });
 

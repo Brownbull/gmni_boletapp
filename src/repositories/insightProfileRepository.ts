@@ -5,7 +5,7 @@
  * Story 15-6b: Firestore implementation wrapping features/insights/services/insightProfileService.ts.
  */
 
-import type { UserInsightProfile } from '@/types/insight';
+import type { UserInsightProfile, InsightContent } from '@/types/insight';
 import type { RepositoryContext } from './types';
 import {
   getOrCreateInsightProfile,
@@ -24,12 +24,7 @@ import {
 // Interface
 // =============================================================================
 
-export interface InsightContent {
-  title?: string;
-  message?: string;
-  icon?: string;
-  category?: string;
-}
+export type { InsightContent };
 
 export interface InsightDeleteTarget {
   insightId: string;

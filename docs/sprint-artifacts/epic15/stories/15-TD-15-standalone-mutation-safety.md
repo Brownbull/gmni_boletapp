@@ -60,3 +60,4 @@ Four mutation functions across 3 service files still use standalone `deleteDoc()
 - `updateTransaction()` already uses `increment(1)` for version — the transaction should read the current version first for true optimistic locking
 - `deleteTransaction()` and `deleteTrustedMerchant()` are user-initiated, low-frequency operations — risk is LOW but consistency with the codebase pattern is the primary motivation
 - Source: TD-11 code review deferred item + full TOCTOU codebase audit (2026-02-10)
+- **Added from 15-TD-6 code review (2026-02-11):** `insightProfileService.ts` has 4 read-then-write functions without `runTransaction()`: `recordInsightShown`, `deleteInsight`, `deleteInsights`, `recordIntentionalResponse` + `getOrCreateInsightProfile` has a non-transactional create-if-not-exists race. LOW impact (per-user insight history, no financial data) but inconsistent with codebase TOCTOU policy.

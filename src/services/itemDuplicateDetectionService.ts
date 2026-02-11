@@ -64,7 +64,7 @@ export interface ItemDuplicateGroup {
  * @param name - Item name to normalize
  * @returns Normalized name for comparison
  */
-export function normalizeItemName(name: string): string {
+export function normalizeForDuplicateDetection(name: string): string {
     return name
         .toLowerCase()
         .trim()
@@ -121,7 +121,7 @@ export function haveSameNumbers(name1: string, name2: string): boolean {
  * @returns true if names are identical after normalization
  */
 export function areNamesIdentical(name1: string, name2: string): boolean {
-    return normalizeItemName(name1) === normalizeItemName(name2);
+    return normalizeForDuplicateDetection(name1) === normalizeForDuplicateDetection(name2);
 }
 
 /**
@@ -152,7 +152,7 @@ export function findItemDuplicates(
         // Skip items with very short names
         if (item.name.length < MIN_NAME_LENGTH) continue;
 
-        const merchantKey = normalizeItemName(item.merchantName || 'unknown');
+        const merchantKey = normalizeForDuplicateDetection(item.merchantName || 'unknown');
         const existing = merchantGroups.get(merchantKey) || [];
         existing.push(item);
         merchantGroups.set(merchantKey, existing);
@@ -166,7 +166,7 @@ export function findItemDuplicates(
         // Create a map of normalized name -> items
         const nameToItems = new Map<string, FlattenedItem[]>();
         for (const item of merchantItems) {
-            const normalizedName = normalizeItemName(item.name);
+            const normalizedName = normalizeForDuplicateDetection(item.name);
             const existing = nameToItems.get(normalizedName) || [];
             existing.push(item);
             nameToItems.set(normalizedName, existing);
@@ -203,7 +203,7 @@ export function findItemDuplicates(
         const fuseItems = merchantItems.map(item => ({
             id: item.id,
             name: item.name,
-            normalizedName: normalizeItemName(item.name),
+            normalizedName: normalizeForDuplicateDetection(item.name),
         }));
 
         const fuse = new Fuse(fuseItems, {
@@ -294,8 +294,8 @@ export function filterToDuplicatesGrouped(items: FlattenedItem[]): FlattenedItem
         item => item.id,
         // Sort groups by normalized name
         (a, b) => {
-            const aName = normalizeItemName(a?.name || '');
-            const bName = normalizeItemName(b?.name || '');
+            const aName = normalizeForDuplicateDetection(a?.name || '');
+            const bName = normalizeForDuplicateDetection(b?.name || '');
             return aName.localeCompare(bName);
         },
         // Sort within group by name

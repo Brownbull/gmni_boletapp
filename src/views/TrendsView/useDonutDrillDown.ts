@@ -52,9 +52,9 @@ export function useDonutDrillDown({
         return () => delays.forEach(clearTimeout);
     }, [donutAnimationKey]);
 
-    const handleSegmentClick = (categoryName: string) => {
+    const handleSegmentClick = useCallback((categoryName: string) => {
         setSelectedCategory(prev => prev === categoryName ? null : categoryName);
-    };
+    }, []);
 
     const getMaxDrillDownLevel = useCallback((): number => {
         switch (viewMode) {
@@ -66,7 +66,7 @@ export function useDonutDrillDown({
         }
     }, [viewMode]);
 
-    const handleDrillDown = (name: string) => {
+    const handleDrillDown = useCallback((name: string) => {
         setSelectedCategory(null);
         setDrillDownExpandedCount(0);
         const maxLevel = getMaxDrillDownLevel();
@@ -76,9 +76,9 @@ export function useDonutDrillDown({
             setDrillDownPath(prev => [...prev, name]);
             setDrillDownLevel(prev => Math.min(prev + 1, 4) as 0 | 1 | 2 | 3 | 4);
         }
-    };
+    }, [getMaxDrillDownLevel, drillDownLevel]);
 
-    const handleBack = () => {
+    const handleBack = useCallback(() => {
         setSelectedCategory(null);
         setDrillDownExpandedCount(0);
         if (drillDownLevel > 0) {
@@ -87,23 +87,23 @@ export function useDonutDrillDown({
             setDrillDownPath(prev => prev.slice(0, -1));
             setDrillDownLevel(prev => Math.max(prev - 1, 0) as 0 | 1 | 2 | 3 | 4);
         }
-    };
+    }, [drillDownLevel]);
 
-    const handleExpand = () => {
+    const handleExpand = useCallback(() => {
         if (drillDownLevel === 0) {
             parentOnExpand();
         } else {
             setDrillDownExpandedCount(prev => prev + 1);
         }
-    };
+    }, [drillDownLevel, parentOnExpand]);
 
-    const handleCollapse = () => {
+    const handleCollapse = useCallback(() => {
         if (drillDownLevel === 0) {
             parentOnCollapse();
         } else {
             setDrillDownExpandedCount(prev => Math.max(0, prev - 1));
         }
-    };
+    }, [drillDownLevel, parentOnCollapse]);
 
     /**
      * Build semantic DrillDownPath from current state.
