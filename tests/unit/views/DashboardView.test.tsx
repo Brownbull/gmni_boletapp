@@ -475,20 +475,20 @@ describe('DashboardView', () => {
   });
 
   describe('AC#3: Recientes Carousel Section', () => {
-    it('should render recientes carousel with default "Últimos Escaneados" slide', () => {
+    it('should render recientes carousel with default "latestScanned" slide', () => {
       renderDashboardView({
         allTransactions: createManyTransactions(10),
       });
 
-      // Default slide is 0 = "Últimos Escaneados"
-      expect(screen.getByText('Últimos Escaneados')).toBeInTheDocument();
+      // Default slide is 0 = "latestScanned" (i18n key)
+      expect(screen.getByText('latestScanned')).toBeInTheDocument();
       // Should have indicator bar with 2 segments
       expect(screen.getByTestId('recientes-indicator-bar')).toBeInTheDocument();
       expect(screen.getByTestId('recientes-indicator-0')).toBeInTheDocument();
       expect(screen.getByTestId('recientes-indicator-1')).toBeInTheDocument();
     });
 
-    it('should switch to "Por Fecha" slide when indicator is clicked', async () => {
+    it('should switch to "byDate" slide when indicator is clicked', async () => {
       renderDashboardView({
         allTransactions: createManyTransactions(10),
       });
@@ -496,8 +496,8 @@ describe('DashboardView', () => {
       // Click on second indicator
       fireEvent.click(screen.getByTestId('recientes-indicator-1'));
 
-      // Title should change
-      expect(screen.getByText('Por Fecha')).toBeInTheDocument();
+      // Title should change to byDate i18n key
+      expect(screen.getByText('byDate')).toBeInTheDocument();
     });
 
     it('should show 5 transactions by default (collapsed)', () => {

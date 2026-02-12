@@ -43,6 +43,7 @@ interface DashboardBumpSlideProps {
     translateTreemapName: (name: string) => string;
     getTreemapEmoji: (name: string) => string;
     t: (key: string) => string;
+    formatCompactAmount: (amount: number) => string;
 }
 
 export const DashboardBumpSlide: React.FC<DashboardBumpSlideProps> = ({
@@ -56,6 +57,7 @@ export const DashboardBumpSlide: React.FC<DashboardBumpSlideProps> = ({
     translateTreemapName,
     getTreemapEmoji,
     t,
+    formatCompactAmount,
 }) => {
     if (bumpChartData.categories.length === 0) {
         return (
@@ -82,14 +84,14 @@ export const DashboardBumpSlide: React.FC<DashboardBumpSlideProps> = ({
                                 ? t('otherCategory')
                                 : translateCategory(bumpTooltip.category, lang)}
                         </span>
-                        <span style={{ color: 'var(--text-tertiary)' }}>en {bumpTooltip.month}:</span>
+                        <span style={{ color: 'var(--text-tertiary)' }}>{t('bumpInMonth')} {bumpTooltip.month}:</span>
                         <span className="font-semibold" style={{ color: 'var(--foreground)' }}>
-                            ${Math.round(bumpTooltip.amount).toLocaleString('es-CL')}
+                            {formatCompactAmount(bumpTooltip.amount)}
                         </span>
                     </div>
                 ) : (
                     <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                        Toca un punto para ver detalles
+                        {t('tapPointForDetails')}
                     </span>
                 )}
             </div>

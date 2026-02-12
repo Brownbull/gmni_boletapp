@@ -3,7 +3,7 @@
 **Epic:** 15 - Codebase Refactoring
 **Points:** 5
 **Priority:** MEDIUM
-**Status:** review
+**Status:** done
 
 ## Description
 
@@ -76,3 +76,19 @@ Phase 5 reduced TrendsView from 5,901 to 2,965 and TransactionEditorView from 2,
 - helpers.ts split: `computeTrendCategories` duplicates logic from `categoryAggregation.ts` — consider sharing during split
 - DashboardView decomposition: focus on the 4 category-mode rendering blocks (store groups, item groups per mode) which are highly repetitive
 - Run `npx vitest run` on all affected test files after each move step — don't batch
+
+### Tech Debt Stories Created / Updated
+
+| TD Story | Description | Priority | Action |
+|----------|-------------|----------|--------|
+| [15-TD-16](./15-TD-16-mega-view-decomposition-5c.md) | Further TrendsView (3,199→2,000) + DashboardView (2,482→1,500) decomposition + i18n fixes in extracted slides | MEDIUM | CREATED |
+
+## Senior Developer Review (ECC)
+
+- **Review date:** 2026-02-11
+- **Classification:** STANDARD (13 files, 4 tasks)
+- **ECC agents used:** code-reviewer, security-reviewer
+- **Outcome:** APPROVE — all ACs met, 5 quick fixes applied, 1 TD story created
+- **Quick fixes applied:** Stale test props removed, dead mocks cleaned, useCallback added to drill-down handlers
+- **TD stories created:** 15-TD-16 (further mega-view decomposition + i18n fixes)
+- **Security:** Clean — no vulnerabilities, no secrets, no new attack surface

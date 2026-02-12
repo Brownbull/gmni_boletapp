@@ -1,6 +1,6 @@
 # Tech Debt Story 15-TD-16: Mega-View Decomposition Phase 5c
 
-Status: ready-for-dev
+Status: done
 
 > **Source:** ECC Code Review (2026-02-11) on story 15-TD-5
 > **Priority:** MEDIUM
@@ -22,26 +22,36 @@ The extracted slide components also carry pre-existing i18n/hardcoded-locale iss
 
 ## Acceptance Criteria
 
-- [ ] **AC1:** `TrendsView.tsx` reduced to under 2,000 lines by extracting at least 2 cohesive sub-components
-- [ ] **AC2:** `DashboardView.tsx` reduced to under 1,500 lines by extracting at least 2 more section components (e.g., category-mode rendering blocks)
-- [ ] **AC3:** Hardcoded Spanish strings in DashboardBumpSlide.tsx ("Toca un punto para ver detalles", "en {month}") replaced with i18n translations
-- [ ] **AC4:** Hardcoded `es-CL` locale in DashboardBumpSlide.tsx replaced with `lang` prop usage
-- [ ] **AC5:** Hardcoded `$` currency symbol in DashboardRadarSlide.tsx replaced with `formatCurrency` or `currency` prop
-- [ ] **AC6:** All imports updated, barrel re-exports maintained, all tests pass
+- [x] **AC1:** `TrendsView.tsx` reduced to under 2,000 lines by extracting at least 2 cohesive sub-components — 3,199 → 1,981 lines (6 extractions + helper additions)
+- [x] **AC2:** `DashboardView.tsx` reduced to under 1,500 lines by extracting at least 2 more section components — 2,483 → 1,479 lines (4 extractions)
+- [x] **AC3:** Hardcoded Spanish strings in DashboardBumpSlide.tsx replaced with i18n translations (`tapPointForDetails`, `bumpInMonth`)
+- [x] **AC4:** Hardcoded `es-CL` locale in DashboardBumpSlide.tsx replaced with `lang` prop usage
+- [x] **AC5:** Hardcoded `$` currency symbol in DashboardRadarSlide.tsx replaced with `formatCompactAmount` prop
+- [x] **AC6:** All imports updated, barrel re-exports maintained, all 6,568 tests pass
 
 ## Tasks
 
-- [ ] **Task 1:** Decompose TrendsView.tsx
-  - [ ] Identify 2-3 cohesive sections (e.g., period selector, treemap section, chart controls)
-  - [ ] Extract as co-located components in `TrendsView/`
-  - [ ] Target: ~1,200 line reduction minimum
-- [ ] **Task 2:** Decompose DashboardView.tsx further
-  - [ ] Extract category-mode rendering blocks (store groups, item groups) — these are repetitive
-  - [ ] Target: ~1,000 line reduction minimum
-- [ ] **Task 3:** Fix i18n/locale issues in extracted slide components
-  - [ ] DashboardBumpSlide: replace hardcoded Spanish strings with `t()` calls
-  - [ ] DashboardBumpSlide: use `lang` prop for locale-dependent formatting
-  - [ ] DashboardRadarSlide: use `formatCurrency` or `currency` prop for amount display
+- [x] **Task 1:** Decompose TrendsView.tsx
+  - [x] Extracted TrendsCardHeader.tsx (318 lines) — card header with view controls
+  - [x] Extracted ExpandCollapseButtons.tsx (101 lines) — shared floating +/- buttons
+  - [x] Extracted periodComparisonHelpers.ts (273 lines) — period-over-period comparison
+  - [x] Extracted navigationHelpers.ts (310 lines) — treemap/trend navigation payload builders
+  - [x] Extracted drillDownHelpers.ts (86 lines) — common drill-down resolution
+  - [x] Extracted periodNavigationHelpers.ts (146 lines) — period state navigation
+  - [x] Extended aggregationHelpers.ts (+95 lines) — store/item group computations
+  - [x] Result: 3,199 → 1,981 lines (1,218 line reduction)
+- [x] **Task 2:** Decompose DashboardView.tsx further
+  - [x] Extracted categoryDataHelpers.ts (292 lines) — 4 category aggregation functions
+  - [x] Extracted chartDataHelpers.ts (462 lines) — radar + bump chart computation
+  - [x] Extracted DashboardFullListView.tsx (205 lines) — full paginated list view
+  - [x] Extracted DashboardRecientesSection.tsx (283 lines) — recientes carousel section
+  - [x] Removed pre-existing `as any` and `as Transaction[]` casts
+  - [x] Result: 2,483 → 1,479 lines (1,004 line reduction)
+- [x] **Task 3:** Fix i18n/locale issues in extracted slide components
+  - [x] DashboardBumpSlide: replaced hardcoded Spanish strings with `t()` calls
+  - [x] DashboardBumpSlide: replaced `es-CL` with `lang`-based locale selection
+  - [x] DashboardBumpSlide: replaced hardcoded `$` amount with `formatCompactAmount` prop
+  - [x] DashboardRadarSlide: replaced hardcoded `$` with `formatCompactAmount` prop
 
 ## Dev Notes
 
@@ -50,4 +60,32 @@ The extracted slide components also carry pre-existing i18n/hardcoded-locale iss
 - Files affected: `src/views/TrendsView/TrendsView.tsx`, `src/views/DashboardView/DashboardView.tsx`, `src/views/DashboardView/DashboardBumpSlide.tsx`, `src/views/DashboardView/DashboardRadarSlide.tsx`
 - DashboardView dev note from TD-5: "focus on the 4 category-mode rendering blocks (store groups, item groups per mode) which are highly repetitive"
 - TrendsView has multiple slide-rendering functions that could become standalone components
-- **Added from 15-TD-6 code review (2026-02-11):** DashboardView.tsx has pre-existing `as any` casts at lines 1614, 1636 (`category as any`, `transaction as any`) and `as Transaction[]` casts at lines 1314, 1319, 1325 — investigate and fix during Task 2 decomposition
+- **Added from 15-TD-6 code review (2026-02-11):** DashboardView.tsx pre-existing `as any` and `as Transaction[]` casts — FIXED during Task 2
+- **Code review quick fixes applied:** BumpSlide `formatCompactAmount` prop, removed unused `_previousTxs` parameter from `computeDailySparkline`
+- **Code review quick fixes (2026-02-12):** DashboardRecientesSection 9 hardcoded Spanish strings → t() calls, formatCompactAmount inline lambda → useCallback, aggregationHelpers buildProductKey consistency, DashboardView test updated for i18n keys
+
+### Tech Debt Stories Created / Updated
+
+| TD Story | Description | Priority | Action |
+|----------|-------------|----------|--------|
+| [15-TD-21](./15-TD-21-mega-view-helper-tests.md) | Test coverage for 6 extracted pure helper modules (1,568 lines) | HIGH | CREATED |
+
+### Pre-Existing Issues (not introduced by this story)
+
+- periodComparisonHelpers.ts:135-136,155-156 — `String.includes()` substring check where array membership intended (works by accident)
+- TrendsCardHeader / ExpandCollapseButtons — 14 `locale === 'es'` ternaries for aria-labels (bypass t() system)
+- periodComparisonHelpers.ts — 5 `as string` casts on item.category
+- chartDataHelpers.ts at 462 lines (approaching 500-line warning)
+- DashboardRecientesSection (22 props) / DashboardFullListView (21 props) — prop drilling from extraction
+- computeStoreGroupsData / computeItemGroupsData name collision between TrendsView and DashboardView (different signatures)
+
+## Senior Developer Review (ECC)
+
+- **Review date:** 2026-02-12
+- **Classification:** STANDARD (2 agents)
+- **ECC agents used:** code-reviewer, security-reviewer
+- **Overall score:** 8/10
+- **Outcome:** APPROVED (after quick fixes)
+- **Quick fixes applied:** 3 (i18n RecientesSection, formatCompactAmount useCallback, buildProductKey consistency)
+- **TD stories created:** 1 (15-TD-21 — helper test coverage)
+- **Tests:** 6,568 pass, TypeScript clean

@@ -18,61 +18,33 @@
  */
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { Inbox, ArrowUpDown, Filter, ChevronLeft, ChevronRight, Receipt, Package, X, Trash2, CheckSquare } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Receipt, Package } from 'lucide-react';
 import { ImageViewer } from '../../components/ImageViewer';
-// Story 10a.1: Filter bar for consolidated home view (AC #2)
-import { HistoryFilterBar } from '@features/history/components/HistoryFilterBar';
-// Story 14.15b: Selection mode and modals for Dashboard
-// Story 14e-5: DeleteTransactionsModal now uses Modal Manager
 import type { TransactionPreview } from '@features/history/components/DeleteTransactionsModal';
 import { useModalActions } from '@managers/ModalManager';
 import { useSelectionMode } from '../../hooks/useSelectionMode';
 import { deleteTransactionsBatch } from '../../services/firestore';
 import { getFirestore } from 'firebase/firestore';
-// Story 14d-v2-1.1: useQueryClient import removed - group cache invalidation disabled (Epic 14c cleanup)
-// Story 14c-refactor.4: clearGroupCacheById import REMOVED (IndexedDB cache deleted)
-// Story 9.12: Category translations
-// Story 14e-25b.2: Language type now comes from hook (useDashboardViewData)
 import { translateCategory } from '../../utils/categoryTranslations';
-// Story 15-TD-5: Extracted chart slide components
 import { DashboardRadarSlide } from './DashboardRadarSlide';
 import { DashboardBumpSlide } from './DashboardBumpSlide';
-// Story 10a.1: Filter and duplicate detection utilities (AC #2, #4)
 import { useHistoryFilters } from '@shared/hooks/useHistoryFilters';
 import { getDuplicateIds } from '../../services/duplicateDetectionService';
 import {
     extractAvailableFilters,
     filterTransactionsByHistoryFilters,
 } from '@shared/utils/historyFilterUtils';
-// Story 14.12: Animation framework imports
 import { PageTransition } from '../../components/animation/PageTransition';
 import { TransitionChild } from '../../components/animation/TransitionChild';
 import { useCountUp } from '../../hooks/useCountUp';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
-// Story 14.21: Use unified category colors (both fg and bg for text contrast)
-// getCategoryColorsAuto - respects fontColorMode (colorful/plain) for general text
-// getCategoryPillColors - ALWAYS colorful for pills/badges/legends
-// Story 14.13 Session 4: Added imports for view mode groups and item categories
 import {
-    getCategoryBackgroundAuto,
-    getCategoryPillColors,
-    getStoreGroupColors,
-    getItemGroupColors,
-    getCurrentTheme,
-    getCurrentMode,
-    ALL_STORE_CATEGORY_GROUPS,
-    ALL_ITEM_CATEGORY_GROUPS,
-    STORE_CATEGORY_GROUPS,
-    ITEM_CATEGORY_GROUPS,
-    ITEM_CATEGORY_TO_KEY,
-    expandStoreCategoryGroup,  // Story 14.13 Session 13: For "Más" expansion
-    expandItemCategoryGroup,   // Story 14.13 Session 13: For "Más" expansion
+    expandStoreCategoryGroup,
+    expandItemCategoryGroup,
     type StoreCategoryGroup,
     type ItemCategoryGroup,
-    // Story 14e-25b.2: ThemeName type now comes from hook (useDashboardViewData)
 } from '../../config/categoryColors';
 import { getCategoryEmoji } from '../../utils/categoryEmoji';
-// Story 14.13 Session 4: Category translations for view mode labels
 import {
     translateStoreCategoryGroup,
     translateItemCategoryGroup,
@@ -80,63 +52,40 @@ import {
     getItemCategoryGroupEmoji,
     getItemCategoryEmoji,
 } from '../../utils/categoryTranslations';
-// Story 14.15b: Category normalization for legacy data compatibility
-import { normalizeItemCategory } from '../../utils/categoryNormalizer';
-// Story 14.13: Import normalizeItemNameForGrouping for consistent unique product counting
-import { normalizeItemNameForGrouping } from '../../hooks/useItems';
 import { calculateTreemapLayout } from '../../utils/treemapLayout';
-// Story 14.13 Session 4: Navigation payload for treemap cell clicks
 import { HistoryNavigationPayload, DrillDownPath } from '@features/analytics/utils/analyticsToHistoryFilters';
-// Story 14e-25d: Direct navigation hooks (ViewHandlersContext deleted)
 import { useHistoryNavigation } from '@/shared/hooks';
 import { useNavigationActions } from '@/shared/stores';
-// Story 14e-25b.2: DashboardView data hook
 import { useDashboardViewData, type UseDashboardViewDataReturn } from './useDashboardViewData';
-// Story 14.15b: Use consolidated TransactionCard from shared transactions folder
 import { TransactionCard } from '../../components/transactions';
 import { getStorageString, setStorageString } from '@/utils/storage';
 import { toMillis } from '@/utils/timestamp';
-import { applyMasGrouping, buildProductKey } from '@/utils/categoryAggregation';
-// Story 14.12: Radar chart uses inline SVG (matching mockup hexagonal design)
-
-// ============================================================================
-// Types & Constants (extracted to ./types.ts)
-// ============================================================================
+import { computeRadarChartData, computeBumpChartData } from './chartDataHelpers';
+import {
+    computeStoreCategoriesData, computeStoreGroupsData,
+    computeItemCategoriesData, computeItemGroupsData,
+} from './categoryDataHelpers';
 import type { SortType, CarouselSlide, TreemapViewMode, Transaction } from './types';
 import {
     CAROUSEL_TITLE_KEYS, VIEW_MODE_CONFIG,
-    getTreemapColors, MONTH_SHORT_KEYS,
+    MONTH_SHORT_KEYS,
     RECENT_TRANSACTIONS_COLLAPSED, RECENT_TRANSACTIONS_EXPANDED,
 } from './types';
+import { AnimatedTreemapCard } from './AnimatedTreemapCard';
+import { DashboardFullListView } from './DashboardFullListView';
+import { DashboardRecientesSection } from './DashboardRecientesSection';
 
-/**
- * Story 14e-25b.2: DashboardView Props
- *
- * DashboardView now owns its data via useDashboardViewData hook.
- * Props are minimal - only test overrides for testing and callbacks
- * that need App-level state coordination.
- */
+/** DashboardView props - minimal, only test overrides and App-level callbacks. */
 export interface DashboardViewProps {
-    /**
-     * Optional overrides for testing and production callbacks.
-     * In production, App.tsx passes callbacks that need App-level coordination.
-     * In tests, can inject mock data without needing to mock hooks.
-     */
     _testOverrides?: Partial<UseDashboardViewDataReturn & {
-        /** Callback when transactions are deleted */
         onTransactionsDeleted?: (deletedIds: string[]) => void;
     }>;
 }
 
-// Sub-Components (co-located)
-import { AnimatedTreemapCard } from './AnimatedTreemapCard';
-
 export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) => {
-    // Story 14e-25b.2: Get all data from internal hook
     const hookData = useDashboardViewData();
 
     // Merge hook data with test overrides (test overrides take precedence)
-    // Pattern: HistoryView lines 186-209
     const {
         transactions,
         allTransactions,
@@ -162,50 +111,39 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
         onViewRecentScans,
     } = { ...hookData, ..._testOverrides };
 
-    // Extract onTransactionsDeleted from overrides (not in hook)
     const onTransactionsDeleted = _testOverrides?.onTransactionsDeleted;
-
-    // Story 7.12: Theme-aware styling using CSS variables (AC #1, #2, #8)
     const isDark = theme === 'dark';
 
-    // Story 14e-25d: Direct navigation hooks (ViewHandlersContext deleted)
+    // Navigation hooks
     const { handleNavigateToHistory } = useHistoryNavigation();
     const { setView } = useNavigationActions();
     const onNavigateToHistory = handleNavigateToHistory;
-    // Story 14e-25b.2: onViewHistory from navigation (fallback for "Ver todo")
     const onViewHistory = () => setView('history');
 
-    // Story 14.12: Reduced motion preference (available for future use)
     useReducedMotion();
 
-    // Story 9.11: State for ImageViewer modal
+    // ImageViewer modal state
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
-    // Story 14.12: Selected month/year for viewing data
+    // Selected month/year for viewing data
     const [selectedMonth, setSelectedMonth] = useState(() => {
         const now = new Date();
         return { year: now.getFullYear(), month: now.getMonth() };
     });
 
-    // Story 14.12: Expanded state for recientes list
+    // Recientes carousel state
     const [recientesExpanded, setRecientesExpanded] = useState(false);
-    // Story 14.12: Recientes carousel state (0 = by scan date, 1 = by transaction date)
     const [recientesSlide, setRecientesSlide] = useState<0 | 1>(0);
-    // Story 14.12: Slide direction for recientes carousel transition animation
     const [recientesSlideDirection, setRecientesSlideDirection] = useState<'left' | 'right' | null>(null);
-    // Story 14.12: Animation key for recientes - increments to re-trigger staggered item animations
     const [recientesAnimKey, setRecientesAnimKey] = useState(0);
-    // Story 14.12: Swipe tracking for recientes carousel
     const [recientesTouchStart, setRecientesTouchStart] = useState<number | null>(null);
     const [recientesTouchEnd, setRecientesTouchEnd] = useState<number | null>(null);
 
-    // Story 14.12: Carousel state (3 slides: treemap, polygon, bump chart)
+    // Main carousel state (3 slides: treemap, polygon, bump chart)
     const [carouselSlide, setCarouselSlide] = useState<CarouselSlide>(0);
-    const [carouselCollapsed] = useState(false); // Toggle function removed, but state still used for layout
-    // Story 14.13 Session 4: Treemap view mode state - persisted to localStorage
-    // Story 14.13 Session 9: Synced with Analytics view using shared localStorage key
+    const [carouselCollapsed] = useState(false);
+    // Treemap view mode - persisted to localStorage, synced with TrendsView
     const [treemapViewMode, setTreemapViewMode] = useState<TreemapViewMode>(() => {
-        // Restore from localStorage if available (shared with TrendsView for sync)
         const saved = getStorageString('boletapp-analytics-viewmode', 'store-categories');
         if (['store-groups', 'store-categories', 'item-groups', 'item-categories'].includes(saved)) {
             return saved as TreemapViewMode;
@@ -213,14 +151,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
         return 'store-categories';
     });
 
-    // Story 14.13 Session 9: Persist view mode to localStorage (shared with TrendsView)
     useEffect(() => {
         setStorageString('boletapp-analytics-viewmode', treemapViewMode);
     }, [treemapViewMode]);
 
-    // Story 14.13 Session 10: Count mode toggle - transactions vs items (synced with TrendsView)
-    // 'transactions' = count transactions, navigate to Compras (Receipt icon)
-    // 'items' = count items/products, navigate to Productos (Package icon)
+    // Count mode toggle: 'transactions' = Compras, 'items' = Productos (synced with TrendsView)
     const [countMode, setCountMode] = useState<'transactions' | 'items'>(() => {
         const saved = getStorageString('boletapp-analytics-countmode', 'transactions');
         if (saved === 'transactions' || saved === 'items') {
@@ -229,12 +164,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
         return 'transactions';
     });
 
-    // Story 14.13 Session 10: Persist count mode to localStorage (shared with TrendsView)
     useEffect(() => {
         setStorageString('boletapp-analytics-countmode', countMode);
     }, [countMode]);
 
-    // Story 14.13 Session 10: Toggle count mode between transactions and items
     const toggleCountMode = useCallback(() => {
         setCountMode(prev => prev === 'transactions' ? 'items' : 'transactions');
     }, []);
@@ -242,10 +175,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
     const [showMonthPicker, setShowMonthPicker] = useState(false);
     const monthPickerRef = useRef<HTMLDivElement>(null);
     const monthPickerToggleRef = useRef<HTMLButtonElement>(null);
-    // Story 14.12: Tooltip for transaction count badge
     const [showCountTooltip, setShowCountTooltip] = useState(false);
-    // Story 14.12: Radar tooltip state (shows category name + amounts on click)
-    // Story 14.12: Selected radar category for comparison display
     const [selectedRadarCategory, setSelectedRadarCategory] = useState<{
         name: string;
         emoji: string;
@@ -253,34 +183,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
         prevAmount: number;
         color: string;
     } | null>(null);
-    // Story 14.12: Bump chart tooltip state (shows category + month + amount on click)
     const [bumpTooltip, setBumpTooltip] = useState<{ category: string; month: string; amount: number; color: string } | null>(null);
-    // Story 14.12: Slide direction for carousel transition animation
     const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
-    // Story 14.12: Swipe gesture tracking for carousel with live animation
     const [touchStart, setTouchStart] = useState<number | null>(null);
     const [touchEnd, setTouchEnd] = useState<number | null>(null);
     const [carouselSwipeOffset, setCarouselSwipeOffset] = useState(0);
-    // Story 14.13: Month swipe navigation touch state with live animation
     const [monthTouchStart, setMonthTouchStart] = useState<number | null>(null);
     const [monthSwipeOffset, setMonthSwipeOffset] = useState(0);
-    // Story 14.12: Animation trigger key - increments when slide changes to restart animations
     const [animationKey, setAnimationKey] = useState(0);
-    // Story 14d.4c: pickerMonth removed - picker functions were unused
 
-    // Story 10a.1: Pagination state (AC #3)
+    // Pagination
     const [historyPage, setHistoryPage] = useState(1);
     const pageSize = 10;
 
-    // Story 11.1: Sort preference (transactionDate = by receipt date, scanDate = by createdAt)
+    // Sort and filter preferences
     const [sortType, setSortType] = useState<SortType>('transactionDate');
-    // Story 11.1: Show only possible duplicates filter
     const [showDuplicatesOnly, setShowDuplicatesOnly] = useState(false);
 
-    // Story 14.12: Toggle between refreshed dashboard and full list view
+    // Toggle between refreshed dashboard and full list view
     const [showFullList, setShowFullList] = useState(false);
 
-    // Story 14.15b: Selection mode state and hooks for Dashboard Recientes
+    // Selection mode for Dashboard Recientes
     const {
         isSelectionMode,
         selectedIds,
@@ -292,15 +215,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
         clearSelection,
     } = useSelectionMode();
 
-    // Story 14e-5: Delete modal now uses Modal Manager
     const { openModal, closeModal } = useModalActions();
 
-    // Story 14.15b: Long-press state for selection mode entry
+    // Long-press for selection mode entry
     const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
     const longPressMoved = useRef(false);
     const LONG_PRESS_DURATION = 500; // ms
 
-    // Story 14.15b: Long-press handlers
     const handleLongPressStart = useCallback((txId: string) => {
         longPressMoved.current = false;
         longPressTimerRef.current = setTimeout(() => {
@@ -375,308 +296,31 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
     // Animated day count for month progress
     const animatedDaysElapsed = useCountUp(monthProgress.daysElapsed, { duration: 1200, startValue: 0, key: animationKey });
 
-    // Story 14.12: Calculate categories for treemap (AC #1)
-    // Story 14.21: Updated to use both bgColor and fgColor for proper contrast
-    // Story 14.13 Session 10: Added itemCount for unique products per category
-    // Story 14.13 Session 13: Changed "Otro" → "Más", added categoryCount, returns otroCategories for expansion
-    // Display: All categories >10% + first category ≤10% + "Más" aggregating rest
-    const treemapCategoriesResult = useMemo(() => {
-        // Aggregate by category - track unique transactions and unique products
-        // Story 14.13 Session 14: Changed to use transactionIds Set for accurate unique transaction counting
-        // This matches TrendsView pattern and prevents double-counting
-        const categoryTotals: Record<string, { amount: number; transactionIds: Set<string>; uniqueProducts: Set<string> }> = {};
-        monthTransactions.forEach((tx, index) => {
-            const cat = tx.category || 'Otro';
-            if (!categoryTotals[cat]) {
-                categoryTotals[cat] = { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() };
-            }
-            categoryTotals[cat].amount += tx.total;
-            categoryTotals[cat].transactionIds.add(tx.id ?? `tx-${index}`);
-            (tx.items || []).forEach(item => {
-                categoryTotals[cat].uniqueProducts.add(buildProductKey(
-                    normalizeItemNameForGrouping(item.name || ''),
-                    normalizeItemNameForGrouping(tx.merchant || '')
-                ));
-            });
-        });
+    // Story 15-TD-5b: Category aggregation extracted to categoryDataHelpers.ts
+    const treemapCategoriesResult = useMemo(() =>
+        computeStoreCategoriesData(monthTransactions, monthTotal),
+    [monthTransactions, monthTotal]);
 
-        // Category data type with optional categoryCount for "Más" aggregation
-        // Story 14.13 Session 14: Added transactionIds for accurate "Más" aggregation
-        type CategoryEntry = {
-            name: string;
-            amount: number;
-            count: number;
-            itemCount: number;
-            bgColor: string;
-            fgColor: string;
-            percent: number;
-            categoryCount?: number;
-            transactionIds?: Set<string>;  // For unique transaction count in "Más" aggregation
-        };
-
-        // Convert to array and sort by amount (highest first)
-        // Story 14.21: Include both bg and fg colors for proper text contrast
-        const sorted: CategoryEntry[] = Object.entries(categoryTotals)
-            .map(([name, data]) => {
-                const colors = getTreemapColors(name);
-                return {
-                    name,
-                    amount: data.amount,
-                    count: data.transactionIds.size,  // Use Set size for unique count
-                    itemCount: data.uniqueProducts.size,
-                    bgColor: colors.bg,
-                    fgColor: colors.fg,
-                    percent: monthTotal > 0 ? (data.amount / monthTotal) * 100 : 0,
-                    transactionIds: data.transactionIds,  // Keep for "Más" aggregation
-                };
-            })
-            .sort((a, b) => b.amount - a.amount);
-
-        // Apply "Más" threshold grouping (shared utility)
-        const masColors = getTreemapColors('Otro');
-        return applyMasGrouping(sorted, monthTotal, (stats) => ({
-            name: 'Más',
-            amount: stats.amount,
-            count: stats.count,
-            itemCount: stats.itemCount,
-            bgColor: masColors.bg,
-            fgColor: masColors.fg,
-            percent: stats.percent,
-            categoryCount: stats.categoryCount,
-        }));
-    }, [monthTransactions, monthTotal]);
-
-    // Extract display categories and otroCategories for expansion
     const treemapCategories = treemapCategoriesResult.displayCategories;
     const storeCategoriesOtro = treemapCategoriesResult.otroCategories;
 
-    // Story 14.13 Session 4: Calculate store groups data for treemap
-    // Story 14.13 Session 10: Added itemCount for unique products per group
-    // Story 14.13 Session 13: Added "Más" aggregation with categoryCount
-    // Story 14.13 Session 14: Changed to use transactionIds Set for accurate unique transaction counting
-    const storeGroupsDataResult = useMemo(() => {
-        const theme = getCurrentTheme();
-        const mode = getCurrentMode();
-        const groupTotals: Record<StoreCategoryGroup, { amount: number; transactionIds: Set<string>; uniqueProducts: Set<string> }> = {
-            'food-dining': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'health-wellness': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'retail-general': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'retail-specialty': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'automotive': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'services': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'hospitality': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'other': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-        };
-
-        monthTransactions.forEach((tx, index) => {
-            const cat = tx.category || 'Otro';
-            const group = STORE_CATEGORY_GROUPS[cat as keyof typeof STORE_CATEGORY_GROUPS] || 'other';
-            groupTotals[group].amount += tx.total;
-            groupTotals[group].transactionIds.add(tx.id ?? `tx-${index}`);
-            (tx.items || []).forEach(item => {
-                groupTotals[group].uniqueProducts.add(buildProductKey(
-                    normalizeItemNameForGrouping(item.name || ''),
-                    normalizeItemNameForGrouping(tx.merchant || '')
-                ));
-            });
-        });
-
-        // Category data type with optional categoryCount for "Más" aggregation
-        type GroupEntry = {
-            name: string;
-            amount: number;
-            count: number;
-            itemCount: number;
-            bgColor: string;
-            fgColor: string;
-            percent: number;
-            categoryCount?: number;
-            transactionIds?: Set<string>;
-        };
-
-        const sorted: GroupEntry[] = ALL_STORE_CATEGORY_GROUPS
-            .map(groupKey => {
-                const data = groupTotals[groupKey];
-                const colors = getStoreGroupColors(groupKey, theme, mode);
-                return {
-                    name: groupKey,
-                    amount: data.amount,
-                    count: data.transactionIds.size,
-                    itemCount: data.uniqueProducts.size,
-                    bgColor: colors.bg,
-                    fgColor: colors.fg,
-                    percent: monthTotal > 0 ? (data.amount / monthTotal) * 100 : 0,
-                    transactionIds: data.transactionIds,
-                };
-            })
-            .filter(g => g.amount > 0)
-            .sort((a, b) => b.amount - a.amount);
-
-        // Apply "Más" threshold grouping (shared utility)
-        const masColors = getTreemapColors('Otro');
-        return applyMasGrouping(sorted, monthTotal, (stats) => ({
-            name: 'Más',
-            amount: stats.amount,
-            count: stats.count,
-            itemCount: stats.itemCount,
-            bgColor: masColors.bg,
-            fgColor: masColors.fg,
-            percent: stats.percent,
-            categoryCount: stats.categoryCount,
-        }));
-    }, [monthTransactions, monthTotal]);
+    const storeGroupsDataResult = useMemo(() =>
+        computeStoreGroupsData(monthTransactions, monthTotal),
+    [monthTransactions, monthTotal]);
 
     const storeGroupsData = storeGroupsDataResult.displayCategories;
     const storeGroupsOtro = storeGroupsDataResult.otroCategories;
 
-    // Story 14.13 Session 4: Calculate item categories data from transaction line items
-    // Story 14.13 Session 10: Added itemCount for unique products per item category
-    // Story 14.13 Session 13: Added "Más" aggregation with categoryCount
-    // Story 14.13 Session 14: Changed to use transactionIds Set for accurate unique transaction counting
-    const itemCategoriesDataResult = useMemo(() => {
-        const itemCategoryMap: Record<string, { amount: number; transactionIds: Set<string>; uniqueProducts: Set<string> }> = {};
-
-        monthTransactions.forEach((tx, index) => {
-            (tx.items || []).forEach(item => {
-                const cat = normalizeItemCategory(item.category || 'Other');
-                if (!itemCategoryMap[cat]) {
-                    itemCategoryMap[cat] = { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() };
-                }
-                itemCategoryMap[cat].amount += item.price;
-                itemCategoryMap[cat].transactionIds.add(tx.id ?? `tx-${index}`);
-                itemCategoryMap[cat].uniqueProducts.add(buildProductKey(
-                    normalizeItemNameForGrouping(item.name || ''),
-                    normalizeItemNameForGrouping(tx.merchant || '')
-                ));
-            });
-        });
-
-        const total = Object.values(itemCategoryMap).reduce((sum, c) => sum + c.amount, 0);
-
-        // Category data type with optional categoryCount for "Más" aggregation
-        type ItemCatEntry = {
-            name: string;
-            amount: number;
-            count: number;
-            itemCount: number;
-            bgColor: string;
-            fgColor: string;
-            percent: number;
-            categoryCount?: number;
-            transactionIds?: Set<string>;
-        };
-
-        const sorted: ItemCatEntry[] = Object.entries(itemCategoryMap)
-            .map(([name, data]) => {
-                const colors = getCategoryPillColors(name);
-                return {
-                    name,
-                    amount: data.amount,
-                    count: data.transactionIds.size,  // Count unique transactions
-                    itemCount: data.uniqueProducts.size,
-                    bgColor: colors.bg,
-                    fgColor: colors.fg,
-                    percent: total > 0 ? (data.amount / total) * 100 : 0,
-                    transactionIds: data.transactionIds,
-                };
-            })
-            .sort((a, b) => b.amount - a.amount);
-
-        // Apply "Más" threshold grouping (shared utility)
-        const masColors = getTreemapColors('Otro');
-        return applyMasGrouping(sorted, total, (stats) => ({
-            name: 'Más',
-            amount: stats.amount,
-            count: stats.count,
-            itemCount: stats.itemCount,
-            bgColor: masColors.bg,
-            fgColor: masColors.fg,
-            percent: stats.percent,
-            categoryCount: stats.categoryCount,
-        }));
-    }, [monthTransactions]);
+    const itemCategoriesDataResult = useMemo(() =>
+        computeItemCategoriesData(monthTransactions),
+    [monthTransactions]);
 
     const itemCategoriesData = itemCategoriesDataResult.displayCategories;
     const itemCategoriesOtro = itemCategoriesDataResult.otroCategories;
 
-    // Story 14.13 Session 4: Calculate item groups data
-    // Story 14.13 Session 10: Added itemCount - computed directly from transactions to avoid double-counting
-    // Story 14.13 Session 13: Added "Más" aggregation with categoryCount
-    // Story 14.13 Session 14: Changed to use transactionIds Set for accurate unique transaction counting
-    const itemGroupsDataResult = useMemo(() => {
-        const theme = getCurrentTheme();
-        const mode = getCurrentMode();
-        const groupTotals: Record<ItemCategoryGroup, { amount: number; transactionIds: Set<string>; uniqueProducts: Set<string> }> = {
-            'food-fresh': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'food-packaged': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'health-personal': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'household': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'nonfood-retail': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'services-fees': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'other-item': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-        };
-
-        // Compute directly from transactions to get accurate unique product counts
-        monthTransactions.forEach((tx, index) => {
-            (tx.items || []).forEach(item => {
-                const cat = normalizeItemCategory(item.category || 'Other');
-                const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
-                const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
-                groupTotals[group].amount += item.price;
-                groupTotals[group].transactionIds.add(tx.id ?? `tx-${index}`);
-                groupTotals[group].uniqueProducts.add(buildProductKey(
-                    normalizeItemNameForGrouping(item.name || ''),
-                    normalizeItemNameForGrouping(tx.merchant || '')
-                ));
-            });
-        });
-
-        const total = Object.values(groupTotals).reduce((sum, g) => sum + g.amount, 0);
-
-        // Category data type with optional categoryCount for "Más" aggregation
-        type ItemGroupEntry = {
-            name: string;
-            amount: number;
-            count: number;
-            itemCount: number;
-            bgColor: string;
-            fgColor: string;
-            percent: number;
-            categoryCount?: number;
-            transactionIds?: Set<string>;
-        };
-
-        const sorted: ItemGroupEntry[] = ALL_ITEM_CATEGORY_GROUPS
-            .map(groupKey => {
-                const data = groupTotals[groupKey];
-                const colors = getItemGroupColors(groupKey, theme, mode);
-                return {
-                    name: groupKey,
-                    amount: data.amount,
-                    count: data.transactionIds.size,
-                    itemCount: data.uniqueProducts.size,
-                    bgColor: colors.bg,
-                    fgColor: colors.fg,
-                    percent: total > 0 ? (data.amount / total) * 100 : 0,
-                    transactionIds: data.transactionIds,
-                };
-            })
-            .filter(g => g.amount > 0)
-            .sort((a, b) => b.amount - a.amount);
-
-        // Apply "Más" threshold grouping (shared utility)
-        const masColors = getTreemapColors('Otro');
-        return applyMasGrouping(sorted, total, (stats) => ({
-            name: 'Más',
-            amount: stats.amount,
-            count: stats.count,
-            itemCount: stats.itemCount,
-            bgColor: masColors.bg,
-            fgColor: masColors.fg,
-            percent: stats.percent,
-            categoryCount: stats.categoryCount,
-        }));
-    }, [monthTransactions]);
+    const itemGroupsDataResult = useMemo(() =>
+        computeItemGroupsData(monthTransactions),
+    [monthTransactions]);
 
     const itemGroupsData = itemGroupsDataResult.displayCategories;
     const itemGroupsOtro = itemGroupsDataResult.otroCategories;
@@ -843,6 +487,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
         return formatMonth(selectedMonth.month, selectedMonth.year);
     }, [selectedMonth, formatMonth]);
 
+    // Story 15-TD-16: Shared compact amount formatter for chart slides
+    const formatCompactAmount = useCallback(
+        (amount: number) => `${formatCurrency(Math.round(amount / 1000), currency).replace(/\s/g, '')}k`,
+        [formatCurrency, currency]
+    );
+
     // Story 14.13: Get prev/next month names for swipe animation
     const prevMonthName = useMemo(() => {
         const prevMonth = selectedMonth.month === 0 ? 11 : selectedMonth.month - 1;
@@ -927,208 +577,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
 
 
     // Story 14.12: Radar chart data for "Mes a Mes" view (dynamic polygon)
-    // Criteria: Categories >10% + first category ≤10% + "Otro" catch-all
-    // - 3 categories = triangle, 4 = diamond, 5 = pentagon, 6 = hexagon (max)
-    // - Minimum 3 categories required
-    // Story 14.13 Session 4: Now responds to treemapViewMode for different data groupings
-    const radarChartData = useMemo(() => {
-        // Get previous month
-        const prevMonth = selectedMonth.month === 0 ? 11 : selectedMonth.month - 1;
-        const prevYear = selectedMonth.month === 0 ? selectedMonth.year - 1 : selectedMonth.year;
-        const prevMonthStr = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}`;
-
-        // Get transactions for current and previous month
-        const currMonthTx = monthTransactions;
-        const prevMonthTx = allTx.filter(tx => tx.date.startsWith(prevMonthStr));
-
-        // Story 14.13 Session 4: Helper to get emoji and color based on view mode
-        const getEmojiForMode = (name: string): string => {
-            switch (treemapViewMode) {
-                case 'store-groups':
-                    return getStoreCategoryGroupEmoji(name as StoreCategoryGroup);
-                case 'item-groups':
-                    return getItemCategoryGroupEmoji(name as ItemCategoryGroup);
-                case 'item-categories':
-                    return getItemCategoryEmoji(name);
-                case 'store-categories':
-                default:
-                    return getCategoryEmoji(name);
-            }
-        };
-
-        const getColorForMode = (name: string): string => {
-            const theme = getCurrentTheme();
-            const mode = getCurrentMode();
-            switch (treemapViewMode) {
-                case 'store-groups':
-                    return getStoreGroupColors(name as StoreCategoryGroup, theme, mode).bg;
-                case 'item-groups':
-                    return getItemGroupColors(name as ItemCategoryGroup, theme, mode).bg;
-                case 'store-categories':
-                case 'item-categories':
-                default:
-                    return getCategoryBackgroundAuto(name);
-            }
-        };
-
-        // Aggregate data based on view mode
-        const currTotals: Record<string, number> = {};
-        const prevTotals: Record<string, number> = {};
-        let totalCurrMonth = 0;
-        let totalPrevMonth = 0;
-
-        if (treemapViewMode === 'store-categories') {
-            // Original behavior: aggregate by transaction category
-            currMonthTx.forEach(tx => {
-                const cat = tx.category || 'Otro';
-                currTotals[cat] = (currTotals[cat] || 0) + tx.total;
-                totalCurrMonth += tx.total;
-            });
-            prevMonthTx.forEach(tx => {
-                const cat = tx.category || 'Otro';
-                prevTotals[cat] = (prevTotals[cat] || 0) + tx.total;
-                totalPrevMonth += tx.total;
-            });
-        } else if (treemapViewMode === 'store-groups') {
-            // Aggregate by store category groups
-            currMonthTx.forEach(tx => {
-                const cat = tx.category || 'Otro';
-                const group = STORE_CATEGORY_GROUPS[cat as keyof typeof STORE_CATEGORY_GROUPS] || 'other';
-                currTotals[group] = (currTotals[group] || 0) + tx.total;
-                totalCurrMonth += tx.total;
-            });
-            prevMonthTx.forEach(tx => {
-                const cat = tx.category || 'Otro';
-                const group = STORE_CATEGORY_GROUPS[cat as keyof typeof STORE_CATEGORY_GROUPS] || 'other';
-                prevTotals[group] = (prevTotals[group] || 0) + tx.total;
-                totalPrevMonth += tx.total;
-            });
-        } else if (treemapViewMode === 'item-categories') {
-            // Aggregate by item categories from line items
-            currMonthTx.forEach(tx => {
-                (tx.items || []).forEach(item => {
-                    const cat = normalizeItemCategory(item.category || 'Other');
-                    currTotals[cat] = (currTotals[cat] || 0) + item.price;
-                    totalCurrMonth += item.price;
-                });
-            });
-            prevMonthTx.forEach(tx => {
-                (tx.items || []).forEach(item => {
-                    const cat = normalizeItemCategory(item.category || 'Other');
-                    prevTotals[cat] = (prevTotals[cat] || 0) + item.price;
-                    totalPrevMonth += item.price;
-                });
-            });
-        } else if (treemapViewMode === 'item-groups') {
-            // Aggregate by item category groups from line items
-            currMonthTx.forEach(tx => {
-                (tx.items || []).forEach(item => {
-                    const cat = normalizeItemCategory(item.category || 'Other');
-                    const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
-                    const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
-                    currTotals[group] = (currTotals[group] || 0) + item.price;
-                    totalCurrMonth += item.price;
-                });
-            });
-            prevMonthTx.forEach(tx => {
-                (tx.items || []).forEach(item => {
-                    const cat = normalizeItemCategory(item.category || 'Other');
-                    const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
-                    const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
-                    prevTotals[group] = (prevTotals[group] || 0) + item.price;
-                    totalPrevMonth += item.price;
-                });
-            });
-        }
-
-        // Get all unique categories with their percentage of current month budget
-        const allCategories = new Set([...Object.keys(currTotals), ...Object.keys(prevTotals)]);
-        const otherKey = treemapViewMode === 'item-groups' ? 'other-item' :
-                         treemapViewMode === 'store-groups' ? 'other' : 'Otro';
-
-        const allCategoriesWithData = Array.from(allCategories)
-            .map(name => ({
-                name,
-                currAmount: currTotals[name] || 0,
-                prevAmount: prevTotals[name] || 0,
-                percent: totalCurrMonth > 0 ? ((currTotals[name] || 0) / totalCurrMonth) * 100 : 0,
-                emoji: getEmojiForMode(name),
-                color: getColorForMode(name),
-            }))
-            .sort((a, b) => b.currAmount - a.currAmount);
-
-        // Apply selection criteria:
-        // 1. All categories >10%
-        // 2. First category ≤10%
-        // 3. Everything else goes to "Otro"
-        const isOtherCategory = (name: string) => name === otherKey || name === 'Otro' || name === 'Other';
-        const significant = allCategoriesWithData.filter(c => c.percent > 10 && !isOtherCategory(c.name));
-        const belowThreshold = allCategoriesWithData.filter(c => c.percent <= 10 && !isOtherCategory(c.name));
-
-        let selectedCategories = [...significant];
-
-        // Add first category ≤10% if exists
-        if (belowThreshold.length > 0) {
-            selectedCategories.push(belowThreshold[0]);
-        }
-
-        // Aggregate remaining into "Otro" (exclude already selected categories)
-        const selectedNames = new Set(selectedCategories.map(c => c.name));
-        const remaining = allCategoriesWithData.filter(c => !selectedNames.has(c.name) && !isOtherCategory(c.name));
-
-        // Calculate "Otro" totals from remaining categories + any existing "Otro" transactions
-        const existingOtro = allCategoriesWithData.find(c => isOtherCategory(c.name));
-        let otroAmount = remaining.reduce((sum, c) => sum + c.currAmount, 0);
-        let otroPrevAmount = remaining.reduce((sum, c) => sum + c.prevAmount, 0);
-        if (existingOtro) {
-            otroAmount += existingOtro.currAmount;
-            otroPrevAmount += existingOtro.prevAmount;
-        }
-
-        // Always include "Otro" if there's any remaining data
-        if (otroAmount > 0 || otroPrevAmount > 0) {
-            selectedCategories.push({
-                name: otherKey,
-                currAmount: otroAmount,
-                prevAmount: otroPrevAmount,
-                percent: totalCurrMonth > 0 ? (otroAmount / totalCurrMonth) * 100 : 0,
-                emoji: getEmojiForMode(otherKey),
-                color: '#9ca3af', // Gray for "Otro"
-            });
-        }
-
-        // Ensure minimum 3 categories (pad with zeros if needed)
-        while (selectedCategories.length < 3 && belowThreshold.length > selectedCategories.length - significant.length) {
-            const nextCat = belowThreshold[selectedCategories.length - significant.length];
-            if (nextCat && !selectedNames.has(nextCat.name)) {
-                selectedCategories.splice(selectedCategories.length - 1, 0, nextCat); // Insert before "Otro"
-            } else {
-                break;
-            }
-        }
-
-        // Cap at 6 categories maximum (hexagon)
-        selectedCategories = selectedCategories.slice(0, 6);
-
-        // Calculate max value for scaling
-        const maxValue = Math.max(
-            ...selectedCategories.map(c => Math.max(c.currAmount, c.prevAmount)),
-            1
-        );
-
-        // Determine polygon type based on number of categories
-        const sides = selectedCategories.length;
-        const polygonType = sides === 3 ? 'triangle' : sides === 4 ? 'diamond' : sides === 5 ? 'pentagon' : 'hexagon';
-
-        return {
-            categories: selectedCategories,
-            maxValue,
-            sides,
-            polygonType,
-            currentMonthIdx: selectedMonth.month,
-            prevMonthIdx: prevMonth,
-        };
-    }, [monthTransactions, allTx, selectedMonth, treemapViewMode]);
+    // Story 15-TD-5b: Computation extracted to chartDataHelpers.ts
+    const radarChartData = useMemo(() =>
+        computeRadarChartData(monthTransactions, allTx, selectedMonth, treemapViewMode),
+    [monthTransactions, allTx, selectedMonth, treemapViewMode]);
 
     // Story 14.12: Translate month labels for radar chart (outside useMemo to access t)
     const radarCurrentMonthLabel = t(MONTH_SHORT_KEYS[radarChartData.currentMonthIdx]);
@@ -1136,173 +588,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
 
 
     // Story 14.12: Bump chart data for "Ultimos 4 Meses" view
-    // Story 14.13 Session 4: Now responds to treemapViewMode for different data groupings
-    const bumpChartData = useMemo(() => {
-        // Get last 4 months including current
-        const months: { year: number; month: number; isCurrentMonth: boolean }[] = [];
-        let year = selectedMonth.year;
-        let month = selectedMonth.month;
-
-        for (let i = 0; i < 4; i++) {
-            months.unshift({
-                year,
-                month,
-                isCurrentMonth: i === 0
-            });
-            // Go to previous month
-            if (month === 0) {
-                month = 11;
-                year -= 1;
-            } else {
-                month -= 1;
-            }
-        }
-
-        // Story 14.13 Session 4: Helper to get color based on view mode
-        const getColorForMode = (name: string): string => {
-            const theme = getCurrentTheme();
-            const mode = getCurrentMode();
-            switch (treemapViewMode) {
-                case 'store-groups':
-                    return getStoreGroupColors(name as StoreCategoryGroup, theme, mode).fg;
-                case 'item-groups':
-                    return getItemGroupColors(name as ItemCategoryGroup, theme, mode).fg;
-                case 'store-categories':
-                case 'item-categories':
-                default:
-                    return getCategoryPillColors(name).fg;
-            }
-        };
-
-        // Calculate category totals per month
-        const categoryRankings: Record<string, { amounts: number[]; color: string }> = {};
-        const otherKey = treemapViewMode === 'item-groups' ? 'other-item' :
-                         treemapViewMode === 'store-groups' ? 'other' : 'Otro';
-
-        months.forEach((m, idx) => {
-            const monthStr = `${m.year}-${String(m.month + 1).padStart(2, '0')}`;
-            const monthTx = allTx.filter(tx => tx.date.startsWith(monthStr));
-
-            // Aggregate based on view mode
-            const totals: Record<string, number> = {};
-
-            if (treemapViewMode === 'store-categories') {
-                // Original behavior: aggregate by transaction category
-                monthTx.forEach(tx => {
-                    const cat = tx.category || 'Otro';
-                    totals[cat] = (totals[cat] || 0) + tx.total;
-                });
-            } else if (treemapViewMode === 'store-groups') {
-                // Aggregate by store category groups
-                monthTx.forEach(tx => {
-                    const cat = tx.category || 'Otro';
-                    const group = STORE_CATEGORY_GROUPS[cat as keyof typeof STORE_CATEGORY_GROUPS] || 'other';
-                    totals[group] = (totals[group] || 0) + tx.total;
-                });
-            } else if (treemapViewMode === 'item-categories') {
-                // Aggregate by item categories from line items
-                monthTx.forEach(tx => {
-                    (tx.items || []).forEach(item => {
-                        const cat = normalizeItemCategory(item.category || 'Other');
-                        totals[cat] = (totals[cat] || 0) + item.price;
-                    });
-                });
-            } else if (treemapViewMode === 'item-groups') {
-                // Aggregate by item category groups from line items
-                monthTx.forEach(tx => {
-                    (tx.items || []).forEach(item => {
-                        const cat = normalizeItemCategory(item.category || 'Other');
-                        const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
-                        const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
-                        totals[group] = (totals[group] || 0) + item.price;
-                    });
-                });
-            }
-
-            // Update rankings
-            Object.entries(totals).forEach(([cat, amount]) => {
-                if (!categoryRankings[cat]) {
-                    categoryRankings[cat] = { amounts: [0, 0, 0, 0], color: getColorForMode(cat) };
-                }
-                categoryRankings[cat].amounts[idx] = amount;
-            });
-        });
-
-        // Calculate ranks for each month (1 = highest spending)
-        const ranks: Record<string, number[]> = {};
-        months.forEach((_, monthIdx) => {
-            const categoryAmounts = Object.entries(categoryRankings)
-                .map(([cat, data]) => ({ cat, amount: data.amounts[monthIdx] }))
-                .sort((a, b) => b.amount - a.amount);
-
-            categoryAmounts.forEach((item, rank) => {
-                if (!ranks[item.cat]) ranks[item.cat] = [4, 4, 4, 4]; // Default to lowest rank
-                ranks[item.cat][monthIdx] = rank + 1;
-            });
-        });
-
-        // Return top 4 categories + "Otro" (max 5 categories)
-        const isOtherCategory = (name: string) => name === otherKey || name === 'Otro' || name === 'Other';
-        const sortedCategories = Object.entries(categoryRankings)
-            .filter(([cat]) => !isOtherCategory(cat)) // Exclude "other" categories from sorting
-            .map(([cat, data]) => ({
-                name: cat,
-                color: data.color,
-                amounts: data.amounts,
-                ranks: ranks[cat] || [5, 5, 5, 5],
-                total: data.amounts.reduce((sum, a) => sum + a, 0)
-            }))
-            .sort((a, b) => b.total - a.total);
-
-        const top4 = sortedCategories.slice(0, 4);
-        const rest = sortedCategories.slice(4);
-
-        // Get existing "other" category data if any
-        const existingOther = Object.entries(categoryRankings).find(([cat]) => isOtherCategory(cat));
-
-        // Aggregate remaining categories into "Otro"
-        let categoryTotals = top4;
-        const hasRemainingOrOther = rest.length > 0 || existingOther;
-
-        if (hasRemainingOrOther) {
-            const otroAmounts = rest.reduce(
-                (sums, cat) => sums.map((s, i) => s + cat.amounts[i]),
-                existingOther ? [...existingOther[1].amounts] : [0, 0, 0, 0]
-            );
-            const otroTotal = otroAmounts.reduce((sum, a) => sum + a, 0);
-
-            // Calculate ranks for Otro based on its amounts
-            const otroRanks = months.map((_, monthIdx) => {
-                const allAmounts = [...top4.map(c => c.amounts[monthIdx]), otroAmounts[monthIdx]];
-                const sorted = [...allAmounts].sort((a, b) => b - a);
-                return sorted.indexOf(otroAmounts[monthIdx]) + 1;
-            });
-
-            categoryTotals = [
-                ...top4,
-                {
-                    name: otherKey,
-                    color: getColorForMode(otherKey),
-                    amounts: otroAmounts,
-                    ranks: otroRanks,
-                    total: otroTotal
-                }
-            ];
-
-            // Recalculate ranks with Otro included
-            months.forEach((_, monthIdx) => {
-                const categoryAmounts = categoryTotals
-                    .map(cat => ({ name: cat.name, amount: cat.amounts[monthIdx] }))
-                    .sort((a, b) => b.amount - a.amount);
-                categoryAmounts.forEach((item, rank) => {
-                    const cat = categoryTotals.find(c => c.name === item.name);
-                    if (cat) cat.ranks[monthIdx] = rank + 1;
-                });
-            });
-        }
-
-        return { monthData: months, categories: categoryTotals };
-    }, [allTx, selectedMonth, treemapViewMode]);
+    // Story 15-TD-5b: Computation extracted to chartDataHelpers.ts
+    const bumpChartData = useMemo(() =>
+        computeBumpChartData(allTx, selectedMonth, treemapViewMode),
+    [allTx, selectedMonth, treemapViewMode]);
 
     // Story 14.12: Translate bump chart month labels (outside useMemo to access t)
     const bumpChartMonthLabels = bumpChartData.monthData.map(m =>
@@ -1311,18 +600,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
 
     // Story 10a.1: Extract available filters from transactions (AC #2)
     const availableFilters = useMemo(() => {
-        return extractAvailableFilters(allTx as Transaction[]);
+        return extractAvailableFilters(allTx);
     }, [allTx]);
 
     // Story 10a.1: Duplicate detection (AC #4) - moved before filtering for duplicatesOnly filter
     const duplicateIds = useMemo(() => {
-        return getDuplicateIds(allTx as Transaction[]);
+        return getDuplicateIds(allTx);
     }, [allTx]);
 
     // Story 10a.1: Apply filters to transactions (AC #2)
     // Story 11.1: Extended to support duplicates-only filter and sort by createdAt
     const filteredTransactions = useMemo(() => {
-        let result = filterTransactionsByHistoryFilters(allTx as Transaction[], filterState);
+        let result = filterTransactionsByHistoryFilters(allTx, filterState);
 
         // Story 11.1: Apply duplicates-only filter
         if (showDuplicatesOnly) {
@@ -1610,7 +899,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
                         date: transaction.date,
                         time: transaction.time,
                         total: transaction.total,
-                        category: transaction.category as any,
+                        category: transaction.category,
                         city: transaction.city,
                         country: transaction.country,
                         currency: transaction.currency || currency,
@@ -1632,7 +921,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
                     userDefaultCountry={defaultCountry}
                     foreignLocationFormat={foreignLocationFormat}
                     isDuplicate={isDuplicate}
-                    onClick={() => onEditTransaction(transaction as any)}
+                    onClick={() => onEditTransaction(transaction)}
                     onThumbnailClick={() => handleThumbnailClick(transaction)}
                     selection={isSelectionMode ? {
                         isSelectionMode,
@@ -1645,134 +934,32 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
     };
 
     // Story 14.12: If showing full list, render the old paginated view
+    // Story 15-TD-5b: Extracted to DashboardFullListView component
     if (showFullList) {
         return (
-            <div className="space-y-6">
-                {/* Back button to return to dashboard */}
-                <button
-                    onClick={() => setShowFullList(false)}
-                    className="flex items-center gap-2 text-sm font-medium"
-                    style={{ color: 'var(--accent)' }}
-                >
-                    <ChevronRight size={16} className="rotate-180" />
-                    {t('backToDashboard') || 'Volver'}
-                </button>
-
-                {/* Filter bar */}
-                <HistoryFilterBar
-                    availableFilters={availableFilters}
-                    theme={theme}
-                    locale={lang}
-                    t={t}
-                    totalCount={allTx.length}
-                    filteredCount={filteredTransactions.length}
-                />
-
-                {/* Sort and duplicates filter controls */}
-                <div className="flex flex-wrap items-center gap-2 mb-4">
-                    <div className="flex items-center gap-1.5">
-                        <ArrowUpDown size={14} style={{ color: 'var(--secondary)' }} />
-                        <select
-                            value={sortType}
-                            onChange={(e) => setSortType(e.target.value as SortType)}
-                            className="text-sm py-1.5 px-2 rounded-lg border min-h-[36px] cursor-pointer"
-                            style={{
-                                backgroundColor: 'var(--surface)',
-                                borderColor: 'var(--border-light)',
-                                color: 'var(--text-primary)',
-                            }}
-                            aria-label={t('sortBy')}
-                        >
-                            <option value="transactionDate">{t('sortByTransactionDate')}</option>
-                            <option value="scanDate">{t('sortByScanDate')}</option>
-                        </select>
-                    </div>
-
-                    {duplicateIds.size > 0 && (
-                        <button
-                            onClick={() => setShowDuplicatesOnly(!showDuplicatesOnly)}
-                            className={`flex items-center gap-1.5 text-sm py-1.5 px-3 rounded-lg border min-h-[36px] transition-colors ${
-                                showDuplicatesOnly
-                                    ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/30'
-                                    : ''
-                            }`}
-                            style={{
-                                backgroundColor: showDuplicatesOnly
-                                    ? undefined
-                                    : 'var(--surface)',
-                                borderColor: showDuplicatesOnly
-                                    ? '#fbbf24'
-                                    : isDark ? '#334155' : '#e2e8f0',
-                                color: showDuplicatesOnly
-                                    ? isDark ? '#fbbf24' : '#d97706'
-                                    : 'var(--secondary)',
-                            }}
-                            aria-pressed={showDuplicatesOnly}
-                            aria-label={t('filterDuplicates')}
-                        >
-                            <Filter size={14} />
-                            <span>{t('filterDuplicates')}</span>
-                            <span className="font-semibold">({duplicateIds.size})</span>
-                        </button>
-                    )}
-                </div>
-
-                {/* Transaction list */}
-                {filteredTransactions.length === 0 && hasActiveFilters ? (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <Inbox size={48} className="mb-4 opacity-50" style={{ color: 'var(--secondary)' }} />
-                        <p className="text-lg font-medium mb-2" style={{ color: 'var(--text-primary)' }}>{t('noMatchingTransactions')}</p>
-                        <p className="text-sm opacity-75" style={{ color: 'var(--secondary)' }}>{t('tryDifferentFilters')}</p>
-                    </div>
-                ) : (
-                    <>
-                        <div className="space-y-2">
-                            {paginatedTransactions.map((tx, index) => renderTransactionItem(tx, index))}
-                        </div>
-
-                        {totalPages > 1 && (
-                            <div className="flex justify-center items-center gap-4 mt-6">
-                                <button
-                                    disabled={historyPage === 1}
-                                    onClick={() => setHistoryPage(p => p - 1)}
-                                    className="px-4 py-2 border rounded-lg disabled:opacity-50 min-h-11"
-                                    style={{
-                                        borderColor: 'var(--border-light)',
-                                        backgroundColor: 'var(--surface)',
-                                        color: 'var(--text-primary)',
-                                    }}
-                                >
-                                    {t('prev')}
-                                </button>
-                                <span style={{ color: 'var(--secondary)' }}>
-                                    {t('page')} {historyPage} / {totalPages}
-                                </span>
-                                <button
-                                    disabled={historyPage >= totalPages}
-                                    onClick={() => setHistoryPage(p => p + 1)}
-                                    className="px-4 py-2 border rounded-lg disabled:opacity-50 min-h-11"
-                                    style={{
-                                        borderColor: 'var(--border-light)',
-                                        backgroundColor: 'var(--surface)',
-                                        color: 'var(--text-primary)',
-                                    }}
-                                >
-                                    {t('next')}
-                                </button>
-                            </div>
-                        )}
-                    </>
-                )}
-
-                {/* Image Viewer Modal */}
-                {selectedTransaction && selectedTransaction.imageUrls && selectedTransaction.imageUrls.length > 0 && (
-                    <ImageViewer
-                        images={selectedTransaction.imageUrls}
-                        merchantName={selectedTransaction.alias || selectedTransaction.merchant}
-                        onClose={handleCloseViewer}
-                    />
-                )}
-            </div>
+            <DashboardFullListView
+                onBack={() => setShowFullList(false)}
+                availableFilters={availableFilters}
+                theme={theme}
+                lang={lang}
+                t={t}
+                allTxCount={allTx.length}
+                filteredTransactions={filteredTransactions}
+                hasActiveFilters={hasActiveFilters}
+                sortType={sortType}
+                setSortType={setSortType}
+                showDuplicatesOnly={showDuplicatesOnly}
+                setShowDuplicatesOnly={setShowDuplicatesOnly}
+                duplicateIds={duplicateIds}
+                isDark={isDark}
+                paginatedTransactions={paginatedTransactions}
+                historyPage={historyPage}
+                setHistoryPage={setHistoryPage}
+                totalPages={totalPages}
+                renderTransactionItem={renderTransactionItem}
+                selectedTransaction={selectedTransaction}
+                handleCloseViewer={handleCloseViewer}
+            />
         );
     }
 
@@ -2174,6 +1361,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
                                             radarPrevMonthLabel={radarPrevMonthLabel}
                                             translateTreemapName={translateTreemapName}
                                             t={t}
+                                            formatCompactAmount={formatCompactAmount}
                                         />
                                     </div>
                                 )}
@@ -2202,6 +1390,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
                                             translateTreemapName={translateTreemapName}
                                             getTreemapEmoji={getTreemapEmoji}
                                             t={t}
+                                            formatCompactAmount={formatCompactAmount}
                                         />
                                     </div>
                                 )}
@@ -2251,218 +1440,32 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
                 </TransitionChild>
 
                 {/* Section 2: Recientes Carousel (AC #3) - 2 slides: by scan date, by transaction date */}
+                {/* Story 15-TD-5b: Extracted to DashboardRecientesSection component */}
                 <TransitionChild index={1} totalItems={2}>
-                    <div className="rounded-xl border overflow-hidden" style={cardStyle}>
-                        {/* Section Header - fixed height (h-10 = 40px) to prevent layout shift between modes */}
-                        <div className="flex justify-between items-center px-2.5 h-10 relative">
-                            {/* Left side: Title or Selection count - uses absolute positioning for smooth transitions */}
-                            <div className="flex items-center gap-2 h-full">
-                                {/* Normal mode: Title + Expand button */}
-                                <div
-                                    className="flex items-center gap-2 transition-opacity duration-150"
-                                    style={{
-                                        opacity: isSelectionMode ? 0 : 1,
-                                        pointerEvents: isSelectionMode ? 'none' : 'auto',
-                                        position: isSelectionMode ? 'absolute' : 'relative',
-                                    }}
-                                >
-                                    <h2 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
-                                        {recientesSlide === 0 ? 'Últimos Escaneados' : 'Por Fecha'}
-                                    </h2>
-                                    {/* Story 14.41b: Removed expand button - now using "See More" card at end of list */}
-                                </div>
-                                {/* Selection mode: X button + count */}
-                                <div
-                                    className="flex items-center gap-2 transition-opacity duration-150"
-                                    style={{
-                                        opacity: isSelectionMode ? 1 : 0,
-                                        pointerEvents: isSelectionMode ? 'auto' : 'none',
-                                        position: isSelectionMode ? 'relative' : 'absolute',
-                                    }}
-                                >
-                                    <button
-                                        onClick={exitSelectionMode}
-                                        className="w-6 h-6 rounded-full flex items-center justify-center"
-                                        style={{ backgroundColor: 'var(--bg-tertiary)' }}
-                                        aria-label="Cancelar selección"
-                                    >
-                                        <X size={14} style={{ color: 'var(--text-secondary)' }} />
-                                    </button>
-                                    <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
-                                        {selectedIds.size} {selectedIds.size === 1 ? 'seleccionado' : 'seleccionados'}
-                                    </span>
-                                </div>
-                            </div>
-                            {/* Right side: Ver todo or Action buttons - uses absolute positioning for smooth transitions */}
-                            <div className="flex items-center h-full">
-                                {/* Normal mode: Ver todo link */}
-                                <div
-                                    className="transition-opacity duration-150"
-                                    style={{
-                                        opacity: isSelectionMode ? 0 : 1,
-                                        pointerEvents: isSelectionMode ? 'none' : 'auto',
-                                        position: isSelectionMode ? 'absolute' : 'relative',
-                                        right: isSelectionMode ? '0.625rem' : undefined,
-                                    }}
-                                >
-                                    <button
-                                        onClick={handleViewAll}
-                                        className="text-sm font-medium"
-                                        style={{ color: 'var(--primary)' }}
-                                        data-testid="view-all-link"
-                                    >
-                                        Ver todo →
-                                    </button>
-                                </div>
-                                {/* Selection mode: Action buttons */}
-                                <div
-                                    className="flex items-center gap-2 transition-opacity duration-150"
-                                    style={{
-                                        opacity: isSelectionMode ? 1 : 0,
-                                        pointerEvents: isSelectionMode ? 'auto' : 'none',
-                                        position: isSelectionMode ? 'relative' : 'absolute',
-                                        right: isSelectionMode ? undefined : '0.625rem',
-                                    }}
-                                >
-                                    <button
-                                        onClick={handleRecientesSelectAllToggle}
-                                        className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-                                        style={{ backgroundColor: 'var(--secondary)' }}
-                                        aria-label={visibleRecientesIds.every(id => selectedIds.has(id)) ? 'Deseleccionar todo' : 'Seleccionar todo'}
-                                        data-testid="recientes-select-all"
-                                    >
-                                        <CheckSquare
-                                            size={16}
-                                            style={{ color: 'white' }}
-                                            fill={visibleRecientesIds.length > 0 && visibleRecientesIds.every(id => selectedIds.has(id)) ? 'rgba(255, 255, 255, 0.3)' : 'none'}
-                                        />
-                                    </button>
-                                    <button
-                                        onClick={handleOpenDelete}
-                                        className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-                                        style={{ backgroundColor: 'var(--error)' }}
-                                        aria-label="Eliminar"
-                                        disabled={selectedIds.size === 0}
-                                    >
-                                        <Trash2 size={16} style={{ color: 'white' }} />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Transaction List with swipe support - reduced horizontal padding */}
-                        <div
-                            className="px-1.5 pb-1.5"
-                            onTouchStart={(e) => setRecientesTouchStart(e.targetTouches[0].clientX)}
-                            onTouchMove={(e) => setRecientesTouchEnd(e.targetTouches[0].clientX)}
-                            onTouchEnd={() => {
-                                if (recientesTouchStart !== null && recientesTouchEnd !== null) {
-                                    const diff = recientesTouchStart - recientesTouchEnd;
-                                    const minSwipeDistance = 50;
-                                    if (diff > minSwipeDistance) {
-                                        // Swiped left -> go to next slide (slide 1)
-                                        goToRecientesSlide(recientesSlide === 0 ? 1 : 0, 'left');
-                                    } else if (diff < -minSwipeDistance) {
-                                        // Swiped right -> go to prev slide (slide 0)
-                                        goToRecientesSlide(recientesSlide === 1 ? 0 : 1, 'right');
-                                    }
-                                }
-                                setRecientesTouchStart(null);
-                                setRecientesTouchEnd(null);
-                            }}
-                        >
-                            {recentTransactions.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-8 text-center">
-                                    <Inbox size={36} className="mb-3 opacity-50" style={{ color: 'var(--secondary)' }} />
-                                    <p className="text-sm" style={{ color: 'var(--secondary)' }}>
-                                        {t('noRecentTransactions') || 'Sin transacciones recientes'}
-                                    </p>
-                                </div>
-                            ) : (
-                                <div
-                                    key={`recientes-list-${recientesAnimKey}`}
-                                    className="space-y-1"
-                                    style={{
-                                        animation: recientesSlideDirection
-                                            ? `${recientesSlideDirection === 'left' ? 'slideInFromRight' : 'slideInFromLeft'} 300ms ease-out`
-                                            : undefined
-                                    }}
-                                >
-                                    {recentTransactions.map((tx, index) => (
-                                        <div
-                                            key={`${(tx as Transaction).id}-${recientesAnimKey}`}
-                                            className="animate-fade-in-left"
-                                            style={{
-                                                opacity: 0,
-                                                animationDelay: `${index * 80}ms`
-                                            }}
-                                        >
-                                            {renderTransactionItem(tx, index)}
-                                        </div>
-                                    ))}
-                                    {/* Story 14.41b: "See More" / "See Less" link at end of list - styled like "Ver todo" */}
-                                    {canExpand && (
-                                        <div
-                                            key={`see-more-less-${recientesAnimKey}`}
-                                            className="flex justify-center pt-2 pb-1 animate-fade-in-left"
-                                            style={{
-                                                opacity: 0,
-                                                animationDelay: `${recentTransactions.length * 80}ms`
-                                            }}
-                                        >
-                                            <button
-                                                onClick={() => setRecientesExpanded(!recientesExpanded)}
-                                                className="text-sm font-medium flex items-center gap-1"
-                                                style={{ color: 'var(--primary)' }}
-                                                data-testid={recientesExpanded ? 'show-less-card' : 'see-more-card'}
-                                            >
-                                                <span>
-                                                    {recientesExpanded
-                                                        ? (t('showLess') || 'Ver menos')
-                                                        : (t('seeMore') || 'Ver más')}
-                                                </span>
-                                                <span className="text-base font-bold">{recientesExpanded ? '−' : '+'}</span>
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Indicator Bar (2 segments) - uses CSS variables for theme colors */}
-                        <div
-                            className="flex"
-                            style={{
-                                backgroundColor: 'var(--border-light)',
-                                borderRadius: '0 0 12px 12px',
-                                overflow: 'hidden',
-                                height: '6px',
-                            }}
-                            data-testid="recientes-indicator-bar"
-                        >
-                            {[0, 1].map((idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => {
-                                        if (idx !== recientesSlide) {
-                                            goToRecientesSlide(idx as 0 | 1, idx > recientesSlide ? 'left' : 'right');
-                                        }
-                                    }}
-                                    className="flex-1 h-full transition-colors"
-                                    style={{
-                                        backgroundColor: recientesSlide === idx
-                                            ? 'var(--border-medium, #d4a574)'
-                                            : 'transparent',
-                                        borderRadius: recientesSlide === idx
-                                            ? (idx === 0 ? '0 0 0 12px' : '0 0 12px 0')
-                                            : '0',
-                                    }}
-                                    aria-label={idx === 0 ? 'Últimos Escaneados' : 'Por Fecha'}
-                                    data-testid={`recientes-indicator-${idx}`}
-                                />
-                            ))}
-                        </div>
-                    </div>
+                    <DashboardRecientesSection
+                        cardStyle={cardStyle}
+                        recientesSlide={recientesSlide}
+                        isSelectionMode={isSelectionMode}
+                        selectedIds={selectedIds}
+                        exitSelectionMode={exitSelectionMode}
+                        handleViewAll={handleViewAll}
+                        visibleRecientesIds={visibleRecientesIds}
+                        handleRecientesSelectAllToggle={handleRecientesSelectAllToggle}
+                        handleOpenDelete={handleOpenDelete}
+                        recentTransactions={recentTransactions}
+                        recientesAnimKey={recientesAnimKey}
+                        recientesSlideDirection={recientesSlideDirection}
+                        renderTransactionItem={renderTransactionItem}
+                        canExpand={canExpand}
+                        recientesExpanded={recientesExpanded}
+                        setRecientesExpanded={setRecientesExpanded}
+                        t={t}
+                        setRecientesTouchStart={setRecientesTouchStart}
+                        setRecientesTouchEnd={setRecientesTouchEnd}
+                        recientesTouchStart={recientesTouchStart}
+                        recientesTouchEnd={recientesTouchEnd}
+                        goToRecientesSlide={goToRecientesSlide}
+                    />
                 </TransitionChild>
 
                 {/* Image Viewer Modal */}

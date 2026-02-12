@@ -636,6 +636,11 @@ export const TRANSLATIONS = {
         receiptsSaved: "receipts saved",
         // Story 14.12: Dashboard recientes section
         noRecentTransactions: "No recent transactions",
+        latestScanned: "Latest Scanned",
+        byDate: "By Date",
+        cancelSelection: "Cancel selection",
+        selectedSingular: "selected",
+        deleteAction: "Delete",
         // Story 14.12: Dashboard carousel and date labels
         todayLabel: "Today",
         yesterdayLabel: "Yesterday",
@@ -643,6 +648,9 @@ export const TRANSLATIONS = {
         monthToMonth: "Month to Month",
         lastFourMonths: "Last 4 Months",
         otherCategory: "Other",
+        // Story 15-TD-16: Bump chart i18n
+        tapPointForDetails: "Tap a point to see details",
+        bumpInMonth: "in",
         apply: "Apply",
         // Story 14.12: Month names (short)
         monthJan: "Jan", monthFeb: "Feb", monthMar: "Mar", monthApr: "Apr",
@@ -1488,6 +1496,11 @@ export const TRANSLATIONS = {
         receiptsSaved: "recibos guardados",
         // Story 14.12: Dashboard recientes section
         noRecentTransactions: "Sin transacciones recientes",
+        latestScanned: "Últimos Escaneados",
+        byDate: "Por Fecha",
+        cancelSelection: "Cancelar selección",
+        selectedSingular: "seleccionado",
+        deleteAction: "Eliminar",
         // Story 14.12: Dashboard carousel and date labels
         todayLabel: "Hoy",
         yesterdayLabel: "Ayer",
@@ -1495,6 +1508,9 @@ export const TRANSLATIONS = {
         monthToMonth: "Mes a Mes",
         lastFourMonths: "Últimos 4 Meses",
         otherCategory: "Otro",
+        // Story 15-TD-16: Bump chart i18n
+        tapPointForDetails: "Toca un punto para ver detalles",
+        bumpInMonth: "en",
         apply: "Aplicar",
         // Story 14.12: Month names (short)
         monthJan: "Ene", monthFeb: "Feb", monthMar: "Mar", monthApr: "Abr",

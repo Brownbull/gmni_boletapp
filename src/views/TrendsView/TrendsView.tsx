@@ -17,7 +17,7 @@
  */
 
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, PieChart, LayoutGrid, Plus, Minus, Receipt, Package, GitBranch, List } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 // Story 14.13: Animation components
 import { PageTransition } from '../../components/animation/PageTransition';
 import { TransitionChild } from '../../components/animation/TransitionChild';
@@ -42,23 +42,10 @@ import type { HistoryFilterState } from '@/types/historyFilters';
 import { useSwipeNavigation } from '../../hooks/useSwipeNavigation';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 // Utilities
-// Story 14.14b: Category group helpers for donut view mode data transformation
-// Story 14.15b: Category normalization for legacy data compatibility
-import { normalizeItemCategory } from '../../utils/categoryNormalizer';
 import {
     getContrastTextColor,
-    ALL_STORE_CATEGORY_GROUPS,
-    ALL_ITEM_CATEGORY_GROUPS,
-    STORE_CATEGORY_GROUPS,
-    ITEM_CATEGORY_GROUPS,
-    ITEM_CATEGORY_TO_KEY,
-    getStoreGroupColors,
-    getItemGroupColors,
     getCurrentTheme,
     getCurrentMode,
-    expandStoreCategoryGroup,
-    expandItemCategoryGroup,
-    type StoreCategoryGroup,
     type ItemCategoryGroup,
 } from '../../config/categoryColors';
 import { getStorageString, setStorageString, getStorageJSON, setStorageJSON } from '@/utils/storage';
@@ -97,7 +84,7 @@ import type {
 } from './types';
 // Re-export canonical types for backward compatibility (consumers import from TrendsView)
 export type { DrillDownPath, HistoryNavigationPayload } from '../../types/navigation';
-import type { HistoryNavigationPayload, DrillDownPath } from '../../types/navigation';
+import type { HistoryNavigationPayload } from '../../types/navigation';
 
 /**
  * Story 14e-25b.1: TrendsView props interface.
@@ -119,20 +106,27 @@ export interface TrendsViewProps {
 // Constants & Helpers (extracted to ./helpers.ts)
 // ============================================================================
 import {
+    computeStoreGroupsData, computeItemGroupsData,
+} from './aggregationHelpers';
+import {
     getPeriodLabel, filterByPeriod,
     computeAllCategoryData, computeItemCategoryData,
-    computeSubcategoryData, computeItemGroupsForStore, computeItemCategoriesInGroup,
+    computeSubcategoryData,
     computeTreemapCategories, computeTrendCategories,
     CAROUSEL_TITLES_BASE,
 } from './helpers';
 
-// Sub-Components (co-located)
+// Story 15-TD-5b: Extracted helpers
+import { computePreviousPeriodTotals, computeDailySparkline as computeDailySparklineFn } from './periodComparisonHelpers';
+import { buildTreemapNavigationPayload, buildTrendNavigationPayload, getDonutViewModeAtDrillLevel, getMaxDrillDownLevel } from './navigationHelpers';
+import { resolveDrillDownCategories } from './drillDownHelpers';
+import { getPreviousPeriodState, getNextPeriodState, getCurrentDatePeriod, isCurrentPeriod } from './periodNavigationHelpers';
+// Sub-Components (co-located + extracted)
 import { AnimatedTreemapCell } from './AnimatedTreemapCell';
 import { DonutChart } from './DonutChart';
 import { TrendListItem } from './TrendListItem';
-
-// (Helper functions in ./helpers.ts)
-// (Sub-components in co-located files)
+import { TrendsCardHeader } from './TrendsCardHeader';
+import { ExpandCollapseButtons } from './ExpandCollapseButtons';
 
 // ============================================================================
 // Main Component
@@ -703,48 +697,11 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
     }, [timePeriod, currentPeriod, donutViewMode]);
 
     // Story 14.14b: View mode data computations for treemap
-    // Aggregate allCategoryData by store category groups
-    // Story 14.13 Session 5: Now also aggregates itemCount for count mode toggle
-    const storeGroupsData = useMemo((): CategoryData[] => {
-        const theme = getCurrentTheme();
-        const mode = getCurrentMode();
-        const groupTotals: Record<StoreCategoryGroup, { value: number; count: number; itemCount: number }> = {
-            'food-dining': { value: 0, count: 0, itemCount: 0 },
-            'health-wellness': { value: 0, count: 0, itemCount: 0 },
-            'retail-general': { value: 0, count: 0, itemCount: 0 },
-            'retail-specialty': { value: 0, count: 0, itemCount: 0 },
-            'automotive': { value: 0, count: 0, itemCount: 0 },
-            'services': { value: 0, count: 0, itemCount: 0 },
-            'hospitality': { value: 0, count: 0, itemCount: 0 },
-            'other': { value: 0, count: 0, itemCount: 0 },
-        };
-
-        for (const cat of allCategoryData) {
-            const group = STORE_CATEGORY_GROUPS[cat.name as keyof typeof STORE_CATEGORY_GROUPS] || 'other';
-            groupTotals[group].value += cat.value;
-            groupTotals[group].count += cat.count;
-            groupTotals[group].itemCount += cat.itemCount || 0;
-        }
-
-        const totalValue = Object.values(groupTotals).reduce((sum, g) => sum + g.value, 0);
-
-        return ALL_STORE_CATEGORY_GROUPS
-            .map(groupKey => {
-                const data = groupTotals[groupKey];
-                const colors = getStoreGroupColors(groupKey, theme, mode);
-                return {
-                    name: groupKey,
-                    value: data.value,
-                    count: data.count,
-                    itemCount: data.itemCount,
-                    color: colors.bg,
-                    fgColor: colors.fg,
-                    percent: totalValue > 0 ? Math.round((data.value / totalValue) * 100) : 0,
-                };
-            })
-            .filter(g => g.value > 0)
-            .sort((a, b) => b.value - a.value);
-    }, [allCategoryData]);
+    // Story 15-TD-5b: Extracted to aggregationHelpers.ts
+    const storeGroupsData = useMemo(
+        () => computeStoreGroupsData(allCategoryData),
+        [allCategoryData]
+    );
 
     // Aggregate item categories from transaction line items
     const itemCategoriesData = useMemo((): CategoryData[] => {
@@ -752,60 +709,11 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
     }, [filteredTransactions]);
 
     // Aggregate item categories by item groups
-    // Story 14.14b Session 6: Use transactionIds for accurate counting (prevents double-counting)
-    // Story 14.13 Session 5: Now also aggregates itemCount for count mode toggle
-    // Story 14.13 Session 7: Compute unique products directly from transactions to avoid double-counting
-    const itemGroupsData = useMemo((): CategoryData[] => {
-        const theme = getCurrentTheme();
-        const mode = getCurrentMode();
-        const groupTotals: Record<ItemCategoryGroup, { value: number; transactionIds: Set<string>; uniqueProducts: Set<string> }> = {
-            'food-fresh': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'food-packaged': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'health-personal': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'household': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'nonfood-retail': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'services-fees': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'other-item': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-        };
-
-        // Story 14.13 Session 7: Compute directly from transactions to properly count unique products per group
-        filteredTransactions.forEach((tx, index) => {
-            (tx.items || []).forEach(item => {
-                const cat = normalizeItemCategory(item.category || 'Other');
-                const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
-                const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
-
-                groupTotals[group].value += item.price;
-                groupTotals[group].transactionIds.add(tx.id ?? `tx-${index}`);
-
-                // Track unique products by normalized name + merchant
-                const normalizedName = (item.name || 'Unknown').toLowerCase().trim().replace(/\s+/g, ' ');
-                const normalizedMerchant = (tx.merchant || 'unknown').toLowerCase().trim().replace(/\s+/g, ' ');
-                const productKey = `${normalizedName}::${normalizedMerchant}`;
-                groupTotals[group].uniqueProducts.add(productKey);
-            });
-        });
-
-        const totalValue = Object.values(groupTotals).reduce((sum, g) => sum + g.value, 0);
-
-        return ALL_ITEM_CATEGORY_GROUPS
-            .map(groupKey => {
-                const data = groupTotals[groupKey];
-                const colors = getItemGroupColors(groupKey, theme, mode);
-                return {
-                    name: groupKey,
-                    value: data.value,
-                    count: data.transactionIds.size,  // Unique transaction count
-                    itemCount: data.uniqueProducts.size,  // Story 14.13 Session 7: Unique products count
-                    transactionIds: data.transactionIds,  // Keep for further aggregation
-                    color: colors.bg,
-                    fgColor: colors.fg,
-                    percent: totalValue > 0 ? Math.round((data.value / totalValue) * 100) : 0,
-                };
-            })
-            .filter(g => g.value > 0)
-            .sort((a, b) => b.value - a.value);
-    }, [filteredTransactions]);
+    // Story 15-TD-5b: Extracted to aggregationHelpers.ts
+    const itemGroupsData = useMemo(
+        () => computeItemGroupsData(filteredTransactions),
+        [filteredTransactions]
+    );
 
     // Get the base data for the current view mode (before treemap categorization)
     const viewModeBaseData = useMemo((): CategoryData[] => {
@@ -830,65 +738,11 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
     );
 
     // Story 14.13 Session 17: TreeMap drill-down data computation
-    // Computes what to display based on the treemap drill-down level and path
+    // Story 15-TD-5b: Extracted to drillDownHelpers.ts
     const treemapDrillDownData = useMemo((): CategoryData[] => {
-        if (treemapDrillDownLevel === 0) return [];
-
-        const path = treemapDrillDownPath;
-
-        // Drill-down structure depends on viewMode:
-        // store-categories: storeCategory -> itemGroups -> itemCategories -> subcategories
-        // store-groups: storeGroup -> storeCategories -> itemGroups -> itemCategories -> subcategories
-        // item-groups: itemGroup -> itemCategories -> subcategories
-        // item-categories: itemCategory -> subcategories
-
-        if (donutViewMode === 'store-categories') {
-            if (treemapDrillDownLevel === 1 && path[0]) {
-                // Level 1: Item groups within this store category
-                return computeItemGroupsForStore(filteredTransactions, path[0]);
-            } else if (treemapDrillDownLevel === 2 && path[1] && path[0]) {
-                // Level 2: Item categories within this item group, filtered by store category
-                return computeItemCategoriesInGroup(filteredTransactions, path[1], path[0]);
-            } else if (treemapDrillDownLevel === 3 && path[2]) {
-                // Level 3: Subcategories
-                return computeSubcategoryData(filteredTransactions, path[2]);
-            }
-        }
-
-        if (donutViewMode === 'store-groups') {
-            if (treemapDrillDownLevel === 1 && path[0]) {
-                // Level 1: Store categories in this store group
-                return allCategoryData.filter(cat => {
-                    const catGroup = STORE_CATEGORY_GROUPS[cat.name as keyof typeof STORE_CATEGORY_GROUPS];
-                    return catGroup === path[0];
-                });
-            } else if (treemapDrillDownLevel === 2 && path[1]) {
-                // Level 2: Item groups in this store category
-                return computeItemGroupsForStore(filteredTransactions, path[1]);
-            } else if (treemapDrillDownLevel === 3 && path[2] && path[1]) {
-                // Level 3: Item categories in this item group, filtered by store category
-                return computeItemCategoriesInGroup(filteredTransactions, path[2], path[1]);
-            }
-        }
-
-        if (donutViewMode === 'item-groups') {
-            if (treemapDrillDownLevel === 1 && path[0]) {
-                // Level 1: Item categories in this item group
-                return computeItemCategoriesInGroup(filteredTransactions, path[0]);
-            } else if (treemapDrillDownLevel === 2 && path[1]) {
-                // Level 2: Subcategories
-                return computeSubcategoryData(filteredTransactions, path[1]);
-            }
-        }
-
-        if (donutViewMode === 'item-categories') {
-            if (treemapDrillDownLevel === 1 && path[0]) {
-                // Level 1: Subcategories
-                return computeSubcategoryData(filteredTransactions, path[0]);
-            }
-        }
-
-        return [];
+        return resolveDrillDownCategories(
+            filteredTransactions, donutViewMode, treemapDrillDownLevel, treemapDrillDownPath, allCategoryData
+        );
     }, [treemapDrillDownLevel, treemapDrillDownPath, donutViewMode, filteredTransactions, allCategoryData]);
 
     // Story 14.13 Session 17: Process treemap drill-down data through the same expand/collapse logic
@@ -905,21 +759,11 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
         return computeTreemapCategories(recalculatedData, treemapDrillDownExpandedCount);
     }, [treemapDrillDownLevel, treemapDrillDownData, treemapDrillDownExpandedCount, categoryData, otroCategories, canExpand, canCollapse]);
 
-    // Story 14.13 Session 17: Get max drill-down level based on view mode
-    const getTreemapMaxDrillDownLevel = useCallback((): number => {
-        switch (donutViewMode) {
-            case 'store-groups':
-                return 3; // storeGroup -> storeCategory -> itemGroup -> itemCategory
-            case 'store-categories':
-                return 3; // storeCategory -> itemGroup -> itemCategory -> subcategory
-            case 'item-groups':
-                return 2; // itemGroup -> itemCategory -> subcategory
-            case 'item-categories':
-                return 1; // itemCategory -> subcategory
-            default:
-                return 3;
-        }
-    }, [donutViewMode]);
+    // Story 15-TD-5b: Max drill-down level extracted to navigationHelpers.ts
+    const getTreemapMaxDrillDownLevel = useCallback(
+        () => getMaxDrillDownLevel(donutViewMode),
+        [donutViewMode]
+    );
 
     /**
      * Story 14.13.2: Get previous period transactions for comparison
@@ -961,249 +805,25 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
 
     /**
      * Story 14.13.2: Compute previous period category totals for comparison
-     * Aggregates spending by category from previous period transactions
+     * Story 15-TD-5b: Extracted to periodComparisonHelpers.ts
      */
-    const previousPeriodTotals = useMemo(() => {
-        const totals = new Map<string, number>();
-
-        // Helper to get category based on view mode
-        const getCategory = (tx: Transaction): string | null => {
-            switch (donutViewMode) {
-                case 'store-groups': {
-                    const storeCat = tx.category || 'Unknown';
-                    // Look up the group for this store category
-                    // STORE_CATEGORY_GROUPS maps category -> group (e.g., 'Supermarket' -> 'food-dining')
-                    return STORE_CATEGORY_GROUPS[storeCat as keyof typeof STORE_CATEGORY_GROUPS] || 'other';
-                }
-                case 'store-categories':
-                    return tx.category || 'Unknown';
-                case 'item-groups': {
-                    // Aggregate item categories to groups
-                    const itemGroups = new Set<string>();
-                    tx.items?.forEach(item => {
-                        // TransactionItem uses 'category' not 'itemCategory'
-                        const itemCat = normalizeItemCategory((item.category as string) || 'Unknown');
-                        const groupKey = ITEM_CATEGORY_TO_KEY[itemCat as keyof typeof ITEM_CATEGORY_TO_KEY];
-                        if (groupKey) {
-                            // ITEM_CATEGORY_GROUPS maps itemCategoryKey -> group (e.g., 'Produce' -> 'food-fresh')
-                            const group = ITEM_CATEGORY_GROUPS[groupKey as keyof typeof ITEM_CATEGORY_GROUPS];
-                            if (group) {
-                                itemGroups.add(group);
-                            }
-                        }
-                    });
-                    // Return first group found (simplified - actual implementation uses all items)
-                    return itemGroups.size > 0 ? Array.from(itemGroups)[0] : null;
-                }
-                case 'item-categories': {
-                    // Use first item's category (simplified)
-                    const firstItem = tx.items?.[0];
-                    if (firstItem) {
-                        // TransactionItem uses 'category' not 'itemCategory'
-                        return normalizeItemCategory((firstItem.category as string) || 'Unknown');
-                    }
-                    return null;
-                }
-                default:
-                    return tx.category || 'Unknown';
-            }
-        };
-
-        // For store-based modes, aggregate by transaction
-        if (donutViewMode === 'store-groups' || donutViewMode === 'store-categories') {
-            previousPeriodTransactions.forEach(tx => {
-                const category = getCategory(tx);
-                if (category) {
-                    totals.set(category, (totals.get(category) || 0) + tx.total);
-                }
-            });
-        } else {
-            // For item-based modes, aggregate by items
-            previousPeriodTransactions.forEach(tx => {
-                tx.items?.forEach(item => {
-                    let category: string | null = null;
-
-                    if (donutViewMode === 'item-groups') {
-                        // TransactionItem uses 'category' not 'itemCategory', and 'qty' not 'quantity'
-                        const itemCat = normalizeItemCategory((item.category as string) || 'Unknown');
-                        const groupKey = ITEM_CATEGORY_TO_KEY[itemCat as keyof typeof ITEM_CATEGORY_TO_KEY];
-                        if (groupKey) {
-                            // ITEM_CATEGORY_GROUPS maps itemCategoryKey -> group (e.g., 'Produce' -> 'food-fresh')
-                            category = ITEM_CATEGORY_GROUPS[groupKey as keyof typeof ITEM_CATEGORY_GROUPS] || null;
-                        }
-                    } else {
-                        // TransactionItem uses 'category' not 'itemCategory'
-                        category = normalizeItemCategory((item.category as string) || 'Unknown');
-                    }
-
-                    if (category) {
-                        // TransactionItem uses 'qty' not 'quantity'
-                        const itemTotal = item.price * (item.qty || 1);
-                        totals.set(category, (totals.get(category) || 0) + itemTotal);
-                    }
-                });
-            });
-        }
-
-        return totals;
-    }, [previousPeriodTransactions, donutViewMode]);
+    const previousPeriodTotals = useMemo(
+        () => computePreviousPeriodTotals(previousPeriodTransactions, donutViewMode),
+        [previousPeriodTransactions, donutViewMode]
+    );
 
     /**
      * Story 14.13.2: Compute cumulative daily sparkline data for a category
-     * Shows cumulative spending throughout the current period (X=days, Y=cumulative amount)
-     * Each point represents the running total up to that day
-     * - Week: 7 points (one per day)
-     * - Month: up to 31 points (one per day)
-     * - Quarter: ~90 points (one per day, may downsample)
-     * - Year: ~365 points (downsampled to ~30 points)
+     * Story 15-TD-5b: Extracted to periodComparisonHelpers.ts
      */
     const computeDailySparkline = useCallback((
         categoryName: string,
-        currentTxs: Transaction[],
-        _previousTxs: Transaction[]
+        currentTxs: Transaction[]
     ): number[] => {
-        // Helper to get category value from transaction based on view mode
-        const getCategoryValue = (tx: Transaction): { match: boolean; value: number } => {
-            switch (donutViewMode) {
-                case 'store-groups': {
-                    const storeCat = tx.category || 'Unknown';
-                    for (const [groupKey, categories] of Object.entries(STORE_CATEGORY_GROUPS)) {
-                        if (categories.includes(storeCat) && groupKey === categoryName) {
-                            return { match: true, value: tx.total };
-                        }
-                    }
-                    return { match: false, value: 0 };
-                }
-                case 'store-categories':
-                    return tx.category === categoryName
-                        ? { match: true, value: tx.total }
-                        : { match: false, value: 0 };
-                case 'item-groups':
-                case 'item-categories':
-                    // For item-based modes, sum up matching items
-                    let itemTotal = 0;
-                    tx.items?.forEach(item => {
-                        const itemCat = normalizeItemCategory((item.category as string) || 'Unknown');
-                        if (donutViewMode === 'item-groups') {
-                            const groupKey = ITEM_CATEGORY_TO_KEY[itemCat as keyof typeof ITEM_CATEGORY_TO_KEY];
-                            if (groupKey) {
-                                for (const [group, categories] of Object.entries(ITEM_CATEGORY_GROUPS)) {
-                                    if (categories.includes(groupKey) && group === categoryName) {
-                                        itemTotal += item.price * (item.qty || 1);
-                                        break;
-                                    }
-                                }
-                            }
-                        } else if (itemCat === categoryName) {
-                            itemTotal += item.price * (item.qty || 1);
-                        }
-                    });
-                    return { match: itemTotal > 0, value: itemTotal };
-                default:
-                    return { match: false, value: 0 };
-            }
-        };
-
-        // Get the actual number of days in the current period
-        const getDaysInCurrentPeriod = (): number => {
-            switch (timePeriod) {
-                case 'week': return 7;
-                case 'month': {
-                    // Get actual days in the selected month
-                    const year = currentPeriod.year;
-                    const month = currentPeriod.month || 1;
-                    return new Date(year, month, 0).getDate();
-                }
-                case 'quarter': {
-                    // Get days in the quarter (sum of 3 months)
-                    const year = currentPeriod.year;
-                    const quarter = currentPeriod.quarter || 1;
-                    const startMonth = (quarter - 1) * 3;
-                    let days = 0;
-                    for (let m = 0; m < 3; m++) {
-                        days += new Date(year, startMonth + m + 1, 0).getDate();
-                    }
-                    return days;
-                }
-                case 'year': return 365; // Will be downsampled
-                default: return 30;
-            }
-        };
-
-        const daysInPeriod = getDaysInCurrentPeriod();
-
-        // Create daily buckets for current period only
-        const dailyTotals = new Array(daysInPeriod).fill(0);
-
-        // Process current period transactions - map each to its day within the period
-        currentTxs.forEach(tx => {
-            const result = getCategoryValue(tx);
-            if (result.match) {
-                const txDate = new Date(tx.date);
-                let dayIndex: number;
-
-                switch (timePeriod) {
-                    case 'week': {
-                        // Day of week (0-6)
-                        dayIndex = txDate.getDay();
-                        break;
-                    }
-                    case 'month': {
-                        // Day of month (0-indexed)
-                        dayIndex = txDate.getDate() - 1;
-                        break;
-                    }
-                    case 'quarter': {
-                        // Day within the quarter
-                        const txMonth = txDate.getMonth();
-                        const quarterStartMonth = ((currentPeriod.quarter || 1) - 1) * 3;
-                        let dayOfQuarter = txDate.getDate() - 1;
-                        // Add days from previous months in the quarter
-                        for (let m = quarterStartMonth; m < txMonth; m++) {
-                            dayOfQuarter += new Date(currentPeriod.year, m + 1, 0).getDate();
-                        }
-                        dayIndex = dayOfQuarter;
-                        break;
-                    }
-                    case 'year': {
-                        // Day of year (0-364)
-                        const startOfYear = new Date(currentPeriod.year, 0, 1);
-                        dayIndex = Math.floor((txDate.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
-                        break;
-                    }
-                    default:
-                        dayIndex = txDate.getDate() - 1;
-                }
-
-                // Ensure index is within bounds
-                dayIndex = Math.max(0, Math.min(dayIndex, daysInPeriod - 1));
-                dailyTotals[dayIndex] += result.value;
-            }
-        });
-
-        // Convert daily totals to cumulative totals
-        const cumulativeTotals: number[] = [];
-        let runningTotal = 0;
-        for (let i = 0; i < dailyTotals.length; i++) {
-            runningTotal += dailyTotals[i];
-            cumulativeTotals.push(runningTotal);
-        }
-
-        // Downsample to reasonable number of points for display (max 20 points)
-        const maxPoints = 20;
-        if (cumulativeTotals.length <= maxPoints) {
-            return cumulativeTotals;
-        }
-
-        // For cumulative data, sample evenly to preserve the shape
-        const sampledData: number[] = [];
-        const step = (cumulativeTotals.length - 1) / (maxPoints - 1);
-        for (let i = 0; i < maxPoints; i++) {
-            const index = Math.round(i * step);
-            sampledData.push(cumulativeTotals[index]);
-        }
-
-        return sampledData;
+        return computeDailySparklineFn(
+            categoryName, currentTxs,
+            donutViewMode, timePeriod, currentPeriod
+        );
     }, [donutViewMode, timePeriod, currentPeriod]);
 
     /**
@@ -1219,8 +839,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
             // Generate daily sparkline data showing both periods
             const sparklineData = computeDailySparkline(
                 cat.name,
-                filteredTransactions,
-                previousPeriodTransactions
+                filteredTransactions
             );
 
             return {
@@ -1231,113 +850,31 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
                 changeDirection: changeResult.direction,
             };
         }).sort((a, b) => b.value - a.value); // Sort by current value descending (AC #1)
-    }, [viewModeBaseData, previousPeriodTotals, computeDailySparkline, filteredTransactions, previousPeriodTransactions]);
+    }, [viewModeBaseData, previousPeriodTotals, computeDailySparkline, filteredTransactions]);
 
-    /**
-     * Story 14.13.2: Get max drill-down level for trend list based on current view mode
-     * Matches treemap logic
-     */
-    const getTrendMaxDrillDownLevel = useCallback((): number => {
-        switch (donutViewMode) {
-            case 'store-groups':
-                return 3; // storeGroup -> storeCategory -> itemGroup -> itemCategory
-            case 'store-categories':
-                return 3; // storeCategory -> itemGroup -> itemCategory -> subcategory
-            case 'item-groups':
-                return 2; // itemGroup -> itemCategory -> subcategory
-            case 'item-categories':
-                return 1; // itemCategory -> subcategory
-            default:
-                return 3;
-        }
-    }, [donutViewMode]);
+    // Story 15-TD-5b: Max drill-down level extracted to navigationHelpers.ts
+    const getTrendMaxDrillDownLevel = useCallback(
+        () => getMaxDrillDownLevel(donutViewMode),
+        [donutViewMode]
+    );
 
     /**
      * Story 14.13.2: Compute drill-down trend data with period comparison
      * Similar to treemapDrillDownData but returns TrendData with sparklines
      */
+    // Story 15-TD-5b: Extracted drill-down resolution to drillDownHelpers.ts
     const trendDrillDownData = useMemo((): TrendData[] => {
         if (trendDrillDownLevel === 0) return [];
 
-        const path = trendDrillDownPath;
-        let drillDownCategories: CategoryData[] = [];
+        // Resolve current period drill-down categories
+        const drillDownCategories = resolveDrillDownCategories(
+            filteredTransactions, donutViewMode, trendDrillDownLevel, trendDrillDownPath, allCategoryData
+        );
 
-        // Compute drill-down data based on view mode and level (matches treemap logic)
-        switch (donutViewMode) {
-            case 'store-categories':
-                if (trendDrillDownLevel === 1 && path[0]) {
-                    drillDownCategories = computeItemGroupsForStore(filteredTransactions, path[0]);
-                } else if (trendDrillDownLevel === 2 && path[1] && path[0]) {
-                    drillDownCategories = computeItemCategoriesInGroup(filteredTransactions, path[1], path[0]);
-                } else if (trendDrillDownLevel === 3 && path[2]) {
-                    drillDownCategories = computeSubcategoryData(filteredTransactions, path[2]);
-                }
-                break;
-            case 'store-groups':
-                if (trendDrillDownLevel === 1 && path[0]) {
-                    // Drill into store group -> show store categories in that group
-                    const categoriesInGroup = Object.entries(STORE_CATEGORY_GROUPS)
-                        .filter(([, group]) => group === path[0])
-                        .map(([cat]) => cat);
-                    drillDownCategories = allCategoryData.filter(c => categoriesInGroup.includes(c.name));
-                } else if (trendDrillDownLevel === 2 && path[1]) {
-                    drillDownCategories = computeItemGroupsForStore(filteredTransactions, path[1]);
-                } else if (trendDrillDownLevel === 3 && path[2] && path[1]) {
-                    drillDownCategories = computeItemCategoriesInGroup(filteredTransactions, path[2], path[1]);
-                }
-                break;
-            case 'item-groups':
-                if (trendDrillDownLevel === 1 && path[0]) {
-                    drillDownCategories = computeItemCategoriesInGroup(filteredTransactions, path[0]);
-                } else if (trendDrillDownLevel === 2 && path[1]) {
-                    drillDownCategories = computeSubcategoryData(filteredTransactions, path[1]);
-                }
-                break;
-            case 'item-categories':
-                if (trendDrillDownLevel === 1 && path[0]) {
-                    drillDownCategories = computeSubcategoryData(filteredTransactions, path[0]);
-                }
-                break;
-        }
-
-        // Now compute previous period data for comparison
-        let prevDrillDownCategories: CategoryData[] = [];
-        switch (donutViewMode) {
-            case 'store-categories':
-                if (trendDrillDownLevel === 1 && path[0]) {
-                    prevDrillDownCategories = computeItemGroupsForStore(previousPeriodTransactions, path[0]);
-                } else if (trendDrillDownLevel === 2 && path[1] && path[0]) {
-                    prevDrillDownCategories = computeItemCategoriesInGroup(previousPeriodTransactions, path[1], path[0]);
-                } else if (trendDrillDownLevel === 3 && path[2]) {
-                    prevDrillDownCategories = computeSubcategoryData(previousPeriodTransactions, path[2]);
-                }
-                break;
-            case 'store-groups':
-                if (trendDrillDownLevel === 1 && path[0]) {
-                    const categoriesInGroup = Object.entries(STORE_CATEGORY_GROUPS)
-                        .filter(([, group]) => group === path[0])
-                        .map(([cat]) => cat);
-                    const prevAllCategoryData = computeAllCategoryData(previousPeriodTransactions);
-                    prevDrillDownCategories = prevAllCategoryData.filter(c => categoriesInGroup.includes(c.name));
-                } else if (trendDrillDownLevel === 2 && path[1]) {
-                    prevDrillDownCategories = computeItemGroupsForStore(previousPeriodTransactions, path[1]);
-                } else if (trendDrillDownLevel === 3 && path[2] && path[1]) {
-                    prevDrillDownCategories = computeItemCategoriesInGroup(previousPeriodTransactions, path[2], path[1]);
-                }
-                break;
-            case 'item-groups':
-                if (trendDrillDownLevel === 1 && path[0]) {
-                    prevDrillDownCategories = computeItemCategoriesInGroup(previousPeriodTransactions, path[0]);
-                } else if (trendDrillDownLevel === 2 && path[1]) {
-                    prevDrillDownCategories = computeSubcategoryData(previousPeriodTransactions, path[1]);
-                }
-                break;
-            case 'item-categories':
-                if (trendDrillDownLevel === 1 && path[0]) {
-                    prevDrillDownCategories = computeSubcategoryData(previousPeriodTransactions, path[0]);
-                }
-                break;
-        }
+        // Resolve previous period drill-down categories (for comparison)
+        const prevDrillDownCategories = resolveDrillDownCategories(
+            previousPeriodTransactions, donutViewMode, trendDrillDownLevel, trendDrillDownPath
+        );
 
         // Build map of previous period values
         const prevTotalsMap = new Map<string, number>();
@@ -1347,7 +884,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
         return drillDownCategories.map(cat => {
             const previousValue = prevTotalsMap.get(cat.name) || 0;
             const changeResult = calculateChange(cat.value, previousValue);
-            const sparklineData = computeDailySparkline(cat.name, filteredTransactions, previousPeriodTransactions);
+            const sparklineData = computeDailySparkline(cat.name, filteredTransactions);
 
             return {
                 ...cat,
@@ -1384,34 +921,11 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
         [effectiveTrendData, currentTrendExpandedCount]
     );
 
-    /**
-     * Story 14.13.2: Get current view mode at trend drill-down level
-     * Used to determine which emoji/translation to use
-     */
-    const getTrendViewModeAtLevel = useCallback((): DonutViewMode => {
-        if (trendDrillDownLevel === 0) return donutViewMode;
-
-        switch (donutViewMode) {
-            case 'store-groups':
-                if (trendDrillDownLevel === 1) return 'store-categories';
-                if (trendDrillDownLevel === 2) return 'item-groups';
-                if (trendDrillDownLevel === 3) return 'item-categories';
-                break;
-            case 'store-categories':
-                if (trendDrillDownLevel === 1) return 'item-groups';
-                if (trendDrillDownLevel === 2) return 'item-categories';
-                // Level 3 would be subcategories (still item-categories)
-                break;
-            case 'item-groups':
-                if (trendDrillDownLevel === 1) return 'item-categories';
-                // Level 2 would be subcategories
-                break;
-            case 'item-categories':
-                // Level 1 would be subcategories
-                break;
-        }
-        return donutViewMode;
-    }, [trendDrillDownLevel, donutViewMode]);
+    // Story 15-TD-5b: View mode at drill level extracted to navigationHelpers.ts
+    const getTrendViewModeAtLevel = useCallback(
+        () => getDonutViewModeAtDrillLevel(donutViewMode, trendDrillDownLevel),
+        [trendDrillDownLevel, donutViewMode]
+    );
 
     // Total spending
     const total = useMemo(
@@ -1426,143 +940,39 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
     );
 
     // Story 14.14b Session 7: Check if viewing current period (for visual indicator)
-    // Returns true if the selected period matches today's date for the current time dimension
+    // Story 15-TD-5b: Logic extracted to periodNavigationHelpers.ts
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const isViewingCurrentPeriod = useMemo(() => {
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth() + 1;
-        const currentQuarter = Math.ceil(currentMonth / 3);
-        const currentWeek = Math.ceil(now.getDate() / 7);
-
-        switch (timePeriod) {
-            case 'year':
-                return currentPeriod.year === currentYear;
-            case 'quarter':
-                return currentPeriod.year === currentYear && currentPeriod.quarter === currentQuarter;
-            case 'month':
-                return currentPeriod.year === currentYear && currentPeriod.month === currentMonth;
-            case 'week':
-                return currentPeriod.year === currentYear &&
-                       currentPeriod.month === currentMonth &&
-                       currentPeriod.week === currentWeek;
-            default:
-                return true;
-        }
-    }, [timePeriod, currentPeriod]);
+    const isViewingCurrentPeriod = useMemo(
+        () => isCurrentPeriod(timePeriod, currentPeriod),
+        [timePeriod, currentPeriod]
+    );
 
     // =========================================================================
     // Event Handlers
     // =========================================================================
 
     // Navigate to previous period (AC #3) with animation trigger
+    // Story 15-TD-5b: Arithmetic extracted to periodNavigationHelpers.ts
     const goPrevPeriod = useCallback(() => {
-        setCurrentPeriod(prev => {
-            switch (timePeriod) {
-                case 'year':
-                    return { ...prev, year: prev.year - 1 };
-                case 'quarter':
-                    if (prev.quarter === 1) {
-                        return { ...prev, year: prev.year - 1, quarter: 4 };
-                    }
-                    return { ...prev, quarter: prev.quarter - 1 };
-                case 'month':
-                    if (prev.month === 1) {
-                        return { ...prev, year: prev.year - 1, month: 12, quarter: 4 };
-                    }
-                    return {
-                        ...prev,
-                        month: prev.month - 1,
-                        quarter: Math.ceil((prev.month - 1) / 3),
-                    };
-                case 'week':
-                    if (prev.week === 1) {
-                        // Go to previous month, last week
-                        const newMonth = prev.month === 1 ? 12 : prev.month - 1;
-                        const newYear = prev.month === 1 ? prev.year - 1 : prev.year;
-                        return {
-                            ...prev,
-                            year: newYear,
-                            month: newMonth,
-                            quarter: Math.ceil(newMonth / 3),
-                            week: 4, // Approximate
-                        };
-                    }
-                    return { ...prev, week: prev.week - 1 };
-            }
-        });
-        setAnimationKey(prev => prev + 1); // Trigger animations on period change
+        setCurrentPeriod(prev => getPreviousPeriodState(prev, timePeriod));
+        setAnimationKey(prev => prev + 1);
     }, [timePeriod]);
 
     // Navigate to next period (AC #3) with animation trigger
+    // Story 15-TD-5b: Arithmetic extracted to periodNavigationHelpers.ts
     const goNextPeriod = useCallback(() => {
         const now = new Date();
-        setCurrentPeriod(prev => {
-            switch (timePeriod) {
-                case 'year':
-                    if (prev.year >= now.getFullYear()) return prev;
-                    return { ...prev, year: prev.year + 1 };
-                case 'quarter':
-                    if (prev.year >= now.getFullYear() && prev.quarter >= Math.ceil((now.getMonth() + 1) / 3)) {
-                        return prev;
-                    }
-                    if (prev.quarter === 4) {
-                        return { ...prev, year: prev.year + 1, quarter: 1 };
-                    }
-                    return { ...prev, quarter: prev.quarter + 1 };
-                case 'month':
-                    if (prev.year >= now.getFullYear() && prev.month >= now.getMonth() + 1) {
-                        return prev;
-                    }
-                    if (prev.month === 12) {
-                        return { ...prev, year: prev.year + 1, month: 1, quarter: 1 };
-                    }
-                    return {
-                        ...prev,
-                        month: prev.month + 1,
-                        quarter: Math.ceil((prev.month + 1) / 3),
-                    };
-                case 'week':
-                    if (prev.week >= 4) {
-                        // Go to next month, first week
-                        if (prev.year >= now.getFullYear() && prev.month >= now.getMonth() + 1) {
-                            return prev;
-                        }
-                        const newMonth = prev.month === 12 ? 1 : prev.month + 1;
-                        const newYear = prev.month === 12 ? prev.year + 1 : prev.year;
-                        return {
-                            ...prev,
-                            year: newYear,
-                            month: newMonth,
-                            quarter: Math.ceil(newMonth / 3),
-                            week: 1,
-                        };
-                    }
-                    return { ...prev, week: prev.week + 1 };
-            }
-        });
-        setAnimationKey(prev => prev + 1); // Trigger animations on period change
+        setCurrentPeriod(prev => getNextPeriodState(prev, timePeriod, now));
+        setAnimationKey(prev => prev + 1);
     }, [timePeriod]);
 
     // Story 14.14b Session 7: Handle time period pill click
-    // If clicking on an already-selected period, reset to current (today's) period
-    // This provides a quick way to return to "now" after navigating through past periods
+    // Story 15-TD-5b: Date arithmetic extracted to periodNavigationHelpers.ts
     const handleTimePeriodClick = useCallback((period: TimePeriod) => {
         if (timePeriod === period) {
             // Already on this period - reset to current date
-            const now = new Date();
-            const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth() + 1;
-            const currentQuarter = Math.ceil(currentMonth / 3);
-            const currentWeek = Math.ceil(now.getDate() / 7);
-
-            setCurrentPeriod({
-                year: currentYear,
-                month: currentMonth,
-                quarter: currentQuarter,
-                week: currentWeek,
-            });
-            setAnimationKey(prev => prev + 1); // Trigger animation for the reset
+            setCurrentPeriod(getCurrentDatePeriod());
+            setAnimationKey(prev => prev + 1);
         } else {
             // Different period - just switch to it
             setTimePeriod(period);
@@ -1641,114 +1051,21 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
     }, [trendDrillDownLevel]);
 
     // Story 14.13.2: Handle trend count pill click - navigate to HistoryView/ItemsView with filters
-    // Works like the donut chart's handleTransactionCountClick, but considers drill-down state
-    // Fixed: Now properly builds drillDownPath like donut/treemap handlers do
-    // Story 14.13.2: Handle "Más" aggregated group by expanding to constituent categories (matches treemap behavior)
+    // Story 15-TD-5b: Payload building extracted to navigationHelpers.ts
     const handleTrendCountClick = useCallback((categoryName: string) => {
         if (!onNavigateToHistory) return;
 
-        // Build the navigation payload based on viewMode and drill-down state
-        const payload: HistoryNavigationPayload = {
-            targetView: countMode === 'items' ? 'items' : 'history',
-            sourceDistributionView: 'treemap', // Using treemap as source for Tendencia
-        };
-
-        // Check if this is the "Más" aggregated group - expand to constituent categories
-        const isAggregatedGroup = categoryName === 'Más' || categoryName === 'More';
-
-        // Build drillDownPath with accumulated context AND current clicked category
-        // This matches donut chart's buildSemanticDrillDownPath and treemap's treemapPath logic
-        const trendPath: DrillDownPath = {};
-
-        // Add parent context from drill-down path based on view mode hierarchy
-        if (trendDrillDownLevel > 0 && trendDrillDownPath.length > 0) {
-            switch (donutViewMode) {
-                case 'store-categories':
-                    // Path order: storeCategory -> itemGroup -> itemCategory
-                    if (trendDrillDownPath[0]) trendPath.storeCategory = trendDrillDownPath[0];
-                    if (trendDrillDownPath[1]) trendPath.itemGroup = trendDrillDownPath[1];
-                    if (trendDrillDownPath[2]) trendPath.itemCategory = trendDrillDownPath[2];
-                    break;
-                case 'store-groups':
-                    // Path order: storeGroup -> storeCategory -> itemGroup -> itemCategory
-                    if (trendDrillDownPath[0]) trendPath.storeGroup = trendDrillDownPath[0];
-                    if (trendDrillDownPath[1]) trendPath.storeCategory = trendDrillDownPath[1];
-                    if (trendDrillDownPath[2]) trendPath.itemGroup = trendDrillDownPath[2];
-                    if (trendDrillDownPath[3]) trendPath.itemCategory = trendDrillDownPath[3];
-                    break;
-                case 'item-groups':
-                    // Path order: itemGroup -> itemCategory
-                    if (trendDrillDownPath[0]) trendPath.itemGroup = trendDrillDownPath[0];
-                    if (trendDrillDownPath[1]) trendPath.itemCategory = trendDrillDownPath[1];
-                    break;
-                case 'item-categories':
-                    // Path order: itemCategory
-                    if (trendDrillDownPath[0]) trendPath.itemCategory = trendDrillDownPath[0];
-                    break;
-            }
-        }
-
-        // Add current clicked category to the path at the appropriate level
-        // For "Más", expand to all constituent categories (matches treemap behavior)
-        const effectiveViewMode = getTrendViewModeAtLevel();
-        if (effectiveViewMode === 'store-categories') {
-            if (isAggregatedGroup && otroTrendCategories.length > 0) {
-                // Expand "Más" to all hidden store categories
-                payload.category = otroTrendCategories.map(c => c.name).join(',');
-            } else {
-                trendPath.storeCategory = categoryName;
-                payload.category = categoryName;
-            }
-        } else if (effectiveViewMode === 'store-groups') {
-            if (isAggregatedGroup && otroTrendCategories.length > 0) {
-                // Expand "Más" store groups to all their constituent store categories
-                const allCategories = otroTrendCategories.flatMap(c =>
-                    expandStoreCategoryGroup(c.name as StoreCategoryGroup)
-                );
-                payload.category = allCategories.join(',');
-            } else {
-                trendPath.storeGroup = categoryName;
-                payload.storeGroup = categoryName;
-            }
-        } else if (effectiveViewMode === 'item-groups') {
-            if (isAggregatedGroup && otroTrendCategories.length > 0) {
-                // Expand "Más" item groups to all their constituent item categories
-                const allItemCategories = otroTrendCategories.flatMap(c =>
-                    expandItemCategoryGroup(c.name as ItemCategoryGroup)
-                );
-                payload.itemCategory = allItemCategories.join(',');
-            } else {
-                trendPath.itemGroup = categoryName;
-                payload.itemGroup = categoryName;
-            }
-        } else if (effectiveViewMode === 'item-categories') {
-            if (isAggregatedGroup && otroTrendCategories.length > 0) {
-                // Expand "Más" to all hidden item categories
-                payload.itemCategory = otroTrendCategories.map(c => c.name).join(',');
-            } else {
-                trendPath.itemCategory = categoryName;
-                payload.itemCategory = categoryName;
-            }
-        }
-
-        // Include drillDownPath if we have any accumulated context (skip for aggregated groups)
-        if (!isAggregatedGroup && Object.keys(trendPath).length > 0) {
-            payload.drillDownPath = trendPath;
-        }
-
-        // Add temporal filter based on current time period selection
-        if (currentPeriod) {
-            payload.temporal = {
-                level: timePeriod,
-                year: String(currentPeriod.year),
-            };
-            if (timePeriod === 'month' || timePeriod === 'week') {
-                payload.temporal.month = `${currentPeriod.year}-${String(currentPeriod.month).padStart(2, '0')}`;
-            }
-            if (timePeriod === 'quarter') {
-                payload.temporal.quarter = `Q${currentPeriod.quarter}`;
-            }
-        }
+        const payload = buildTrendNavigationPayload({
+            categoryName,
+            countMode,
+            donutViewMode,
+            effectiveViewMode: getTrendViewModeAtLevel(),
+            timePeriod,
+            currentPeriod,
+            trendDrillDownLevel,
+            trendDrillDownPath,
+            otroTrendCategories,
+        });
 
         onNavigateToHistory(payload);
     }, [onNavigateToHistory, donutViewMode, countMode, timePeriod, currentPeriod, trendDrillDownLevel, trendDrillDownPath, getTrendViewModeAtLevel, otroTrendCategories]);
@@ -1878,150 +1195,25 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
     }, [treemapDrillDownLevel]);
 
     // Story 14.22: Handle treemap transaction count pill click - navigate to HistoryView with filters
-    // Story 14.14b Session 7: Handle "Más" aggregated group by expanding to constituent categories
-    // Story 14.13 Session 5: Navigate to Items view when countMode is 'items'
-    // Story 14.13 Session 19: Fixed to consider treemapDrillDownLevel when determining filter dimension
+    // Story 15-TD-5b: Payload building extracted to navigationHelpers.ts
     const handleTreemapTransactionCountClick = useCallback((categoryName: string) => {
         if (!onNavigateToHistory) return;
-
-        // Build the navigation payload based on view mode
-        const payload: HistoryNavigationPayload = {
-            // Story 14.13 Session 5: Target view based on countMode toggle
-            targetView: countMode === 'items' ? 'items' : 'history',
-        };
-
-        // Check if this is the "Más" aggregated group - expand to constituent categories
-        const isAggregatedGroup = categoryName === 'Más' || categoryName === 'More';
 
         // Story 14.13 Session 19: Get otroCategories based on current drill-down level
         const currentOtroCategories = treemapDrillDownLevel > 0
             ? treemapDrillDownCategorized.otroCategories
             : otroCategories;
 
-        // Story 14.13 Session 19: Determine current view mode based on drill-down level
-        // Similar to DonutChart's logic - what we're currently displaying depends on drill-down depth
-        const getCurrentDisplayMode = (): 'store-groups' | 'store-categories' | 'item-groups' | 'item-categories' | 'subcategories' => {
-            if (treemapDrillDownLevel === 0) return donutViewMode;
-
-            // Drill-down structure depends on base viewMode:
-            // store-categories: L0=storeCategories, L1=itemGroups, L2=itemCategories, L3=subcategories
-            // store-groups: L0=storeGroups, L1=storeCategories, L2=itemGroups, L3=itemCategories
-            // item-groups: L0=itemGroups, L1=itemCategories, L2=subcategories
-            // item-categories: L0=itemCategories, L1=subcategories
-            if (donutViewMode === 'store-categories') {
-                if (treemapDrillDownLevel === 1) return 'item-groups';
-                if (treemapDrillDownLevel === 2) return 'item-categories';
-                return 'subcategories';
-            }
-            if (donutViewMode === 'store-groups') {
-                if (treemapDrillDownLevel === 1) return 'store-categories';
-                if (treemapDrillDownLevel === 2) return 'item-groups';
-                if (treemapDrillDownLevel === 3) return 'item-categories';
-                return 'subcategories';
-            }
-            if (donutViewMode === 'item-groups') {
-                if (treemapDrillDownLevel === 1) return 'item-categories';
-                return 'subcategories';
-            }
-            // item-categories
-            return 'subcategories';
-        };
-
-        const currentDisplayMode = getCurrentDisplayMode();
-
-        // Set the appropriate filter based on current display mode (NOT base viewMode)
-        if (currentDisplayMode === 'store-categories') {
-            if (isAggregatedGroup && currentOtroCategories.length > 0) {
-                payload.category = currentOtroCategories.map(c => c.name).join(',');
-            } else {
-                payload.category = categoryName;
-            }
-        } else if (currentDisplayMode === 'store-groups') {
-            if (isAggregatedGroup && currentOtroCategories.length > 0) {
-                const allCategories = currentOtroCategories.flatMap(c =>
-                    expandStoreCategoryGroup(c.name as StoreCategoryGroup)
-                );
-                payload.category = allCategories.join(',');
-            } else {
-                payload.storeGroup = categoryName;
-            }
-        } else if (currentDisplayMode === 'item-groups') {
-            if (isAggregatedGroup && currentOtroCategories.length > 0) {
-                const allItemCategories = currentOtroCategories.flatMap(c =>
-                    expandItemCategoryGroup(c.name as ItemCategoryGroup)
-                );
-                payload.itemCategory = allItemCategories.join(',');
-            } else {
-                payload.itemGroup = categoryName;
-            }
-        } else if (currentDisplayMode === 'item-categories') {
-            if (isAggregatedGroup && currentOtroCategories.length > 0) {
-                payload.itemCategory = currentOtroCategories.map(c => c.name).join(',');
-            } else {
-                payload.itemCategory = categoryName;
-            }
-        } else if (currentDisplayMode === 'subcategories') {
-            // At subcategory level, the subcategory name goes in drillDownPath.subcategory
-            // For filtering, we still use the parent item category from the path
-            // The drillDownPath will handle the full context including subcategory
-        }
-
-        // Story 14.13 Session 19: Build drillDownPath including parent path when drilled down
-        if (!isAggregatedGroup) {
-            const treemapPath: DrillDownPath = {};
-
-            // Add parent context from drill-down path
-            if (treemapDrillDownLevel > 0 && treemapDrillDownPath.length > 0) {
-                // Include accumulated drill-down context
-                if (donutViewMode === 'store-categories') {
-                    if (treemapDrillDownPath[0]) treemapPath.storeCategory = treemapDrillDownPath[0];
-                    if (treemapDrillDownPath[1]) treemapPath.itemGroup = treemapDrillDownPath[1];
-                    if (treemapDrillDownPath[2]) treemapPath.itemCategory = treemapDrillDownPath[2];
-                } else if (donutViewMode === 'store-groups') {
-                    if (treemapDrillDownPath[0]) treemapPath.storeGroup = treemapDrillDownPath[0];
-                    if (treemapDrillDownPath[1]) treemapPath.storeCategory = treemapDrillDownPath[1];
-                    if (treemapDrillDownPath[2]) treemapPath.itemGroup = treemapDrillDownPath[2];
-                    if (treemapDrillDownPath[3]) treemapPath.itemCategory = treemapDrillDownPath[3];
-                } else if (donutViewMode === 'item-groups') {
-                    if (treemapDrillDownPath[0]) treemapPath.itemGroup = treemapDrillDownPath[0];
-                    if (treemapDrillDownPath[1]) treemapPath.itemCategory = treemapDrillDownPath[1];
-                } else if (donutViewMode === 'item-categories') {
-                    if (treemapDrillDownPath[0]) treemapPath.itemCategory = treemapDrillDownPath[0];
-                }
-            }
-
-            // Add current clicked category to the appropriate level
-            if (currentDisplayMode === 'store-groups') {
-                treemapPath.storeGroup = categoryName;
-            } else if (currentDisplayMode === 'store-categories') {
-                treemapPath.storeCategory = categoryName;
-            } else if (currentDisplayMode === 'item-groups') {
-                treemapPath.itemGroup = categoryName;
-            } else if (currentDisplayMode === 'item-categories') {
-                treemapPath.itemCategory = categoryName;
-            } else if (currentDisplayMode === 'subcategories') {
-                treemapPath.subcategory = categoryName;
-            }
-
-            if (Object.keys(treemapPath).length > 0) {
-                payload.drillDownPath = treemapPath;
-            }
-        }
-
-        // Build temporal filter based on current time period selection
-        payload.temporal = {
-            level: timePeriod,
-            year: String(currentPeriod.year),
-        };
-        if (timePeriod === 'month' || timePeriod === 'week') {
-            payload.temporal.month = `${currentPeriod.year}-${String(currentPeriod.month).padStart(2, '0')}`;
-        }
-        if (timePeriod === 'quarter') {
-            payload.temporal.quarter = `Q${currentPeriod.quarter}`;
-        }
-
-        // Story 14.13a: Add sourceDistributionView for treemap navigation
-        payload.sourceDistributionView = 'treemap';
+        const payload = buildTreemapNavigationPayload({
+            categoryName,
+            countMode,
+            donutViewMode,
+            timePeriod,
+            currentPeriod,
+            treemapDrillDownLevel,
+            treemapDrillDownPath,
+            otroCategories: currentOtroCategories,
+        });
 
         onNavigateToHistory(payload);
     }, [onNavigateToHistory, donutViewMode, timePeriod, currentPeriod, otroCategories, countMode, treemapDrillDownLevel, treemapDrillDownPath, treemapDrillDownCategorized]);
@@ -2067,23 +1259,16 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
     }, [onTouchStart, onTouchMove, onTouchEnd]);
 
     // =========================================================================
-    // =========================================================================
-
-    // =========================================================================
     // Story 14.40: Category Statistics Calculation
     // =========================================================================
 
-    // Calculate total spent for percentage calculation
-    const totalSpentAllCategories = useMemo(() => {
-        return filteredTransactions.reduce((sum, tx) => sum + tx.total, 0);
-    }, [filteredTransactions]);
-
     // Calculate statistics for the selected category (if popup is open)
+    // Story 15-TD-5b: Reuse `total` (identical computation) instead of duplicate useMemo
     const categoryStatistics = useCategoryStatistics({
         transactions: filteredTransactions,
         categoryName: statsPopupCategory?.name ?? '',
         categoryType: statsPopupCategory?.type ?? 'store-category',
-        totalSpentAllCategories,
+        totalSpentAllCategories: total,
     });
 
     // Get translated category name for popup display
@@ -2317,270 +1502,24 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
                             }}
                             data-testid="analytics-card"
                         >
-                            {/* Card Header - with centered title */}
-                            <div className="relative flex items-center justify-between px-3 pt-3 pb-2">
-                                {/* Left side buttons container */}
-                                <div className="flex items-center gap-1.5 z-10">
-                                    {/* View Toggle Button (AC #7) with icon morphing animation */}
-                                    <button
-                                        onClick={toggleView}
-                                        className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200"
-                                        aria-label="Toggle view"
-                                        data-testid="view-toggle"
-                                        style={{
-                                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                                            backgroundColor: carouselSlide === 0 && distributionView === 'donut'
-                                                ? 'var(--primary)'
-                                                : 'var(--bg-tertiary)',
-                                            color: carouselSlide === 0 && distributionView === 'donut'
-                                                ? 'white'
-                                                : 'var(--text-secondary)',
-                                        }}
-                                    >
-                                        <span
-                                            className="inline-flex transition-transform duration-200 ease-out"
-                                            style={{
-                                                transform: prefersReducedMotion ? 'none' : 'rotate(0deg)',
-                                            }}
-                                            key={`${carouselSlide}-${distributionView}-${tendenciaView}`}
-                                        >
-                                            {carouselSlide === 0 ? (
-                                                distributionView === 'treemap' ? (
-                                                    <PieChart size={16} className="transition-opacity duration-150" />
-                                                ) : (
-                                                    <LayoutGrid size={16} className="transition-opacity duration-150" />
-                                                )
-                                            ) : (
-                                                // Story 14.13.3: Sankey toggle - show flow icon when on list, list icon when on sankey
-                                                tendenciaView === 'list' ? (
-                                                    <GitBranch size={16} className="transition-opacity duration-150" />
-                                                ) : (
-                                                    <List size={16} className="transition-opacity duration-150" />
-                                                )
-                                            )}
-                                        </span>
-                                    </button>
-
-                                    </div>
-
-                                {/* Story 14.14b Session 5: View mode pills for all carousel slides */}
-                                {/* Story 14.13.3 Phase 5: Show 2 icons for Sankey view, 4 icons for other views */}
-                                {(carouselSlide === 0 || carouselSlide === 1) ? (
-                                    <div
-                                        className="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center"
-                                        data-testid="viewmode-pills-wrapper"
-                                    >
-                                        {/* Outer container pill - height matches left button (32px) */}
-                                        <div
-                                            className="relative flex items-center rounded-full"
-                                            style={{
-                                                backgroundColor: 'var(--bg-tertiary, #f1f5f9)',
-                                                height: '32px',
-                                                padding: '2px 4px',
-                                                border: '1px solid var(--border-light, #e2e8f0)',
-                                                gap: '6px',
-                                            }}
-                                            role="tablist"
-                                            aria-label="View mode selection"
-                                            data-testid="viewmode-pills-container"
-                                        >
-                                            {/* Story 14.13.3 Phase 5: Sankey mode pills (2 icons) when on Sankey view */}
-                                            {carouselSlide === 1 && tendenciaView === 'sankey' ? (
-                                                <>
-                                                    {/* Animated selection indicator for Sankey (2 pills) */}
-                                                    <div
-                                                        className={`absolute rounded-full transition-all duration-300 ease-out ${
-                                                            prefersReducedMotion ? '' : 'transform'
-                                                        }`}
-                                                        style={{
-                                                            width: '28px',
-                                                            height: '28px',
-                                                            top: '2px',
-                                                            left: sankeyMode === '3-level-groups' ? '4px' : 'calc(4px + 34px)',
-                                                            background: 'var(--primary, #2563eb)',
-                                                        }}
-                                                        aria-hidden="true"
-                                                    />
-                                                    {/* Sankey mode pills - 2 icons */}
-                                                    {([
-                                                        { value: '3-level-groups' as SankeyMode, emoji: '🏪', labelEs: 'Grupos → Categorías → Productos', labelEn: 'Groups → Categories → Products' },
-                                                        { value: '3-level-categories' as SankeyMode, emoji: '🛒', labelEs: 'Compras → Grupos → Items', labelEn: 'Purchases → Groups → Items' },
-                                                    ]).map((mode) => {
-                                                        const isActive = sankeyMode === mode.value;
-                                                        return (
-                                                            <button
-                                                                key={mode.value}
-                                                                onClick={() => setSankeyMode(mode.value)}
-                                                                className="relative z-10 flex items-center justify-center rounded-full transition-colors"
-                                                                style={{
-                                                                    width: '28px',
-                                                                    height: '28px',
-                                                                    lineHeight: 1,
-                                                                }}
-                                                                aria-pressed={isActive}
-                                                                aria-label={locale === 'es' ? mode.labelEs : mode.labelEn}
-                                                                title={locale === 'es' ? mode.labelEs : mode.labelEn}
-                                                                data-testid={`sankey-mode-pill-${mode.value}`}
-                                                            >
-                                                                <span
-                                                                    className="text-lg leading-none transition-all"
-                                                                    style={{
-                                                                        filter: isActive ? 'brightness(1.2)' : 'none',
-                                                                    }}
-                                                                >
-                                                                    {mode.emoji}
-                                                                </span>
-                                                            </button>
-                                                        );
-                                                    })}
-                                                </>
-                                            ) : (
-                                                <>
-                                                    {/* Animated selection indicator for Donut (4 pills) */}
-                                                    <div
-                                                        className={`absolute rounded-full transition-all duration-300 ease-out ${
-                                                            prefersReducedMotion ? '' : 'transform'
-                                                        }`}
-                                                        style={{
-                                                            width: '28px',
-                                                            height: '28px',
-                                                            top: '2px',
-                                                            // 4px initial padding + (28px button + 6px gap) * index
-                                                            left: donutViewMode === 'store-groups' ? '4px' :
-                                                                  donutViewMode === 'store-categories' ? 'calc(4px + 34px)' :
-                                                                  donutViewMode === 'item-groups' ? 'calc(4px + 68px)' :
-                                                                  'calc(4px + 102px)',
-                                                            background: 'var(--primary, #2563eb)',
-                                                        }}
-                                                        aria-hidden="true"
-                                                    />
-                                                    {/* View mode pills with icons only (4 icons for Donut/List views) */}
-                                                    {([
-                                                        { value: 'store-groups' as DonutViewMode, emoji: '🏪', labelEs: 'Grupos de Compras', labelEn: 'Purchase Groups' },
-                                                        { value: 'store-categories' as DonutViewMode, emoji: '🛒', labelEs: 'Categorías de Compras', labelEn: 'Purchase Categories' },
-                                                        { value: 'item-groups' as DonutViewMode, emoji: '📦', labelEs: 'Grupos de Productos', labelEn: 'Product Groups' },
-                                                        { value: 'item-categories' as DonutViewMode, emoji: '🏷️', labelEs: 'Categorías de Productos', labelEn: 'Product Categories' },
-                                                    ]).map((mode) => {
-                                                        const isActive = donutViewMode === mode.value;
-                                                        return (
-                                                            <button
-                                                                key={mode.value}
-                                                                onClick={() => setDonutViewMode(mode.value)}
-                                                                className="relative z-10 flex items-center justify-center rounded-full transition-colors"
-                                                                style={{
-                                                                    width: '28px',
-                                                                    height: '28px',
-                                                                    lineHeight: 1,
-                                                                }}
-                                                                aria-pressed={isActive}
-                                                                aria-label={locale === 'es' ? mode.labelEs : mode.labelEn}
-                                                                title={locale === 'es' ? mode.labelEs : mode.labelEn}
-                                                                data-testid={`viewmode-pill-${mode.value}`}
-                                                            >
-                                                                <span
-                                                                    className="text-lg leading-none transition-all"
-                                                                    style={{
-                                                                        filter: isActive ? 'brightness(1.2)' : 'none',
-                                                                    }}
-                                                                >
-                                                                    {mode.emoji}
-                                                                </span>
-                                                            </button>
-                                                        );
-                                                    })}
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <span
-                                        className="absolute left-1/2 transform -translate-x-1/2 font-semibold"
-                                        style={{ color: 'var(--text-primary)' }}
-                                        data-testid="carousel-title"
-                                    >
-                                        {carouselTitles[carouselSlide]}
-                                    </span>
-                                )}
-
-                                {/* Right side buttons - Story 14.13.3: Show nav buttons for Sankey, count toggle for others */}
-                                <div className="flex items-center gap-1 z-10">
-                                    {carouselSlide === 1 && tendenciaView === 'sankey' ? (
-                                        <>
-                                            {/* Story 14.13.3: Left/Right buttons NOW navigate carousel slides (swipe scrolls diagram) */}
-                                            {/* Enhanced styling with border and pulse animation to draw attention */}
-                                            <button
-                                                onClick={goToPrevSlide}
-                                                className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95"
-                                                aria-label={locale === 'es' ? 'Ir al slide anterior' : 'Go to previous slide'}
-                                                title={locale === 'es' ? 'Anterior' : 'Previous'}
-                                                data-testid="sankey-nav-left"
-                                                style={{
-                                                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                                                    backgroundColor: 'var(--bg)',
-                                                    color: 'var(--primary)',
-                                                    border: '2px solid var(--primary)',
-                                                    animation: prefersReducedMotion ? 'none' : 'sankey-nav-pulse 2s ease-in-out infinite',
-                                                }}
-                                            >
-                                                <ChevronLeft size={16} strokeWidth={2.5} />
-                                            </button>
-                                            <button
-                                                onClick={goToNextSlide}
-                                                className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95"
-                                                aria-label={locale === 'es' ? 'Ir al siguiente slide' : 'Go to next slide'}
-                                                title={locale === 'es' ? 'Siguiente' : 'Next'}
-                                                data-testid="sankey-nav-right"
-                                                style={{
-                                                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                                                    backgroundColor: 'var(--bg)',
-                                                    color: 'var(--primary)',
-                                                    border: '2px solid var(--primary)',
-                                                    animation: prefersReducedMotion ? 'none' : 'sankey-nav-pulse 2s ease-in-out infinite 0.3s',
-                                                }}
-                                            >
-                                                <ChevronRight size={16} strokeWidth={2.5} />
-                                            </button>
-                                            {/* Keyframe animation for pulse effect */}
-                                            <style>{`
-                                                @keyframes sankey-nav-pulse {
-                                                    0%, 100% { transform: scale(1); }
-                                                    50% { transform: scale(1.05); }
-                                                }
-                                            `}</style>
-                                        </>
-                                    ) : (
-                                        /* Count Mode Toggle Button for other views */
-                                        <button
-                                            onClick={toggleCountMode}
-                                            className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200"
-                                            aria-label={countMode === 'transactions'
-                                                ? (locale === 'es' ? 'Contando transacciones (clic para contar productos)' : 'Counting transactions (click to count products)')
-                                                : (locale === 'es' ? 'Contando productos (clic para contar transacciones)' : 'Counting products (click to count transactions)')
-                                            }
-                                            title={countMode === 'transactions'
-                                                ? (locale === 'es' ? 'Contando compras' : 'Counting purchases')
-                                                : (locale === 'es' ? 'Contando productos' : 'Counting products')
-                                            }
-                                            data-testid="count-mode-toggle"
-                                            style={{
-                                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                                                backgroundColor: countMode === 'items'
-                                                    ? 'var(--primary)'
-                                                    : 'var(--bg-tertiary)',
-                                                color: countMode === 'items'
-                                                    ? 'white'
-                                                    : 'var(--text-secondary)',
-                                            }}
-                                        >
-                                            {countMode === 'transactions' ? (
-                                                <Receipt size={16} className="transition-opacity duration-150" />
-                                            ) : (
-                                                <Package size={16} className="transition-opacity duration-150" />
-                                            )}
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
+                            {/* Card Header - Story 15-TD-5b: Extracted to TrendsCardHeader */}
+                            <TrendsCardHeader
+                                carouselSlide={carouselSlide}
+                                distributionView={distributionView}
+                                tendenciaView={tendenciaView}
+                                toggleView={toggleView}
+                                prefersReducedMotion={prefersReducedMotion}
+                                donutViewMode={donutViewMode}
+                                setDonutViewMode={setDonutViewMode}
+                                sankeyMode={sankeyMode}
+                                setSankeyMode={setSankeyMode}
+                                locale={locale}
+                                countMode={countMode}
+                                toggleCountMode={toggleCountMode}
+                                goToPrevSlide={goToPrevSlide}
+                                goToNextSlide={goToNextSlide}
+                                carouselTitles={carouselTitles}
+                            />
 
                             {/* Carousel Content - Fills remaining height with scroll */}
                             <div
@@ -2668,32 +1607,8 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
                                                 dynamicHeight = 640; // Max height for 11+ categories
                                             }
 
-                                            // Story 14.13 Session 17: Determine current view mode for cell display
-                                            // This controls emoji and translation lookup in AnimatedTreemapCell
-                                            const getCurrentTreemapViewMode = (): DonutViewMode => {
-                                                if (treemapDrillDownLevel === 0) return donutViewMode;
-
-                                                // Drill-down view modes based on base view mode and drill level
-                                                if (donutViewMode === 'store-categories') {
-                                                    // Level 1: item-groups, Level 2: item-categories, Level 3: item-categories (subcats)
-                                                    if (treemapDrillDownLevel === 1) return 'item-groups';
-                                                    return 'item-categories';
-                                                }
-                                                if (donutViewMode === 'store-groups') {
-                                                    // Level 1: store-categories, Level 2: item-groups, Level 3: item-categories
-                                                    if (treemapDrillDownLevel === 1) return 'store-categories';
-                                                    if (treemapDrillDownLevel === 2) return 'item-groups';
-                                                    return 'item-categories';
-                                                }
-                                                if (donutViewMode === 'item-groups') {
-                                                    // Level 1: item-categories, Level 2: item-categories (subcats)
-                                                    return 'item-categories';
-                                                }
-                                                // item-categories: Level 1 = subcategories (still item-categories display)
-                                                return 'item-categories';
-                                            };
-
-                                            const currentViewMode = getCurrentTreemapViewMode();
+                                            // Story 15-TD-5b: View mode at drill level extracted to navigationHelpers.ts
+                                            const currentViewMode = getDonutViewModeAtDrillLevel(donutViewMode, treemapDrillDownLevel);
 
                                             return (
                                                 <div
@@ -2746,94 +1661,20 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
                                             );
                                         })()}
 
-                                        {/* Story 14.44: Floating Expand/Collapse buttons - bottom center, horizontal layout */}
-                                        {/* Moved from top-left to avoid blocking category icon clicks */}
-                                        {/* Story 14.13 Session 17: Use drill-down state when in drill-down mode */}
-                                        {(() => {
-                                            const currentCanExpand = treemapDrillDownLevel > 0
-                                                ? treemapDrillDownCategorized.canExpand
-                                                : canExpand;
-                                            const currentCanCollapse = treemapDrillDownLevel > 0
-                                                ? treemapDrillDownCategorized.canCollapse
-                                                : canCollapse;
-                                            const currentOtroCategories = treemapDrillDownLevel > 0
-                                                ? treemapDrillDownCategorized.otroCategories
-                                                : otroCategories;
-                                            const currentExpandedCount = treemapDrillDownLevel > 0
-                                                ? treemapDrillDownExpandedCount
-                                                : expandedCategoryCount;
-                                            const handleExpand = treemapDrillDownLevel > 0
+                                        {/* Story 15-TD-5b: Extracted to ExpandCollapseButtons */}
+                                        <ExpandCollapseButtons
+                                            canExpand={treemapDrillDownLevel > 0 ? treemapDrillDownCategorized.canExpand : canExpand}
+                                            canCollapse={treemapDrillDownLevel > 0 ? treemapDrillDownCategorized.canCollapse : canCollapse}
+                                            otroCount={(treemapDrillDownLevel > 0 ? treemapDrillDownCategorized.otroCategories : otroCategories).length}
+                                            expandedCount={treemapDrillDownLevel > 0 ? treemapDrillDownExpandedCount : expandedCategoryCount}
+                                            onExpand={treemapDrillDownLevel > 0
                                                 ? () => setTreemapDrillDownExpandedCount(prev => prev + 1)
-                                                : () => setExpandedCategoryCount(prev => prev + 1);
-                                            const handleCollapse = treemapDrillDownLevel > 0
+                                                : () => setExpandedCategoryCount(prev => prev + 1)}
+                                            onCollapse={treemapDrillDownLevel > 0
                                                 ? () => setTreemapDrillDownExpandedCount(prev => Math.max(0, prev - 1))
-                                                : () => setExpandedCategoryCount(prev => Math.max(0, prev - 1));
-
-                                            // Only show if there's something to expand or collapse
-                                            if (!currentCanExpand && !currentCanCollapse) return null;
-
-                                            return (
-                                                <div
-                                                    className="absolute left-1/2 -translate-x-1/2 bottom-2 z-20 pointer-events-none"
-                                                >
-                                                    <div className="flex flex-row gap-4 pointer-events-auto">
-                                                        {/* Plus button (expand) - on left */}
-                                                        {/* Story 14.13: More transparent buttons to reduce visual clutter */}
-                                                        <button
-                                                            onClick={handleExpand}
-                                                            disabled={!currentCanExpand}
-                                                            className="relative w-10 h-10 rounded-full flex items-center justify-center transition-all backdrop-blur-md"
-                                                            style={{
-                                                                backgroundColor: 'color-mix(in srgb, var(--primary) 40%, transparent)',
-                                                                color: 'white',
-                                                                opacity: currentCanExpand ? 1 : 0,
-                                                                pointerEvents: currentCanExpand ? 'auto' : 'none',
-                                                            }}
-                                                            aria-label={locale === 'es' ? `Mostrar más (${currentOtroCategories.length} en Otro)` : `Show more (${currentOtroCategories.length} in Other)`}
-                                                            data-testid="expand-categories-btn"
-                                                        >
-                                                            <Plus size={18} strokeWidth={2.5} />
-                                                            {/* Badge with count - bottom right, semi-transparent */}
-                                                            <span
-                                                                className="absolute -bottom-1 -right-1 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-xs font-bold backdrop-blur-md"
-                                                                style={{
-                                                                    backgroundColor: 'color-mix(in srgb, var(--primary) 30%, transparent)',
-                                                                    color: 'white',
-                                                                }}
-                                                            >
-                                                                {currentOtroCategories.length}
-                                                            </span>
-                                                        </button>
-                                                        {/* Minus button (collapse) - on right */}
-                                                        <button
-                                                            onClick={handleCollapse}
-                                                            disabled={!currentCanCollapse}
-                                                            className="relative w-10 h-10 rounded-full flex items-center justify-center transition-all backdrop-blur-md"
-                                                            style={{
-                                                                backgroundColor: 'color-mix(in srgb, var(--primary) 40%, transparent)',
-                                                                color: 'white',
-                                                                opacity: currentCanCollapse ? 1 : 0,
-                                                                pointerEvents: currentCanCollapse ? 'auto' : 'none',
-                                                            }}
-                                                            aria-label={locale === 'es' ? 'Mostrar menos categorías' : 'Show fewer categories'}
-                                                            data-testid="collapse-categories-btn"
-                                                        >
-                                                            <Minus size={18} strokeWidth={2.5} />
-                                                            {/* Badge with count - bottom right, semi-transparent */}
-                                                            <span
-                                                                className="absolute -bottom-1 -right-1 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-xs font-bold backdrop-blur-md"
-                                                                style={{
-                                                                    backgroundColor: 'color-mix(in srgb, var(--primary) 30%, transparent)',
-                                                                    color: 'white',
-                                                                }}
-                                                            >
-                                                                {currentExpandedCount}
-                                                            </span>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })()}
+                                                : () => setExpandedCategoryCount(prev => Math.max(0, prev - 1))}
+                                            locale={locale}
+                                        />
                                     </div>
                                 )}
 
@@ -2929,80 +1770,21 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
                                             ))}
                                         </div>
 
-                                        {/* Story 14.44: Floating Expand/Collapse buttons - bottom center, horizontal layout */}
-                                        {/* Moved from top-left to avoid blocking category icon clicks */}
-                                        {(() => {
-                                            const handleTrendExpand = trendDrillDownLevel > 0
+                                        {/* Story 15-TD-5b: Extracted to ExpandCollapseButtons */}
+                                        <ExpandCollapseButtons
+                                            canExpand={trendCanExpand}
+                                            canCollapse={trendCanCollapse}
+                                            otroCount={otroTrendCategories.length}
+                                            expandedCount={currentTrendExpandedCount}
+                                            onExpand={trendDrillDownLevel > 0
                                                 ? () => setTrendDrillDownExpandedCount(prev => prev + 1)
-                                                : () => setTrendExpandedCount(prev => prev + 1);
-                                            const handleTrendCollapse = trendDrillDownLevel > 0
+                                                : () => setTrendExpandedCount(prev => prev + 1)}
+                                            onCollapse={trendDrillDownLevel > 0
                                                 ? () => setTrendDrillDownExpandedCount(prev => Math.max(0, prev - 1))
-                                                : () => setTrendExpandedCount(prev => Math.max(0, prev - 1));
-
-                                            // Only show if there's something to expand or collapse
-                                            if (!trendCanExpand && !trendCanCollapse) return null;
-
-                                            return (
-                                                <div
-                                                    className="absolute left-1/2 -translate-x-1/2 bottom-2 z-20 pointer-events-none"
-                                                >
-                                                    <div className="flex flex-row gap-4 pointer-events-auto">
-                                                        {/* Plus button (expand) - on left */}
-                                                        <button
-                                                            onClick={handleTrendExpand}
-                                                            disabled={!trendCanExpand}
-                                                            className="relative w-10 h-10 rounded-full flex items-center justify-center transition-all backdrop-blur-md"
-                                                            style={{
-                                                                backgroundColor: 'color-mix(in srgb, var(--primary) 40%, transparent)',
-                                                                color: 'white',
-                                                                opacity: trendCanExpand ? 1 : 0,
-                                                                pointerEvents: trendCanExpand ? 'auto' : 'none',
-                                                            }}
-                                                            aria-label={locale === 'es' ? `Mostrar más (${otroTrendCategories.length} en Más)` : `Show more (${otroTrendCategories.length} in More)`}
-                                                            data-testid="trend-expand-categories-btn"
-                                                        >
-                                                            <Plus size={18} strokeWidth={2.5} />
-                                                            {/* Badge with count - bottom right, semi-transparent */}
-                                                            <span
-                                                                className="absolute -bottom-1 -right-1 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-xs font-bold backdrop-blur-md"
-                                                                style={{
-                                                                    backgroundColor: 'color-mix(in srgb, var(--primary) 30%, transparent)',
-                                                                    color: 'white',
-                                                                }}
-                                                            >
-                                                                {otroTrendCategories.length}
-                                                            </span>
-                                                        </button>
-                                                        {/* Minus button (collapse) - on right */}
-                                                        <button
-                                                            onClick={handleTrendCollapse}
-                                                            disabled={!trendCanCollapse}
-                                                            className="relative w-10 h-10 rounded-full flex items-center justify-center transition-all backdrop-blur-md"
-                                                            style={{
-                                                                backgroundColor: 'color-mix(in srgb, var(--primary) 40%, transparent)',
-                                                                color: 'white',
-                                                                opacity: trendCanCollapse ? 1 : 0,
-                                                                pointerEvents: trendCanCollapse ? 'auto' : 'none',
-                                                            }}
-                                                            aria-label={locale === 'es' ? 'Mostrar menos categorías' : 'Show fewer categories'}
-                                                            data-testid="trend-collapse-categories-btn"
-                                                        >
-                                                            <Minus size={18} strokeWidth={2.5} />
-                                                            {/* Badge with count - bottom right, semi-transparent */}
-                                                            <span
-                                                                className="absolute -bottom-1 -right-1 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-xs font-bold backdrop-blur-md"
-                                                                style={{
-                                                                    backgroundColor: 'color-mix(in srgb, var(--primary) 30%, transparent)',
-                                                                    color: 'white',
-                                                                }}
-                                                            >
-                                                                {currentTrendExpandedCount}
-                                                            </span>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })()}
+                                                : () => setTrendExpandedCount(prev => Math.max(0, prev - 1))}
+                                            locale={locale}
+                                            testIdPrefix="trend-"
+                                        />
                                     </div>
                                 )}
 

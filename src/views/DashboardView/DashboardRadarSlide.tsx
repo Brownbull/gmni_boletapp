@@ -47,6 +47,7 @@ interface DashboardRadarSlideProps {
     radarPrevMonthLabel: string;
     translateTreemapName: (name: string) => string;
     t: (key: string) => string;
+    formatCompactAmount: (amount: number) => string;
 }
 
 export const DashboardRadarSlide: React.FC<DashboardRadarSlideProps> = ({
@@ -59,6 +60,7 @@ export const DashboardRadarSlide: React.FC<DashboardRadarSlideProps> = ({
     radarPrevMonthLabel,
     translateTreemapName,
     t,
+    formatCompactAmount,
 }) => {
     if (radarChartData.categories.length < 3) {
         return (
@@ -234,7 +236,7 @@ export const DashboardRadarSlide: React.FC<DashboardRadarSlideProps> = ({
                             <div className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-medium shadow-sm"
                                 style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)', color: 'var(--secondary)' }}>
                                 <span className="opacity-70">{radarPrevMonthLabel}</span>
-                                <span>${Math.round(selectedRadarCategory.prevAmount / 1000)}k</span>
+                                <span>{formatCompactAmount(selectedRadarCategory.prevAmount)}</span>
                             </div>
                             <div className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-xs font-semibold"
                                 style={{ backgroundColor: selectedRadarCategory.color + '25', color: 'var(--primary)' }}>
@@ -252,7 +254,7 @@ export const DashboardRadarSlide: React.FC<DashboardRadarSlideProps> = ({
                             <div className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-bold shadow-sm"
                                 style={{ backgroundColor: 'var(--primary)', color: 'var(--bg)' }}>
                                 <span className="opacity-70">{radarCurrentMonthLabel}</span>
-                                <span>${Math.round(selectedRadarCategory.currAmount / 1000)}k</span>
+                                <span>{formatCompactAmount(selectedRadarCategory.currAmount)}</span>
                             </div>
                             {(() => {
                                 const change = selectedRadarCategory.prevAmount > 0

@@ -11,12 +11,16 @@
 import { normalizeItemCategory } from '../../utils/categoryNormalizer';
 import {
     getCategoryPillColors,
+    getStoreGroupColors,
     getItemGroupColors,
     getCurrentTheme,
     getCurrentMode,
+    ALL_STORE_CATEGORY_GROUPS,
     ALL_ITEM_CATEGORY_GROUPS,
+    STORE_CATEGORY_GROUPS,
     ITEM_CATEGORY_GROUPS,
     ITEM_CATEGORY_TO_KEY,
+    type StoreCategoryGroup,
     type ItemCategoryGroup,
 } from '../../config/categoryColors';
 import { buildProductKey } from '@/utils/categoryAggregation';
@@ -257,4 +261,103 @@ export function computeItemCategoriesInGroup(
         const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
         return group === itemGroupKey;
     });
+}
+
+/**
+ * Story 15-TD-5b: Aggregate allCategoryData by store category groups.
+ * Extracted from TrendsView.tsx storeGroupsData useMemo.
+ */
+export function computeStoreGroupsData(allCategoryData: CategoryData[]): CategoryData[] {
+    const theme = getCurrentTheme();
+    const mode = getCurrentMode();
+    const groupTotals: Record<StoreCategoryGroup, { value: number; count: number; itemCount: number }> = {
+        'food-dining': { value: 0, count: 0, itemCount: 0 },
+        'health-wellness': { value: 0, count: 0, itemCount: 0 },
+        'retail-general': { value: 0, count: 0, itemCount: 0 },
+        'retail-specialty': { value: 0, count: 0, itemCount: 0 },
+        'automotive': { value: 0, count: 0, itemCount: 0 },
+        'services': { value: 0, count: 0, itemCount: 0 },
+        'hospitality': { value: 0, count: 0, itemCount: 0 },
+        'other': { value: 0, count: 0, itemCount: 0 },
+    };
+
+    for (const cat of allCategoryData) {
+        const group = STORE_CATEGORY_GROUPS[cat.name as keyof typeof STORE_CATEGORY_GROUPS] || 'other';
+        groupTotals[group].value += cat.value;
+        groupTotals[group].count += cat.count;
+        groupTotals[group].itemCount += cat.itemCount || 0;
+    }
+
+    const totalValue = Object.values(groupTotals).reduce((sum, g) => sum + g.value, 0);
+
+    return ALL_STORE_CATEGORY_GROUPS
+        .map(groupKey => {
+            const data = groupTotals[groupKey];
+            const colors = getStoreGroupColors(groupKey, theme, mode);
+            return {
+                name: groupKey,
+                value: data.value,
+                count: data.count,
+                itemCount: data.itemCount,
+                color: colors.bg,
+                fgColor: colors.fg,
+                percent: totalValue > 0 ? Math.round((data.value / totalValue) * 100) : 0,
+            };
+        })
+        .filter(g => g.value > 0)
+        .sort((a, b) => b.value - a.value);
+}
+
+/**
+ * Story 15-TD-5b: Aggregate item categories by item groups from transactions.
+ * Extracted from TrendsView.tsx itemGroupsData useMemo.
+ */
+export function computeItemGroupsData(filteredTransactions: Transaction[]): CategoryData[] {
+    const theme = getCurrentTheme();
+    const mode = getCurrentMode();
+    const groupTotals: Record<ItemCategoryGroup, { value: number; transactionIds: Set<string>; uniqueProducts: Set<string> }> = {
+        'food-fresh': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+        'food-packaged': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+        'health-personal': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+        'household': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+        'nonfood-retail': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+        'services-fees': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+        'other-item': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+    };
+
+    filteredTransactions.forEach((tx, index) => {
+        (tx.items || []).forEach(item => {
+            const cat = normalizeItemCategory(item.category || 'Other');
+            const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
+            const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
+
+            groupTotals[group].value += item.price;
+            groupTotals[group].transactionIds.add(tx.id ?? `tx-${index}`);
+
+            // Track unique products by normalized name + merchant
+            groupTotals[group].uniqueProducts.add(
+                buildProductKey(item.name || '', tx.merchant || '')
+            );
+        });
+    });
+
+    const totalValue = Object.values(groupTotals).reduce((sum, g) => sum + g.value, 0);
+
+    return ALL_ITEM_CATEGORY_GROUPS
+        .map(groupKey => {
+            const data = groupTotals[groupKey];
+            const colors = getItemGroupColors(groupKey, theme, mode);
+            return {
+                name: groupKey,
+                value: data.value,
+                count: data.transactionIds.size,
+                itemCount: data.uniqueProducts.size,
+                transactionIds: data.transactionIds,
+                color: colors.bg,
+                fgColor: colors.fg,
+                percent: totalValue > 0 ? Math.round((data.value / totalValue) * 100) : 0,
+            };
+        })
+        .filter(g => g.value > 0)
+        .sort((a, b) => b.value - a.value);
 }
