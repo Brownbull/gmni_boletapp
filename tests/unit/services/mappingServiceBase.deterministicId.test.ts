@@ -68,4 +68,10 @@ describe('generateDeterministicId', () => {
         const id = generateDeterministicId(compoundKeyConfig, { normalizedMerchant: 'jumbo' });
         expect(id.length).toBeGreaterThan(0);
     });
+
+    it('should produce an ID under 1500 bytes for very long inputs', () => {
+        const longMapping = { normalizedMerchant: 'a'.repeat(500) };
+        const id = generateDeterministicId(singleKeyConfig, longMapping);
+        expect(new TextEncoder().encode(id).byteLength).toBeLessThan(1500);
+    });
 });

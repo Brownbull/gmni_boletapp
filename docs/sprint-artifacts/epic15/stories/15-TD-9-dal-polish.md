@@ -3,7 +3,7 @@
 **Epic:** 15 - Codebase Refactoring
 **Points:** 3
 **Priority:** LOW
-**Status:** review
+**Status:** done
 
 ## Description
 
@@ -66,3 +66,13 @@ Polish the Data Access Layer created in Phase 6 by improving the `save()` method
 - Don't migrate all consumers at once — this story targets 2 as a proof-of-concept for the improved signature
 - **TD-13 code review (2026-02-10):** `saveUserCredits()` (non-transactional setDoc) is still exported from `userCreditsService.ts` and wrapped as `save()` in `creditsRepository.ts`. When this story replaces `creditsRepository.save()` with transactional methods, also deprecate/remove the `saveUserCredits` export from the service layer to close the bypass vector.
 - **Deterministic doc IDs:** Use a hash of the primary key field(s) as the document ID. E.g., for merchant mappings: `doc(collRef, hashKey(normalizedMerchant))`. This makes concurrent creates idempotent — both writers target the same doc, so Firestore's last-write-wins semantics apply instead of creating duplicates. A simple approach: `btoa(primaryKeyValue).replace(/[^a-zA-Z0-9]/g, '')` or use a proper hash function.
+
+## Senior Developer Review (ECC)
+
+- **Review date:** 2026-02-12
+- **Classification:** STANDARD (2 agents)
+- **ECC agents:** code-reviewer, security-reviewer
+- **Outcome:** APPROVED (9/10)
+- **Quick fixes applied:** (1) Exported `ServerGeneratedFields` to `repositories/types.ts` for reuse, (2) Fixed JSDoc "collision-resistant" to "collision-free" (btoa is bijective), (3) Documented unused `db` field in `useUserPreferences` FirebaseServices interface, (4) Added long-input edge case test for deterministic ID generation
+- **Deferred items:** 0 new (deprecated `save()` removal already tracked by TD-13)
+- **All tests pass:** 273 files, 6,542 tests

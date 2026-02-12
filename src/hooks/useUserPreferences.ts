@@ -48,6 +48,7 @@ interface UseUserPreferencesResult {
 }
 
 interface FirebaseServices {
+  /** Retained for caller compatibility — no longer accessed directly (repository handles Firestore). */
   db: unknown;
   appId: string;
 }

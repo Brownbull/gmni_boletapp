@@ -71,8 +71,8 @@ export function normalizeForMapping(name: string): string {
  * Generate a deterministic Firestore document ID from primary key field(s).
  * Makes concurrent creates idempotent by targeting the same document.
  *
- * Uses btoa encoding, stripped of non-alphanumeric chars, to produce
- * a URL-safe, collision-resistant ID from the key fields.
+ * Uses btoa encoding (bijective) with base64url substitution to produce
+ * a URL-safe, collision-free ID from the key fields.
  * Input is always normalized (lowercase, alphanumeric) by normalizeForMapping(),
  * so btoa is safe for ASCII input.
  */
@@ -94,8 +94,8 @@ export function generateDeterministicId(
     // Fallback for empty input — use placeholder to ensure non-empty ID
     const input = raw || '_empty_';
 
-    // base64url encoding: lossless (no two inputs produce the same ID)
-    // Firestore IDs allow [a-zA-Z0-9_-], so base64url is safe
+    // base64url encoding: bijective — no two distinct inputs produce the same ID
+    // Firestore IDs allow [a-zA-Z0-9_-], so base64url chars are safe
     return btoa(input).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
