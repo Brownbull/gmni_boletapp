@@ -10,6 +10,7 @@ import { ChevronLeft } from 'lucide-react';
 import { ProfileDropdown, ProfileAvatar, getInitials } from '../components/ProfileDropdown';
 import type { InAppNotificationClient } from '../types/notification';
 import type { User } from 'firebase/auth';
+import type { BatchResult } from '@/lib/firestoreBatch';
 
 interface NotificationsViewProps {
   user: User | null;
@@ -22,7 +23,7 @@ interface NotificationsViewProps {
   markNotificationAsRead: (id: string) => Promise<void>;
   markAllNotificationsAsRead: () => Promise<void>;
   deleteInAppNotification: (id: string) => Promise<void>;
-  deleteAllInAppNotifications: () => Promise<void>;
+  deleteAllInAppNotifications: () => Promise<BatchResult | undefined>;
 }
 
 export const NotificationsView: React.FC<NotificationsViewProps> = ({

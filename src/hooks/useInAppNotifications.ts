@@ -31,7 +31,7 @@ import {
 } from 'firebase/firestore';
 import type { InAppNotification, InAppNotificationClient } from '../types/notification';
 import { toDateSafe } from '@/utils/timestamp';
-import { batchWrite, batchDelete } from '@/lib/firestoreBatch';
+import { batchWrite, batchDelete, type BatchResult } from '@/lib/firestoreBatch';
 import { notificationsPath, notificationDocSegments } from '@/lib/firestorePaths';
 
 // ============================================================================
@@ -53,8 +53,8 @@ export interface UseInAppNotificationsResult {
     markAllAsRead: () => Promise<void>;
     /** Delete a specific notification */
     deleteNotification: (notificationId: string) => Promise<void>;
-    /** Delete all notifications */
-    deleteAllNotifications: () => Promise<void>;
+    /** Delete all notifications. Returns BatchResult for partial-failure detection. */
+    deleteAllNotifications: () => Promise<BatchResult | undefined>;
 }
 
 // ============================================================================
@@ -184,10 +184,10 @@ export function useInAppNotifications(
         [db, userId, appId]
     );
 
-    // Delete all notifications
-    const deleteAllNotifications = useCallback(async () => {
-        if (!db || !userId || !appId) return;
-        if (notifications.length === 0) return;
+    // Delete all notifications — returns BatchResult for partial-failure detection
+    const deleteAllNotifications = useCallback(async (): Promise<BatchResult | undefined> => {
+        if (!db || !userId || !appId) return undefined;
+        if (notifications.length === 0) return undefined;
         const currentDb = db;
         const uid = userId;
         const aid = appId;
@@ -196,9 +196,12 @@ export function useInAppNotifications(
             const refs = notifications.map((notif) =>
                 doc(currentDb, ...notificationDocSegments(aid, uid, notif.id))
             );
-            await batchDelete(currentDb, refs);
+            return await batchDelete(currentDb, refs);
         } catch (err) {
             console.error('[useInAppNotifications] Failed to delete all notifications:', err);
+            const batchResult = (err as Error & { batchResult?: BatchResult })?.batchResult;
+            if (batchResult) return batchResult;
+            return undefined;
         }
     }, [db, userId, appId, notifications]);
 

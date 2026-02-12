@@ -841,6 +841,7 @@ export const TRANSLATIONS = {
         errorStorageQuotaMessage: "Offline data may be limited. Consider clearing old data.",
         errorPermissionDeniedMessage: "You don't have permission to access this resource.",
         errorUnknownMessage: "An unexpected error occurred. Please try again.",
+        batchPartialFailure: "Some items could not be processed. Please try again.",
         // Error UI labels
         connectionRestored: "Connection restored",
         offline: "You're offline",
@@ -1692,6 +1693,7 @@ export const TRANSLATIONS = {
         errorStorageQuotaMessage: "Los datos sin conexión pueden estar limitados. Considera limpiar datos antiguos.",
         errorPermissionDeniedMessage: "No tienes permiso para acceder a este recurso.",
         errorUnknownMessage: "Ocurrió un error inesperado. Por favor intenta de nuevo.",
+        batchPartialFailure: "Algunos elementos no pudieron ser procesados. Intenta de nuevo.",
         // Error UI labels
         connectionRestored: "Conexión restaurada",
         offline: "Sin conexión",

@@ -512,6 +512,15 @@ function App() {
     const mainRef = useRef<HTMLDivElement>(null);
     const t = (k: string) => (TRANSLATIONS[lang] as any)[k] || k;
 
+    // Batch delete wrapper: surfaces partial-failure via toast (Story 15-TD-12)
+    const handleDeleteAllInAppNotifications = useCallback(async () => {
+        const result = await deleteAllInAppNotifications();
+        if (result && result.failedBatches > 0) {
+            showToast(t('batchPartialFailure'), 'warning');
+        }
+        return result;
+    }, [deleteAllInAppNotifications, showToast, t]);
+
     // Transaction handlers (save, delete, wipe, export)
     const {
         saveTransaction,
@@ -1884,7 +1893,7 @@ function App() {
                     markNotificationAsRead,
                     markAllNotificationsAsRead,
                     deleteInAppNotification,
-                    deleteAllInAppNotifications,
+                    deleteAllInAppNotifications: handleDeleteAllInAppNotifications,
                 })}
 
                 {/* Statement Scan Placeholder View */}

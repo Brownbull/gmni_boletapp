@@ -148,7 +148,7 @@ development_status:
   15-TD-7-context-cleanup-dead-code: done    # 3 pts - TD-10, TD-12, TD-19, TD-21: Delete dead contexts, unify toast
   15-TD-8-input-validation-hardening: done     # 2 pts - TD-22, TD-23: validateAppId + data: URI pattern
   15-TD-9-dal-polish: done                           # 3 pts - TD-7, TD-9, CR-2: save() signature + consumer migration + deterministic doc IDs
-  15-TD-12-batch-migration-error-surfacing: ready-for-dev  # 2 pts - CR-4, CR-9: migrateCreatedAt raw writeBatch + partial-commit surfacing
+  15-TD-12-batch-migration-error-surfacing: done    # 2 pts - CR-4, CR-9: migrateCreatedAt raw writeBatch + partial-commit surfacing
   15-TD-15-standalone-mutation-safety: ready-for-dev       # 2 pts - TD-11 deferred + audit: deleteTrustedMerchant/deleteTransaction/updateTransaction/deleteMapping transaction wrapping
   15-TD-16-mega-view-decomposition-5c: ready-for-dev      # 5 pts - Further TrendsView (3,199→2,000) + DashboardView (2,482→1,500) decomposition + i18n fixes in extracted slides
   15-TD-17-report-innerhtml-sanitization: ready-for-dev   # 1 pt  - ReportDetailOverlay innerHTML → DOM API (pre-existing XSS defense-in-depth)
