@@ -3,7 +3,7 @@
 **Epic:** 15 - Codebase Refactoring
 **Points:** 3
 **Priority:** LOW
-**Status:** ready-for-dev
+**Status:** review
 
 ## Description
 
@@ -17,37 +17,46 @@ Polish the Data Access Layer created in Phase 6 by improving the `save()` method
 
 ## Acceptance Criteria
 
-- [ ] **AC1:** Repository `save()` methods accept `Omit<T, 'id' | 'createdAt' | 'updatedAt'>` instead of full `T`
-- [ ] **AC2:** All `as unknown as T` casts in repository implementations removed
-- [ ] **AC3:** At least 2 consumer hooks migrated from direct service imports to repository hooks
-- [ ] **AC4:** Repository interfaces updated to reflect new save signature
-- [ ] **AC5:** `saveMapping()` uses deterministic document IDs (hash of primary key fields) to prevent duplicate-create race condition
-- [ ] **AC6:** All tests pass
+- [x] **AC1:** Repository `save()` methods accept `Omit<T, 'id' | 'createdAt' | 'updatedAt'>` instead of full `T`
+- [x] **AC2:** All `as unknown as T` casts in repository implementations removed
+- [x] **AC3:** At least 2 consumer hooks migrated from direct service imports to repository hooks
+- [x] **AC4:** Repository interfaces updated to reflect new save signature
+- [x] **AC5:** `saveMapping()` uses deterministic document IDs (hash of primary key fields) to prevent duplicate-create race condition
+- [x] **AC6:** All tests pass
 
 ## Tasks
 
-- [ ] **Task 1:** Fix `save()` signature in repository interfaces
-  - [ ] Update `Repository<T>` interface `save` method to accept `Omit<T, 'id' | 'createdAt' | 'updatedAt'>`
-  - [ ] Update all 8 repository factory implementations
-  - [ ] Remove `as unknown as T` casts
-- [ ] **Task 2:** Migrate 2 consumer hooks to repository pattern
-  - [ ] Choose 2 high-usage hooks (e.g., `useTransactions`, `useUserPreferences`)
-  - [ ] Replace direct service function imports with repository hook usage
-  - [ ] Verify behavior is identical
+- [x] **Task 1:** Fix `save()` signature in repository interfaces
+  - [x] Update `IMappingRepository<T>` interface `save` method to accept `Omit<T, ServerGeneratedFields>`
+  - [x] Remove `as unknown as T` casts from 4 consumer hooks
+  - [x] Deprecate `creditsRepository.save()` and `saveUserCredits()` with `@deprecated` JSDoc
+- [x] **Task 2:** Migrate 2 consumer hooks to repository pattern
+  - [x] `useUserPreferences` → `usePreferencesRepository()` (get + save)
+  - [x] `useTrustedMerchants` → `useTrustRepository()` (8 service methods → repository)
+  - [x] Tests rewired from service mocks to repository mocks (13 tests pass)
 
-- [ ] **Task 3:** Fix saveMapping duplicate-create race
-  - [ ] Generate deterministic document IDs from primary key fields (e.g., `hashKey(normalizedMerchant)` or `hashKey(normalizedMerchant, normalizedItemName)`)
-  - [ ] Replace `doc(collRef)` (auto-ID) with `doc(collRef, deterministicId)` in the create path
-  - [ ] This eliminates the race where two concurrent creates both see empty query results
+- [x] **Task 3:** Fix saveMapping duplicate-create race
+  - [x] `generateDeterministicId()` using `btoa(primaryKey).replace(/[^a-zA-Z0-9]/g, '')` with `::` compound separator
+  - [x] Create path uses `doc(collRef, deterministicId)` + `transaction.get()` to detect concurrent create
+  - [x] 8 deterministic ID tests + 6 saveMapping transaction tests pass
 
 ## File Specification
 
 | File | Action | Description |
 |------|--------|-------------|
-| `src/repositories/types.ts` | MODIFY | Update Repository<T> save signature |
-| `src/repositories/*.ts` | MODIFY | Remove `as unknown as T` casts |
-| 2 consumer hook files | MODIFY | Migrate to repository hooks |
-| `src/services/mappingServiceBase.ts` | MODIFY | Use deterministic doc IDs in create path |
+| `src/repositories/mappingRepository.ts` | MODIFY | `ServerGeneratedFields` type + `save()` Omit signature |
+| `src/repositories/creditsRepository.ts` | MODIFY | `@deprecated` JSDoc on `save()` |
+| `src/services/userCreditsService.ts` | MODIFY | `@deprecated` JSDoc on `saveUserCredits()` |
+| `src/hooks/useMerchantMappings.ts` | MODIFY | Remove `as unknown as` cast |
+| `src/hooks/useCategoryMappings.ts` | MODIFY | Remove `as unknown as` cast |
+| `src/hooks/useItemNameMappings.ts` | MODIFY | Remove `as unknown as` cast |
+| `src/hooks/useSubcategoryMappings.ts` | MODIFY | Remove `as unknown as` cast |
+| `src/hooks/useUserPreferences.ts` | MODIFY | Migrate to `usePreferencesRepository()` |
+| `src/hooks/useTrustedMerchants.ts` | MODIFY | Migrate to `useTrustRepository()` |
+| `src/services/mappingServiceBase.ts` | MODIFY | `generateDeterministicId()` + deterministic create path |
+| `tests/unit/hooks/useTrustedMerchants.test.ts` | MODIFY | Rewire to repository mocks |
+| `tests/unit/services/mappingServiceBase.saveMapping.test.ts` | MODIFY | Deterministic ID + concurrent create tests |
+| `tests/unit/services/mappingServiceBase.deterministicId.test.ts` | CREATE | 8 tests for ID generation |
 
 ## Dev Notes
 

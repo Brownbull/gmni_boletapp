@@ -104,6 +104,9 @@ export async function getUserCredits(
 /**
  * Save user credits to Firestore.
  *
+ * @deprecated Use transactional methods (deductAndSaveCredits, addAndSaveCredits, etc.)
+ * instead. This non-transactional setDoc bypasses TOCTOU safety and can cause lost updates.
+ *
  * @param db - Firestore instance
  * @param userId - User ID from Firebase Auth
  * @param appId - Application ID

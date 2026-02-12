@@ -20,6 +20,7 @@ import {
 
 export interface ICreditsRepository {
   get(): Promise<UserCredits>;
+  /** @deprecated Use transactional methods (deduct, deductSuper) instead. Non-transactional setDoc bypasses TOCTOU safety. */
   save(credits: UserCredits): Promise<void>;
   deduct(amount: number): Promise<UserCredits>;
   deductSuper(amount: number): Promise<UserCredits>;

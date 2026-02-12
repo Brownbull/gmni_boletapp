@@ -64,6 +64,42 @@ export function normalizeForMapping(name: string): string {
 }
 
 // =============================================================================
+// Deterministic Document IDs (Story 15-TD-9: prevent duplicate-create race)
+// =============================================================================
+
+/**
+ * Generate a deterministic Firestore document ID from primary key field(s).
+ * Makes concurrent creates idempotent by targeting the same document.
+ *
+ * Uses btoa encoding, stripped of non-alphanumeric chars, to produce
+ * a URL-safe, collision-resistant ID from the key fields.
+ * Input is always normalized (lowercase, alphanumeric) by normalizeForMapping(),
+ * so btoa is safe for ASCII input.
+ */
+export function generateDeterministicId(
+    config: MappingConfig,
+    mapping: Record<string, unknown>,
+): string {
+    const primaryValue = String(mapping[config.primaryKeyField] ?? '');
+    const parts = [primaryValue];
+
+    if (config.secondaryKeyField) {
+        const secondaryValue = String(mapping[config.secondaryKeyField] ?? '');
+        parts.push(secondaryValue);
+    }
+
+    // Join with separator that cannot appear in normalized values
+    const raw = parts.join('::');
+
+    // Fallback for empty input — use placeholder to ensure non-empty ID
+    const input = raw || '_empty_';
+
+    // base64url encoding: lossless (no two inputs produce the same ID)
+    // Firestore IDs allow [a-zA-Z0-9_-], so base64url is safe
+    return btoa(input).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+// =============================================================================
 // Generic CRUD Operations
 // =============================================================================
 
@@ -71,6 +107,9 @@ export function normalizeForMapping(name: string): string {
  * Save (upsert) a mapping document.
  * If a document with the same primary key (and optional secondary key) exists,
  * it will be updated. Otherwise, a new document is created.
+ *
+ * Story 15-TD-9: Create path uses deterministic document IDs to prevent
+ * duplicate-create race conditions from concurrent calls.
  */
 export async function saveMapping<T extends Record<string, unknown>>(
     db: Firestore,
@@ -87,9 +126,7 @@ export async function saveMapping<T extends Record<string, unknown>>(
         : { ...mapping };
 
     // Build upsert query (outside transaction — client SDK limitation).
-    // KNOWN LIMITATION: Two concurrent create calls can both see empty results
-    // and create duplicate documents. Mitigation: use deterministic document IDs
-    // (e.g., hash of primary key fields) or enforce uniqueness via Cloud Function.
+    // Duplicate-create race is mitigated by deterministic document IDs below.
     const filters = [
         where(config.primaryKeyField, '==', mapping[config.primaryKeyField]),
     ];
@@ -121,14 +158,25 @@ export async function saveMapping<T extends Record<string, unknown>>(
         return existingDocs.docs[0].id;
     }
 
-    // No existing doc — create with transaction to prevent duplicate creates
-    const newDocRef = doc(collRef);
+    // No existing doc — create with deterministic ID to prevent duplicate-create race.
+    // Two concurrent creates target the same doc, making the operation idempotent.
+    const deterministicId = generateDeterministicId(config, data);
+    const newDocRef = doc(collRef, deterministicId);
     await runTransaction(db, async (transaction) => {
-        transaction.set(newDocRef, {
-            ...data,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        });
+        const existingSnap = await transaction.get(newDocRef);
+        if (existingSnap.exists()) {
+            // Concurrent create already won — update instead of duplicate
+            transaction.update(newDocRef, {
+                ...data,
+                updatedAt: serverTimestamp(),
+            });
+        } else {
+            transaction.set(newDocRef, {
+                ...data,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            });
+        }
     });
     return newDocRef.id;
 }

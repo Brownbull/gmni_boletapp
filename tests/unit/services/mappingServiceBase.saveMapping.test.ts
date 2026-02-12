@@ -2,6 +2,7 @@
  * mappingServiceBase.saveMapping Transaction Tests
  *
  * Story 15-TD-1: Verify saveMapping uses runTransaction for TOCTOU safety
+ * Story 15-TD-9: Verify deterministic document IDs in create path
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -14,7 +15,14 @@ const mockTransaction = {
 
 vi.mock('firebase/firestore', () => ({
     collection: vi.fn(() => 'mock-collection-ref'),
-    doc: vi.fn(() => 'mock-new-doc-ref'),
+    doc: vi.fn((...args: unknown[]) => {
+        // doc(collRef, id) — deterministic ID path
+        if (args.length >= 2 && typeof args[1] === 'string') {
+            return { id: args[1] };
+        }
+        // doc(collRef) — auto-ID (no longer used in create path)
+        return { id: 'mock-auto-id' };
+    }),
     getDocs: vi.fn(),
     query: vi.fn(),
     where: vi.fn(),
@@ -28,11 +36,12 @@ vi.mock('firebase/firestore', () => ({
     runTransaction: vi.fn((_db, fn) => fn(mockTransaction)),
 }));
 
-import { getDocs, runTransaction } from 'firebase/firestore';
-import { saveMapping, type MappingConfig } from '../../../src/services/mappingServiceBase';
+import { getDocs, runTransaction, doc } from 'firebase/firestore';
+import { saveMapping, generateDeterministicId, type MappingConfig } from '../../../src/services/mappingServiceBase';
 
 const mockGetDocs = vi.mocked(getDocs);
 const mockRunTransaction = vi.mocked(runTransaction);
+const mockDoc = vi.mocked(doc);
 
 describe('saveMapping - TOCTOU transaction safety', () => {
     const mockDb = {} as Parameters<typeof saveMapping>[0];
@@ -103,18 +112,29 @@ describe('saveMapping - TOCTOU transaction safety', () => {
         );
     });
 
-    it('should use runTransaction when creating a new mapping', async () => {
+    it('should use deterministic doc ID when creating a new mapping', async () => {
         // No existing document found
         mockGetDocs.mockResolvedValueOnce({
             empty: true,
             docs: [],
         } as never);
 
-        await saveMapping(mockDb, userId, appId, mapping, config);
+        // Transaction.get for the deterministic-ID doc — not found (first create)
+        mockTransaction.get.mockResolvedValueOnce({
+            exists: () => false,
+        });
+
+        const id = await saveMapping(mockDb, userId, appId, mapping, config);
+
+        // Should use deterministic ID (doc called with collRef + id)
+        const expectedId = generateDeterministicId(config, mapping);
+        expect(mockDoc).toHaveBeenCalledWith('mock-collection-ref', expectedId);
+        expect(id).toBe(expectedId);
 
         expect(mockRunTransaction).toHaveBeenCalledTimes(1);
+        expect(mockTransaction.get).toHaveBeenCalled();
         expect(mockTransaction.set).toHaveBeenCalledWith(
-            'mock-new-doc-ref',
+            { id: expectedId },
             expect.objectContaining({
                 normalizedKey: 'foo',
                 targetValue: 'bar',
@@ -122,6 +142,37 @@ describe('saveMapping - TOCTOU transaction safety', () => {
                 updatedAt: 'mock-server-timestamp',
             })
         );
+    });
+
+    it('should update instead of set when concurrent create detected', async () => {
+        // No existing document found by query
+        mockGetDocs.mockResolvedValueOnce({
+            empty: true,
+            docs: [],
+        } as never);
+
+        // But the deterministic-ID doc already exists (concurrent create won)
+        mockTransaction.get.mockResolvedValueOnce({
+            exists: () => true,
+            data: () => ({ normalizedKey: 'foo', targetValue: 'bar' }),
+        });
+
+        await saveMapping(mockDb, userId, appId, mapping, config);
+
+        // Should update (not set) since doc already exists
+        expect(mockTransaction.update).toHaveBeenCalled();
+        expect(mockTransaction.set).not.toHaveBeenCalled();
+        expect(mockTransaction.update).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({
+                normalizedKey: 'foo',
+                targetValue: 'bar',
+                updatedAt: 'mock-server-timestamp',
+            })
+        );
+        // Should NOT include createdAt (preserve original)
+        const updateArgs = mockTransaction.update.mock.calls[0][1] as Record<string, unknown>;
+        expect(updateArgs).not.toHaveProperty('createdAt');
     });
 
     it('should sanitize target field when configured', async () => {
@@ -134,6 +185,10 @@ describe('saveMapping - TOCTOU transaction safety', () => {
             empty: true,
             docs: [],
         } as never);
+
+        mockTransaction.get.mockResolvedValueOnce({
+            exists: () => false,
+        });
 
         await saveMapping(mockDb, userId, appId, mapping, sanitizeConfig);
 
@@ -156,6 +211,10 @@ describe('saveMapping - TOCTOU transaction safety', () => {
             empty: true,
             docs: [],
         } as never);
+
+        mockTransaction.get.mockResolvedValueOnce({
+            exists: () => false,
+        });
 
         await saveMapping(mockDb, userId, appId, compoundMapping, compoundConfig);
 

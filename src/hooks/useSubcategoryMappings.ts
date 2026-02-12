@@ -87,7 +87,7 @@ export function useSubcategoryMappings(
             };
 
             try {
-                return await repo.save(newMapping as unknown as SubcategoryMapping);
+                return await repo.save(newMapping);
             } catch (e) {
                 const err = e instanceof Error ? e : new Error('Failed to save mapping');
                 setError(err);

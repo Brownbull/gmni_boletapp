@@ -3,6 +3,7 @@
  *
  * Story 9.8: React hook for managing user preferences
  * Story 14.28: Migrated to React Query for app-level caching
+ * Story 15-TD-9: Migrated to repository pattern (usePreferencesRepository)
  *
  * Provides access to user preferences with automatic loading, saving, and caching.
  * When called at App level, warms the React Query cache so subsequent Settings
@@ -14,9 +15,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { User } from 'firebase/auth';
 import { useFirestoreQuery } from './useFirestoreQuery';
 import { QUERY_KEYS } from '../lib/queryKeys';
-import {
-  getUserPreferences,
-  saveUserPreferences,
+import { usePreferencesRepository } from '@/repositories';
+import type {
   UserPreferences,
   SupportedCurrency,
   SupportedFontFamily,
@@ -48,7 +48,7 @@ interface UseUserPreferencesResult {
 }
 
 interface FirebaseServices {
-  db: any;
+  db: unknown;
   appId: string;
 }
 
@@ -71,6 +71,10 @@ const DEFAULT_PREFERENCES: UserPreferences = {
  * at the App level (on login), it warms the cache so that subsequent
  * Settings visits display instantly without a loading spinner.
  *
+ * Story 15-TD-9: Uses usePreferencesRepository() for data access.
+ * The user/services parameters are retained for backward compatibility
+ * (they drive the enabled flag and query key).
+ *
  * @param user - Firebase Auth user
  * @param services - Firebase services (db, appId)
  * @returns User preferences and update functions
@@ -80,7 +84,8 @@ export function useUserPreferences(
   services: FirebaseServices | null
 ): UseUserPreferencesResult {
   const queryClient = useQueryClient();
-  const enabled = !!user && !!services;
+  const prefsRepo = usePreferencesRepository();
+  const enabled = !!user && !!services && !!prefsRepo;
 
   // Create stable query key
   const queryKey = useMemo(
@@ -90,16 +95,16 @@ export function useUserPreferences(
     [enabled, user?.uid, services?.appId]
   );
 
-  // Use React Query for cached preferences fetch
+  // Use React Query for cached preferences fetch via repository
   const { data: preferences = DEFAULT_PREFERENCES, isLoading } = useFirestoreQuery(
     queryKey,
-    () => getUserPreferences(services!.db, user!.uid, services!.appId),
+    () => prefsRepo!.get(),
     { enabled }
   );
 
   /**
    * Helper function for optimistic updates
-   * Updates cache immediately, then persists to Firestore
+   * Updates cache immediately, then persists to Firestore via repository
    * Reverts on error by refetching
    */
   const updatePreference = useCallback(
@@ -107,7 +112,7 @@ export function useUserPreferences(
       key: K,
       value: UserPreferences[K]
     ) => {
-      if (!user || !services) return;
+      if (!prefsRepo) return;
 
       // Get current preferences from cache
       const currentPrefs = queryClient.getQueryData<UserPreferences>(queryKey) ?? DEFAULT_PREFERENCES;
@@ -119,17 +124,15 @@ export function useUserPreferences(
       });
 
       try {
-        // Persist to Firestore
-        await saveUserPreferences(services.db, user.uid, services.appId, {
-          [key]: value,
-        });
+        // Persist to Firestore via repository
+        await prefsRepo.save({ [key]: value });
       } catch (error) {
         console.error(`Failed to save ${key}:`, error);
         // Revert by refetching from Firestore
         queryClient.invalidateQueries({ queryKey });
       }
     },
-    [user, services, queryClient, queryKey]
+    [prefsRepo, queryClient, queryKey]
   );
 
   // Update functions using the helper
