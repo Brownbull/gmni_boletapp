@@ -15,7 +15,7 @@ const DANGEROUS_PATTERNS = [
   /<script[\s\S]*?<\/script>/gi, // Script tags (non-greedy match)
   /<[^>]*on\w+\s*=/gi, // Event handlers like onclick, onload, etc.
   /javascript:/gi, // JavaScript protocol
-  /data:/gi, // Data URLs (can contain scripts)
+  /data:\s*(\w+\/\w+|[;,])/gi, // Data URIs: MIME types (data:text/html) + MIME-less (data:, data:;base64)
   /vbscript:/gi, // VBScript protocol
 ];
 

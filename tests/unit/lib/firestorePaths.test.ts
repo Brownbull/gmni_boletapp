@@ -26,6 +26,52 @@ const APP_ID = 'test-app';
 const USER_ID = 'user-123';
 
 describe('firestorePaths', () => {
+    describe('appId validation', () => {
+        it.each([
+            ['empty string', ''],
+            ['path traversal', '../hack'],
+            ['nested traversal', '../../etc/passwd'],
+            ['slash in appId', 'app/id'],
+            ['spaces', 'app id'],
+            ['special chars', 'app@id!'],
+            ['dot only', '.'],
+            ['double dot', '..'],
+            ['exceeds max length (65 chars)', 'a'.repeat(65)],
+        ])('throws on invalid appId: %s', (_desc, invalidAppId) => {
+            expect(() => transactionsPath(invalidAppId, USER_ID)).toThrow(
+                'Invalid appId format'
+            );
+        });
+
+        it.each([
+            ['simple alpha', 'boletapp'],
+            ['with hyphens', 'test-app'],
+            ['with underscores', 'my_app'],
+            ['alphanumeric', 'app123'],
+        ])('accepts valid appId: %s', (_desc, validAppId) => {
+            expect(() => transactionsPath(validAppId, USER_ID)).not.toThrow();
+        });
+
+        it('validates in collection path functions', () => {
+            const fns = [
+                transactionsPath, merchantMappingsPath, categoryMappingsPath,
+                subcategoryMappingsPath, itemNameMappingsPath, trustedMerchantsPath,
+                airlocksPath, personalRecordsPath, notificationsPath,
+            ];
+            for (const fn of fns) {
+                expect(() => fn('../hack', USER_ID)).toThrow('Invalid appId');
+            }
+        });
+
+        it('validates in document segment functions', () => {
+            expect(() => preferencesDocSegments('../hack', USER_ID)).toThrow('Invalid appId');
+            expect(() => creditsDocSegments('../hack', USER_ID)).toThrow('Invalid appId');
+            expect(() => insightProfileDocSegments('../hack', USER_ID)).toThrow('Invalid appId');
+            expect(() => transactionDocSegments('../hack', USER_ID, 'tx-1')).toThrow('Invalid appId');
+            expect(() => notificationDocSegments('../hack', USER_ID, 'n-1')).toThrow('Invalid appId');
+        });
+    });
+
     describe('collection paths', () => {
         it.each([
             ['transactionsPath', transactionsPath, 'transactions'],
