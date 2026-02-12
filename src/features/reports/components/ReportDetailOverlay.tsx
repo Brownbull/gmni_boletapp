@@ -72,8 +72,11 @@ const generatePdfFilename = (
 };
 
 /**
- * Handles PDF export by cloning report content to a print container
- * This approach avoids CSS complexity with deeply nested React components
+ * Handles PDF export by cloning report content to a print container.
+ * Uses DOM APIs (createElement/textContent) instead of innerHTML to prevent
+ * XSS even if upstream report data were compromised (defense-in-depth).
+ *
+ * @internal Exported as `testHandlePrintReport` for unit testing only.
  */
 const handlePrintReport = (
   reportContentRef: React.RefObject<HTMLDivElement | null>,
@@ -103,23 +106,28 @@ const handlePrintReport = (
   // Clone the report content
   const clone = reportContent.cloneNode(true) as HTMLElement;
 
-  // Create branding header (matches TopHeader wordmark styling with "G" logo circle)
-  const brandingHtml = `
-    <div class="print-branding">
-      <div class="print-logo-circle">G</div>
-      <span class="print-wordmark">Gastify</span>
-    </div>
-  `;
+  // Build branding header using DOM APIs (matches TopHeader wordmark styling)
+  const brandingEl = document.createElement('div');
+  brandingEl.className = 'print-branding';
+  const logoCircle = document.createElement('div');
+  logoCircle.className = 'print-logo-circle';
+  logoCircle.textContent = 'G';
+  const wordmark = document.createElement('span');
+  wordmark.className = 'print-wordmark';
+  wordmark.textContent = 'Gastify';
+  brandingEl.append(logoCircle, wordmark);
 
-  // Create report header
-  const headerHtml = `
-    <div class="print-report-header">
-      <h1>${reportData.fullTitle}</h1>
-      <p>${reportData.transactionCount} ${reportData.transactionCount === 1 ? 'transacción' : 'transacciones'}</p>
-    </div>
-  `;
+  // Build report header using DOM APIs (textContent for user data — XSS-safe)
+  const headerEl = document.createElement('div');
+  headerEl.className = 'print-report-header';
+  const h1 = document.createElement('h1');
+  h1.textContent = reportData.fullTitle;
+  const headerP = document.createElement('p');
+  const txLabel = reportData.transactionCount === 1 ? 'transacción' : 'transacciones';
+  headerP.textContent = `${reportData.transactionCount} ${txLabel}`;
+  headerEl.append(h1, headerP);
 
-  // Create footer with generation info
+  // Build footer using DOM APIs
   const now = new Date();
   const dateStr = now.toLocaleDateString('es-CL', {
     day: 'numeric',
@@ -131,18 +139,27 @@ const handlePrintReport = (
     minute: '2-digit',
     hour12: false
   });
-  const footerHtml = `
-    <div class="print-footer">
-      <div class="print-footer-divider"></div>
-      <p class="print-footer-title">Reporte generado automáticamente por Gastify</p>
-      <p class="print-footer-meta">${dateStr}, ${timeStr} · Basado en ${reportData.transactionCount} ${reportData.transactionCount === 1 ? 'transacción' : 'transacciones'}</p>
-      <p class="print-footer-disclaimer">Este reporte es solo para uso personal.</p>
-      <p class="print-footer-url">gastify.cl</p>
-    </div>
-  `;
+  const footerEl = document.createElement('div');
+  footerEl.className = 'print-footer';
+  const divider = document.createElement('div');
+  divider.className = 'print-footer-divider';
+  const footerTitle = document.createElement('p');
+  footerTitle.className = 'print-footer-title';
+  footerTitle.textContent = 'Reporte generado automáticamente por Gastify';
+  const footerMeta = document.createElement('p');
+  footerMeta.className = 'print-footer-meta';
+  footerMeta.textContent = `${dateStr}, ${timeStr} · Basado en ${reportData.transactionCount} ${txLabel}`;
+  const footerDisclaimer = document.createElement('p');
+  footerDisclaimer.className = 'print-footer-disclaimer';
+  footerDisclaimer.textContent = 'Este reporte es solo para uso personal.';
+  const footerUrl = document.createElement('p');
+  footerUrl.className = 'print-footer-url';
+  footerUrl.textContent = 'gastify.cl';
+  footerEl.append(divider, footerTitle, footerMeta, footerDisclaimer, footerUrl);
 
-  // Clear and populate print container
-  printContainer.innerHTML = brandingHtml + headerHtml;
+  // Clear and populate print container using DOM APIs (no innerHTML)
+  printContainer.textContent = '';
+  printContainer.append(brandingEl, headerEl);
 
   // Remove the print-only elements from clone (they're now in the container)
   const printOnlyElements = clone.querySelectorAll('[data-testid="print-app-branding"], [data-testid="print-header"]');
@@ -152,7 +169,7 @@ const handlePrintReport = (
   printContainer.appendChild(clone);
 
   // Add footer at the end
-  printContainer.insertAdjacentHTML('beforeend', footerHtml);
+  printContainer.appendChild(footerEl);
 
   // Add print-ready class to body
   document.body.classList.add('printing-report');
@@ -160,12 +177,15 @@ const handlePrintReport = (
   // Print
   window.print();
 
-  // Cleanup after print dialog closes
+  // Cleanup after print dialog closes (guarded against double-execution)
+  let cleaned = false;
   const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
     document.body.classList.remove('printing-report');
     document.title = originalTitle; // Restore original title
     if (printContainer) {
-      printContainer.innerHTML = '';
+      printContainer.textContent = '';
     }
   };
 
@@ -174,6 +194,9 @@ const handlePrintReport = (
   // Fallback timeout in case afterprint doesn't fire
   setTimeout(cleanup, 1000);
 };
+
+/** @internal Test-only export for unit testing handlePrintReport */
+export { handlePrintReport as testHandlePrintReport };
 
 // ============================================================================
 // Types

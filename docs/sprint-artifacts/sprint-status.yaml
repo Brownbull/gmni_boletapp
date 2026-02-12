@@ -151,11 +151,12 @@ development_status:
   15-TD-12-batch-migration-error-surfacing: done    # 2 pts - CR-4, CR-9: migrateCreatedAt raw writeBatch + partial-commit surfacing
   15-TD-15-standalone-mutation-safety: done                  # 2 pts - TD-11 deferred + audit: deleteTrustedMerchant/deleteTransaction/updateTransaction/deleteMapping transaction wrapping
   15-TD-16-mega-view-decomposition-5c: done            # 5 pts - TrendsView 3,199→1,981 + DashboardView 2,483→1,479 (10 extracted files) + i18n/currency fixes
-  15-TD-17-report-innerhtml-sanitization: ready-for-dev   # 1 pt  - ReportDetailOverlay innerHTML → DOM API (pre-existing XSS defense-in-depth)
+  15-TD-17-report-innerhtml-sanitization: done               # 1 pt  - ReportDetailOverlay innerHTML → DOM API (pre-existing XSS defense-in-depth)
   15-TD-18-path-parameter-validation: ready-for-dev       # 2 pts - userId/transactionId format validation + dead validateAppId cleanup (from 15-TD-8 review)
   15-TD-19-sanitizer-defense-depth: ready-for-dev         # 2 pts - Multi-pass sanitization + URL decode + pre-truncation (from 15-TD-8 review)
   15-TD-20-insight-profile-toctou: ready-for-dev           # 2 pts - insightProfileService 5 read-then-write functions → runTransaction (from 15-TD-15 review)
   15-TD-21-mega-view-helper-tests: ready-for-dev           # 3 pts - Unit tests for 6 pure helper modules extracted in TD-16 (1,568 lines, 0% coverage)
+  15-TD-22-report-print-extract-i18n: ready-for-dev        # 2 pts - Extract print helpers to printUtils.ts + i18n migration (from 15-TD-17 review)
 
   epic-15-retrospective: optional
 

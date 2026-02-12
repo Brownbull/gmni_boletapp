@@ -1,6 +1,6 @@
 # Tech Debt Story TD-15-TD-17: ReportDetailOverlay innerHTML Sanitization
 
-Status: ready-for-dev
+Status: done
 
 > **Source:** ECC Code Review (2026-02-11) on story 15-TD-7
 > **Priority:** LOW
@@ -18,18 +18,18 @@ So that **the print-to-PDF feature is resistant to XSS even if Firestore report 
 
 ## Acceptance Criteria
 
-- [ ] **AC1:** `printContainer.innerHTML = ...` in `handlePrintReport()` replaced with DOM API calls (`createElement`, `textContent`, `appendChild`)
-- [ ] **AC2:** No `dangerouslySetInnerHTML` or `innerHTML` usage in the component after fix
-- [ ] **AC3:** Print-to-PDF output visually identical before and after change
-- [ ] **AC4:** All tests pass
+- [x] **AC1:** `printContainer.innerHTML = ...` in `handlePrintReport()` replaced with DOM API calls (`createElement`, `textContent`, `appendChild`)
+- [x] **AC2:** No `dangerouslySetInnerHTML` or `innerHTML` usage in the component after fix
+- [ ] **AC3:** Print-to-PDF output visually identical before and after change (requires manual verification)
+- [x] **AC4:** All tests pass (6,579 tests, 11 for this story)
 
 ## Tasks
 
-- [ ] **Task 1:** Refactor `handlePrintReport()` to use DOM APIs
-  - [ ] Replace template literal HTML with `document.createElement()` + `textContent` for text content
-  - [ ] Use `element.style.*` for styling instead of inline HTML style attributes
-  - [ ] Preserve all print-specific CSS classes and branding elements
-- [ ] **Task 2:** Verify visual parity
+- [x] **Task 1:** Refactor `handlePrintReport()` to use DOM APIs
+  - [x] Replace template literal HTML with `document.createElement()` + `textContent` for text content
+  - [x] Use `element.className` for CSS classes instead of inline HTML class attributes
+  - [x] Preserve all print-specific CSS classes and branding elements
+- [ ] **Task 2:** Verify visual parity (manual — requires user validation)
   - [ ] Manual print-to-PDF test comparing before/after output
 
 ## File Specification
@@ -45,3 +45,23 @@ So that **the print-to-PDF feature is resistant to XSS even if Firestore report 
 - Pre-existing issue — not introduced by 15-TD-7
 - Risk is LOW in practice (data from app pipeline, not user input)
 - The `brandingHtml` and `headerHtml` template literals both need refactoring
+
+## Senior Developer Review (ECC)
+
+- **Review date:** 2026-02-12
+- **Classification:** STANDARD
+- **ECC agents used:** code-reviewer, security-reviewer
+- **Outcome:** APPROVE (9.5/10)
+- **Quick fixes applied:** 2 (afterprint cleanup test, document.title restoration assertion)
+- **Total test count after review:** 11 tests (10 original + 1 added)
+
+### Code Review Quick Fixes (2026-02-12)
+
+- Added `afterprint` event cleanup test (finding #6)
+- Added `document.title` restoration assertion to timeout cleanup test (finding #7)
+
+### Tech Debt Stories Created
+
+| TD Story | Description | Priority | Action |
+|----------|-------------|----------|--------|
+| [15-TD-22](./15-TD-22-report-print-extract-i18n.md) | Extract print helpers to printUtils.ts + i18n migration (file size, hardcoded locale, hardcoded strings) | LOW | CREATED |
