@@ -11,7 +11,6 @@
 
 import {
     collection,
-    deleteDoc,
     doc,
     onSnapshot,
     serverTimestamp,
@@ -267,6 +266,7 @@ export function subscribeToMappings<T>(
 
 /**
  * Delete a mapping document.
+ * Story 15-TD-15: Wrapped in runTransaction for TOCTOU safety
  */
 export async function deleteMapping(
     db: Firestore,
@@ -276,7 +276,14 @@ export async function deleteMapping(
     config: MappingConfig
 ): Promise<void> {
     const docRef = doc(db, config.collectionPath(appId, userId), mappingId);
-    return deleteDoc(docRef);
+
+    await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(docRef);
+        if (!snap.exists()) {
+            throw new Error(`Mapping not found: ${mappingId}`);
+        }
+        transaction.delete(docRef);
+    });
 }
 
 /**

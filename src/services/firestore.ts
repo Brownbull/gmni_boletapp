@@ -1,8 +1,6 @@
 import {
     collection,
     addDoc,
-    updateDoc,
-    deleteDoc,
     doc,
     onSnapshot,
     serverTimestamp,
@@ -16,6 +14,7 @@ import {
     QueryDocumentSnapshot,
     DocumentData,
     increment,
+    runTransaction,
 } from 'firebase/firestore';
 import { Transaction } from '../types/transaction';
 import { toMillis } from '@/utils/timestamp';
@@ -92,6 +91,13 @@ export async function addTransaction(
     return docRef.id;
 }
 
+/**
+ * Story 15-TD-15: Wrapped in runTransaction for TOCTOU safety.
+ * Reads current version via transaction.get() and increments atomically,
+ * preventing lost updates from concurrent writes.
+ * Note: updateTransactionsBatch still uses increment(1) — see that function's
+ * comment for why per-doc transactions are impractical in batch operations.
+ */
 export async function updateTransaction(
     db: Firestore,
     userId: string,
@@ -105,17 +111,30 @@ export async function updateTransaction(
     // Story 14d-v2-1.2b: Recompute periods if date changed
     const periods = updates.date ? computePeriods(updates.date) : undefined;
 
-    // Story 14d-v2-1.2b: Increment version for optimistic concurrency
-    // Use Firestore increment() for atomic version updates
     const docRef = doc(db, transactionsPath(appId, userId), transactionId);
-    return updateDoc(docRef, {
-        ...cleanedUpdates,
-        updatedAt: serverTimestamp(),
-        version: increment(1),
-        ...(periods && { periods }),
+
+    await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(docRef);
+        if (!snap.exists()) {
+            throw new Error(`Transaction not found: ${transactionId}`);
+        }
+
+        const currentData = snap.data();
+        const currentVersion = (currentData.version as number) ?? 0;
+
+        transaction.update(docRef, {
+            ...cleanedUpdates,
+            updatedAt: serverTimestamp(),
+            version: currentVersion + 1,
+            ...(periods && { periods }),
+        });
     });
 }
 
+/**
+ * Story 15-TD-15: Wrapped in runTransaction for TOCTOU safety.
+ * Verifies doc exists before deleting.
+ */
 export async function deleteTransaction(
     db: Firestore,
     userId: string,
@@ -123,7 +142,14 @@ export async function deleteTransaction(
     transactionId: string
 ): Promise<void> {
     const docRef = doc(db, transactionsPath(appId, userId), transactionId);
-    return deleteDoc(docRef);
+
+    await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(docRef);
+        if (!snap.exists()) {
+            throw new Error(`Transaction not found: ${transactionId}`);
+        }
+        transaction.delete(docRef);
+    });
 }
 
 /**
@@ -424,6 +450,9 @@ export async function updateTransactionsBatch(
     // Story 14d-v2-1.2b: Recompute periods if date changed
     const periods = updates.date ? computePeriods(updates.date) : undefined;
 
+    // Note: batch operations use increment(1) rather than transactional read+increment.
+    // Per-doc transactions would be impractical at scale (up to 500 docs).
+    // Single-doc updateTransaction() has full TOCTOU protection via runTransaction.
     const refs = transactionIds.map(id => doc(db, transactionsPath(appId, userId), id));
     await batchWrite(db, refs, (batch, ref) => {
         batch.update(ref, {

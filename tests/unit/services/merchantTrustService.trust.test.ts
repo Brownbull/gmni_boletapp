@@ -11,6 +11,7 @@ const mockTransaction = {
     get: vi.fn(),
     set: vi.fn(),
     update: vi.fn(),
+    delete: vi.fn(),
 };
 
 vi.mock('firebase/firestore', () => ({
@@ -36,15 +37,17 @@ vi.mock('@/lib/firestorePaths', () => ({
     trustedMerchantsPath: vi.fn(() => 'test/path'),
 }));
 
-import { runTransaction, updateDoc, type Firestore } from 'firebase/firestore';
+import { runTransaction, updateDoc, deleteDoc, type Firestore } from 'firebase/firestore';
 import {
     trustMerchant,
     declineTrust,
     revokeTrust,
+    deleteTrustedMerchant,
 } from '../../../src/services/merchantTrustService';
 
 const mockRunTransaction = vi.mocked(runTransaction);
 const mockUpdateDoc = vi.mocked(updateDoc);
+const mockDeleteDoc = vi.mocked(deleteDoc);
 
 // --- Test helpers ---
 
@@ -122,7 +125,7 @@ describe('trustMerchant - TOCTOU transaction safety', () => {
 
         await expect(
             trustMerchant(mockDb, userId, appId, 'NonExistent')
-        ).rejects.toThrow('Merchant trust record not found');
+        ).rejects.toThrow('Merchant trust record not found: nonexistent');
     });
 
     it('should skip update if merchant is already trusted', async () => {
@@ -165,7 +168,7 @@ describe('declineTrust - TOCTOU transaction safety', () => {
 
         await expect(
             declineTrust(mockDb, userId, appId, 'NonExistent')
-        ).rejects.toThrow('Merchant trust record not found');
+        ).rejects.toThrow('Merchant trust record not found: nonexistent');
     });
 
     it('should skip update if already declined', async () => {
@@ -216,7 +219,7 @@ describe('revokeTrust - TOCTOU transaction safety', () => {
 
         await expect(
             revokeTrust(mockDb, userId, appId, 'NonExistent')
-        ).rejects.toThrow('Merchant trust record not found');
+        ).rejects.toThrow('Merchant trust record not found: nonexistent');
     });
 
     it('should skip update if merchant is not currently trusted', async () => {
@@ -225,5 +228,45 @@ describe('revokeTrust - TOCTOU transaction safety', () => {
         await revokeTrust(mockDb, userId, appId, 'Jumbo');
 
         expect(mockTransaction.update).not.toHaveBeenCalled();
+    });
+});
+
+describe('deleteTrustedMerchant - TOCTOU transaction safety', () => {
+    it('should use runTransaction instead of standalone deleteDoc', async () => {
+        mockExistingDoc();
+
+        await deleteTrustedMerchant(mockDb, userId, appId, 'jumbo');
+
+        expect(mockRunTransaction).toHaveBeenCalledTimes(1);
+        expect(mockTransaction.get).toHaveBeenCalledWith('mock-doc-ref');
+        expect(mockDeleteDoc).not.toHaveBeenCalled();
+    });
+
+    it('should call transaction.delete inside the transaction', async () => {
+        mockExistingDoc();
+
+        await deleteTrustedMerchant(mockDb, userId, appId, 'jumbo');
+
+        expect(mockTransaction.delete).toHaveBeenCalledWith('mock-doc-ref');
+    });
+
+    it('should throw if merchant doc does not exist', async () => {
+        mockMissingDoc();
+
+        await expect(
+            deleteTrustedMerchant(mockDb, userId, appId, 'nonexistent')
+        ).rejects.toThrow('Merchant trust record not found: nonexistent');
+    });
+
+    it('should not call transaction.delete when doc is missing', async () => {
+        mockMissingDoc();
+
+        try {
+            await deleteTrustedMerchant(mockDb, userId, appId, 'nonexistent');
+        } catch {
+            // expected
+        }
+
+        expect(mockTransaction.delete).not.toHaveBeenCalled();
     });
 });

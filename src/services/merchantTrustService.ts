@@ -2,7 +2,6 @@ import {
     collection,
     doc,
     getDoc,
-    deleteDoc,
     getDocs,
     onSnapshot,
     serverTimestamp,
@@ -229,7 +228,7 @@ export async function trustMerchant(
     await runTransaction(db, async (transaction) => {
         const snap = await transaction.get(docRef);
         if (!snap.exists()) {
-            throw new Error('Merchant trust record not found');
+            throw new Error(`Merchant trust record not found: ${normalizedName}`);
         }
 
         const data = snap.data() as TrustedMerchant;
@@ -266,7 +265,7 @@ export async function declineTrust(
     await runTransaction(db, async (transaction) => {
         const snap = await transaction.get(docRef);
         if (!snap.exists()) {
-            throw new Error('Merchant trust record not found');
+            throw new Error(`Merchant trust record not found: ${normalizedName}`);
         }
 
         const data = snap.data() as TrustedMerchant;
@@ -301,7 +300,7 @@ export async function revokeTrust(
     await runTransaction(db, async (transaction) => {
         const snap = await transaction.get(docRef);
         if (!snap.exists()) {
-            throw new Error('Merchant trust record not found');
+            throw new Error(`Merchant trust record not found: ${normalizedName}`);
         }
 
         const data = snap.data() as TrustedMerchant;
@@ -320,6 +319,7 @@ export async function revokeTrust(
 /**
  * Delete a trusted merchant record entirely
  * Story 11.4: AC #6, AC #7 - Settings management
+ * Story 15-TD-15: Wrapped in runTransaction for TOCTOU safety
  */
 export async function deleteTrustedMerchant(
     db: Firestore,
@@ -329,7 +329,14 @@ export async function deleteTrustedMerchant(
 ): Promise<void> {
     const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, merchantId);
-    await deleteDoc(docRef);
+
+    await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(docRef);
+        if (!snap.exists()) {
+            throw new Error(`Merchant trust record not found: ${merchantId}`);
+        }
+        transaction.delete(docRef);
+    });
 }
 
 /**
