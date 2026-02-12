@@ -25,23 +25,6 @@ export const getSafeDate = (val: unknown): string => {
 };
 
 // =============================================================================
-// Application ID Validation (Story 14d-v2-1-7b: ECC Security Review)
-// =============================================================================
-
-const ALLOWED_APP_IDS = ['boletapp'] as const;
-
-/**
- * Validate an application ID against the allowlist.
- * Prevents path traversal attacks in Firestore collection paths.
- */
-export function validateAppId(appId: string): boolean {
-    if (!appId || typeof appId !== 'string') {
-        return false;
-    }
-    return (ALLOWED_APP_IDS as readonly string[]).includes(appId);
-}
-
-// =============================================================================
 // CSS Color Validation (TD-CONSOLIDATED-7: CSS Color Injection Prevention)
 // =============================================================================
 

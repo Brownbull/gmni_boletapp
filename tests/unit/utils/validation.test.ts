@@ -2,66 +2,13 @@
  * Validation & Parsing Utils Tests
  *
  * Story 15-1g: Consolidated from validationUtils.test.ts
- * Tests for validateAppId, validateCSSColor, safeCSSColor.
+ * Tests for validateCSSColor, safeCSSColor.
+ * (validateAppId removed in 15-TD-18: dead code, replaced by assertValidAppId in firestorePaths.ts)
  * (validateEmail, normalizeEmail, validateGroupId removed with shared groups)
  */
 
 import { describe, it, expect } from 'vitest';
-import { validateAppId, validateCSSColor, safeCSSColor } from '../../../src/utils/validation';
-
-// =========================================================================
-// validateAppId Tests (Story 14d-v2-1-7b: ECC Security Review)
-// =========================================================================
-describe('validateAppId', () => {
-    describe('valid app IDs', () => {
-        it('returns true for "boletapp"', () => {
-            expect(validateAppId('boletapp')).toBe(true);
-        });
-    });
-
-    describe('invalid app IDs', () => {
-        it('returns false for unknown app IDs', () => {
-            expect(validateAppId('unknown')).toBe(false);
-            expect(validateAppId('otherapp')).toBe(false);
-            expect(validateAppId('myapp')).toBe(false);
-        });
-
-        it('returns false for path traversal attempts', () => {
-            expect(validateAppId('../hack')).toBe(false);
-            expect(validateAppId('../../etc/passwd')).toBe(false);
-            expect(validateAppId('boletapp/../../')).toBe(false);
-            expect(validateAppId('../boletapp')).toBe(false);
-        });
-
-        it('returns false for empty string', () => {
-            expect(validateAppId('')).toBe(false);
-        });
-
-        it('returns false for null/undefined', () => {
-            expect(validateAppId(null as unknown as string)).toBe(false);
-            expect(validateAppId(undefined as unknown as string)).toBe(false);
-        });
-
-        it('returns false for non-string types', () => {
-            expect(validateAppId(123 as unknown as string)).toBe(false);
-            expect(validateAppId({} as unknown as string)).toBe(false);
-            expect(validateAppId([] as unknown as string)).toBe(false);
-            expect(validateAppId(true as unknown as string)).toBe(false);
-        });
-
-        it('returns false for case variations', () => {
-            expect(validateAppId('Boletapp')).toBe(false);
-            expect(validateAppId('BOLETAPP')).toBe(false);
-            expect(validateAppId('BoletApp')).toBe(false);
-        });
-
-        it('returns false for whitespace-padded valid app ID', () => {
-            expect(validateAppId(' boletapp')).toBe(false);
-            expect(validateAppId('boletapp ')).toBe(false);
-            expect(validateAppId(' boletapp ')).toBe(false);
-        });
-    });
-});
+import { validateCSSColor, safeCSSColor } from '../../../src/utils/validation';
 
 // =========================================================================
 // validateCSSColor Tests (TD-CONSOLIDATED-7: CSS Color Injection Prevention)
