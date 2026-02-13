@@ -12,6 +12,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '../../../setup/test-utils';
 import { DonutChart } from '../../../../src/views/TrendsView/DonutChart';
 import type { CategoryData, DonutViewMode } from '../../../../src/views/TrendsView/types';
+import { makeCategoryDataPartial as makeCategoryData } from '../__fixtures__/categoryDataFactory';
 
 // =============================================================================
 // Mocks — heavy dependency tree, mock everything external
@@ -77,23 +78,6 @@ vi.mock('../../../../src/views/TrendsView/helpers', () => ({
   computeItemGroupsForStore: () => [],
   computeItemCategoriesInGroup: () => [],
 }));
-
-// =============================================================================
-// Test Helpers
-// =============================================================================
-
-function makeCategoryData(overrides: Partial<CategoryData> = {}): CategoryData {
-  return {
-    name: 'Supermercado',
-    value: 50000,
-    count: 10,
-    itemCount: 25,
-    color: '#4CAF50',
-    fgColor: '#ffffff',
-    percent: 50,
-    ...overrides,
-  };
-}
 
 const defaultProps = {
   categoryData: [makeCategoryData()],

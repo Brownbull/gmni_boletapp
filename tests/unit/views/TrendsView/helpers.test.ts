@@ -8,6 +8,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Transaction } from '@/types/transaction';
 import type { TimePeriod, CurrentPeriod, CategoryData, TrendData } from '@/views/TrendsView/types';
+import { makeTx } from '../__fixtures__/transactionFactory';
+import { makeCategoryData } from '../__fixtures__/categoryDataFactory';
 
 // ============================================================================
 // Mocks
@@ -111,33 +113,6 @@ beforeEach(() => {
 // ============================================================================
 // Test Helpers
 // ============================================================================
-
-function makeTx(overrides: Partial<Transaction> & { date: string; total: number }): Transaction {
-  return {
-    merchant: 'TestMerchant',
-    category: 'Supermercado' as Transaction['category'],
-    items: [],
-    ...overrides,
-  };
-}
-
-function makeCategoryData(
-  name: string,
-  value: number,
-  percent: number,
-  opts?: Partial<CategoryData>
-): CategoryData {
-  return {
-    name,
-    value,
-    count: opts?.count ?? 1,
-    itemCount: opts?.itemCount ?? 0,
-    color: opts?.color ?? `${name}-bg`,
-    fgColor: opts?.fgColor ?? `${name}-fg`,
-    percent,
-    ...opts,
-  };
-}
 
 function makeTrendData(
   name: string,
