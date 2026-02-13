@@ -19,9 +19,14 @@ export const parseStrictNumber = (val: unknown): number => {
 
 export const getSafeDate = (val: unknown): string => {
     const today = new Date().toISOString().split('T')[0];
+    // Accept YYYY-MM-DD strings directly
     if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
-    const date = toDateSafe(val as Parameters<typeof toDateSafe>[0]);
-    return date ? date.toISOString().split('T')[0] : today;
+    // Accept Firestore Timestamps and Date objects (but not arbitrary string parsing)
+    if (val != null && typeof val !== 'string') {
+        const date = toDateSafe(val as Parameters<typeof toDateSafe>[0]);
+        if (date) return date.toISOString().split('T')[0];
+    }
+    return today;
 };
 
 // =============================================================================

@@ -15,7 +15,8 @@ export default [
     ignores: [
       'src/hooks/useChangeDetection.ts',
       'src/components/celebrations/PersonalRecordBanner.tsx',
-      'src/components/history/IconFilterBar.tsx',
+      'src/contexts/HistoryFiltersContext.tsx',
+      'src/features/history/components/IconCategoryFilter.tsx',
       'src/views/ItemsView/ItemsView.tsx',
     ]
   },

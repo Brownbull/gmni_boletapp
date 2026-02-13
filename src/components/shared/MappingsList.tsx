@@ -359,6 +359,8 @@ export function MappingsList<T>({
     setDeleting(true);
     try {
       await onDeleteMapping(id);
+    } catch (error) {
+      console.error('[MappingsList] Delete failed:', error);
     } finally {
       setDeleting(false);
       setDeleteTarget(null);
