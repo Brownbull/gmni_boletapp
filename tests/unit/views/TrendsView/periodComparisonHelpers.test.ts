@@ -189,8 +189,9 @@ describe('computePreviousPeriodTotals', () => {
 
   describe('default mode', () => {
     it('falls into item-based else branch for unknown mode', () => {
-      // Unknown mode hits the else branch which iterates tx.items
-      // Transactions with no items produce empty results
+      // Exercises the else branch in the switch statement: any mode not matching
+      // 'store-categories' or 'item-categories' falls through to item-based aggregation.
+      // Transactions with no items produce empty results in this branch.
       const txs = [
         makeTx({ date: '2026-01-01', total: 500, category: 'Supermercado' as Transaction['category'] }),
       ];

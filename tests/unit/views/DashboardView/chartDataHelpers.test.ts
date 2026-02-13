@@ -182,10 +182,9 @@ describe('computeRadarChartData', () => {
       ];
 
       const result = computeRadarChartData(currTxs, currTxs, selectedMonth, 'store-categories');
-      expect(result.sides).toBeGreaterThanOrEqual(3);
-      if (result.sides === 3) {
-        expect(result.polygonType).toBe('triangle');
-      }
+      // 3 distinct categories → exactly 3 sides → triangle
+      expect(result.sides).toBe(3);
+      expect(result.polygonType).toBe('triangle');
     });
 
     it('returns correct polygon names', () => {

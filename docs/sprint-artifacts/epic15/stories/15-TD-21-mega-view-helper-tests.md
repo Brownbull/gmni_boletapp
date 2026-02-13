@@ -1,6 +1,6 @@
 # Tech Debt Story 15-TD-21: Test Coverage for TD-16 Extracted Helpers
 
-Status: review
+Status: done
 
 > **Source:** ECC Code Review (2026-02-12) on story 15-TD-16
 > **Priority:** HIGH
@@ -44,6 +44,23 @@ So that **1,568 lines of computation logic have regression protection during fut
 - All functions are pure — no React or Firebase mocking needed, use table-driven tests
 - `aggregationHelpers.ts` is partially tested by TD-4 tests; the new +95 lines for `computeItemGroupsData` should be included
 - Pre-existing bug noted in `periodComparisonHelpers.ts:135-136,155-156`: `String.includes()` used where intent is array membership check on `STORE_CATEGORY_GROUPS` / `ITEM_CATEGORY_GROUPS` values — works by accident because category names aren't substrings of group names. Tests should document current behavior and a future fix story can correct the logic.
+
+## Senior Developer Review (ECC)
+
+- **Review date:** 2026-02-13
+- **Classification:** STANDARD
+- **ECC agents used:** code-reviewer (7/10), security-reviewer (10/10)
+- **Overall score:** 8.5/10
+- **Outcome:** APPROVED with deferred items
+- **Quick fixes applied:** 2 (comment clarity, conditional assertion → deterministic)
+- **TD stories created:** 2 (15-TD-25 shared fixtures, 15-TD-26 includes fix)
+
+### Tech Debt Stories Created / Updated
+
+| TD Story | Description | Priority | Action |
+|----------|-------------|----------|--------|
+| [15-TD-25](./15-TD-25-shared-test-fixtures.md) | Extract shared test fixtures (makeTx, makeCategoryData, categoryColors) to reduce file sizes below 300-line limit | MEDIUM | CREATED |
+| [15-TD-26](./15-TD-26-period-comparison-includes-fix.md) | Fix String.includes() → Array.includes() in periodComparisonHelpers (pre-existing from TD-16) | LOW | CREATED |
 
 ## File Specification
 
