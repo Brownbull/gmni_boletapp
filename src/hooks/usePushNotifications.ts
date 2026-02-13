@@ -9,6 +9,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { setStorageString } from '@/utils/storage';
 import {
   isWebPushSupported,
   getNotificationPermission,
@@ -185,12 +186,8 @@ export function usePushNotifications({
       setToken('web-push-enabled');
 
       // Store in localStorage
-      try {
-        localStorage.setItem(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_KEY, 'true');
-        localStorage.setItem(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_ENDPOINT_KEY, subscription.endpoint);
-      } catch {
-        // Ignore localStorage errors
-      }
+      setStorageString(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_KEY, 'true');
+      setStorageString(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_ENDPOINT_KEY, subscription.endpoint);
 
       return true;
     } catch (err) {

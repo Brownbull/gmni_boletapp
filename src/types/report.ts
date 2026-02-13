@@ -10,6 +10,7 @@
 
 import type { StoreCategory, ItemCategory } from './transaction';
 import type { StoreCategoryGroup, ItemCategoryGroup } from '../config/categoryColors';
+import { formatCurrency as formatCurrencyFull, DEFAULT_CURRENCY } from '@/utils/currency';
 
 /**
  * Type of report card for styling and content
@@ -187,12 +188,14 @@ export function calculateTrend(
 }
 
 /**
- * Format currency for display (Chilean Pesos)
- * @param amount Amount in pesos
+ * Format currency for display using the app's default currency (CLP).
+ * Convenience wrapper for report-specific usage where currency is always the default.
+ *
+ * @param amount Amount in smallest units
  * @returns Formatted string (e.g., "$45.200")
  */
 export function formatCurrency(amount: number): string {
-  return `$${amount.toLocaleString('es-CL')}`;
+  return formatCurrencyFull(amount, DEFAULT_CURRENCY);
 }
 
 /**

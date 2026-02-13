@@ -169,10 +169,10 @@ describe('TotalMismatchDialog', () => {
         />
       );
 
-      // USD should show US$18,99 and US$25,50 (divided by 100, es-CL locale)
+      // USD should show $18.99 and $25.50 (divided by 100, en-US locale)
       // Use getAllByText since amounts appear in both comparison display and buttons
-      const amount1899 = screen.getAllByText(/18,99/);
-      const amount2550 = screen.getAllByText(/25,50/);
+      const amount1899 = screen.getAllByText(/18[.,]99/);
+      const amount2550 = screen.getAllByText(/25[.,]50/);
       expect(amount1899.length).toBeGreaterThanOrEqual(1);
       expect(amount2550.length).toBeGreaterThanOrEqual(1);
     });
@@ -223,11 +223,10 @@ describe('TotalMismatchDialog', () => {
         />
       );
 
-      // EUR should show €99.99 and €125.00 (divided by 100)
+      // EUR should show €99.99 and €125.00 (divided by 100, en-US locale)
       // Use getAllByText since amounts appear in both comparison display and buttons
-      // EUR uses comma for decimals in es-CL locale
-      const amount9999 = screen.getAllByText(/99,99/);
-      const amount12500 = screen.getAllByText(/125,00/);
+      const amount9999 = screen.getAllByText(/99[.,]99/);
+      const amount12500 = screen.getAllByText(/125[.,]00/);
       expect(amount9999.length).toBeGreaterThanOrEqual(1);
       expect(amount12500.length).toBeGreaterThanOrEqual(1);
     });

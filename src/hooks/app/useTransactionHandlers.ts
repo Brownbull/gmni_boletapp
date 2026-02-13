@@ -52,9 +52,10 @@ import {
     generateInsightForTransaction,
     isInsightsSilenced,
     getDefaultCache,
-} from '../../services/insightEngineService';
+} from '@features/insights/services/insightEngineService';
 import { parseStrictNumber, getSafeDate } from '../../utils/validation';
 import { downloadBasicData } from '../../utils/csvExport';
+import { DEFAULT_CURRENCY } from '../../utils/currency';
 // Story 14e-16: Import batch review actions to sync removal when saving from edit mode
 // Story 14e-34b: Import atomic batch actions for race condition prevention
 import { batchReviewActions, atomicBatchActions } from '@features/batch-review';
@@ -63,13 +64,8 @@ import { batchReviewActions, atomicBatchActions } from '@features/batch-review';
 // Types
 // =============================================================================
 
-/**
- * Toast message configuration
- */
-interface ToastMessage {
-    text: string;
-    type: 'success' | 'info';
-}
+import type { ToastMessage } from '@/shared/hooks';
+import { classifyError, getErrorInfo } from '@/utils/errorHandler';
 
 /**
  * Session context for insight display
@@ -264,7 +260,7 @@ export function useTransactionHandlers(
             items: [],
             country: userPreferences.defaultCountry || '',
             city: userPreferences.defaultCity || '',
-            currency: userPreferences.defaultCurrency || 'CLP',
+            currency: userPreferences.defaultCurrency || DEFAULT_CURRENCY,
         };
 
         return baseTransaction;
@@ -499,7 +495,8 @@ export function useTransactionHandlers(
             await wipeAllTransactions(services.db, user.uid, services.appId);
             alert(t('cleaned'));
         } catch (e) {
-            alert(t('wipeFailed') || 'Failed to wipe');
+            const info = getErrorInfo(classifyError(e));
+            alert(t(info.titleKey));
         }
     }, [services, user, t]);
 
@@ -521,7 +518,8 @@ export function useTransactionHandlers(
             setToastMessage({ text: t('exportSuccess'), type: 'success' });
         } catch (e) {
             console.error('Export failed:', e);
-            setToastMessage({ text: t('exportFailed') || 'Export failed', type: 'info' });
+            const info = getErrorInfo(classifyError(e));
+            setToastMessage({ text: t(info.messageKey), type: info.toastType });
         }
     }, [transactions, setToastMessage, t]);
 

@@ -18,8 +18,10 @@ import type { ReceiptType } from '@/services/gemini';
 import type { ScanState } from '@/types/scanStateMachine';
 import { DIALOG_TYPES } from '@/types/scanStateMachine';
 import { MAX_BATCH_IMAGES } from '@/components/scan';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
 import { analyzeReceipt } from '@/services/gemini';
 import { getSafeDate, parseStrictNumber } from '@/utils/validation';
+import { classifyError, getErrorInfo } from '@/utils/errorHandler';
 
 // Store imports
 import { useScanStore } from '../store/useScanStore';
@@ -29,14 +31,8 @@ import { useNavigationStore } from '@/shared/stores/useNavigationStore';
 // Types
 // =============================================================================
 
-/**
- * Message type for toast notifications.
- * Note: Uses 'success' | 'info' to match App.tsx's toast system.
- */
-export interface ToastMessage {
-  text: string;
-  type: 'success' | 'info';
-}
+import type { ToastMessage } from '@/shared/hooks';
+export type { ToastMessage };
 
 /**
  * User credits state.
@@ -280,7 +276,7 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
     setScanImages([]);
     setScanError(null);
     setScanStoreType('auto');
-    setScanCurrency(defaultCurrency || 'CLP');
+    setScanCurrency(defaultCurrency || DEFAULT_CURRENCY);
     setCurrentTransaction(createDefaultTransaction());
 
     // Camera button opens file picker, manual "+" goes directly to editor
@@ -493,11 +489,12 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
       } else {
         setToastMessage({ text: t('rescanSuccess'), type: 'success' });
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Re-scan failed:', e);
       // Restore credit on API error only
       await addUserCredits(1);
-      setToastMessage({ text: t('scanFailedCreditRefunded'), type: 'info' });
+      const errorInfo = getErrorInfo(classifyError(e));
+      setToastMessage({ text: t('scanFailedCreditRefunded'), type: errorInfo.toastType });
     } finally {
       setIsRescanning(false);
     }

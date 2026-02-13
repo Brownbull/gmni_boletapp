@@ -11,6 +11,8 @@
  * @see docs/sprint-artifacts/epic14/stories/story-14.40-category-statistics-popup.md
  */
 
+import { numericAsc } from '@/utils/comparators';
+
 /**
  * Calculate the median of an array of numbers.
  * Returns 0 for empty arrays.
@@ -21,7 +23,7 @@
 export const calculateMedian = (values: number[]): number => {
   if (values.length === 0) return 0;
 
-  const sorted = [...values].sort((a, b) => a - b);
+  const sorted = [...values].sort(numericAsc);
   const mid = Math.floor(sorted.length / 2);
 
   if (sorted.length % 2 === 0) {

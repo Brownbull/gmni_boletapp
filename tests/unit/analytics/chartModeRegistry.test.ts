@@ -17,7 +17,7 @@ import {
   getMonthLabelsForQuarter,
   getWeekLabelsForMonth,
   getDayLabels,
-} from '../../../src/utils/chartModeRegistry';
+} from '@features/analytics/utils/chartModeRegistry';
 import type { TemporalPosition } from '../../../src/types/analytics';
 
 // ============================================================================

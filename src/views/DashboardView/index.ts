@@ -1,15 +1,15 @@
 /**
  * DashboardView Module Exports
  *
- * Story 14e-25b.2: DashboardView Data Migration
+ * Story 15-TD-5: Resolved file/directory naming collision
+ * DashboardView.tsx moved into DashboardView/ directory
  *
- * Re-exports DashboardView component and hook from their locations.
- * This allows imports from '@/views/DashboardView' to work.
+ * Re-exports DashboardView component, types, and hooks.
  */
 
-// Re-export the main component from the parent file
-export { DashboardView } from '../DashboardView';
-export type { DashboardViewProps } from '../DashboardView';
+// Main component (now co-located in this directory)
+export { DashboardView } from './DashboardView';
+export type { DashboardViewProps } from './DashboardView';
 
 // Export the data hook and types
 export { useDashboardViewData } from './useDashboardViewData';

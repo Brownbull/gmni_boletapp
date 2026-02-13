@@ -17,7 +17,7 @@ import {
   getVisualConfig,
   INSIGHT_VISUAL_CONFIG,
   InsightVisualType,
-} from '../../../src/utils/insightTypeConfig';
+} from '@features/insights/utils/insightTypeConfig';
 
 // ============================================================================
 // getVisualType() Tests

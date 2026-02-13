@@ -14,7 +14,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import type { RefObject } from 'react';
 import type { View } from '../../../../src/components/App';
-import type { HistoryFilterState } from '../../../../src/contexts/HistoryFiltersContext';
+import type { HistoryFilterState } from '@/types/historyFilters';
 import type { ScanState } from '../../../../src/types/scanStateMachine';
 import type { UseNavigationHandlersProps } from '../../../../src/hooks/app/useNavigationHandlers';
 import { useNavigationHandlers } from '../../../../src/hooks/app/useNavigationHandlers';
@@ -155,7 +155,7 @@ describe('useNavigationHandlers', () => {
                 result.current.navigateToView('dashboard');
             });
 
-            expect(dismissScanDialog).toHaveBeenCalled();
+            expect(dismissScanDialog).toHaveBeenCalledWith();
         });
 
         it('should NOT dismiss QuickSave dialog when navigating to transaction-editor', () => {

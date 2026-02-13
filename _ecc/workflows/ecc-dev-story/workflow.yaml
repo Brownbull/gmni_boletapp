@@ -12,28 +12,32 @@ ecc_orchestration:
   agents:
     planner:
       subagent_type: "everything-claude-code:planner"
+      model: "opus"
+      max_turns: 7
       purpose: "Implementation planning and risk assessment"
     tdd-guide:
       subagent_type: "everything-claude-code:tdd-guide"
+      model: "opus"
+      # No max_turns — iterative implementation needs many turns
       purpose: "Test-driven development, RED-GREEN-REFACTOR cycle"
     build-error-resolver:
       subagent_type: "everything-claude-code:build-error-resolver"
+      model: "sonnet"
+      max_turns: 5
       purpose: "Fix build/TypeScript errors with minimal diffs"
     code-reviewer:
       subagent_type: "everything-claude-code:code-reviewer"
+      model: "sonnet"
+      max_turns: 7
       purpose: "Code quality self-review before completion"
-    security-reviewer:
-      subagent_type: "everything-claude-code:security-reviewer"
-      purpose: "Security analysis for sensitive code"
 
   # Workflow sequence
-  sequence: "planner → tdd-guide → build-error-resolver (on failure) → code-reviewer"
+  sequence: "planner -> tdd-guide -> build-error-resolver (on failure) -> code-reviewer"
 
-  # Parallel phases
-  parallel_phases:
-    pre_completion_review:
-      agents: ["code-reviewer", "security-reviewer"]
-      description: "Parallel self-review before marking story complete"
+  # Pre-completion review (code-reviewer only — formal review is via /ecc-code-review)
+  pre_completion_review:
+    agents: ["code-reviewer"]
+    description: "Quick self-review before marking story review-ready"
 
 # Project Knowledge Integration (replaces Atlas - migrated 2026-02-05)
 project_knowledge:

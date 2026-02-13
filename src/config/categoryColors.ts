@@ -16,6 +16,7 @@
  */
 
 import type { StoreCategory, ItemCategory } from '../types/transaction';
+import { getStorageString } from '@/utils/storage';
 
 // ============================================================================
 // TYPES
@@ -961,14 +962,8 @@ export function getCurrentMode(): ModeName {
  * 'plain' = use standard black/white text colors
  */
 export function getFontColorMode(): 'colorful' | 'plain' {
-  if (typeof window === 'undefined') return 'colorful';
-  try {
-    const mode = localStorage.getItem('fontColorMode');
-    if (mode === 'plain') return 'plain';
-  } catch {
-    // localStorage may not be available (e.g., tests, SSR)
-  }
-  return 'colorful';
+  const mode = getStorageString('fontColorMode', 'colorful');
+  return mode === 'plain' ? 'plain' : 'colorful';
 }
 
 /**

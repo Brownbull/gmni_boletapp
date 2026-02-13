@@ -526,6 +526,60 @@ describe('useInAppNotifications', () => {
 
             expect(writeBatch).not.toHaveBeenCalled()
         })
+
+        it('should return BatchResult with success counts', async () => {
+            const mockDocs = [
+                {
+                    id: 'notif-1',
+                    data: () => ({
+                        type: 'TRANSACTION_ADDED',
+                        title: 'Group',
+                        body: 'Test',
+                        read: false,
+                        createdAt: { toDate: () => new Date() },
+                    }),
+                },
+            ]
+
+            const { result } = renderHook(() =>
+                useInAppNotifications(mockDb, mockUserId, mockAppId)
+            )
+
+            act(() => {
+                if (onSnapshotCallback) {
+                    onSnapshotCallback({ docs: mockDocs })
+                }
+            })
+
+            await waitFor(() => {
+                expect(result.current.notifications.length).toBe(1)
+            })
+
+            let batchResult: unknown
+            await act(async () => {
+                batchResult = await result.current.deleteAllNotifications()
+            })
+
+            expect(batchResult).toEqual({
+                totalBatches: 1,
+                succeededBatches: 1,
+                failedBatches: 0,
+                errors: [],
+            })
+        })
+
+        it('should return undefined when no db is provided', async () => {
+            const { result } = renderHook(() =>
+                useInAppNotifications(null, mockUserId, mockAppId)
+            )
+
+            let batchResult: unknown = 'not-called'
+            await act(async () => {
+                batchResult = await result.current.deleteAllNotifications()
+            })
+
+            expect(batchResult).toBeUndefined()
+        })
     })
 
     describe('Error Handling', () => {

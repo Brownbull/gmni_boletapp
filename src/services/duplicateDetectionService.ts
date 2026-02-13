@@ -19,6 +19,7 @@
  */
 
 import { Transaction } from '../types/transaction';
+import { filterAndGroupDuplicates } from '@/utils/duplicateGrouping';
 
 /**
  * Maximum time difference in minutes for transactions to be considered duplicates.
@@ -267,94 +268,22 @@ export function filterToDuplicateTransactions(transactions: Transaction[]): Tran
  * @returns Array of transactions with duplicates grouped together
  */
 export function filterToDuplicatesGrouped(transactions: Transaction[]): Transaction[] {
-  const duplicateMap = findDuplicates(transactions);
-
-  // If no duplicates, return empty
-  if (duplicateMap.size === 0) return [];
-
-  // Build groups of related duplicates using Union-Find approach
-  const txIdToGroup = new Map<string, Set<string>>();
-
-  // Initialize each transaction with its own group
-  for (const [txId, duplicateIds] of duplicateMap) {
-    // Get or create group for this transaction
-    let group = txIdToGroup.get(txId);
-    if (!group) {
-      group = new Set([txId]);
-      txIdToGroup.set(txId, group);
-    }
-
-    // Add all duplicates to the same group
-    for (const dupId of duplicateIds) {
-      // Check if duplicate already has a group
-      const existingGroup = txIdToGroup.get(dupId);
-      if (existingGroup && existingGroup !== group) {
-        // Merge groups
-        for (const id of existingGroup) {
-          group.add(id);
-          txIdToGroup.set(id, group);
-        }
-      } else {
-        group.add(dupId);
-        txIdToGroup.set(dupId, group);
-      }
-    }
-  }
-
-  // Get unique groups
-  const uniqueGroups = new Set<Set<string>>();
-  for (const group of txIdToGroup.values()) {
-    uniqueGroups.add(group);
-  }
-
-  // Create transaction lookup
-  const txById = new Map<string, Transaction>();
-  for (const tx of transactions) {
-    if (tx.id) {
-      txById.set(tx.id, tx);
-    }
-  }
-
-  // Build result array with duplicates grouped together
-  const result: Transaction[] = [];
-  const addedIds = new Set<string>();
-
-  // Sort groups by date (newest first) then merchant name
-  const sortedGroups = Array.from(uniqueGroups).sort((a, b) => {
-    const aFirst = txById.get(Array.from(a)[0]);
-    const bFirst = txById.get(Array.from(b)[0]);
-
-    // Sort by date descending
-    const aDate = aFirst?.date || '';
-    const bDate = bFirst?.date || '';
-    if (aDate !== bDate) return bDate.localeCompare(aDate);
-
-    // Then by merchant name
-    const aMerchant = (aFirst?.merchant || '').toLowerCase().trim();
-    const bMerchant = (bFirst?.merchant || '').toLowerCase().trim();
-    return aMerchant.localeCompare(bMerchant);
-  });
-
-  // Add transactions group by group
-  for (const group of sortedGroups) {
-    // Sort transactions within group by time for consistent ordering
-    const groupTxs = Array.from(group)
-      .map(id => txById.get(id))
-      .filter((tx): tx is Transaction => tx !== undefined && !addedIds.has(tx.id!))
-      .sort((a, b) => {
-        // Sort by time within same date
-        const aTime = a.time || '00:00';
-        const bTime = b.time || '00:00';
-        return aTime.localeCompare(bTime);
-      });
-
-    for (const tx of groupTxs) {
-      result.push(tx);
-      addedIds.add(tx.id!);
-    }
-  }
-
-  return result;
+  return filterAndGroupDuplicates(
+    transactions,
+    findDuplicates(transactions),
+    tx => tx.id!,
+    // Sort groups by date (newest first) then merchant name
+    (a, b) => {
+      const aDate = a?.date || '';
+      const bDate = b?.date || '';
+      if (aDate !== bDate) return bDate.localeCompare(aDate);
+      const aMerchant = (a?.merchant || '').toLowerCase().trim();
+      const bMerchant = (b?.merchant || '').toLowerCase().trim();
+      return aMerchant.localeCompare(bMerchant);
+    },
+    // Sort within group by time
+    (a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'),
+  );
 }
 
 /**

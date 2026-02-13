@@ -13,7 +13,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { CelebrationCard } from '../../../../src/components/insights/CelebrationCard';
+import { CelebrationCard } from '@features/insights/components/CelebrationCard';
 
 // Simple translation mock
 const mockT = (key: string) => {

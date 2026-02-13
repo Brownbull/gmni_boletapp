@@ -49,12 +49,14 @@ vi.mock('@/hooks/useRecentScans', () => ({
     useRecentScans: vi.fn(() => []),
 }));
 
-// Mock useTheme
-vi.mock('@/contexts/ThemeContext', () => ({
-    useTheme: vi.fn(() => ({
+// Story 15-7c: Mock useThemeSettings (ThemeContext removed)
+vi.mock('@/shared/stores', () => ({
+    useThemeSettings: vi.fn(() => ({
         theme: 'light',
         colorTheme: 'Normal',
         fontColorMode: 'colorful',
+        fontSize: 'small',
+        fontFamily: 'outfit',
         lang: 'es',
         currency: 'CLP',
         dateFormat: 'LatAm',

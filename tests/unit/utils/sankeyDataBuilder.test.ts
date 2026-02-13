@@ -15,7 +15,7 @@ import {
     isMasNode,
     getMasCount,
     type SankeyExpansionState,
-} from '../../../src/utils/sankeyDataBuilder';
+} from '@features/analytics/utils/sankeyDataBuilder';
 import type { Transaction } from '../../../src/types/transaction';
 
 // ============================================================================

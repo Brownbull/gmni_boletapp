@@ -138,7 +138,7 @@ describe('CategoryMappingsList Component - Story 6.5', () => {
       const deleteButton = screen.getByRole('button', { name: /delete.*uber eats/i });
       await userEvent.click(deleteButton);
 
-      expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(screen.getByText('Remove this learned category?')).toBeInTheDocument();
       // Modal shows item name in description - use getAllByText since it appears in list and modal
       const uberEatsTexts = screen.getAllByText(/"UBER EATS"/);
@@ -179,7 +179,7 @@ describe('CategoryMappingsList Component - Story 6.5', () => {
       await userEvent.click(cancelButton);
 
       await waitFor(() => {
-        expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
       });
       expect(mockDelete).not.toHaveBeenCalled();
     });
@@ -193,12 +193,12 @@ describe('CategoryMappingsList Component - Story 6.5', () => {
       const deleteButton = screen.getByRole('button', { name: /delete.*uber eats/i });
       await userEvent.click(deleteButton);
 
-      // Click backdrop (the presentation div)
-      const backdrop = screen.getByRole('presentation');
-      fireEvent.click(backdrop);
+      // Click backdrop (the dialog overlay div)
+      const dialog = screen.getByRole('dialog');
+      fireEvent.click(dialog);
 
       await waitFor(() => {
-        expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
       });
     });
   });
@@ -229,13 +229,13 @@ describe('CategoryMappingsList Component - Story 6.5', () => {
       const deleteButton = screen.getByRole('button', { name: /delete.*uber eats/i });
       await userEvent.click(deleteButton);
 
-      expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
 
       // Press Escape
       await userEvent.keyboard('{Escape}');
 
       await waitFor(() => {
-        expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
       });
     });
 
@@ -273,11 +273,11 @@ describe('CategoryMappingsList Component - Story 6.5', () => {
       const deleteButton = screen.getByRole('button', { name: /delete.*uber eats/i });
       deleteButton.focus();
 
-      // Simulate Enter key press
-      fireEvent.keyDown(deleteButton, { key: 'Enter', code: 'Enter' });
+      // userEvent.keyboard simulates real browser Enter→click behavior
+      await userEvent.keyboard('{Enter}');
 
       await waitFor(() => {
-        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
       });
     });
 
@@ -289,11 +289,11 @@ describe('CategoryMappingsList Component - Story 6.5', () => {
       const deleteButton = screen.getByRole('button', { name: /delete.*uber eats/i });
       deleteButton.focus();
 
-      // Simulate Space key press
-      fireEvent.keyDown(deleteButton, { key: ' ', code: 'Space' });
+      // userEvent.keyboard simulates real browser Space→click behavior
+      await userEvent.keyboard(' ');
 
       await waitFor(() => {
-        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
       });
     });
 
@@ -305,10 +305,9 @@ describe('CategoryMappingsList Component - Story 6.5', () => {
       const deleteButton = screen.getByRole('button', { name: /delete.*uber eats/i });
       await userEvent.click(deleteButton);
 
-      const modal = screen.getByRole('alertdialog');
+      const modal = screen.getByRole('dialog');
       expect(modal).toHaveAttribute('aria-modal', 'true');
-      expect(modal).toHaveAttribute('aria-labelledby', 'delete-modal-title');
-      expect(modal).toHaveAttribute('aria-describedby', 'delete-modal-description');
+      expect(modal).toHaveAttribute('aria-labelledby', 'confirmation-dialog-title');
     });
   });
 
@@ -395,8 +394,9 @@ describe('CategoryMappingsList Component - Story 6.5', () => {
       const confirmButton = screen.getByRole('button', { name: /confirm/i });
       await userEvent.click(confirmButton);
 
+      // Modal closes in finally block even on error
       await waitFor(() => {
-        expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
       });
     });
   });

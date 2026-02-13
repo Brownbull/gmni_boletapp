@@ -77,11 +77,7 @@ describe('subscribeToTransactions', () => {
 
             expect(mockCollection).toHaveBeenCalledWith(
                 mockDb,
-                'artifacts',
-                appId,
-                'users',
-                userId,
-                'transactions'
+                `artifacts/${appId}/users/${userId}/transactions`
             );
         });
 

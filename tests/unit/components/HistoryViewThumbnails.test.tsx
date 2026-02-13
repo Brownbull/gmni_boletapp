@@ -12,7 +12,8 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '../../setup/test-utils'
-import { HistoryFiltersProvider, type HistoryFilterState } from '../../../src/contexts/HistoryFiltersContext'
+import { HistoryFiltersProvider } from '../../../src/contexts/HistoryFiltersContext';
+import type { HistoryFilterState } from '@/types/historyFilters'
 import type { UseHistoryViewDataReturn } from '../../../src/views/HistoryView/useHistoryViewData'
 
 // =============================================================================
@@ -51,24 +52,6 @@ const mockHistoryViewData: UseHistoryViewDataReturn = {
 
 vi.mock('../../../src/views/HistoryView/useHistoryViewData', () => ({
   useHistoryViewData: vi.fn(() => mockHistoryViewData),
-}))
-
-// Mock ThemeContext for components that use useTheme directly
-vi.mock('../../../src/contexts/ThemeContext', () => ({
-  useTheme: vi.fn(() => ({
-    theme: 'light',
-    colorTheme: 'mono',
-    fontColorMode: 'colorful',
-    lang: 'en',
-    currency: 'USD',
-    dateFormat: 'US',
-    setTheme: vi.fn(),
-    setColorTheme: vi.fn(),
-    setFontColorMode: vi.fn(),
-    setLang: vi.fn(),
-    setCurrency: vi.fn(),
-    setDateFormat: vi.fn(),
-  })),
 }))
 
 // Group consolidation: Mock firebase/firestore for getFirestore calls

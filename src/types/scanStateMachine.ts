@@ -15,6 +15,7 @@
  */
 
 import type { Transaction } from './transaction';
+import { hasItemWithPrice } from '@/utils/transactionValidation';
 // Story 14d.5c: Import from types file to avoid circular dependency with useBatchReview
 import type { BatchReceipt, BatchReceiptStatus } from './batchReceipt';
 
@@ -500,12 +501,8 @@ export function generateRequestId(): string {
 export function canSaveTransaction(transaction: Transaction | null): boolean {
   if (!transaction) return false;
 
-  // Must have at least one item
-  if (!transaction.items?.length) return false;
-
-  // At least one item must have non-zero price
-  const hasValidItem = transaction.items.some((item) => item.price > 0);
-  if (!hasValidItem) return false;
+  // Must have at least one item with non-zero price
+  if (!hasItemWithPrice(transaction.items)) return false;
 
   // Transaction total must be non-zero
   if (transaction.total <= 0) return false;

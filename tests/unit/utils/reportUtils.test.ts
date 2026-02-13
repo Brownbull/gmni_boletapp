@@ -24,7 +24,7 @@ import {
   generateWeeklySummary,
   generateReportCards,
   generateEmptyStateCard,
-} from '../../../src/utils/reportUtils';
+} from '@features/reports/utils/reportUtils';
 
 // ============================================================================
 // Test Fixtures

@@ -36,7 +36,7 @@ import { useMemo, useCallback } from 'react';
 import { useBreathing } from '../animation/useBreathing';
 import { DURATION } from '../animation/constants';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { formatCurrency } from '../../utils/currency';
+import { formatCurrency, DEFAULT_CURRENCY } from '../../utils/currency';
 
 /**
  * Spending data for a single category
@@ -137,7 +137,7 @@ export function DynamicPolygon({
   breathing = true,
   onVertexClick,
   className = '',
-  currency = 'CLP',
+  currency = DEFAULT_CURRENCY,
 }: DynamicPolygonProps): JSX.Element {
   const prefersReducedMotion = useReducedMotion();
 

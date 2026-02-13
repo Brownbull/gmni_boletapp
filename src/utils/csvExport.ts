@@ -9,6 +9,7 @@
  */
 
 import type { Transaction } from '../types/transaction';
+import { roundTo, calcPercent } from './numberFormat';
 
 /**
  * Column configuration for CSV generation
@@ -415,12 +416,9 @@ export function downloadStatistics(
     .map(([category, data]) => ({
       category,
       transactionCount: data.count,
-      totalAmount: Math.round(data.total * 100) / 100, // Round to 2 decimals
-      averageAmount: Math.round((data.total / data.count) * 100) / 100,
-      percentageOfTotal:
-        grandTotal > 0
-          ? Math.round((data.total / grandTotal) * 10000) / 100
-          : 0,
+      totalAmount: roundTo(data.total),
+      averageAmount: roundTo(data.total / data.count),
+      percentageOfTotal: calcPercent(data.total, grandTotal, 2),
     }))
     .sort((a, b) => b.totalAmount - a.totalAmount); // Sort by total descending
 
@@ -511,10 +509,9 @@ export function downloadYearlyStatistics(
       return {
         month: data.month,
         category: data.category,
-        total: Math.round(data.total * 100) / 100,
+        total: roundTo(data.total),
         transactionCount: data.count,
-        percentageOfMonthlySpend:
-          Math.round((data.total / monthTotal) * 10000) / 100,
+        percentageOfMonthlySpend: calcPercent(data.total, monthTotal, 2),
       };
     })
     .sort((a, b) => {
@@ -551,12 +548,9 @@ export function downloadYearlyStatistics(
     .map(([category, data]) => ({
       month: 'YEARLY TOTAL',
       category,
-      total: Math.round(data.total * 100) / 100,
+      total: roundTo(data.total),
       transactionCount: data.count,
-      percentageOfMonthlySpend:
-        yearTotal > 0
-          ? Math.round((data.total / yearTotal) * 10000) / 100
-          : 0,
+      percentageOfMonthlySpend: calcPercent(data.total, yearTotal, 2),
     }))
     .sort((a, b) => b.total - a.total); // Sort summary by total descending
 
@@ -697,7 +691,7 @@ export function downloadAggregatedItemsCSV(
   // Transform aggregated items to export row format with translated categories
   const exportData: AggregatedItemExportRow[] = items.map((item) => ({
     itemName: item.displayName,
-    totalAmount: Math.round(item.totalAmount * 100) / 100,
+    totalAmount: roundTo(item.totalAmount),
     category: item.category ? translateItemCategory(item.category, lang) : '',
     subcategory: item.subcategory ? translateItemCategory(item.subcategory, lang) : '',
     transactionCount: item.transactionCount,

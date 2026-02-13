@@ -17,7 +17,7 @@ import { Timestamp } from 'firebase/firestore';
 import {
   IntentionalPrompt,
   shouldShowIntentionalPrompt,
-} from '../../../../src/components/insights/IntentionalPrompt';
+} from '@features/insights/components/IntentionalPrompt';
 import type { InsightRecord } from '../../../../src/types/insight';
 
 // ============================================================================

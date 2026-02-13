@@ -18,6 +18,7 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { X, AlertTriangle, ChevronRight, Eye, Trash2 } from 'lucide-react';
+import { DEFAULT_CURRENCY } from '../../utils/currency';
 
 // ============================================================================
 // Types
@@ -229,7 +230,7 @@ export const TransactionConflictDialog: React.FC<TransactionConflictDialogProps>
     }
 
     if (merchant && total !== undefined && total > 0) {
-      return `${merchant} - ${formatCurrency(total, currency || 'CLP')}`;
+      return `${merchant} - ${formatCurrency(total, currency || DEFAULT_CURRENCY)}`;
     }
 
     if (merchant) {

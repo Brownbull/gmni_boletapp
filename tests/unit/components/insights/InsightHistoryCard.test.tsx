@@ -19,7 +19,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { InsightHistoryCard } from '../../../../src/components/insights/InsightHistoryCard';
+import { InsightHistoryCard } from '@features/insights/components/InsightHistoryCard';
 import { InsightRecord } from '../../../../src/types/insight';
 import { createMockTimestampDaysAgo } from '../../../helpers';
 

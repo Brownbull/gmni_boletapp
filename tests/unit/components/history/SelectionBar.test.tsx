@@ -7,7 +7,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { SelectionBar } from '../../../../src/components/history/SelectionBar';
+import { SelectionBar } from '@features/history/components/SelectionBar';
 
 // ============================================================================
 // Test Setup

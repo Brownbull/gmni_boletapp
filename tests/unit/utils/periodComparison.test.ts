@@ -16,7 +16,7 @@ import {
     calculatePeriodComparison,
     type PeriodIdentifier,
     type TimePeriod,
-} from '../../../src/utils/periodComparison';
+} from '@features/analytics/utils/periodComparison';
 
 describe('periodComparison utilities', () => {
     // ========================================================================

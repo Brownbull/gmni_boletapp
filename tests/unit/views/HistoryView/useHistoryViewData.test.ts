@@ -14,7 +14,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import type { HistoryFilterState } from '@/contexts/HistoryFiltersContext';
+import type { HistoryFilterState } from '@/types/historyFilters';
 
 // =============================================================================
 // Mock Module Setup
@@ -106,21 +106,17 @@ vi.mock('@/shared/stores/useNavigationStore', () => ({
     usePendingHistoryFilters: vi.fn(() => mockState.pendingHistoryFilters),
 }));
 
-// Story 14e-25a.2b: Mock ThemeContext
-vi.mock('@/contexts/ThemeContext', () => ({
-    useTheme: vi.fn(() => ({
+// Story 15-7c: Mock useThemeSettings (ThemeContext removed)
+vi.mock('@/shared/stores', () => ({
+    useThemeSettings: vi.fn(() => ({
         theme: mockState.theme,
         colorTheme: mockState.colorTheme,
         fontColorMode: mockState.fontColorMode,
+        fontSize: 'small',
+        fontFamily: 'outfit',
         lang: mockState.lang,
         currency: mockState.currency,
         dateFormat: mockState.dateFormat,
-        setTheme: vi.fn(),
-        setColorTheme: vi.fn(),
-        setFontColorMode: vi.fn(),
-        setLang: vi.fn(),
-        setCurrency: vi.fn(),
-        setDateFormat: vi.fn(),
     })),
 }));
 
@@ -459,7 +455,7 @@ describe('useHistoryViewData', () => {
     // =========================================================================
 
     describe('theme and locale settings (Story 14e-25a.2b)', () => {
-        it('returns theme from ThemeContext', () => {
+        it('returns theme from useThemeSettings', () => {
             const { result } = renderHook(() => useHistoryViewData());
 
             expect(result.current.theme).toBe('light');
@@ -467,7 +463,7 @@ describe('useHistoryViewData', () => {
             expect(result.current.fontColorMode).toBe('colorful');
         });
 
-        it('returns locale settings from ThemeContext', () => {
+        it('returns locale settings from useThemeSettings', () => {
             const { result } = renderHook(() => useHistoryViewData());
 
             expect(result.current.lang).toBe('en');

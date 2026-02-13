@@ -25,7 +25,7 @@ import {
     navigationActions,
     type SettingsSubview,
 } from '@shared/stores/useNavigationStore';
-import type { HistoryFilterState } from '@/contexts/HistoryFiltersContext';
+import type { HistoryFilterState } from '@/types/historyFilters';
 import type { AnalyticsNavigationState } from '@/types/analytics';
 
 // =============================================================================

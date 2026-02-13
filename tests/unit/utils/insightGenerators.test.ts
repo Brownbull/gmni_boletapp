@@ -11,7 +11,7 @@ import {
   generateAllCandidates,
   getGenerator,
   getGeneratorsByCategory,
-} from '../../../src/utils/insightGenerators';
+} from '@features/insights/utils/insightGenerators';
 import { Transaction, TransactionItem } from '../../../src/types/transaction';
 
 // ============================================================================

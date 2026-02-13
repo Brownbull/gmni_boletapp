@@ -16,7 +16,9 @@
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 import { devtools, persist, createJSONStorage } from 'zustand/middleware';
-import type { Theme, ColorTheme, FontColorMode, FontSize, Language, Currency } from '@/types/settings';
+import type { Theme, ColorTheme, FontColorMode, FontSize, FontFamily, Language, Currency } from '@/types/settings';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
+import { getStorageString, setStorageString } from '@/utils/storage';
 
 // =============================================================================
 // Types
@@ -27,6 +29,8 @@ interface SettingsState {
   colorTheme: ColorTheme;
   fontColorMode: FontColorMode;
   fontSize: FontSize;
+  // Story 15-7c: fontFamily from Firestore preferences (not persisted to localStorage)
+  fontFamily: FontFamily;
   // Story 14e-35: Locale settings migrated from App.tsx useState
   lang: Language;
   currency: Currency;
@@ -38,6 +42,8 @@ interface SettingsActions {
   setColorTheme: (colorTheme: ColorTheme) => void;
   setFontColorMode: (fontColorMode: FontColorMode) => void;
   setFontSize: (fontSize: FontSize) => void;
+  // Story 15-7c: fontFamily from Firestore (no localStorage persistence)
+  setFontFamily: (fontFamily: FontFamily) => void;
   // Story 14e-35: Locale setting actions
   setLang: (lang: Language) => void;
   setCurrency: (currency: Currency) => void;
@@ -53,9 +59,11 @@ export const defaultSettingsState: SettingsState = {
   colorTheme: 'mono',
   fontColorMode: 'colorful',
   fontSize: 'small',
+  // Story 15-7c: fontFamily default (Firestore overrides on load)
+  fontFamily: 'outfit',
   // Story 14e-35: Default locale settings (target market: Chile)
   lang: 'es',
-  currency: 'CLP',
+  currency: DEFAULT_CURRENCY as Currency,
   dateFormat: 'LatAm',
 };
 
@@ -78,15 +86,10 @@ export const defaultSettingsState: SettingsState = {
  * Note: 'theme' (light/dark) is not persisted in legacy format, uses default.
  */
 const migrateFromLegacyKeys = (): Partial<SettingsState> => {
-  // Guard for SSR/test environments
-  if (typeof localStorage === 'undefined') {
-    return {};
-  }
-
   const result: Partial<SettingsState> = {};
 
   // Migrate colorTheme (handles ghibli->normal, default->professional)
-  const savedColorTheme = localStorage.getItem('colorTheme');
+  const savedColorTheme = getStorageString('colorTheme', '');
   if (savedColorTheme === 'ghibli') {
     result.colorTheme = 'normal';
   } else if (savedColorTheme === 'default') {
@@ -100,32 +103,29 @@ const migrateFromLegacyKeys = (): Partial<SettingsState> => {
   }
 
   // Migrate fontColorMode
-  const savedFontColorMode = localStorage.getItem('fontColorMode');
+  const savedFontColorMode = getStorageString('fontColorMode', '');
   if (savedFontColorMode === 'colorful' || savedFontColorMode === 'plain') {
     result.fontColorMode = savedFontColorMode;
   }
 
   // Migrate fontSize
-  const savedFontSize = localStorage.getItem('fontSize');
+  const savedFontSize = getStorageString('fontSize', '');
   if (savedFontSize === 'small' || savedFontSize === 'normal') {
     result.fontSize = savedFontSize;
   }
 
   // Story 14e-35: Migrate locale settings from legacy keys
-  // lang (Language)
-  const savedLang = localStorage.getItem('lang');
+  const savedLang = getStorageString('lang', '');
   if (savedLang === 'es' || savedLang === 'en') {
     result.lang = savedLang;
   }
 
-  // currency (Currency)
-  const savedCurrency = localStorage.getItem('currency');
+  const savedCurrency = getStorageString('currency', '');
   if (savedCurrency === 'CLP' || savedCurrency === 'USD' || savedCurrency === 'EUR') {
     result.currency = savedCurrency;
   }
 
-  // dateFormat
-  const savedDateFormat = localStorage.getItem('dateFormat');
+  const savedDateFormat = getStorageString('dateFormat', '');
   if (savedDateFormat === 'LatAm' || savedDateFormat === 'US') {
     result.dateFormat = savedDateFormat;
   }
@@ -148,44 +148,55 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
         // Note: We also write to plain localStorage keys for backward compatibility
         // with code that reads directly (e.g., categoryColors.ts getFontColorMode())
         setTheme: (theme) => {
-          try { localStorage.setItem('theme', theme); } catch { /* SSR/test safety */ }
+          setStorageString('theme', theme);
           set({ theme }, false, 'settings/setTheme');
         },
 
         setColorTheme: (colorTheme) => {
-          try { localStorage.setItem('colorTheme', colorTheme); } catch { /* SSR/test safety */ }
+          setStorageString('colorTheme', colorTheme);
           set({ colorTheme }, false, 'settings/setColorTheme');
         },
 
         setFontColorMode: (fontColorMode) => {
-          try { localStorage.setItem('fontColorMode', fontColorMode); } catch { /* SSR/test safety */ }
+          setStorageString('fontColorMode', fontColorMode);
           set({ fontColorMode }, false, 'settings/setFontColorMode');
         },
 
         setFontSize: (fontSize) => {
-          try { localStorage.setItem('fontSize', fontSize); } catch { /* SSR/test safety */ }
+          setStorageString('fontSize', fontSize);
           set({ fontSize }, false, 'settings/setFontSize');
+        },
+
+        // Story 15-7c: fontFamily from Firestore (no localStorage persistence)
+        setFontFamily: (fontFamily) => {
+          set({ fontFamily }, false, 'settings/setFontFamily');
         },
 
         // Story 14e-35: Locale setting actions
         setLang: (lang) => {
-          try { localStorage.setItem('lang', lang); } catch { /* SSR/test safety */ }
+          setStorageString('lang', lang);
           set({ lang }, false, 'settings/setLang');
         },
 
         setCurrency: (currency) => {
-          try { localStorage.setItem('currency', currency); } catch { /* SSR/test safety */ }
+          setStorageString('currency', currency);
           set({ currency }, false, 'settings/setCurrency');
         },
 
         setDateFormat: (dateFormat) => {
-          try { localStorage.setItem('dateFormat', dateFormat); } catch { /* SSR/test safety */ }
+          setStorageString('dateFormat', dateFormat);
           set({ dateFormat }, false, 'settings/setDateFormat');
         },
       }),
       {
         name: 'boletapp-settings',
         storage: createJSONStorage(() => localStorage),
+        // Story 15-7c: Exclude fontFamily from persistence (Firestore is source of truth)
+        partialize: (state) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { fontFamily, ...rest } = state;
+          return rest;
+        },
         // Merge function to apply legacy migration on first load
         merge: (persistedState, currentState) => {
           // If no persisted state, apply legacy migration
@@ -215,10 +226,12 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
 // Convenience Selectors (prevent unnecessary re-renders)
 // =============================================================================
 
-export const useTheme = () => useSettingsStore((state) => state.theme);
+export const useThemeMode = () => useSettingsStore((state) => state.theme);
 export const useColorTheme = () => useSettingsStore((state) => state.colorTheme);
 export const useFontColorMode = () => useSettingsStore((state) => state.fontColorMode);
 export const useFontSize = () => useSettingsStore((state) => state.fontSize);
+// Story 15-7c: fontFamily selector
+export const useFontFamily = () => useSettingsStore((state) => state.fontFamily);
 
 // Story 14e-35: Locale selectors (prevent unnecessary re-renders)
 export const useLang = () => useSettingsStore((state) => state.lang);
@@ -240,6 +253,25 @@ export const useDateFormat = () => useSettingsStore((state) => state.dateFormat)
 export const useLocaleSettings = () =>
   useSettingsStore(
     useShallow((state) => ({
+      lang: state.lang,
+      currency: state.currency,
+      dateFormat: state.dateFormat,
+    }))
+  );
+
+/**
+ * Story 15-7c: Combined theme + locale settings selector.
+ * Replaces ThemeContext's useTheme() — returns all visual + locale settings.
+ * Uses shallow comparison to prevent infinite re-renders.
+ */
+export const useThemeSettings = () =>
+  useSettingsStore(
+    useShallow((state) => ({
+      theme: state.theme,
+      colorTheme: state.colorTheme,
+      fontColorMode: state.fontColorMode,
+      fontSize: state.fontSize,
+      fontFamily: state.fontFamily,
       lang: state.lang,
       currency: state.currency,
       dateFormat: state.dateFormat,
@@ -268,6 +300,9 @@ export const settingsActions = {
     useSettingsStore.getState().setFontColorMode(fontColorMode),
   setFontSize: (fontSize: FontSize) =>
     useSettingsStore.getState().setFontSize(fontSize),
+  // Story 15-7c: fontFamily action for non-React code
+  setFontFamily: (fontFamily: FontFamily) =>
+    useSettingsStore.getState().setFontFamily(fontFamily),
   // Story 14e-35: Locale actions for non-React code
   setLang: (lang: Language) => useSettingsStore.getState().setLang(lang),
   setCurrency: (currency: Currency) =>

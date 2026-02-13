@@ -15,7 +15,7 @@ import {
   computeBarDataFromTransactions,
   type TemporalPosition,
   type CategoryPosition,
-} from '../../../src/utils/chartDataComputation';
+} from '@features/analytics/utils/chartDataComputation';
 import type { Transaction } from '../../../src/types/transaction';
 
 // ============================================================================

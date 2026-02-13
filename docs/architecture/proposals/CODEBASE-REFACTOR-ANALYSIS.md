@@ -1,124 +1,87 @@
 # Codebase Refactor Analysis
 
-> **Date:** 2026-02-07
-> **Scope:** Full codebase excluding `src/features/shared-groups/`
-> **Status:** ANALYSIS ONLY - No code changes
+> **Original Date:** 2026-02-07
+> **Updated:** 2026-02-09 (post shared-groups removal)
+> **Scope:** Full codebase — `src/features/shared-groups/` has been deleted
+> **Status:** APPROVED — This document defines **Epic 15: Codebase Refactoring**
 
 ---
 
 ## Executive Summary
 
-The codebase has **23 files exceeding the 800-line ECC limit** (max should be 800, strictest at 500+ warning). The top 3 files alone total **12,184 lines** (TrendsView 5960, DashboardView 3473, TransactionEditorViewInternal 2751). Feature-Sliced Design is declared but only ~30% adopted — most domain logic lives in flat `src/services/`, `src/hooks/`, `src/utils/`, and `src/components/` directories rather than feature modules.
+The codebase has **14 files exceeding the 800-line ECC limit** (max 800, warning at 500+). The top 3 files alone total **12,034 lines** (TrendsView 5,901, DashboardView 3,412, TransactionEditorViewInternal 2,721). Feature-Sliced Design is declared but only ~30% adopted — most domain logic lives in flat `src/services/`, `src/hooks/`, `src/utils/`, and `src/components/` directories rather than feature modules.
 
-**Key numbers:**
-- **23 files over 800 lines** (ECC max)
-- **~1,500 lines of duplicated service code** (mapping services, duplicate detection)
-- **15+ views with no feature module** (only 5 features exist for 20+ views)
-- **6 contexts** where Zustand stores should handle client state
-- **4 dead/unused services** (changelogService, fcmTokenService, pushNotifications, transactionQuery)
-- **5 normalization functions** with inconsistent Unicode handling (accent bug in Spanish)
+### Post Shared-Groups Removal (2026-02-09)
+
+The shared-groups feature (Epic 14d) was fully removed, deleting ~43,700 lines across ~225 files. This resolved several findings from the original analysis:
+
+- **Dead services:** `changelogService.ts`, `invitationService.ts`, `sharedGroupService.ts` deleted
+- **Dead stores:** `useViewModeStore.ts` deleted
+- **Dead utils:** `sharingCooldown.ts`, `userSharingCooldown.ts`, `cooldownCore.ts`, `viewModeFilterUtils.ts` deleted
+- **Dead types:** `sharedGroup.ts`, `changelog.ts` deleted
+- **Dead hooks:** 6 group-related hooks deleted
+- **State cleanup:** `GroupFilterState` removed from `HistoryFiltersContext`
+- **Translations:** 560+ orphaned keys removed (`translations.ts` 2,201 → 1,707 lines)
+- **Firebase:** sharedGroups/pendingInvitations rules and indexes removed; 2 Cloud Functions deleted
+
+### Current Key Numbers
+
+| Metric | Original (Feb 7) | Current (Feb 9) | Change |
+|--------|-------------------|------------------|--------|
+| Files over 800 lines | 23 | **14** | -9 |
+| Files over 500 lines | ~35 | **35** | ~same |
+| Feature modules | 5 | **5** (shared-groups deleted) | -1 |
+| Firebase SDK imports | 72 files | **46 files** | -26 |
+| Dead services | 4 | **3** (fcmToken, pushNotifications, transactionQuery) | -1 |
+| React Contexts (client state) | 6 | **5** (GroupFilter removed) | -1 |
+| Duplicated mapping services | 4 (828 lines) | **4 (828 lines)** | same |
+| Duplicated mapping components | 4 (~1,600 lines) | **4 (2,238 lines)** | same |
+| Normalization functions | 5 variants | **15 functions, 5 copies of `normalizeItemName`** | worse than estimated |
+| Batch chunking bugs | 2 services | **2 services** | same |
+| Hardcoded 'CLP' | 13+ files | **56 occurrences** | worse than estimated |
+| localStorage direct access | 19 files | **22 files** | +3 |
+| Inline `.sort()` calls | 15+ patterns | **132 calls across 43 files** | worse than estimated |
+| Total codebase | ~140K lines | **~130K lines** | -10K |
 
 ---
 
 ## Finding 1: Mega-Views (P0 - Critical)
 
 ### The Problem
-View files are monolithic — each combines data fetching, aggregation, state management, event handlers, and JSX rendering in a single file. This violates both ECC file-size conventions and the single-responsibility principle.
+View files are monolithic — each combines data fetching, aggregation, state management, event handlers, and JSX rendering in a single file.
 
-### Files Over 800 Lines (Excluding shared-groups)
+### Files Over 800 Lines (Current)
 
 | File | Lines | Hooks | Priority |
 |------|-------|-------|----------|
-| `views/TrendsView.tsx` | **5,960** | 114 | P0 |
-| `views/DashboardView.tsx` | **3,473** | 72 | P0 |
-| `views/TransactionEditorViewInternal.tsx` | **2,751** | 60 | P0 |
+| `views/TrendsView.tsx` | **5,901** | 114 | P0 |
+| `views/DashboardView.tsx` | **3,412** | 72 | P0 |
+| `views/TransactionEditorViewInternal.tsx` | **2,721** | 60 | P0 |
 | `utils/reportUtils.ts` | **2,401** | - | P0 |
-| `utils/translations.ts` | **2,201** | - | P2 (data) |
-| `App.tsx` | **2,176** | 30+ | P1 |
-| `components/history/IconFilterBar.tsx` | **2,032** | 15+ | P0 |
+| `App.tsx` | **2,069** | 30+ | P1 |
 | `views/EditView.tsx` | **1,810** | 19 | P1 |
+| `components/history/IconFilterBar.tsx` | **1,797** | 15+ | P0 |
+| `utils/translations.ts` | **1,707** | - | P2 (data) |
 | `views/ScanResultView.tsx` | **1,554** | 20+ | P1 |
 | `config/categoryColors.ts` | **1,379** | - | P2 (data) |
-| `views/HistoryView.tsx` | **1,215** | 15+ | P2 |
-| `utils/historyFilterUtils.ts` | **1,106** | - | P1 |
+| `views/HistoryView.tsx` | **1,168** | 15+ | P2 |
+| `utils/historyFilterUtils.ts` | **1,075** | - | P1 |
 | `utils/sankeyDataBuilder.ts` | **1,036** | - | P1 |
-| `views/ItemsView/ItemsView.tsx` | **1,006** | 18 | P2 |
-| `hooks/app/useScanHandlers.ts` | **962** | - | P1 |
-| `features/scan/store/useScanStore.ts` | **946** | - | P1 |
-| `components/analytics/SankeyChart.tsx` | **890** | 10+ | P1 |
-| `components/reports/ReportDetailOverlay.tsx` | **812** | 5+ | P2 |
-| `services/locationService.ts` | **810** | - | P2 |
-| `components/analytics/DrillDownGrid.tsx` | **807** | 5+ | P2 |
-| `services/pendingScanStorage.ts` | **803** | - | P2 |
-| `views/BatchCaptureView.tsx` | **798** | 12 | P2 |
-| `services/invitationService.ts` | **782** | - | P1 |
+| `views/ItemsView/ItemsView.tsx` | **1,003** | 18 | P2 |
 
-### Decomposition Strategy: TrendsView (5,960 lines → ~6 files)
+**Files at 500-800 lines (warning zone):** 21 more files including `useScanHandlers.ts` (962), `useScanStore.ts` (946), `SankeyChart.tsx` (890), `ReportDetailOverlay.tsx` (812), `locationService.ts` (810), `pendingScanStorage.ts` (803), `BatchCaptureView.tsx` (798), `InsightsView.tsx` (772), `useBatchReviewHandlers.ts` (768).
 
-TrendsView has **114 hook calls** and **15+ inline sub-components**. Recommended split:
+### Decomposition Strategies
 
-```
-src/features/analytics/          ← NEW feature module
-├── views/TrendsView.tsx         (800 lines - orchestration only)
-├── hooks/
-│   ├── useTrendsAggregation.ts  (extract all useMemo aggregation blocks)
-│   ├── useTrendsFilters.ts      (drill-down state + filter application)
-│   └── useTrendsAnimation.ts    (carousel, swipe, animation keys)
-├── utils/
-│   ├── categoryAggregation.ts   (SHARED: "Más" grouping, threshold logic)
-│   ├── trendsPeriod.ts          (period navigation, comparison)
-│   └── sankeyDataBuilder.ts     (move from src/utils/)
-└── components/
-    ├── TrendsCarousel.tsx       (slide navigation + period selector)
-    ├── TrendsTreemap.tsx        (treemap grid with responsive cells)
-    ├── TrendsDonut.tsx          (donut chart section)
-    └── TrendsSankey.tsx         (Sankey wrapper with mode toggles)
-```
+These remain unchanged from the original analysis — the mega-views were not affected by the shared-groups removal:
 
-**Critical shared code**: `categoryAggregation.ts` — identical "Más" aggregation logic (>10% threshold, Set-based unique counting, overflow grouping) is **duplicated between TrendsView and DashboardView**. Extract once, share.
+**TrendsView (5,901 → ~6 files):** Extract into `features/analytics/` with hooks (`useTrendsAggregation`, `useTrendsFilters`, `useTrendsAnimation`), utils (`categoryAggregation`, `trendsPeriod`, `sankeyDataBuilder`), and components (`TrendsCarousel`, `TrendsTreemap`, `TrendsDonut`, `TrendsSankey`).
 
-### Decomposition Strategy: DashboardView (3,473 lines → ~5 files)
+**DashboardView (3,412 → ~5 files):** Extract into `features/dashboard/` with components (`DashboardTreemap`, `DashboardRecents`, `DashboardMonthNav`), hooks (`useDashboardSelection`), sharing `categoryAggregation.ts` with analytics.
 
-```
-src/features/dashboard/          ← NEW feature module
-├── views/DashboardView.tsx      (800 lines - orchestration)
-├── components/
-│   ├── DashboardTreemap.tsx     (treemap rendering + view mode toggle)
-│   ├── DashboardRecents.tsx     (transaction list + date grouping)
-│   └── DashboardMonthNav.tsx    (month/year navigation)
-├── hooks/
-│   └── useDashboardSelection.ts (selection mode, batch operations)
-└── utils/                       (imports from analytics/utils/categoryAggregation.ts)
-```
+**TransactionEditorViewInternal (2,721 → ~5 files):** Expand `features/transaction-editor/` with hooks (`useItemOperations`, `useLearningPromptChain`, `useItemNameSuggestions`), components (`ItemEditor`, `LearningPrompts`, `ScanStateSection`).
 
-### Decomposition Strategy: TransactionEditorViewInternal (2,751 lines → ~5 files)
-
-```
-src/features/transaction-editor/  ← EXISTS but needs expansion
-├── hooks/
-│   ├── useItemOperations.ts     (add/update/delete items - SHARED with EditView)
-│   ├── useLearningPromptChain.ts (category/subcategory/merchant learning sequence)
-│   └── useItemNameSuggestions.ts (approval handler)
-├── components/
-│   ├── ItemEditor.tsx           (item list rendering + inline editing)
-│   ├── LearningPrompts.tsx      (learning prompt rendering)
-│   └── ScanStateSection.tsx     (processing overlay)
-└── views/
-    └── TransactionEditorViewInternal.tsx (800 lines - orchestration)
-```
-
-### Decomposition Strategy: IconFilterBar (2,032 lines)
-
-This component has **4 complete dropdown implementations** inline (time, category, location, custom groups). Each dropdown should be its own component:
-
-```
-src/components/history/
-├── IconFilterBar.tsx            (200 lines - toolbar shell)
-├── TemporalFilterDropdown.tsx   (time navigation)
-├── CategoryFilterDropdown.tsx   (EXISTS - but IconFilterBar has its own version!)
-├── LocationFilterDropdown.tsx   (country/region filters)
-└── GroupFilterDropdown.tsx      (custom group filters)
-```
+**IconFilterBar (1,797 → ~5 files):** Extract 3 inline dropdowns into separate components: `TemporalFilterDropdown`, `CategoryFilterDropdown`, `LocationFilterDropdown`.
 
 ---
 
@@ -126,19 +89,19 @@ src/components/history/
 
 ### The Problem
 
-The architecture doc says "Feature-Sliced Design" but only **5 features** exist for **20+ views**:
+The architecture doc says "Feature-Sliced Design" but only **5 features** exist for **21 views** (15 root-level view files + 6 view subdirectories):
 
 | Existing Feature | Has Services | Has Hooks | Has Components | Has Store |
 |-----------------|-------------|-----------|----------------|-----------|
-| `batch-review` | No | Yes | No | No |
-| `categories` | No | No | Yes | No |
-| `credit` | No | No | Yes | No |
-| `scan` | No | Yes | Yes | Yes |
-| `transaction-editor` | No | No | No | No |
+| `batch-review` | No | Yes (27 files) | No | Yes |
+| `categories` | No | No | Yes (7 files) | No |
+| `credit` | No | No | Yes (6 files) | No |
+| `scan` | No | Yes | Yes (33 files) | Yes |
+| `transaction-editor` | No | No | No (5 files) | Yes |
 
 **Missing feature modules** (currently scattered across flat directories):
 
-| Should Be Feature | Current Location | Lines Scattered |
+| Should Be Feature | Current Location | Estimated Lines |
 |-------------------|-----------------|-----------------|
 | `analytics` / `trends` | `views/TrendsView` + `components/analytics/*` + `utils/sankey*,chart*,period*` | ~9,000 |
 | `dashboard` | `views/DashboardView` + `components/DashboardView/*` | ~4,000 |
@@ -150,40 +113,40 @@ The architecture doc says "Feature-Sliced Design" but only **5 features** exist 
 
 ### Components That Belong in Features
 
-These `src/components/` subdirectories should be feature-internal:
-
 | Component Dir | Should Be In | Files |
 |--------------|-------------|-------|
-| `components/analytics/` (13 files) | `features/analytics/components/` | SankeyChart, DrillDownGrid, etc. |
-| `components/history/` (15 files) | `features/history/components/` | IconFilterBar, FilterChips, etc. |
-| `components/scan/` (9 files) | `features/scan/components/` (already exists but scan components are split!) |
-| `components/batch/` (8 files) | `features/batch-review/components/` |
-| `components/reports/` (10 files) | `features/reports/components/` |
-| `components/insights/` (19 files) | `features/insights/components/` |
-| `components/settings/` (5+ files) | `features/settings/components/` |
+| `components/analytics/` | `features/analytics/components/` | SankeyChart, DrillDownGrid, etc. |
+| `components/history/` | `features/history/components/` | IconFilterBar, FilterChips, etc. |
+| `components/scan/` | `features/scan/components/` (split!) | QuickSaveCard, etc. |
+| `components/batch/` | `features/batch-review/components/` | BatchCaptureUI, ConfirmationDialog, etc. |
+| `components/reports/` | `features/reports/components/` | ReportDetailOverlay, etc. |
+| `components/insights/` | `features/insights/components/` | InsightsViewSwitcher, etc. |
+| `components/settings/` | `features/settings/components/` | Subviews, etc. |
 
 ### Services That Belong in Features
-
-Cross-import analysis shows these services are used by only **1 domain**:
 
 | Service (src/services/) | Used By | Move To |
 |------------------------|---------|---------|
 | `airlockService.ts` | hooks only | `features/insights/services/` |
-| `analyticsService.ts` | components only | `features/analytics/services/` |
 | `insightProfileService.ts` | hooks only | `features/insights/services/` |
-| `invitationService.ts` | hooks only | `features/shared-groups/services/` |
+| `insightEngineService.ts` (643 lines) | hooks only | `features/insights/services/` |
+| `recordsService.ts` (712 lines) | hooks only | `features/insights/services/` |
 | `itemDuplicateDetectionService.ts` | views only | `features/history/services/` or shared |
 | `merchantMatcherService.ts` | hooks only | shared service (OK) |
 | `merchantTrustService.ts` | hooks only | shared service (OK) |
-| `recordsService.ts` | hooks only | `features/insights/services/` |
 | `subcategoryMappingService.ts` | hooks only | shared (mapping pattern) |
 
-### Dead Services (0 external importers)
+### Dead Services (0 external importers — verified 2026-02-09)
 
-- `changelogService.ts` — **unused**, candidate for deletion
-- `fcmTokenService.ts` — **unused**, candidate for deletion
-- `pushNotifications.ts` — **unused**, candidate for deletion
-- `transactionQuery.ts` — **unused**, candidate for deletion
+| Service | Lines | Status |
+|---------|-------|--------|
+| `fcmTokenService.ts` | 410 | **DEAD** — 0 imports in `src/` |
+| `pushNotifications.ts` | 182 | **DEAD** — 0 imports in `src/` |
+| `transactionQuery.ts` | 601 | **DEAD** — 0 imports in `src/` |
+
+**Total dead code: 1,193 lines.** Note: `changelogService.ts` and `invitationService.ts` were already deleted during shared-groups removal.
+
+**`userPreferencesService.ts`** (167 lines) — NOT dead. Still imported by 11 files for scan preferences and user settings.
 
 ---
 
@@ -191,54 +154,42 @@ Cross-import analysis shows these services are used by only **1 domain**:
 
 ### 3a. Four Mapping Services — Copy-Paste Pattern
 
-These four services implement **identical CRUD logic** with only the collection name varying:
-
 | Service | Lines | Collection |
 |---------|-------|-----------|
-| `categoryMappingService.ts` | 200 | `category_mappings` |
+| `categoryMappingService.ts` | 199 | `category_mappings` |
 | `merchantMappingService.ts` | 200 | `merchant_mappings` |
-| `subcategoryMappingService.ts` | 199 | `subcategory_mappings` |
-| `itemNameMappingService.ts` | 232 | `item_name_mappings` |
+| `subcategoryMappingService.ts` | 198 | `subcategory_mappings` |
+| `itemNameMappingService.ts` | 231 | `item_name_mappings` |
 
-**Identical in all four:**
-- `getMappingsCollectionPath()` — only collection name differs
-- `save<X>Mapping()` — query for existing + upsert pattern
-- `subscribeTo<X>Mappings()` — onSnapshot with orderBy/limit
-- `increment<X>MappingUsage()` — updateDoc with increment(1)
-- `normalize<X>Name()` — same regex chain
+**Total: 828 lines** of near-identical code. Each has the same `save*Mapping()`, `subscribeTo*Mappings()`, `increment*MappingUsage()`, and `normalize*Name()` functions. Only the collection name differs.
 
-**Fix:** Create `genericMappingService.ts` parameterized by config. Reduces **~800 lines to ~200**.
+**Fix:** Create `genericMappingService.ts` parameterized by config. Reduces **~828 lines to ~250**.
 
-### 3b. Two Duplicate Detection Services — Duplicated Algorithm
+### 3b. Two Duplicate Detection Services
 
-| Service | Lines | Domain |
-|---------|-------|--------|
-| `duplicateDetectionService.ts` | 369 | Transactions |
-| `itemDuplicateDetectionService.ts` | 375 | Items |
+| Service | Lines |
+|---------|-------|
+| `duplicateDetectionService.ts` | 368 |
+| `itemDuplicateDetectionService.ts` | 374 |
 
-Both implement the same:
-- Group-by-key algorithm
-- Pairwise comparison within groups
-- Union-Find grouping for transitive duplicates
-- Identical filtering/counting utilities
+**Total: 742 lines.** Both implement identical group-by-key, pairwise comparison, and Union-Find algorithms. Only matching criteria differ.
 
-Only the **matching criteria** differs. **Fix:** Extract `baseDuplicateDetection.ts` with configurable comparator. Saves **~250 lines**.
+**Fix:** Extract `baseDuplicateDetection.ts` with configurable comparator. Saves **~300 lines**.
 
-### 3c. Normalization Inconsistency (Bug)
+### 3c. Normalization Inconsistency (Bug — Confirmed Worse Than Estimated)
 
-Five normalization functions across the codebase, but only one handles Unicode correctly:
+**15 normalize functions** across the codebase. The worst case: `normalizeItemName` is **copied verbatim into 5 separate files**:
+1. `utils/categoryMatcher.ts`
+2. `services/categoryMappingService.ts`
+3. `services/itemNameMappingService.ts`
+4. `services/subcategoryMappingService.ts`
+5. `services/itemDuplicateDetectionService.ts`
 
-```typescript
-// merchantTrustService.ts - CORRECT (handles Spanish accents):
-name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+Plus `normalizeItemNameForGrouping` (6th variant) in `hooks/useItems.ts`.
 
-// categoryMappingService.ts - INCOMPLETE (no Unicode normalization):
-name.toLowerCase().trim().replace(/[^a-z0-9\s]/gi, '').replace(/\s+/g, ' ')
-```
+Unicode handling remains inconsistent — only `merchantTrustService.ts` correctly uses NFD normalization for Spanish accents.
 
-**Impact:** In Spanish (primary language), "Café" and "Cafe" are treated as different merchants in mapping services but correctly deduplicated in trust service. This is a **data consistency bug**.
-
-**Fix:** Single `normalizeForMapping()` in a shared util.
+**Fix:** Single `normalizeForMapping()` in a shared util with proper Unicode support.
 
 ---
 
@@ -246,47 +197,27 @@ name.toLowerCase().trim().replace(/[^a-z0-9\s]/gi, '').replace(/\s+/g, ' ')
 
 ### 4a. Context vs Zustand Overlap
 
-The project declares "Zustand for client state" but has **6 React Contexts** managing client state:
+**5 React Contexts** managing pure client state (Zustand candidates):
 
 | Context | State Type | Should Be |
 |---------|-----------|-----------|
 | `AuthContext` | Auth + Firebase refs | Context OK (provider pattern) |
-| `ThemeContext` | Theme + mode | **Zustand** (pure client state) |
-| `HistoryFiltersContext` | Filter state + dispatch | **Zustand** (pure client state) |
-| `AppStateContext` | View navigation + scan state | **Zustand** (pure client state) |
-| `NotificationContext` | In-app notifications | **Zustand** (pure client state) |
-| `AnalyticsContext` | Temporal/category position | **Zustand** (pure client state) |
+| `ThemeContext` | Theme + mode | **Zustand** |
+| `HistoryFiltersContext` | Filter state + dispatch | **Zustand** |
+| `AppStateContext` | View navigation + scan state | **Zustand** |
+| `NotificationContext` | In-app notifications | **Zustand** |
+| `AnalyticsContext` | Temporal/category position | **Zustand** |
 
-`AuthContext` is correctly a Context (provides Firebase instances down the tree). The other 5 could be Zustand stores, reducing provider nesting and enabling selectors for performance.
+Note: `GroupFilterState` was removed from `HistoryFiltersContext` during shared-groups removal, but the Context itself remains. Additional feature-local contexts (`AnimationContext`, `CategoriesFeature`, `CreditFeature`) are appropriate where they are.
 
-### 4b. Hooks Mixing Client and Server State
+**Current Zustand stores (8):** `useModalStore`, `useScanStore` (946 lines!), `useBatchReviewStore`, `useTransactionEditorStore`, `useNavigationStore`, `useInsightStore`, `useSettingsStore`, plus their selectors.
 
-Several hooks in `src/hooks/` combine client-side UI state with Firestore data fetching in a single hook. ECC convention: separate client state (Zustand) from server state (TanStack Query).
+### 4b-4c. Mixed Hooks and Misplaced Hooks
 
-Examples:
-- `useHistoryFilters.ts` (496 lines) — manages filter UI state AND triggers Firestore queries
-- `useLearningPhases.ts` (507 lines) — tracks UI phase state AND reads/writes Firestore
-- `useActiveTransaction.ts` (480 lines) — manages form state AND persists to Firestore
-
-### 4c. Misplaced Hooks
-
-Hooks in `src/hooks/` that are feature-specific:
-
-| Hook | Feature | Lines |
-|------|---------|-------|
-| `useBatchCapture.ts` | batch-review | 356 |
-| `useBatchProcessing.ts` | batch-review | 365 |
-| `useBatchReview.ts` | batch-review | 478 |
-| `useBatchSession.ts` | batch-review | 82 |
-| `useScanState.ts` | scan | 211 |
-| `useScanOverlayState.ts` | scan | 175 |
-| `useCategoryStatistics.ts` | analytics | 378 |
-| `useAnalyticsTransactions.ts` | analytics | 350 |
-| `useInsightProfile.ts` | insights | 220 |
-| `useInAppNotifications.ts` | insights | 205 |
-| `usePaginatedTransactions.ts` | history | 395 |
-
-These should move into their respective `features/*/hooks/` directories.
+Unchanged from original analysis. Key examples:
+- `useHistoryFilters.ts` (496 lines) — client UI state mixed with Firestore queries
+- `useLearningPhases.ts` (507 lines) — UI phase state mixed with Firestore reads/writes
+- 11+ feature-specific hooks in `src/hooks/` that should be in their feature modules
 
 ---
 
@@ -294,32 +225,22 @@ These should move into their respective `features/*/hooks/` directories.
 
 ### 5a. Feature-Specific Utils in Global Directory
 
-| Util | Only Used By | Lines |
-|------|-------------|-------|
-| `sankeyDataBuilder.ts` | TrendsView/SankeyChart | 1,036 |
-| `chartDataComputation.ts` | TrendsView | ~400 |
-| `chartModeRegistry.ts` | TrendsView | ~300 |
-| `periodComparison.ts` | TrendsView | ~400 |
-| `reportUtils.ts` | ReportsView | 2,401 |
-| `historyFilterUtils.ts` | HistoryView/IconFilterBar | 1,106 |
-| `insightGenerators.ts` | InsightsView | 720 |
-| `csvExport.ts` | Multiple (OK to stay) | 714 |
+Unchanged from original analysis. Key offenders: `sankeyDataBuilder.ts` (1,036 lines), `reportUtils.ts` (2,401 lines), `historyFilterUtils.ts` (1,075 lines).
 
-### 5b. Naming Confusion — Duplicate-Named Files
+### 5b. Naming Confusion — Updated
 
-| File Pair | Issue |
-|-----------|-------|
-| `validation.ts` + `validationUtils.ts` | Two validation files — consolidate |
-| `date.ts` + `dateHelpers.ts` | Two date util files — consolidate |
-| `sharingCooldown.ts` + `userSharingCooldown.ts` | Overlapping cooldown logic |
-| `analyticsHelpers.ts` + `analyticsToHistoryFilters.ts` | Both analytics util files |
+| File Pair | Issue | Status |
+|-----------|-------|--------|
+| `validation.ts` + `validationUtils.ts` | Two validation files | Still exists |
+| `date.ts` + `dateHelpers.ts` | Two date util files | Still exists |
+| ~~`sharingCooldown.ts` + `userSharingCooldown.ts`~~ | ~~Overlapping cooldown~~ | **RESOLVED** — deleted |
+| `analyticsHelpers.ts` + `analyticsToHistoryFilters.ts` | Both analytics util files | Still exists |
 
-### 5c. Data Files Bloating Utils
+### 5c. Data Files
 
-These are **data/config files**, not utilities:
-- `translations.ts` (2,201 lines) — string dictionary, OK but consider splitting by feature
-- `categoryColors.ts` (1,379 lines) — color constants
-- `categoryTranslations.ts` (598 lines) — category name translations
+- `translations.ts` — now 1,707 lines (was 2,201, 560+ group keys removed)
+- `categoryColors.ts` — 1,379 lines (unchanged)
+- `categoryTranslations.ts` — ~598 lines (unchanged)
 
 ---
 
@@ -329,43 +250,43 @@ These are **data/config files**, not utilities:
 
 | Component | Lines | Issue |
 |-----------|-------|-------|
-| `history/IconFilterBar.tsx` | 2,032 | 4 inline dropdowns — extract each |
+| `history/IconFilterBar.tsx` | 1,797 | 3 inline dropdowns — extract each |
 | `analytics/SankeyChart.tsx` | 890 | Inline option building — extract to hook |
 | `analytics/DrillDownGrid.tsx` | 807 | Data computation inline — extract to hook |
 | `reports/ReportDetailOverlay.tsx` | 812 | Print logic inline — extract utility |
-| `scan/QuickSaveCard.tsx` | 674 | Form logic inline — extract to hook |
+| `scan/QuickSaveCard.tsx` | 642 | Form logic inline — extract to hook |
 
-### Shared Components That Aren't Shared
+### Mapping List Components — 4 Near-Identical UI Components (2,238 Lines)
 
-`CategoryMappingsList.tsx`, `MerchantMappingsList.tsx`, `SubcategoryMappingsList.tsx`, `ItemNameMappingsList.tsx` — four **nearly identical list components** (same pattern as the services). These should use a `GenericMappingsList` component.
+| Component | Lines |
+|-----------|-------|
+| `CategoryMappingsList.tsx` | 632 |
+| `SubcategoryMappingsList.tsx` | 581 |
+| `ItemNameMappingsList.tsx` | 551 |
+| `MerchantMappingsList.tsx` | 474 |
+
+Each embeds DeleteConfirmModal (~160 lines) and EditModal (~180 lines) with identical ref management, focus trapping, escape handlers, scroll lock, and theme-aware styling.
+
+**Fix:** Extract generic `MappingsList<T>` + `ConfirmDialog` + `EditDialog`. **~2,238 lines → ~400 lines.**
+
+Note: A `ConfirmationDialog` component already exists in `src/components/batch/ConfirmationDialog.tsx` but is only used by `BatchCaptureUI`. It should be promoted to shared and reused.
+
+### Confirmation Dialogs — Still Fragmented
+
+- `ConfirmationDialog.tsx` exists in `components/batch/` (well-designed, supports destructive variant)
+- `window.confirm()` still used in `useTransactionHandlers.ts` and `TrustedMerchantsList.tsx`
+- Mapping list components each have their own inline modals
+
+**Fix:** Promote `ConfirmationDialog` to `shared/components/`, replace `window.confirm()` and inline modals.
 
 ---
 
 ## Finding 7: Architecture Opportunities (P2)
 
-### 7a. Missing Feature Barrel Exports
-
-Features that exist don't consistently export through barrel files:
-- `features/batch-review/` — has hooks barrel but no top-level barrel
-- `features/scan/` — has component and hook barrels
-- `features/categories/` — minimal
-- `features/credit/` — minimal
-- `features/transaction-editor/` — has views but no hooks/services
-
-### 7b. Query Key Fragmentation
-
-`src/lib/queryKeys.ts` defines keys, but some hooks use inline key strings instead:
-- Inconsistent cache invalidation
-- Harder to trace data dependencies
-
-### 7c. App.tsx God Component
-
-At 2,176 lines, `App.tsx` is the orchestration hub. It's partially decomposed (`useTransactionHandlers`, `useScanHandlers`, etc.) but still does too much:
-- View routing
-- Handler delegation
-- Feature orchestration
-- Provider nesting
-- Service initialization
+Unchanged from original analysis:
+- Missing feature barrel exports
+- Query key fragmentation (inline key strings instead of `queryKeys.ts`)
+- App.tsx at 2,069 lines is still a god component
 
 ---
 
@@ -373,360 +294,97 @@ At 2,176 lines, `App.tsx` is the orchestration hub. It's partially decomposed (`
 
 ### The Problem
 
-**72 files** import directly from `firebase/firestore`. The Firebase SDK is not just the database driver — it's woven into business logic, hooks, and views. This creates:
+**46 files** import directly from `firebase/firestore` (was 72 before shared-groups removal). Still a significant coupling surface:
+- 12 service files, 11 hook files, 8 type files, 6 view files, 4 component files, 3 app-level files, 2 context files
 
-- **Tight coupling**: Every service, hook, and view that touches data knows Firestore internals (collection paths, `serverTimestamp()`, `increment()`, query builders)
-- **Test complexity**: Tests must mock 15+ Firebase SDK functions per test file instead of one repository interface
-- **Migration lock-in**: Moving to any other backend (API layer, Supabase, etc.) requires rewriting all 72 files
-
-### Current Pattern (Direct SDK Coupling)
-
-```typescript
-// firestore.ts — business logic mixed with Firestore SDK
-import { collection, addDoc, serverTimestamp, increment } from 'firebase/firestore';
-
-export async function addTransaction(db: Firestore, userId: string, appId: string, tx) {
-    const periods = tx.date ? computePeriods(tx.date) : undefined;
-    const docRef = await addDoc(
-        collection(db, 'artifacts', appId, 'users', userId, 'transactions'),  // SDK call
-        { ...cleanedTx, createdAt: serverTimestamp(), version: 1, ...periods } // SDK types
-    );
-    return docRef.id;
-}
-```
-
-Every consumer must import Firebase types and pass the `db` instance. The collection path `artifacts/{appId}/users/{userId}/transactions` is hardcoded in 12+ service files (see Finding 9a).
-
-### Proposed Pattern (Repository Interface)
-
-```typescript
-// src/repositories/TransactionRepository.ts — THE CONTRACT (no Firebase imports)
-interface TransactionRepository {
-    add(userId: string, appId: string, tx: CreateTransactionInput): Promise<string>;
-    update(userId: string, appId: string, id: string, data: Partial<Transaction>): Promise<void>;
-    delete(userId: string, appId: string, id: string): Promise<void>;
-    subscribe(userId: string, appId: string, cb: (txs: Transaction[]) => void): Unsubscribe;
-    subscribeRecentScans(userId: string, appId: string, cb: (txs: Transaction[]) => void): Unsubscribe;
-    getPage(userId: string, appId: string, cursor?: string, limit?: number): Promise<TransactionPage>;
-    batchDelete(userId: string, appId: string, ids: string[]): Promise<void>;
-    wipeAll(userId: string, appId: string): Promise<void>;
-}
-```
-
-```typescript
-// src/repositories/firestore/FirestoreTransactionRepository.ts — THE IMPLEMENTATION
-class FirestoreTransactionRepository implements TransactionRepository {
-    constructor(private db: Firestore, private appId: string) {}
-
-    async add(userId, appId, tx) {
-        // Exact same logic from firestore.ts:addTransaction() — just wrapped
-        const cleaned = removeUndefined(tx);
-        const periods = tx.date ? computePeriods(tx.date) : undefined;
-        return (await addDoc(
-            collection(this.db, ...PATHS.transactions(appId, userId)),
-            { ...cleaned, createdAt: serverTimestamp(), version: 1, ...(periods && { periods }) }
-        )).id;
-    }
-}
-```
-
-### What Changes for Consumers
-
-```typescript
-// BEFORE: Hook imports Firebase + service function
-import { subscribeToTransactions } from '@/services/firestore';
-import { Firestore } from 'firebase/firestore';
-
-function useTransactions(db: Firestore, userId: string, appId: string) {
-    // Must know about Firestore type, pass db instance
-    return useFirestoreSubscription(['transactions'], (cb) => subscribeToTransactions(db, userId, appId, cb));
-}
-
-// AFTER: Hook imports repository interface only
-import { useTransactionRepo } from '@/repositories';
-
-function useTransactions(userId: string, appId: string) {
-    const repo = useTransactionRepo(); // Injected via context/factory
-    return useFirestoreSubscription(['transactions'], (cb) => repo.subscribe(userId, appId, cb));
-}
-```
-
-### Repositories Needed
+### Repositories Needed (Updated)
 
 | Repository | Wraps | Current Files |
 |-----------|-------|---------------|
 | `TransactionRepository` | `firestore.ts` (all transaction CRUD + subscriptions) | 1 file, ~470 lines |
 | `MappingRepository<T>` | All 4 mapping services (generic, parameterized) | 4 files → 1 generic |
 | `MerchantTrustRepository` | `merchantTrustService.ts` | 1 file |
-| `UserPreferencesRepository` | `userPreferencesService.ts` | 1 file |
-| `RecordsRepository` | `recordsService.ts` | 1 file |
+| `UserPreferencesRepository` | `userPreferencesService.ts` | 1 file (167 lines, 11 consumers) |
+| `RecordsRepository` | `recordsService.ts` | 1 file (712 lines) |
 | `AirlockRepository` | `airlockService.ts` | 1 file |
 | `InsightProfileRepository` | `insightProfileService.ts` | 1 file |
 
-**Total: ~7 interfaces + 7 Firestore implementations.** The generic `MappingRepository<T>` replaces 4 nearly identical services (see Finding 3a).
+**Total: ~7 interfaces + 7 Firestore implementations.** Same as original estimate.
 
 ### Impact Summary
 
-| Aspect | Without DAL | With DAL |
-|--------|-------------|----------|
-| Firebase SDK imports | 72 files | 7-10 files (repository impls only) |
+| Aspect | Current (46 files) | With DAL (7-10 files) |
+|--------|--------------------|-----------------------|
+| Firebase SDK coupling | 46 files | 7-10 files (repository impls only) |
 | Test mocking | Mock 15+ Firebase functions per test | Mock 1 repository interface |
-| Collection path management | 12 files with hardcoded paths | Centralized in repository impls |
-| Backend migration effort | Touch 72+ files | Implement new repository class |
-| Cost to implement | — | ~1-2 days during Phase 1 refactor |
-| Behavior change | — | None — same code, reorganized |
-
-### Analogy
-
-This is the same pattern as mainframe access methods (VSAM, QSAM, BDAM): one layer owns the I/O contract, consumers just call the interface. The physical storage mechanism (Firestore today, API tomorrow) is an implementation detail hidden behind the contract.
+| Collection path management | 10+ files with hardcoded paths | Centralized in repository impls |
+| Backend migration | Touch 46+ files | Implement new repository class |
 
 ---
 
 ## Finding 9: Scattered Business Logic (P0 - Critical)
 
-### 9a. Firestore Collection Paths — Magic Strings in 12+ Files
+### 9a. Firestore Collection Paths — Magic Strings (Updated)
 
-Every service builds its own collection path with hardcoded template literals:
+**~35 inline path constructions** across 10+ files (was 45+ before shared-groups removal). Shared-groups paths deleted, but all personal-data paths remain hardcoded.
 
-| Service | Path Pattern |
-|---------|-------------|
-| `firestore.ts` (6 locations) | `artifacts/${appId}/users/${userId}/transactions` |
-| `categoryMappingService.ts` | `artifacts/${appId}/users/${userId}/category_mappings` |
-| `merchantMappingService.ts` | `artifacts/${appId}/users/${userId}/merchant_mappings` |
-| `subcategoryMappingService.ts` | `artifacts/${appId}/users/${userId}/subcategory_mappings` |
-| `itemNameMappingService.ts` | `artifacts/${appId}/users/${userId}/item_name_mappings` |
-| `merchantTrustService.ts` | `artifacts/${appId}/users/${userId}/trusted_merchants` |
-| `airlockService.ts` | `artifacts/${appId}/users/${userId}/airlocks` |
-| `recordsService.ts` | `artifacts/${appId}/users/${userId}/personalRecords` |
-| `userPreferencesService.ts` | `artifacts/${appId}/users/${userId}/preferences/settings` |
-| `fcmTokenService.ts` | `artifacts/${appId}/users/${userId}/fcmTokens` |
-| `migrateCreatedAt.ts` | `artifacts/${appId}/users/${userId}/transactions` |
+### 9b. Currency Formatting — Worse Than Estimated
 
-**45+ inline path constructions** across 12 files. A typo in any of these causes a runtime error with no compile-time safety.
+**56 occurrences** of hardcoded `'CLP'` across source files (original estimate was 13+). The constant is defined in at least 4 places: `types/settings.ts`, `userPreferencesService.ts`, `useSettingsStore.ts`, `useUserPreferences.ts`.
 
-**Fix:** Centralize in `src/repositories/paths.ts` (or as part of the DAL):
-```typescript
-export const PATHS = {
-    transactions: (appId: string, userId: string) => ['artifacts', appId, 'users', userId, 'transactions'],
-    mappings: (appId: string, userId: string, type: string) => ['artifacts', appId, 'users', userId, type],
-    // ...
-};
-```
+**Fix:** Single `DEFAULT_CURRENCY` constant + centralized `formatCurrency()`. Audit all 56 occurrences.
 
-### 9b. Currency Formatting — 5 Implementations, 13+ Hardcoded Defaults
+### 9c. Date/Period Calculations
 
-| Location | Implementation | Default |
-|----------|---------------|---------|
-| `utils/currency.ts:16-33` | `Intl.NumberFormat` with cents conversion | `'CLP'` |
-| `types/report.ts:194-196` | `toLocaleString('es-CL')` hardcoded | `'CLP'` |
-| `components/analytics/DrillDownCard.tsx:71` | Local `formatCurrency()` | `'CLP'` |
-| `features/shared-groups/.../SharedGroupTotalCard.tsx:58` | `formatAmount()` | `'CLP'` |
-| `features/shared-groups/.../MemberContributionChart.tsx:77` | `formatAmount()` | `'CLP'` |
+Unchanged — 7+ files with overlapping logic, two different ISO week implementations.
 
-The string `'CLP'` appears as a hardcoded default in **13+ files** instead of coming from a centralized constant or user preference.
+### 9d. Batch Operation Chunking — BUG Still Present
 
-**Fix:** Single `formatCurrency()` in `utils/currency.ts` (already exists but underused). Add `DEFAULT_CURRENCY` constant. Audit all 13+ files to use the centralized version.
+Neither `recordsService.ts` (712 lines) nor `airlockService.ts` implement batch chunking. Both use `writeBatch()` + loop + single `batch.commit()`. No `BATCH_SIZE` constant, no chunking at 500 ops.
 
-### 9c. Date/Period Calculations — 7+ Files with Overlapping Logic
-
-| File | What It Contains |
-|------|-----------------|
-| `utils/date.ts` | `formatDate()` for LatAm/US, quarter/week utilities |
-| `utils/periodUtils.ts` | `computePeriods()`, ISO week calc, date parsing (194 lines) |
-| `utils/dateHelpers.ts` | `getISOWeekNumber()` — **different implementation** from `periodUtils.ts` |
-| `utils/historyFilterUtils.ts:158-200` | `getQuarterFromMonth()`, `getMonthsInQuarter()`, `getWeekOfMonth()` |
-| `types/report.ts:204` | `formatDateRange()` |
-| `utils/csvExport.ts:136` | `formatDateForCSV()` |
-| `utils/reportUtils.ts:1467` | `formatWeekDateRange()` |
-
-ISO week calculation is implemented **twice** with different algorithms (`periodUtils.ts` vs `dateHelpers.ts`). **97+ scattered calls** to `toLocaleDateString` across views with inconsistent locale handling.
-
-**Fix:** Consolidate into `utils/date.ts` (keep one) + `utils/periodUtils.ts` (keep one). Delete `dateHelpers.ts`. Move feature-specific formatters to their feature modules.
-
-### 9d. Batch Operation Chunking — 2 Services Missing Required Safety (BUG)
-
-Per CLAUDE.md security rules: _"Firestore batch operations MUST chunk at 500 ops (silent failure otherwise)."_
-
-| Service | Chunking? | Status |
-|---------|-----------|--------|
-| `firestore.ts` (3 batch operations) | Yes (`BATCH_SIZE = 500`) | OK |
-| `fcmTokenService.ts` | Yes | OK |
-| `migrateCreatedAt.ts` | Yes | OK |
-| **`recordsService.ts:deletePersonalRecords()`** | **No** | **BUG** |
-| **`airlockService.ts:deleteAirlocks()`** | **No** | **BUG** |
-
-Both `recordsService` and `airlockService` call `batch.commit()` without chunking. If a user has >500 records/airlocks, the batch **silently fails** — data appears deleted in the UI but persists in Firestore.
-
-**Fix:** Extract `batchDelete(db, docRefs[])` utility with automatic 500-op chunking. All batch operations use it.
+**This is a security/reliability violation per `.claude/rules/security.md`.**
 
 ### 9e. Transaction Validation — 11+ Files with Scattered Checks
 
-Transaction field validation (`!tx.merchant`, `!tx.category`, `!tx.date`, `!tx.total`) is performed inline in:
-
-- `TransactionEditorViewInternal.tsx` — required field checks
-- `EditView.tsx` — edit validation
-- `historyFilterUtils.ts` — filter null checks
-- `CreditFeature.tsx` — credit calculation guards
-- `BatchReviewCard.tsx` — batch review validation
-- `useCategoryStatistics.ts` — stats aggregation guards
-- `recordsService.ts` — record computation guards
-- `useItems.ts` — item list guards
-- `reportUtils.ts` — report generation guards
-- `chartDataComputation.ts` — chart data guards
-- `insightGenerators.ts` — insight generation guards
-
-No centralized `isValidTransaction()` or schema validator. Each file implements its own subset of checks.
-
-**Fix:** Create `utils/transactionValidation.ts` with `isCompleteTransaction()`, `hasRequiredFields()`, etc. Consider Zod schema for compile-time + runtime validation.
+Unchanged from original analysis.
 
 ### 9f. Error Handling — 37 Files with No Standard Pattern
 
-Toast notifications via `useToast()` hook scattered across **37 files**. No centralized error-to-toast mapping:
-- Some errors show raw exception messages to users
-- Some show hardcoded Spanish strings
-- Some show translation keys
-- Some silently fail (catch block with only `console.error`)
+Unchanged from original analysis.
 
-**Fix:** Create `shared/errors/errorHandler.ts` with error code → user-facing message mapping. Wrap service calls with consistent error boundary.
+### 9g. Input Sanitization
 
-### 9g. Input Sanitization — Centralized but Underused
-
-`sanitizeInput()` exists in `utils/sanitize.ts` (165 lines) with specialized wrappers (`sanitizeMerchantName`, `sanitizeItemName`, `sanitizeLocation`, `sanitizeSubcategory`). However, **only 6 files** use it — mostly in the `shared-groups` feature. The rest of the codebase writes user input directly to Firestore without sanitization.
-
-**Fix:** Audit all user input write paths. Integrate sanitization into the DAL repository layer so it's automatic.
+`sanitizeInput()` exists but is still underused. The shared-groups feature was actually the primary consumer — now even fewer files use it.
 
 ---
 
 ## Finding 10: Additional Repeated Patterns (P1 - High)
 
-### 10a. Mapping List Components — 4 Near-Identical UI Components (~1,600 Lines Duplicated)
+### 10a. Sorting Comparators — Worse Than Estimated
 
-The same UI duplication pattern from Finding 3a (services) repeats at the component layer:
+**132 inline `.sort()` calls across 43 files** (original estimate was 15+ patterns across 40+ files). Top offenders: `reportUtils.ts` (15), `DashboardView.tsx` (11), `TrendsView.tsx` (10), `transactionQuery.ts` (9), `useItems.ts` (9).
 
-| Component | Lines | Identical Elements |
-|-----------|-------|-------------------|
-| `CategoryMappingsList.tsx` | 633 | DeleteModal, EditModal, list rendering, focus mgmt, scroll lock |
-| `MerchantMappingsList.tsx` | 475 | DeleteModal, EditModal, list rendering, focus mgmt, scroll lock |
-| `SubcategoryMappingsList.tsx` | 582 | DeleteModal, EditModal, list rendering, focus mgmt, scroll lock |
-| `ItemNameMappingsList.tsx` | 552 | DeleteModal, EditModal, list rendering, focus mgmt, scroll lock |
+### 10b. Timestamp Conversion — 3 Approaches
 
-Each component embeds a `DeleteConfirmModal` (~160 lines) and `EditModal` (~180 lines) with **identical**:
-- Ref management (`modalRef`, `confirmButtonRef`, `previousActiveElement`)
-- Focus trapping (Tab/Shift+Tab wrapping)
-- Escape key handlers
-- Body scroll lock (`document.body.style.overflow = 'hidden'`)
-- Theme-aware modal styling
-- Backdrop + close button + icon + title + confirm/cancel layout
+Unchanged from original analysis.
 
-**Only variation:** `CategoryMappingsList` uses `<select>` for editing; the other three use `<input>`.
+### 10c. LocalStorage Access — 22 Files
 
-**Fix:** Extract generic `MappingsList<T>` component + `ConfirmDialog` + `EditDialog`. **~1,600 lines → ~300 lines** (companion to the generic `MappingRepository<T>` from Finding 8).
+**22 files** directly access `localStorage` (was 19 estimate). No centralized wrapper. Each reimplements try/catch + JSON.parse. None handle `QuotaExceededError`.
 
-### 10b. Sorting Comparators — 15+ Patterns Across 40+ Files
+### 10d. Number Formatting
 
-Inline `.sort()` calls with duplicated comparator logic across the codebase:
+Unchanged — 22+ files with ad-hoc rounding.
 
-| Pattern | Occurrences | Example |
-|---------|------------|---------|
-| Alphabetical ascending | 9 files | `.sort((a,b) => a.localeCompare(b))` |
-| Reverse chronological | 7 files | `.sort((a,b) => b.localeCompare(a))` for dates |
-| Numeric total descending | 8 files | `.sort((a,b) => b.total - a.total)` |
-| Localized name sort | 5 files | `.sort((a,b) => a.names[lang].localeCompare(b.names[lang], lang))` |
-| Complex multi-field | 6 files | Priority + date + merchant |
+### 10e. Copy-to-Clipboard — Resolved
 
-Files include `transactionQuery.ts`, `historyFilterUtils.ts`, `sankeyDataBuilder.ts`, `csvExport.ts`, `chartDataComputation.ts`, `periodComparison.ts`, `duplicateDetectionService.ts`, `locationService.ts`, `IconFilterBar.tsx`, and 30+ more.
+The 2 shared-groups clipboard implementations (`ShareCodeDisplay`, `InviteMembersDialog`) were deleted. **No `navigator.clipboard` calls remain in `src/`.** This finding is resolved.
 
-**Fix:** Create `utils/comparators.ts` with reusable typed comparators:
-```typescript
-export const byTotalDesc = <T extends { total: number }>(a: T, b: T) => b.total - a.total;
-export const byDateDesc = (a: string, b: string) => b.localeCompare(a);
-export const byLocalized = (lang: string) => (a: string, b: string) => a.localeCompare(b, lang);
-```
-
-### 10c. Timestamp Conversion — 3 Approaches Across 12 Files
-
-Firestore Timestamps are converted to JavaScript Dates using three different methods:
-
-| Approach | Files | Pattern |
-|----------|-------|---------|
-| `Timestamp.toDate()` | `firestore.ts`, `recordsService.ts` | `ts.toDate()` |
-| Manual `seconds * 1000` | `firestore.ts:246-260`, `migrateCreatedAt.ts` | `ts.seconds * 1000 + ts.nanoseconds / 1e6` |
-| String ISO parsing | `recordsService.ts`, `pendingScanStorage.ts` | `new Date(dateStr)` |
-
-The `subscribeToRecentScans` function in [firestore.ts:246-260](src/services/firestore.ts#L246-L260) has a 15-line inline function just to handle the three timestamp formats:
-
-```typescript
-const getTime = (tx: Transaction): number => {
-    const ca = tx.createdAt;
-    if (!ca) return 0;
-    if (typeof ca === 'object' && 'seconds' in ca) return ca.seconds * 1000 + (ca.nanoseconds || 0) / 1e6;
-    return new Date(ca).getTime();
-};
-```
-
-This same polymorphic timestamp handling is needed wherever timestamps appear.
-
-**Fix:** Create `utils/timestampUtils.ts` with `toMillis(value: TimestampLike): number` and `toDate(value: TimestampLike): Date` that handle all three formats.
-
-### 10d. LocalStorage Access — 19 Files with Manual JSON Parse/Stringify
-
-Every file that uses `localStorage` reimplements the same try/catch + `JSON.parse()` pattern:
-
-```typescript
-// Pattern repeated 19 times:
-try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return defaultValue;
-    return JSON.parse(raw);
-} catch { return defaultValue; }
-```
-
-Files include `pendingScanStorage.ts` (3 locations), `locationService.ts` (2), `recordsService.ts` (2), `useSettingsStore.ts`, `useDeepLinkInvitation.ts`, `AuthContext.tsx`, and 10+ more.
-
-Some locations include validation after parsing, others don't. None handle `QuotaExceededError` on writes.
-
-**Fix:** Create `utils/storage.ts` with `getStorageItem<T>(key, defaultValue, validator?)` and `setStorageItem<T>(key, value)` with consistent error handling.
-
-### 10e. Number Formatting (Non-Currency) — 22 Files with Ad-Hoc Rounding
-
-Beyond currency (Finding 9b), percentage and decimal formatting is scattered:
-
-| Pattern | Files | Example |
-|---------|-------|---------|
-| `Math.round(x * 100) / 100` | `csvExport.ts` (4 locations), chart components | Decimal rounding |
-| `.toFixed(1)` then parse | `TrendsView`, chart components | Percentage display |
-| No rounding (raw float) | `reportUtils.ts`, `insightGenerators.ts` | Shows `12.333333%` |
-
-**Fix:** Add `formatDecimal(n, precision)`, `formatPercent(n, decimals)` to `utils/numberFormat.ts`.
-
-### 10f. Confirmation Dialog — No Shared Component
-
-Delete confirmations are implemented **inline** in every component that needs them. Beyond the 4 mapping list components (10a), there are:
-- `window.confirm()` calls in `useTransactionHandlers.ts` and `TrustedMerchantsList.tsx`
-- Custom modal dialogs in group management components
-- Each with its own focus management, escape handler, and backdrop
-
-**Fix:** Extract `shared/components/ConfirmDialog.tsx` with variants (destructive red, warning yellow). Replace all inline implementations.
-
-### 10g. Copy-to-Clipboard — 3 Independent Implementations
-
-Three separate clipboard implementations with different fallback strategies:
-
-| File | Has Fallback | Has Toast | Has Timeout Reset |
-|------|-------------|-----------|-------------------|
-| `ShareCodeDisplay.tsx:67-103` | Yes (textarea) | No | Yes (2s) |
-| `InviteMembersDialog.tsx:116-132` | Yes (textarea, position:fixed) | No | No |
-| `GruposView.tsx` (via analyticsService) | Unknown | Yes | Unknown |
-
-**Fix:** Create `utils/clipboard.ts` with `copyToClipboard(text): Promise<boolean>` including fallback, then use from all locations.
-
-### Already Centralized (No Action Needed)
-
-These patterns were investigated and found to be **already properly centralized**:
+### 10f. Already Centralized (No Action Needed)
 
 | Pattern | Centralized In | Status |
 |---------|---------------|--------|
-| Swipe/gestures | `useSwipeNavigation.ts` (263 lines) | OK |
+| Swipe/gestures | `useSwipeNavigation.ts` | OK |
 | Animation tokens | `components/animation/constants.ts` | OK |
 | Color/theming | CSS variables + ThemeContext | OK |
 | Data export (CSV) | `csvExport.ts` (715 lines, RFC 4180) | OK |
@@ -736,119 +394,179 @@ These patterns were investigated and found to be **already properly centralized*
 
 ---
 
-## Recommended Refactor Roadmap
+## Recommended Refactor Roadmap — Epic 15
 
-### Phase 0: Critical Bugs (Immediate)
+> This roadmap replaces the previous Epic 15 (Advanced Features) definition.
+> Previous Epic 15 stories are deferred to Epic 19 (renumbered).
+
+### Phase 0: Critical Bugs (Immediate — 2 stories, ~3 pts)
 
 | Story | What | Risk | Impact |
 |-------|------|------|--------|
-| **R-0a** | Fix batch chunking in `recordsService.ts` and `airlockService.ts` | Low | Prevents silent data loss |
-| **R-0b** | Audit `sanitizeInput()` coverage — add to all user input write paths | Low | Security hardening |
+| **15-0a** | Fix batch chunking in `recordsService.ts` and `airlockService.ts` | Low | Prevents silent data loss |
+| **15-0b** | Audit `sanitizeInput()` coverage — add to all user input write paths | Low | Security hardening |
 
-### Phase 1: Foundation + DAL (Low Risk, High Impact)
-
-| Story | What | Lines Saved | Unblocks |
-|-------|------|------------|----------|
-| **R-1** | Define repository interfaces (Transaction, Mapping, Trust, Preferences, Records, Airlock, InsightProfile) | — | All subsequent phases |
-| **R-2** | Implement Firestore repository classes (wrap existing service code, no behavior change) | — | Test simplification |
-| **R-3** | Centralize `PATHS` constant (collection path builder) | 45+ inline paths → 1 file | Path safety |
-| **R-4** | Extract `genericMappingService.ts` → generic `MappingRepository<T>` | ~600 | Service consistency |
-| **R-5** | Centralize `normalizeForMapping()` with Unicode NFD support | ~100 + bug fix | Data consistency |
-| **R-6** | Delete dead services (changelog, fcmToken, pushNotifications, transactionQuery) | ~400 | Clarity |
-| **R-7** | Extract `baseDuplicateDetection.ts` | ~250 | Algorithm consistency |
-| **R-8** | Extract `batchOperations.ts` with auto-chunking at 500 ops | ~50 + bug fix | Batch safety |
-
-### Phase 2: Business Logic Centralization (Low Risk, High Impact)
-
-| Story | What | Files Affected | Unblocks |
-|-------|------|---------------|----------|
-| **R-9** | Consolidate currency formatting → single `formatCurrency()` + `DEFAULT_CURRENCY` | 13+ files | Consistency |
-| **R-10** | Consolidate date utilities → merge `date.ts` + `dateHelpers.ts` + `periodUtils.ts` | 7+ files | Remove duplicate ISO week |
-| **R-11** | Create `timestampUtils.ts` — unified `TimestampLike → Date/millis` conversion | 12 files | Timestamp consistency |
-| **R-12** | Create `transactionValidation.ts` with shared validation predicates | 11+ files | Validation consistency |
-| **R-13** | Create `comparators.ts` — reusable typed sort comparators | 40+ files | Sorting consistency |
-| **R-14** | Create `storage.ts` — typed localStorage wrapper with error handling | 19 files | Storage safety |
-| **R-15** | Create `clipboard.ts` — unified copy-to-clipboard with fallback | 4 files | Browser compatibility |
-| **R-16** | Create `numberFormat.ts` — `formatDecimal()`, `formatPercent()` | 22 files | Number consistency |
-| **R-17** | Standardize error handling → error code mapping + toast service | 37 files | UX consistency |
-| **R-18** | Extract `ConfirmDialog` shared component (destructive/warning variants) | 10+ files | Dialog consistency |
-
-### Phase 3: Component Deduplication (Low Risk, High Impact)
+### Phase 1: Foundation — Dead Code + Shared Utilities (Low Risk — 7 stories, ~15 pts)
 
 | Story | What | Lines Saved | Unblocks |
 |-------|------|------------|----------|
-| **R-19** | Extract generic `MappingsList<T>` component (replaces 4 near-identical list components) | ~1,300 | UI consistency |
+| **15-1a** | Delete dead services (fcmToken 410, pushNotifications 182, transactionQuery 601) | ~1,193 | Clarity |
+| **15-1b** | Centralize `PATHS` constant (collection path builder) | 35+ inline paths → 1 file | Path safety |
+| **15-1c** | Extract `genericMappingService.ts` (parameterized by config) | ~580 | Service consistency |
+| **15-1d** | Centralize `normalizeForMapping()` with Unicode NFD support | ~100 + bug fix | Data consistency |
+| **15-1e** | Extract `baseDuplicateDetection.ts` with configurable comparator | ~300 | Algorithm consistency |
+| **15-1f** | Extract `batchOperations.ts` with auto-chunking at 500 ops | ~50 + bug fix | Batch safety |
+| **15-1g** | Consolidate `validation.ts` + `validationUtils.ts` | ~100 | Naming clarity |
 
-### Phase 4: Feature Modules (Medium Risk, High Impact)
+### Phase 2: Business Logic Centralization (Low Risk — 8 stories, ~16 pts)
 
-| Story | What | Files Moved | Unblocks |
-|-------|------|------------|----------|
-| **R-20** | Create `features/analytics/` module | ~15 files | TrendsView refactor |
-| **R-21** | Create `features/history/` module | ~10 files | HistoryView cleanup |
-| **R-22** | Create `features/insights/` module | ~12 files | InsightsView cleanup |
-| **R-23** | Create `features/reports/` module | ~8 files | ReportsView cleanup |
-| **R-24** | Create `features/dashboard/` module | ~5 files | DashboardView refactor |
-| **R-25** | Create `features/settings/` module | ~5 files | SettingsView cleanup |
+| Story | What | Files Affected |
+|-------|------|---------------|
+| **15-2a** | Consolidate currency formatting → `formatCurrency()` + `DEFAULT_CURRENCY` | 56 occurrences |
+| **15-2b** | Consolidate date utilities → merge `date.ts` + `dateHelpers.ts` + `periodUtils.ts` | 7+ files |
+| **15-2c** | Create `timestampUtils.ts` — unified `TimestampLike → Date/millis` | 12 files |
+| **15-2d** | Create `transactionValidation.ts` with shared validation predicates | 11+ files |
+| **15-2e** | Create `comparators.ts` — reusable typed sort comparators | 43 files, 132 calls |
+| **15-2f** | Create `storage.ts` — typed localStorage wrapper with error handling | 22 files |
+| **15-2g** | Create `numberFormat.ts` — `formatDecimal()`, `formatPercent()` | 22 files |
+| **15-2h** | Standardize error handling → error code mapping + toast service | 37 files |
 
-### Phase 5: Mega-View Decomposition (Higher Risk, Critical Impact)
+| **15-2i** | Integrate `errorHandler` into production catch blocks + tighten `classifyError` | 37 files |
+
+#### Phase 2 Code Review Dev Notes (2026-02-09)
+
+The following items were identified during Phase 2 code review and deferred to later phases:
+
+- **15-2e (comparators):** Add `NumericKeys<T>` type constraint for compile-time safety when `byNumberDesc<T>()` is used. Apply when comparators are adopted in mega-views (Phase 5).
+- **15-2g (numberFormat):** `roundTo(1.005, 2)` returns `1` not `1.01` due to IEEE 754 binary representation. Fix with multiply-before-round trick if needed — preserves current behavior, low priority. Apply during Phase 5 decomposition where heavy numeric logic is extracted.
+- **15-2h (errorHandler):** `classifyError()` string matching is too broad for `'storage'` and `'disk'` keywords (false positives possible). Tighten patterns when integrating into production flows (story 15-2i).
+- **Top-5 file migration not done:** TrendsView (10 sorts), DashboardView (11 sorts), reportUtils (14 sorts) were intentionally left unmigrated — these files are scheduled for decomposition in Phase 5 (15-5b, 15-5c) and feature extraction in Phase 4 (15-4d). Migrating now would mean touching files twice.
+
+### Phase 3: Component Deduplication (Low Risk — 2 stories, ~5 pts)
+
+| Story | What | Lines Saved |
+|-------|------|------------|
+| **15-3a** | Promote `ConfirmationDialog` to shared, replace `window.confirm()` + inline modals | ~500 |
+| **15-3b** | Extract generic `MappingsList<T>` component (replaces 4 near-identical lists) | ~1,800 |
+
+### Phase 4: Feature Modules (Medium Risk — 7 stories, ~14 pts)
+
+| Story | What | Files Moved |
+|-------|------|------------|
+| **15-4a** | Create `features/analytics/` module | ~15 files |
+| **15-4b** | Create `features/history/` module | ~10 files |
+| **15-4c** | Create `features/insights/` module | ~12 files |
+| **15-4d** | Create `features/reports/` module | ~8 files |
+| **15-4e** | Create `features/dashboard/` module | ~5 files |
+| **15-4f** | Create `features/settings/` module | ~5 files |
+| **15-4g** | Move feature-specific hooks to their feature modules + barrel exports | ~15 hooks |
+
+> **Dev Note (15-4d):** When creating `features/reports/`, migrate `reportUtils.ts` 14 inline sorts to use `comparators.ts` imports.
+
+### Phase 5: Mega-View Decomposition (Higher Risk — 6 stories, ~18 pts)
 
 | Story | What | Lines Before → After |
 |-------|------|---------------------|
-| **R-26** | Extract shared `categoryAggregation.ts` | ~400 duplicated → 200 shared |
-| **R-27** | Decompose TrendsView.tsx | 5,960 → 800 + sub-files |
-| **R-28** | Decompose DashboardView.tsx | 3,473 → 800 + sub-files |
-| **R-29** | Decompose TransactionEditorViewInternal.tsx | 2,751 → 800 + sub-files |
-| **R-30** | Decompose IconFilterBar.tsx | 2,032 → 200 + dropdown files |
-| **R-31** | Decompose App.tsx (continue pattern) | 2,176 → 800 + feature roots |
+| **15-5a** | Extract shared `categoryAggregation.ts` (TrendsView + DashboardView) | ~400 duplicated → 200 shared |
+| **15-5b** | Decompose TrendsView.tsx | 5,901 → 800 + sub-files |
+| **15-5c** | Decompose DashboardView.tsx | 3,412 → 800 + sub-files |
+| **15-5d** | Decompose TransactionEditorViewInternal.tsx | 2,721 → 800 + sub-files |
+| **15-5e** | Decompose IconFilterBar.tsx | 1,797 → 200 + dropdown files |
+| **15-5f** | Decompose App.tsx | 2,069 → 800 + feature roots |
 
-### Phase 6: State Management Alignment (Medium Risk)
+> **Dev Notes (15-5b, 15-5c):**
+> - Migrate inline sorts to `comparators.ts` during decomposition (TrendsView: 10 sorts, DashboardView: 11 sorts).
+> - Add `NumericKeys<T>` type constraint to comparator generics if type inference is insufficient for extracted sub-components.
+> - Consider `roundTo` IEEE 754 fix (multiply-before-round) if numeric precision surfaces during testing of extracted calculation modules.
+
+### Phase 6: Data Access Layer (Medium Risk — 3 stories, ~8 pts)
 
 | Story | What | Impact |
 |-------|------|--------|
-| **R-32** | Migrate ThemeContext → Zustand store | Reduce provider nesting |
-| **R-33** | Migrate HistoryFiltersContext → Zustand store | Enable selectors |
-| **R-34** | Migrate AppStateContext → Zustand store | Centralize app state |
-| **R-35** | Separate client/server state in mixed hooks | ECC compliance |
+| **15-6a** | Define repository interfaces (7 interfaces: Transaction, Mapping, Trust, Preferences, Records, Airlock, InsightProfile) | Contract definition |
+| **15-6b** | Implement Firestore repository classes (wrap existing services, no behavior change) | 46 → 7-10 Firebase imports |
+| **15-6c** | Migrate consumers to repository pattern (hooks, views) | Test simplification |
 
-### Phase 7: Cleanup (Low Risk)
+### Phase 7: State Management Alignment (Medium Risk — 4 stories, ~8 pts)
 
-| Story | What |
-|-------|------|
-| **R-36** | Consolidate `validation.ts` + `validationUtils.ts` |
-| **R-37** | Move feature-specific hooks to feature modules |
-| **R-38** | Add barrel exports to all features |
-| **R-39** | Audit and consolidate query key usage |
+| Story | What | Impact |
+|-------|------|--------|
+| **15-7a** | Migrate `HistoryFiltersContext` → Zustand store | Enable selectors |
+| **15-7b** | Migrate `AppStateContext` → Zustand store | Centralize app state |
+| **15-7c** | Migrate `ThemeContext` → Zustand store | Reduce provider nesting |
+| **15-7d** | Separate client/server state in mixed hooks | ECC compliance |
+
+> **Dev Notes (15-7b):**
+> - **Toast convergence:** Two independent toast providers exist — `useToast` hook (used by views) and `AppStateContext.toastMessage` (legacy). When migrating `AppStateContext` → Zustand, unify into a single toast store. Both now support `error`/`warning` types with 2x auto-dismiss.
+> - **CSS variable alignment:** Toast error/warning colors are hardcoded hex (`#ef4444`, `#f59e0b`) while success/info use CSS vars (`--primary`, `--accent`). Define `--error` and `--warning` CSS variables in the design system and use them in `Toast.tsx` for theme consistency.
 
 ---
 
-## Impact Assessment
+## Epic 15 Summary
+
+| Phase | Stories | Est. Points | Risk | Dependency |
+|-------|---------|-------------|------|------------|
+| **Phase 0: Bugs** | 2 | 3 | Low | None |
+| **Phase 1: Foundation** | 7 | 15 | Low | None |
+| **Phase 2: Business Logic** | 9 | 19 | Low | Phase 1 |
+| **Phase 3: Components** | 2 | 5 | Low | Phase 1c (generic mapping) |
+| **Phase 4: Feature Modules** | 7 | 14 | Medium | Phase 2 |
+| **Phase 5: Mega-Views** | 6 | 18 | Higher | Phase 4 |
+| **Phase 6: DAL** | 3 | 8 | Medium | Phase 1b (PATHS) |
+| **Phase 7: State Mgmt** | 4 | 8 | Medium | Phase 4 |
+| **Total** | **40** | **~90** | — | — |
+
+### Phase Dependencies (Execution Order)
+
+```
+Phase 0 (bugs) ──────────────────────────────────────────────→ anytime
+Phase 1 (foundation) ──→ Phase 2 (business logic) ──→ Phase 4 (features) ──→ Phase 5 (mega-views)
+Phase 1b (PATHS) ───────────────────────────────────────────→ Phase 6 (DAL)
+Phase 1c (mapping svc) ─→ Phase 3 (components)
+Phase 4 (features) ─────────────────────────────────────────→ Phase 7 (state)
+```
+
+Phases 0, 1, 2, 3 can proceed largely in parallel. Phases 4-7 depend on earlier phases but can overlap where dependencies allow.
+
+### Suggested Sprint Breakdown
+
+| Sprint | Phases | Duration | Focus |
+|--------|--------|----------|-------|
+| Sprint 15.1 | Phase 0 + Phase 1 | 1 week | Bug fixes + dead code + shared utilities |
+| Sprint 15.2 | Phase 2 + Phase 3 | 1 week | Business logic centralization + component dedup |
+| Sprint 15.3 | Phase 4 + Phase 6 | 1-2 weeks | Feature modules + DAL |
+| Sprint 15.4 | Phase 5 + Phase 7 | 2 weeks | Mega-view decomposition + state migration |
+
+---
+
+## Impact Assessment (Current → Target)
 
 | Metric | Current | After Refactor |
 |--------|---------|----------------|
-| Files over 800 lines | 23 | 0 (target) |
+| Files over 800 lines | 14 | 0 (target) |
+| Files over 500 lines | 35 | <10 |
 | Feature modules | 5 | 12+ |
-| Firebase SDK imports | 72 files | 7-10 files (DAL only) |
-| Duplicated service code | ~1,500 lines | ~200 lines |
-| Duplicated UI components | ~1,600 lines (4 mapping lists) | ~300 lines (1 generic) |
-| Dead code | ~400 lines | 0 |
-| Max file size | 5,960 lines | ~800 lines |
-| Normalization consistency | 5 variants (1 correct) | 1 shared function |
-| Currency formatters | 5 implementations | 1 centralized |
+| Firebase SDK imports | 46 files | 7-10 files (DAL only) |
+| Duplicated service code | ~1,570 lines (mapping + detection) | ~250 lines |
+| Duplicated UI components | ~2,238 lines (4 mapping lists) | ~400 lines (1 generic) |
+| Dead code | ~1,193 lines | 0 |
+| Max file size | 5,901 lines | ~800 lines |
+| Normalization functions | 15 (5 copies of `normalizeItemName`) | 1 shared function |
+| Currency formatters | 56 occurrences of hardcoded 'CLP' | 1 centralized constant |
 | Date/period implementations | 7+ files (2 ISO week) | 2 consolidated files |
 | Timestamp conversion | 3 approaches, 12 files | 1 `timestampUtils.ts` |
-| Sorting comparators | 15+ inline patterns, 40+ files | 1 `comparators.ts` |
+| Sorting comparators | 132 inline calls across 43 files | 1 `comparators.ts` |
 | Batch chunking compliance | 5/7 services | 7/7 (all via utility) |
-| Collection path management | 12 files, 45+ inline | 1 centralized `PATHS` |
-| Input sanitization coverage | 6 files | All write paths (via DAL) |
-| LocalStorage access | 19 files, manual JSON parse | 1 `storage.ts` wrapper |
-| Clipboard implementations | 3 independent | 1 `clipboard.ts` utility |
-| Confirmation dialogs | Inline in every component | 1 shared `ConfirmDialog` |
+| Collection path management | 10+ files, ~35 inline | 1 centralized `PATHS` |
+| Input sanitization coverage | <6 files | All write paths (via DAL) |
+| LocalStorage access | 22 files, manual JSON parse | 1 `storage.ts` wrapper |
+| Confirmation dialogs | 6+ implementations (inline + window.confirm) | 1 shared `ConfirmDialog` |
 | Number formatting | 22 files, ad-hoc rounding | 1 `numberFormat.ts` |
-| Context providers (client state) | 6 | 1 (AuthContext) |
-| Zustand stores | 3 | 8+ |
+| Context providers (client state) | 5 | 1 (AuthContext) |
+| Zustand stores | 8 | 12+ |
 | Test mock complexity | 15+ Firebase fns/test | 1 repository interface |
 
-**Total estimated lines saved/consolidated: ~5,000-6,000 lines**
+**Total estimated lines saved/consolidated: ~6,000-8,000 lines**
 
 ---
 
@@ -856,37 +574,41 @@ These patterns were investigated and found to be **already properly centralized*
 
 ### ast-grep (Integrated 2026-02-08)
 
-ast-grep MCP server is configured for this project (`.mcp.json`). It provides AST-based structural code search — critical for Phases 1-4 where we need to find all instances of duplicated patterns before extracting shared utilities.
-
-**Key refactoring queries pre-built in `.claude/skills/ast-grep/SKILL.md`:**
-- Firebase direct imports (72 files) — Phase 1 DAL migration
-- Inline sort comparators (40+ files) — Phase 2 R-13
-- Manual localStorage JSON.parse (19 files) — Phase 2 R-14
-- Batch.commit() without chunking (bug detection) — Phase 0 R-0a
-- Hardcoded 'CLP' currency (13+ files) — Phase 2 R-9
-- Firestore collection path magic strings (45+ locations) — Phase 1 R-3
+ast-grep MCP server configured (`.mcp.json`). Key refactoring queries pre-built in `.claude/skills/ast-grep/SKILL.md`:
+- Firebase direct imports (46 files) — Phase 6 DAL migration
+- Inline sort comparators (43 files) — Phase 2 15-2e
+- Manual localStorage JSON.parse (22 files) — Phase 2 15-2f
+- Batch.commit() without chunking (bug detection) — Phase 0
+- Hardcoded 'CLP' currency (56 occurrences) — Phase 2 15-2a
+- Firestore collection path magic strings (~35 locations) — Phase 1 15-1b
 
 ### code-structure-plugin (Deferred — Install for Phase 5)
 
-[eran-broder/code-structure-plugin](https://github.com/eran-broder/code-structure-plugin) extracts structural skeletons from TypeScript files (function signatures, class hierarchies, interfaces) without reading full implementations. Token-efficient: a 5,960-line file skeleton uses ~200 tokens instead of ~15,000.
-
-**Install when starting Phase 5** (Mega-View Decomposition): Add as Claude Code skill to `.claude/skills/`. Useful for:
-- R-27: TrendsView decomposition planning (114 hooks, 15+ inline components)
-- R-28: DashboardView decomposition (72 hooks)
-- R-29: TransactionEditorViewInternal decomposition (60 hooks)
-- R-30: IconFilterBar decomposition (4 inline dropdowns)
-
-No value in Phases 0-4 where files are smaller and pattern extraction is the primary activity.
+[eran-broder/code-structure-plugin](https://github.com/eran-broder/code-structure-plugin) — token-efficient structural skeletons. Install when starting Phase 5 (Mega-View Decomposition) for:
+- 15-5b: TrendsView decomposition (114 hooks, 15+ inline components)
+- 15-5c: DashboardView decomposition (72 hooks)
+- 15-5d: TransactionEditorViewInternal decomposition (60 hooks)
+- 15-5e: IconFilterBar decomposition (3 inline dropdowns)
 
 ---
 
 ## Risk Notes
 
-1. **TrendsView/DashboardView refactor** is the highest-risk change — they're the most-used views. Requires comprehensive test coverage before touching.
-2. **DAL introduction** (Phase 1) is low risk — wrapping existing code, no behavior change. Can be done incrementally (one repository at a time).
-3. **Business logic centralization** (Phase 2) is low risk — creating shared utilities and migrating callers incrementally. Each story is independent.
-4. **Mapping list component extraction** (Phase 3) is medium risk — 4 components have slight UI variations that need parameterization.
-5. **Feature module creation** (Phase 4) is mostly file moves with import rewiring — lower risk but tedious. Use ast-grep to find all import references before moving, then validate with `npx vitest run` after each move.
-6. **State management migration** (Phase 6) requires careful testing since contexts propagate differently than stores.
-7. **Dead service deletion** should verify via `git log` that these services aren't referenced in Cloud Functions or other non-src code.
+1. **TrendsView/DashboardView refactor** (Phase 5) is highest risk — most-used views, require comprehensive test coverage first.
+2. **DAL introduction** (Phase 6) is medium risk — wrapping existing code with no behavior change. Can be incremental.
+3. **Business logic centralization** (Phase 2) is low risk — creating shared utilities, migrating callers incrementally. Each story independent.
+4. **Mapping list extraction** (Phase 3) is low risk — 4 components with slight UI variations need parameterization.
+5. **Feature module creation** (Phase 4) is mostly file moves with import rewiring — lower risk but tedious. Use ast-grep + `npx vitest run` after each move.
+6. **State management migration** (Phase 7) requires careful testing — contexts propagate differently than stores.
+7. **Dead service deletion** (Phase 1) — `fcmTokenService` and `pushNotifications` verified to have 0 imports in `src/`. Also verify no Cloud Function references before deleting.
 8. **Batch chunking fix** (Phase 0) is critical and should be done immediately — it's a silent data loss bug.
+
+---
+
+## Change Log
+
+| Date | Change |
+|------|--------|
+| 2026-02-07 | Initial analysis created |
+| 2026-02-09 | Updated post shared-groups removal: revised all metrics, removed resolved findings (cooldown utils, dead services already deleted, clipboard, GroupFilterState), updated file counts, restructured roadmap as Epic 15 with story IDs and sprint breakdown, verified dead services with import analysis |
+| 2026-02-09 | Phase 2 code review dev notes: added dev notes to stories 15-4d, 15-5b, 15-5c, 15-7b. Created story 15-2i (errorHandler integration + classifyError tightening). Total: 40 stories, ~90 pts |

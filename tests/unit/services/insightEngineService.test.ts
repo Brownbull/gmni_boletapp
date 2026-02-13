@@ -27,7 +27,7 @@ import {
   getMerchantVisitCount,
   getCategoryTotal,
   getLastWeekTotal,
-} from '../../../src/services/insightEngineService';
+} from '@features/insights/services/insightEngineService';
 import type { Transaction } from '../../../src/types/transaction';
 import type {
   Insight,

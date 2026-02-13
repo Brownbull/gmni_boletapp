@@ -9,7 +9,7 @@
 import React from 'react';
 import { X, Layers, DollarSign, BarChart3, Home } from 'lucide-react';
 import type { Transaction } from '../../types/transaction';
-import type { HistoryNavigationPayload } from '../../utils/analyticsToHistoryFilters';
+import type { HistoryNavigationPayload } from '@features/analytics/utils/analyticsToHistoryFilters';
 
 export interface BatchCompleteModalProps {
   /** List of saved transactions */

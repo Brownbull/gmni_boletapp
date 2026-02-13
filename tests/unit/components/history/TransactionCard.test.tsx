@@ -8,7 +8,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { TransactionCard } from '../../../../src/components/history/TransactionCard';
+import { TransactionCard } from '@features/history/components/TransactionCard';
 
 // ============================================================================
 // Test Fixtures

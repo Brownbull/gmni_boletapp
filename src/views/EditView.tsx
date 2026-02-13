@@ -11,6 +11,7 @@ import { LearnMerchantDialog } from '../components/dialogs/LearnMerchantDialog';
 import { LocationSelect } from '../components/LocationSelect';
 import { DateTimeTag } from '../components/DateTimeTag';
 import { CurrencyTag } from '../components/CurrencyTag';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
 import { StoreTypeSelector } from '../components/StoreTypeSelector';
 import { AdvancedScanOptions } from '../components/AdvancedScanOptions';
 import { celebrateSuccess } from '../utils/confetti';
@@ -90,7 +91,7 @@ interface EditViewProps {
     t: (key: string) => string;
     storeCategories: string[];
     formatCurrency: (amount: number, currency: string) => string;
-    parseStrictNumber: (val: any) => number;
+    parseStrictNumber: (val: unknown) => number;
     onBack: () => void;
     onDelete: (id: string) => void;
     onSave: () => Promise<void>;
@@ -1053,7 +1054,7 @@ export const EditView: React.FC<EditViewProps> = ({
                                 t={t}
                             />
                             <CurrencyTag
-                                currency={currentTransaction.currency || 'CLP'}
+                                currency={currentTransaction.currency || DEFAULT_CURRENCY}
                                 onCurrencyChange={currency => onUpdateTransaction({ ...currentTransaction, currency })}
                                 t={t}
                             />

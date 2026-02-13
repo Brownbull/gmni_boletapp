@@ -117,3 +117,10 @@ docs/archive/
 
 # MCP config (machine-specific paths)
 .mcp.json
+
+# Workflow cost tracking (generated per-environment)
+docs/sprint-artifacts/workflow-costs.csv
+docs/sprint-artifacts/workflow-cost-stats.json
+
+# Generated dependency diagrams
+dependency-diagrams/

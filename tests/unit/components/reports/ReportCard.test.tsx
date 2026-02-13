@@ -9,7 +9,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { ReportCard } from '../../../../src/components/reports/ReportCard';
+import { ReportCard } from '@features/reports/components/ReportCard';
 import type { ReportCard as ReportCardType } from '../../../../src/types/report';
 
 // Mock useReducedMotion hook
@@ -177,7 +177,7 @@ describe('ReportCard', () => {
       }));
 
       const { ReportCard: ReportCardWithReducedMotion } = await import(
-        '../../../../src/components/reports/ReportCard'
+        '@features/reports/components/ReportCard'
       );
 
       render(<ReportCardWithReducedMotion card={mockSummaryCard} />);

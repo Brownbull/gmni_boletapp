@@ -102,11 +102,10 @@ describe('MerchantMappingsList', () => {
         })
 
         it('follows CategoryMappingsList pattern with similar structure (AC #7)', () => {
-            const { container } = render(<MerchantMappingsList {...defaultProps} />)
+            render(<MerchantMappingsList {...defaultProps} />)
 
-            // Component uses div.space-y-0 for list container (not ul/ol with role="list")
-            const listContainer = container.querySelector('.space-y-0')
-            expect(listContainer).toBeInTheDocument()
+            // Generic MappingsList uses role="list" for the list container
+            expect(screen.getByRole('list')).toBeInTheDocument()
         })
     })
 
@@ -149,7 +148,7 @@ describe('MerchantMappingsList', () => {
             const deleteButton = screen.getByLabelText('Delete "Jumbo Supermarket"')
             await userEvent.click(deleteButton)
 
-            expect(screen.getByRole('alertdialog')).toBeInTheDocument()
+            expect(screen.getByTestId('confirmation-dialog')).toBeInTheDocument()
             expect(screen.getByText('Remove this learned merchant?')).toBeInTheDocument()
         })
 
@@ -185,7 +184,7 @@ describe('MerchantMappingsList', () => {
             const cancelButton = screen.getByText('Cancel')
             await userEvent.click(cancelButton)
 
-            expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+            expect(screen.queryByTestId('confirmation-dialog')).not.toBeInTheDocument()
         })
 
         it('closes confirmation dialog when Escape is pressed', async () => {
@@ -194,11 +193,11 @@ describe('MerchantMappingsList', () => {
             const deleteButton = screen.getByLabelText('Delete "Jumbo Supermarket"')
             await userEvent.click(deleteButton)
 
-            expect(screen.getByRole('alertdialog')).toBeInTheDocument()
+            expect(screen.getByTestId('confirmation-dialog')).toBeInTheDocument()
 
             await userEvent.keyboard('{Escape}')
 
-            expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+            expect(screen.queryByTestId('confirmation-dialog')).not.toBeInTheDocument()
         })
     })
 
@@ -355,17 +354,19 @@ describe('MerchantMappingsList', () => {
 
     describe('Theme Support', () => {
         it('renders correctly in light theme', () => {
-            const { container } = render(<MerchantMappingsList {...defaultProps} theme="light" />)
+            render(<MerchantMappingsList {...defaultProps} theme="light" />)
 
-            // Component renders with light theme styling
-            expect(container.querySelector('.space-y-0')).toBeInTheDocument()
+            // Component renders with list structure
+            expect(screen.getByRole('list')).toBeInTheDocument()
+            expect(screen.getByText('"Jumbo Supermarket"')).toBeInTheDocument()
         })
 
         it('renders correctly in dark theme', () => {
-            const { container } = render(<MerchantMappingsList {...defaultProps} theme="dark" />)
+            render(<MerchantMappingsList {...defaultProps} theme="dark" />)
 
-            // Component renders with dark theme styling
-            expect(container.querySelector('.space-y-0')).toBeInTheDocument()
+            // Component renders with list structure
+            expect(screen.getByRole('list')).toBeInTheDocument()
+            expect(screen.getByText('"Jumbo Supermarket"')).toBeInTheDocument()
         })
     })
 

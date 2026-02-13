@@ -12,9 +12,9 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { SettingsMenuItem } from '../../../../src/components/settings/SettingsMenuItem';
-import { SettingsBackHeader } from '../../../../src/components/settings/SettingsBackHeader';
-import { SettingsSelect, SelectOption } from '../../../../src/components/settings/SettingsSelect';
+import { SettingsMenuItem } from '@features/settings/components/SettingsMenuItem';
+import { SettingsBackHeader } from '@features/settings/components/SettingsBackHeader';
+import { SettingsSelect, SelectOption } from '@features/settings/components/SettingsSelect';
 
 // =============================================================================
 // SettingsMenuItem Tests (5 tests)

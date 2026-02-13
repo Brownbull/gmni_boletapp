@@ -28,7 +28,7 @@ vi.mock('../../../src/hooks/useAuth', () => ({
 }));
 
 // Mock the insight service
-vi.mock('../../../src/services/insightEngineService', () => ({
+vi.mock('@features/insights/services/insightEngineService', () => ({
   getUserInsightProfile: vi.fn(),
   getLocalCache: vi.fn(() => ({
     weekdayScanCount: 0,
@@ -41,7 +41,7 @@ vi.mock('../../../src/services/insightEngineService', () => ({
 }));
 
 // Mock the insight profile hook
-vi.mock('../../../src/hooks/useInsightProfile', () => ({
+vi.mock('@features/insights/hooks/useInsightProfile', () => ({
   useInsightProfile: vi.fn(() => ({
     profile: null,
     cache: {
@@ -71,7 +71,7 @@ vi.mock('../../../src/shared/stores/useNavigationStore', () => ({
 }));
 
 import { useAuth } from '../../../src/hooks/useAuth';
-import { getUserInsightProfile } from '../../../src/services/insightEngineService';
+import { getUserInsightProfile } from '@features/insights/services/insightEngineService';
 
 
 const mockUser = { uid: 'test-user-id' };

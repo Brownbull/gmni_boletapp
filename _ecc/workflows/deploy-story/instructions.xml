@@ -8,6 +8,41 @@
   <critical>NEVER use `git merge` to merge into protected branches - use `gh pr merge` instead</critical>
   <critical>Pre-deployment validation is REQUIRED before production deployment</critical>
 
+  <step n="0" goal="Firebase MCP pre-flight check">
+    <critical>Firebase MCP tools are needed for post-deployment verification (rules, functions, logs).
+      Check if Firebase MCP is enabled before starting the deployment pipeline.</critical>
+
+    <action>Read {project-root}/.mcp.json</action>
+    <action>Check if mcpServers.firebase.disabled == true</action>
+
+    <check if="firebase.disabled is true">
+      <output>**FIREBASE MCP DISABLED**
+
+        The Firebase MCP server is disabled in `.mcp.json`.
+        It is needed for post-deployment verification (security rules, function logs, etc.).
+
+        To enable it:
+        1. Set `"disabled": false` in `.mcp.json` under `mcpServers.firebase`
+        2. Restart the Claude Code session for MCP changes to take effect
+
+        The `firebase deploy` CLI command will work either way, but you will not
+        have access to Firebase MCP tools for verification after deployment.</output>
+      <ask>Continue deployment without Firebase MCP tools? [Y/N]</ask>
+      <check if="user says N">
+        <action>Update {project-root}/.mcp.json: set mcpServers.firebase.disabled = false</action>
+        <output>Firebase MCP enabled in `.mcp.json`. **Please restart the session** and re-run `/deploy-story`.</output>
+        <action>EXIT workflow</action>
+      </check>
+      <check if="user says Y">
+        <output>Proceeding without Firebase MCP tools. Post-deployment verification will be limited to CLI.</output>
+      </check>
+    </check>
+
+    <check if="firebase.disabled is false or firebase entry not found">
+      <output>Firebase MCP: available</output>
+    </check>
+  </step>
+
   <step n="1" goal="Verify story is ready for deployment">
     <action>If {{story_path}} not provided, ask user which story to deploy</action>
     <action>Read COMPLETE story file</action>
@@ -376,7 +411,8 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"`</action>
       {{#if deploy_targets}}- Verify backend in Firebase Console (functions list, rules, indexes)
       - Update `docs/firebase/DEPLOYMENT-MANIFEST.md` parity table{{/if}}
       - Run `/sprint-status` to see sprint progress
-      - Continue with next story via `/ecc-create-story`</output>
+      - Continue with next story via `/ecc-create-story`
+      - **Disable Firebase MCP** when done: set `"disabled": true` in `.mcp.json` to free ~5.7k context tokens</output>
   </step>
 
 </workflow>

@@ -10,7 +10,7 @@
  *
  * Pattern matches IconFilterBar from HistoryView but simplified for item-specific filters.
  *
- * @see src/components/history/IconFilterBar.tsx - Reference implementation
+ * @see src/features/history/components/IconFilterBar.tsx - Reference implementation
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';

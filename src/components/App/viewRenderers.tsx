@@ -47,7 +47,8 @@ import { BatchReviewView } from '../../views/BatchReviewView';
 
 // Providers (view-scoped - NOT moved to AppProviders to prevent unnecessary re-renders)
 import { AnalyticsProvider } from '../../contexts/AnalyticsContext';
-import { HistoryFiltersProvider, type HistoryFilterState } from '../../contexts/HistoryFiltersContext';
+import { HistoryFiltersProvider } from '../../contexts/HistoryFiltersContext';
+import type { HistoryFilterState } from '@/types/historyFilters';
 
 // View type for switch
 import type { View } from './types';

@@ -10,7 +10,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { TotalDisplay } from '../../../src/components/analytics/TotalDisplay';
+import { TotalDisplay } from '@features/analytics/components/TotalDisplay';
 
 // ============================================================================
 // AC #9: Chart displays total amount

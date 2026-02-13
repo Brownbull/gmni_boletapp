@@ -1,6 +1,12 @@
 import { getCurrency } from '../../shared/schema/currencies';
 
 /**
+ * Default currency for the application (Chilean Pesos).
+ * Use this instead of hardcoding 'CLP' in fallbacks and prop defaults.
+ */
+export const DEFAULT_CURRENCY = 'CLP';
+
+/**
  * Format a currency amount for display.
  *
  * IMPORTANT: Amounts are stored as integers:

@@ -20,6 +20,7 @@
 import React, { useState } from 'react';
 import { CheckCircle2, Trash2, Loader2 } from 'lucide-react';
 import { TrustedMerchant } from '../types/trust';
+import { ConfirmationDialog } from './shared/ConfirmationDialog';
 
 export interface TrustedMerchantsListProps {
     /** List of trusted merchants */
@@ -43,14 +44,17 @@ export const TrustedMerchantsList: React.FC<TrustedMerchantsListProps> = ({
 }) => {
     const isDark = theme === 'dark';
     const [revokingId, setRevokingId] = useState<string | null>(null);
+    const [revokeTarget, setRevokeTarget] = useState<TrustedMerchant | null>(null);
 
-    const handleRevoke = async (merchant: TrustedMerchant) => {
+    const handleRevokeClick = (merchant: TrustedMerchant) => {
         if (revokingId) return; // Already revoking
+        setRevokeTarget(merchant);
+    };
 
-        // Confirmation dialog (AC #7)
-        if (!window.confirm(t('removeTrustConfirm'))) {
-            return;
-        }
+    const handleConfirmRevoke = async () => {
+        if (!revokeTarget) return;
+        const merchant = revokeTarget;
+        setRevokeTarget(null);
 
         setRevokingId(merchant.id || merchant.normalizedName);
         try {
@@ -98,6 +102,7 @@ export const TrustedMerchantsList: React.FC<TrustedMerchantsListProps> = ({
     }
 
     return (
+        <>
         <div role="list" aria-label={t('trustedMerchants')}>
             {trustedOnly.map((merchant, index) => {
                 const merchantId = merchant.id || merchant.normalizedName;
@@ -144,7 +149,7 @@ export const TrustedMerchantsList: React.FC<TrustedMerchantsListProps> = ({
                         {/* Delete/Revoke button - red per mockup */}
                         <div className="flex items-center gap-2 flex-shrink-0">
                             <button
-                                onClick={() => handleRevoke(merchant)}
+                                onClick={() => handleRevokeClick(merchant)}
                                 disabled={isRevoking}
                                 className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
                                 style={{
@@ -166,6 +171,19 @@ export const TrustedMerchantsList: React.FC<TrustedMerchantsListProps> = ({
                 );
             })}
         </div>
+
+        <ConfirmationDialog
+            isOpen={!!revokeTarget}
+            title={t('removeTrust')}
+            message={`${t('removeTrustConfirm')} "${revokeTarget?.merchantName || ''}"`}
+            confirmText={t('confirm')}
+            cancelText={t('cancel')}
+            theme={theme}
+            onConfirm={handleConfirmRevoke}
+            onCancel={() => setRevokeTarget(null)}
+            isDestructive
+        />
+        </>
     );
 };
 

@@ -24,6 +24,7 @@ import { X, TrendingUp, Camera, History, Sparkles } from 'lucide-react';
 import { DURATION, EASING } from '../animation/constants';
 import { TranslationKey } from '../../utils/translations';
 import { useSessionContext, useInsightActions } from '@/shared/stores';
+import { formatCurrency } from '@/utils/currency';
 
 /**
  * Session context for message selection and summary display
@@ -143,17 +144,6 @@ export function getSuggestions(
   return suggestions.slice(0, 2); // Max 2 suggestions
 }
 
-/**
- * Formats currency for display
- */
-function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat('es-CL', {
-    style: 'currency',
-    currency: currency || 'CLP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 /**
  * SessionComplete Component

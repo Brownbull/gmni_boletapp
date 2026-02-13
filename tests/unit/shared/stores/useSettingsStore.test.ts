@@ -37,7 +37,7 @@ vi.mock('zustand/middleware', async (importOriginal) => {
 import {
   useSettingsStore,
   defaultSettingsState,
-  useTheme,
+  useThemeMode,
   useColorTheme,
   useFontColorMode,
   useFontSize,
@@ -71,6 +71,7 @@ function getStateOnly() {
     colorTheme: state.colorTheme,
     fontColorMode: state.fontColorMode,
     fontSize: state.fontSize,
+    fontFamily: state.fontFamily,
     // Story 14e-35: Locale settings
     lang: state.lang,
     currency: state.currency,
@@ -109,6 +110,7 @@ describe('useSettingsStore', () => {
         colorTheme: 'mono',
         fontColorMode: 'colorful',
         fontSize: 'small',
+        fontFamily: 'outfit',
         // Story 14e-35: Locale defaults (target market: Chile)
         lang: 'es',
         currency: 'CLP',
@@ -122,6 +124,7 @@ describe('useSettingsStore', () => {
         colorTheme: 'mono',
         fontColorMode: 'colorful',
         fontSize: 'small',
+        fontFamily: 'outfit',
         // Story 14e-35: Locale defaults
         lang: 'es',
         currency: 'CLP',
@@ -323,10 +326,10 @@ describe('useSettingsStore', () => {
   // ===========================================================================
 
   describe('Selectors', () => {
-    it('useTheme should return current theme', () => {
+    it('useThemeMode should return current theme', () => {
       useSettingsStore.setState({ theme: 'dark' });
 
-      const { result } = renderHook(() => useTheme());
+      const { result } = renderHook(() => useThemeMode());
 
       expect(result.current).toBe('dark');
     });
@@ -507,6 +510,7 @@ describe('useSettingsStore', () => {
         colorTheme: 'professional',
         fontColorMode: 'plain',
         fontSize: 'normal',
+        fontFamily: 'outfit',
         // Story 14e-35: Locale state
         lang: 'en',
         currency: 'USD',

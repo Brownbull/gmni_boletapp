@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { SankeyIconNode } from '../../../../src/components/analytics/SankeyIconNode';
+import { SankeyIconNode } from '@features/analytics/components/SankeyIconNode';
 
 describe('SankeyIconNode', () => {
     const defaultProps = {

@@ -17,8 +17,9 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { Transaction } from '../types/transaction';
+import { toMillis, toDateSafe } from '@/utils/timestamp';
 import { TransactionCard } from '../components/transactions';
-import { SelectionBar } from '../components/history/SelectionBar';
+import { SelectionBar } from '@features/history/components/SelectionBar';
 import { useSelectionMode } from '../hooks/useSelectionMode';
 
 // ============================================================================
@@ -65,47 +66,19 @@ type PageSize = typeof PAGE_SIZES[number];
 
 /**
  * Sort transactions by createdAt (scan date) descending.
- * Handles both Firestore Timestamp objects and plain {seconds, nanoseconds} objects.
  */
 function sortByCreatedAtDesc(transactions: Transaction[]): Transaction[] {
-    return [...transactions].sort((a, b) => {
-        const getTime = (tx: Transaction): number => {
-            const ca = tx.createdAt;
-            if (!ca) return 0;
-            // Handle Firestore Timestamp (has .toDate() method)
-            if (typeof ca === 'object' && ca !== null && 'toDate' in ca && typeof (ca as { toDate: unknown }).toDate === 'function') {
-                return (ca as { toDate: () => Date }).toDate().getTime();
-            }
-            // Handle Firestore Timestamp serialized as {seconds, nanoseconds}
-            if (typeof ca === 'object' && ca !== null && 'seconds' in ca) {
-                const ts = ca as { seconds: number; nanoseconds?: number };
-                return ts.seconds * 1000 + (ts.nanoseconds || 0) / 1000000;
-            }
-            // Handle Date objects
-            if (ca instanceof Date) {
-                return ca.getTime();
-            }
-            // Fallback to Date parsing for ISO strings
-            return new Date(ca as string).getTime();
-        };
-        return getTime(b) - getTime(a); // Descending order (newest first)
-    });
+    return [...transactions].sort((a, b) =>
+        toMillis(b.createdAt) - toMillis(a.createdAt)
+    );
 }
 
 /**
  * Format createdAt timestamp for display.
  */
 function formatCreatedAt(createdAt: any, lang: 'en' | 'es' = 'es'): string {
-    if (!createdAt) return '';
-
-    let date: Date;
-    if (typeof createdAt.toDate === 'function') {
-        date = createdAt.toDate();
-    } else if (typeof createdAt === 'object' && 'seconds' in createdAt) {
-        date = new Date(createdAt.seconds * 1000);
-    } else {
-        date = new Date(createdAt);
-    }
+    const date = toDateSafe(createdAt);
+    if (!date) return '';
 
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();

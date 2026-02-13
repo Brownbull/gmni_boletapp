@@ -15,8 +15,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import React from 'react';
-import { InsightCard } from '../../../../src/components/insights/InsightCard';
-import { BuildingProfileCard } from '../../../../src/components/insights/BuildingProfileCard';
+import { InsightCard } from '@features/insights/components/InsightCard';
+import { BuildingProfileCard } from '@features/insights/components/BuildingProfileCard';
 import { Insight } from '../../../../src/types/insight';
 
 // ============================================================================

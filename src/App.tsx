@@ -31,7 +31,7 @@ import { migrateCreatedAt } from './utils/migrateCreatedAt';
 import { useRecentScans } from './hooks/useRecentScans';
 import { usePaginatedTransactions } from './hooks/usePaginatedTransactions';
 import { CategoriesFeature } from '@features/categories';
-import { useToast } from '@/shared/hooks';
+import { useToast, type ToastMessage } from '@/shared/hooks';
 import { Toast } from '@/shared/ui';
 import {
     useSettingsStore,
@@ -59,7 +59,7 @@ import { useTrustedMerchants } from './hooks/useTrustedMerchants';
 import { useUserPreferences } from './hooks/useUserPreferences';
 import { useUserCredits } from './hooks/useUserCredits';
 import { useReducedMotion } from './hooks/useReducedMotion';
-import { useInsightProfile } from './hooks/useInsightProfile';
+import { useInsightProfile } from '@features/insights/hooks/useInsightProfile';
 import { useBatchSession } from './hooks/useBatchSession';
 import { usePersonalRecords } from './hooks/usePersonalRecords';
 import { useInAppNotifications } from './hooks/useInAppNotifications';
@@ -107,9 +107,10 @@ import {
     useEditorMode,
     useTransactionEditorActions,
 } from '@features/transaction-editor';
-import { getQuarterFromMonth } from './utils/analyticsHelpers';
-import { HistoryFiltersProvider, type HistoryFilterState, type TemporalFilterState } from './contexts/HistoryFiltersContext';
-import type { HistoryNavigationPayload } from './utils/analyticsToHistoryFilters';
+import { getQuarterFromMonth } from '@features/analytics/utils/analyticsHelpers';
+import { HistoryFiltersProvider } from './contexts/HistoryFiltersContext';
+import type { HistoryFilterState, TemporalFilterState } from '@/types/historyFilters';
+import type { HistoryNavigationPayload } from '@features/analytics/utils/analyticsToHistoryFilters';
 import { analyzeReceipt, ReceiptType } from './services/gemini';
 import { SupportedCurrency } from './services/userPreferencesService';
 import { addTransaction as firestoreAddTransaction } from './services/firestore';
@@ -120,7 +121,7 @@ import {
     isInsightsSilenced,
     getLastWeekTotal,
     setLocalCache,
-} from './services/insightEngineService';
+} from '@features/insights/services/insightEngineService';
 import { Transaction } from './types/transaction';
 import { Insight } from './types/insight';
 import {
@@ -129,7 +130,7 @@ import {
     clearPersistedScanState,
     clearLegacyBatchStorage,
 } from './services/pendingScanStorage';
-import { formatCurrency } from './utils/currency';
+import { formatCurrency, DEFAULT_CURRENCY } from './utils/currency';
 import { formatDate } from './utils/date';
 import { getSafeDate } from './utils/validation';
 import { TRANSLATIONS } from './utils/translations';
@@ -140,6 +141,7 @@ import {
     type ItemCategoryGroup,
 } from './config/categoryColors';
 import { applyCategoryMappings } from './utils/categoryMatcher';
+import { classifyError, getErrorInfo } from './utils/errorHandler';
 import { incrementMappingUsage } from './services/categoryMappingService';
 import { incrementMerchantMappingUsage } from './services/merchantMappingService';
 import { incrementItemNameMappingUsage } from './services/itemNameMappingService';
@@ -346,7 +348,7 @@ function App() {
     }, [setScanContextStoreType]);
 
     // scanCurrency wrapper
-    const scanCurrency = (scanState.currency || 'CLP') as SupportedCurrency;
+    const scanCurrency = (scanState.currency || DEFAULT_CURRENCY) as SupportedCurrency;
     const setScanCurrency = useCallback((currency: SupportedCurrency) => {
         setScanContextCurrency(currency);
     }, [setScanContextCurrency]);
@@ -484,7 +486,7 @@ function App() {
             items: [],
             country: defaultCountry,
             city: defaultCity,
-            currency: userPreferences.defaultCurrency || 'CLP',
+            currency: userPreferences.defaultCurrency || DEFAULT_CURRENCY,
         };
 
         return baseTransaction;
@@ -494,7 +496,7 @@ function App() {
     const [wiping, _setWiping] = useState(false);
     const [exporting, _setExporting] = useState(false);
     const { toastMessage, showToast, dismissToast } = useToast();
-    const setToastMessage = useCallback((msg: { text: string; type: 'success' | 'info' } | null) => {
+    const setToastMessage = useCallback((msg: ToastMessage | null) => {
         if (msg) {
             showToast(msg.text, msg.type);
         } else {
@@ -509,6 +511,15 @@ function App() {
     }, []);
     const mainRef = useRef<HTMLDivElement>(null);
     const t = (k: string) => (TRANSLATIONS[lang] as any)[k] || k;
+
+    // Batch delete wrapper: surfaces partial-failure via toast (Story 15-TD-12)
+    const handleDeleteAllInAppNotifications = useCallback(async () => {
+        const result = await deleteAllInAppNotifications();
+        if (result && result.failedBatches > 0) {
+            showToast(t('batchPartialFailure'), 'warning');
+        }
+        return result;
+    }, [deleteAllInAppNotifications, showToast, t]);
 
     // Transaction handlers (save, delete, wipe, export)
     const {
@@ -1018,7 +1029,7 @@ function App() {
             user: {
                 userId: user?.uid || '',
                 creditsRemaining: userCredits.remaining,
-                defaultCurrency: userPreferences.defaultCurrency || 'CLP',
+                defaultCurrency: userPreferences.defaultCurrency || DEFAULT_CURRENCY,
                 transactions,
             },
             mapping: {
@@ -1200,7 +1211,7 @@ function App() {
         currentTransaction,
         createDefaultTransaction,
         // User preferences
-        defaultCurrency: userPreferences.defaultCurrency || 'CLP',
+        defaultCurrency: userPreferences.defaultCurrency || DEFAULT_CURRENCY,
         userCredits,
         lang: lang as 'en' | 'es',
         // Actions
@@ -1549,7 +1560,7 @@ function App() {
                     formatCurrency,
                     userDefaultCountry: defaultCountry,
                     // Story 14e-23a: Currency/Total mismatch dialog props (migrated from AppOverlays)
-                    userCurrency: userPreferences.defaultCurrency || 'CLP',
+                    userCurrency: userPreferences.defaultCurrency || DEFAULT_CURRENCY,
                     onCurrencyUseDetected: handleCurrencyUseDetected,
                     onCurrencyUseDefault: handleCurrencyUseDefault,
                     onCurrencyMismatchCancel: handleCurrencyMismatchCancel,
@@ -1660,7 +1671,7 @@ function App() {
                 {/* Story 14e-22: AppProviders consolidates app-level providers.
                   * Story 14e-25d: ViewHandlersProvider removed - views use direct hooks.
                   * Story 14e-45: NavigationProvider removed - navigation via useNavigationStore.
-                  * Includes ThemeProvider, AppStateProvider, NotificationProvider.
+                  * Includes NotificationProvider (ThemeProvider/AppStateProvider removed in 15-7b/15-7c).
                   */}
                 <AppProviders
                     fontFamily={userPreferences?.fontFamily}
@@ -1767,7 +1778,8 @@ function App() {
                                 // Restore credit on complete batch failure
                                 console.error('Batch processing failed:', e);
                                 await addUserSuperCredits(1);
-                                setToastMessage({ text: t('scanFailedCreditRefunded'), type: 'info' });
+                                const errorInfo = getErrorInfo(classifyError(e));
+                                setToastMessage({ text: t('scanFailedCreditRefunded'), type: errorInfo.toastType });
                             }
                         }}
                         onSwitchToIndividual={() => {
@@ -1881,7 +1893,7 @@ function App() {
                     markNotificationAsRead,
                     markAllNotificationsAsRead,
                     deleteInAppNotification,
-                    deleteAllInAppNotifications,
+                    deleteAllInAppNotifications: handleDeleteAllInAppNotifications,
                 })}
 
                 {/* Statement Scan Placeholder View */}

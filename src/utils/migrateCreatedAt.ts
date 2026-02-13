@@ -2,6 +2,7 @@
  * Migration Utility: Standardize createdAt field
  *
  * Story 14.31: Fix inconsistent createdAt formats in transactions collection.
+ * Story 15-TD-12: Migrated to centralized batchWrite from firestoreBatch.ts.
  *
  * Problem:
  * - Some transactions have Firestore Timestamp (correct)
@@ -21,34 +22,26 @@ import {
     Firestore,
     collection,
     getDocs,
-    writeBatch,
     Timestamp,
     doc,
 } from 'firebase/firestore';
+import { isFirestoreTimestamp } from '@/utils/timestamp';
+import { batchWrite } from '@/lib/firestoreBatch';
+import { transactionsPath, transactionDocSegments } from '@/lib/firestorePaths';
 
 interface TransactionDoc {
     id: string;
     date?: string;
-    createdAt?: any;
+    createdAt?: unknown;
     merchant?: string;
 }
 
-/**
- * Check if a value is a valid Firestore Timestamp
- */
-function isValidTimestamp(value: any): boolean {
-    if (!value) return false;
-    // Firestore Timestamp has seconds and nanoseconds as numbers
-    if (typeof value === 'object' &&
-        typeof value.seconds === 'number' &&
-        typeof value.nanoseconds === 'number') {
-        return true;
-    }
-    // Also check for toDate method (Timestamp instance)
-    if (value && typeof value.toDate === 'function') {
-        return true;
-    }
-    return false;
+interface DocToFix {
+    docId: string;
+    merchant: string;
+    oldValue: unknown;
+    newCreatedAt: Timestamp;
+    dateUsed: string;
 }
 
 /**
@@ -71,6 +64,8 @@ export interface MigrationResult {
  * Migrate all transactions for a user to have valid createdAt timestamps.
  * For transactions with invalid/missing createdAt, sets it to the transaction date.
  *
+ * Uses centralized batchWrite for auto-chunking at 500 ops with retry/backoff.
+ *
  * @param db - Firestore instance
  * @param userId - User ID
  * @param appId - App ID
@@ -83,9 +78,10 @@ export async function migrateCreatedAt(
     appId: string,
     dryRun: boolean = false
 ): Promise<MigrationResult> {
-    const collectionPath = `artifacts/${appId}/users/${userId}/transactions`;
-    const collectionRef = collection(db, 'artifacts', appId, 'users', userId, 'transactions');
+    const collectionPath = transactionsPath(appId, userId);
+    const collectionRef = collection(db, collectionPath);
 
+    /* eslint-disable no-console */
     console.log(`[migrateCreatedAt] Starting migration for: ${collectionPath}`);
     console.log(`[migrateCreatedAt] Dry run: ${dryRun}`);
 
@@ -99,77 +95,77 @@ export async function migrateCreatedAt(
         errors: [],
     };
 
-    const batch = writeBatch(db);
-    let batchCount = 0;
-    const BATCH_SIZE = 500; // Firestore batch limit
-
-    const toFix: Array<{ id: string; merchant: string; oldValue: any; newValue: string }> = [];
+    // Pass 1: Identify documents that need fixing
+    const docsToFix: DocToFix[] = [];
 
     for (const docSnapshot of snapshot.docs) {
         const data = docSnapshot.data() as TransactionDoc;
         const { createdAt, date, merchant } = data;
 
-        // Check if createdAt needs fixing
-        if (isValidTimestamp(createdAt)) {
+        if (isFirestoreTimestamp(createdAt)) {
             result.skipped++;
             continue;
         }
 
-        // Need to fix this document
         let newCreatedAt: Timestamp;
         let dateUsed: string;
 
         if (date && typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
-            // Use transaction date
             newCreatedAt = dateStringToTimestamp(date);
             dateUsed = date;
         } else {
-            // No valid date, use current time as fallback
             newCreatedAt = Timestamp.now();
             dateUsed = 'now()';
         }
 
-        toFix.push({
-            id: docSnapshot.id,
+        docsToFix.push({
+            docId: docSnapshot.id,
             merchant: merchant || 'Unknown',
             oldValue: createdAt,
-            newValue: dateUsed,
+            newCreatedAt,
+            dateUsed,
         });
-
-        if (!dryRun) {
-            const docRef = doc(db, 'artifacts', appId, 'users', userId, 'transactions', docSnapshot.id);
-            batch.update(docRef, { createdAt: newCreatedAt });
-            batchCount++;
-
-            // Commit batch if we hit the limit
-            if (batchCount >= BATCH_SIZE) {
-                try {
-                    await batch.commit();
-                    console.log(`[migrateCreatedAt] Committed batch of ${batchCount} updates`);
-                } catch (err: any) {
-                    result.errors.push(`Batch commit error: ${err.message}`);
-                }
-                batchCount = 0;
-            }
-        }
-
-        result.fixed++;
     }
 
     // Log what will be/was fixed
-    console.log(`[migrateCreatedAt] Transactions to fix (${toFix.length}):`);
-    for (const item of toFix) {
-        console.log(`  - ${item.id} (${item.merchant}): ${JSON.stringify(item.oldValue)} -> ${item.newValue}`);
+    console.log(`[migrateCreatedAt] Transactions to fix (${docsToFix.length}):`);
+    for (const item of docsToFix) {
+        console.log(`  - ${item.docId} (${item.merchant}): ${JSON.stringify(item.oldValue)} -> ${item.dateUsed}`);
     }
 
-    // Commit remaining updates
-    if (!dryRun && batchCount > 0) {
+    // Pass 2: Write fixes using centralized batchWrite (auto-chunks at 500 ops)
+    if (!dryRun && docsToFix.length > 0) {
         try {
-            await batch.commit();
-            console.log(`[migrateCreatedAt] Committed final batch of ${batchCount} updates`);
-        } catch (err: any) {
-            result.errors.push(`Final batch commit error: ${err.message}`);
+            const batchResult = await batchWrite(db, docsToFix, (batch, item) => {
+                const docRef = doc(db, ...transactionDocSegments(appId, userId, item.docId));
+                batch.update(docRef, { createdAt: item.newCreatedAt });
+            });
+
+            // When all batches succeed, fixed = total attempted
+            if (batchResult.failedBatches === 0) {
+                result.fixed = docsToFix.length;
+            } else {
+                // Partial failure: conservative estimate from succeeded batches
+                result.fixed = docsToFix.length - (batchResult.failedBatches * Math.ceil(docsToFix.length / batchResult.totalBatches));
+                result.fixed = Math.max(0, result.fixed);
+                result.errors.push(
+                    `${batchResult.failedBatches} of ${batchResult.totalBatches} batch chunks failed`
+                );
+                // Sanitize error messages — don't expose internal Firestore details
+                result.errors.push(`${batchResult.errors.length} error(s) occurred. Check console for details.`);
+                for (const err of batchResult.errors) {
+                    console.error('[migrateCreatedAt] Batch chunk error:', err.message);
+                }
+            }
+        } catch (error: unknown) {
+            // Total failure — nothing was fixed
+            result.fixed = 0;
+            console.error('[migrateCreatedAt] Batch write failed:', error);
+            result.errors.push('Batch write failed. Check console for details.');
         }
+    } else if (dryRun) {
+        // Dry run: report what would be fixed
+        result.fixed = docsToFix.length;
     }
 
     console.log(`[migrateCreatedAt] Migration complete!`);
@@ -177,11 +173,12 @@ export async function migrateCreatedAt(
     console.log(`  Fixed: ${result.fixed}`);
     console.log(`  Skipped (already valid): ${result.skipped}`);
     console.log(`  Errors: ${result.errors.length}`);
+    /* eslint-enable no-console */
 
     return result;
 }
 
-// Export for use in browser console
-if (typeof window !== 'undefined') {
-    (window as any).migrateCreatedAt = migrateCreatedAt;
+// Export for use in browser console (dev only)
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
+    (window as unknown as Record<string, unknown>).migrateCreatedAt = migrateCreatedAt;
 }

@@ -6,9 +6,9 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { filterTransactionsByHistoryFilters } from '../../../src/utils/historyFilterUtils';
+import { filterTransactionsByHistoryFilters } from '@shared/utils/historyFilterUtils';
 import type { Transaction } from '../../../src/types/transaction';
-import type { HistoryFilterState } from '../../../src/contexts/HistoryFiltersContext';
+import type { HistoryFilterState } from '@/types/historyFilters';
 
 // ============================================================================
 // Test Data
