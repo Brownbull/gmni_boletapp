@@ -3,7 +3,7 @@
 **Epic:** 15b - Continued Codebase Refactoring
 **Points:** 1
 **Priority:** LOW
-**Status:** ready-for-dev
+**Status:** done
 
 ## Description
 
@@ -26,11 +26,11 @@ Note: `views/EditView.tsx` and `views/ScanResultView.tsx` also appear as entry p
 
 ## Functional Acceptance Criteria
 
-- [ ] **AC1:** All 5 suspect modules verified via grep for static imports, dynamic imports, barrel re-exports, and string references
-- [ ] **AC2:** 5 confirmed dead source files deleted + 3 orphaned test files deleted
-- [ ] **AC3:** DatosAprendidosView.tsx confirmed ALIVE and kept (used by SettingsView)
-- [ ] **AC4:** `npm run test:quick` passes after all deletions
-- [ ] **AC5:** 0 orphaned modules in depcruise output
+- [x] **AC1:** All 5 suspect modules verified via grep for static imports, dynamic imports, barrel re-exports, and string references
+- [x] **AC2:** 5 confirmed dead source files deleted + 3 orphaned test files deleted
+- [x] **AC3:** DatosAprendidosView.tsx confirmed ALIVE and kept (used by SettingsView)
+- [x] **AC4:** `npm run test:quick` passes after all deletions
+- [x] **AC5:** 0 orphaned modules in depcruise output
 
 ## Architectural Acceptance Criteria (MANDATORY)
 
@@ -62,18 +62,18 @@ Note: `views/EditView.tsx` and `views/ScanResultView.tsx` also appear as entry p
 
 ## Tasks
 
-- [ ] **Task 1:** Verify all 5 suspects (confirm ECC pre-analysis)
-  - [ ] Run grep for each suspect: static imports, dynamic imports, barrel re-exports
-  - [ ] Confirm `DatosAprendidosView` is alive (imported by SettingsView)
-  - [ ] Confirm 2 chart files replaced by DonutChart/SankeyChart
-- [ ] **Task 2:** Delete confirmed dead modules (3 rounds, atomic)
-  - [ ] Round 1: Delete hooks (`useAirlocks.ts`, `useDialogResolution.ts`)
-  - [ ] Round 2: Delete `semanticColors.ts` + test file
-  - [ ] Round 3: Delete chart files + test files; remove empty `charts/` dir if applicable
-- [ ] **Task 3:** Validate
-  - [ ] Run `npx tsc --noEmit` — 0 errors
-  - [ ] Run `npm run test:quick` — all pass
-  - [ ] Run depcruise — 0 orphaned modules
+- [x] **Task 1:** Verify all 5 suspects (confirm ECC pre-analysis)
+  - [x] Run grep for each suspect: static imports, dynamic imports, barrel re-exports
+  - [x] Confirm `DatosAprendidosView` is alive (imported by SettingsView)
+  - [x] Confirm 2 chart files replaced by DonutChart/SankeyChart
+- [x] **Task 2:** Delete confirmed dead modules (3 rounds, atomic)
+  - [x] Round 1: Delete hooks (`useAirlocks.ts`, `useDialogResolution.ts`)
+  - [x] Round 2: Delete `semanticColors.ts` + test file
+  - [x] Round 3: Delete chart files + test files; remove empty `charts/` dir if applicable
+- [x] **Task 3:** Validate
+  - [x] Run `npx tsc --noEmit` — 0 errors
+  - [x] Run `npm run test:quick` — all pass
+  - [x] Run depcruise — 0 orphaned modules
 
 ## Dev Notes
 
@@ -91,6 +91,15 @@ Note: `views/EditView.tsx` and `views/ScanResultView.tsx` also appear as entry p
 1. Hooks (no tests to delete): `useAirlocks.ts`, `useDialogResolution.ts`
 2. Utils + test: `semanticColors.ts` + `semanticColors.test.ts`
 3. Charts + tests: `SimplePieChart.tsx`, `GroupedBarChart.tsx` + test files
+
+## Senior Developer Review (ECC)
+
+- **Review Date:** 2026-02-13
+- **ECC Agents Used:** code-reviewer (Sonnet), security-reviewer (Sonnet)
+- **Classification:** STANDARD (2 agents)
+- **Outcome:** APPROVE — 10/10
+- **Action Items:** 0 findings, 0 TD stories created
+- **Verification:** Zero remaining references, tsc clean, 6,884 tests pass, charts/ dir removed
 
 ## ECC Analysis Summary
 - Risk Level: LOW
