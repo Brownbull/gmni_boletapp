@@ -7,7 +7,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { BatchSummary } from '../../../../src/components/insights/BatchSummary';
+import { BatchSummary } from '@features/insights/components/BatchSummary';
 import { Transaction } from '../../../../src/types/transaction';
 import { Insight } from '../../../../src/types/insight';
 

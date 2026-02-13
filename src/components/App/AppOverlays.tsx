@@ -37,9 +37,9 @@ import type { SessionContext, SessionAction } from '../session';
 // import { PWAUpdatePrompt } from '../PWAUpdatePrompt';
 // Story 14e-23a: Scan overlays moved to ScanFeature
 // import { ScanOverlay, QuickSaveCard, BatchCompleteModal, CurrencyMismatchDialog, TotalMismatchDialog } from '../scan';
-import { InsightCard } from '../insights/InsightCard';
-import { BuildingProfileCard } from '../insights/BuildingProfileCard';
-import { BatchSummary } from '../insights/BatchSummary';
+import { InsightCard } from '@features/insights/components/InsightCard';
+import { BuildingProfileCard } from '@features/insights/components/BuildingProfileCard';
+import { BatchSummary } from '@features/insights/components/BatchSummary';
 import { PersonalRecordBanner } from '../celebrations';
 import { SessionComplete } from '../session';
 // Story 14e-39: TrustMerchantPrompt moved to CreditFeature

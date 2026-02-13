@@ -18,6 +18,7 @@ import React from 'react';
 import { Store } from 'lucide-react';
 import type { FlattenedItem } from '../../types/item';
 import { getItemCategoryColors, type ThemeName, type ModeName } from '../../config/categoryColors';
+import { DEFAULT_CURRENCY } from '../../utils/currency';
 import { getItemCategoryEmoji } from '../../utils/categoryTranslations';
 import { normalizeItemCategory } from '../../utils/categoryNormalizer';
 import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';
@@ -81,7 +82,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
     item,
     formatters,
     theme,
-    defaultCurrency = 'CLP',
+    defaultCurrency = DEFAULT_CURRENCY,
     userDefaultCountry,
     lang = 'es',
     onClick,

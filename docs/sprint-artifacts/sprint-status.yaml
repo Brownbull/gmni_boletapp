@@ -55,35 +55,122 @@ development_status:
 
   # Epic 14d shared groups: REMOVED (2026-02-09) — feature will be redesigned
 
-  # Epic 15: Advanced Features (~38 points - revised after mockup verification 2025-12-31)
-  # Goals system, learned thresholds, out-of-character detection, treemap, themeable skins
-  # Key features: Savings GPS, Emotional Airlock, Treemap, Themeable Skins (Sankey/Sharing REMOVED - not in mockups)
-  # BLOCKED by Epic 14 - Requires animation framework and polygon
-  # Atlas Feature Mapping: Goals system, Pattern detection, Treemap viz
-  # Workflow Chains: Extends Insight Gen (#5), Analytics (#2)
-  epic-15: backlog
+  # ============================================================================
+  # Epic 15: Codebase Refactoring (~90 points, 8 phases)
+  # Full analysis: docs/architecture/proposals/CODEBASE-REFACTOR-ANALYSIS.md
+  # Replaces previous Epic 15 (Advanced Features, deferred to Epic 19)
+  # ============================================================================
+  epic-15: in-progress
 
-  # Goals System (new feature area)
-  15-1-custom-goals-crud: backlog  # 3 pts - Name, emoji, amount, currency [NEW FEATURE: Goals] [MOCKUP: goals-gps.html]
-  15-2-savings-gps-visualization: backlog  # 5 pts - ETA, alternate routes [DEPENDS: 15.1] [MOCKUP: goals-gps.html]
-  15-3-hybrid-income-mode: backlog  # 3 pts - Smart + Precision modes [NEW FEATURE: Income tracking]
-  15-4-goal-connected-insights: backlog  # 3 pts - "Coffee = 1 day from Tokyo" [EXTENDS: Insight Gen #5]
+  # Phase 0: Critical Bugs (immediate)
+  15-0a-batch-chunking-fix: done        # 2 pts - Fix missing 500-op chunking in recordsService + airlockService
+  15-0b-sanitize-input-audit: done      # 1 pt  - Audit + extend sanitizeInput() coverage
 
-  # Learned Behavior (extends Insight Engine)
-  15-5-learned-budget-thresholds: backlog  # 3 pts - App suggests limits [EXTENDS: Insight Gen #5] [MOCKUP: goals-gps.html budget-limit]
-  15-6-threshold-proximity-alerts: backlog  # 2 pts - 75%, 90%, 100% warnings [DEPENDS: 15.5]
-  15-7-out-of-character-detection: backlog  # 5 pts - Pattern deviation [EXTENDS: Insight Gen #5]
-  15-8-emotional-airlock-flow: backlog  # 3 pts - Curiosity → Playful → Reveal [DEPENDS: 15.7] [MOCKUP: insights.html airlock sequence]
+  # Phase 1: Foundation — Dead Code + Shared Utilities
+  15-1a-delete-dead-services: done      # 1 pt  - Delete fcmToken, pushNotifications, transactionQuery (~1,193 lines)
+  15-1b-centralize-paths: done          # 2 pts - Collection path builder (35+ inline → 1 file)
+  15-1c-generic-mapping-service: done   # 3 pts - Parameterized mapping service (828 → ~250 lines)
+  15-1d-normalize-for-mapping: done     # 2 pts - Folded into 15-1c (normalizeForMapping in mappingServiceBase)
+  15-1e-base-duplicate-detection: done  # 2 pts - Configurable comparator via duplicateGrouping.ts
+  15-1f-batch-operations-util: done     # 2 pts - Auto-chunking batchDelete/batchWrite at 500 ops
+  15-1g-consolidate-validation: done    # 1 pt  - Merge validation.ts + validationUtils.ts
 
-  # Advanced Visualizations
-  15-9-treemap-implementation: backlog  # 5 pts - Proportional breakdown [MOCKUP: analytics-polygon.html, home-dashboard.html]
-  # REMOVED 15.9-Sankey (CSS defined but not rendered), 15.12-Sharing (not in mockups)
+  # Phase 2: Business Logic Centralization
+  15-2a-currency-formatting: done       # 2 pts - DEFAULT_CURRENCY + formatCurrency() (56 occurrences)
+  15-2b-date-utilities: done            # 2 pts - Merge date.ts + dateHelpers.ts + periodUtils.ts
+  15-2c-timestamp-utils: done           # 2 pts - Unified TimestampLike → Date/millis
+  15-2d-transaction-validation: done    # 2 pts - Shared validation predicates (11+ files)
+  15-2e-comparators: done               # 2 pts - Typed sort comparators (132 calls, 43 files)
+  15-2f-storage-wrapper: done           # 2 pts - Typed localStorage wrapper (22 files)
+  15-2g-number-format: done             # 2 pts - formatDecimal(), formatPercent()
+  15-2h-error-handling: done            # 3 pts - Error code mapping + toast service (37 files)
+  15-2i-error-handler-integration: done   # 3 pts - Integrate errorHandler into catch blocks + tighten classifyError (7 files)
 
-  # Engagement & Personalization
-  15-10-monthly-milestone-view: backlog  # 3 pts - Progress celebrations [DEPENDS: 14.12] [MOCKUP: goals-gps.html milestone markers]
-  15-11-themeable-skins: backlog  # 3 pts - 3 themes: Professional Blue, Mono, Ni No Kuni [MOCKUP: settings.html PALETA DE COLOR]
+  # Phase 3: Component Deduplication
+  15-3a-confirm-dialog-shared: done    # 2 pts - Promoted ConfirmationDialog to shared, replaced window.confirm
+  15-3b-generic-mappings-list: done    # 3 pts - MappingsList<T> replaces 4 components (2,238 → 797 lines, -64%)
+
+  # Phase 4: Feature Modules
+  15-4a-feature-analytics: done         # 2 pts - features/analytics/ (13 components, 6 utils, 3 hooks)
+  15-4b-feature-history: done           # 2 pts - features/history/ (14 components)
+  15-4c-feature-insights: done          # 2 pts - features/insights/ (19 components, 4 services, 1 hook, 2 utils)
+  15-4d-feature-reports: done           # 2 pts - features/reports/ (9 components, 1 util)
+  15-4e-feature-dashboard: done         # 2 pts - features/dashboard/ placeholder (Phase 5 decomposes view)
+  15-4f-feature-settings: done          # 2 pts - features/settings/ (4 components, 10 subviews)
+  15-4g-hooks-to-features: done         # 2 pts - Audit: all remaining hooks are cross-feature, stay in src/hooks/
+
+  # Phase 5: Mega-View Decomposition
+  15-5a-category-aggregation: done       # 2 pts - Shared categoryAggregation.ts
+  15-5b-decompose-trends-view: done     # 5 pts - TrendsView 5,901 → 3,207 + 7 sub-files (2,935 lines extracted)
+  15-5c-decompose-dashboard-view: done   # 3 pts - DashboardView 3,250 → 2,968 + 3 sub-files (282 lines extracted)
+  15-5d-decompose-editor-view: done     # 3 pts - TransactionEditorView 2,722 → 1,421 + 5 extracted files
+  15-5e-decompose-icon-filter-bar: done    # 2 pts - IconFilterBar 1,797 → 185 + 2 dropdown files
+  15-5f-decompose-app-tsx: done          # 3 pts - App.tsx already well-modularized (AppOverlays, viewRenderers, handler hooks extracted); remaining 2,071 lines is irreducible orchestration
+
+  # Phase 6: Data Access Layer
+  15-6a-repository-interfaces: done     # 2 pts - 8 repository interfaces (Transaction, Mapping, Trust, Preferences, Credits, Records, Airlock, InsightProfile)
+  15-6b-firestore-repositories: done    # 3 pts - Factory functions wrapping existing services + React hooks (src/repositories/)
+  15-6c-migrate-consumers: done          # 3 pts - 4 mapping hooks migrated to repository pattern
+
+  # Phase 7: State Management Alignment
+  15-7a-history-filters-zustand: done   # 2 pts - HistoryFiltersContext → Zustand store (useHistoryFiltersStore)
+  15-7b-app-state-zustand: done         # 2 pts - AppStateContext deprecated (zero consumers, useToast is mechanism)
+  15-7c-theme-zustand: done             # 2 pts - ThemeContext → useSettingsStore (fontFamily, useThemeSettings)
+  15-7d-separate-client-server: done    # 2 pts - Resolved: useHistoryFilters via 15-7a, useLearningPhases is dead code, feature hooks moved in Phase 4
+
+  # ============================================================================
+  # Tech Debt Stories — Consolidated from Phase Reviews (2026-02-10)
+  # Source: ECC code review of Phases 0, 1, 5, 6, 7 + Phase 5 review
+  # + TD-1/2/3 code review findings (2026-02-10)
+  # Stories: docs/sprint-artifacts/epic15/stories/15-TD-*.md
+  # TD items: TD-1 to TD-26 (TD-11 fixed in review, rest consolidated into 12 stories)
+  # ============================================================================
+
+  # HIGH priority — done (9 pts):
+  15-TD-1-toctou-security-fixes: done              # 3 pts - TD-6, TD-17, TD-18: TOCTOU races in credits/mapping/trust
+  15-TD-2-batch-operations-completion: done            # 3 pts - TD-13, TD-20: Batch bypass + retry/backoff
+  15-TD-3-foundation-infrastructure-tests: done            # 3 pts - TD-15, TD-16: Missing tests for Phase 1 utils + Phase 7 store
+
+  # CRITICAL priority — from TD-1/2/3 code review (3 pts):
+  15-TD-10-credits-consumer-safety: done               # 3 pts - CR-1, CR-13: useUserCredits bypasses transaction + silent DEFAULT_CREDITS
+
+  # HIGH priority — from TD-1/2/3 code review (2 pts):
+  15-TD-11-trust-service-transactions: done    # 2 pts - CR-8: trustMerchant/declineTrust/revokeTrust not transactional
+
+  # HIGH priority — from TD-10 code review (5 pts):
+  15-TD-13-transactional-credit-additions: done     # 3 pts - addCredits/addSuperCredits/useAirlocks non-transactional TOCTOU
+  15-TD-14-credits-type-safety-cleanup: done        # 2 pts - db:any type chain + deprecated _currentCredits param removal
+
+  # MEDIUM priority (19 pts):
+  15-TD-4-phase5-component-tests: done             # 3 pts - TD-3, TD-26: Missing tests for DonutChart, helpers, extracted components
+  15-TD-5-mega-view-decomposition-5b: done             # 5 pts - TD-2, TD-4, TD-14, TD-24: Further view decomposition + naming fix
+  15-TD-6-dry-cleanup: done                 # 3 pts - TD-1, TD-5, TD-8, TD-25: CircularProgress, types, normalizers (also covers CR-11)
+  15-TD-7-context-cleanup-dead-code: done    # 3 pts - TD-10, TD-12, TD-19, TD-21: Delete dead contexts, unify toast
+  15-TD-8-input-validation-hardening: done     # 2 pts - TD-22, TD-23: validateAppId + data: URI pattern
+  15-TD-9-dal-polish: done                           # 3 pts - TD-7, TD-9, CR-2: save() signature + consumer migration + deterministic doc IDs
+  15-TD-12-batch-migration-error-surfacing: done    # 2 pts - CR-4, CR-9: migrateCreatedAt raw writeBatch + partial-commit surfacing
+  15-TD-15-standalone-mutation-safety: done                  # 2 pts - TD-11 deferred + audit: deleteTrustedMerchant/deleteTransaction/updateTransaction/deleteMapping transaction wrapping
+  15-TD-16-mega-view-decomposition-5c: done            # 5 pts - TrendsView 3,199→1,981 + DashboardView 2,483→1,479 (10 extracted files) + i18n/currency fixes
+  15-TD-17-report-innerhtml-sanitization: done               # 1 pt  - ReportDetailOverlay innerHTML → DOM API (pre-existing XSS defense-in-depth)
+  15-TD-18-path-parameter-validation: done                  # 2 pts - userId/transactionId format validation + dead validateAppId cleanup (from 15-TD-8 review)
+  15-TD-19-sanitizer-defense-depth: done            # 2 pts - Multi-pass sanitization + URL decode + pre-truncation (from 15-TD-8 review)
+  15-TD-20-insight-profile-toctou: done              # 2 pts - insightProfileService 5 read-then-write functions → runTransaction (from 15-TD-15 review)
+  15-TD-21-mega-view-helper-tests: done                     # 3 pts - Unit tests for 6 pure helper modules extracted in TD-16 (1,568 lines, 0% coverage)
+  15-TD-25-shared-test-fixtures: done                       # 2 pts - Extract makeTx/makeCategoryData/categoryColors to shared fixtures (from 15-TD-21 review)
+  15-TD-26-period-comparison-includes-fix: done             # 1 pt  - String.includes() → direct key lookup in periodComparisonHelpers (pre-existing from 15-TD-16)
+  15-TD-22-report-print-extract-i18n: done                   # 2 pts - Extract print helpers to printUtils.ts + i18n migration (from 15-TD-17 review)
+  15-TD-23-doc-id-segment-validation: done               # 2 pts - Document ID segment validation in service functions (from 15-TD-18 review)
+  15-TD-24-insight-profile-remaining-toctou: done    # 1 pt  - Wrap 4 remaining insightProfileService functions in runTransaction (from 15-TD-20 review)
+  15-TD-27-report-overlay-full-i18n: done                     # 2 pts - Migrate all remaining hardcoded Spanish strings in ReportDetailOverlay (from 15-TD-22 review)
+  15-TD-28-remaining-fixture-consolidation: done             # 1 pt  - Consolidate inline makeTx/makeCategoryData in helpers.test.ts + DonutChart.test.tsx (from 15-TD-25 review)
 
   epic-15-retrospective: optional
+
+# .mcp.json "disabled": true
+
+  # ============================================================================
+  # Deferred Epics (renumbered after Epic 15 replacement)
+  # ============================================================================
 
   # Epic 16: Onboarding & Progressive Disclosure (~15 points)
   # Time-to-value <60 seconds, demo walkthrough, feature unlocking
@@ -102,6 +189,13 @@ development_status:
   # (Formerly Epic 16, renumbered after brainstorming expansion)
   epic-18: backlog
   epic-18-retrospective: optional
+
+  # Epic 19: Advanced Features (~38 points)
+  # Goals system, learned thresholds, out-of-character detection, treemap, themeable skins
+  # (Formerly Epic 15, deferred 2026-02-09 — replaced by Codebase Refactoring)
+  # Full definition preserved in: docs/sprint-artifacts/epic15/epic-15-advanced-features.md
+  epic-19: backlog
+  epic-19-retrospective: optional
 
   # ============================================================================
   # FUTURE BACKLOG (Post-Launch)

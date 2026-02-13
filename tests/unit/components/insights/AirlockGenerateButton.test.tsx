@@ -10,7 +10,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { AirlockGenerateButton } from '../../../../src/components/insights/AirlockGenerateButton';
+import { AirlockGenerateButton } from '@features/insights/components/AirlockGenerateButton';
 
 // ============================================================================
 // Test Helpers

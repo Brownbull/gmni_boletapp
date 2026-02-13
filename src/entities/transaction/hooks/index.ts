@@ -23,4 +23,4 @@ export { usePaginatedTransactions } from '../../../hooks/usePaginatedTransaction
 export { useActiveTransaction } from '../../../hooks/useActiveTransaction';
 
 // Analytics-optimized transaction access
-export { useAnalyticsTransactions } from '../../../hooks/useAnalyticsTransactions';
+export { useAnalyticsTransactions } from '@features/analytics/hooks/useAnalyticsTransactions';

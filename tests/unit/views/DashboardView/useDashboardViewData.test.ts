@@ -95,35 +95,29 @@ vi.mock('@/hooks/useUserPreferences', () => ({
     })),
 }));
 
-// Mock ThemeContext
-vi.mock('@/contexts/ThemeContext', () => ({
-    useTheme: vi.fn(() => ({
-        theme: mockState.theme,
-        colorTheme: mockState.colorTheme,
-        fontColorMode: mockState.fontColorMode,
-        lang: mockState.lang,
-        currency: mockState.currency,
-        dateFormat: mockState.dateFormat,
-        setTheme: vi.fn(),
-        setColorTheme: vi.fn(),
-        setFontColorMode: vi.fn(),
-        setLang: vi.fn(),
-        setCurrency: vi.fn(),
-    })),
-}));
-
 // Mock Firebase
 vi.mock('firebase/firestore', () => ({
     getFirestore: vi.fn(() => ({})),
 }));
 
 // Story 14e-25d: Mock useNavigationActions
+// Story 15-7c: Mock useThemeSettings (ThemeContext removed)
 const mockSetView = vi.fn();
 vi.mock('@/shared/stores', () => ({
     useNavigationActions: vi.fn(() => ({
         setView: mockSetView,
         navigateBack: vi.fn(),
         setHistoryFilters: vi.fn(),
+    })),
+    useThemeSettings: vi.fn(() => ({
+        theme: mockState.theme,
+        colorTheme: mockState.colorTheme,
+        fontColorMode: mockState.fontColorMode,
+        fontSize: 'small',
+        fontFamily: 'outfit',
+        lang: mockState.lang,
+        currency: mockState.currency,
+        dateFormat: mockState.dateFormat,
     })),
 }));
 
@@ -281,7 +275,7 @@ describe('useDashboardViewData', () => {
     // =========================================================================
 
     describe('theme and locale settings (AC2)', () => {
-        it('returns theme from ThemeContext', () => {
+        it('returns theme from useThemeSettings', () => {
             const { result } = renderHook(() => useDashboardViewData());
 
             expect(result.current.theme).toBe('light');
@@ -289,7 +283,7 @@ describe('useDashboardViewData', () => {
             expect(result.current.fontColorMode).toBe('colorful');
         });
 
-        it('returns locale settings from ThemeContext', () => {
+        it('returns locale settings from useThemeSettings', () => {
             const { result } = renderHook(() => useDashboardViewData());
 
             expect(result.current.lang).toBe('en');

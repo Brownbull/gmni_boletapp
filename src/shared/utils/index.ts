@@ -6,3 +6,6 @@ export {
     computeBatchContext,
     type ScanButtonState,
 } from './scanHelpers';
+
+// History filter utilities (used by analytics, history, dashboard, items views)
+export * from './historyFilterUtils';

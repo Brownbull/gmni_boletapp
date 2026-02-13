@@ -12,8 +12,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { AnalyticsProvider } from '../../../src/contexts/AnalyticsContext';
-import { CategoryBreadcrumb } from '../../../src/components/analytics/CategoryBreadcrumb';
-import { useAnalyticsNavigation } from '../../../src/hooks/useAnalyticsNavigation';
+import { CategoryBreadcrumb } from '@features/analytics/components/CategoryBreadcrumb';
+import { useAnalyticsNavigation } from '@features/analytics/hooks/useAnalyticsNavigation';
 import type { AnalyticsNavigationState } from '../../../src/types/analytics';
 
 // ============================================================================

@@ -58,6 +58,7 @@ import type {
 } from '@/types/scanStateMachine';
 import type { ScanOverlayStateHook } from '@/hooks/useScanOverlayState';
 import type { SupportedCurrency } from '@/services/userPreferencesService';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
 import type { HistoryNavigationPayload } from '@/views/TrendsView';
 
 // =============================================================================
@@ -398,11 +399,11 @@ export function ScanFeature({
   onQuickSaveCancel,
   onQuickSaveComplete,
   isQuickSaving = false,
-  currency = 'CLP',
+  currency = DEFAULT_CURRENCY,
   formatCurrency,
   userDefaultCountry = 'CL',
   // Story 14e-23a: Currency/Total mismatch dialog props
-  userCurrency = 'CLP',
+  userCurrency = DEFAULT_CURRENCY,
   onCurrencyUseDetected,
   onCurrencyUseDefault,
   onCurrencyMismatchCancel,

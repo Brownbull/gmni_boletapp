@@ -18,7 +18,7 @@ import {
   getChildTemporalLevel,
   getParentCategoryLevel,
   getChildCategoryLevel,
-} from '../../../src/hooks/useAnalyticsNavigation';
+} from '@features/analytics/hooks/useAnalyticsNavigation';
 import type { AnalyticsNavigationState } from '../../../src/types/analytics';
 
 // Helper to create a wrapper with AnalyticsProvider

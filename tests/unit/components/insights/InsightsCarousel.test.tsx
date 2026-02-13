@@ -14,7 +14,7 @@ import { Timestamp } from 'firebase/firestore';
 import {
   InsightsCarousel,
   selectHighlightedInsights,
-} from '../../../../src/components/insights/InsightsCarousel';
+} from '@features/insights/components/InsightsCarousel';
 import { InsightRecord, InsightCategory } from '../../../../src/types/insight';
 
 // Mock Firebase Timestamp

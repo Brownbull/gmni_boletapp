@@ -16,9 +16,9 @@
  *    - Navigation: useNavigationStore (Story 14e-45)
  *
  * 2. AppProviders level (this component):
- *    - ThemeProvider (theme + locale preferences)
- *    - AppStateProvider (toasts, operation status)
  *    - NotificationProvider (in-app notifications)
+ *    Note: ThemeProvider removed (Story 15-7c, theme via useSettingsStore)
+ *    Note: AppStateProvider removed (Story 15-7b, toasts via useToast)
  *
  * Note: Navigation state is now managed by useNavigationStore (Zustand).
  * AnalyticsProvider and HistoryFiltersProvider are view-scoped
@@ -47,12 +47,12 @@
  * @see docs/sprint-artifacts/epic14e-feature-architecture/architecture-decision.md
  */
 
+import { useEffect } from 'react';
 import type { AppProvidersProps } from './types';
 import {
-    ThemeProvider,
-    AppStateProvider,
     NotificationProvider,
 } from '../contexts';
+import { settingsActions } from '../shared/stores';
 
 // =============================================================================
 // Component
@@ -65,10 +65,9 @@ import {
  * Providers are ordered from outermost (least dependencies) to innermost
  * (may depend on outer providers).
  *
- * Order rationale:
- * - ThemeProvider: No dependencies, provides theme to all children
- * - AppStateProvider: No dependencies on above, provides toast/operation state
- * - NotificationProvider: May show toasts via AppStateProvider
+ * Remaining provider:
+ * - NotificationProvider: Provides in-app notification state
+ * Note: ThemeProvider removed (15-7c), AppStateProvider removed (15-7b)
  *
  * Story 14e-45: NavigationProvider removed - navigation now uses Zustand store:
  * - Navigation state: useNavigationStore from @/shared/stores
@@ -87,18 +86,20 @@ export function AppProviders({
     userId,
     appId,
 }: AppProvidersProps): JSX.Element {
+    // Story 15-7c: Sync fontFamily from Firestore to Zustand store (ThemeProvider removed)
+    useEffect(() => {
+        settingsActions.setFontFamily(fontFamily);
+    }, [fontFamily]);
+
+    // Story 15-7b: AppStateProvider removed (zero consumers, useToast is the toast mechanism)
     return (
-        <ThemeProvider fontFamily={fontFamily}>
-            <AppStateProvider>
-                <NotificationProvider
-                    db={db ?? null}
-                    userId={userId ?? null}
-                    appId={appId ?? null}
-                >
-                    {children}
-                </NotificationProvider>
-            </AppStateProvider>
-        </ThemeProvider>
+        <NotificationProvider
+            db={db ?? null}
+            userId={userId ?? null}
+            appId={appId ?? null}
+        >
+            {children}
+        </NotificationProvider>
     );
 }
 

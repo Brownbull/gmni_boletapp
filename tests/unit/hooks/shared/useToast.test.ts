@@ -150,6 +150,47 @@ describe('useToast', () => {
             expect(result.current.toastMessage).toBeNull();
         });
 
+        it('should auto-dismiss error type after double duration (6000ms)', () => {
+            const { result } = renderHook(() => useToast());
+
+            act(() => {
+                result.current.showToast('Error toast', 'error');
+            });
+            expect(result.current.toastMessage).not.toBeNull();
+
+            // Should NOT dismiss at normal timeout
+            act(() => {
+                vi.advanceTimersByTime(3000);
+            });
+            expect(result.current.toastMessage).not.toBeNull();
+
+            // Should NOT dismiss just before double timeout
+            act(() => {
+                vi.advanceTimersByTime(2999);
+            });
+            expect(result.current.toastMessage).not.toBeNull();
+
+            // Should dismiss at exactly 2x timeout
+            act(() => {
+                vi.advanceTimersByTime(1);
+            });
+            expect(result.current.toastMessage).toBeNull();
+        });
+
+        it('should auto-dismiss warning type at normal duration', () => {
+            const { result } = renderHook(() => useToast());
+
+            act(() => {
+                result.current.showToast('Warning toast', 'warning');
+            });
+            expect(result.current.toastMessage).not.toBeNull();
+
+            act(() => {
+                vi.advanceTimersByTime(3000);
+            });
+            expect(result.current.toastMessage).toBeNull();
+        });
+
         it('should reset timer when new toast is shown', () => {
             const { result } = renderHook(() => useToast(3000));
 

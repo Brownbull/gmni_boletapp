@@ -1,15 +1,12 @@
 import {
     collection,
     addDoc,
-    updateDoc,
-    deleteDoc,
     doc,
     onSnapshot,
     serverTimestamp,
     Firestore,
     Unsubscribe,
     getDocs,
-    writeBatch,
     query,
     orderBy,
     limit,
@@ -17,10 +14,14 @@ import {
     QueryDocumentSnapshot,
     DocumentData,
     increment,
+    runTransaction,
 } from 'firebase/firestore';
 import { Transaction } from '../types/transaction';
-import { computePeriods } from '../utils/periodUtils';
+import { toMillis } from '@/utils/timestamp';
+import { computePeriods } from '../utils/date';
 import { ensureTransactionsDefaults } from '../utils/transactionUtils';
+import { transactionsPath, assertValidSegment } from '@/lib/firestorePaths';
+import { batchDelete, batchWrite } from '@/lib/firestoreBatch';
 
 /**
  * Removes undefined values from an object (Firestore doesn't accept undefined).
@@ -72,7 +73,7 @@ export async function addTransaction(
     };
 
     const docRef = await addDoc(
-        collection(db, 'artifacts', appId, 'users', userId, 'transactions'),
+        collection(db, transactionsPath(appId, userId)),
         transactionWithDefaults
     );
     // Story 14.31: Debug logging for transaction save
@@ -81,7 +82,7 @@ export async function addTransaction(
             id: docRef.id,
             merchant: transaction.merchant,
             date: transaction.date,
-            currency: (transaction as any).currency,
+            currency: (transaction as Record<string, unknown>).currency,
             version: 1,
             periods: periods?.month,
             path: `artifacts/${appId}/users/${userId}/transactions/${docRef.id}`
@@ -90,6 +91,13 @@ export async function addTransaction(
     return docRef.id;
 }
 
+/**
+ * Story 15-TD-15: Wrapped in runTransaction for TOCTOU safety.
+ * Reads current version via transaction.get() and increments atomically,
+ * preventing lost updates from concurrent writes.
+ * Note: updateTransactionsBatch still uses increment(1) — see that function's
+ * comment for why per-doc transactions are impractical in batch operations.
+ */
 export async function updateTransaction(
     db: Firestore,
     userId: string,
@@ -97,31 +105,54 @@ export async function updateTransaction(
     transactionId: string,
     updates: Partial<Transaction>
 ): Promise<void> {
+    assertValidSegment(transactionId, 'transactionId');
+
     // Clean undefined values before sending to Firestore
     const cleanedUpdates = removeUndefined(updates as Record<string, unknown>);
 
     // Story 14d-v2-1.2b: Recompute periods if date changed
     const periods = updates.date ? computePeriods(updates.date) : undefined;
 
-    // Story 14d-v2-1.2b: Increment version for optimistic concurrency
-    // Use Firestore increment() for atomic version updates
-    const docRef = doc(db, 'artifacts', appId, 'users', userId, 'transactions', transactionId);
-    return updateDoc(docRef, {
-        ...cleanedUpdates,
-        updatedAt: serverTimestamp(),
-        version: increment(1),
-        ...(periods && { periods }),
+    const docRef = doc(db, transactionsPath(appId, userId), transactionId);
+
+    await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(docRef);
+        if (!snap.exists()) {
+            throw new Error(`Transaction not found: ${transactionId}`);
+        }
+
+        const currentData = snap.data();
+        const currentVersion = (currentData.version as number) ?? 0;
+
+        transaction.update(docRef, {
+            ...cleanedUpdates,
+            updatedAt: serverTimestamp(),
+            version: currentVersion + 1,
+            ...(periods && { periods }),
+        });
     });
 }
 
+/**
+ * Story 15-TD-15: Wrapped in runTransaction for TOCTOU safety.
+ * Verifies doc exists before deleting.
+ */
 export async function deleteTransaction(
     db: Firestore,
     userId: string,
     appId: string,
     transactionId: string
 ): Promise<void> {
-    const docRef = doc(db, 'artifacts', appId, 'users', userId, 'transactions', transactionId);
-    return deleteDoc(docRef);
+    assertValidSegment(transactionId, 'transactionId');
+    const docRef = doc(db, transactionsPath(appId, userId), transactionId);
+
+    await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(docRef);
+        if (!snap.exists()) {
+            throw new Error(`Transaction not found: ${transactionId}`);
+        }
+        transaction.delete(docRef);
+    });
 }
 
 /**
@@ -162,7 +193,7 @@ export function subscribeToTransactions(
     appId: string,
     callback: (transactions: Transaction[]) => void
 ): Unsubscribe {
-    const collectionRef = collection(db, 'artifacts', appId, 'users', userId, 'transactions');
+    const collectionRef = collection(db, transactionsPath(appId, userId));
 
     // Story 14.25: Add orderBy + limit to reduce Firestore reads
     const q = query(
@@ -217,7 +248,7 @@ export function subscribeToRecentScans(
     appId: string,
     callback: (transactions: Transaction[]) => void
 ): Unsubscribe {
-    const collectionRef = collection(db, 'artifacts', appId, 'users', userId, 'transactions');
+    const collectionRef = collection(db, transactionsPath(appId, userId));
 
     // Order by createdAt (scan timestamp) descending, limit to 10
     const q = query(
@@ -238,20 +269,9 @@ export function subscribeToRecentScans(
         const activeTxs = normalizedTxs;
 
         // Sort client-side as backup (Firestore should already sort, but ensure order)
-        // createdAt can be a Firestore Timestamp (with .seconds) or a Date string
-        const sortedTxs = [...activeTxs].sort((a, b) => {
-            const getTime = (tx: Transaction): number => {
-                const ca = tx.createdAt;
-                if (!ca) return 0;
-                // Firestore Timestamp has seconds/nanoseconds
-                if (typeof ca === 'object' && 'seconds' in ca) {
-                    return ca.seconds * 1000 + (ca.nanoseconds || 0) / 1000000;
-                }
-                // Fallback to Date parsing
-                return new Date(ca).getTime();
-            };
-            return getTime(b) - getTime(a); // Descending order
-        });
+        const sortedTxs = [...activeTxs].sort((a, b) =>
+            toMillis(b.createdAt) - toMillis(a.createdAt)
+        );
 
         callback(sortedTxs);
     }, (error) => {
@@ -275,21 +295,13 @@ export async function wipeAllTransactions(
     userId: string,
     appId: string
 ): Promise<void> {
-    const q = collection(db, 'artifacts', appId, 'users', userId, 'transactions');
+    const q = collection(db, transactionsPath(appId, userId));
     const snap = await getDocs(q);
 
     if (snap.empty) return;
 
-    // Story 14.26: Use writeBatch with chunking (500 ops per batch)
-    const BATCH_SIZE = 500;
-    const docs = snap.docs;
-
-    for (let i = 0; i < docs.length; i += BATCH_SIZE) {
-        const chunk = docs.slice(i, i + BATCH_SIZE);
-        const batch = writeBatch(db);
-        chunk.forEach(d => batch.delete(d.ref));
-        await batch.commit();
-    }
+    // Story 14.26: Atomic batch deletion with auto-chunking at 500 ops
+    await batchDelete(db, snap.docs.map(d => d.ref));
 }
 
 /**
@@ -344,7 +356,7 @@ export async function getTransactionPage(
     cursor?: QueryDocumentSnapshot<DocumentData> | null,
     pageSize: number = PAGINATION_PAGE_SIZE
 ): Promise<TransactionPage> {
-    const collectionRef = collection(db, 'artifacts', appId, 'users', userId, 'transactions');
+    const collectionRef = collection(db, transactionsPath(appId, userId));
 
     // Build query with orderBy and limit
     // Request one extra document to check if more pages exist
@@ -412,20 +424,9 @@ export async function deleteTransactionsBatch(
 ): Promise<void> {
     if (transactionIds.length === 0) return;
 
-    // Firestore batch limit is 500 operations
-    const BATCH_SIZE = 500;
-
-    for (let i = 0; i < transactionIds.length; i += BATCH_SIZE) {
-        const chunk = transactionIds.slice(i, i + BATCH_SIZE);
-        const batch = writeBatch(db);
-
-        for (const txId of chunk) {
-            const docRef = doc(db, 'artifacts', appId, 'users', userId, 'transactions', txId);
-            batch.delete(docRef);
-        }
-
-        await batch.commit();
-    }
+    transactionIds.forEach(id => assertValidSegment(id, 'transactionId'));
+    const refs = transactionIds.map(id => doc(db, transactionsPath(appId, userId), id));
+    await batchDelete(db, refs);
 }
 
 /**
@@ -447,30 +448,24 @@ export async function updateTransactionsBatch(
 ): Promise<void> {
     if (transactionIds.length === 0) return;
 
+    transactionIds.forEach(id => assertValidSegment(id, 'transactionId'));
+
     // Clean undefined values
     const cleanedUpdates = removeUndefined(updates as Record<string, unknown>);
 
     // Story 14d-v2-1.2b: Recompute periods if date changed
     const periods = updates.date ? computePeriods(updates.date) : undefined;
 
-    // Firestore batch limit is 500 operations
-    const BATCH_SIZE = 500;
-
-    for (let i = 0; i < transactionIds.length; i += BATCH_SIZE) {
-        const chunk = transactionIds.slice(i, i + BATCH_SIZE);
-        const batch = writeBatch(db);
-
-        for (const txId of chunk) {
-            const docRef = doc(db, 'artifacts', appId, 'users', userId, 'transactions', txId);
-            // Story 14d-v2-1.2b: Increment version and update timestamp
-            batch.update(docRef, {
-                ...cleanedUpdates,
-                updatedAt: serverTimestamp(),
-                version: increment(1),
-                ...(periods && { periods }),
-            });
-        }
-
-        await batch.commit();
-    }
+    // Note: batch operations use increment(1) rather than transactional read+increment.
+    // Per-doc transactions would be impractical at scale (up to 500 docs).
+    // Single-doc updateTransaction() has full TOCTOU protection via runTransaction.
+    const refs = transactionIds.map(id => doc(db, transactionsPath(appId, userId), id));
+    await batchWrite(db, refs, (batch, ref) => {
+        batch.update(ref, {
+            ...cleanedUpdates,
+            updatedAt: serverTimestamp(),
+            version: increment(1),
+            ...(periods && { periods }),
+        });
+    });
 }

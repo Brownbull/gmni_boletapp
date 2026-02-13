@@ -673,7 +673,8 @@ describe('processScan', () => {
       const result = await processScan(params);
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('Unknown error');
+      // extractErrorMessage returns string errors as-is
+      expect(result.error).toContain('string error');
     });
   });
 

@@ -2,6 +2,7 @@
  * useItemNameMappings Hook
  *
  * v9.7.0: Per-Store Item Name Learning
+ * Story 15-6c: Migrated to repository pattern
  *
  * Real-time subscription to user's item name mappings with React Query caching.
  * Provides CRUD operations for item name learning per merchant.
@@ -17,13 +18,8 @@ import { User } from 'firebase/auth'
 import { Services } from './useAuth'
 import { useFirestoreSubscription } from './useFirestoreSubscription'
 import { QUERY_KEYS } from '../lib/queryKeys'
-import {
-    subscribeToItemNameMappings,
-    saveItemNameMapping,
-    deleteItemNameMapping,
-    updateItemNameMappingTarget,
-    normalizeItemName
-} from '../services/itemNameMappingService'
+import { normalizeItemName, MAPPING_CONFIG } from '../services/itemNameMappingService'
+import { createMappingRepository } from '@/repositories'
 import { normalizeMerchantName } from '../services/merchantMappingService'
 import { ItemNameMapping, ItemNameMatchResult, NewItemNameMapping } from '../types/itemNameMapping'
 import type { ItemCategory } from '../types/transaction'
@@ -97,7 +93,17 @@ export function useItemNameMappings(
     services: Services | null
 ): UseItemNameMappingsReturn {
     const [error, setError] = useState<Error | null>(null)
-    const enabled = !!user && !!services
+
+    // Story 15-6c: Create repository instance bound to user context
+    const repo = useMemo(() => {
+        if (!services?.db || !user?.uid) return null;
+        return createMappingRepository<ItemNameMapping>(
+            { db: services.db, userId: user.uid, appId: services.appId },
+            MAPPING_CONFIG,
+        );
+    }, [services?.db, services?.appId, user?.uid])
+
+    const enabled = !!repo
 
     // Create the query key
     const queryKey = useMemo(
@@ -110,12 +116,7 @@ export function useItemNameMappings(
     // Subscribe to mappings with React Query caching
     const { data: mappings = [], isLoading } = useFirestoreSubscription<ItemNameMapping[]>(
         queryKey,
-        (callback) => subscribeToItemNameMappings(
-            services!.db,
-            user!.uid,
-            services!.appId,
-            callback
-        ),
+        (callback) => repo!.subscribe(callback),
         { enabled }
     )
 
@@ -127,7 +128,7 @@ export function useItemNameMappings(
             targetItemName: string,
             targetCategory?: ItemCategory
         ): Promise<string> => {
-            if (!user || !services) {
+            if (!repo) {
                 throw new Error('User must be authenticated to save mappings')
             }
 
@@ -147,49 +148,38 @@ export function useItemNameMappings(
             }
 
             try {
-                const id = await saveItemNameMapping(
-                    services.db,
-                    user.uid,
-                    services.appId,
-                    newMapping
-                )
-                return id
+                return await repo.save(newMapping)
             } catch (e) {
                 const err = e instanceof Error ? e : new Error('Failed to save mapping')
                 setError(err)
                 throw err
             }
         },
-        [user, services]
+        [repo]
     )
 
     // Delete a mapping
     const deleteMapping = useCallback(
         async (mappingId: string): Promise<void> => {
-            if (!user || !services) {
+            if (!repo) {
                 throw new Error('User must be authenticated to delete mappings')
             }
 
             try {
-                await deleteItemNameMapping(
-                    services.db,
-                    user.uid,
-                    services.appId,
-                    mappingId
-                )
+                await repo.delete(mappingId)
             } catch (e) {
                 const err = e instanceof Error ? e : new Error('Failed to delete mapping')
                 setError(err)
                 throw err
             }
         },
-        [user, services]
+        [repo]
     )
 
     // Update a mapping's target item name
     const updateMapping = useCallback(
         async (mappingId: string, newTarget: string): Promise<void> => {
-            if (!user || !services) {
+            if (!repo) {
                 throw new Error('User must be authenticated to update mappings')
             }
 
@@ -197,20 +187,14 @@ export function useItemNameMappings(
             const capitalizedTarget = toTitleCase(newTarget.trim())
 
             try {
-                await updateItemNameMappingTarget(
-                    services.db,
-                    user.uid,
-                    services.appId,
-                    mappingId,
-                    capitalizedTarget
-                )
+                await repo.updateTarget(mappingId, capitalizedTarget)
             } catch (e) {
                 const err = e instanceof Error ? e : new Error('Failed to update mapping')
                 setError(err)
                 throw err
             }
         },
-        [user, services]
+        [repo]
     )
 
     // Find all mappings for a specific merchant (for scan processing)

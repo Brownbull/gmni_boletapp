@@ -11,7 +11,12 @@ import {
   setDoc,
   serverTimestamp,
   Firestore,
+  FieldValue,
+  Timestamp,
 } from 'firebase/firestore';
+import { sanitizeInput, sanitizeLocation } from '@/utils/sanitize';
+import { preferencesDocSegments } from '@/lib/firestorePaths';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
 
 /**
  * Supported currencies for the application
@@ -55,7 +60,7 @@ export interface UserPreferences {
   /** Story 14.35b: Foreign location display format ('code' or 'flag') */
   foreignLocationFormat?: ForeignLocationDisplayFormat;
   /** Timestamp when preferences were last updated */
-  updatedAt?: any;
+  updatedAt?: FieldValue | Timestamp;
 }
 
 /**
@@ -64,7 +69,7 @@ export interface UserPreferences {
  * Story 14.35b: Added foreignLocationFormat default to 'code'
  */
 const DEFAULT_PREFERENCES: UserPreferences = {
-  defaultCurrency: 'CLP',
+  defaultCurrency: DEFAULT_CURRENCY as SupportedCurrency,
   fontFamily: 'outfit',
   foreignLocationFormat: 'code',
 };
@@ -73,7 +78,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
  * Get the Firestore document reference for user preferences
  */
 function getPreferencesDocRef(db: Firestore, appId: string, userId: string) {
-  return doc(db, 'artifacts', appId, 'users', userId, 'preferences', 'settings');
+  return doc(db, ...preferencesDocSegments(appId, userId));
 }
 
 /**
@@ -137,14 +142,27 @@ export async function saveUserPreferences(
   try {
     const docRef = getPreferencesDocRef(db, appId, userId);
 
-    await setDoc(
-      docRef,
-      {
-        ...preferences,
-        updatedAt: serverTimestamp(),
-      },
-      { merge: true }
-    );
+    const sanitized = {
+      ...preferences,
+      ...(preferences.displayName !== undefined && {
+        displayName: sanitizeInput(preferences.displayName, { maxLength: 100 }),
+      }),
+      ...(preferences.phoneNumber !== undefined && {
+        phoneNumber: sanitizeInput(preferences.phoneNumber, { maxLength: 20 }),
+      }),
+      ...(preferences.birthDate !== undefined && {
+        birthDate: sanitizeInput(preferences.birthDate, { maxLength: 10 }),
+      }),
+      ...(preferences.defaultCountry !== undefined && {
+        defaultCountry: sanitizeLocation(preferences.defaultCountry),
+      }),
+      ...(preferences.defaultCity !== undefined && {
+        defaultCity: sanitizeLocation(preferences.defaultCity),
+      }),
+      updatedAt: serverTimestamp(),
+    };
+
+    await setDoc(docRef, sanitized, { merge: true });
   } catch (error) {
     console.error('Error saving user preferences:', error);
     throw error;

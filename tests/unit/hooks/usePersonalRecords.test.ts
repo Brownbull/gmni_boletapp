@@ -14,8 +14,8 @@ import type { Transaction } from '../../../src/types/transaction';
 import { RECORD_COOLDOWNS_KEY } from '../../../src/types/personalRecord';
 
 // Mock the recordsService
-vi.mock('../../../src/services/recordsService', async () => {
-    const actual = await vi.importActual('../../../src/services/recordsService');
+vi.mock('@features/insights/services/recordsService', async () => {
+    const actual = await vi.importActual('@features/insights/services/recordsService');
     return {
         ...actual,
         storePersonalRecord: vi.fn().mockResolvedValue('mock-record-id'),

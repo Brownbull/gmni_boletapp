@@ -117,9 +117,9 @@ export function isFullScreenView(view: View): boolean {
  * Props for AppProviders component.
  *
  * AppProviders wraps children with app-level context providers:
- * - ThemeProvider (theme + font preferences)
- * - AppStateProvider (toasts, operation status)
  * - NotificationProvider (in-app notifications)
+ * Note: ThemeProvider removed (15-7c, theme via useSettingsStore)
+ * Note: AppStateProvider removed (15-7b, toasts via useToast)
  *
  * External providers (Auth, Query, Scan) remain in main.tsx.
  * View-scoped providers (Analytics, HistoryFilters) remain per-view.

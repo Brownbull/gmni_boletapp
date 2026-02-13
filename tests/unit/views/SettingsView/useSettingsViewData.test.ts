@@ -118,9 +118,9 @@ vi.mock('@/hooks/useAuth', () => ({
     })),
 }));
 
-// Mock ThemeContext
-vi.mock('@/contexts/ThemeContext', () => ({
-    useTheme: vi.fn(() => ({
+// Story 15-7c: Mock useThemeSettings (ThemeContext removed)
+vi.mock('@/shared/stores', () => ({
+    useThemeSettings: vi.fn(() => ({
         theme: mockState.theme,
         colorTheme: mockState.colorTheme,
         fontColorMode: mockState.fontColorMode,
@@ -129,14 +129,27 @@ vi.mock('@/contexts/ThemeContext', () => ({
         lang: mockState.lang,
         currency: mockState.currency,
         dateFormat: mockState.dateFormat,
-        setTheme: mockSetters.setTheme,
-        setColorTheme: mockSetters.setColorTheme,
-        setFontColorMode: mockSetters.setFontColorMode,
-        setFontSize: mockSetters.setFontSize,
-        setLang: mockSetters.setLang,
-        setCurrency: mockSetters.setCurrency,
-        setDateFormat: mockSetters.setDateFormat,
     })),
+}));
+
+// Story 15-7c: Mock useSettingsStore for individual selectors + setters
+vi.mock('@/shared/stores/useSettingsStore', () => ({
+    useSettingsStore: vi.fn((selector) => {
+        const state = {
+            theme: mockState.theme,
+            colorTheme: mockState.colorTheme,
+            fontColorMode: mockState.fontColorMode,
+            fontSize: mockState.fontSize,
+            setTheme: mockSetters.setTheme,
+            setColorTheme: mockSetters.setColorTheme,
+            setFontColorMode: mockSetters.setFontColorMode,
+            setFontSize: mockSetters.setFontSize,
+            setLang: mockSetters.setLang,
+            setCurrency: mockSetters.setCurrency,
+            setDateFormat: mockSetters.setDateFormat,
+        };
+        return selector(state);
+    }),
 }));
 
 // Mock useUserPreferences
@@ -334,7 +347,7 @@ describe('useSettingsViewData', () => {
     // =========================================================================
 
     describe('theme data (AC3)', () => {
-        it('returns theme settings from ThemeContext', () => {
+        it('returns theme settings from useThemeSettings', () => {
             const { result } = renderHook(() => useSettingsViewData());
 
             expect(result.current.theme.theme).toBe('light');

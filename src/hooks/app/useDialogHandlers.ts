@@ -65,13 +65,8 @@ import { openModalDirect, closeModalDirect } from '@managers/ModalManager';
 // Types
 // =============================================================================
 
-/**
- * Toast message configuration
- */
-export interface ToastMessage {
-    text: string;
-    type: 'success' | 'info';
-}
+import type { ToastMessage, ToastType } from '@/shared/hooks';
+export type { ToastMessage };
 
 /**
  * Conflict dialog data structure
@@ -137,7 +132,7 @@ export interface UseDialogHandlersResult {
      * @param text - Toast message text
      * @param type - Toast type ('success' or 'info')
      */
-    showToast: (text: string, type: 'success' | 'info') => void;
+    showToast: (text: string, type: ToastType) => void;
 
     // ===========================================================================
     // Conflict Dialog
@@ -200,7 +195,7 @@ export function useDialogHandlers(props: UseDialogHandlersProps): UseDialogHandl
     /**
      * Show a toast notification.
      */
-    const showToast = useCallback((text: string, type: 'success' | 'info') => {
+    const showToast = useCallback((text: string, type: ToastType) => {
         setToastMessage({ text, type });
     }, []);
 

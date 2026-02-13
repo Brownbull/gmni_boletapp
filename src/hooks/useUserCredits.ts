@@ -7,14 +7,23 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { User } from 'firebase/auth';
+import { Firestore } from 'firebase/firestore';
 import { UserCredits, DEFAULT_CREDITS } from '../types/scan';
-import { getUserCredits, saveUserCredits } from '../services/userCreditsService';
+import {
+  getUserCredits,
+  deductAndSaveCredits,
+  deductAndSaveSuperCredits,
+  addAndSaveCredits,
+  addAndSaveSuperCredits,
+} from '../services/userCreditsService';
 
 interface UseUserCreditsResult {
   /** Current user credits (both normal and super) */
   credits: UserCredits;
   /** Loading state */
   loading: boolean;
+  /** Error from loading credits (null if no error) */
+  error: Error | null;
   /** Whether credits are currently reserved (pending confirmation) */
   hasReservedCredits: boolean;
   /** Deduct normal credits (for scanning) */
@@ -46,7 +55,7 @@ interface UseUserCreditsResult {
 }
 
 interface FirebaseServices {
-  db: any;
+  db: Firestore;
   appId: string;
 }
 
@@ -76,6 +85,7 @@ export function useUserCredits(
 ): UseUserCreditsResult {
   const [credits, setCredits] = useState<UserCredits>(DEFAULT_CREDITS);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   // Track if we've loaded credits for this user to avoid resetting
   const loadedForUserRef = useRef<string | null>(null);
@@ -97,13 +107,14 @@ export function useUserCredits(
 
     const loadCredits = async () => {
       setLoading(true);
+      setError(null);
       try {
         const userCredits = await getUserCredits(services.db, user.uid, services.appId);
         setCredits(userCredits);
         loadedForUserRef.current = user.uid;
-      } catch (error) {
-        console.error('Failed to load user credits:', error);
-        // Keep default credits on error
+      } catch (err) {
+        console.error('Failed to load user credits:', err);
+        setError(err instanceof Error ? err : new Error('Failed to load credits'));
       } finally {
         setLoading(false);
       }
@@ -120,8 +131,14 @@ export function useUserCredits(
       if (document.visibilityState === 'visible') {
         // Refresh credits when user returns to app
         getUserCredits(services.db, user.uid, services.appId)
-          .then(setCredits)
-          .catch((error) => console.error('Failed to refresh credits on visibility change:', error));
+          .then((refreshed) => {
+            setCredits(refreshed);
+            setError(null);
+          })
+          .catch((err) => {
+            console.error('Failed to refresh credits on visibility change:', err);
+            setError(err instanceof Error ? err : new Error('Failed to refresh credits'));
+          });
       }
     };
 
@@ -130,121 +147,88 @@ export function useUserCredits(
   }, [user, services]);
 
   // Deduct normal credits (for scanning receipts)
+  // Uses transactional deductAndSaveCredits to prevent TOCTOU overdrafts (TD-10)
   const deductCredits = useCallback(
     async (amount: number): Promise<boolean> => {
       if (!user || !services) return false;
 
-      // Check if sufficient credits
-      if (credits.remaining < amount) {
-        return false;
-      }
-
-      // Optimistic update
-      const newCredits: UserCredits = {
-        remaining: credits.remaining - amount,
-        used: credits.used + amount,
-        superRemaining: credits.superRemaining,
-        superUsed: credits.superUsed,
-      };
-      setCredits(newCredits);
-
       try {
-        await saveUserCredits(services.db, user.uid, services.appId, newCredits);
+        const updatedCredits = await deductAndSaveCredits(
+          services.db, user.uid, services.appId, amount
+        );
+        setCredits(updatedCredits);
         return true;
       } catch (error) {
-        console.error('Failed to save credits after deduction:', error);
-        // Revert on error
-        const savedCredits = await getUserCredits(services.db, user.uid, services.appId);
-        setCredits(savedCredits);
+        // 'Insufficient credits' or 'Amount must be a positive integer' are expected
+        if (error instanceof Error && error.message === 'Insufficient credits') {
+          return false;
+        }
+        console.error('Failed to deduct credits:', error);
         return false;
       }
     },
-    [user, services, credits]
+    [user, services]
   );
 
   // Deduct super credits (tier 2)
+  // Uses transactional deductAndSaveSuperCredits to prevent TOCTOU overdrafts (TD-10)
   const deductSuperCredits = useCallback(
     async (amount: number): Promise<boolean> => {
       if (!user || !services) return false;
 
-      // Check if sufficient super credits
-      if (credits.superRemaining < amount) {
-        return false;
-      }
-
-      // Optimistic update
-      const newCredits: UserCredits = {
-        remaining: credits.remaining,
-        used: credits.used,
-        superRemaining: credits.superRemaining - amount,
-        superUsed: credits.superUsed + amount,
-      };
-      setCredits(newCredits);
-
       try {
-        await saveUserCredits(services.db, user.uid, services.appId, newCredits);
+        const updatedCredits = await deductAndSaveSuperCredits(
+          services.db, user.uid, services.appId, amount
+        );
+        setCredits(updatedCredits);
         return true;
       } catch (error) {
-        console.error('Failed to save super credits after deduction:', error);
-        // Revert on error
-        const savedCredits = await getUserCredits(services.db, user.uid, services.appId);
-        setCredits(savedCredits);
+        if (error instanceof Error && error.message === 'Insufficient super credits') {
+          return false;
+        }
+        console.error('Failed to deduct super credits:', error);
         return false;
       }
     },
-    [user, services, credits]
+    [user, services]
   );
 
   // Add normal credits (for purchases, promotions, etc.)
+  // Uses transactional addAndSaveCredits to prevent lost updates (TD-13)
   const addCredits = useCallback(
     async (amount: number): Promise<void> => {
       if (!user || !services) return;
 
-      // Optimistic update
-      const newCredits: UserCredits = {
-        remaining: credits.remaining + amount,
-        used: credits.used,
-        superRemaining: credits.superRemaining,
-        superUsed: credits.superUsed,
-      };
-      setCredits(newCredits);
-
       try {
-        await saveUserCredits(services.db, user.uid, services.appId, newCredits);
+        const updatedCredits = await addAndSaveCredits(
+          services.db, user.uid, services.appId, amount
+        );
+        setCredits(updatedCredits);
       } catch (error) {
-        console.error('Failed to save credits after addition:', error);
-        // Revert on error
-        const savedCredits = await getUserCredits(services.db, user.uid, services.appId);
-        setCredits(savedCredits);
+        console.error('Failed to add credits:', error);
+        throw error;
       }
     },
-    [user, services, credits]
+    [user, services]
   );
 
   // Add super credits (for purchases, promotions, etc.)
+  // Uses transactional addAndSaveSuperCredits to prevent lost updates (TD-13)
   const addSuperCredits = useCallback(
     async (amount: number): Promise<void> => {
       if (!user || !services) return;
 
-      // Optimistic update
-      const newCredits: UserCredits = {
-        remaining: credits.remaining,
-        used: credits.used,
-        superRemaining: credits.superRemaining + amount,
-        superUsed: credits.superUsed,
-      };
-      setCredits(newCredits);
-
       try {
-        await saveUserCredits(services.db, user.uid, services.appId, newCredits);
+        const updatedCredits = await addAndSaveSuperCredits(
+          services.db, user.uid, services.appId, amount
+        );
+        setCredits(updatedCredits);
       } catch (error) {
-        console.error('Failed to save super credits after addition:', error);
-        // Revert on error
-        const savedCredits = await getUserCredits(services.db, user.uid, services.appId);
-        setCredits(savedCredits);
+        console.error('Failed to add super credits:', error);
+        throw error;
       }
     },
-    [user, services, credits]
+    [user, services]
   );
 
   // Force refresh credits from Firestore (e.g., after admin changes or app resume)
@@ -277,7 +261,7 @@ export function useUserCredits(
 
       // If there's already a reservation, refund it first (shouldn't happen normally)
       if (reservedCredits) {
-        console.warn('reserveCredits called with existing reservation - refunding first');
+        if (import.meta.env.DEV) console.warn('reserveCredits called with existing reservation - refunding first');
         setCredits(reservedCredits.originalCredits);
       }
 
@@ -311,6 +295,7 @@ export function useUserCredits(
   /**
    * Story 14.24: Confirm reserved credits by persisting to Firestore.
    * Called after successful scan completion.
+   * TD-10: Uses transactional deduction to prevent TOCTOU overdrafts.
    */
   const confirmReservedCredits = useCallback(async (): Promise<boolean> => {
     if (!user || !services) {
@@ -319,29 +304,29 @@ export function useUserCredits(
     }
 
     if (!reservedCredits) {
-      console.warn('confirmReservedCredits called without reservation');
+      if (import.meta.env.DEV) console.warn('confirmReservedCredits called without reservation');
       return false;
     }
 
     try {
-      // Persist the current credits state to Firestore
-      await saveUserCredits(services.db, user.uid, services.appId, credits);
+      // Use transactional deduction — reads fresh balance inside transaction
+      const deductFn = reservedCredits.type === 'super'
+        ? deductAndSaveSuperCredits
+        : deductAndSaveCredits;
+      const updatedCredits = await deductFn(
+        services.db, user.uid, services.appId, reservedCredits.amount
+      );
+      setCredits(updatedCredits);
       setReservedCredits(null);
       return true;
     } catch (error) {
       console.error('Failed to confirm reserved credits:', error);
-      // On error, try to restore from server and refund reservation
-      try {
-        const savedCredits = await getUserCredits(services.db, user.uid, services.appId);
-        setCredits(savedCredits);
-      } catch {
-        // If we can't get server state, restore from our saved original
-        setCredits(reservedCredits.originalCredits);
-      }
+      // Refund: restore pre-reservation state
+      setCredits(reservedCredits.originalCredits);
       setReservedCredits(null);
       return false;
     }
-  }, [user, services, credits, reservedCredits]);
+  }, [user, services, reservedCredits]);
 
   /**
    * Story 14.24: Refund reserved credits (restore UI state).
@@ -349,7 +334,7 @@ export function useUserCredits(
    */
   const refundReservedCredits = useCallback((): void => {
     if (!reservedCredits) {
-      console.warn('refundReservedCredits called without reservation');
+      if (import.meta.env.DEV) console.warn('refundReservedCredits called without reservation');
       return;
     }
 
@@ -361,6 +346,7 @@ export function useUserCredits(
   return {
     credits,
     loading,
+    error,
     hasReservedCredits: reservedCredits !== null,
     deductCredits,
     deductSuperCredits,

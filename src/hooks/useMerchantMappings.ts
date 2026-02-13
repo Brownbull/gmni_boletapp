@@ -2,15 +2,10 @@
  * useMerchantMappings Hook
  *
  * Story 14.29: React Query Migration
- * Epic 14: Core Implementation
+ * Story 15-6c: Migrated to repository pattern
  *
  * Real-time subscription to user's merchant mappings with React Query caching.
  * Provides CRUD operations for merchant learning.
- *
- * Migration benefits:
- * - Settings navigation shows instantly (cached data)
- * - No loading spinner on return visits
- * - Shared cache across components
  */
 
 import { useState, useCallback, useMemo } from 'react'
@@ -18,13 +13,8 @@ import { User } from 'firebase/auth'
 import { Services } from './useAuth'
 import { useFirestoreSubscription } from './useFirestoreSubscription'
 import { QUERY_KEYS } from '../lib/queryKeys'
-import {
-    subscribeToMerchantMappings,
-    saveMerchantMapping,
-    deleteMerchantMapping,
-    updateMerchantMappingTarget,
-    normalizeMerchantName
-} from '../services/merchantMappingService'
+import { normalizeMerchantName, MAPPING_CONFIG } from '../services/merchantMappingService'
+import { createMappingRepository } from '@/repositories'
 import { findMerchantMatch } from '../services/merchantMatcherService'
 import { MerchantMapping, MerchantMatchResult, NewMerchantMapping } from '../types/merchantMapping'
 import type { StoreCategory } from '../types/transaction'
@@ -67,7 +57,17 @@ export function useMerchantMappings(
     services: Services | null
 ): UseMerchantMappingsReturn {
     const [error, setError] = useState<Error | null>(null)
-    const enabled = !!user && !!services
+
+    // Story 15-6c: Create repository instance bound to user context
+    const repo = useMemo(() => {
+        if (!services?.db || !user?.uid) return null;
+        return createMappingRepository<MerchantMapping>(
+            { db: services.db, userId: user.uid, appId: services.appId },
+            MAPPING_CONFIG,
+        );
+    }, [services?.db, services?.appId, user?.uid])
+
+    const enabled = !!repo
 
     // Create the query key
     const queryKey = useMemo(
@@ -80,106 +80,79 @@ export function useMerchantMappings(
     // Subscribe to mappings with React Query caching
     const { data: mappings = [], isLoading } = useFirestoreSubscription<MerchantMapping[]>(
         queryKey,
-        (callback) => subscribeToMerchantMappings(
-            services!.db,
-            user!.uid,
-            services!.appId,
-            callback
-        ),
+        (callback) => repo!.subscribe(callback),
         { enabled }
     )
 
     // Save a new mapping or update existing
-    // v9.6.1: Now accepts optional storeCategory to learn both alias and category
     const saveMapping = useCallback(
         async (originalMerchant: string, targetMerchant: string, storeCategory?: StoreCategory): Promise<string> => {
-            if (!user || !services) {
+            if (!repo) {
                 throw new Error('User must be authenticated to save mappings')
             }
 
-            // Story 9.6: Always capitalize the target merchant (alias) for consistency
             const capitalizedTarget = toTitleCase(targetMerchant.trim())
 
             const newMapping: NewMerchantMapping = {
                 originalMerchant,
                 normalizedMerchant: normalizeMerchantName(originalMerchant),
                 targetMerchant: capitalizedTarget,
-                // v9.6.1: Include storeCategory if provided
                 ...(storeCategory && { storeCategory }),
-                confidence: 1.0, // Always 1.0 for user-set mappings
-                source: 'user', // Always 'user' for MVP
+                confidence: 1.0,
+                source: 'user',
                 usageCount: 0
             }
 
             try {
-                const id = await saveMerchantMapping(
-                    services.db,
-                    user.uid,
-                    services.appId,
-                    newMapping
-                )
-                return id
+                return await repo.save(newMapping)
             } catch (e) {
                 const err = e instanceof Error ? e : new Error('Failed to save mapping')
                 setError(err)
                 throw err
             }
         },
-        [user, services]
+        [repo]
     )
 
     // Delete a mapping
     const deleteMapping = useCallback(
         async (mappingId: string): Promise<void> => {
-            if (!user || !services) {
+            if (!repo) {
                 throw new Error('User must be authenticated to delete mappings')
             }
 
             try {
-                await deleteMerchantMapping(
-                    services.db,
-                    user.uid,
-                    services.appId,
-                    mappingId
-                )
+                await repo.delete(mappingId)
             } catch (e) {
                 const err = e instanceof Error ? e : new Error('Failed to delete mapping')
                 setError(err)
                 throw err
             }
         },
-        [user, services]
+        [repo]
     )
 
     // Update a mapping's target merchant name (Story 9.7)
     const updateMapping = useCallback(
         async (mappingId: string, newTarget: string): Promise<void> => {
-            if (!user || !services) {
+            if (!repo) {
                 throw new Error('User must be authenticated to update mappings')
             }
 
-            // Apply title case to the new target
             const capitalizedTarget = toTitleCase(newTarget.trim())
 
             try {
-                await updateMerchantMappingTarget(
-                    services.db,
-                    user.uid,
-                    services.appId,
-                    mappingId,
-                    capitalizedTarget
-                )
+                await repo.updateTarget(mappingId, capitalizedTarget)
             } catch (e) {
                 const err = e instanceof Error ? e : new Error('Failed to update mapping')
                 setError(err)
                 throw err
             }
         },
-        [user, services]
+        [repo]
     )
 
     // Find best match for a merchant name using fuzzy matching
-    // Story 9.5: Full Fuse.js fuzzy matching implementation
     const findMatch = useCallback(
         (merchantName: string, threshold?: number): MerchantMatchResult | null => {
             return findMerchantMatch(merchantName, mappings, threshold)

@@ -1,55 +1,44 @@
 /**
  * Story 14e-22: AppProviders Unit Tests
- * Story 14e-25d: Updated - ViewHandlersProvider removed
- * Story 14e-45: Updated - NavigationProvider removed (navigation via Zustand)
+ * Story 15-7b: AppStateProvider removed (zero consumers)
+ * Story 15-7c: ThemeProvider removed (migrated to useSettingsStore)
  *
  * Tests for the provider composition component that wraps
  * children with app-level React context providers.
  *
- * Tests verify:
- * 1. Provider composition and hierarchy
- * 2. Props handling (fontFamily, db, userId, appId)
- * 3. Graceful degradation
- *
- * Note: ViewHandlersProvider was removed in Story 14e-25d.
- * Note: NavigationProvider was removed in Story 14e-45 - navigation uses Zustand store.
- * Views now use direct hooks for navigation and handlers.
+ * Remaining providers: NotificationProvider only.
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { AppProviders } from '../../../src/app/AppProviders';
 
 // Mock the contexts to verify they're being used
-// Story 14e-45: NavigationProvider removed - navigation now via useNavigationStore
 vi.mock('../../../src/contexts', () => ({
-    ThemeProvider: ({ children }: { children: React.ReactNode }) => (
-        <div data-testid="theme-provider">{children}</div>
-    ),
-    AppStateProvider: ({ children }: { children: React.ReactNode }) => (
-        <div data-testid="appstate-provider">{children}</div>
-    ),
     NotificationProvider: ({ children }: { children: React.ReactNode }) => (
         <div data-testid="notification-provider">{children}</div>
     ),
 }));
 
+// Story 15-7c: Mock settingsActions used by AppProviders for fontFamily sync
+vi.mock('../../../src/shared/stores', () => ({
+    settingsActions: {
+        setFontFamily: vi.fn(),
+    },
+}));
+
 describe('AppProviders', () => {
     describe('Provider composition', () => {
-        it('should render all required providers in correct nesting order', () => {
+        it('should render NotificationProvider', () => {
             render(
                 <AppProviders>
                     <div data-testid="child">Content</div>
                 </AppProviders>
             );
 
-            // All providers should be in the tree
-            // Story 14e-45: NavigationProvider removed - navigation via Zustand
-            expect(screen.getByTestId('theme-provider')).toBeInTheDocument();
-            expect(screen.getByTestId('appstate-provider')).toBeInTheDocument();
             expect(screen.getByTestId('notification-provider')).toBeInTheDocument();
         });
 
-        it('should render children inside all providers', () => {
+        it('should render children inside providers', () => {
             render(
                 <AppProviders>
                     <div data-testid="child-content">Child content</div>
@@ -60,29 +49,21 @@ describe('AppProviders', () => {
             expect(screen.getByText('Child content')).toBeInTheDocument();
         });
 
-        it('should maintain correct provider hierarchy', () => {
+        it('should nest children inside NotificationProvider', () => {
             render(
                 <AppProviders>
-                    <div>Content</div>
+                    <div data-testid="inner">Content</div>
                 </AppProviders>
             );
 
-            // Story 14e-45: Verify nesting order: Theme > AppState > Notification > children
-            // (NavigationProvider removed - navigation via Zustand)
-            const themeProvider = screen.getByTestId('theme-provider');
-            const appStateProvider = screen.getByTestId('appstate-provider');
             const notificationProvider = screen.getByTestId('notification-provider');
-
-            // Theme should contain AppState
-            expect(themeProvider.contains(appStateProvider)).toBe(true);
-            // AppState should contain Notification
-            expect(appStateProvider.contains(notificationProvider)).toBe(true);
+            const inner = screen.getByTestId('inner');
+            expect(notificationProvider.contains(inner)).toBe(true);
         });
     });
 
     describe('Props handling', () => {
         it('should accept fontFamily prop', () => {
-            // This test ensures the component doesn't throw with the prop
             expect(() => {
                 render(
                     <AppProviders fontFamily="outfit">
@@ -170,7 +151,6 @@ describe('AppProviders', () => {
 
     describe('Graceful degradation', () => {
         it('should render without optional props', () => {
-            // This is important for test environments
             expect(() => {
                 render(
                     <AppProviders>

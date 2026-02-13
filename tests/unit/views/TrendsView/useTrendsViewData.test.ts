@@ -78,19 +78,17 @@ vi.mock('@/hooks/useUserPreferences', () => ({
     })),
 }));
 
-// Mock ThemeContext
-vi.mock('@/contexts/ThemeContext', () => ({
-    useTheme: vi.fn(() => ({
+// Story 15-7c: Mock useThemeSettings (ThemeContext removed)
+vi.mock('@/shared/stores', () => ({
+    useThemeSettings: vi.fn(() => ({
         theme: mockState.theme,
         colorTheme: mockState.colorTheme,
         fontColorMode: mockState.fontColorMode,
+        fontSize: 'small',
+        fontFamily: 'outfit',
         lang: mockState.lang,
         currency: mockState.currency,
-        setTheme: vi.fn(),
-        setColorTheme: vi.fn(),
-        setFontColorMode: vi.fn(),
-        setLang: vi.fn(),
-        setCurrency: vi.fn(),
+        dateFormat: 'US',
     })),
 }));
 
@@ -223,7 +221,7 @@ describe('useTrendsViewData', () => {
     // =========================================================================
 
     describe('theme and locale settings (AC2)', () => {
-        it('returns theme from ThemeContext', () => {
+        it('returns theme from useThemeSettings', () => {
             const { result } = renderHook(() => useTrendsViewData());
 
             expect(result.current.theme).toBe('light');
@@ -231,7 +229,7 @@ describe('useTrendsViewData', () => {
             expect(result.current.fontColorMode).toBe('colorful');
         });
 
-        it('returns locale settings from ThemeContext', () => {
+        it('returns locale settings from useThemeSettings', () => {
             const { result } = renderHook(() => useTrendsViewData());
 
             expect(result.current.lang).toBe('en');

@@ -27,11 +27,12 @@ import {
     doc,
     updateDoc,
     deleteDoc,
-    writeBatch,
     type Firestore,
-    type Timestamp,
 } from 'firebase/firestore';
 import type { InAppNotification, InAppNotificationClient } from '../types/notification';
+import { toDateSafe } from '@/utils/timestamp';
+import { batchWrite, batchDelete, type BatchResult } from '@/lib/firestoreBatch';
+import { notificationsPath, notificationDocSegments } from '@/lib/firestorePaths';
 
 // ============================================================================
 // Types
@@ -52,8 +53,8 @@ export interface UseInAppNotificationsResult {
     markAllAsRead: () => Promise<void>;
     /** Delete a specific notification */
     deleteNotification: (notificationId: string) => Promise<void>;
-    /** Delete all notifications */
-    deleteAllNotifications: () => Promise<void>;
+    /** Delete all notifications. Returns BatchResult for partial-failure detection. */
+    deleteAllNotifications: () => Promise<BatchResult | undefined>;
 }
 
 // ============================================================================
@@ -97,7 +98,7 @@ export function useInAppNotifications(
 
         const notificationsRef = collection(
             db,
-            `artifacts/${appId}/users/${userId}/notifications`
+            notificationsPath(appId, userId)
         );
 
         const q = query(
@@ -114,7 +115,7 @@ export function useInAppNotifications(
                     return {
                         ...data,
                         id: doc.id,
-                        createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
+                        createdAt: toDateSafe(data.createdAt) || new Date(),
                     };
                 });
                 setNotifications(notifs);
@@ -139,10 +140,7 @@ export function useInAppNotifications(
             if (!db || !userId || !appId) return;
 
             try {
-                const notifRef = doc(
-                    db,
-                    `artifacts/${appId}/users/${userId}/notifications/${notificationId}`
-                );
+                const notifRef = doc(db, ...notificationDocSegments(appId, userId, notificationId));
                 await updateDoc(notifRef, { read: true });
             } catch (err) {
                 console.error('[useInAppNotifications] Failed to mark as read:', err);
@@ -154,20 +152,18 @@ export function useInAppNotifications(
     // Mark all notifications as read
     const markAllAsRead = useCallback(async () => {
         if (!db || !userId || !appId) return;
+        const currentDb = db;
+        const uid = userId;
+        const aid = appId;
 
         const unreadNotifs = notifications.filter((n) => !n.read);
         if (unreadNotifs.length === 0) return;
 
         try {
-            const batch = writeBatch(db);
-            for (const notif of unreadNotifs) {
-                const notifRef = doc(
-                    db,
-                    `artifacts/${appId}/users/${userId}/notifications/${notif.id}`
-                );
+            await batchWrite(currentDb, unreadNotifs, (batch, notif) => {
+                const notifRef = doc(currentDb, ...notificationDocSegments(aid, uid, notif.id));
                 batch.update(notifRef, { read: true });
-            }
-            await batch.commit();
+            });
         } catch (err) {
             console.error('[useInAppNotifications] Failed to mark all as read:', err);
         }
@@ -179,10 +175,7 @@ export function useInAppNotifications(
             if (!db || !userId || !appId) return;
 
             try {
-                const notifRef = doc(
-                    db,
-                    `artifacts/${appId}/users/${userId}/notifications/${notificationId}`
-                );
+                const notifRef = doc(db, ...notificationDocSegments(appId, userId, notificationId));
                 await deleteDoc(notifRef);
             } catch (err) {
                 console.error('[useInAppNotifications] Failed to delete notification:', err);
@@ -191,23 +184,24 @@ export function useInAppNotifications(
         [db, userId, appId]
     );
 
-    // Delete all notifications
-    const deleteAllNotifications = useCallback(async () => {
-        if (!db || !userId || !appId) return;
-        if (notifications.length === 0) return;
+    // Delete all notifications — returns BatchResult for partial-failure detection
+    const deleteAllNotifications = useCallback(async (): Promise<BatchResult | undefined> => {
+        if (!db || !userId || !appId) return undefined;
+        if (notifications.length === 0) return undefined;
+        const currentDb = db;
+        const uid = userId;
+        const aid = appId;
 
         try {
-            const batch = writeBatch(db);
-            for (const notif of notifications) {
-                const notifRef = doc(
-                    db,
-                    `artifacts/${appId}/users/${userId}/notifications/${notif.id}`
-                );
-                batch.delete(notifRef);
-            }
-            await batch.commit();
+            const refs = notifications.map((notif) =>
+                doc(currentDb, ...notificationDocSegments(aid, uid, notif.id))
+            );
+            return await batchDelete(currentDb, refs);
         } catch (err) {
             console.error('[useInAppNotifications] Failed to delete all notifications:', err);
+            const batchResult = (err as Error & { batchResult?: BatchResult })?.batchResult;
+            if (batchResult) return batchResult;
+            return undefined;
         }
     }, [db, userId, appId, notifications]);
 

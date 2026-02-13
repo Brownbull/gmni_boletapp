@@ -10,7 +10,7 @@
  * - Calls usePaginatedTransactions() for transaction data
  * - Calls useRecentScans() for recent scan merge
  * - Calls useUserPreferences() for user defaults
- * - Calls useTheme() for theme/locale settings (via ThemeContext)
+ * - Calls useTheme() for theme/locale settings (via useThemeSettings from useSettingsStore)
  * - Provides formatters (t, formatCurrency, formatDate, getSafeDate) internally
  *
  * Pattern: Follows HistoryView (14e-25a.2a/b) and TrendsView (14e-25b.1)
@@ -31,13 +31,13 @@ import { usePaginatedTransactions } from '@/hooks/usePaginatedTransactions';
 import { useRecentScans } from '@/hooks/useRecentScans';
 import { mergeTransactionsWithRecentScans } from '@/utils/transactionMerge';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
-import { useTheme } from '@/contexts/ThemeContext';
-// Story 14e-25d: Direct navigation hooks (ViewHandlersContext deleted)
-import { useNavigationActions } from '@/shared/stores';
+// Story 15-7c: Theme settings from Zustand store (ThemeContext removed)
+import { useThemeSettings, useNavigationActions } from '@/shared/stores';
 import { formatCurrency as formatCurrencyUtil } from '@/utils/currency';
 import { formatDate as formatDateUtil } from '@/utils/date';
 import { TRANSLATIONS } from '@/utils/translations';
 import type { Transaction } from '@/types/transaction';
+import { toDateSafe } from '@/utils/timestamp';
 import type { Language, Theme, FontColorMode } from '@/types/settings';
 import type { ThemeName } from '@/config/categoryColors';
 
@@ -99,7 +99,7 @@ export interface UseDashboardViewDataReturn {
     /** Date formatting function (compatible with TransactionCard) */
     formatDate: (date: string, format: string) => string;
     /** Safe date extraction function (handles Firestore Timestamp) */
-    getSafeDate: (val: any) => string;
+    getSafeDate: (val: unknown) => string;
 
     // === Callbacks (stub - override via _testOverrides) ===
     /** Create new transaction handler */
@@ -126,15 +126,8 @@ function createGetSafeDate(): (val: any) => string {
     return (val: any): string => {
         if (!val) return '';
         if (typeof val === 'string') return val;
-        if (val.toDate) {
-            // Firestore Timestamp
-            const date = val.toDate();
-            return date.toISOString().split('T')[0];
-        }
-        if (val instanceof Date) {
-            return val.toISOString().split('T')[0];
-        }
-        return String(val);
+        const date = toDateSafe(val);
+        return date ? date.toISOString().split('T')[0] : String(val);
     };
 }
 
@@ -170,7 +163,7 @@ export function useDashboardViewData(): UseDashboardViewDataReturn {
         lang,
         currency,
         dateFormat,
-    } = useTheme();
+    } = useThemeSettings();
 
     // === User Preferences ===
     const { preferences } = useUserPreferences(user, services);

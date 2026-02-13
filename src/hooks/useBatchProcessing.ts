@@ -22,6 +22,7 @@ import {
 } from '../services/batchProcessingService';
 import { Transaction } from '../types/transaction';
 import { ReceiptType } from '../services/gemini';
+import { DEFAULT_CURRENCY } from '../utils/currency';
 
 /**
  * Story 14d.5b: Callbacks for ScanContext integration.
@@ -116,7 +117,7 @@ export function useBatchProcessing(concurrencyLimit = 3): UseBatchProcessingRetu
 
   // Processing options ref for retry
   const optionsRef = useRef<Pick<BatchProcessingOptions, 'currency' | 'receiptType'>>({
-    currency: 'CLP',
+    currency: DEFAULT_CURRENCY,
   });
 
   /**

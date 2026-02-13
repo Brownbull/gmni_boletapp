@@ -11,7 +11,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { AirlockHistoryList } from '../../../../src/components/insights/AirlockHistoryList';
+import { AirlockHistoryList } from '@features/insights/components/AirlockHistoryList';
 import { AirlockRecord } from '../../../../src/types/airlock';
 import { createMockTimestamp, createMockTimestampDaysAgo } from '../../../helpers';
 

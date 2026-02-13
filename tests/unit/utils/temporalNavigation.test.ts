@@ -14,8 +14,8 @@ import {
   getPrevTemporalPeriod,
   getNextPeriodLabel,
   getPrevPeriodLabel,
-} from '../../../src/utils/historyFilterUtils';
-import type { TemporalFilterState } from '../../../src/contexts/HistoryFiltersContext';
+} from '@shared/utils/historyFilterUtils';
+import type { TemporalFilterState } from '@/types/historyFilters';
 
 describe('Temporal Navigation Utilities (Story 14.9)', () => {
   describe('getNextTemporalPeriod', () => {

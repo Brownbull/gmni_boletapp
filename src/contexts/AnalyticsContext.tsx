@@ -19,7 +19,7 @@ import {
   validateNavigationState,
   getDefaultNavigationState,
   getCurrentYear,
-} from '../utils/analyticsHelpers';
+} from '@features/analytics/utils/analyticsHelpers';
 
 // ============================================================================
 // Context Creation

@@ -22,6 +22,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { ChevronLeft, X, Calendar, Clock, Plus, Check, Pencil, Camera, Zap, Info, ShoppingCart, AlertTriangle, ArrowLeft, Trash2 } from 'lucide-react';
 import type { UserCredits } from '../types/scan';
 import { Transaction, TransactionItem, StoreCategory, ItemCategory } from '../types/transaction';
+import { hasItemWithPrice } from '@/utils/transactionValidation';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { CategoryBadge } from '../components/CategoryBadge';
 import { LocationSelect } from '../components/LocationSelect';
@@ -252,8 +253,7 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
 
   // Validation: require total > 0 and at least one item with price > 0
   const hasValidTotal = total > 0;
-  const hasValidItem = items.some(item => item.price > 0);
-  const canSave = hasValidTotal && hasValidItem;
+  const canSave = hasValidTotal && hasItemWithPrice(items);
 
   // Handle save - with input sanitization for security
   const handleSave = useCallback(async () => {

@@ -13,7 +13,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { AnalyticsProvider } from '../../../src/contexts/AnalyticsContext';
-import { ChartModeToggle } from '../../../src/components/analytics/ChartModeToggle';
+import { ChartModeToggle } from '@features/analytics/components/ChartModeToggle';
 import type { AnalyticsNavigationState } from '../../../src/types/analytics';
 
 // ============================================================================

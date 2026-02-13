@@ -23,7 +23,6 @@
  *   useAppLifecycle,
  *   useAppInitialization,
  *   useDeepLinking,
- *   useAppPushNotifications,
  * } from './hooks/app';
  * ```
  */
@@ -53,12 +52,6 @@ export {
     useAppInitialization,
     type UseAppInitializationResult,
 } from './useAppInitialization';
-
-// Push notifications coordination
-export {
-    useAppPushNotifications,
-    type UseAppPushNotificationsResult,
-} from './useAppPushNotifications';
 
 // =============================================================================
 // Transaction & Scan Handler Hooks

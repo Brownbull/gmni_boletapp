@@ -11,6 +11,8 @@
  * Story 14.13: Analytics Explorer Redesign - Proportional treemap layout
  */
 
+import { byNumberDesc } from '@/utils/comparators';
+
 export interface TreemapItem {
     id: string;
     value: number;
@@ -220,7 +222,7 @@ export function calculateTreemapLayout(
     // Filter out zero/negative values and sort by value descending
     const validItems = items
         .filter(item => item.value > 0)
-        .sort((a, b) => b.value - a.value);
+        .sort(byNumberDesc('value'));
 
     if (validItems.length === 0) return [];
 

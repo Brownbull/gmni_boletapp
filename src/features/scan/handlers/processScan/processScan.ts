@@ -40,6 +40,7 @@ import {
 import { reconcileItemsTotal } from '@entities/transaction';
 
 import { calculateConfidence } from '@/utils/confidenceCheck';
+import { classifyError, extractErrorMessage } from '@/utils/errorHandler';
 
 // =============================================================================
 // Story 14e-43: Store Direct Access for Non-React Code
@@ -443,14 +444,13 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
     // Error Handling + Credit Refund
     // ========================================================================
 
-    const errorMessage = e instanceof Error ? e.message : 'Unknown error';
-    const fullErrorMessage = 'Failed: ' + errorMessage;
+    const errorCode = classifyError(e);
+    const errorMessage = extractErrorMessage(e);
 
     // Story 14e-43: Use store action directly
-    scanActions.processError(fullErrorMessage);
+    scanActions.processError(errorMessage);
 
-    const isTimeout = errorMessage?.includes('timed out');
-    scanOverlay.setError(isTimeout ? 'timeout' : 'api', fullErrorMessage);
+    scanOverlay.setError(errorCode === 'TIMEOUT_ERROR' ? 'timeout' : 'api', errorMessage);
 
     // Restore credit on API error
     await services.addUserCredits(1);
@@ -458,7 +458,7 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
 
     return {
       success: false,
-      error: fullErrorMessage,
+      error: errorMessage,
     };
   }
 }

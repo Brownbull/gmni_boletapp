@@ -12,7 +12,7 @@ import {
   categoryPositionToFilter,
   createTemporalNavigationPayload,
   createCategoryNavigationPayload,
-} from '../../../src/utils/analyticsToHistoryFilters';
+} from '@features/analytics/utils/analyticsToHistoryFilters';
 import type { TemporalPosition, CategoryPosition } from '../../../src/types/analytics';
 
 // ============================================================================

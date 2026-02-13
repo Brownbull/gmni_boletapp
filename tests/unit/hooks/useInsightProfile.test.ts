@@ -7,18 +7,18 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useInsightProfile } from '../../../src/hooks/useInsightProfile';
-import * as insightProfileService from '../../../src/services/insightProfileService';
-import * as insightEngineService from '../../../src/services/insightEngineService';
+import { useInsightProfile } from '@features/insights/hooks/useInsightProfile';
+import * as insightProfileService from '@features/insights/services/insightProfileService';
+import * as insightEngineService from '@features/insights/services/insightEngineService';
 
 // Mock the services
-vi.mock('../../../src/services/insightProfileService', () => ({
+vi.mock('@features/insights/services/insightProfileService', () => ({
   getOrCreateInsightProfile: vi.fn(),
   recordInsightShown: vi.fn(),
   trackTransactionForProfile: vi.fn(),
 }));
 
-vi.mock('../../../src/services/insightEngineService', () => ({
+vi.mock('@features/insights/services/insightEngineService', () => ({
   getLocalCache: vi.fn(),
   setLocalCache: vi.fn(),
   incrementScanCounter: vi.fn(),

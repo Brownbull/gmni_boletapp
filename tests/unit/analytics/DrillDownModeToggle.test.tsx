@@ -13,7 +13,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { AnalyticsProvider } from '../../../src/contexts/AnalyticsContext';
-import { DrillDownModeToggle } from '../../../src/components/analytics/DrillDownModeToggle';
+import { DrillDownModeToggle } from '@features/analytics/components/DrillDownModeToggle';
 import type { AnalyticsNavigationState } from '../../../src/types/analytics';
 
 // ============================================================================

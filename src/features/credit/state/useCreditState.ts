@@ -8,6 +8,7 @@
 
 import { useMemo } from 'react';
 import { User } from 'firebase/auth';
+import { Firestore } from 'firebase/firestore';
 import { useUserCredits } from '@/hooks/useUserCredits';
 
 /**
@@ -15,7 +16,7 @@ import { useUserCredits } from '@/hooks/useUserCredits';
  * Matches the interface expected by useUserCredits.
  */
 export interface CreditFirebaseServices {
-  db: unknown;
+  db: Firestore;
   appId: string;
 }
 
@@ -45,6 +46,7 @@ export function useCreditState(
     [
       creditsResult.credits,
       creditsResult.loading,
+      creditsResult.error,
       creditsResult.hasReservedCredits,
       creditsResult.deductCredits,
       creditsResult.deductSuperCredits,

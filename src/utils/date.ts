@@ -1,12 +1,17 @@
 /**
  * Date Utilities
  *
- * Quarter and week calculation utilities for temporal navigation.
- * Uses month-aligned week chunks (NOT ISO weeks) per ADR-012.
+ * Consolidated date utilities:
+ * - Quarter and week calculation for temporal navigation (ADR-012)
+ * - ISO 8601 week number calculation
+ * - Period computation for Firestore queries (AD-5)
+ *
+ * Story 15-2b: Merged date.ts + dateHelpers.ts + periodUtils.ts
  *
  * @see docs/architecture-epic7.md - ADR-012: Month-Aligned Week Chunks
- * @see docs/sprint-artifacts/epic7/story-7.6-quarter-week-date-utilities.md
  */
+
+import type { TransactionPeriods } from '../types/transaction';
 
 // ============================================================================
 // Types
@@ -216,3 +221,115 @@ export const formatDate = (dateStr: string, format: 'LatAm' | 'US'): string => {
   if (format === 'US') return `${parts[1]}/${parts[2]}/${parts[0]}`;
   return `${parts[2]}/${parts[1]}/${parts[0]}`; // LatAm default
 };
+
+// ============================================================================
+// ISO 8601 Week Number (from dateHelpers.ts)
+// ============================================================================
+
+/**
+ * Gets the ISO 8601 week number for a given date.
+ *
+ * ISO weeks start on Monday, and week 1 is the week containing January 4th.
+ *
+ * @param date - The date to get the week number for
+ * @returns The ISO week number (1-53)
+ */
+export function getISOWeekNumber(date: Date): number {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  // Set to nearest Thursday: current date + 4 - current day number (Monday=1, Sunday=7)
+  // Make Sunday day 7 instead of 0
+  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+  // January 4th is always in week 1
+  const week1 = new Date(d.getFullYear(), 0, 4);
+  // Calculate week number: weekday difference / 7 days
+  const weekNum = 1 + Math.round(
+    ((d.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7
+  );
+  return weekNum;
+}
+
+// ============================================================================
+// Period Computation (from periodUtils.ts — AD-5)
+// ============================================================================
+
+/**
+ * Compute all period identifiers from a transaction date string.
+ * Used for efficient Firestore queries via pre-computed period fields.
+ *
+ * @param dateString - Date in YYYY-MM-DD format
+ * @returns TransactionPeriods object with day, week, month, quarter, year
+ */
+export function computePeriods(dateString: string): TransactionPeriods {
+  const date = parseLocalDate(dateString);
+
+  if (isNaN(date.getTime())) {
+    return createFallbackPeriods(dateString);
+  }
+
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+
+  return {
+    day: formatDayString(date),
+    week: computeISOWeekString(date),
+    month: `${year}-${String(month).padStart(2, '0')}`,
+    quarter: `${year}-Q${Math.ceil(month / 3)}`,
+    year: String(year),
+  };
+}
+
+/**
+ * Parse a date string as a local date (avoiding UTC conversion issues).
+ */
+function parseLocalDate(dateString: string): Date {
+  if (!dateString) return new Date(NaN);
+
+  const parts = dateString.split('-');
+  if (parts.length === 3) {
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+    if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+      return new Date(year, month, day);
+    }
+  }
+
+  return new Date(dateString);
+}
+
+/** Format date as YYYY-MM-DD string. */
+function formatDayString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/** Compute ISO 8601 week string (YYYY-Www). */
+function computeISOWeekString(date: Date): string {
+  const d = new Date(date.getTime());
+  const dayOfWeek = d.getDay() || 7;
+  d.setDate(d.getDate() + 4 - dayOfWeek);
+  const isoYear = d.getFullYear();
+  const isoWeekNumber = getISOWeekNumber(date);
+  return `${isoYear}-W${String(isoWeekNumber).padStart(2, '0')}`;
+}
+
+/** Create fallback periods for invalid dates. */
+function createFallbackPeriods(dateString: string): TransactionPeriods {
+  if (import.meta.env.DEV) {
+    console.warn(`[date] Invalid date string: "${dateString}"`);
+  }
+
+  const yearMatch = dateString.match(/^(\d{4})/);
+  const year = yearMatch ? yearMatch[1] : '0000';
+
+  return {
+    day: dateString || '0000-00-00',
+    week: `${year}-W00`,
+    month: `${year}-00`,
+    quarter: `${year}-Q0`,
+    year: year,
+  };
+}

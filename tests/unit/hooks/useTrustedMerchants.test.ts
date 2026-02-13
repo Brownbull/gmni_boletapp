@@ -2,26 +2,34 @@
  * useTrustedMerchants Hook Tests
  *
  * Story 14.29: Updated to use renderHookWithClient for React Query support
+ * Story 15-TD-9: Updated to mock repository pattern (useTrustRepository)
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act } from '@testing-library/react';
 import { renderHookWithClient } from '../../setup/test-utils';
+import type { ITrustRepository } from '../../../src/repositories';
 
-// Mock the service module before importing the hook
-vi.mock('../../../src/services/merchantTrustService', () => ({
-    subscribeToTrustedMerchants: vi.fn(() => vi.fn()),
+// Mock the repository hook
+const mockTrustRepo: ITrustRepository = {
     recordScan: vi.fn(),
-    isMerchantTrusted: vi.fn(),
-    trustMerchant: vi.fn(),
+    isTrusted: vi.fn(),
+    trust: vi.fn(),
     declineTrust: vi.fn(),
     revokeTrust: vi.fn(),
-    deleteTrustedMerchant: vi.fn(),
-    getMerchantTrustRecord: vi.fn(),
+    delete: vi.fn(),
+    getAll: vi.fn(),
+    getOnlyTrusted: vi.fn(),
+    subscribe: vi.fn(() => vi.fn()),
+    getRecord: vi.fn(),
+};
+
+vi.mock('../../../src/repositories', () => ({
+    useTrustRepository: vi.fn(() => mockTrustRepo),
 }));
 
 import { useTrustedMerchants } from '../../../src/hooks/useTrustedMerchants';
-import * as merchantTrustService from '../../../src/services/merchantTrustService';
+import { useTrustRepository } from '../../../src/repositories';
 import type { Services } from '../../../src/hooks/useAuth';
 import type { User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
@@ -35,6 +43,8 @@ describe('useTrustedMerchants', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        // Default: repository is available (authenticated)
+        vi.mocked(useTrustRepository).mockReturnValue(mockTrustRepo);
     });
 
     describe('Initialization', () => {
@@ -43,7 +53,6 @@ describe('useTrustedMerchants', () => {
 
             expect(result.current.merchants).toEqual([]);
             expect(result.current.trustedMerchants).toEqual([]);
-            // Story 14.29: loading is true initially until subscription confirms no data
             expect(result.current.loading).toBe(false);
         });
 
@@ -55,22 +64,25 @@ describe('useTrustedMerchants', () => {
             expect(result.current.loading).toBe(false);
         });
 
-        it('should subscribe to merchants when user and services are provided', () => {
+        it('should return empty merchants when repository is null (not auth)', () => {
+            vi.mocked(useTrustRepository).mockReturnValue(null);
+            const { result } = renderHookWithClient(() => useTrustedMerchants(mockUser, mockServices));
+
+            expect(result.current.merchants).toEqual([]);
+            expect(result.current.loading).toBe(false);
+        });
+
+        it('should subscribe via repository when all dependencies are available', () => {
             renderHookWithClient(() => useTrustedMerchants(mockUser, mockServices));
 
-            expect(merchantTrustService.subscribeToTrustedMerchants).toHaveBeenCalledWith(
-                mockServices.db,
-                mockUser.uid,
-                mockServices.appId,
-                expect.any(Function)
-            );
+            expect(mockTrustRepo.subscribe).toHaveBeenCalledWith(expect.any(Function));
         });
     });
 
     describe('recordMerchantScan (AC #1, #2)', () => {
-        it('should call recordScan service', async () => {
+        it('should call repository recordScan', async () => {
             const mockEligibility = { shouldShowPrompt: false, reason: 'insufficient_scans' as const };
-            vi.mocked(merchantTrustService.recordScan).mockResolvedValue(mockEligibility);
+            vi.mocked(mockTrustRepo.recordScan).mockResolvedValue(mockEligibility);
 
             const { result } = renderHookWithClient(() => useTrustedMerchants(mockUser, mockServices));
 
@@ -79,17 +91,12 @@ describe('useTrustedMerchants', () => {
                 eligibility = await result.current.recordMerchantScan('Jumbo', false);
             });
 
-            expect(merchantTrustService.recordScan).toHaveBeenCalledWith(
-                mockServices.db,
-                mockUser.uid,
-                mockServices.appId,
-                'Jumbo',
-                false
-            );
+            expect(mockTrustRepo.recordScan).toHaveBeenCalledWith('Jumbo', false);
             expect(eligibility).toEqual(mockEligibility);
         });
 
-        it('should return insufficient_scans when user is null', async () => {
+        it('should return insufficient_scans when repository is null', async () => {
+            vi.mocked(useTrustRepository).mockReturnValue(null);
             const { result } = renderHookWithClient(() => useTrustedMerchants(null, mockServices));
 
             let eligibility;
@@ -105,8 +112,8 @@ describe('useTrustedMerchants', () => {
     });
 
     describe('checkTrusted (AC #5)', () => {
-        it('should call isMerchantTrusted service', async () => {
-            vi.mocked(merchantTrustService.isMerchantTrusted).mockResolvedValue(true);
+        it('should call repository isTrusted', async () => {
+            vi.mocked(mockTrustRepo.isTrusted).mockResolvedValue(true);
 
             const { result } = renderHookWithClient(() => useTrustedMerchants(mockUser, mockServices));
 
@@ -115,16 +122,12 @@ describe('useTrustedMerchants', () => {
                 isTrusted = await result.current.checkTrusted('Jumbo');
             });
 
-            expect(merchantTrustService.isMerchantTrusted).toHaveBeenCalledWith(
-                mockServices.db,
-                mockUser.uid,
-                mockServices.appId,
-                'Jumbo'
-            );
+            expect(mockTrustRepo.isTrusted).toHaveBeenCalledWith('Jumbo');
             expect(isTrusted).toBe(true);
         });
 
-        it('should return false when user is null', async () => {
+        it('should return false when repository is null', async () => {
+            vi.mocked(useTrustRepository).mockReturnValue(null);
             const { result } = renderHookWithClient(() => useTrustedMerchants(null, mockServices));
 
             let isTrusted;
@@ -137,8 +140,8 @@ describe('useTrustedMerchants', () => {
     });
 
     describe('acceptTrust (AC #4)', () => {
-        it('should call trustMerchant service', async () => {
-            vi.mocked(merchantTrustService.trustMerchant).mockResolvedValue(undefined);
+        it('should call repository trust', async () => {
+            vi.mocked(mockTrustRepo.trust).mockResolvedValue(undefined);
 
             const { result } = renderHookWithClient(() => useTrustedMerchants(mockUser, mockServices));
 
@@ -146,15 +149,11 @@ describe('useTrustedMerchants', () => {
                 await result.current.acceptTrust('Jumbo');
             });
 
-            expect(merchantTrustService.trustMerchant).toHaveBeenCalledWith(
-                mockServices.db,
-                mockUser.uid,
-                mockServices.appId,
-                'Jumbo'
-            );
+            expect(mockTrustRepo.trust).toHaveBeenCalledWith('Jumbo');
         });
 
-        it('should throw when user is null', async () => {
+        it('should throw when repository is null', async () => {
+            vi.mocked(useTrustRepository).mockReturnValue(null);
             const { result } = renderHookWithClient(() => useTrustedMerchants(null, mockServices));
 
             await expect(
@@ -166,8 +165,8 @@ describe('useTrustedMerchants', () => {
     });
 
     describe('declinePrompt (AC #4)', () => {
-        it('should call declineTrust service', async () => {
-            vi.mocked(merchantTrustService.declineTrust).mockResolvedValue(undefined);
+        it('should call repository declineTrust', async () => {
+            vi.mocked(mockTrustRepo.declineTrust).mockResolvedValue(undefined);
 
             const { result } = renderHookWithClient(() => useTrustedMerchants(mockUser, mockServices));
 
@@ -175,18 +174,13 @@ describe('useTrustedMerchants', () => {
                 await result.current.declinePrompt('Jumbo');
             });
 
-            expect(merchantTrustService.declineTrust).toHaveBeenCalledWith(
-                mockServices.db,
-                mockUser.uid,
-                mockServices.appId,
-                'Jumbo'
-            );
+            expect(mockTrustRepo.declineTrust).toHaveBeenCalledWith('Jumbo');
         });
     });
 
     describe('removeTrust (AC #7)', () => {
-        it('should call revokeTrust service', async () => {
-            vi.mocked(merchantTrustService.revokeTrust).mockResolvedValue(undefined);
+        it('should call repository revokeTrust', async () => {
+            vi.mocked(mockTrustRepo.revokeTrust).mockResolvedValue(undefined);
 
             const { result } = renderHookWithClient(() => useTrustedMerchants(mockUser, mockServices));
 
@@ -194,19 +188,12 @@ describe('useTrustedMerchants', () => {
                 await result.current.removeTrust('Jumbo');
             });
 
-            expect(merchantTrustService.revokeTrust).toHaveBeenCalledWith(
-                mockServices.db,
-                mockUser.uid,
-                mockServices.appId,
-                'Jumbo'
-            );
+            expect(mockTrustRepo.revokeTrust).toHaveBeenCalledWith('Jumbo');
         });
     });
 
     describe('trustedMerchants computed property', () => {
         it('should filter only trusted merchants', () => {
-            // The subscription callback is mocked, so we can't easily test the filter
-            // This would require more complex mock setup
             const { result } = renderHookWithClient(() => useTrustedMerchants(mockUser, mockServices));
 
             // Initially empty since subscription hasn't fired

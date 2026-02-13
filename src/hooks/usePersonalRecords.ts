@@ -18,7 +18,7 @@ import {
     detectAndFilterRecords,
     storePersonalRecord,
     getCurrentWeekId,
-} from '../services/recordsService';
+} from '@features/insights/services/recordsService';
 
 /**
  * Options for usePersonalRecords hook

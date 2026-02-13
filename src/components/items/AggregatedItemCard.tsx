@@ -18,6 +18,7 @@ import { Store, Receipt } from 'lucide-react';
 import type { AggregatedItem } from '../../types/item';
 import { getItemCategoryColors, type ThemeName, type ModeName } from '../../config/categoryColors';
 import { getItemCategoryEmoji } from '../../utils/categoryTranslations';
+import { DEFAULT_CURRENCY } from '../../utils/currency';
 import { normalizeItemCategory } from '../../utils/categoryNormalizer';
 
 // ============================================================================
@@ -76,7 +77,7 @@ export const AggregatedItemCard: React.FC<AggregatedItemCardProps> = ({
     item,
     formatters,
     theme,
-    defaultCurrency = 'CLP',
+    defaultCurrency = DEFAULT_CURRENCY,
     lang = 'es',
     onTransactionCountClick,
     onClick,

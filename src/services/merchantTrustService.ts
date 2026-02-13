@@ -2,9 +2,6 @@ import {
     collection,
     doc,
     getDoc,
-    setDoc,
-    updateDoc,
-    deleteDoc,
     getDocs,
     onSnapshot,
     serverTimestamp,
@@ -13,6 +10,7 @@ import {
     limit,
     Firestore,
     Unsubscribe,
+    runTransaction,
 } from 'firebase/firestore';
 import {
     TrustedMerchant,
@@ -21,37 +19,24 @@ import {
     TRUST_THRESHOLDS,
 } from '../types/trust';
 import { LISTENER_LIMITS } from './firestore';
+import { sanitizeMerchantName } from '@/utils/sanitize';
+import { trustedMerchantsPath, assertValidDocumentId } from '@/lib/firestorePaths';
+import { normalizeForMapping } from './mappingServiceBase';
 
 /**
- * Get the collection path for a user's trusted merchants
- * Story 11.4: AC #8 - Trust data stored per-user in Firestore
- */
-function getTrustedMerchantsCollectionPath(appId: string, userId: string): string {
-    return `artifacts/${appId}/users/${userId}/trusted_merchants`;
-}
-
-/**
- * Normalize a merchant name for trust matching
- * - Lowercase
- * - Trim whitespace
- * - Remove special characters except alphanumeric and spaces
- * - Collapse multiple spaces
- * - Remove accents/diacritics
+ * Normalize a merchant name for trust matching.
+ * Composes on normalizeForMapping with an additional NFD diacritics step.
  *
  * Story 11.4: Task 2 - Handle merchant name normalization
+ * Story 15-TD-6: Compose on normalizeForMapping base
  */
 export function normalizeMerchantNameForTrust(name: string): string {
-    return name
-        .toLowerCase()
-        .trim()
-        // Remove accents/diacritics
+    // NFD diacritics removal (the step normalizeForMapping lacks)
+    const withoutDiacritics = name
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        // Remove non-alphanumeric except spaces
-        .replace(/[^a-z0-9\s]/gi, '')
-        // Collapse multiple spaces
-        .replace(/\s+/g, ' ')
-        .trim();
+        .replace(/[\u0300-\u036f]/g, '');
+    // Shared normalization: lowercase, trim, remove non-alnum, collapse spaces
+    return normalizeForMapping(withoutDiacritics);
 }
 
 /**
@@ -136,69 +121,72 @@ export async function recordScan(
     merchantName: string,
     wasEdited: boolean
 ): Promise<TrustPromptEligibility> {
-    const normalizedName = normalizeMerchantNameForTrust(merchantName);
+    const sanitizedMerchant = sanitizeMerchantName(merchantName);
+    const normalizedName = normalizeMerchantNameForTrust(sanitizedMerchant);
+    assertValidDocumentId(normalizedName, 'merchantDocId');
 
     // Use normalized name as document ID for consistent lookups
-    const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
+    const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
-    const existingDoc = await getDoc(docRef);
+    // TOCTOU fix: wrap read-then-write in runTransaction for atomic update
+    return runTransaction(db, async (transaction) => {
+        const existingDoc = await transaction.get(docRef);
 
-    if (existingDoc.exists()) {
-        // Update existing record
-        const existing = { id: existingDoc.id, ...existingDoc.data() } as TrustedMerchant;
-        const newScanCount = existing.scanCount + 1;
-        const newEditCount = existing.editCount + (wasEdited ? 1 : 0);
-        const newEditRate = calculateEditRate(newScanCount, newEditCount);
+        if (existingDoc.exists()) {
+            // Update existing record atomically
+            const existing = { id: existingDoc.id, ...existingDoc.data() } as TrustedMerchant;
+            const newScanCount = existing.scanCount + 1;
+            const newEditCount = existing.editCount + (wasEdited ? 1 : 0);
+            const newEditRate = calculateEditRate(newScanCount, newEditCount);
 
-        await updateDoc(docRef, {
-            scanCount: newScanCount,
-            editCount: newEditCount,
-            editRate: newEditRate,
-            lastScanAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        });
+            transaction.update(docRef, {
+                scanCount: newScanCount,
+                editCount: newEditCount,
+                editRate: newEditRate,
+                lastScanAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            });
 
-        const updated: TrustedMerchant = {
-            ...existing,
-            scanCount: newScanCount,
-            editCount: newEditCount,
-            editRate: newEditRate,
-        };
+            const updated: TrustedMerchant = {
+                ...existing,
+                scanCount: newScanCount,
+                editCount: newEditCount,
+                editRate: newEditRate,
+            };
 
-        return shouldShowTrustPrompt(updated);
-    } else {
-        // Create new record - use TrustedMerchantCreate for proper serverTimestamp() typing
-        const newRecord: TrustedMerchantCreate = {
-            merchantName,
-            normalizedName,
-            scanCount: 1,
-            editCount: wasEdited ? 1 : 0,
-            editRate: wasEdited ? 1 : 0,
-            trusted: false,
-            lastScanAt: serverTimestamp(),
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        };
-
-        await setDoc(docRef, newRecord);
-
-        // Return a TrustedMerchant representation for the eligibility check
-        // Note: Timestamp fields will be populated by Firestore on read
-        return {
-            shouldShowPrompt: false,
-            merchant: {
-                id: normalizedName,
-                merchantName,
+            return shouldShowTrustPrompt(updated);
+        } else {
+            // Create new record - use TrustedMerchantCreate for proper serverTimestamp() typing
+            const newRecord: TrustedMerchantCreate = {
+                merchantName: sanitizedMerchant,
                 normalizedName,
                 scanCount: 1,
                 editCount: wasEdited ? 1 : 0,
                 editRate: wasEdited ? 1 : 0,
                 trusted: false,
-            } as TrustedMerchant,
-            reason: 'insufficient_scans',
-        };
-    }
+                lastScanAt: serverTimestamp(),
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            };
+
+            transaction.set(docRef, newRecord);
+
+            return {
+                shouldShowPrompt: false,
+                merchant: {
+                    id: normalizedName,
+                    merchantName: sanitizedMerchant,
+                    normalizedName,
+                    scanCount: 1,
+                    editCount: wasEdited ? 1 : 0,
+                    editRate: wasEdited ? 1 : 0,
+                    trusted: false,
+                } as TrustedMerchant,
+                reason: 'insufficient_scans',
+            };
+        }
+    });
 }
 
 /**
@@ -211,8 +199,9 @@ export async function isMerchantTrusted(
     appId: string,
     merchantName: string
 ): Promise<boolean> {
-    const normalizedName = normalizeMerchantNameForTrust(merchantName);
-    const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
+    const normalizedName = normalizeMerchantNameForTrust(sanitizeMerchantName(merchantName));
+    assertValidDocumentId(normalizedName, 'merchantDocId');
+    const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
     const docSnap = await getDoc(docRef);
@@ -225,6 +214,7 @@ export async function isMerchantTrusted(
 /**
  * Mark a merchant as trusted
  * Story 11.4: AC #4 - User can accept trust
+ * Story 15-TD-11: Wrapped in runTransaction for TOCTOU safety
  */
 export async function trustMerchant(
     db: Firestore,
@@ -232,22 +222,37 @@ export async function trustMerchant(
     appId: string,
     merchantName: string
 ): Promise<void> {
-    const normalizedName = normalizeMerchantNameForTrust(merchantName);
-    const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
+    const sanitizedMerchant = sanitizeMerchantName(merchantName);
+    const normalizedName = normalizeMerchantNameForTrust(sanitizedMerchant);
+    assertValidDocumentId(normalizedName, 'merchantDocId');
+    const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
-    await updateDoc(docRef, {
-        trusted: true,
-        trustedAt: serverTimestamp(),
-        promptShownAt: serverTimestamp(),
-        declined: false,
-        updatedAt: serverTimestamp(),
+    await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(docRef);
+        if (!snap.exists()) {
+            throw new Error(`Merchant trust record not found: ${normalizedName}`);
+        }
+
+        const data = snap.data() as TrustedMerchant;
+        if (data.trusted) {
+            return; // Already trusted — no-op
+        }
+
+        transaction.update(docRef, {
+            trusted: true,
+            trustedAt: serverTimestamp(),
+            promptShownAt: serverTimestamp(),
+            declined: false,
+            updatedAt: serverTimestamp(),
+        });
     });
 }
 
 /**
  * Decline trust for a merchant (marks as declined to avoid nagging)
  * Story 11.4: AC #4 - User can decline trust, only show prompt once per merchant
+ * Story 15-TD-11: Wrapped in runTransaction for TOCTOU safety
  */
 export async function declineTrust(
     db: Firestore,
@@ -255,20 +260,35 @@ export async function declineTrust(
     appId: string,
     merchantName: string
 ): Promise<void> {
-    const normalizedName = normalizeMerchantNameForTrust(merchantName);
-    const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
+    const sanitizedMerchant = sanitizeMerchantName(merchantName);
+    const normalizedName = normalizeMerchantNameForTrust(sanitizedMerchant);
+    assertValidDocumentId(normalizedName, 'merchantDocId');
+    const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
-    await updateDoc(docRef, {
-        declined: true,
-        promptShownAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+    await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(docRef);
+        if (!snap.exists()) {
+            throw new Error(`Merchant trust record not found: ${normalizedName}`);
+        }
+
+        const data = snap.data() as TrustedMerchant;
+        if (data.declined || data.trusted) {
+            return; // Already declined or trusted — no-op (prevents contradictory state)
+        }
+
+        transaction.update(docRef, {
+            declined: true,
+            promptShownAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        });
     });
 }
 
 /**
  * Revoke trust for a merchant
  * Story 11.4: AC #7 - Users can revoke trust at any time
+ * Story 15-TD-11: Wrapped in runTransaction for TOCTOU safety
  */
 export async function revokeTrust(
     db: Firestore,
@@ -276,20 +296,35 @@ export async function revokeTrust(
     appId: string,
     merchantName: string
 ): Promise<void> {
-    const normalizedName = normalizeMerchantNameForTrust(merchantName);
-    const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
+    const sanitizedMerchant = sanitizeMerchantName(merchantName);
+    const normalizedName = normalizeMerchantNameForTrust(sanitizedMerchant);
+    assertValidDocumentId(normalizedName, 'merchantDocId');
+    const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
-    await updateDoc(docRef, {
-        trusted: false,
-        trustedAt: null,
-        updatedAt: serverTimestamp(),
+    await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(docRef);
+        if (!snap.exists()) {
+            throw new Error(`Merchant trust record not found: ${normalizedName}`);
+        }
+
+        const data = snap.data() as TrustedMerchant;
+        if (!data.trusted) {
+            return; // Not currently trusted — no-op
+        }
+
+        transaction.update(docRef, {
+            trusted: false,
+            trustedAt: null,
+            updatedAt: serverTimestamp(),
+        });
     });
 }
 
 /**
  * Delete a trusted merchant record entirely
  * Story 11.4: AC #6, AC #7 - Settings management
+ * Story 15-TD-15: Wrapped in runTransaction for TOCTOU safety
  */
 export async function deleteTrustedMerchant(
     db: Firestore,
@@ -297,9 +332,17 @@ export async function deleteTrustedMerchant(
     appId: string,
     merchantId: string
 ): Promise<void> {
-    const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
+    assertValidDocumentId(merchantId, 'merchantId');
+    const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, merchantId);
-    await deleteDoc(docRef);
+
+    await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(docRef);
+        if (!snap.exists()) {
+            throw new Error(`Merchant trust record not found: ${merchantId}`);
+        }
+        transaction.delete(docRef);
+    });
 }
 
 /**
@@ -311,7 +354,7 @@ export async function getTrustedMerchants(
     userId: string,
     appId: string
 ): Promise<TrustedMerchant[]> {
-    const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
+    const collectionPath = trustedMerchantsPath(appId, userId);
     const colRef = collection(db, collectionPath);
     const snapshot = await getDocs(colRef);
 
@@ -345,7 +388,7 @@ export function subscribeToTrustedMerchants(
     appId: string,
     callback: (merchants: TrustedMerchant[]) => void
 ): Unsubscribe {
-    const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
+    const collectionPath = trustedMerchantsPath(appId, userId);
     const colRef = collection(db, collectionPath);
 
     // Story 14.25: Add limit to reduce Firestore reads
@@ -382,8 +425,9 @@ export async function getMerchantTrustRecord(
     appId: string,
     merchantName: string
 ): Promise<TrustedMerchant | null> {
-    const normalizedName = normalizeMerchantNameForTrust(merchantName);
-    const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
+    const normalizedName = normalizeMerchantNameForTrust(sanitizeMerchantName(merchantName));
+    assertValidDocumentId(normalizedName, 'merchantDocId');
+    const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
     const docSnap = await getDoc(docRef);

@@ -13,7 +13,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { computePeriods } from '../../../src/utils/periodUtils';
+import { computePeriods } from '../../../src/utils/date';
 import type { TransactionPeriods } from '../../../src/types/transaction';
 
 describe('computePeriods', () => {

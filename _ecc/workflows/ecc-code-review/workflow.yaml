@@ -12,15 +12,23 @@ ecc_orchestration:
   agents:
     code-reviewer:
       subagent_type: "everything-claude-code:code-reviewer"
+      model: "sonnet"
+      max_turns: 5
       purpose: "Code quality, maintainability, best practices"
     security-reviewer:
       subagent_type: "everything-claude-code:security-reviewer"
+      model: "sonnet"
+      max_turns: 5
       purpose: "OWASP Top 10, secrets, vulnerabilities"
     architect:
       subagent_type: "everything-claude-code:architect"
+      model: "opus"
+      max_turns: 5
       purpose: "Architecture compliance, patterns, design"
     tdd-guide:
       subagent_type: "everything-claude-code:tdd-guide"
+      model: "haiku"
+      max_turns: 5
       purpose: "Test coverage, TDD compliance, test quality"
 
   # Parallel execution - ALL agents spawn simultaneously
@@ -65,20 +73,20 @@ instructions: "{installed_path}/instructions.xml"
 adaptive_review:
   enabled: true
 
-  # Classification thresholds
+  # Classification thresholds (loosened to reduce agent count for typical stories)
   thresholds:
     trivial:
-      max_tasks: 1
-      max_subtasks: 3
-      max_files: 2
+      max_tasks: 2
+      max_subtasks: 5
+      max_files: 3
     simple:
-      max_tasks: 3
-      max_subtasks: 10
-      max_files: 5
-    standard:
       max_tasks: 4
-      max_subtasks: 15
-      max_files: 8
+      max_subtasks: 12
+      max_files: 6
+    standard:
+      max_tasks: 6
+      max_subtasks: 20
+      max_files: 10
     complex:
       # Anything exceeding standard thresholds
 
@@ -109,5 +117,22 @@ adaptive_review:
     security-reviewer: 30
     architect: 20
     tdd-guide: 10
+
+# Context budget settings
+context_budget:
+  # Read files ONCE in orchestrator, pass content to agents (avoids 4x duplication)
+  orchestrator_reads_files: true
+  # Agents receive file contents in prompt — do NOT read files independently
+  agent_reads_files: false
+  # Agents return compact findings only (no code snippets or full reasoning)
+  agent_compact_output: true
+  # Warn when file count exceeds story sizing limit
+  file_count_warning_threshold: 12
+
+# Auto-proceed — skip generic "Continue?" confirmations between steps
+# Only pause at Step 4 (triage choice) — all other steps auto-proceed
+auto_proceed:
+  enabled: true
+  pause_only_at: ["step-4-triage", "step-6e-e2e-gap"]
 
 standalone: true

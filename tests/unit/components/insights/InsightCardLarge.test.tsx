@@ -10,7 +10,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Timestamp } from 'firebase/firestore';
-import { InsightCardLarge } from '../../../../src/components/insights/InsightCardLarge';
+import { InsightCardLarge } from '@features/insights/components/InsightCardLarge';
 import { InsightRecord, InsightCategory } from '../../../../src/types/insight';
 
 // Mock Firebase Timestamp

@@ -20,19 +20,19 @@ import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { Inbox, FileText, ChevronLeft, ChevronRight, Camera, BarChart2, Loader2, Download, AlertTriangle } from 'lucide-react';
 import { ProfileDropdown, ProfileAvatar, getInitials } from '../components/ProfileDropdown';
 import { ImageViewer } from '../components/ImageViewer';
-import { IconFilterBar } from '../components/history/IconFilterBar';
-import { TemporalBreadcrumb } from '../components/history/TemporalBreadcrumb';
-import { SearchBar } from '../components/history/SearchBar';
+import { IconFilterBar } from '@features/history/components/IconFilterBar';
+import { TemporalBreadcrumb } from '@features/history/components/TemporalBreadcrumb';
+import { SearchBar } from '@features/history/components/SearchBar';
 // Story 14.15b: Use consolidated TransactionCard from shared transactions folder
 import { TransactionCard } from '../components/transactions';
-import { DateGroupHeader, groupTransactionsByDate, formatDateGroupLabel, calculateGroupTotal } from '../components/history/DateGroupHeader';
-import { FilterChips } from '../components/history/FilterChips';
+import { DateGroupHeader, groupTransactionsByDate, formatDateGroupLabel, calculateGroupTotal } from '@features/history/components/DateGroupHeader';
+import { FilterChips } from '@features/history/components/FilterChips';
 // Story 14.31 Session 3: Sort control
-import { SortControl } from '../components/history/SortControl';
-import type { SortOption } from '../components/history/SortControl';
-import { SelectionBar } from '../components/history/SelectionBar';
+import { SortControl } from '@features/history/components/SortControl';
+import type { SortOption } from '@features/history/components/SortControl';
+import { SelectionBar } from '@features/history/components/SelectionBar';
 // Story 14e-5: DeleteTransactionsModal now uses Modal Manager
-import type { TransactionPreview } from '../components/history/DeleteTransactionsModal';
+import type { TransactionPreview } from '@features/history/components/DeleteTransactionsModal';
 import { useModalActions } from '@managers/ModalManager';
 import { PageTransition } from '../components/animation/PageTransition';
 import { TransitionChild } from '../components/animation/TransitionChild';
@@ -42,8 +42,8 @@ import { normalizeTransaction } from '../utils/transactionNormalizer';
 import {
     extractAvailableFilters,
     filterTransactionsByHistoryFilters,
-} from '../utils/historyFilterUtils';
-import { useHistoryFilters } from '../hooks/useHistoryFilters';
+} from '@shared/utils/historyFilterUtils';
+import { useHistoryFilters } from '@shared/hooks/useHistoryFilters';
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useSelectionMode } from '../hooks/useSelectionMode';

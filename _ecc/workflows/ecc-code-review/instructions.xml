@@ -4,26 +4,15 @@
   <critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
   <critical>Generate all documents in {document_output_language}</critical>
 
-  <critical>🎭 ECC ADAPTIVE CODE REVIEW - ECC Orchestrator selects and spawns agents based on story complexity!</critical>
-  <critical>Step 1.5 classifies story as TRIVIAL/SIMPLE/STANDARD/COMPLEX → selects appropriate agents</critical>
-  <critical>CRITICAL: Use a SINGLE message with MULTIPLE Task calls for true parallelism</critical>
+  <critical>ECC ADAPTIVE CODE REVIEW - Orchestrator selects and spawns agents based on story complexity</critical>
+  <critical>Use a SINGLE message with MULTIPLE Task calls for true parallelism</critical>
 
-  <!-- ECC ORCHESTRATOR PROTOCOL -->
-  <orchestrator-protocol>
-    <principle>Orchestrator spawns specialized ECC agents in parallel</principle>
-    <principle>SINGLE message, MULTIPLE Task calls = true parallel execution</principle>
-    <principle>Collect all outputs, then synthesize findings</principle>
-    <principle>Resolve conflicts between agent recommendations</principle>
-
-    <parallel-team>
-      | Agent | subagent_type | Focus Area |
-      |-------|---------------|------------|
-      | Code Reviewer | everything-claude-code:code-reviewer | Quality, maintainability |
-      | Security Reviewer | everything-claude-code:security-reviewer | OWASP, vulnerabilities |
-      | Architect | everything-claude-code:architect | Patterns, design |
-      | TDD Guide | everything-claude-code:tdd-guide | Test coverage, TDD |
-    </parallel-team>
-  </orchestrator-protocol>
+  <!-- AUTO-PROCEED: This workflow runs non-interactively between steps.
+       Do NOT ask "Continue to next step?" or pause for confirmation.
+       ONLY pause at Step 4 (triage choice) and Step 6e (E2E gap action).
+       All other steps execute automatically in sequence. -->
+  <critical>AUTO-PROCEED MODE: Skip all generic "Continue?" confirmations.
+    Only pause at Step 4 triage and Step 6e E2E gap. All other steps auto-proceed.</critical>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <!-- STEP 0: Project Knowledge Loading                                       -->
@@ -103,8 +92,16 @@
     <check if="git repository exists">
       <action>Run `git status --porcelain` to find uncommitted changes</action>
       <action>Run `git diff --name-only` to see modified files</action>
-      <action>Compile {{files_to_review}} from git + story File List</action>
+      <action>Compile {{files_to_review}} as a FILE PATH LIST from git + story File List</action>
     </check>
+
+    <!-- CONTEXT BUDGET: Read files ONCE here, pass to agents (avoids 4x duplication) -->
+    <critical>Read ALL files in {{files_to_review}} NOW using parallel Read calls.
+      Store as {{file_contents_manifest}} — each file's path and full content.
+      Agents will receive this content in their prompts and MUST NOT read files themselves.
+      This avoids each agent independently reading the same files (4x cost savings).</critical>
+    <action>Read all {{files_to_review}} in parallel (use multiple Read tool calls in one message)</action>
+    <action>Store combined content as {{file_contents_manifest}}</action>
 
     <output>📋 **Review Target Identified**
 
@@ -153,44 +150,31 @@
     <action>Search story content for keywords: authentication, authorization, delete, cascade, password, token, secret</action>
     <action>Set {{has_security_keywords}} = true/false</action>
 
-    <!-- Classification logic (evaluated top-down, first match wins) -->
+    <!-- Classification logic (cascade — first match wins, then force-includes adjust) -->
     <classification>
-      <!-- COMPLEX: exceeds standard thresholds OR has security/architecture flags -->
-      <check if="task_count > 4 OR file_count > 8 OR {{has_security_files}} OR {{has_security_keywords}}">
-        <check if="{{has_architecture_files}} OR task_count > 4">
-          <action>Set {{classification}} = "COMPLEX"</action>
-          <action>Set {{review_agents}} = ["code-reviewer", "security-reviewer", "architect", "tdd-guide"]</action>
-        </check>
-        <check if="NOT {{has_architecture_files}} AND task_count &lt;= 4">
-          <action>Set {{classification}} = "STANDARD"</action>
-          <action>Set {{review_agents}} = ["code-reviewer", "security-reviewer"]</action>
-        </check>
+      <check if="task_count > 6 OR file_count > 10 OR ({{has_architecture_files}} AND {{has_security_files}})">
+        <action>Set {{classification}} = "COMPLEX"</action>
+        <action>Set {{review_agents}} = ["code-reviewer", "security-reviewer", "architect", "tdd-guide"]</action>
       </check>
 
-      <!-- STANDARD: moderate size with service/state changes -->
-      <check if="task_count &lt;= 4 AND subtask_count &lt;= 15 AND file_count &lt;= 8">
-        <check if="any file_paths match **/services/** OR **/stores/** OR **/hooks/**">
-          <action>Set {{classification}} = "STANDARD"</action>
-          <action>Set {{review_agents}} = ["code-reviewer", "security-reviewer"]</action>
-        </check>
+      <check if="{{classification}} is NOT set AND (task_count > 4 OR file_count > 6 OR {{has_security_files}} OR {{has_security_keywords}})">
+        <action>Set {{classification}} = "STANDARD"</action>
+        <action>Set {{review_agents}} = ["code-reviewer", "security-reviewer"]</action>
       </check>
 
-      <!-- SIMPLE: small, UI-only changes -->
-      <check if="task_count &lt;= 3 AND subtask_count &lt;= 10 AND file_count &lt;= 5 AND NOT {{has_security_files}}">
-        <action>Set {{classification}} = "SIMPLE"</action>
-        <action>Set {{review_agents}} = ["code-reviewer", "tdd-guide"]</action>
-      </check>
-
-      <!-- TRIVIAL: tiny change, no sensitive files -->
-      <check if="task_count &lt;= 1 AND subtask_count &lt;= 3 AND file_count &lt;= 2 AND NOT {{has_security_files}} AND NOT {{has_architecture_files}}">
+      <check if="{{classification}} is NOT set AND task_count &lt;= 2 AND subtask_count &lt;= 5 AND file_count &lt;= 3 AND NOT {{has_security_files}}">
         <action>Set {{classification}} = "TRIVIAL"</action>
         <action>Set {{review_agents}} = ["code-reviewer"]</action>
       </check>
 
-      <!-- Fallback: if no classification matched, default to STANDARD -->
+      <check if="{{classification}} is NOT set AND task_count &lt;= 4 AND subtask_count &lt;= 12 AND file_count &lt;= 6">
+        <action>Set {{classification}} = "SIMPLE"</action>
+        <action>Set {{review_agents}} = ["code-reviewer", "tdd-guide"]</action>
+      </check>
+
       <check if="{{classification}} is NOT set">
-        <action>Set {{classification}} = "STANDARD"</action>
-        <action>Set {{review_agents}} = ["code-reviewer", "security-reviewer"]</action>
+        <action>Set {{classification}} = "SIMPLE"</action>
+        <action>Set {{review_agents}} = ["code-reviewer", "tdd-guide"]</action>
       </check>
     </classification>
 
@@ -198,7 +182,7 @@
     <check if="{{has_security_files}} OR {{has_security_keywords}}">
       <action>Force add "security-reviewer" to {{review_agents}} if not already present</action>
     </check>
-    <check if="{{has_architecture_files}} AND task_count > 4">
+    <check if="{{has_architecture_files}} AND task_count > 6">
       <action>Force add "architect" to {{review_agents}} if not already present</action>
     </check>
 
@@ -220,26 +204,18 @@
       **Selected Review Agents ({{agent_count}}):** {{review_agents}}
     </output>
 
-    <ask>Proceed with {{classification}} review using {{agent_count}} agents? [Y/N/Override]</ask>
-
-    <check if="user says N">
-      <output>Review cancelled.</output>
-      <stop/>
+    <!-- CONTEXT BUDGET: Large story warning -->
+    <check if="file_count > 12">
+      <output>**Context Budget Warning:** {{file_count}} files exceeds the 12-file story
+        sizing guideline. This review may exhaust context if all agents produce
+        detailed findings. Consider:
+        1. Splitting the story via `/story-sizing` before review
+        2. Running only 2 agents (e.g., code-reviewer + tdd-guide) then a second
+           pass with (security-reviewer + architect)
+        3. Proceeding as-is but with strict compact output mode</output>
     </check>
 
-    <check if="user says Override">
-      <ask>Select agents: [C]ode, [S]ecurity, [A]rchitect, [T]DD
-        (e.g., "CS" for Code + Security, "CSAT" for all 4)</ask>
-      <action>Parse user selection:
-        C → "code-reviewer"
-        S → "security-reviewer"
-        A → "architect"
-        T → "tdd-guide"
-      </action>
-      <action>Set {{review_agents}} from parsed selection</action>
-      <action>Set {{classification}} = "OVERRIDE"</action>
-      <output>✅ Override accepted. Agents: {{review_agents}}</output>
-    </check>
+    <!-- Auto-proceed: classification displayed above, no confirmation needed -->
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
@@ -247,369 +223,147 @@
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
   <step n="2" goal="Spawn selected ECC agents based on adaptive classification">
-    <critical>🎭 ECC ORCHESTRATOR: Spawning ONLY agents from {{review_agents}} ({{classification}} classification)</critical>
+    <critical>ECC ORCHESTRATOR: Spawning ONLY agents from {{review_agents}} ({{classification}} classification)</critical>
     <critical>CRITICAL: Send ALL selected Task calls in a SINGLE message for true parallelism!</critical>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <!-- EXPLICIT PARALLEL EXECUTION DIRECTIVE                                   -->
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
     <parallel-execution-rule>
-      🚨 HOW TO ACHIEVE TRUE PARALLELISM:
+      HOW TO ACHIEVE TRUE PARALLELISM:
 
       You MUST issue ALL selected agent Task calls in your NEXT SINGLE RESPONSE.
       Only spawn agents listed in {{review_agents}} — skip the rest.
-
-      ❌ WRONG (Sequential - slow):
-         Response 1: Task(agent-1) → wait → result
-         Response 2: Task(agent-2) → wait → result
-
-      ✅ CORRECT (Parallel - fast):
-         Response 1: Task(agent-1) + Task(agent-2) + ...
-         → All run simultaneously → All results returned together
-
-      IN YOUR NEXT MESSAGE, include Task calls ONLY for agents in {{review_agents}}.
     </parallel-execution-rule>
 
-    <output>🎭 **Spawning {{classification}} Review Team...**
+    <output>**Spawning {{classification}} Review Team...**
 
       **Classification:** {{classification}}
       **Agents launching:** {{review_agents}}
     </output>
 
     <!-- ADAPTIVE PARALLEL SPAWN - Only selected agents, ALL IN ONE MESSAGE -->
+    <!-- All agent prompts include file contents and compact output directive -->
+    <agent-directives>
+      IMPORTANT — include these directives in EVERY agent prompt:
+      1. File contents are provided below. Do NOT use Read/Grep/Glob to read review files.
+      2. Return ONLY: numbered findings table (severity | description | file:line), recommendation (APPROVE / CHANGES REQUESTED / BLOCKED), score (X/10). Max ~50 lines. No code snippets or lengthy reasoning.
+    </agent-directives>
+
     <ecc-parallel-spawn agents="{{review_agents}}">
-      <!-- Task 1: Code Reviewer (ALWAYS included — present in all classifications) -->
+      <!-- Task 1: Code Reviewer (ALWAYS included) -->
       <task-call id="code_review" if="code-reviewer in {{review_agents}}">
         subagent_type: "everything-claude-code:code-reviewer"
+        model: "sonnet"
+        max_turns: 5
         description: "Code quality review for {{story_key}}"
         prompt: |
           ## Code Review Task
-
           **Story:** {{story_key}}
+          **IMPORTANT: File contents provided below. Do NOT read files yourself.**
 
-          **Files to Review:**
-          {{files_to_review}}
+          **Acceptance Criteria:** {{acceptance_criteria}}
+          **Project Patterns:** {{project_patterns}}
 
-          **Acceptance Criteria:**
-          {{acceptance_criteria}}
+          **Review:** quality, error handling, performance, naming, DRY, complexity
 
-          **Project Context:**
-          {{project_patterns}}
+          **Output (max 50 lines):**
+          | # | Sev | Finding | file:line |
+          Recommendation: APPROVE / CHANGES REQUESTED
+          Score: X/10
 
-          **Review Checklist:**
-          1. Code quality and readability
-          2. Error handling completeness
-          3. Performance considerations
-          4. Naming conventions
-          5. DRY principle compliance
-          6. Complexity analysis
-          7. Documentation quality
-
-          **MANDATORY: ast-grep Structural Pattern Scan**
-          Before writing your review output, run these ast-grep checks on the changed files:
-
-          1. **Duplication check**: For each new function/pattern in changed files, use `find_code` to search the
-             full `src/` directory for structurally similar patterns. Flag if the same pattern exists elsewhere
-             (potential DRY violation or missed shared utility).
-             Example: `find_code(pattern="$ARR.sort(($A, $B) => $$$)", project_folder="{project-root}")`
-
-          2. **Known anti-pattern scan**: Run these against changed files:
-             - `$BATCH.commit()` — flag if not inside a chunking loop (batch safety, Finding 9d)
-             - `localStorage.getItem($KEY)` — flag if manual JSON.parse instead of shared utility (Finding 10d)
-             - `collection($DB, "artifacts", $$$)` — flag hardcoded Firestore paths (Finding 9a)
-
-          3. **Import coupling check** (if files touch services/hooks):
-             `find_code(pattern="import {$$$} from 'firebase/firestore'")` — flag direct Firebase SDK imports
-             in new code (should use repository layer per DAL plan)
-
-          Tools: `find_code` for simple patterns, `find_code_by_rule` for relational YAML rules.
-          Full pattern library: .claude/skills/ast-grep/SKILL.md
-
-          **Output Format:**
-          ```
-          ## Code Review Findings
-
-          ### HIGH Severity
-          - [Finding]: [Description] [file:line]
-
-          ### MEDIUM Severity
-          - [Finding]: [Description] [file:line]
-
-          ### LOW Severity
-          - [Finding]: [Description] [file:line]
-
-          ### ast-grep Pattern Scan Results
-          - Duplication matches: X (list files if any)
-          - Anti-pattern hits: X (batch safety, localStorage, hardcoded paths)
-          - Firebase SDK coupling: X direct imports in new code
-
-          ### Summary
-          - Total issues: X
-          - Recommendation: APPROVE / CHANGES REQUESTED
-          ```
+          ---
+          **FILE CONTENTS:**
+          {{file_contents_manifest}}
       </task-call>
 
       <!-- Task 2: Security Reviewer (STANDARD + COMPLEX only) -->
       <task-call id="security_review" if="security-reviewer in {{review_agents}}">
         subagent_type: "everything-claude-code:security-reviewer"
+        model: "sonnet"
+        max_turns: 5
         description: "Security review for {{story_key}}"
         prompt: |
           ## Security Review Task
-
           **Story:** {{story_key}}
+          **IMPORTANT: File contents provided below. Do NOT read files yourself.**
 
-          **Files to Review:**
-          {{files_to_review}}
+          **Check:** OWASP Top 10 (injection, XSS, auth, access control, secrets, data exposure, CSRF, input validation)
 
-          **Security Checklist (OWASP Top 10):**
-          1. Injection vulnerabilities (SQL, command, XSS)
-          2. Broken authentication
-          3. Sensitive data exposure
-          4. XML external entities (XXE)
-          5. Broken access control
-          6. Security misconfiguration
-          7. Cross-site scripting (XSS)
-          8. Insecure deserialization
-          9. Using components with known vulnerabilities
-          10. Insufficient logging and monitoring
+          **Output (max 50 lines):**
+          | # | Sev | Vulnerability | file:line | Remediation |
+          Secrets detected: Y/N
+          Recommendation: APPROVE / BLOCK / CHANGES REQUESTED
+          Score: X/10
 
-          **Additional Checks:**
-          - Hardcoded secrets (API keys, passwords, tokens)
-          - Input validation
-          - Output encoding
-          - CSRF protection
-          - Rate limiting
-
-          **Output Format:**
-          ```
-          ## Security Review Findings
-
-          ### CRITICAL
-          - [Vulnerability]: [Description] [file:line] [REMEDIATION]
-
-          ### HIGH
-          - [Vulnerability]: [Description] [file:line] [REMEDIATION]
-
-          ### MEDIUM
-          - [Vulnerability]: [Description] [file:line] [REMEDIATION]
-
-          ### Summary
-          - Vulnerabilities found: X
-          - Secrets detected: Y/N
-          - Recommendation: APPROVE / BLOCK / CHANGES REQUESTED
-          ```
+          ---
+          **FILE CONTENTS:**
+          {{file_contents_manifest}}
       </task-call>
 
       <!-- Task 3: Architect (COMPLEX only) -->
       <task-call id="architecture_review" if="architect in {{review_agents}}">
         subagent_type: "everything-claude-code:architect"
+        model: "opus"
+        max_turns: 5
         description: "Architecture review for {{story_key}}"
         prompt: |
           ## Architecture Review Task
-
           **Story:** {{story_key}}
-
-          **Files to Review:**
-          {{files_to_review}}
-
-          **Architecture Patterns:**
-          {{project_patterns}}
-
-          **Architectural Acceptance Criteria (from story):**
-          {{architectural_acs}}
-
-          **Expected File Specification (from story):**
-          {{file_specification_table}}
-
-          ---
-
-          ## 🚨 CRITICAL: Documented Architecture Compliance Check
+          **IMPORTANT: File contents provided below. Do NOT read files yourself.**
 
           **Architecture Source:** {{architecture_reference}}
+          **Architectural ACs:** {{architectural_acs}}
+          **File Specification:** {{file_specification_table}}
+          **Patterns:** {{project_patterns}}
 
-          **This review MUST validate compliance with DOCUMENTED architectural patterns.**
-          Do not use hardcoded assumptions - validate against what's documented.
+          **Validate:** file locations, pattern compliance, anti-patterns, architectural ACs, separation of concerns, dependency management, layer violations, coupling
 
-          ### 1. File Location Compliance (per documented patterns)
-
-          **Documented File Location Requirements:**
-          {{file_location_acs}}
-
-          For EACH new/modified file, verify it matches the documented file structure.
-
-          **Flag as HIGH severity if:**
-          - File location violates documented pattern
-          - Files are scattered outside documented structure
-          - File Specification in story was not followed
-
-          ### 2. Pattern Compliance (per documented patterns)
-
-          **Documented Pattern Requirements:**
-          {{pattern_acs}}
-
-          For each pattern requirement from documentation, verify compliance.
-
-          **Flag as HIGH severity if:**
-          - Implementation deviates from documented patterns
-          - Patterns not specified in architecture docs were introduced
-
-          ### 3. Anti-Pattern Compliance (per documented anti-patterns)
-
-          **Documented Anti-Patterns (must NOT occur):**
-          {{antipattern_acs}}
-
-          **Flag as HIGH severity if:**
-          - Any documented anti-pattern is detected in the implementation
-
-          ### 4. Architectural AC Validation (from story)
-
-          **Architectural ACs from Story:**
-          {{architectural_acs}}
-
-          For EACH architectural AC, verify:
-          - AC is satisfied by the implementation
-          - File paths match specification
-          - Patterns followed correctly
-
-          **Flag as CRITICAL if:**
-          - Architectural AC explicitly violated
-          - File at completely wrong location vs specification
-          - Implementation creates technical debt vs documented architecture
+          **Output (max 50 lines):**
+          | AC ID | Status | Notes |
+          File location compliance: X/Y
+          Pattern violations: [list or none]
+          Anti-patterns: [list or none]
+          Alignment: ALIGNED / DRIFT DETECTED
+          Recommendation: APPROVE / CHANGES REQUESTED / BLOCKED
+          Score: X/10
 
           ---
-
-          **Standard Review Checklist:**
-          1. Pattern compliance with documented architecture
-          2. Separation of concerns
-          3. Dependency management
-          4. Layer violations
-          5. API design consistency
-          6. Data flow correctness
-          7. Scalability considerations
-          8. Coupling and cohesion
-
-          **Output Format:**
-          ```
-          ## Architecture Review Findings
-
-          **Architecture Source:** {{architecture_reference}}
-
-          ### 🏗️ File Location Compliance (per documented patterns)
-          - Files in documented locations: X/Y
-          - Location violations: [list with references to violated ACs]
-
-          ### 📋 Pattern Compliance (per documented patterns)
-          - Pattern requirements met: X/Y
-          - Pattern violations: [list]
-
-          ### 🚫 Anti-Pattern Compliance (per documented anti-patterns)
-          - Anti-patterns detected: [list with AC references]
-          - Clean: [count of checks passed]
-
-          ### 📋 Architectural AC Validation
-          | AC ID | Description | Status | Notes |
-          |-------|-------------|--------|-------|
-          | AC-ARCH-LOC-1 | ... | ✅/❌ | ... |
-          | AC-ARCH-PATTERN-1 | ... | ✅/❌ | ... |
-          | AC-ARCH-NO-1 | ... | ✅/❌ | ... |
-
-          ### Pattern Violations (HIGH Severity)
-          - [Pattern from docs]: Expected [X], Found [Y] [file:line]
-
-          ### Design Issues
-          - [Issue]: [Description] [RECOMMENDATION]
-
-          ### Drift from Documented Architecture
-          - [Drift]: [Description] [IMPACT] [Source: architecture_reference]
-
-          ### Summary
-          - File location compliance: X%
-          - Pattern compliance: X%
-          - Anti-pattern compliance: X%
-          - Architectural ACs: X/Y passed
-          - Architecture alignment: ALIGNED WITH DOCS / DRIFT DETECTED
-          - Recommendation: APPROVE / CHANGES REQUESTED / BLOCKED
-          ```
+          **FILE CONTENTS:**
+          {{file_contents_manifest}}
       </task-call>
 
       <!-- Task 4: TDD Guide (SIMPLE + COMPLEX only) -->
       <task-call id="test_review" if="tdd-guide in {{review_agents}}">
         subagent_type: "everything-claude-code:tdd-guide"
+        model: "haiku"
+        max_turns: 5
         description: "Test review for {{story_key}}"
         prompt: |
           ## Test Coverage Review Task
-
           **Story:** {{story_key}}
+          **IMPORTANT: File contents provided below. Do NOT read files yourself.**
 
-          **Files to Review:**
-          {{files_to_review}}
+          **Acceptance Criteria:** {{acceptance_criteria}}
+          **Testing Patterns:** {{project_testing_patterns}}
 
-          **Acceptance Criteria:**
-          {{acceptance_criteria}}
+          **Review:** AC coverage, edge cases, error scenarios, assertion quality, mock appropriateness, naming
 
-          **Testing Patterns:**
-          {{project_testing_patterns}}
+          **TEA Score (each 0-100):** Determinism, Isolation, Maintainability, Coverage, Performance. 70+ = GOOD.
 
-          **Review Checklist:**
-          1. Test coverage percentage
-          2. AC coverage - each AC has corresponding test
-          3. Edge case coverage
-          4. Error scenario coverage
-          5. Test quality (real assertions vs placeholders)
-          6. TDD compliance (tests written first?)
-          7. Test naming conventions
-          8. Mock/stub appropriateness
-
-          **TEA 5-Dimension Test Quality Scoring:**
-          Score each dimension 0-100:
-          1. **Determinism**: No random/time-dependent failures, no flaky tests
-          2. **Isolation**: No shared state between tests, proper setup/teardown
-          3. **Maintainability**: Readable, follows project patterns, DRY test helpers
-          4. **Coverage**: Happy path + critical error paths covered, ACs tested
-          5. **Performance**: Tests run within tier time budgets (unit ~35s, story ~2min)
-
-          Overall = weighted average. Threshold: 70+ = GOOD, <70 = NEEDS IMPROVEMENT.
-
-          **Output Format:**
-          ```
-          ## Test Review Findings
-
-          ### Coverage Gaps
-          - [AC/Feature]: Missing test for [scenario] [file]
-
-          ### Test Quality Issues
-          - [Test]: [Issue] [file:line]
-
-          ### TEA 5-Dimension Quality Score
+          **Output (max 50 lines):**
+          Coverage gaps: [AC] missing test for [scenario] [file]
+          Quality issues: [test] [issue] [file:line]
           | Dimension | Score | Notes |
-          |-----------|-------|-------|
-          | Determinism | X/100 | [details] |
-          | Isolation | X/100 | [details] |
-          | Maintainability | X/100 | [details] |
-          | Coverage | X/100 | [details] |
-          | Performance | X/100 | [details] |
-          | **Overall** | **X/100** | **GOOD / NEEDS IMPROVEMENT** |
+          Overall: X/100 — GOOD / NEEDS IMPROVEMENT
+          Recommendation: APPROVE / CHANGES REQUESTED
+          Score: X/10
 
-          ### Metrics
-          - Estimated coverage: X%
-          - ACs tested: Y/Z
-          - Edge cases: covered/missing
-
-          ### Summary
-          - Test quality: GOOD / NEEDS IMPROVEMENT (based on 5-dimension score)
-          - TDD compliance: COMPLIANT / NON-COMPLIANT
-          - Recommendation: APPROVE / CHANGES REQUESTED
-          ```
+          ---
+          **FILE CONTENTS:**
+          {{file_contents_manifest}}
       </task-call>
     </ecc-parallel-spawn>
 
     <action>Wait for all selected agents to complete</action>
-    <action>Collect outputs from spawned agents only:
-      - {{code_review_output}} (always present)
-      - {{security_review_output}} (if security-reviewer was spawned)
-      - {{architecture_review_output}} (if architect was spawned)
-      - {{test_review_output}} (if tdd-guide was spawned)
-    </action>
+    <action>Collect outputs — extract ONLY: finding #, severity, agent, one-line description, file:line</action>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
@@ -814,91 +568,208 @@
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 4.5: Tech Debt Story Creation (Optional)                           -->
+  <!-- STEP 4.5: Deferred Item Audit + Tech Debt Story Creation (MANDATORY)    -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="4.5" goal="Create tech debt stories for deferred items">
-    <critical>🗂️ TECH DEBT TRACKING - Every deferred item becomes a tracked TD story</critical>
+  <step n="4.5" goal="Audit ALL deferred items and ensure every one is tracked by a story">
+    <critical>🗂️ TECH DEBT TRACKING - Every deferred item MUST be tracked by a story</critical>
     <critical>NO dark void — deferred items ALWAYS get stories + sprint-status updates</critical>
+    <critical>This step is MANDATORY even when Step 4 triage has zero deferred items</critical>
 
-    <action>Use {{td_items}} from Step 4 (pre-selected by user in triage)</action>
+    <!-- ─── 4.5a: Collect ALL deferred items from ALL sources ─── -->
+    <action>Build {{all_deferred_items}} by collecting from THREE sources:
 
-    <action>Group deferred items by theme to minimize story count:
-      - Related items in same file/feature → single TD story
-      - Unrelated items → separate TD stories
+      **Source 1: Triage deferrals** (from Step 4)
+      - Use {{td_items}} from Step 4 (items user chose to defer during triage)
+
+      **Source 2: Story pre-existing deferrals**
+      - Search the story's Dev Notes for: "Deferred", "out of scope", "follow-up", "future"
+      - These are items deferred BEFORE this review (e.g., during dev-story)
+      - Add each to {{all_deferred_items}}
+
+      **Source 3: Agent out-of-scope findings**
+      - Search agent review outputs for items flagged as:
+        "out of scope", "pre-existing", "not part of this story", "follow-up recommended"
+      - These are issues agents found but noted as beyond this story's scope
+      - Add each to {{all_deferred_items}}
     </action>
 
-    <!-- Create TD stories -->
-    <action>For each TD story group, create story using template:
+    <!-- ─── 4.5b: Verify existing coverage for each deferred item ─── -->
+    <action>For EACH item in {{all_deferred_items}}, check if already tracked:
 
+      1. Search {sprint_artifacts}/stories/ for story files covering this item
+         - Grep for the function name, file name, or pattern described
+      2. Search {sprint_status} for any story whose description matches
+      3. Check if the item is explicitly listed as a task/AC in an existing story
+
+      Set {{item.tracked}} = true/false for each item
+      Set {{item.tracking_story}} = story ID if tracked
+    </action>
+
+    <!-- ─── 4.5c: Handle tracked items — verify + link ─── -->
+    <check if="any items have {{item.tracked}} = true">
+      <action>For each tracked item:
+        - Verify the tracking story actually covers the deferred work (not just mentions it)
+        - Update the source story's deferred reference to link to the tracking story
+          e.g., "Deferred: X — tracked in [15-TD-Y](./15-TD-Y-slug.md)"
+      </action>
+    </check>
+
+    <!-- ─── 4.5d: Handle untracked items — create stories or add to existing ─── -->
+    <check if="any items have {{item.tracked}} = false">
+      <action>For each UNTRACKED item, decide:
+
+        **Option A: Add to existing story** — if an existing ready-for-dev story covers a related theme
+        - Add as new Task/AC to that story
+        - Update File Specification table if new files affected
+        - Note: "Added from {{story_key}} code review ({{date}})"
+
+        **Option B: Create new TD story** — if no existing story covers this theme
+        - Group related untracked items into a single story (minimize story count)
+        - Use TD story template (below)
+      </action>
+
+      <!-- Create new TD stories when needed -->
+      <action>For each new TD story group, create story using template:
+
+        ```markdown
+        # Tech Debt Story TD-{{epic_id}}-{{td_number}}: {{title}}
+
+        Status: ready-for-dev
+
+        > **Source:** ECC Code Review ({{date}}) on story {{story_key}}
+        > **Priority:** {{priority}}
+        > **Estimated Effort:** {{effort_estimate}}
+
+        ## Story
+
+        As a **developer**,
+        I want **{{what}}**,
+        So that **{{why}}**.
+
+        ## Acceptance Criteria
+
+        {{acceptance_criteria}}
+
+        ## Tasks / Subtasks
+
+        {{tasks}}
+
+        ## Dev Notes
+
+        - Source story: [{{story_key}}](./{{story_filename}})
+        - Review findings: {{finding_indices}}
+        - Files affected: {{affected_files}}
+        ```
+      </action>
+
+      <action>Write story files to: {sprint_artifacts}/stories/TD-{{epic_id}}-{{td_number}}-{{slug}}.md</action>
+    </check>
+
+    <!-- ─── 4.5e: Update sprint-status.yaml + source story (MANDATORY) ─── -->
+    <action>For each NEW TD story created:
+      - Add to sprint-status.yaml with status: ready-for-dev
+      - Add DEPENDS: {{story_key}} (source story)
+    </action>
+
+    <action>Update source story {{story_key}} with tracking table:
       ```markdown
-      # Tech Debt Story TD-{{epic_id}}-{{td_number}}: {{title}}
+      ### Tech Debt Stories Created / Updated
 
-      Status: ready-for-dev
-
-      > **Source:** ECC Code Review ({{date}}) on story {{story_key}}
-      > **Priority:** {{priority}}
-      > **Estimated Effort:** {{effort_estimate}}
-
-      ## Story
-
-      As a **developer**,
-      I want **{{what}}**,
-      So that **{{why}}**.
-
-      ## Acceptance Criteria
-
-      {{acceptance_criteria}}
-
-      ## Tasks / Subtasks
-
-      {{tasks}}
-
-      ## Dev Notes
-
-      - Source story: [{{story_key}}](./{{story_filename}})
-      - Review findings: {{finding_indices}}
-      - Files affected: {{affected_files}}
-      ```
-    </action>
-
-    <action>Write story files to: {sprint_artifacts}/stories/TD-{{epic_id}}-{{td_number}}-{{slug}}.md</action>
-
-    <!-- Update sprint-status.yaml — MANDATORY -->
-    <action>Add each TD story to sprint-status.yaml:
-      - Status: ready-for-dev
-      - DEPENDS: {{story_key}} (source story)
-    </action>
-
-    <!-- Update source story with TD links -->
-    <action>Add to story {{story_key}}:
-      ```markdown
-      ### Tech Debt Stories Created
-
-      | TD Story | Description | Priority |
-      |----------|-------------|----------|
-      {{#each created_td_stories}}
-      | [{{id}}](./{{filename}}) | {{description}} | {{priority}} |
+      | TD Story | Description | Priority | Action |
+      |----------|-------------|----------|--------|
+      {{#each all_resolved_items}}
+      | [{{tracking_id}}](./{{filename}}) | {{description}} | {{priority}} | {{action}} |
       {{/each}}
       ```
+      Where {{action}} is one of: CREATED, ADDED_TO_EXISTING, ALREADY_TRACKED
     </action>
 
-    <output>✅ **Tech Debt Stories Created**
+    <!-- ─── 4.5f: Summary output ─── -->
+    <output>🗂️ **Deferred Item Audit Complete**
 
-      Created {{td_story_count}} TD stories:
-      {{#each created_td_stories}}
+      **Sources scanned:**
+      - Triage deferrals: {{triage_deferred_count}}
+      - Story pre-existing deferrals: {{preexisting_deferred_count}}
+      - Agent out-of-scope findings: {{agent_deferred_count}}
+
+      **Resolution:**
+      - Already tracked by existing stories: {{already_tracked_count}}
+      - Added to existing stories: {{added_to_existing_count}}
+      - New TD stories created: {{new_td_count}}
+      - Total deferred items verified: {{total_deferred}}
+
+      {{#if new_td_count > 0}}
+      **New TD stories:**
+      {{#each new_td_stories}}
       - **{{id}}**: {{title}} ({{priority}}) → `{{filepath}}`
       {{/each}}
+      {{/if}}
 
-      Sprint status updated. Stories ready for sprint planning.
+      {{#if added_to_existing_count > 0}}
+      **Added to existing stories:**
+      {{#each added_to_existing}}
+      - **{{item}}** → added to {{tracking_story}}
+      {{/each}}
+      {{/if}}
+
+      Sprint status updated. All deferred items are now tracked.
     </output>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 5: Update Story Status                                             -->
+  <!-- STEP 5: Cost Tracking + E2E Coverage Check                              -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="5" goal="Update story status based on review outcome">
+  <step n="5" goal="Cost tracking, E2E coverage, and Firebase analysis before status update">
+
+    <!-- 5a: Quick check for UI changes -->
+    <action>Check if any {{files_to_review}} match UI patterns:
+      "src/components/**/*.tsx" (excluding ui/), "src/hooks/*.ts", "src/stores/*.ts"</action>
+    <action>Set {{has_ui_changes}} = true/false</action>
+
+    <check if="{{has_ui_changes}}">
+      <!-- 5b: Search existing E2E specs for coverage of changed UI -->
+      <action>Extract data-testid values from changed .tsx files, search tests/e2e/*.spec.ts for coverage</action>
+      <action>Set {{uncovered_testids}} and {{ui_missing_e2e}}</action>
+
+      <!-- 5c: Critical path assessment -->
+      <action>Check if changes are on critical user path (auth, canvas, toolbox, inspector, YAML import/export)</action>
+    </check>
+
+    <!-- MANDATORY: Check for Firebase backend changes that need separate deployment -->
+    <action>Check if any {{files_to_review}} match Firebase backend patterns:
+      - "firestore.rules" → needs `firebase deploy --only firestore:rules`
+      - "firestore.indexes.json" → needs `firebase deploy --only firestore:indexes`
+      - "storage.rules" → needs `firebase deploy --only storage`
+      - "functions/src/**" → needs `cd functions && npm run build && firebase deploy --only functions`
+    </action>
+    <action>Set {{has_firebase_backend_changes}} = true/false</action>
+    <action>Set {{firebase_deploy_targets}} = comma-separated list of targets (e.g., "firestore:rules,firestore:indexes")</action>
+
+    <!-- MANDATORY: Cost tracking runs BEFORE story status update so it never gets skipped -->
+    <critical>You MUST execute this bash command and capture its output. Do NOT skip it. Do NOT generate the final output without running this command first.</critical>
+    <action>Run cost analyzer: `workflow-cost --csv --stats --workflow "ecc-code-review" --story "{{story_key}}"`</action>
+    <action>Store the FULL terminal output as {{cost_report_output}} — include the COST NOTICE box</action>
+
+    <!-- MANDATORY: Build commit commands for the user -->
+    <action>Build list of {{review_changed_files}} — files modified/created during THIS review session:
+      - Story file (status update + review summary)
+      - sprint-status.yaml (status change + any new TD entries)
+      - Any new TD story files created in Step 4.5
+      - Any source/test files modified by quick fixes in Step 4
+    </action>
+
+    <output>✅ **Cost & E2E Analysis Complete** — proceeding to story status update.</output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 6: Story Status Update + Review Complete (MUST be last step)       -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="6" goal="Update story status and present final review summary">
+    <critical>Story status update is the FINAL step. Cost tracking and E2E analysis already ran in Step 5.</critical>
+
     <check if="no CRITICAL or HIGH issues OR all fixed">
       <action>Update story Status to "done"</action>
       <action>Set {{new_status}} = "done"</action>
@@ -919,59 +790,70 @@
       - Outcome
       - Action items count
     </action>
-  </step>
 
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 6: Review Complete                                                 -->
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- Final unified output with cost, commit commands, and next steps -->
+    <output>**ECC Code Review Complete!**
 
-  <step n="6" goal="Finalize review and report results">
-    <!-- Check for UI changes without E2E coverage -->
-    <action>Check if any {{files_to_review}} are .tsx components/views</action>
-    <action>Search tests/e2e/staging/*.spec.ts for TestIds matching those components</action>
-    <action>Set {{ui_missing_e2e}} = true if UI changes found without matching E2E specs</action>
+      **Story:** {{story_key}} | **Status:** {{new_status}} | **Classification:** {{classification}}
+      **Triage:** {{fixed_count}} fixed, {{td_story_count}} TD stories
+      **Agents:** {{review_agents}}
 
-    <!-- MANDATORY: Check for Firebase backend changes that need separate deployment -->
-    <action>Check if any {{files_to_review}} match Firebase backend patterns:
-      - "firestore.rules" → needs `firebase deploy --only firestore:rules`
-      - "firestore.indexes.json" → needs `firebase deploy --only firestore:indexes`
-      - "storage.rules" → needs `firebase deploy --only storage`
-      - "functions/src/**" → needs `cd functions && npm run build && firebase deploy --only functions`
-    </action>
-    <action>Set {{has_firebase_backend_changes}} = true/false</action>
-    <action>Set {{firebase_deploy_targets}} = comma-separated list of targets (e.g., "firestore:rules,firestore:indexes")</action>
-
-    <output>**✅ ECC Code Review Complete!**
-
-      **Story:** {{story_key}}
-      **Status:** {{new_status}}
-      **Classification:** {{classification}}
-
-      **Triage Summary:**
-      - ⚡ Fixed now: {{fixed_count}} items
-      {{#if td_story_count}}
-      - 🗂️ TD stories created: {{td_story_count}} stories
+      {{#if has_ui_changes}}
+      {{#if ui_missing_e2e}}
+      **E2E:** gaps detected for {{uncovered_testids}}
+      **Critical path:** {{is_critical_path}} — {{critical_path_reason}}
+      {{/if}}
+      {{#if NOT ui_missing_e2e}}
+      **E2E:** Existing specs cover changed UI components.
+      {{/if}}
+      {{/if}}
+      {{#if NOT has_ui_changes}}
+      **E2E:** No UI changes — E2E check skipped.
       {{/if}}
 
-      **ECC Agents Used:**
-      {{#each review_agents}}
-      - {{agent}} ✓
-      {{/each}}
-
       {{#if has_firebase_backend_changes}}
-      **⚠️ Firebase Backend Changes Detected:**
+      **Firebase Backend Changes Detected:**
       This story modifies Firebase backend files that do NOT auto-deploy with Hosting.
       When deploying, you MUST run `firebase deploy --only {{firebase_deploy_targets}}` separately.
       The `/deploy-story` workflow handles this automatically (Step 5).
       {{/if}}
+
+      **Session Cost:**
+      {{cost_report_output}}
+
+      ---
+
+      **Commit Commands (copy-paste):**
+
+      ```bash
+      # Stage review artifacts
+      {{#each review_changed_files}}
+      git add {{file_path}}
+      {{/each}}
+
+      # Commit
+      git commit -m "$(cat &lt;&lt;'EOF'
+      Review {{story_key}}: {{overall_status}} {{overall_score}}/10{{#if td_story_count}}, create {{td_stories_list}}{{/if}}
+
+      Co-Authored-By: Claude Opus 4.6 &lt;noreply@anthropic.com&gt;
+      EOF
+      )"
+      ```
 
       **Next Steps:**
       - Run `/workflow-close` to verify tests, status files, and branch state
       {{#if new_status == "done"}}
       - Run `/deploy-story` to deploy — or [C]ommit to branch for batching multiple stories
       {{/if}}
+      {{#if has_ui_changes}}
       {{#if ui_missing_e2e}}
-      - Recommend: Run `/ecc-e2e` to add E2E coverage for new UI changes
+      {{#if is_critical_path}}
+      - **Recommend:** Run `/ecc-e2e` — E2E gap on critical path ({{critical_path_reason}})
+      {{/if}}
+      {{#if NOT is_critical_path}}
+      - Consider running `/ecc-e2e` for E2E coverage of new UI changes
+      {{/if}}
+      {{/if}}
       {{/if}}
       {{#if new_status != "done"}}
       - Address remaining issues

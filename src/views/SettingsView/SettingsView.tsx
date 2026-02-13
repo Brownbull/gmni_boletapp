@@ -19,7 +19,7 @@ import {
     DatosAprendidosView,
     AppView,
     CuentaView,
-} from '@/components/settings';
+} from '@features/settings/components';
 // Story 14e-25d: Direct toast hook (ViewHandlersContext deleted)
 import { useToast } from '@/shared/hooks';
 import { useModalActions } from '@/managers/ModalManager';

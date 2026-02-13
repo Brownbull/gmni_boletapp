@@ -3,10 +3,10 @@
  *
  * Story 14.29: React Query Migration
  * Story 11.4: Trust Merchant System
- * Epic 14: Core Implementation
+ * Story 15-TD-9: Migrated to repository pattern (useTrustRepository)
  *
  * Real-time subscription to user's trusted merchants with React Query caching.
- * Provides trust lifecycle operations.
+ * Provides trust lifecycle operations via the repository layer.
  *
  * Migration benefits:
  * - Settings navigation shows instantly (cached data)
@@ -19,16 +19,7 @@ import { User } from 'firebase/auth';
 import { Services } from './useAuth';
 import { useFirestoreSubscription } from './useFirestoreSubscription';
 import { QUERY_KEYS } from '../lib/queryKeys';
-import {
-    subscribeToTrustedMerchants,
-    recordScan,
-    isMerchantTrusted,
-    trustMerchant,
-    declineTrust,
-    revokeTrust,
-    deleteTrustedMerchant,
-    getMerchantTrustRecord,
-} from '../services/merchantTrustService';
+import { useTrustRepository } from '@/repositories';
 import { TrustedMerchant, TrustPromptEligibility } from '../types/trust';
 
 export interface UseTrustedMerchantsReturn {
@@ -81,13 +72,17 @@ export interface UseTrustedMerchantsReturn {
  * Provides real-time subscription to user's trusted merchants with trust lifecycle operations
  *
  * Story 11.4: Trust Merchant System
+ * Story 15-TD-9: Uses useTrustRepository() for data access.
+ * The user/services parameters are retained for backward compatibility
+ * (they drive the enabled flag and query key).
  */
 export function useTrustedMerchants(
     user: User | null,
     services: Services | null
 ): UseTrustedMerchantsReturn {
     const [error, setError] = useState<Error | null>(null);
-    const enabled = !!user && !!services;
+    const trustRepo = useTrustRepository();
+    const enabled = !!user && !!services && !!trustRepo;
 
     // Create the query key
     const queryKey = useMemo(
@@ -97,15 +92,10 @@ export function useTrustedMerchants(
         [enabled, user?.uid, services?.appId]
     );
 
-    // Subscribe to trusted merchants with React Query caching
+    // Subscribe to trusted merchants with React Query caching via repository
     const { data: merchants = [], isLoading } = useFirestoreSubscription<TrustedMerchant[]>(
         queryKey,
-        (callback) => subscribeToTrustedMerchants(
-            services!.db,
-            user!.uid,
-            services!.appId,
-            callback
-        ),
+        (callback) => trustRepo!.subscribe(callback),
         { enabled }
     );
 
@@ -118,7 +108,7 @@ export function useTrustedMerchants(
     // Record a scan and check trust eligibility
     const recordMerchantScan = useCallback(
         async (merchantName: string, wasEdited: boolean): Promise<TrustPromptEligibility> => {
-            if (!user || !services) {
+            if (!trustRepo) {
                 return {
                     shouldShowPrompt: false,
                     reason: 'insufficient_scans',
@@ -126,157 +116,120 @@ export function useTrustedMerchants(
             }
 
             try {
-                const eligibility = await recordScan(
-                    services.db,
-                    user.uid,
-                    services.appId,
-                    merchantName,
-                    wasEdited
-                );
-                return eligibility;
+                return await trustRepo.recordScan(merchantName, wasEdited);
             } catch (e) {
                 const err = e instanceof Error ? e : new Error('Failed to record scan');
                 setError(err);
                 throw err;
             }
         },
-        [user, services]
+        [trustRepo]
     );
 
     // Check if merchant is trusted (for auto-save decision)
     const checkTrusted = useCallback(
         async (merchantName: string): Promise<boolean> => {
-            if (!user || !services) {
+            if (!trustRepo) {
                 return false;
             }
 
             try {
-                return await isMerchantTrusted(
-                    services.db,
-                    user.uid,
-                    services.appId,
-                    merchantName
-                );
+                return await trustRepo.isTrusted(merchantName);
             } catch (e) {
                 console.warn('Failed to check merchant trust:', e);
                 return false;
             }
         },
-        [user, services]
+        [trustRepo]
     );
 
     // Accept trust (user clicked "Yes, trust")
     const acceptTrust = useCallback(
         async (merchantName: string): Promise<void> => {
-            if (!user || !services) {
+            if (!trustRepo) {
                 throw new Error('User must be authenticated to trust merchants');
             }
 
             try {
-                await trustMerchant(
-                    services.db,
-                    user.uid,
-                    services.appId,
-                    merchantName
-                );
+                await trustRepo.trust(merchantName);
             } catch (e) {
                 const err = e instanceof Error ? e : new Error('Failed to trust merchant');
                 setError(err);
                 throw err;
             }
         },
-        [user, services]
+        [trustRepo]
     );
 
     // Decline trust (user clicked "Not now")
     const declinePrompt = useCallback(
         async (merchantName: string): Promise<void> => {
-            if (!user || !services) {
+            if (!trustRepo) {
                 throw new Error('User must be authenticated to decline trust');
             }
 
             try {
-                await declineTrust(
-                    services.db,
-                    user.uid,
-                    services.appId,
-                    merchantName
-                );
+                await trustRepo.declineTrust(merchantName);
             } catch (e) {
                 const err = e instanceof Error ? e : new Error('Failed to decline trust');
                 setError(err);
                 throw err;
             }
         },
-        [user, services]
+        [trustRepo]
     );
 
     // Revoke trust (from Settings)
     const removeTrust = useCallback(
         async (merchantName: string): Promise<void> => {
-            if (!user || !services) {
+            if (!trustRepo) {
                 throw new Error('User must be authenticated to revoke trust');
             }
 
             try {
-                await revokeTrust(
-                    services.db,
-                    user.uid,
-                    services.appId,
-                    merchantName
-                );
+                await trustRepo.revokeTrust(merchantName);
             } catch (e) {
                 const err = e instanceof Error ? e : new Error('Failed to revoke trust');
                 setError(err);
                 throw err;
             }
         },
-        [user, services]
+        [trustRepo]
     );
 
     // Delete trusted merchant record entirely
     const deleteMerchant = useCallback(
         async (merchantId: string): Promise<void> => {
-            if (!user || !services) {
+            if (!trustRepo) {
                 throw new Error('User must be authenticated to delete merchant');
             }
 
             try {
-                await deleteTrustedMerchant(
-                    services.db,
-                    user.uid,
-                    services.appId,
-                    merchantId
-                );
+                await trustRepo.delete(merchantId);
             } catch (e) {
                 const err = e instanceof Error ? e : new Error('Failed to delete merchant');
                 setError(err);
                 throw err;
             }
         },
-        [user, services]
+        [trustRepo]
     );
 
     // Get trust record for a specific merchant
     const getTrustRecord = useCallback(
         async (merchantName: string): Promise<TrustedMerchant | null> => {
-            if (!user || !services) {
+            if (!trustRepo) {
                 return null;
             }
 
             try {
-                return await getMerchantTrustRecord(
-                    services.db,
-                    user.uid,
-                    services.appId,
-                    merchantName
-                );
+                return await trustRepo.getRecord(merchantName);
             } catch (e) {
                 console.warn('Failed to get trust record:', e);
                 return null;
             }
         },
-        [user, services]
+        [trustRepo]
     );
 
     return useMemo(

@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { useCategoryStatistics } from '../../../src/hooks/useCategoryStatistics';
+import { useCategoryStatistics } from '@features/analytics/hooks/useCategoryStatistics';
 import type { Transaction } from '../../../src/types/transaction';
 
 // Mock transaction data
