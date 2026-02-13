@@ -175,7 +175,7 @@ development_status:
   epic-15b: drafted
 
   # Phase 0: Structural Cleanup (5 stories, ~7 pts)
-  15b-0a-dead-module-audit: backlog            # 1 pt  - Identify and remove orphan modules
+  15b-0a-dead-module-audit: ready-for-dev       # 1 pt  - Identify and remove orphan modules
   15b-0b-fix-app-barrel-cycles: backlog        # 2 pts - Fix 3/6 circular deps (App barrel re-exports)
   15b-0c-fix-store-modal-cycles: backlog       # 2 pts - Fix 3/6 circular deps (stores/ModalManager/EditorScanThumbnail)
   15b-0d-layer-violation-cleanup: backlog      # 1 pt  - Fix 8 layer violations in hooks/app/
