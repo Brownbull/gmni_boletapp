@@ -20,6 +20,8 @@ import {
     insightProfileDocSegments,
     transactionDocSegments,
     notificationDocSegments,
+    assertValidSegment,
+    assertValidDocumentId,
 } from '../../../src/lib/firestorePaths';
 
 const APP_ID = 'test-app';
@@ -198,6 +200,78 @@ describe('firestorePaths', () => {
             expect(() => insightProfileDocSegments('../hack', USER_ID)).toThrow('Invalid appId');
             expect(() => transactionDocSegments('../hack', USER_ID, 'tx-1')).toThrow('Invalid appId');
             expect(() => notificationDocSegments('../hack', USER_ID, 'n-1')).toThrow('Invalid appId');
+        });
+    });
+
+    // =========================================================================
+    // assertValidSegment (Story 15-TD-23: exported for service-level validation)
+    // =========================================================================
+
+    describe('assertValidSegment (exported)', () => {
+        it('accepts alphanumeric, hyphens, underscores', () => {
+            expect(() => assertValidSegment('abc-123_DEF', 'test')).not.toThrow();
+        });
+
+        it.each([
+            ['path traversal', '../hack'],
+            ['slash', 'id/path'],
+            ['empty string', ''],
+            ['spaces', 'has space'],
+            ['special chars', 'id@!'],
+            ['null', null as unknown as string],
+            ['undefined', undefined as unknown as string],
+        ])('rejects invalid segment: %s', (_desc, value) => {
+            expect(() => assertValidSegment(value, 'test')).toThrow('Invalid test format');
+        });
+
+        it('rejects values exceeding maxLength', () => {
+            expect(() => assertValidSegment('a'.repeat(257), 'test')).toThrow('Invalid test format');
+        });
+
+        it('accepts value at exactly 256 chars', () => {
+            expect(() => assertValidSegment('a'.repeat(256), 'test')).not.toThrow();
+        });
+    });
+
+    // =========================================================================
+    // assertValidDocumentId (Story 15-TD-23: space-permitting doc ID validator)
+    // =========================================================================
+
+    describe('assertValidDocumentId', () => {
+        it('accepts alphanumeric with spaces (normalized merchant names)', () => {
+            expect(() => assertValidDocumentId('jumbo mall 123', 'merchantDocId')).not.toThrow();
+        });
+
+        it('accepts hyphens and underscores', () => {
+            expect(() => assertValidDocumentId('abc-123_DEF', 'test')).not.toThrow();
+        });
+
+        it('accepts single word', () => {
+            expect(() => assertValidDocumentId('jumbo', 'test')).not.toThrow();
+        });
+
+        it.each([
+            ['path traversal', '../hack'],
+            ['slash', 'id/path'],
+            ['empty string', ''],
+            ['whitespace only', '   '],
+            ['single space', ' '],
+            ['special chars (@)', 'id@test'],
+            ['special chars (!)', 'id!test'],
+            ['tab', 'id\tid'],
+            ['newline', 'id\nid'],
+            ['null', null as unknown as string],
+            ['undefined', undefined as unknown as string],
+        ])('rejects invalid document ID: %s', (_desc, value) => {
+            expect(() => assertValidDocumentId(value, 'test')).toThrow('Invalid test format');
+        });
+
+        it('rejects values exceeding maxLength', () => {
+            expect(() => assertValidDocumentId('a'.repeat(257), 'test')).toThrow('Invalid test format');
+        });
+
+        it('accepts value at exactly 256 chars', () => {
+            expect(() => assertValidDocumentId('a'.repeat(256), 'test')).not.toThrow();
         });
     });
 

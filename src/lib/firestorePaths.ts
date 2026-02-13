@@ -17,8 +17,21 @@ const MAX_APP_ID_LENGTH = 64;
 /** Firestore document IDs max 1500 bytes; 256 chars is a safe conservative limit */
 const MAX_SEGMENT_LENGTH = 256;
 
-function assertValidSegment(value: string, label: string, maxLength: number = MAX_SEGMENT_LENGTH): void {
+export function assertValidSegment(value: string, label: string, maxLength: number = MAX_SEGMENT_LENGTH): void {
     if (typeof value !== 'string' || !value || value.length > maxLength || !SEGMENT_PATTERN.test(value)) {
+        throw new Error(`Invalid ${label} format`);
+    }
+}
+
+/**
+ * Story 15-TD-23: Looser document ID validator that allows spaces.
+ * Used for Firestore document IDs that may contain spaces (e.g., normalized merchant names).
+ * Blocks path traversal (/, ..) while permitting [a-zA-Z0-9_ -].
+ */
+const DOC_ID_PATTERN = /^[a-zA-Z0-9_ -]+$/;
+
+export function assertValidDocumentId(value: string, label: string, maxLength: number = MAX_SEGMENT_LENGTH): void {
+    if (typeof value !== 'string' || !value || !value.trim() || value.length > maxLength || !DOC_ID_PATTERN.test(value)) {
         throw new Error(`Invalid ${label} format`);
     }
 }
