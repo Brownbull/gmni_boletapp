@@ -1,6 +1,6 @@
 # Tech Debt Story 15-TD-21: Test Coverage for TD-16 Extracted Helpers
 
-Status: ready-for-dev
+Status: review
 
 > **Source:** ECC Code Review (2026-02-12) on story 15-TD-16
 > **Priority:** HIGH
@@ -18,24 +18,24 @@ So that **1,568 lines of computation logic have regression protection during fut
 
 ## Acceptance Criteria
 
-- [ ] **AC1:** `periodComparisonHelpers.test.ts` covers `computePreviousPeriodTotals` and `computeDailySparkline` (273 lines)
-- [ ] **AC2:** `navigationHelpers.test.ts` covers all 5 exported functions (310 lines)
-- [ ] **AC3:** `categoryDataHelpers.test.ts` covers all 4 `compute*Data` functions (292 lines)
-- [ ] **AC4:** `chartDataHelpers.test.ts` covers `computeRadarChartData` and `computeBumpChartData` (462 lines)
-- [ ] **AC5:** `periodNavigationHelpers.test.ts` covers 4 period state functions (146 lines)
-- [ ] **AC6:** `drillDownHelpers.test.ts` covers `resolveDrillDownCategories` (86 lines)
-- [ ] **AC7:** All tests pass with `npm run test:quick`
+- [x] **AC1:** `periodComparisonHelpers.test.ts` covers `computePreviousPeriodTotals` and `computeDailySparkline` (273 lines)
+- [x] **AC2:** `navigationHelpers.test.ts` covers all 5 exported functions (310 lines)
+- [x] **AC3:** `categoryDataHelpers.test.ts` covers all 4 `compute*Data` functions (292 lines)
+- [x] **AC4:** `chartDataHelpers.test.ts` covers `computeRadarChartData` and `computeBumpChartData` (462 lines)
+- [x] **AC5:** `periodNavigationHelpers.test.ts` covers 4 period state functions (146 lines)
+- [x] **AC6:** `drillDownHelpers.test.ts` covers `resolveDrillDownCategories` (86 lines)
+- [x] **AC7:** All tests pass with `npm run test:quick`
 
 ## Tasks
 
-- [ ] **Task 1:** Write TrendsView helper tests
-  - [ ] `tests/unit/views/TrendsView/periodComparisonHelpers.test.ts`
-  - [ ] `tests/unit/views/TrendsView/navigationHelpers.test.ts`
-  - [ ] `tests/unit/views/TrendsView/drillDownHelpers.test.ts`
-  - [ ] `tests/unit/views/TrendsView/periodNavigationHelpers.test.ts`
-- [ ] **Task 2:** Write DashboardView helper tests
-  - [ ] `tests/unit/views/DashboardView/categoryDataHelpers.test.ts`
-  - [ ] `tests/unit/views/DashboardView/chartDataHelpers.test.ts`
+- [x] **Task 1:** Write TrendsView helper tests
+  - [x] `tests/unit/views/TrendsView/periodComparisonHelpers.test.ts`
+  - [x] `tests/unit/views/TrendsView/navigationHelpers.test.ts`
+  - [x] `tests/unit/views/TrendsView/drillDownHelpers.test.ts`
+  - [x] `tests/unit/views/TrendsView/periodNavigationHelpers.test.ts`
+- [x] **Task 2:** Write DashboardView helper tests
+  - [x] `tests/unit/views/DashboardView/categoryDataHelpers.test.ts`
+  - [x] `tests/unit/views/DashboardView/chartDataHelpers.test.ts`
 
 ## Dev Notes
 
