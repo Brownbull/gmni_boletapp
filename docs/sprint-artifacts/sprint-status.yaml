@@ -60,7 +60,7 @@ development_status:
   # Full analysis: docs/architecture/proposals/CODEBASE-REFACTOR-ANALYSIS.md
   # Replaces previous Epic 15 (Advanced Features, deferred to Epic 19)
   # ============================================================================
-  epic-15: in-progress
+  epic-15: done
 
   # Phase 0: Critical Bugs (immediate)
   15-0a-batch-chunking-fix: done        # 2 pts - Fix missing 500-op chunking in recordsService + airlockService
@@ -165,6 +165,76 @@ development_status:
   15-TD-28-remaining-fixture-consolidation: done             # 1 pt  - Consolidate inline makeTx/makeCategoryData in helpers.test.ts + DonutChart.test.tsx (from 15-TD-25 review)
 
   epic-15-retrospective: optional
+
+  # ============================================================================
+  # Epic 15b: Continued Codebase Refactoring (~91 points, 5 phases)
+  # Analysis: docs/architecture/proposals/EPIC-15B-CONTINUED-REFACTORING-ANALYSIS.md
+  # Dependency analysis: dependency-diagrams/ANALYSIS-REPORT.md
+  # Predecessor: Epic 15 (DONE — 68 stories, ~158 pts)
+  # ============================================================================
+  epic-15b: drafted
+
+  # Phase 0: Structural Cleanup (5 stories, ~7 pts)
+  15b-0a-dead-module-audit: backlog            # 1 pt  - Identify and remove orphan modules
+  15b-0b-fix-app-barrel-cycles: backlog        # 2 pts - Fix 3/6 circular deps (App barrel re-exports)
+  15b-0c-fix-store-modal-cycles: backlog       # 2 pts - Fix 3/6 circular deps (stores/ModalManager/EditorScanThumbnail)
+  15b-0d-layer-violation-cleanup: backlog      # 1 pt  - Fix 8 layer violations in hooks/app/
+  15b-0e-dependency-graph-baseline: backlog    # 1 pt  - Commit depcruise baseline for regression checks
+
+  # Phase 1: Feature Consolidation (12 stories, ~21 pts)
+  15b-1a-consolidate-analytics: backlog        # 3 pts - features/analytics/ (TrendsView + hooks + utils)
+  15b-1b-consolidate-dashboard: backlog        # 2 pts - features/dashboard/ (DashboardView + hooks)
+  15b-1c-consolidate-transaction-editor: backlog  # 2 pts - features/transaction-editor/ (EditorView + hooks)
+  15b-1d-consolidate-history: backlog          # 2 pts - features/history/ (HistoryView + hooks)
+  15b-1e-create-items-feature: backlog         # 2 pts - Create & consolidate features/items/
+  15b-1f-consolidate-batch-review: backlog     # 2 pts - features/batch-review/ (views + hooks + components)
+  15b-1g-consolidate-insights: backlog         # 2 pts - features/insights/ (InsightsView + hooks)
+  15b-1h-consolidate-reports: backlog          # 1 pt  - features/reports/ (ReportsView + components)
+  15b-1i-consolidate-scan: backlog             # 2 pts - features/scan/ (views + hooks + components)
+  15b-1j-consolidate-settings: backlog         # 1 pt  - features/settings/ (SettingsView + components)
+  15b-1k-shared-audit: backlog                 # 1 pt  - Verify remaining flat files are truly cross-feature
+  15b-1l-feature-barrel-exports: backlog       # 1 pt  - Feature barrel exports + depcruise cycle check
+
+  # Phase 2: Decomposition (16 stories, ~34 pts)
+  # Never-scoped views (target <800)
+  15b-2a-decompose-edit-view: backlog          # 3 pts - EditView 1,811 lines
+  15b-2b-decompose-scan-result-view: backlog   # 3 pts - ScanResultView 1,554 lines
+  15b-2c-decompose-history-view: backlog       # 2 pts - HistoryView 1,168 lines
+  15b-2d-decompose-items-view: backlog         # 2 pts - ItemsView 1,003 lines
+  # Feature-internal large files (target <800)
+  15b-2e-decompose-report-utils: backlog       # 3 pts - reportUtils.ts 2,401 lines
+  15b-2f-decompose-sankey-data-builder: backlog  # 2 pts - sankeyDataBuilder.ts 1,037 lines
+  15b-2g-decompose-sankey-chart: backlog       # 2 pts - SankeyChart.tsx 890 lines
+  15b-2h-decompose-use-scan-store: backlog     # 2 pts - useScanStore.ts 946 lines
+  15b-2i-decompose-drill-down-grid: backlog    # 2 pts - DrillDownGrid.tsx 808 lines
+  15b-2j-decompose-batch-review-handlers: backlog  # 1 pt  - useBatchReviewHandlers.ts 768 lines
+  15b-2k-decompose-history-filter-utils: backlog   # 2 pts - historyFilterUtils.ts 1,075 lines
+  15b-2l-decompose-scan-handlers: backlog      # 2 pts - useScanHandlers.ts 956 lines
+  # Plateaued views round 2 (target <1,200)
+  15b-2m-trends-view-extraction: backlog       # 3 pts - TrendsView further extraction 1,981 lines
+  15b-2n-dashboard-view-extraction: backlog    # 3 pts - DashboardView further extraction 1,485 lines
+  15b-2o-editor-view-extraction: backlog       # 3 pts - TransactionEditorViewInternal 1,421 lines
+  15b-2p-icon-filter-extraction: backlog       # 2 pts - IconCategoryFilter further extraction 1,106 lines
+
+  # Phase 3: Infrastructure Hardening (7 stories, ~15 pts)
+  15b-3a-dal-transaction-hooks: backlog        # 2 pts - Migrate transaction hooks to TransactionRepository
+  15b-3b-dal-trust-preferences: backlog        # 2 pts - Migrate trust + preferences hooks to repositories
+  15b-3c-dal-records-airlock-insight: backlog   # 3 pts - Migrate records + airlock + insight profile hooks
+  15b-3d-dal-credits-hooks: backlog            # 2 pts - Migrate credits hooks to CreditsRepository
+  15b-3e-dal-remaining-firebase: backlog       # 2 pts - Migrate remaining view/component Firebase imports
+  15b-3f-analytics-context-zustand: backlog    # 2 pts - AnalyticsContext -> Zustand
+  15b-3g-notification-context-zustand: backlog # 2 pts - NotificationContext -> Zustand + HistoryFiltersContext removal
+
+  # Phase 4: High-Coupling Architecture (7 stories, ~14 pts)
+  15b-4a-transaction-type-design: backlog      # 2 pts - Design transaction.ts sub-type schema (analysis only)
+  15b-4b-transaction-type-split: backlog       # 2 pts - Split transaction.ts into domain sub-types + re-export shim
+  15b-4c-transaction-consumers-batch1: backlog # 2 pts - Update type consumers (services + repos)
+  15b-4d-transaction-consumers-batch2: backlog # 2 pts - Update type consumers (hooks + features)
+  15b-4e-transaction-consumers-batch3: backlog # 2 pts - Update type consumers (views + components + cleanup)
+  15b-4f-app-tsx-fanout-reduction: backlog     # 3 pts - App.tsx fan-out reduction (extract feature orchestrators)
+  15b-4g-final-dependency-validation: backlog  # 1 pt  - Final dependency graph validation + epic metrics
+
+  epic-15b-retrospective: optional
 
 # .mcp.json "disabled": true
 

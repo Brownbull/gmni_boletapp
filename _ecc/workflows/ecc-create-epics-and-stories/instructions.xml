@@ -1,0 +1,868 @@
+<workflow>
+  <critical>The workflow execution engine is governed by: {project-root}/_bmad/core/tasks/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+
+  <critical>ECC-ORCHESTRATED EPIC AND STORY CREATION
+    Sequence: prerequisites -> epic design (planner) -> per-epic story generation (planner + architect + security) -> cross-epic analysis -> validation -> finalization
+    This workflow produces: epics.md + individual story files with File Specs, Architectural ACs, Tasks/Subtasks, and Dev Notes
+  </critical>
+
+  <critical>HARDENING ANALYSIS: Every story is checked against 6 hardening patterns to proactively detect
+    technical debt that would otherwise emerge during code review. Findings are classified as BUILT-IN
+    (added to existing story) or SEPARATE (new hardening story). Target: reduce 2.3x story multiplier to under 1.3x.</critical>
+
+  <!-- AUTO-PROCEED: Skip generic "Continue?" confirmations between steps.
+       ONLY pause at USER GATES: Step 1 (requirements confirmation), Step 2 (epic approval),
+       Step 3c (per-epic story approval), Step 5 (final validation).
+       All other steps auto-proceed. -->
+  <critical>AUTO-PROCEED MODE: Skip all generic "Continue?" confirmations.
+    Only pause at Steps 1, 2, 3c, and 5 user gates. All other steps auto-proceed.</critical>
+
+  <!-- ================================================================ -->
+  <!-- STEP 0: Project Knowledge Loading                                -->
+  <!-- ================================================================ -->
+
+  <step n="0" goal="Load project knowledge once at session start" tag="knowledge-init">
+    <critical>Load ALL project knowledge ONCE at session start, pass to ECC agents</critical>
+
+    <action>Load and cache {project-root}/_ecc/knowledge/code-review-patterns.md -> {{cached_review_patterns}}</action>
+    <action>Load and cache {project-root}/_ecc/knowledge/hardening-patterns.md -> {{cached_hardening_patterns}}</action>
+    <action>Load and cache {project-root}/.claude/rules/testing.md -> {{cached_testing_rules}}</action>
+    <action>Load and cache {project-root}/.claude/rules/security.md -> {{cached_security_rules}}</action>
+    <action>Load and cache any docs/architecture/*.md files that exist -> {{cached_architecture}}</action>
+    <action>Combine all cached knowledge into {{project_patterns}} for passing to ECC agents</action>
+
+    <output>**ECC Orchestrator Initialized - Epic and Story Creation**
+
+      Knowledge loaded for session:
+      - Code review patterns: {{review_patterns_summary}}
+      - Hardening patterns: 6 patterns loaded
+      - Testing rules: loaded
+      - Security rules: loaded
+      - Architecture docs: loaded (if available)
+
+      ECC agents will receive cached context.
+    </output>
+  </step>
+
+  <!-- ================================================================ -->
+  <!-- STEP 1: Prerequisite Validation & Requirements Extraction        -->
+  <!-- ================================================================ -->
+
+  <step n="1" goal="Validate planning artifacts and extract all requirements" tag="prerequisites">
+    <critical>Extract requirements as structured lists (FRs, NFRs, ARs, UX) — NOT full prose</critical>
+
+    <!-- Search for required planning artifacts -->
+    <action>Search {epics_dir} for PRD: *prd*.md or *prd*/index.md -> {{prd_path}}</action>
+    <action>Search {epics_dir} for Architecture: *architecture*.md or *architecture*/index.md -> {{architecture_path}}</action>
+    <action>Search {epics_dir} for UX Design: *ux*.md, *ux*.html, *ux-design*.md -> {{ux_path}} (optional)</action>
+
+    <check if="PRD not found">
+      <output>**ERROR: PRD document not found in {epics_dir}**
+
+        The PRD is required for epic/story creation.
+        Run `/bmad-bmm-create-prd` first, or provide the PRD path.
+      </output>
+      <ask>Provide PRD path or create one first?</ask>
+    </check>
+
+    <check if="Architecture not found">
+      <output>**ERROR: Architecture document not found in {epics_dir}**
+
+        The Architecture document is required for epic/story creation.
+        Run `/bmad-bmm-create-architecture` first, or provide the path.
+      </output>
+      <ask>Provide Architecture path or create one first?</ask>
+    </check>
+
+    <!-- Extract requirements from each document -->
+    <action>Read {{prd_path}} and extract:
+      - All Functional Requirements (FR1, FR2, ...) -> {{functional_requirements}}
+      - All NonFunctional Requirements (NFR1, NFR2, ...) -> {{nonfunctional_requirements}}
+      - Count: {{fr_count}} FRs, {{nfr_count}} NFRs
+    </action>
+
+    <action>Read {{architecture_path}} and extract:
+      - All Additional Requirements (AR1, AR2, ...) -> {{architectural_requirements}}
+      - Technology stack decisions -> {{tech_stack}}
+      - Key architectural patterns -> {{arch_patterns}}
+      - Count: {{ar_count}} ARs
+    </action>
+
+    <check if="UX design found">
+      <action>Read {{ux_path}} and extract:
+        - All UX Requirements (UX1, UX2, ...) -> {{ux_requirements}}
+        - Count: {{ux_count}} UX requirements
+      </action>
+    </check>
+
+    <check if="UX design NOT found">
+      <action>Set {{ux_requirements}} = "No UX design document provided"</action>
+      <action>Set {{ux_count}} = 0</action>
+    </check>
+
+    <!-- Present extracted requirements -->
+    <output>**Requirements Extracted**
+
+      **Source Documents:**
+      - PRD: {{prd_path}}
+      - Architecture: {{architecture_path}}
+      - UX Design: {{ux_path}} (or "not provided")
+
+      **Requirements Summary:**
+      - Functional Requirements: {{fr_count}} FRs
+      - NonFunctional Requirements: {{nfr_count}} NFRs
+      - Architectural Requirements: {{ar_count}} ARs
+      - UX Requirements: {{ux_count}} UX
+
+      **Functional Requirements:**
+      {{functional_requirements}}
+
+      **NonFunctional Requirements:**
+      {{nonfunctional_requirements}}
+
+      **Architectural Requirements (key):**
+      {{architectural_requirements_summary}}
+    </output>
+
+    <!-- USER GATE: Confirm requirements -->
+    <ask>Do these extracted requirements accurately represent what needs to be built? Any additions or corrections?</ask>
+  </step>
+
+  <!-- ================================================================ -->
+  <!-- STEP 2: Epic Design                                              -->
+  <!-- ================================================================ -->
+
+  <step n="2" goal="Design user-value-focused epics with FR coverage map" tag="epic-design">
+    <critical>ECC ORCHESTRATOR: Spawning ECC Planner agent for epic design</critical>
+    <critical>Epics must be USER-VALUE focused, not technical layers</critical>
+
+    <output>**Spawning ECC Planner for Epic Design...**
+
+      Task: Group requirements into user-value-focused epics with coverage map
+    </output>
+
+    <ecc-spawn agent="planner">
+      <task-call>
+        subagent_type: "everything-claude-code:planner"
+        model: "opus"
+        description: "Design epics from requirements"
+        prompt: |
+          ## Epic Design Task
+
+          **Goal:** Group requirements into user-value-focused epics.
+
+          **Requirements:**
+          {{functional_requirements}}
+
+          **NonFunctional Requirements:**
+          {{nonfunctional_requirements}}
+
+          **Architectural Requirements:**
+          {{architectural_requirements}}
+
+          **UX Requirements:**
+          {{ux_requirements}}
+
+          **Tech Stack:**
+          {{tech_stack}}
+
+          ---
+
+          ## Epic Design Principles (MANDATORY)
+
+          1. **User-Value First** — each epic must enable users to accomplish something meaningful
+             - CORRECT: "User can build architectures on a canvas" (clear user outcome)
+             - WRONG: "Database Setup" or "API Layer" (no user value)
+          2. **Incremental Delivery** — each epic delivers value independently
+          3. **No Forward Dependencies** — each epic works without requiring future epics to function
+          4. **Stories Flow Sequentially** — within an epic, each story builds on the previous one only
+
+          ## Required Output
+
+          1. **Epic List** — for each epic:
+             - Title (user-value focused)
+             - User outcome (1 sentence: what can the user DO after this epic?)
+             - FRs covered (list FR IDs)
+             - NFRs addressed (list NFR IDs)
+             - Key ARs involved (list AR IDs)
+             - Estimated story count (including likely hardening stories)
+             - Preliminary sizing (total estimated points)
+
+          2. **FR Coverage Map** — table mapping EVERY FR to an epic (100% coverage required)
+
+          3. **NFR Coverage Map** — table mapping EVERY NFR to relevant epics
+
+          4. **Dependency Flow** — the order epics should be built and why
+
+          5. **Risk Assessment** — which epics have the most complexity or unknowns
+
+          **IMPORTANT:** Consider that each user-facing story will likely need 1-2 hardening tasks
+          built in, and complex stories may generate separate hardening stories. Factor this into
+          your story count estimates (multiply naive count by ~1.3x).
+      </task-call>
+    </ecc-spawn>
+
+    <action>Collect planner output as {{epic_design}}</action>
+    <action>Extract {{epic_list}} — array of epics with titles, FRs, NFRs, ARs</action>
+    <action>Extract {{fr_coverage_map}} — FR -> Epic mapping</action>
+    <action>Extract {{epic_count}} — total number of epics</action>
+
+    <!-- Present to user -->
+    <output>**Epic Design Complete**
+
+      **Epics: {{epic_count}}**
+
+      {{epic_list_summary}}
+
+      **FR Coverage:** {{fr_coverage_count}}/{{fr_count}} FRs mapped (must be 100%)
+
+      **Dependency Flow:**
+      {{dependency_flow}}
+    </output>
+
+    <!-- USER GATE: Approve epic structure -->
+    <ask>Do you approve this epic structure? You can:
+      - [A] Approve and proceed to story generation
+      - [M] Modify — suggest changes to epic groupings
+      - [R] Redesign — ask the Planner to try a different approach</ask>
+  </step>
+
+  <!-- ================================================================ -->
+  <!-- STEP 3: Per-Epic Story Generation (loops per epic)               -->
+  <!-- ================================================================ -->
+
+  <step n="3" goal="Generate stories for each epic with hardening analysis" tag="story-generation">
+    <critical>Process epics SEQUENTIALLY. Within each epic, use parallel agents where possible.</critical>
+    <critical>Each epic goes through: story breakdown -> hardening analysis -> consolidation -> file generation</critical>
+
+    <loop for="each epic in {{epic_list}}">
+      <action>Set {{current_epic}} = current epic being processed</action>
+      <action>Set {{current_epic_frs}} = FRs assigned to this epic</action>
+      <action>Set {{current_epic_nfrs}} = NFRs relevant to this epic</action>
+      <action>Set {{current_epic_ars}} = ARs relevant to this epic</action>
+
+      <output>**Processing Epic {{current_epic.number}}: {{current_epic.title}}**
+
+        FRs: {{current_epic_frs}}
+        Estimated stories: {{current_epic.estimated_story_count}}
+      </output>
+
+      <!-- ============================================ -->
+      <!-- STEP 3a: Story Breakdown (Planner)           -->
+      <!-- ============================================ -->
+
+      <step n="3a" goal="Break epic into user stories with risk flags" tag="story-breakdown">
+        <ecc-spawn agent="planner">
+          <task-call>
+            subagent_type: "everything-claude-code:planner"
+            model: "opus"
+            description: "Story breakdown for Epic {{current_epic.number}}"
+            prompt: |
+              ## Story Breakdown for Epic {{current_epic.number}}: {{current_epic.title}}
+
+              **Epic Goal:** {{current_epic.user_outcome}}
+
+              **Functional Requirements to Cover:**
+              {{current_epic_frs_detail}}
+
+              **NonFunctional Requirements:**
+              {{current_epic_nfrs_detail}}
+
+              **Architectural Requirements:**
+              {{current_epic_ars_detail}}
+
+              **UX Requirements (if applicable):**
+              {{current_epic_ux_detail}}
+
+              **Tech Stack:**
+              {{tech_stack}}
+
+              **Project Patterns:**
+              {{project_patterns}}
+
+              ---
+
+              ## SIZING GUIDELINES (Opus 4.6)
+
+              - **SMALL (1-2 pts):** 1-3 tasks, <=10 subtasks, <=4 files
+              - **MEDIUM (3-5 pts):** 3-6 tasks, <=25 subtasks, <=8 files
+              - **LARGE (5-8 pts):** 6-8 tasks, <=40 subtasks, <=12 files
+              - **TOO LARGE (needs split):** >8 tasks OR >40 subtasks OR >12 files
+
+              ---
+
+              ## Story Design Principles
+
+              1. Each story must be completable by a single dev agent
+              2. Stories flow sequentially within the epic (no forward dependencies)
+              3. Database/schema creation happens in the story that first needs it (not upfront)
+              4. Each story has clear Given/When/Then acceptance criteria
+
+              ## Required Output Per Story
+
+              For each story, provide:
+
+              1. **Title** — descriptive, action-oriented
+              2. **User Story** — "As a {user_type}, I want {capability}, so that {benefit}"
+              3. **Acceptance Criteria** — Given/When/Then format, one per testable behavior
+              4. **FR Coverage** — which FRs this story implements
+              5. **Preliminary Sizing** — SMALL/MEDIUM/LARGE with task count estimate
+              6. **Risk Flags** — identify which hardening patterns might apply:
+                 - DATA_PIPELINE: creates schemas, seed scripts, data import/export
+                 - ERROR_RESILIENCE: creates UI rendering dynamic data
+                 - INPUT_SANITIZATION: renders user-provided strings in DOM
+                 - E2E_TESTING: creates UI on core user flows
+                 - PURE_COMPONENT: creates components with nullable/optional states
+                 - CROSS_STORE: creates store actions reading other stores
+              7. **Key Files** — major files this story will create or modify
+
+              **IMPORTANT:** Risk flags will be used by the Architect in the hardening analysis
+              phase to determine what additional tasks need to be added.
+          </task-call>
+        </ecc-spawn>
+
+        <action>Collect planner output as {{story_breakdown}}</action>
+        <action>Extract {{story_list}} — array of stories with ACs, sizing, risk flags</action>
+        <action>Extract {{story_count}} — number of user stories for this epic</action>
+      </step>
+
+      <!-- ============================================ -->
+      <!-- STEP 3b: Hardening Analysis (parallel)       -->
+      <!-- ============================================ -->
+
+      <step n="3b" goal="Analyze stories for hardening needs" tag="hardening-analysis">
+        <critical>Spawn Architect + Security Reviewer in a SINGLE message for true parallelism</critical>
+
+        <output>**Spawning Hardening Analysis (Architect + Security Reviewer)...**</output>
+
+        <parallel-execution-rule>
+          HOW TO ACHIEVE TRUE PARALLELISM:
+          You MUST issue BOTH Task tool invocations in your NEXT SINGLE RESPONSE.
+          Do NOT wait for one to complete before spawning the other.
+        </parallel-execution-rule>
+
+        <ecc-parallel-spawn>
+          <task-call id="architect_hardening">
+            subagent_type: "everything-claude-code:architect"
+            model: "opus"
+            description: "Hardening analysis for Epic {{current_epic.number}}"
+            prompt: |
+              ## Hardening Pattern Analysis
+
+              **Epic:** {{current_epic.number}} — {{current_epic.title}}
+
+              **Stories to Analyze:**
+              {{story_list_with_risk_flags}}
+
+              **Hardening Pattern Catalog:**
+              {{cached_hardening_patterns}}
+
+              **Project Patterns:**
+              {{project_patterns}}
+
+              ---
+
+              ## Task
+
+              For each story, check its risk flags against the 6 hardening patterns:
+
+              1. **Data Pipeline Hardening** — triggered by DATA_PIPELINE flag
+              2. **Error Resilience** — triggered by ERROR_RESILIENCE flag
+              3. **Input Sanitization** — triggered by INPUT_SANITIZATION flag
+              4. **E2E and Test Infrastructure** — triggered by E2E_TESTING flag
+              5. **Pure Component Patterns** — triggered by PURE_COMPONENT flag
+              6. **Cross-Store Coupling** — triggered by CROSS_STORE flag
+
+              For each match, determine:
+              - What specific hardening tasks are needed (reference the pattern catalog)
+              - CLASSIFICATION: BUILT-IN or SEPARATE
+                - BUILT-IN: hardening adds <= 2 tasks / 8 subtasks to the story
+                - SEPARATE: hardening exceeds threshold or is cross-cutting across stories
+
+              ## Required Output
+
+              For each story:
+              ```
+              Story N.M: {title}
+              - Patterns matched: [list]
+              - BUILT-IN additions:
+                - Task: {description} ({pattern})
+                  - Subtask: {detail}
+              - SEPARATE stories needed: [list or "none"]
+              ```
+
+              Then a summary section:
+              ```
+              SEPARATE HARDENING STORIES:
+              - H-N.1: {title} (pattern: {pattern}, hardens: Story N.M)
+                - Tasks: {count}
+                - Reason: {why separate}
+              ```
+          </task-call>
+
+          <task-call id="security_analysis">
+            subagent_type: "everything-claude-code:security-reviewer"
+            model: "sonnet"
+            description: "Security surface analysis for Epic {{current_epic.number}}"
+            prompt: |
+              ## Security Surface Analysis
+
+              **Epic:** {{current_epic.number}} — {{current_epic.title}}
+
+              **Stories:**
+              {{story_list_with_risk_flags}}
+
+              **Security Rules:**
+              {{cached_security_rules}}
+
+              ---
+
+              ## Task
+
+              For each story, identify:
+
+              1. **User Input Paths** — where user data enters (YAML import, form fields, URL params, drag events)
+              2. **DOM Rendering Points** — where user data is displayed (component names, descriptions, labels, metric values)
+              3. **Auth/Authorization** — authentication touchpoints, permission checks needed
+              4. **File Handling** — file uploads, downloads, MIME validation, size limits
+              5. **External Data** — Firestore reads, API calls, third-party integrations
+
+              For each finding, classify severity:
+              - HIGH: requires dedicated security task/story
+              - MEDIUM: requires built-in validation/sanitization subtasks
+              - LOW: covered by framework defaults (React escaping, etc.)
+
+              ## Required Output
+
+              Per story:
+              ```
+              Story N.M: {title}
+              - Input paths: [list with severity]
+              - Rendering points: [list with severity]
+              - Auth concerns: [list or "none"]
+              - File handling: [list or "none"]
+              - Security tasks needed: [list of tasks to add]
+              ```
+
+              Summary:
+              ```
+              HIGH-severity items: {count}
+              MEDIUM-severity items: {count}
+              Stories needing security tasks: [list]
+              ```
+          </task-call>
+        </ecc-parallel-spawn>
+
+        <action>Collect architect output as {{hardening_analysis}}</action>
+        <action>Collect security reviewer output as {{security_analysis}}</action>
+      </step>
+
+      <!-- ============================================ -->
+      <!-- STEP 3c: Story List Consolidation            -->
+      <!-- ============================================ -->
+
+      <step n="3c" goal="Merge story breakdown with hardening findings" tag="consolidation">
+        <action>For each user story in {{story_list}}:
+          1. Merge BUILT-IN hardening tasks from {{hardening_analysis}} into story tasks
+          2. Merge security tasks from {{security_analysis}} into story tasks
+          3. Re-check sizing: if story now exceeds LARGE threshold, flag for splitting
+        </action>
+
+        <action>Collect SEPARATE hardening stories from {{hardening_analysis}}:
+          1. Merge overlapping findings (architect + security on same concern)
+          2. Position each hardening story AFTER the user story it hardens
+          3. Assign story keys: e.g., N.Mh for hardening story after story N.M
+        </action>
+
+        <action>Build {{consolidated_story_list}}:
+          - User stories (with built-in hardening tasks integrated)
+          - Separate hardening stories (positioned after parent stories)
+          - Total count: {{user_story_count}} user + {{hardening_story_count}} hardening = {{total_story_count}}
+        </action>
+
+        <check if="any story exceeds TOO_LARGE threshold">
+          <output>**Sizing Alert:** The following stories exceed sizing limits after hardening integration:
+            {{oversized_stories}}
+
+            **Options:**
+            1. Split the story into 2 smaller stories
+            2. Move some hardening tasks to a SEPARATE story
+            3. Accept the larger size (not recommended)
+          </output>
+          <ask>How should we handle oversized stories?</ask>
+        </check>
+
+        <!-- Present consolidated list to user -->
+        <output>**Story List for Epic {{current_epic.number}}: {{current_epic.title}}**
+
+          **User Stories:** {{user_story_count}}
+          **Hardening Stories:** {{hardening_story_count}}
+          **Total:** {{total_story_count}}
+
+          {{consolidated_story_list_summary}}
+
+          **Hardening Patterns Applied:**
+          {{hardening_patterns_applied}}
+
+          **FR Coverage for This Epic:**
+          {{epic_fr_coverage}}
+        </output>
+
+        <!-- USER GATE: Approve per-epic story list -->
+        <ask>Approve this story list for Epic {{current_epic.number}}? You can:
+          - [A] Approve and generate story files
+          - [M] Modify — add, remove, or adjust stories
+          - [S] Skip — skip file generation for now (stories saved in epics.md only)</ask>
+      </step>
+
+      <!-- ============================================ -->
+      <!-- STEP 3d: Story File Generation               -->
+      <!-- ============================================ -->
+
+      <step n="3d" goal="Generate full story files with File Specs and Architectural ACs" tag="story-files">
+        <critical>Story files use the SAME format as ecc-create-story output.
+          This ensures compatibility with ecc-dev-story and ecc-code-review workflows.</critical>
+
+        <check if="user chose [S] Skip">
+          <action>Append story summaries to {{epics_file}} without generating individual files</action>
+          <goto anchor="next_epic" />
+        </check>
+
+        <!-- Generate story files in batches of up to 3 -->
+        <action>Split {{consolidated_story_list}} into batches of up to 3 stories</action>
+
+        <loop for="each batch in story batches">
+          <parallel-execution-rule>
+            For each story in the batch, spawn an Architect agent in a SINGLE message.
+            All stories in the batch are independent and can be generated in parallel.
+          </parallel-execution-rule>
+
+          <ecc-parallel-spawn>
+            <task-call for="each story in batch">
+              subagent_type: "everything-claude-code:architect"
+              model: "opus"
+              description: "Generate story file for {{story.key}}"
+              prompt: |
+                ## Story File Generation
+
+                **Story:** {{story.key}} — {{story.title}}
+
+                **User Story:**
+                {{story.user_story}}
+
+                **Acceptance Criteria:**
+                {{story.acceptance_criteria}}
+
+                **Tasks (from planner + hardening):**
+                {{story.tasks}}
+
+                **Hardening Notes:**
+                {{story.hardening_notes}}
+
+                **Security Notes:**
+                {{story.security_notes}}
+
+                **Project Architecture Patterns:**
+                {{project_patterns}}
+
+                **Tech Stack:**
+                {{tech_stack}}
+
+                ---
+
+                ## Phase 1: Architecture Discovery
+
+                Load architecture context — do NOT ask the user:
+                1. Reference the architecture document patterns
+                2. Scan existing codebase for conventions (file structure, naming, imports)
+                3. If no existing code, infer from architecture doc
+
+                **Foundation check:** If this is the first story for a new feature module
+                (no existing directory), include directory scaffolding as the first task.
+
+                ## Phase 2: File Specification (MANDATORY)
+
+                Specify EXACT file paths for every new/modified file:
+                | File/Component | EXACT Path | Pattern Reference | Status |
+                |----------------|------------|-------------------|--------|
+                | ... | src/path/to/File.ext | Pattern name | NEW/MODIFY |
+
+                ## Phase 3: Architectural Acceptance Criteria (MANDATORY)
+
+                Generate testable ACs based on discovered patterns:
+
+                **File Location ACs:**
+                - AC-ARCH-LOC-{n}: {Component} located at {exact_path}
+
+                **Pattern Compliance ACs:**
+                - AC-ARCH-PATTERN-{n}: Follows {pattern_name} for {aspect}
+
+                **Anti-Pattern ACs (must NOT happen):**
+                - AC-ARCH-NO-{n}: {anti-pattern} must NOT occur
+
+                ## Phase 4: Task/Subtask Refinement
+
+                Refine the task breakdown from the planner:
+                - Ensure each task has clear subtasks
+                - Include test subtasks per task (TDD: test first, then implement)
+                - Include hardening subtasks where flagged
+                - Verify total stays within sizing limits
+
+                ## Phase 5: Dev Notes
+
+                Provide implementation guidance:
+                - Architecture patterns to follow (with references)
+                - Technical pitfalls to avoid
+                - Hardening rationale (why these patterns were added)
+                - E2E testing recommendations
+
+                ---
+
+                **Output:** Complete story file in markdown format matching the ecc-create-story template
+            </task-call>
+          </ecc-parallel-spawn>
+
+          <action>For each completed story file:
+            1. Write to {story_dir}/{{story.key}}.md
+            2. Append summary to {{epics_file}}
+          </action>
+        </loop>
+
+        <output>**Story Files Generated for Epic {{current_epic.number}}**
+
+          {{generated_story_files_list}}
+        </output>
+      </step>
+
+      <anchor id="next_epic" />
+
+      <!-- Append epic section to epics.md -->
+      <action>Append Epic {{current_epic.number}} section with all stories to {{epics_file}}</action>
+
+    </loop>
+  </step>
+
+  <!-- ================================================================ -->
+  <!-- STEP 4: Cross-Epic Hardening Analysis                            -->
+  <!-- ================================================================ -->
+
+  <step n="4" goal="Analyze full story set for cross-epic concerns" tag="cross-epic-analysis">
+    <critical>This step runs ONCE after all epics are processed</critical>
+
+    <output>**Running Cross-Epic Hardening Analysis...**</output>
+
+    <ecc-spawn agent="architect">
+      <task-call>
+        subagent_type: "everything-claude-code:architect"
+        model: "opus"
+        description: "Cross-epic hardening analysis"
+        prompt: |
+          ## Cross-Epic Hardening Analysis
+
+          **All Epics and Stories:**
+          {{all_stories_summary}}
+
+          **Hardening Patterns Applied Per Story:**
+          {{hardening_applied_summary}}
+
+          ---
+
+          ## Task
+
+          Analyze the complete story set across ALL epics for cross-cutting concerns:
+
+          1. **Schema Evolution** — do later epics modify schemas created in earlier epics?
+             - If yes: flag migration story needed
+             - Check: Zod schemas, Firestore collections, YAML schema versions
+
+          2. **Shared Infrastructure** — do multiple epics need the same:
+             - Test fixtures, mock patterns, or test utilities?
+             - Shared UI components (error boundaries, loading states)?
+             - Common services (logging, analytics, error reporting)?
+             - If yes: recommend a shared infrastructure story in the earliest relevant epic
+
+          3. **Performance Accumulation** — does the combined feature set create:
+             - Bundle size concerns (many new dependencies)?
+             - Render performance bottlenecks (many components re-rendering)?
+             - Data loading waterfall issues?
+             - If yes: recommend performance optimization story
+
+          4. **Security Surface Growth** — does the cumulative attack surface require:
+             - Additional input validation beyond what individual stories cover?
+             - Rate limiting on new user-facing endpoints?
+             - Content Security Policy updates?
+
+          5. **Production Logging Consistency** — is error reporting pattern consistent across epics?
+
+          ## Required Output
+
+          ```
+          CROSS-EPIC FINDINGS:
+          - Finding 1: {description}
+            Action: {new story or modify existing}
+            Epic: {which epic to add it to}
+
+          ADDITIONAL STORIES RECOMMENDED: {count}
+          {list with titles and rationale}
+
+          NO ISSUES FOUND: {list of categories with no concerns}
+          ```
+      </task-call>
+    </ecc-spawn>
+
+    <action>Collect output as {{cross_epic_findings}}</action>
+
+    <check if="additional stories recommended">
+      <output>**Cross-Epic Analysis Found {{additional_story_count}} Additional Stories:**
+
+        {{cross_epic_findings_summary}}
+      </output>
+
+      <action>Generate story files for additional stories (same process as Step 3d)</action>
+      <action>Append to relevant epic sections in {{epics_file}}</action>
+    </check>
+
+    <check if="no additional stories needed">
+      <output>**Cross-Epic Analysis: No Additional Stories Needed**
+
+        All cross-cutting concerns are covered by existing stories.
+      </output>
+    </check>
+  </step>
+
+  <!-- ================================================================ -->
+  <!-- STEP 5: Final Validation                                         -->
+  <!-- ================================================================ -->
+
+  <step n="5" goal="Validate completeness and readiness for development" tag="final-validation">
+    <critical>ALL validations must pass before finalization</critical>
+
+    <action>Run validation checklist:
+
+      1. **FR Coverage** — every FR from PRD mapped to at least one story
+         - Check {{fr_coverage_map}} for unmapped FRs
+         - Set {{fr_coverage_status}} = PASS/FAIL
+
+      2. **NFR Coverage** — every NFR addressed in relevant story ACs
+         - Check each NFR has at least one story addressing it
+         - Set {{nfr_coverage_status}} = PASS/FAIL
+
+      3. **Sizing Compliance** — no story exceeds TOO_LARGE threshold
+         - Check: >8 tasks OR >40 subtasks OR >12 files
+         - Set {{sizing_status}} = PASS/FAIL
+
+      4. **Dependency Check** — no forward dependencies within epics
+         - Story N.2 must not require Story N.3 to be complete first
+         - Set {{dependency_status}} = PASS/FAIL
+
+      5. **Epic Independence** — each epic delivers complete user value
+         - No epic is purely technical setup
+         - Set {{epic_independence_status}} = PASS/FAIL
+
+      6. **Hardening Coverage** — every story with risk surface has hardening
+         - DATA_PIPELINE flagged stories have data validation tasks
+         - ERROR_RESILIENCE flagged stories have error boundary tasks
+         - INPUT_SANITIZATION flagged stories have sanitization tasks
+         - Set {{hardening_coverage_status}} = PASS/FAIL
+
+      7. **Story Files** — all approved stories have files in {story_dir}
+         - Set {{story_files_status}} = PASS/FAIL
+
+      8. **Story Format** — all story files have required sections
+         - Functional ACs, Architectural ACs, File Spec, Tasks/Subtasks, Dev Notes
+         - Set {{story_format_status}} = PASS/FAIL
+    </action>
+
+    <!-- Present validation report -->
+    <output>**Final Validation Report**
+
+      | Check | Status |
+      |-------|--------|
+      | FR Coverage ({{fr_count}}/{{fr_count}}) | {{fr_coverage_status}} |
+      | NFR Coverage ({{nfr_count}}/{{nfr_count}}) | {{nfr_coverage_status}} |
+      | Sizing Compliance | {{sizing_status}} |
+      | Dependency Check | {{dependency_status}} |
+      | Epic Independence | {{epic_independence_status}} |
+      | Hardening Coverage | {{hardening_coverage_status}} |
+      | Story Files | {{story_files_status}} |
+      | Story Format | {{story_format_status}} |
+
+      **Summary:**
+      - Total Epics: {{epic_count}}
+      - Total Stories: {{total_story_count}} ({{user_story_count}} user + {{hardening_story_count}} hardening)
+      - Hardening Multiplier: {{actual_multiplier}}x (target: <1.3x)
+      - Estimated Total Points: {{total_points}}
+    </output>
+
+    <check if="any validation FAIL">
+      <output>**Validation Failures Detected:**
+
+        {{validation_failures}}
+
+        These must be resolved before proceeding.
+      </output>
+      <ask>How would you like to resolve these failures?</ask>
+    </check>
+
+    <!-- USER GATE: Final approval -->
+    <check if="all validations PASS">
+      <ask>All validations pass. Approve for development?
+        - [A] Approve — finalize all files and update sprint status
+        - [R] Revise — go back and modify specific stories</ask>
+    </check>
+  </step>
+
+  <!-- ================================================================ -->
+  <!-- STEP 6: Output Finalization                                      -->
+  <!-- ================================================================ -->
+
+  <step n="6" goal="Write all final files and prepare for development" tag="finalization">
+    <critical>Write final outputs: epics.md, sprint-status.yaml, summary</critical>
+
+    <!-- Finalize epics.md -->
+    <action>Write final {{epics_file}} with:
+      - Frontmatter (stepsCompleted, inputDocuments, hardeningAnalysis metadata)
+      - Requirements Inventory (all FRs, NFRs, ARs, UX)
+      - FR Coverage Map (FR -> Epic -> Story)
+      - Epic List (summary)
+      - Per-Epic sections with story details
+    </action>
+
+    <!-- Create/update sprint-status.yaml -->
+    <action>Create or update {{sprint_status}} with all stories as "drafted":
+      - Group by epic
+      - Include comments with epic descriptions
+      - Stories start as "drafted" — sprint planning promotes to "ready-for-dev"
+    </action>
+
+    <!-- Final summary -->
+    <output>**Epic and Story Creation Complete!**
+
+      **Output Files:**
+      - Epic Overview: {{epics_file}}
+      - Sprint Status: {{sprint_status}}
+      - Story Files: {{story_file_count}} files in {story_dir}/
+
+      **Summary:**
+      - Epics: {{epic_count}}
+      - User Stories: {{user_story_count}}
+      - Hardening Stories: {{hardening_story_count}}
+      - Total Stories: {{total_story_count}}
+      - Hardening Multiplier: {{actual_multiplier}}x
+      - Estimated Total Points: {{total_points}}
+
+      **Hardening Patterns Applied:**
+      {{hardening_summary}}
+
+      **Next Steps:**
+      1. Run sprint planning to select stories for the first sprint
+      2. Promote selected stories from "drafted" to "ready-for-dev"
+      3. Run `/ecc-dev-story` to implement with ECC agents
+      4. Run `/ecc-code-review` after implementation for formal review
+    </output>
+  </step>
+
+</workflow>
