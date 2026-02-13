@@ -17,9 +17,11 @@
 import {
   doc,
   getDoc,
-  setDoc,
   updateDoc,
+  runTransaction,
   Firestore,
+  Transaction,
+  DocumentReference,
   Timestamp,
   increment,
   FieldValue,
@@ -31,12 +33,37 @@ function getProfileDocRef(db: Firestore, appId: string, userId: string) {
   return doc(db, ...insightProfileDocSegments(appId, userId));
 }
 
+/** Default profile for new users. */
+function createDefaultProfile(): UserInsightProfile {
+  return {
+    schemaVersion: 1,
+    firstTransactionDate: null as unknown as Timestamp,
+    totalTransactions: 0,
+    recentInsights: [],
+  };
+}
+
+/** Gets existing profile or creates default within a transaction. */
+async function getOrCreateProfileInTransaction(
+  transaction: Transaction,
+  profileRef: DocumentReference
+): Promise<UserInsightProfile> {
+  const snap = await transaction.get(profileRef);
+  if (snap.exists()) {
+    return snap.data() as UserInsightProfile;
+  }
+  const newProfile = createDefaultProfile();
+  transaction.set(profileRef, newProfile);
+  return newProfile;
+}
+
 // ============================================================================
 // Profile CRUD Operations
 // ============================================================================
 
 /**
  * Gets the user's insight profile, creating one if it doesn't exist.
+ * Story 15-TD-20: Wrapped in runTransaction for TOCTOU safety.
  *
  * @param db - Firestore instance
  * @param userId - User's auth UID
@@ -50,23 +77,9 @@ export async function getOrCreateInsightProfile(
 ): Promise<UserInsightProfile> {
   const profileRef = getProfileDocRef(db, appId, userId);
 
-  const snapshot = await getDoc(profileRef);
-
-  if (snapshot.exists()) {
-    return snapshot.data() as UserInsightProfile;
-  }
-
-  // Create new profile with null firstTransactionDate
-  // (will be set on first transaction save)
-  const newProfile: UserInsightProfile = {
-    schemaVersion: 1,
-    firstTransactionDate: null as unknown as Timestamp,
-    totalTransactions: 0,
-    recentInsights: [],
-  };
-
-  await setDoc(profileRef, newProfile);
-  return newProfile;
+  return runTransaction(db, async (transaction) => {
+    return getOrCreateProfileInTransaction(transaction, profileRef);
+  });
 }
 
 /**
@@ -165,6 +178,7 @@ export async function setFirstTransactionDate(
  * Maintains a maximum of MAX_RECENT_INSIGHTS (50) entries for cooldown checking and history display.
  *
  * Story 10a.5: Stores full insight content for history display.
+ * Story 15-TD-20: Wrapped in runTransaction for TOCTOU safety.
  *
  * @param db - Firestore instance
  * @param userId - User's auth UID
@@ -185,30 +199,34 @@ export async function recordInsightShown(
   transactionId?: string,
   fullInsight?: InsightContent
 ): Promise<void> {
-  const profile = await getOrCreateInsightProfile(db, userId, appId);
   const profileRef = getProfileDocRef(db, appId, userId);
 
-  // Create new insight record with full content (Story 10a.5)
-  const newRecord: InsightRecord = {
-    insightId,
-    shownAt: Timestamp.now(),
-    ...(transactionId && { transactionId }),
-    ...(fullInsight?.title && { title: fullInsight.title }),
-    ...(fullInsight?.message && { message: fullInsight.message }),
-    ...(fullInsight?.icon && { icon: fullInsight.icon }),
-    ...(fullInsight?.category && { category: fullInsight.category as InsightRecord['category'] }),
-  };
+  await runTransaction(db, async (transaction) => {
+    const profile = await getOrCreateProfileInTransaction(transaction, profileRef);
 
-  // Add new record and trim to MAX_RECENT_INSIGHTS
-  const updatedInsights = [...profile.recentInsights, newRecord].slice(-MAX_RECENT_INSIGHTS);
+    // Create new insight record with full content (Story 10a.5)
+    const newRecord: InsightRecord = {
+      insightId,
+      shownAt: Timestamp.now(),
+      ...(transactionId && { transactionId }),
+      ...(fullInsight?.title && { title: fullInsight.title }),
+      ...(fullInsight?.message && { message: fullInsight.message }),
+      ...(fullInsight?.icon && { icon: fullInsight.icon }),
+      ...(fullInsight?.category && { category: fullInsight.category as InsightRecord['category'] }),
+    };
 
-  await updateDoc(profileRef, {
-    recentInsights: updatedInsights,
+    // Add new record and trim to MAX_RECENT_INSIGHTS
+    const updatedInsights = [...profile.recentInsights, newRecord].slice(-MAX_RECENT_INSIGHTS);
+
+    transaction.update(profileRef, {
+      recentInsights: updatedInsights,
+    });
   });
 }
 
 /**
  * Deletes a specific insight from the user's recent insights.
+ * Story 15-TD-20: Wrapped in runTransaction for TOCTOU safety.
  *
  * @param db - Firestore instance
  * @param userId - User's auth UID
@@ -223,22 +241,26 @@ export async function deleteInsight(
   insightId: string,
   shownAtSeconds: number
 ): Promise<void> {
-  const profile = await getOrCreateInsightProfile(db, userId, appId);
   const profileRef = getProfileDocRef(db, appId, userId);
 
-  // Filter out the insight matching both insightId and shownAt timestamp
-  const updatedInsights = profile.recentInsights.filter(
-    (insight) =>
-      !(insight.insightId === insightId && insight.shownAt.seconds === shownAtSeconds)
-  );
+  await runTransaction(db, async (transaction) => {
+    const profile = await getOrCreateProfileInTransaction(transaction, profileRef);
 
-  await updateDoc(profileRef, {
-    recentInsights: updatedInsights,
+    // Filter out the insight matching both insightId and shownAt timestamp
+    const updatedInsights = profile.recentInsights.filter(
+      (insight) =>
+        !(insight.insightId === insightId && insight.shownAt.seconds === shownAtSeconds)
+    );
+
+    transaction.update(profileRef, {
+      recentInsights: updatedInsights,
+    });
   });
 }
 
 /**
  * Deletes multiple insights from the user's recent insights.
+ * Story 15-TD-20: Wrapped in runTransaction for TOCTOU safety.
  *
  * @param db - Firestore instance
  * @param userId - User's auth UID
@@ -251,21 +273,24 @@ export async function deleteInsights(
   appId: string,
   insightsToDelete: Array<{ insightId: string; shownAtSeconds: number }>
 ): Promise<void> {
-  const profile = await getOrCreateInsightProfile(db, userId, appId);
   const profileRef = getProfileDocRef(db, appId, userId);
 
-  // Create a Set for fast lookup
-  const deleteSet = new Set(
-    insightsToDelete.map((i) => `${i.insightId}:${i.shownAtSeconds}`)
-  );
+  await runTransaction(db, async (transaction) => {
+    const profile = await getOrCreateProfileInTransaction(transaction, profileRef);
 
-  // Filter out all matching insights
-  const updatedInsights = profile.recentInsights.filter(
-    (insight) => !deleteSet.has(`${insight.insightId}:${insight.shownAt.seconds}`)
-  );
+    // Create a Set for fast lookup
+    const deleteSet = new Set(
+      insightsToDelete.map((i) => `${i.insightId}:${i.shownAtSeconds}`)
+    );
 
-  await updateDoc(profileRef, {
-    recentInsights: updatedInsights,
+    // Filter out all matching insights
+    const updatedInsights = profile.recentInsights.filter(
+      (insight) => !deleteSet.has(`${insight.insightId}:${insight.shownAt.seconds}`)
+    );
+
+    transaction.update(profileRef, {
+      recentInsights: updatedInsights,
+    });
   });
 }
 
@@ -329,6 +354,7 @@ export async function resetInsightProfile(
 /**
  * Records the user's response to an intentional prompt.
  * Updates the insight record in recentInsights with the response.
+ * Story 15-TD-20: Wrapped in runTransaction for TOCTOU safety.
  *
  * @param db - Firestore instance
  * @param userId - User's auth UID
@@ -345,22 +371,25 @@ export async function recordIntentionalResponse(
   shownAtSeconds: number,
   response: 'intentional' | 'unintentional' | null
 ): Promise<void> {
-  const profile = await getOrCreateInsightProfile(db, userId, appId);
   const profileRef = getProfileDocRef(db, appId, userId);
 
-  // Find and update the matching insight record
-  const updatedInsights = profile.recentInsights.map((insight) => {
-    if (insight.insightId === insightId && insight.shownAt.seconds === shownAtSeconds) {
-      return {
-        ...insight,
-        intentionalResponse: response,
-        intentionalResponseAt: Timestamp.now(),
-      };
-    }
-    return insight;
-  });
+  await runTransaction(db, async (transaction) => {
+    const profile = await getOrCreateProfileInTransaction(transaction, profileRef);
 
-  await updateDoc(profileRef, {
-    recentInsights: updatedInsights,
+    // Find and update the matching insight record
+    const updatedInsights = profile.recentInsights.map((insight) => {
+      if (insight.insightId === insightId && insight.shownAt.seconds === shownAtSeconds) {
+        return {
+          ...insight,
+          intentionalResponse: response,
+          intentionalResponseAt: Timestamp.now(),
+        };
+      }
+      return insight;
+    });
+
+    transaction.update(profileRef, {
+      recentInsights: updatedInsights,
+    });
   });
 }
