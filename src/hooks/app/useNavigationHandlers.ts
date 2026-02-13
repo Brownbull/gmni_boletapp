@@ -51,7 +51,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import type { RefObject } from 'react';
 import type { View } from '@app/types';
 import type { HistoryFilterState, TemporalFilterState } from '@/types/historyFilters';
-import type { HistoryNavigationPayload } from '../../views/TrendsView';
+import type { HistoryNavigationPayload } from '@/types/navigation';
 import type { AnalyticsNavigationState } from '../../types/analytics';
 import type { ScanState } from '../../types/scanStateMachine';
 import { DIALOG_TYPES } from '../../types/scanStateMachine';
