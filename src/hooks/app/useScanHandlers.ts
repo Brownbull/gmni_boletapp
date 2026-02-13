@@ -45,7 +45,7 @@ import type { Firestore } from 'firebase/firestore';
 import type { Transaction, TransactionItem } from '../../types/transaction';
 import type { UserPreferences } from '../../services/userPreferencesService';
 import type { Insight, UserInsightProfile, LocalInsightCache } from '../../types/insight';
-import type { View } from '../../components/App';
+import type { View } from '@app/types';
 import type { TrustPromptEligibility } from '../../types/trust';
 import type {
     CurrencyMismatchDialogData,

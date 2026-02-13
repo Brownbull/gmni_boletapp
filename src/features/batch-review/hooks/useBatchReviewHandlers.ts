@@ -21,7 +21,7 @@ import type { User } from 'firebase/auth';
 import type { Services } from '@/contexts/AuthContext';
 import type { Transaction } from '@/types/transaction';
 import type { BatchReceipt } from '@/types/batchReceipt';
-import type { View } from '@/components/App';
+import type { View } from '@app/types';
 import type { CategoryMapping } from '@/types/categoryMapping';
 import type { UserCredits } from '@/types/scan';
 import type { ScanDialogType, BatchCompleteDialogData, ScanState } from '@/types/scanStateMachine';

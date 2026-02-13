@@ -68,7 +68,7 @@ import { downloadAggregatedItemsCSV } from '@/utils/csvExport';
 // Story 14e-25d: Direct navigation from store (ViewHandlersContext deleted)
 import { useNavigationActions } from '@/shared/stores';
 // Story 14c-refactor.27: View type for navigation
-import type { View } from '@/components/App';
+import type { View } from '@app/types';
 // Story 14e-31: Data ownership via internal hook
 import { useItemsViewData, type UseItemsViewDataReturn } from './useItemsViewData';
 

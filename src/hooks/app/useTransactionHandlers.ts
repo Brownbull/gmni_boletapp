@@ -41,7 +41,7 @@ import type { Firestore } from 'firebase/firestore';
 import type { Transaction } from '../../types/transaction';
 import type { UserPreferences } from '../../services/userPreferencesService';
 import type { Insight, UserInsightProfile, LocalInsightCache } from '../../types/insight';
-import type { View } from '../../components/App';
+import type { View } from '@app/types';
 import {
     addTransaction as firestoreAddTransaction,
     updateTransaction as firestoreUpdateTransaction,

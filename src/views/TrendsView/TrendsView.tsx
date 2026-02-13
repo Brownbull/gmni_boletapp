@@ -71,7 +71,7 @@ import {
 import { useNavigationActions } from '@/shared/stores';
 import { useHistoryNavigation } from '@/shared/hooks';
 // Story 14c-refactor.31a: View type for proper type assertion
-import type { View } from '../../components/App/types';
+import type { View } from '@app/types';
 // Story 14e-25b.1: Internal data hook for view-owned data pattern
 import { useTrendsViewData, type TrendsViewData } from './useTrendsViewData';
 

@@ -8,7 +8,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import type { View } from '../../../../src/components/App/types';
+import type { View } from '@app/types';
 
 // Mock all view components to avoid their complex dependencies
 vi.mock('../../../../src/views/DashboardView', () => ({

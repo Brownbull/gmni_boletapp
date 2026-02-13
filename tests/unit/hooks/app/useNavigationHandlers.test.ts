@@ -13,7 +13,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import type { RefObject } from 'react';
-import type { View } from '../../../../src/components/App';
+import type { View } from '@app/types';
 import type { HistoryFilterState } from '@/types/historyFilters';
 import type { ScanState } from '../../../../src/types/scanStateMachine';
 import type { UseNavigationHandlersProps } from '../../../../src/hooks/app/useNavigationHandlers';

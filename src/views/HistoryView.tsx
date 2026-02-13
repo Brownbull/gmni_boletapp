@@ -56,7 +56,7 @@ import { downloadMonthlyTransactions, downloadYearlyStatistics } from '../utils/
 // Story 14e-25d: Direct navigation from store (ViewHandlersContext deleted)
 import { useNavigationActions } from '@/shared/stores';
 // Story 14c-refactor.27: View type for navigation
-import type { View } from '../components/App';
+import type { View } from '@app/types';
 // Story 14e-25a.2b: HistoryView data hook
 import { useHistoryViewData, type UseHistoryViewDataReturn } from './HistoryView/useHistoryViewData';
 
