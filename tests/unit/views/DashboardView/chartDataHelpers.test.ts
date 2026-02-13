@@ -9,46 +9,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Transaction } from '@/types/transaction';
 import type { TreemapViewMode } from '@/views/DashboardView/types';
+import { makeTx } from '../__fixtures__/transactionFactory';
 
 // ============================================================================
 // Mocks
 // ============================================================================
 
-vi.mock('@/config/categoryColors', () => ({
-  getCategoryBackgroundAuto: vi.fn((name: string) => `${name}-auto-bg`),
-  getCategoryPillColors: vi.fn((name: string) => ({
-    bg: `${name}-bg`,
-    fg: `${name}-fg`,
-  })),
-  getStoreGroupColors: vi.fn((_group: string) => ({
-    bg: 'sgroup-bg',
-    fg: 'sgroup-fg',
-  })),
-  getItemGroupColors: vi.fn((_group: string) => ({
-    bg: 'igroup-bg',
-    fg: 'igroup-fg',
-  })),
-  getCurrentTheme: vi.fn(() => 'light'),
-  getCurrentMode: vi.fn(() => 'default'),
-  STORE_CATEGORY_GROUPS: {
-    Supermercado: 'food-dining',
-    Restaurante: 'food-dining',
-    Farmacia: 'health-wellness',
-    Ferretería: 'retail-general',
-  } as Record<string, string>,
-  ITEM_CATEGORY_GROUPS: {
-    'Frutas y Verduras': 'food-fresh',
-    'Carnes y Mariscos': 'food-fresh',
-    Lácteos: 'food-packaged',
-    Bebidas: 'food-packaged',
-  } as Record<string, string>,
-  ITEM_CATEGORY_TO_KEY: {
-    'Frutas y Verduras': 'Frutas y Verduras',
-    'Carnes y Mariscos': 'Carnes y Mariscos',
-    Lácteos: 'Lácteos',
-    Bebidas: 'Bebidas',
-  } as Record<string, string>,
-}));
+vi.mock('@/config/categoryColors', async () => {
+  const fixtures = await import('../__fixtures__/categoryColorsMock');
+  return {
+    getCategoryBackgroundAuto: vi.fn((name: string) => `${name}-auto-bg`),
+    getCategoryPillColors: vi.fn((name: string) => ({ bg: `${name}-bg`, fg: `${name}-fg` })),
+    getStoreGroupColors: vi.fn((_group: string) => ({ bg: 'sgroup-bg', fg: 'sgroup-fg' })),
+    getItemGroupColors: vi.fn((_group: string) => ({ bg: 'igroup-bg', fg: 'igroup-fg' })),
+    getCurrentTheme: vi.fn(() => 'light'),
+    getCurrentMode: vi.fn(() => 'default'),
+    STORE_CATEGORY_GROUPS: fixtures.MOCK_STORE_CATEGORY_GROUPS,
+    ITEM_CATEGORY_GROUPS: fixtures.MOCK_ITEM_CATEGORY_GROUPS,
+    ITEM_CATEGORY_TO_KEY: fixtures.MOCK_ITEM_CATEGORY_TO_KEY,
+  };
+});
 
 vi.mock('@/utils/categoryEmoji', () => ({
   getCategoryEmoji: vi.fn(() => '🛒'),
@@ -72,19 +52,6 @@ import {
 beforeEach(() => {
   vi.clearAllMocks();
 });
-
-// ============================================================================
-// Test Helpers
-// ============================================================================
-
-function makeTx(overrides: Partial<Transaction> & { date: string; total: number }): Transaction {
-  return {
-    merchant: 'TestMerchant',
-    category: 'Supermercado' as Transaction['category'],
-    items: [],
-    ...overrides,
-  };
-}
 
 // ============================================================================
 // computeRadarChartData

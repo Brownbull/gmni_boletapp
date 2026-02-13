@@ -20,7 +20,7 @@ import {
 } from '../types/trust';
 import { LISTENER_LIMITS } from './firestore';
 import { sanitizeMerchantName } from '@/utils/sanitize';
-import { trustedMerchantsPath } from '@/lib/firestorePaths';
+import { trustedMerchantsPath, assertValidDocumentId } from '@/lib/firestorePaths';
 import { normalizeForMapping } from './mappingServiceBase';
 
 /**
@@ -123,6 +123,7 @@ export async function recordScan(
 ): Promise<TrustPromptEligibility> {
     const sanitizedMerchant = sanitizeMerchantName(merchantName);
     const normalizedName = normalizeMerchantNameForTrust(sanitizedMerchant);
+    assertValidDocumentId(normalizedName, 'merchantDocId');
 
     // Use normalized name as document ID for consistent lookups
     const collectionPath = trustedMerchantsPath(appId, userId);
@@ -199,6 +200,7 @@ export async function isMerchantTrusted(
     merchantName: string
 ): Promise<boolean> {
     const normalizedName = normalizeMerchantNameForTrust(sanitizeMerchantName(merchantName));
+    assertValidDocumentId(normalizedName, 'merchantDocId');
     const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
@@ -222,6 +224,7 @@ export async function trustMerchant(
 ): Promise<void> {
     const sanitizedMerchant = sanitizeMerchantName(merchantName);
     const normalizedName = normalizeMerchantNameForTrust(sanitizedMerchant);
+    assertValidDocumentId(normalizedName, 'merchantDocId');
     const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
@@ -259,6 +262,7 @@ export async function declineTrust(
 ): Promise<void> {
     const sanitizedMerchant = sanitizeMerchantName(merchantName);
     const normalizedName = normalizeMerchantNameForTrust(sanitizedMerchant);
+    assertValidDocumentId(normalizedName, 'merchantDocId');
     const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
@@ -294,6 +298,7 @@ export async function revokeTrust(
 ): Promise<void> {
     const sanitizedMerchant = sanitizeMerchantName(merchantName);
     const normalizedName = normalizeMerchantNameForTrust(sanitizedMerchant);
+    assertValidDocumentId(normalizedName, 'merchantDocId');
     const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 
@@ -327,6 +332,7 @@ export async function deleteTrustedMerchant(
     appId: string,
     merchantId: string
 ): Promise<void> {
+    assertValidDocumentId(merchantId, 'merchantId');
     const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, merchantId);
 
@@ -420,6 +426,7 @@ export async function getMerchantTrustRecord(
     merchantName: string
 ): Promise<TrustedMerchant | null> {
     const normalizedName = normalizeMerchantNameForTrust(sanitizeMerchantName(merchantName));
+    assertValidDocumentId(normalizedName, 'merchantDocId');
     const collectionPath = trustedMerchantsPath(appId, userId);
     const docRef = doc(db, collectionPath, normalizedName);
 

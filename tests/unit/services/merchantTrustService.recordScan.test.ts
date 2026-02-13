@@ -33,6 +33,7 @@ vi.mock('@/utils/sanitize', () => ({
 
 vi.mock('@/lib/firestorePaths', () => ({
     trustedMerchantsPath: vi.fn(() => 'test/path'),
+    assertValidDocumentId: vi.fn(),
 }));
 
 import { runTransaction, type Firestore } from 'firebase/firestore';

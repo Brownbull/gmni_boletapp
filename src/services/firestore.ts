@@ -20,7 +20,7 @@ import { Transaction } from '../types/transaction';
 import { toMillis } from '@/utils/timestamp';
 import { computePeriods } from '../utils/date';
 import { ensureTransactionsDefaults } from '../utils/transactionUtils';
-import { transactionsPath } from '@/lib/firestorePaths';
+import { transactionsPath, assertValidSegment } from '@/lib/firestorePaths';
 import { batchDelete, batchWrite } from '@/lib/firestoreBatch';
 
 /**
@@ -105,6 +105,8 @@ export async function updateTransaction(
     transactionId: string,
     updates: Partial<Transaction>
 ): Promise<void> {
+    assertValidSegment(transactionId, 'transactionId');
+
     // Clean undefined values before sending to Firestore
     const cleanedUpdates = removeUndefined(updates as Record<string, unknown>);
 
@@ -141,6 +143,7 @@ export async function deleteTransaction(
     appId: string,
     transactionId: string
 ): Promise<void> {
+    assertValidSegment(transactionId, 'transactionId');
     const docRef = doc(db, transactionsPath(appId, userId), transactionId);
 
     await runTransaction(db, async (transaction) => {
@@ -421,6 +424,7 @@ export async function deleteTransactionsBatch(
 ): Promise<void> {
     if (transactionIds.length === 0) return;
 
+    transactionIds.forEach(id => assertValidSegment(id, 'transactionId'));
     const refs = transactionIds.map(id => doc(db, transactionsPath(appId, userId), id));
     await batchDelete(db, refs);
 }
@@ -443,6 +447,8 @@ export async function updateTransactionsBatch(
     updates: Partial<Transaction>
 ): Promise<void> {
     if (transactionIds.length === 0) return;
+
+    transactionIds.forEach(id => assertValidSegment(id, 'transactionId'));
 
     // Clean undefined values
     const cleanedUpdates = removeUndefined(updates as Record<string, unknown>);

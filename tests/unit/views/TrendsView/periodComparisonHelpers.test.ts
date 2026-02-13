@@ -8,7 +8,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Transaction } from '@/types/transaction';
-import type { DonutViewMode, TimePeriod, CurrentPeriod } from '@/views/TrendsView/types';
+import type { DonutViewMode, CurrentPeriod } from '@/views/TrendsView/types';
+import { makeTx } from '../__fixtures__/transactionFactory';
 
 // ============================================================================
 // Mocks
@@ -18,24 +19,14 @@ vi.mock('@/utils/categoryNormalizer', () => ({
   normalizeItemCategory: vi.fn((cat: string) => cat),
 }));
 
-vi.mock('@/config/categoryColors', () => ({
-  STORE_CATEGORY_GROUPS: {
-    Supermercado: 'food-dining',
-    Restaurante: 'food-dining',
-    Farmacia: 'health-wellness',
-    Ferretería: 'retail-general',
-  } as Record<string, string>,
-  ITEM_CATEGORY_GROUPS: {
-    'Frutas y Verduras': 'food-fresh',
-    'Carnes y Mariscos': 'food-fresh',
-    Lácteos: 'food-packaged',
-  } as Record<string, string>,
-  ITEM_CATEGORY_TO_KEY: {
-    'Frutas y Verduras': 'Frutas y Verduras',
-    'Carnes y Mariscos': 'Carnes y Mariscos',
-    Lácteos: 'Lácteos',
-  } as Record<string, string>,
-}));
+vi.mock('@/config/categoryColors', async () => {
+  const fixtures = await import('../__fixtures__/categoryColorsMock');
+  return {
+    STORE_CATEGORY_GROUPS: fixtures.MOCK_STORE_CATEGORY_GROUPS,
+    ITEM_CATEGORY_GROUPS: fixtures.MOCK_ITEM_CATEGORY_GROUPS,
+    ITEM_CATEGORY_TO_KEY: fixtures.MOCK_ITEM_CATEGORY_TO_KEY,
+  };
+});
 
 import {
   computePreviousPeriodTotals,
@@ -45,19 +36,6 @@ import {
 beforeEach(() => {
   vi.clearAllMocks();
 });
-
-// ============================================================================
-// Test Helpers
-// ============================================================================
-
-function makeTx(overrides: Partial<Transaction> & { date: string; total: number }): Transaction {
-  return {
-    merchant: 'TestMerchant',
-    category: 'Supermercado' as Transaction['category'],
-    items: [],
-    ...overrides,
-  };
-}
 
 // ============================================================================
 // computePreviousPeriodTotals
@@ -307,21 +285,58 @@ describe('computeDailySparkline', () => {
     });
   });
 
-  describe('store-groups mode (documents pre-existing String.includes bug)', () => {
-    // Dev Notes: periodComparisonHelpers.ts:135-136,155-156 uses String.includes()
-    // where intent is array membership check. Works by accident because category names
-    // aren't substrings of group names. Tests document current behavior.
-    it('uses String.includes for store-groups matching (pre-existing bug)', () => {
+  describe('store-groups mode', () => {
+    // Fixed in 15-TD-26: replaced String.includes loop with direct key lookup
+    it('matches store categories to their groups via direct lookup', () => {
       const txs = [
         makeTx({ date: '2026-01-05', total: 500, category: 'Supermercado' as Transaction['category'] }),
       ];
 
-      // STORE_CATEGORY_GROUPS.Supermercado = 'food-dining' (a string, not an array)
-      // The code does categories.includes(storeCat) where categories is the string 'food-dining'
-      // This calls String.prototype.includes, not Array.prototype.includes
-      // It works by accident because 'Supermercado' is not a substring of 'food-dining'
+      // STORE_CATEGORY_GROUPS['Supermercado'] === 'food-dining' → direct lookup
       const result = computeDailySparkline('food-dining', txs, 'store-groups', 'week', basePeriod);
-      // Current behavior: match fails because String.includes('Supermercado') on 'food-dining' is false
+      expect(result[result.length - 1]).toBe(500);
+    });
+
+    it('returns zeros when category does not belong to requested group', () => {
+      const txs = [
+        makeTx({ date: '2026-01-05', total: 500, category: 'Supermercado' as Transaction['category'] }),
+      ];
+
+      const result = computeDailySparkline('health-wellness', txs, 'store-groups', 'week', basePeriod);
+      expect(result.every(v => v === 0)).toBe(true);
+    });
+  });
+
+  describe('item-groups mode', () => {
+    // Fixed in 15-TD-26: replaced String.includes loop with direct key lookup
+    it('matches item categories to their groups via direct lookup', () => {
+      const txs = [
+        makeTx({
+          date: '2026-01-05',
+          total: 500,
+          items: [
+            { name: 'Apple', price: 200, category: 'Frutas y Verduras' },
+            { name: 'Steak', price: 300, category: 'Carnes y Mariscos' },
+          ],
+        }),
+      ];
+
+      // Both map to 'food-fresh' via ITEM_CATEGORY_TO_KEY → ITEM_CATEGORY_GROUPS
+      const result = computeDailySparkline('food-fresh', txs, 'item-groups', 'week', basePeriod);
+      expect(result[result.length - 1]).toBe(500); // 200 + 300
+    });
+
+    it('returns zeros for non-matching item group', () => {
+      const txs = [
+        makeTx({
+          date: '2026-01-05',
+          total: 300,
+          items: [{ name: 'Milk', price: 300, category: 'Lácteos' }],
+        }),
+      ];
+
+      // Lácteos maps to 'food-packaged', not 'food-fresh'
+      const result = computeDailySparkline('food-fresh', txs, 'item-groups', 'week', basePeriod);
       expect(result.every(v => v === 0)).toBe(true);
     });
   });

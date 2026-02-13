@@ -33,6 +33,7 @@ vi.mock('firebase/firestore', () => ({
 
 vi.mock('@/lib/firestorePaths', () => ({
     transactionsPath: vi.fn(() => 'test/transactions/path'),
+    assertValidSegment: vi.fn(),
 }));
 
 vi.mock('@/utils/timestamp', () => ({

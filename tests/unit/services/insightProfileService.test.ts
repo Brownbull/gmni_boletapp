@@ -5,11 +5,9 @@
  * Tests Firestore CRUD operations for UserInsightProfile
  *
  * Story 15-TD-20: Updated mocks for runTransaction wrapping.
- * Functions that now use runTransaction (getOrCreateInsightProfile, recordInsightShown,
- * deleteInsight, deleteInsights, recordIntentionalResponse) mock transaction.get/set/update.
- * Functions still using standalone ops (trackTransactionForProfile, setFirstTransactionDate,
- * clearRecentInsights, resetInsightProfile) need both: transaction mock (for internal
- * getOrCreateInsightProfile call) AND standalone updateDoc mock.
+ * Story 15-TD-24: All remaining functions (trackTransactionForProfile, setFirstTransactionDate,
+ * clearRecentInsights, resetInsightProfile) now also wrapped in runTransaction.
+ * ALL mutation functions use transaction.get/set/update — only getInsightProfile uses standalone getDoc.
  */
 
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
@@ -207,7 +205,7 @@ describe('getInsightProfile', () => {
 
 // ============================================================================
 // trackTransactionForProfile Tests
-// (calls getOrCreateInsightProfile [transactional] + standalone updateDoc)
+// Story 15-TD-24: Now uses runTransaction with transaction.get/update
 // ============================================================================
 
 describe('trackTransactionForProfile', () => {
@@ -225,8 +223,8 @@ describe('trackTransactionForProfile', () => {
     const db = createMockFirestore();
     await trackTransactionForProfile(db, 'user123', 'app1', new Date());
 
-    expect(updateDoc).toHaveBeenCalled();
-    const updateCall = (updateDoc as Mock).mock.calls[0];
+    expect(mockTransaction.update).toHaveBeenCalled();
+    const updateCall = mockTransaction.update.mock.calls[0];
     expect(updateCall[1].totalTransactions).toEqual({ __increment: 1 });
   });
 
@@ -239,8 +237,8 @@ describe('trackTransactionForProfile', () => {
     const db = createMockFirestore();
     await trackTransactionForProfile(db, 'user123', 'app1', transactionDate);
 
-    expect(updateDoc).toHaveBeenCalled();
-    const updateCall = (updateDoc as Mock).mock.calls[0];
+    expect(mockTransaction.update).toHaveBeenCalled();
+    const updateCall = mockTransaction.update.mock.calls[0];
     expect(updateCall[1].firstTransactionDate).toBeDefined();
   });
 
@@ -252,8 +250,8 @@ describe('trackTransactionForProfile', () => {
     const db = createMockFirestore();
     await trackTransactionForProfile(db, 'user123', 'app1', new Date());
 
-    expect(updateDoc).toHaveBeenCalled();
-    const updateCall = (updateDoc as Mock).mock.calls[0];
+    expect(mockTransaction.update).toHaveBeenCalled();
+    const updateCall = mockTransaction.update.mock.calls[0];
     expect(updateCall[1].firstTransactionDate).toBeUndefined();
   });
 
@@ -263,16 +261,25 @@ describe('trackTransactionForProfile', () => {
     const db = createMockFirestore();
     await trackTransactionForProfile(db, 'user123', 'app1', new Date());
 
-    // getOrCreateInsightProfile creates via transaction.set
+    // getOrCreateProfileInTransaction creates via transaction.set
     expect(mockTransaction.set).toHaveBeenCalled();
-    // trackTransactionForProfile itself uses standalone updateDoc
-    expect(updateDoc).toHaveBeenCalled();
+    // trackTransactionForProfile updates via transaction.update
+    expect(mockTransaction.update).toHaveBeenCalled();
+  });
+
+  it('should NOT call standalone updateDoc', async () => {
+    mockTransactionExistingProfile();
+
+    const db = createMockFirestore();
+    await trackTransactionForProfile(db, 'user123', 'app1', new Date());
+
+    expect(updateDoc).not.toHaveBeenCalled();
   });
 });
 
 // ============================================================================
 // setFirstTransactionDate Tests
-// (calls getOrCreateInsightProfile [transactional] + standalone updateDoc)
+// Story 15-TD-24: Now uses runTransaction with transaction.get/update
 // ============================================================================
 
 describe('setFirstTransactionDate', () => {
@@ -290,8 +297,8 @@ describe('setFirstTransactionDate', () => {
     const db = createMockFirestore();
     await setFirstTransactionDate(db, 'user123', 'app1', firstDate);
 
-    expect(updateDoc).toHaveBeenCalled();
-    const updateCall = (updateDoc as Mock).mock.calls[0];
+    expect(mockTransaction.update).toHaveBeenCalled();
+    const updateCall = mockTransaction.update.mock.calls[0];
     expect(updateCall[1].firstTransactionDate).toBeDefined();
   });
 
@@ -301,9 +308,19 @@ describe('setFirstTransactionDate', () => {
     const db = createMockFirestore();
     await setFirstTransactionDate(db, 'user123', 'app1', new Date());
 
-    // getOrCreateInsightProfile creates via transaction.set
+    // getOrCreateProfileInTransaction creates via transaction.set
     expect(mockTransaction.set).toHaveBeenCalled();
-    expect(updateDoc).toHaveBeenCalled();
+    // setFirstTransactionDate updates via transaction.update
+    expect(mockTransaction.update).toHaveBeenCalled();
+  });
+
+  it('should NOT call standalone updateDoc', async () => {
+    mockTransactionExistingProfile();
+
+    const db = createMockFirestore();
+    await setFirstTransactionDate(db, 'user123', 'app1', new Date());
+
+    expect(updateDoc).not.toHaveBeenCalled();
   });
 });
 
@@ -427,7 +444,7 @@ describe('recordInsightShown', () => {
 
 // ============================================================================
 // clearRecentInsights Tests
-// (calls getOrCreateInsightProfile [transactional] + standalone updateDoc)
+// Story 15-TD-24: Now uses runTransaction with transaction.get/update
 // ============================================================================
 
 describe('clearRecentInsights', () => {
@@ -447,8 +464,8 @@ describe('clearRecentInsights', () => {
     const db = createMockFirestore();
     await clearRecentInsights(db, 'user123', 'app1');
 
-    expect(updateDoc).toHaveBeenCalled();
-    const updateCall = (updateDoc as Mock).mock.calls[0];
+    expect(mockTransaction.update).toHaveBeenCalled();
+    const updateCall = mockTransaction.update.mock.calls[0];
     expect(updateCall[1].recentInsights).toEqual([]);
   });
 
@@ -458,15 +475,25 @@ describe('clearRecentInsights', () => {
     const db = createMockFirestore();
     await clearRecentInsights(db, 'user123', 'app1');
 
-    // getOrCreateInsightProfile creates via transaction.set
+    // getOrCreateProfileInTransaction creates via transaction.set
     expect(mockTransaction.set).toHaveBeenCalled();
-    expect(updateDoc).toHaveBeenCalled();
+    // clearRecentInsights updates via transaction.update
+    expect(mockTransaction.update).toHaveBeenCalled();
+  });
+
+  it('should NOT call standalone updateDoc', async () => {
+    mockTransactionExistingProfile();
+
+    const db = createMockFirestore();
+    await clearRecentInsights(db, 'user123', 'app1');
+
+    expect(updateDoc).not.toHaveBeenCalled();
   });
 });
 
 // ============================================================================
 // resetInsightProfile Tests
-// (calls getOrCreateInsightProfile [transactional] + standalone updateDoc)
+// Story 15-TD-24: Now uses runTransaction with transaction.get/update
 // ============================================================================
 
 describe('resetInsightProfile', () => {
@@ -484,8 +511,8 @@ describe('resetInsightProfile', () => {
     const db = createMockFirestore();
     await resetInsightProfile(db, 'user123', 'app1');
 
-    expect(updateDoc).toHaveBeenCalled();
-    const updateCall = (updateDoc as Mock).mock.calls[0];
+    expect(mockTransaction.update).toHaveBeenCalled();
+    const updateCall = mockTransaction.update.mock.calls[0];
     expect(updateCall[1].totalTransactions).toBe(0);
   });
 
@@ -497,7 +524,7 @@ describe('resetInsightProfile', () => {
     const db = createMockFirestore();
     await resetInsightProfile(db, 'user123', 'app1');
 
-    const updateCall = (updateDoc as Mock).mock.calls[0];
+    const updateCall = mockTransaction.update.mock.calls[0];
     expect(updateCall[1].recentInsights).toEqual([]);
   });
 
@@ -511,8 +538,17 @@ describe('resetInsightProfile', () => {
     const db = createMockFirestore();
     await resetInsightProfile(db, 'user123', 'app1');
 
-    const updateCall = (updateDoc as Mock).mock.calls[0];
+    const updateCall = mockTransaction.update.mock.calls[0];
     expect(updateCall[1].firstTransactionDate).toBe(originalTimestamp);
+  });
+
+  it('should NOT call standalone updateDoc', async () => {
+    mockTransactionExistingProfile();
+
+    const db = createMockFirestore();
+    await resetInsightProfile(db, 'user123', 'app1');
+
+    expect(updateDoc).not.toHaveBeenCalled();
   });
 });
 
@@ -546,7 +582,7 @@ describe('Story 10.2 Acceptance Criteria', () => {
     const db = createMockFirestore();
     await trackTransactionForProfile(db, 'user123', 'app1', transactionDate);
 
-    const updateCall = (updateDoc as Mock).mock.calls[0];
+    const updateCall = mockTransaction.update.mock.calls[0];
     expect(updateCall[1].firstTransactionDate).toBeDefined();
   });
 
@@ -556,7 +592,7 @@ describe('Story 10.2 Acceptance Criteria', () => {
     const db = createMockFirestore();
     await trackTransactionForProfile(db, 'user123', 'app1', new Date());
 
-    const updateCall = (updateDoc as Mock).mock.calls[0];
+    const updateCall = mockTransaction.update.mock.calls[0];
     expect(updateCall[1].totalTransactions).toEqual({ __increment: 1 });
   });
 

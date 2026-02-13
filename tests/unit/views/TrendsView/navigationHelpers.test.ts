@@ -10,7 +10,8 @@
  * - buildTrendNavigationPayload: Trend count click → HistoryNavigationPayload
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { DonutViewMode, CategoryData } from '@/views/TrendsView/types';
+import type { DonutViewMode } from '@/views/TrendsView/types';
+import { makeCategoryData } from '../__fixtures__/categoryDataFactory';
 
 // ============================================================================
 // Mocks
@@ -34,22 +35,6 @@ import {
 beforeEach(() => {
   vi.clearAllMocks();
 });
-
-// ============================================================================
-// Test Helpers
-// ============================================================================
-
-function makeCategoryData(name: string, value: number, percent: number): CategoryData {
-  return {
-    name,
-    value,
-    count: 1,
-    itemCount: 0,
-    color: '#000',
-    fgColor: '#fff',
-    percent,
-  };
-}
 
 const basePeriod = { year: 2026, month: 1, quarter: 1, week: 1 };
 

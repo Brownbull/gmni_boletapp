@@ -26,6 +26,7 @@ import {
     updateDoc,
 } from 'firebase/firestore';
 import { LISTENER_LIMITS } from './firestore';
+import { assertValidSegment } from '@/lib/firestorePaths';
 
 // =============================================================================
 // Configuration Interface
@@ -275,6 +276,7 @@ export async function deleteMapping(
     mappingId: string,
     config: MappingConfig
 ): Promise<void> {
+    assertValidSegment(mappingId, 'mappingId');
     const docRef = doc(db, config.collectionPath(appId, userId), mappingId);
 
     await runTransaction(db, async (transaction) => {
@@ -296,6 +298,7 @@ export async function incrementMappingUsageBase(
     mappingId: string,
     config: MappingConfig
 ): Promise<void> {
+    assertValidSegment(mappingId, 'mappingId');
     const docRef = doc(db, config.collectionPath(appId, userId), mappingId);
     return updateDoc(docRef, {
         usageCount: increment(1),
@@ -314,6 +317,7 @@ export async function updateMappingTarget(
     newTarget: string,
     config: MappingConfig
 ): Promise<void> {
+    assertValidSegment(mappingId, 'mappingId');
     const docRef = doc(db, config.collectionPath(appId, userId), mappingId);
     const value = config.sanitizeTarget ? config.sanitizeTarget(newTarget) : newTarget;
     return updateDoc(docRef, {

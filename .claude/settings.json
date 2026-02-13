@@ -1,8 +1,7 @@
 {
-  "enabledMcpjsonServers": ["ast-grep"],
+  "enableAllProjectMcpServers": true,
   "permissions": {
     "allow": [
-      "mcp__plugin_superpowers-chrome_*",
       "mcp__ast-grep_*"
     ]
   },
@@ -37,6 +36,16 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/_ecc/hooks/ecc-post-edit-typecheck.sh\"",
             "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/_ecc/hooks/ecc-post-memory-notify.sh\"",
+            "timeout": 5
           }
         ]
       }

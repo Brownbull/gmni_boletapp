@@ -21,186 +21,21 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, Download, Receipt } from 'lucide-react';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useLang } from '@shared/stores/useSettingsStore';
+import { TRANSLATIONS } from '@/utils/translations';
 import type { TrendDirection, ReportPeriodType, CategoryBreakdown, TransactionGroup, ItemGroup } from '@/types/report';
 import { formatCurrency } from '@/types/report';
 import { CategoryGroupCard } from './CategoryGroupCard';
 import { ItemGroupCard } from './ItemGroupCard';
 import { SpendingDonutChart, type DonutSegment } from './SpendingDonutChart';
 import { formatCategoryName } from '../utils/reportUtils';
-
-// ============================================================================
-// Print Helper
-// ============================================================================
-
-/** Month abbreviations for filename */
-const MONTH_ABBR = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-
-/**
- * Generates a filename for the PDF export based on period type and date range.
- * Examples:
- * - Weekly: Gastify_report_2025_Q4_Dic_S52
- * - Monthly: Gastify_report_2025_Q4_Dic
- * - Quarterly: Gastify_report_2025_Q4
- * - Yearly: Gastify_report_2025
- */
-const generatePdfFilename = (
-  periodType: ReportPeriodType,
-  dateRange: { start: Date; end: Date }
-): string => {
-  const year = dateRange.start.getFullYear();
-  const month = dateRange.start.getMonth(); // 0-indexed
-  const quarter = Math.floor(month / 3) + 1;
-  const monthAbbr = MONTH_ABBR[month];
-
-  // Calculate week number (ISO week)
-  const startOfYear = new Date(year, 0, 1);
-  const days = Math.floor((dateRange.start.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-  const weekNum = Math.ceil((days + startOfYear.getDay() + 1) / 7);
-
-  switch (periodType) {
-    case 'weekly':
-      return `Gastify_report_${year}_Q${quarter}_${monthAbbr}_S${weekNum}`;
-    case 'monthly':
-      return `Gastify_report_${year}_Q${quarter}_${monthAbbr}`;
-    case 'quarterly':
-      return `Gastify_report_${year}_Q${quarter}`;
-    case 'yearly':
-      return `Gastify_report_${year}`;
-    default:
-      return `Gastify_report_${year}`;
-  }
-};
-
-/**
- * Handles PDF export by cloning report content to a print container.
- * Uses DOM APIs (createElement/textContent) instead of innerHTML to prevent
- * XSS even if upstream report data were compromised (defense-in-depth).
- *
- * @internal Exported as `testHandlePrintReport` for unit testing only.
- */
-const handlePrintReport = (
-  reportContentRef: React.RefObject<HTMLDivElement | null>,
-  reportData: {
-    fullTitle: string;
-    transactionCount: number;
-    periodType: ReportPeriodType;
-    dateRange: { start: Date; end: Date };
-  }
-) => {
-  const reportContent = reportContentRef.current;
-  if (!reportContent) return;
-
-  // Generate filename and set document title (Chrome uses title as default PDF name)
-  const filename = generatePdfFilename(reportData.periodType, reportData.dateRange);
-  const originalTitle = document.title;
-  document.title = filename;
-
-  // Create or get print container
-  let printContainer = document.getElementById('print-container');
-  if (!printContainer) {
-    printContainer = document.createElement('div');
-    printContainer.id = 'print-container';
-    document.body.appendChild(printContainer);
-  }
-
-  // Clone the report content
-  const clone = reportContent.cloneNode(true) as HTMLElement;
-
-  // Build branding header using DOM APIs (matches TopHeader wordmark styling)
-  const brandingEl = document.createElement('div');
-  brandingEl.className = 'print-branding';
-  const logoCircle = document.createElement('div');
-  logoCircle.className = 'print-logo-circle';
-  logoCircle.textContent = 'G';
-  const wordmark = document.createElement('span');
-  wordmark.className = 'print-wordmark';
-  wordmark.textContent = 'Gastify';
-  brandingEl.append(logoCircle, wordmark);
-
-  // Build report header using DOM APIs (textContent for user data — XSS-safe)
-  const headerEl = document.createElement('div');
-  headerEl.className = 'print-report-header';
-  const h1 = document.createElement('h1');
-  h1.textContent = reportData.fullTitle;
-  const headerP = document.createElement('p');
-  const txLabel = reportData.transactionCount === 1 ? 'transacción' : 'transacciones';
-  headerP.textContent = `${reportData.transactionCount} ${txLabel}`;
-  headerEl.append(h1, headerP);
-
-  // Build footer using DOM APIs
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('es-CL', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  });
-  const timeStr = now.toLocaleTimeString('es-CL', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
-  const footerEl = document.createElement('div');
-  footerEl.className = 'print-footer';
-  const divider = document.createElement('div');
-  divider.className = 'print-footer-divider';
-  const footerTitle = document.createElement('p');
-  footerTitle.className = 'print-footer-title';
-  footerTitle.textContent = 'Reporte generado automáticamente por Gastify';
-  const footerMeta = document.createElement('p');
-  footerMeta.className = 'print-footer-meta';
-  footerMeta.textContent = `${dateStr}, ${timeStr} · Basado en ${reportData.transactionCount} ${txLabel}`;
-  const footerDisclaimer = document.createElement('p');
-  footerDisclaimer.className = 'print-footer-disclaimer';
-  footerDisclaimer.textContent = 'Este reporte es solo para uso personal.';
-  const footerUrl = document.createElement('p');
-  footerUrl.className = 'print-footer-url';
-  footerUrl.textContent = 'gastify.cl';
-  footerEl.append(divider, footerTitle, footerMeta, footerDisclaimer, footerUrl);
-
-  // Clear and populate print container using DOM APIs (no innerHTML)
-  printContainer.textContent = '';
-  printContainer.append(brandingEl, headerEl);
-
-  // Remove the print-only elements from clone (they're now in the container)
-  const printOnlyElements = clone.querySelectorAll('[data-testid="print-app-branding"], [data-testid="print-header"]');
-  printOnlyElements.forEach(el => el.remove());
-
-  // Add cloned content
-  printContainer.appendChild(clone);
-
-  // Add footer at the end
-  printContainer.appendChild(footerEl);
-
-  // Add print-ready class to body
-  document.body.classList.add('printing-report');
-
-  // Print
-  window.print();
-
-  // Cleanup after print dialog closes (guarded against double-execution)
-  let cleaned = false;
-  const cleanup = () => {
-    if (cleaned) return;
-    cleaned = true;
-    document.body.classList.remove('printing-report');
-    document.title = originalTitle; // Restore original title
-    if (printContainer) {
-      printContainer.textContent = '';
-    }
-  };
-
-  // Use both events to ensure cleanup
-  window.addEventListener('afterprint', cleanup, { once: true });
-  // Fallback timeout in case afterprint doesn't fire
-  setTimeout(cleanup, 1000);
-};
-
-/** @internal Test-only export for unit testing handlePrintReport */
-export { handlePrintReport as testHandlePrintReport };
+import { handlePrintReport } from '../utils/printUtils';
 
 // ============================================================================
 // Types
 // ============================================================================
+
+type Translations = (typeof TRANSLATIONS)[keyof typeof TRANSLATIONS];
 
 export interface ReportHighlight {
   label: string;
@@ -276,6 +111,7 @@ interface HeroCardProps {
   periodType: ReportPeriodType;
   /** Specific comparison label (e.g., "vs S1", "vs Dic", "vs Q3", "vs 2025") */
   comparisonLabel?: string;
+  t: Translations;
 }
 
 const HeroCard: React.FC<HeroCardProps> = ({
@@ -285,20 +121,21 @@ const HeroCard: React.FC<HeroCardProps> = ({
   isFirst,
   periodType,
   comparisonLabel,
+  t,
 }) => {
   const hasTrend = trend && trend !== 'neutral' && trendPercent !== undefined && !isFirst;
   const periodLabel = {
-    weekly: 'de la semana',
-    monthly: 'del mes',
-    quarterly: 'del trimestre',
-    yearly: 'del año',
+    weekly: t.reportTotalWeekly,
+    monthly: t.reportTotalMonthly,
+    quarterly: t.reportTotalQuarterly,
+    yearly: t.reportTotalYearly,
   }[periodType];
 
   const firstLabel = {
-    weekly: 'Tu primera semana',
-    monthly: 'Tu primer mes',
-    quarterly: 'Tu primer trimestre',
-    yearly: 'Tu primer año completo',
+    weekly: t.reportFirstWeekly,
+    monthly: t.reportFirstMonthly,
+    quarterly: t.reportFirstQuarterly,
+    yearly: t.reportFirstYearly,
   }[periodType];
 
   // Semantic colors for trend - up (more spending) = bad, down (less) = good
@@ -319,7 +156,7 @@ const HeroCard: React.FC<HeroCardProps> = ({
       }}
       data-testid="hero-card"
     >
-      <div className="text-xs text-white/80 mb-1">Total {periodLabel}</div>
+      <div className="text-xs text-white/80 mb-1">{periodLabel}</div>
       <div className="text-4xl font-bold text-white mb-2">
         {formatCurrency(amount)}
       </div>
@@ -347,7 +184,7 @@ const HeroCard: React.FC<HeroCardProps> = ({
               <path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             )}
           </svg>
-          {trend === 'up' ? '+' : '-'}{trendPercent}% {comparisonLabel || 'vs período anterior'}
+          {trend === 'up' ? '+' : '-'}{trendPercent}% {comparisonLabel || t.reportVsPreviousPeriod}
         </div>
       )}
       {isFirst && (
@@ -362,9 +199,10 @@ const HeroCard: React.FC<HeroCardProps> = ({
  */
 interface InsightCardProps {
   insight: string;
+  t: Translations;
 }
 
-const InsightCard: React.FC<InsightCardProps> = ({ insight }) => (
+const InsightCard: React.FC<InsightCardProps> = ({ insight, t }) => (
   <div
     className="rounded-xl p-5 border"
     style={{
@@ -374,7 +212,7 @@ const InsightCard: React.FC<InsightCardProps> = ({ insight }) => (
     data-testid="insight-card"
   >
     <div className="text-xs mb-2" style={{ color: 'var(--text-tertiary)' }}>
-      💡 Insight personalizado
+      💡 {t.reportPersonalizedInsight}
     </div>
     <div className="text-sm" style={{ color: 'var(--text-primary)' }}>
       {insight}
@@ -388,14 +226,15 @@ const InsightCard: React.FC<InsightCardProps> = ({ insight }) => (
 interface HighlightsCardProps {
   highlights: ReportHighlight[];
   periodType: ReportPeriodType;
+  t: Translations;
 }
 
-const HighlightsCard: React.FC<HighlightsCardProps> = ({ highlights, periodType }) => {
+const HighlightsCard: React.FC<HighlightsCardProps> = ({ highlights, periodType, t }) => {
   const highlightLabel = {
-    weekly: 'Highlights de la semana',
-    monthly: 'Highlights del mes',
-    quarterly: 'Highlights del trimestre',
-    yearly: 'Highlights del año',
+    weekly: t.reportHighlightsWeekly,
+    monthly: t.reportHighlightsMonthly,
+    quarterly: t.reportHighlightsQuarterly,
+    yearly: t.reportHighlightsYearly,
   }[periodType];
 
   return (
@@ -431,9 +270,10 @@ const HighlightsCard: React.FC<HighlightsCardProps> = ({ highlights, periodType 
  */
 interface CategoryBreakdownCardProps {
   categories: CategoryBreakdown[];
+  t: Translations;
 }
 
-const CategoryBreakdownCard: React.FC<CategoryBreakdownCardProps> = ({ categories }) => (
+const CategoryBreakdownCard: React.FC<CategoryBreakdownCardProps> = ({ categories, t }) => (
   <div
     className="rounded-xl p-5 border"
     style={{
@@ -443,7 +283,7 @@ const CategoryBreakdownCard: React.FC<CategoryBreakdownCardProps> = ({ categorie
     data-testid="category-breakdown-card"
   >
     <div className="text-xs mb-3" style={{ color: 'var(--text-tertiary)' }}>
-      📊 Desglose por categoría
+      📊 {t.reportCategoryBreakdown}
     </div>
     <div className="flex flex-col gap-2.5">
       {categories.map((cat) => (
@@ -462,7 +302,7 @@ const CategoryBreakdownCard: React.FC<CategoryBreakdownCardProps> = ({ categorie
               {formatCategoryName(cat.category)}
             </div>
             <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-              {cat.transactionCount} {cat.transactionCount === 1 ? 'compra' : 'compras'}
+              {cat.transactionCount} {cat.transactionCount === 1 ? t.reportPurchaseSingular : t.reportPurchasePlural}
             </div>
           </div>
 
@@ -481,9 +321,10 @@ const CategoryBreakdownCard: React.FC<CategoryBreakdownCardProps> = ({ categorie
  */
 interface TransactionGroupsCardProps {
   groups: TransactionGroup[];
+  t: Translations;
 }
 
-const TransactionGroupsCard: React.FC<TransactionGroupsCardProps> = ({ groups }) => {
+const TransactionGroupsCard: React.FC<TransactionGroupsCardProps> = ({ groups, t }) => {
   // Build donut segments from groups
   const donutSegments: DonutSegment[] = groups.map((g) => ({
     key: g.key,
@@ -500,7 +341,7 @@ const TransactionGroupsCard: React.FC<TransactionGroupsCardProps> = ({ groups })
         className="text-xs mb-3 px-1"
         style={{ color: 'var(--text-tertiary)' }}
       >
-        🏪 Desglose por tipo de tienda
+        🏪 {t.reportStoreTypeBreakdown}
       </div>
 
       {/* Donut chart with legend (only show if more than 1 group) */}
@@ -529,9 +370,10 @@ const TransactionGroupsCard: React.FC<TransactionGroupsCardProps> = ({ groups })
  */
 interface ItemGroupsCardProps {
   groups: ItemGroup[];
+  t: Translations;
 }
 
-const ItemGroupsCard: React.FC<ItemGroupsCardProps> = ({ groups }) => {
+const ItemGroupsCard: React.FC<ItemGroupsCardProps> = ({ groups, t }) => {
   // Build donut segments from groups
   const donutSegments: DonutSegment[] = groups.map((g) => ({
     key: g.key,
@@ -548,7 +390,7 @@ const ItemGroupsCard: React.FC<ItemGroupsCardProps> = ({ groups }) => {
         className="text-xs mb-3 px-1"
         style={{ color: 'var(--text-tertiary)' }}
       >
-        🛒 Desglose por tipo de producto
+        🛒 {t.reportProductTypeBreakdown}
       </div>
 
       {/* Donut chart with legend (only show if more than 1 group) */}
@@ -589,6 +431,8 @@ export const ReportDetailOverlay: React.FC<ReportDetailOverlayProps> = ({
   className = '',
   onViewTransactions,
 }) => {
+  const lang = useLang();
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
   const prefersReducedMotion = useReducedMotion();
   const overlayRef = useRef<HTMLDivElement>(null);
   const downloadButtonRef = useRef<HTMLButtonElement>(null);
@@ -723,7 +567,7 @@ export const ReportDetailOverlay: React.FC<ReportDetailOverlayProps> = ({
               backgroundColor: 'var(--bg-secondary)',
               border: '1px solid var(--border-light)',
             }}
-            aria-label={`${reportData.transactionCount} transacciones, ver en historial`}
+            aria-label={t.reportTransactionsViewHistory.replace('{count}', String(reportData.transactionCount))}
             data-testid="transaction-count-pill"
           >
             <Receipt size={14} style={{ color: 'var(--text-tertiary)' }} />
@@ -741,11 +585,11 @@ export const ReportDetailOverlay: React.FC<ReportDetailOverlayProps> = ({
             type="button"
             onClick={() => {
               // Use JS-based print that clones content to a print container
-              handlePrintReport(reportContentRef, reportData);
+              handlePrintReport(reportContentRef, reportData, lang);
             }}
             className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 ml-2"
             style={{ backgroundColor: 'var(--bg-tertiary)' }}
-            aria-label="Descargar como PDF"
+            aria-label={t.reportDownloadPdf}
             data-testid="download-pdf-button"
           >
             <Download size={18} style={{ color: 'var(--text-secondary)' }} />
@@ -782,7 +626,7 @@ export const ReportDetailOverlay: React.FC<ReportDetailOverlayProps> = ({
             >
               <h1 className="text-2xl font-bold mb-1">{reportData.fullTitle}</h1>
               <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                {reportData.transactionCount} {reportData.transactionCount === 1 ? 'transacción' : 'transacciones'}
+                {reportData.transactionCount} {reportData.transactionCount === 1 ? t.transactionSingular : t.transactionPlural}
               </p>
             </div>
 
@@ -794,11 +638,12 @@ export const ReportDetailOverlay: React.FC<ReportDetailOverlayProps> = ({
               isFirst={reportData.isFirst}
               periodType={reportData.periodType}
               comparisonLabel={reportData.comparisonLabel}
+              t={t}
             />
 
             {/* Persona insight */}
             {reportData.personaInsight && (
-              <InsightCard insight={reportData.personaInsight} />
+              <InsightCard insight={reportData.personaInsight} t={t} />
             )}
 
             {/* Highlights */}
@@ -806,24 +651,25 @@ export const ReportDetailOverlay: React.FC<ReportDetailOverlayProps> = ({
               <HighlightsCard
                 highlights={reportData.highlights}
                 periodType={reportData.periodType}
+                t={t}
               />
             )}
 
             {/* Story 14.16: Show transaction groups with inline donut chart */}
             {reportData.transactionGroups && reportData.transactionGroups.length > 0 && (
-              <TransactionGroupsCard groups={reportData.transactionGroups} />
+              <TransactionGroupsCard groups={reportData.transactionGroups} t={t} />
             )}
 
             {/* Story 14.16: Show item groups with inline donut chart */}
             {reportData.itemGroups && reportData.itemGroups.length > 0 && (
-              <ItemGroupsCard groups={reportData.itemGroups} />
+              <ItemGroupsCard groups={reportData.itemGroups} t={t} />
             )}
 
             {/* Fallback to flat category list if no groups available */}
             {(!reportData.transactionGroups || reportData.transactionGroups.length === 0) &&
              (!reportData.itemGroups || reportData.itemGroups.length === 0) &&
              reportData.categories && reportData.categories.length > 0 && (
-              <CategoryBreakdownCard categories={reportData.categories} />
+              <CategoryBreakdownCard categories={reportData.categories} t={t} />
             )}
           </div>
         </div>

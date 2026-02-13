@@ -10,59 +10,28 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Transaction } from '@/types/transaction';
+import { makeTx } from '../__fixtures__/transactionFactory';
 
 // ============================================================================
 // Mocks
 // ============================================================================
 
-vi.mock('@/config/categoryColors', () => ({
-  getCategoryPillColors: vi.fn((name: string) => ({
-    bg: `${name}-bg`,
-    fg: `${name}-fg`,
-  })),
-  getStoreGroupColors: vi.fn((_group: string) => ({
-    bg: 'group-bg',
-    fg: 'group-fg',
-  })),
-  getItemGroupColors: vi.fn((_group: string) => ({
-    bg: 'igroup-bg',
-    fg: 'igroup-fg',
-  })),
-  getCurrentTheme: vi.fn(() => 'light'),
-  getCurrentMode: vi.fn(() => 'default'),
-  getCategoryColorsAuto: vi.fn((name: string) => ({
-    bg: `${name}-bg`,
-    fg: `${name}-fg`,
-  })),
-  ALL_STORE_CATEGORY_GROUPS: [
-    'food-dining', 'health-wellness', 'retail-general',
-    'retail-specialty', 'automotive', 'services', 'hospitality', 'other',
-  ],
-  ALL_ITEM_CATEGORY_GROUPS: [
-    'food-fresh', 'food-packaged', 'health-personal',
-    'household', 'nonfood-retail', 'services-fees', 'other-item',
-  ],
-  STORE_CATEGORY_GROUPS: {
-    Supermercado: 'food-dining',
-    Restaurante: 'food-dining',
-    Farmacia: 'health-wellness',
-    Ferretería: 'retail-general',
-  } as Record<string, string>,
-  ITEM_CATEGORY_GROUPS: {
-    'Frutas y Verduras': 'food-fresh',
-    'Carnes y Mariscos': 'food-fresh',
-    Lácteos: 'food-packaged',
-    Bebidas: 'food-packaged',
-    Snacks: 'food-packaged',
-  } as Record<string, string>,
-  ITEM_CATEGORY_TO_KEY: {
-    'Frutas y Verduras': 'Frutas y Verduras',
-    'Carnes y Mariscos': 'Carnes y Mariscos',
-    Lácteos: 'Lácteos',
-    Bebidas: 'Bebidas',
-    Snacks: 'Snacks',
-  } as Record<string, string>,
-}));
+vi.mock('@/config/categoryColors', async () => {
+  const fixtures = await import('../__fixtures__/categoryColorsMock');
+  return {
+    getCategoryPillColors: vi.fn((name: string) => ({ bg: `${name}-bg`, fg: `${name}-fg` })),
+    getStoreGroupColors: vi.fn((_group: string) => ({ bg: 'group-bg', fg: 'group-fg' })),
+    getItemGroupColors: vi.fn((_group: string) => ({ bg: 'igroup-bg', fg: 'igroup-fg' })),
+    getCurrentTheme: vi.fn(() => 'light'),
+    getCurrentMode: vi.fn(() => 'default'),
+    getCategoryColorsAuto: vi.fn((name: string) => ({ bg: `${name}-bg`, fg: `${name}-fg` })),
+    ALL_STORE_CATEGORY_GROUPS: fixtures.MOCK_ALL_STORE_CATEGORY_GROUPS,
+    ALL_ITEM_CATEGORY_GROUPS: fixtures.MOCK_ALL_ITEM_CATEGORY_GROUPS,
+    STORE_CATEGORY_GROUPS: fixtures.MOCK_STORE_CATEGORY_GROUPS,
+    ITEM_CATEGORY_GROUPS: fixtures.MOCK_ITEM_CATEGORY_GROUPS,
+    ITEM_CATEGORY_TO_KEY: fixtures.MOCK_ITEM_CATEGORY_TO_KEY,
+  };
+});
 
 vi.mock('@/utils/categoryNormalizer', () => ({
   normalizeItemCategory: vi.fn((cat: string) => cat),
@@ -100,19 +69,6 @@ import {
 beforeEach(() => {
   vi.clearAllMocks();
 });
-
-// ============================================================================
-// Test Helpers
-// ============================================================================
-
-function makeTx(overrides: Partial<Transaction> & { date: string; total: number }): Transaction {
-  return {
-    merchant: 'TestMerchant',
-    category: 'Supermercado' as Transaction['category'],
-    items: [],
-    ...overrides,
-  };
-}
 
 // ============================================================================
 // computeStoreCategoriesData

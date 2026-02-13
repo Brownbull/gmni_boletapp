@@ -17,7 +17,6 @@
 import {
   doc,
   getDoc,
-  updateDoc,
   runTransaction,
   Firestore,
   Transaction,
@@ -114,6 +113,7 @@ export async function getInsightProfile(
 /**
  * Updates the first transaction date if this is the user's first transaction.
  * Also increments the total transaction count.
+ * Story 15-TD-24: Wrapped in runTransaction for TOCTOU safety.
  *
  * This function should be called after a transaction is saved.
  *
@@ -128,25 +128,29 @@ export async function trackTransactionForProfile(
   appId: string,
   transactionDate: Date
 ): Promise<void> {
-  const profile = await getOrCreateInsightProfile(db, userId, appId);
   const profileRef = getProfileDocRef(db, appId, userId);
 
-  // Build update object
-  const updateData: Record<string, FieldValue | Timestamp> = {
-    totalTransactions: increment(1),
-  };
+  await runTransaction(db, async (transaction) => {
+    const profile = await getOrCreateProfileInTransaction(transaction, profileRef);
 
-  // Set firstTransactionDate only if it's not already set
-  if (!profile.firstTransactionDate) {
-    updateData.firstTransactionDate = Timestamp.fromDate(transactionDate);
-  }
+    // Build update object
+    const updateData: Record<string, FieldValue | Timestamp> = {
+      totalTransactions: increment(1),
+    };
 
-  await updateDoc(profileRef, updateData);
+    // Set firstTransactionDate only if it's not already set
+    if (!profile.firstTransactionDate) {
+      updateData.firstTransactionDate = Timestamp.fromDate(transactionDate);
+    }
+
+    transaction.update(profileRef, updateData);
+  });
 }
 
 /**
  * Sets the first transaction date explicitly.
  * Used when loading existing transactions to establish profile baseline.
+ * Story 15-TD-24: Wrapped in runTransaction for TOCTOU safety.
  *
  * @param db - Firestore instance
  * @param userId - User's auth UID
@@ -161,11 +165,12 @@ export async function setFirstTransactionDate(
 ): Promise<void> {
   const profileRef = getProfileDocRef(db, appId, userId);
 
-  // Ensure profile exists
-  await getOrCreateInsightProfile(db, userId, appId);
+  await runTransaction(db, async (transaction) => {
+    await getOrCreateProfileInTransaction(transaction, profileRef);
 
-  await updateDoc(profileRef, {
-    firstTransactionDate: Timestamp.fromDate(firstDate),
+    transaction.update(profileRef, {
+      firstTransactionDate: Timestamp.fromDate(firstDate),
+    });
   });
 }
 
@@ -309,11 +314,12 @@ export async function clearRecentInsights(
 ): Promise<void> {
   const profileRef = getProfileDocRef(db, appId, userId);
 
-  // Ensure profile exists
-  await getOrCreateInsightProfile(db, userId, appId);
+  await runTransaction(db, async (transaction) => {
+    await getOrCreateProfileInTransaction(transaction, profileRef);
 
-  await updateDoc(profileRef, {
-    recentInsights: [],
+    transaction.update(profileRef, {
+      recentInsights: [],
+    });
   });
 }
 
@@ -336,14 +342,15 @@ export async function resetInsightProfile(
 ): Promise<void> {
   const profileRef = getProfileDocRef(db, appId, userId);
 
-  // Ensure profile exists and get current firstTransactionDate
-  const profile = await getOrCreateInsightProfile(db, userId, appId);
+  await runTransaction(db, async (transaction) => {
+    const profile = await getOrCreateProfileInTransaction(transaction, profileRef);
 
-  await updateDoc(profileRef, {
-    totalTransactions: 0,
-    recentInsights: [],
-    // Keep firstTransactionDate unchanged
-    firstTransactionDate: profile.firstTransactionDate,
+    transaction.update(profileRef, {
+      totalTransactions: 0,
+      recentInsights: [],
+      // Keep firstTransactionDate unchanged
+      firstTransactionDate: profile.firstTransactionDate,
+    });
   });
 }
 

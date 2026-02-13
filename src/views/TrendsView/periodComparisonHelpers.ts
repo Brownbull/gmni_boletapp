@@ -132,10 +132,9 @@ export function computeDailySparkline(
         switch (donutViewMode) {
             case 'store-groups': {
                 const storeCat = tx.category || 'Unknown';
-                for (const [groupKey, categories] of Object.entries(STORE_CATEGORY_GROUPS)) {
-                    if (categories.includes(storeCat) && groupKey === categoryName) {
-                        return { match: true, value: tx.total };
-                    }
+                const group = STORE_CATEGORY_GROUPS[storeCat as keyof typeof STORE_CATEGORY_GROUPS];
+                if (group === categoryName) {
+                    return { match: true, value: tx.total };
                 }
                 return { match: false, value: 0 };
             }
@@ -152,11 +151,9 @@ export function computeDailySparkline(
                     if (donutViewMode === 'item-groups') {
                         const groupKey = ITEM_CATEGORY_TO_KEY[itemCat as keyof typeof ITEM_CATEGORY_TO_KEY];
                         if (groupKey) {
-                            for (const [group, categories] of Object.entries(ITEM_CATEGORY_GROUPS)) {
-                                if (categories.includes(groupKey) && group === categoryName) {
-                                    itemTotal += item.price * (item.qty || 1);
-                                    break;
-                                }
+                            const itemGroup = ITEM_CATEGORY_GROUPS[groupKey as keyof typeof ITEM_CATEGORY_GROUPS];
+                            if (itemGroup === categoryName) {
+                                itemTotal += item.price * (item.qty || 1);
                             }
                         }
                     } else if (itemCat === categoryName) {

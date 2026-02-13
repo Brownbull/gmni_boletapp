@@ -7,7 +7,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Transaction } from '@/types/transaction';
-import type { DonutViewMode, CategoryData } from '@/views/TrendsView/types';
+import { makeTx } from '../__fixtures__/transactionFactory';
+import { makeCategoryData } from '../__fixtures__/categoryDataFactory';
 
 // ============================================================================
 // Mocks
@@ -38,31 +39,6 @@ import { resolveDrillDownCategories } from '@/views/TrendsView/drillDownHelpers'
 beforeEach(() => {
   vi.clearAllMocks();
 });
-
-// ============================================================================
-// Test Helpers
-// ============================================================================
-
-function makeTx(overrides: Partial<Transaction> & { date: string; total: number }): Transaction {
-  return {
-    merchant: 'TestMerchant',
-    category: 'Supermercado' as Transaction['category'],
-    items: [],
-    ...overrides,
-  };
-}
-
-function makeCategoryData(name: string, value: number): CategoryData {
-  return {
-    name,
-    value,
-    count: 1,
-    itemCount: 0,
-    color: '#000',
-    fgColor: '#fff',
-    percent: 50,
-  };
-}
 
 const txs: Transaction[] = [
   makeTx({ date: '2026-01-01', total: 1000 }),

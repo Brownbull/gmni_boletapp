@@ -22,7 +22,7 @@ import {
     Firestore,
     Timestamp,
 } from 'firebase/firestore';
-import { personalRecordsPath } from '@/lib/firestorePaths';
+import { personalRecordsPath, assertValidSegment } from '@/lib/firestorePaths';
 import { batchDelete } from '@/lib/firestoreBatch';
 import type { Transaction } from '@/types/transaction';
 import type {
@@ -634,6 +634,7 @@ export async function deletePersonalRecord(
     appId: string,
     recordId: string
 ): Promise<void> {
+    assertValidSegment(recordId, 'recordId');
     const recordRef = doc(db, personalRecordsPath(appId, userId), recordId);
     await deleteDoc(recordRef);
 }
@@ -654,6 +655,7 @@ export async function deletePersonalRecords(
 ): Promise<void> {
     if (recordIds.length === 0) return;
 
+    recordIds.forEach(id => assertValidSegment(id, 'recordId'));
     const refs = recordIds.map(id => doc(db, personalRecordsPath(appId, userId), id));
     await batchDelete(db, refs);
 }

@@ -31,7 +31,7 @@ import {
   AirlockTransaction,
   MAX_AIRLOCK_HISTORY,
 } from '@/types/airlock';
-import { airlocksPath } from '@/lib/firestorePaths';
+import { airlocksPath, assertValidSegment } from '@/lib/firestorePaths';
 import { DEFAULT_CURRENCY } from '@/utils/currency';
 
 // ============================================================================
@@ -308,6 +308,7 @@ export async function markAirlockViewed(
   appId: string,
   airlockId: string
 ): Promise<void> {
+  assertValidSegment(airlockId, 'airlockId');
   const collectionPath = airlocksPath(appId, userId);
   const docRef = doc(db, collectionPath, airlockId);
 
@@ -362,6 +363,7 @@ export async function deleteAirlock(
   appId: string,
   airlockId: string
 ): Promise<void> {
+  assertValidSegment(airlockId, 'airlockId');
   const collectionPath = airlocksPath(appId, userId);
   const docRef = doc(db, collectionPath, airlockId);
   await deleteDoc(docRef);
@@ -383,6 +385,7 @@ export async function deleteAirlocks(
 ): Promise<void> {
   if (airlockIds.length === 0) return;
 
+  airlockIds.forEach(id => assertValidSegment(id, 'airlockId'));
   const refs = airlockIds.map(id => doc(db, airlocksPath(appId, userId), id));
   await batchDelete(db, refs);
 }

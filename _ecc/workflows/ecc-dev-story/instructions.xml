@@ -4,28 +4,15 @@
   <critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
   <critical>Generate all documents in {document_output_language}</critical>
 
-  <critical>🎭 ECC-ORCHESTRATED STORY DEVELOPMENT - ECC Orchestrator spawns specialized ECC agents!</critical>
-  <critical>This workflow uses the Task tool to spawn ECC agents for focused tasks</critical>
-  <critical>Sequence: planner → tdd-guide → build-error-resolver → code-reviewer</critical>
+  <critical>ECC-ORCHESTRATED STORY DEVELOPMENT - Sequence: planner -> tdd-guide -> build-error-resolver -> code-reviewer</critical>
+  <critical>Create handoff documents between sequential agent phases. Synthesize outputs after each agent completes.</critical>
 
-  <!-- ECC ORCHESTRATOR PROTOCOL -->
-  <orchestrator-protocol>
-    <principle>Orchestrator spawns specialized ECC agents, coordinates work, synthesizes outputs</principle>
-    <principle>Use Task tool with appropriate subagent_type for each ECC agent</principle>
-    <principle>For parallel tasks, spawn multiple agents in a SINGLE message with multiple Task calls</principle>
-    <principle>Create handoff documents between sequential agent phases</principle>
-    <principle>Synthesize outputs after each agent completes</principle>
-
-    <available-agents>
-      | Agent | subagent_type | Purpose |
-      |-------|---------------|---------|
-      | Planner | everything-claude-code:planner | Implementation planning |
-      | TDD Guide | everything-claude-code:tdd-guide | Test-first development |
-      | Build Resolver | everything-claude-code:build-error-resolver | Fix build errors |
-      | Code Reviewer | everything-claude-code:code-reviewer | Quality review |
-      | Security Reviewer | everything-claude-code:security-reviewer | Security analysis |
-    </available-agents>
-  </orchestrator-protocol>
+  <!-- AUTO-PROCEED: Skip generic "Continue?" confirmations between steps.
+       ONLY pause at decision points: Step 1 (no story), Step 1.5 (stash/rebase),
+       Step 2.5 (complexity growth), Step 4 (arch violation, mid-task sizing).
+       All other steps auto-proceed. -->
+  <critical>AUTO-PROCEED MODE: Skip all generic "Continue?" confirmations.
+    Only pause at Steps 1, 1.5, 2.5, and 4 decision points. All other steps auto-proceed.</critical>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <!-- STEP 0: Project Knowledge Loading                                       -->
@@ -233,6 +220,8 @@
     <ecc-spawn agent="planner">
       <task-call>
         subagent_type: "everything-claude-code:planner"
+        model: "opus"
+        max_turns: 7
         description: "Plan story implementation"
         prompt: |
           Plan the implementation for story: {{story_key}}
@@ -414,6 +403,7 @@
       <ecc-spawn agent="tdd-guide">
         <task-call>
           subagent_type: "everything-claude-code:tdd-guide"
+          model: "opus"
           description: "TDD implementation for {{current_task}}"
           prompt: |
             Implement task using strict TDD methodology: {{current_task}}
@@ -552,6 +542,8 @@
         <ecc-spawn agent="build-resolver">
           <task-call>
             subagent_type: "everything-claude-code:build-error-resolver"
+            model: "sonnet"
+            max_turns: 5
             description: "Fix build errors"
             prompt: |
               Fix the build/TypeScript errors with MINIMAL changes.
@@ -675,6 +667,8 @@
       <ecc-spawn agent="build-resolver">
         <task-call>
           subagent_type: "everything-claude-code:build-error-resolver"
+          model: "sonnet"
+          max_turns: 5
           description: "Fix test failures"
           prompt: |
             Fix the failing tests with minimal changes.
@@ -703,6 +697,8 @@
       <ecc-spawn agent="build-resolver">
         <task-call>
           subagent_type: "everything-claude-code:build-error-resolver"
+          model: "sonnet"
+          max_turns: 5
           description: "Fix build/type errors"
           prompt: |
             Fix the build/TypeScript errors with MINIMAL changes.
@@ -735,95 +731,42 @@
     </output>
   </step>
 
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 6: Parallel Pre-Completion Review                                  -->
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 6: Pre-Completion Self-Review (code-reviewer only — formal review is /ecc-code-review) -->
 
-  <step n="6" goal="Parallel ECC review before marking complete" tag="ecc-parallel-review">
-    <critical>🎭 ECC ORCHESTRATOR: Spawning PARALLEL review agents (SINGLE message, MULTIPLE Task calls)</critical>
+  <step n="6" goal="Quick self-review before marking story review-ready" tag="ecc-self-review">
+    <critical>SELF-REVIEW: code-reviewer only. Full review (security, architecture, TDD) runs via /ecc-code-review.</critical>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <!-- EXPLICIT PARALLEL EXECUTION DIRECTIVE                                   -->
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <parallel-execution-rule>
-      🚨 HOW TO ACHIEVE TRUE PARALLELISM:
+    <!-- Read files ONCE for the reviewer (avoids agent reading independently) -->
+    <action>Read ALL files in {{progress_tracker}}.files_changed using parallel Read calls</action>
+    <action>Store as {{file_contents_manifest}} for the review agent</action>
 
-      You MUST issue BOTH Task tool invocations in your NEXT SINGLE RESPONSE.
-
-      ❌ WRONG (Sequential - slow):
-         Response 1: Task(code-reviewer) → wait → result
-         Response 2: Task(security-reviewer) → wait → result
-
-      ✅ CORRECT (Parallel - fast):
-         Response 1: Task(code-reviewer) + Task(security-reviewer)
-         → Both run simultaneously → Both results returned together
-
-      IN YOUR NEXT MESSAGE, include BOTH Task tool calls at once.
-    </parallel-execution-rule>
-
-    <output>🎭 **Spawning Parallel Review Team...**
-
-      Agents running in parallel:
-      1. Code Reviewer - Quality and best practices
-      2. Security Reviewer - Vulnerability analysis
-    </output>
-
-    <!-- CRITICAL: These must be in a SINGLE message for true parallelism -->
-    <ecc-spawn-parallel>
-      <task-call-1>
+    <ecc-spawn agent="code-reviewer">
+      <task-call>
         subagent_type: "everything-claude-code:code-reviewer"
-        description: "Code quality review"
+        model: "sonnet"
+        max_turns: 7
+        description: "Self-review for {{story_key}}"
         prompt: |
-          Review the implementation for story: {{story_key}}
+          ## Quick Self-Review
+          **Story:** {{story_key}}
+          **IMPORTANT: File contents provided below. Do NOT read files yourself.**
 
-          **Files Changed:**
-          {{file_list}}
+          **Project Patterns:** {{project_patterns}}
 
-          **Check for:**
-          - Code quality and maintainability
-          - Error handling
-          - Performance issues
-          - Test quality
-          - Documentation
+          **Review:** quality, error handling, performance, naming, DRY, obvious security issues
 
-          Output: List of findings with severity (HIGH/MEDIUM/LOW)
-      </task-call-1>
+          **Output (max 50 lines):**
+          | # | Sev | Finding | file:line |
+          Recommendation: APPROVE / CHANGES REQUESTED
+          Score: X/10
 
-      <task-call-2>
-        subagent_type: "everything-claude-code:security-reviewer"
-        description: "Security review"
-        prompt: |
-          Security review for story: {{story_key}}
+          ---
+          **FILE CONTENTS:**
+          {{file_contents_manifest}}
+      </task-call>
+    </ecc-spawn>
 
-          **Files Changed:**
-          {{file_list}}
-
-          **Check for:**
-          - OWASP Top 10 vulnerabilities
-          - Hardcoded secrets
-          - Input validation
-          - Authentication/authorization issues
-
-          Output: Security findings with severity and remediation
-      </task-call-2>
-    </ecc-spawn-parallel>
-
-    <action>Collect outputs from both agents</action>
-    <action>Merge findings by severity</action>
-
-    <!-- Review Synthesis -->
-    <output>🗺️ **Review Synthesis - Parallel Review Results**
-
-      **Code Review Findings:**
-      {{code_review_findings}}
-
-      **Security Review Findings:**
-      {{security_review_findings}}
-
-      **Cross-Cutting Analysis:**
-      - Workflow chain impacts: {{workflow_impacts}}
-      - Architecture alignment: {{architecture_alignment}}
-    </output>
+    <action>Collect code review output</action>
 
     <check if="HIGH severity issues found">
       <action>Fix HIGH severity issues before proceeding</action>
@@ -832,10 +775,64 @@
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 7: Story Completion                                                -->
+  <!-- STEP 7: Cost Tracking + E2E Coverage Check                              -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="7" goal="Mark story complete and update status" tag="completion">
+  <step n="7" goal="Cost tracking, E2E coverage, and Firebase analysis before story completion" tag="cost-e2e">
+    <!-- MANDATORY: Cost tracking runs BEFORE story completion so it never gets skipped -->
+    <critical>You MUST execute this bash command and capture its output. Do NOT skip it. Do NOT generate the final output without running this command first.</critical>
+    <action>Run cost analyzer: `workflow-cost --csv --stats --workflow "ecc-dev-story" --story "{{story_key}}"`</action>
+    <action>Store the FULL terminal output as {{cost_report_output}} — include the COST NOTICE box</action>
+
+    <!-- 7a: Detect UI changes -->
+    <action>Check if any files in {{progress_tracker}}.files_changed match UI component patterns:
+      - "src/components/**/*.tsx" (excluding ui/ - those are shadcn primitives)
+      - "src/hooks/*.ts" (hooks that drive UI behavior)
+      - "src/stores/*.ts" (state that drives UI)
+    </action>
+    <action>Set {{has_ui_changes}} = true/false</action>
+    <action>Set {{changed_ui_files}} = list of matching UI files</action>
+
+    <!-- 7b: Check for existing E2E coverage -->
+    <check if="{{has_ui_changes}}">
+      <action>Search tests/e2e/*.spec.ts for data-testid values matching {{changed_ui_files}}:
+        - For each changed .tsx component, extract data-testid attributes from source
+        - Search existing E2E specs for those testids
+        - Set {{covered_testids}} = testids found in E2E specs
+        - Set {{uncovered_testids}} = testids NOT found in any E2E spec
+      </action>
+      <action>Set {{ui_missing_e2e}} = true if {{uncovered_testids}} is non-empty</action>
+
+      <!-- 7c: Assess critical path importance -->
+      <action>Evaluate if the UI changes are on a critical user path:
+        - Check if story ACs reference core user flows (authentication, main canvas, toolbox browsing,
+          component placement, connection wiring, YAML import/export)
+        - Check if changed files are in the primary interaction chain
+        - Set {{is_critical_path}} = true if any of the above match
+        - Set {{critical_path_reason}} = brief explanation of why
+      </action>
+    </check>
+
+    <!-- Check if story touched Firebase backend files that need separate deployment -->
+    <action>Check if any files in {{progress_tracker}}.files_changed match Firebase backend patterns:
+      - "firestore.rules" → firestore:rules
+      - "firestore.indexes.json" → firestore:indexes
+      - "storage.rules" → storage
+      - "functions/src/**" → functions
+    </action>
+    <action>Set {{has_firebase_backend_changes}} = true/false</action>
+    <action>Set {{firebase_deploy_targets}} = comma-separated list of targets</action>
+
+    <output>✅ **Cost & E2E Analysis Complete** — proceeding to story completion.</output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 8: Story Completion (MUST be last step)                            -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="8" goal="Mark story complete, update status, and present final summary" tag="completion">
+    <critical>Story completion is the FINAL step. Cost tracking and E2E analysis already ran in Step 7.</critical>
+
     <action>Verify ALL tasks marked [x] complete</action>
     <action>Verify ALL functional acceptance criteria satisfied</action>
     <action>Verify ALL architectural acceptance criteria satisfied (validated per-task in Step 4)</action>
@@ -845,6 +842,7 @@
       <action>Update sprint-status.yaml: {{story_key}} → review</action>
     </check>
 
+    <!-- Final unified output with story status, cost, E2E gaps, and next steps -->
     <output>✅ **Story Implementation Complete**
 
       Story: {{story_key}}
@@ -857,7 +855,6 @@
       - TDD Guide: Test-first development
       - Build Resolver: Error fixing (if needed)
       - Code Reviewer: Quality review
-      - Security Reviewer: Security analysis
 
       **Architectural Validation:**
       - File Location ACs: ✅ {{file_location_passed}}/{{file_location_total}}
@@ -866,39 +863,57 @@
       {{#if exceptions_count > 0}}
       - ⚠️ Exceptions documented: {{exceptions_count}} (will be reviewed in code review)
       {{/if}}
-    </output>
-  </step>
 
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 8: Next Steps                                                      -->
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      **Session Cost:**
+      {{cost_report_output}}
 
-  <step n="8" goal="Provide next steps after story completion" tag="next-steps">
-    <!-- Check if story touched UI components that may need E2E coverage -->
-    <action>Check if any files in {{progress_tracker}}.files_changed match *.tsx in components/ or views/</action>
-    <action>Set {{has_ui_changes}} = true/false</action>
+      ---
 
-    <!-- Check if story touched Firebase backend files that need separate deployment -->
-    <action>Check if any files in {{progress_tracker}}.files_changed match Firebase backend patterns:
-      - "firestore.rules" → firestore:rules
-      - "firestore.indexes.json" → firestore:indexes
-      - "storage.rules" → storage
-      - "functions/src/**" → functions
-    </action>
-    <action>Set {{has_firebase_backend_changes}} = true/false</action>
-    <action>Set {{firebase_deploy_targets}} = comma-separated list of targets</action>
-
-    <output>**Next Steps:**
-      - Run `/workflow-close` to verify tests, status files, and branch state
+      **Next Steps:**
       - Run `/ecc-code-review` for external review
       {{#if has_ui_changes}}
-      - Run `/ecc-e2e` for E2E test coverage (UI changes detected)
+      {{#if ui_missing_e2e}}
+
+      **E2E Coverage Gap Detected**
+      UI components changed: {{changed_ui_files}}
+      Missing E2E coverage for: {{uncovered_testids}}
+      {{#if is_critical_path}}
+      **Critical path:** {{critical_path_reason}}
+      **Recommendation:** Run `/ecc-e2e` — these changes affect a core user flow.
+      {{/if}}
+      {{#if NOT is_critical_path}}
+      **Recommendation:** Consider running `/ecc-e2e` for E2E coverage of new UI changes.
+      {{/if}}
+      {{/if}}
+      {{#if NOT ui_missing_e2e}}
+      Existing E2E specs cover the changed UI components.
+      {{/if}}
       {{/if}}
       {{#if has_firebase_backend_changes}}
-      - **⚠️ Firebase backend changes detected** ({{firebase_deploy_targets}}) — these do NOT auto-deploy with Hosting. The `/deploy-story` workflow handles this in Step 5.
+      - **Firebase backend changes detected** ({{firebase_deploy_targets}}) — these do NOT auto-deploy with Hosting. The `/deploy-story` workflow handles this in Step 5.
       {{/if}}
       - Or proceed to deployment if approved
     </output>
+
+    <check if="{{has_ui_changes}} AND {{ui_missing_e2e}} AND {{is_critical_path}}">
+      <ask>E2E gap on critical path. How to proceed?
+        [E] Run `/ecc-e2e` now to add E2E coverage
+        [S] Skip — will add E2E later or not needed
+        [N] Note in story Dev Notes for future reference
+
+        Choose [E], [S], or [N]:</ask>
+
+      <check if="user chooses E">
+        <output>Run `/ecc-e2e {{story_key}}` to generate E2E coverage.</output>
+      </check>
+      <check if="user chooses N">
+        <action>Add to story Dev Notes:
+          - E2E Gap: {{uncovered_testids}} — deferred by user ({date})
+          - Critical path: {{critical_path_reason}}
+        </action>
+        <output>E2E gap noted in story Dev Notes for future tracking.</output>
+      </check>
+    </check>
   </step>
 
 </workflow>
