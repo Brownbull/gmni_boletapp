@@ -1,6 +1,6 @@
 # Tech Debt Story TD-24: insightProfileService Remaining TOCTOU Gaps
 
-Status: ready-for-dev
+Status: done
 
 > **Source:** ECC Code Review (2026-02-13) on story 15-TD-20
 > **Priority:** LOW
@@ -25,21 +25,21 @@ The `getOrCreateProfileInTransaction()` helper extracted in TD-20 makes wrapping
 
 ## Acceptance Criteria
 
-- [ ] **AC1:** `trackTransactionForProfile()` wrapped in `runTransaction()` — atomic increment + conditional firstTransactionDate
-- [ ] **AC2:** `setFirstTransactionDate()` wrapped in `runTransaction()` — atomic create-if-not-exists + date set
-- [ ] **AC3:** `clearRecentInsights()` wrapped in `runTransaction()` — atomic create-if-not-exists + clear
-- [ ] **AC4:** `resetInsightProfile()` wrapped in `runTransaction()` — atomic read (preserve firstTransactionDate) + reset
-- [ ] **AC5:** Unit tests updated for all 4 wrapped functions
-- [ ] **AC6:** All existing tests pass
+- [x] **AC1:** `trackTransactionForProfile()` wrapped in `runTransaction()` — atomic increment + conditional firstTransactionDate
+- [x] **AC2:** `setFirstTransactionDate()` wrapped in `runTransaction()` — atomic create-if-not-exists + date set
+- [x] **AC3:** `clearRecentInsights()` wrapped in `runTransaction()` — atomic create-if-not-exists + clear
+- [x] **AC4:** `resetInsightProfile()` wrapped in `runTransaction()` — atomic read (preserve firstTransactionDate) + reset
+- [x] **AC5:** Unit tests updated for all 4 wrapped functions
+- [x] **AC6:** All existing tests pass
 
 ## Tasks
 
-- [ ] **Task 1:** Wrap all 4 functions using the existing `getOrCreateProfileInTransaction()` helper
-  - [ ] Each reads full profile via transaction, mutates in-memory, writes via transaction.update()
-  - [ ] Remove standalone `updateDoc` calls from these functions
-- [ ] **Task 2:** Update unit tests in `tests/unit/services/insightProfileService.test.ts`
-  - [ ] Replace standalone `updateDoc` assertions with `mockTransaction.update` assertions
-  - [ ] Verify `updateDoc` is NOT called by these functions
+- [x] **Task 1:** Wrap all 4 functions using the existing `getOrCreateProfileInTransaction()` helper
+  - [x] Each reads full profile via transaction, mutates in-memory, writes via transaction.update()
+  - [x] Remove standalone `updateDoc` calls from these functions
+- [x] **Task 2:** Update unit tests in `tests/unit/services/insightProfileService.test.ts`
+  - [x] Replace standalone `updateDoc` assertions with `mockTransaction.update` assertions
+  - [x] Verify `updateDoc` is NOT called by these functions
 
 ## File Specification
 
@@ -51,7 +51,19 @@ The `getOrCreateProfileInTransaction()` helper extracted in TD-20 makes wrapping
 ## Dev Notes
 
 - Uses the `getOrCreateProfileInTransaction()` helper extracted in TD-20
-- After this story, ALL functions in insightProfileService.ts will use transactions (except read-only `getInsightProfile`)
-- `getDoc` import can be removed after this (only used by `getInsightProfile` — check before removing)
+- After this story, ALL functions in insightProfileService.ts use transactions (except read-only `getInsightProfile`)
+- `updateDoc` import removed — no remaining callers. `getDoc` retained for `getInsightProfile`.
+- 4 new negative assertions added: each function verifies `updateDoc` is NOT called
+- 35 tests total, all passing. 6916 tests pass in full suite.
 - Source story: [15-TD-20](./15-TD-20-insight-profile-toctou.md)
 - Review findings: #1, #2
+
+## Senior Developer Review (ECC)
+
+- **Review date:** 2026-02-13
+- **ECC agents:** code-reviewer (TRIVIAL classification)
+- **Outcome:** APPROVE 9/10
+- **Findings:** 2 info-only (no action required)
+  - #1 LOW: `increment(1)` inside transaction is valid and idiomatic — keeping as-is
+  - #2 LOW: `null as unknown as Timestamp` pre-existing from story 10.2 — not in scope
+- **All 6 ACs validated**, clean transaction wrapping, DRY helper reuse, negative assertions present
