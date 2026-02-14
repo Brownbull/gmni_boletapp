@@ -182,11 +182,11 @@ development_status:
   15b-0e-dependency-graph-baseline: done  # 1 pt  - Commit depcruise baseline for regression checks
 
   # Phase 1: Feature Consolidation (12 stories, ~21 pts)
-  15b-1a-consolidate-analytics: ready-for-dev  # 3 pts - features/analytics/ (TrendsView 20 files + 7 tests)
+  15b-1a-consolidate-analytics: done  # 3 pts - features/analytics/ (TrendsView 20 files + 7 tests)
   15b-1b-consolidate-dashboard: ready-for-dev  # 2 pts - features/dashboard/ (DashboardView + hooks)
   15b-1c-consolidate-transaction-editor: ready-for-dev  # 3 pts - features/transaction-editor/ (TEV + EditView + Internal + hooks)
-  15b-1d-consolidate-history: backlog          # 2 pts - features/history/ (HistoryView + hooks)
-  15b-1e-create-items-feature: backlog         # 2 pts - Create & consolidate features/items/
+  15b-1d-consolidate-history: ready-for-dev     # 2 pts - features/history/ (HistoryView + useHistoryViewData)
+  15b-1e-create-items-feature: ready-for-dev    # 3 pts - Create & consolidate features/items/ (3 source locations, 13 files)
   15b-1f-consolidate-batch-review: backlog     # 2 pts - features/batch-review/ (views + hooks + components)
   15b-1g-consolidate-insights: backlog         # 2 pts - features/insights/ (InsightsView + hooks)
   15b-1h-consolidate-reports: backlog          # 1 pt  - features/reports/ (ReportsView + components)
