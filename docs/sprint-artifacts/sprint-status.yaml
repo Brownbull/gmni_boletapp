@@ -179,7 +179,7 @@ development_status:
   15b-b0-fix-app-barrel-cycles: done              # 2 pts - Fix 3/6 circular deps (App barrel re-exports)
   15b-0c-fix-store-modal-cycles: done  # 2 pts - Fix 3/6 circular deps (stores/ModalManager/EditorScanThumbnail)
   15b-0d-layer-violation-cleanup: done  # 1 pt  - Fix 2 remaining layer violations in hooks/app/
-  15b-0e-dependency-graph-baseline: ready-for-dev  # 1 pt  - Commit depcruise baseline for regression checks
+  15b-0e-dependency-graph-baseline: done  # 1 pt  - Commit depcruise baseline for regression checks
 
   # Phase 1: Feature Consolidation (12 stories, ~21 pts)
   15b-1a-consolidate-analytics: ready-for-dev  # 3 pts - features/analytics/ (TrendsView 20 files + 7 tests)
