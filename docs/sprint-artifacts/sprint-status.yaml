@@ -184,16 +184,16 @@ development_status:
   # Phase 1: Feature Consolidation (12 stories, ~21 pts)
   15b-1a-consolidate-analytics: done  # 3 pts - features/analytics/ (TrendsView 20 files + 7 tests)
   15b-1b-consolidate-dashboard: done  # 2 pts - features/dashboard/ (DashboardView + hooks)
-  15b-1c-consolidate-transaction-editor: ready-for-dev  # 3 pts - features/transaction-editor/ (TEV + EditView + Internal + hooks)
+  15b-1c-consolidate-transaction-editor: done  # 3 pts - features/transaction-editor/ (TEV + EditView + Internal + hooks)
   15b-1d-consolidate-history: ready-for-dev     # 2 pts - features/history/ (HistoryView + useHistoryViewData)
   15b-1e-create-items-feature: ready-for-dev    # 3 pts - Create & consolidate features/items/ (3 source locations, 13 files)
   15b-1f-consolidate-batch-review: ready-for-dev  # 2 pts - features/batch-review/ (views + hooks + components)
   15b-1g-consolidate-insights: ready-for-dev   # 2 pts - features/insights/ (InsightsView + 22 test mirrors + CI configs)
   15b-1h-consolidate-reports: ready-for-dev    # 1 pt  - features/reports/ (ReportsView + 3 test files)
   15b-1i-consolidate-scan: ready-for-dev       # 2 pts - features/scan/ (delete dead views + move 3 hooks)
-  15b-1j-consolidate-settings: backlog         # 1 pt  - features/settings/ (SettingsView + components)
-  15b-1k-shared-audit: backlog                 # 1 pt  - Verify remaining flat files are truly cross-feature
-  15b-1l-feature-barrel-exports: backlog       # 1 pt  - Feature barrel exports + depcruise cycle check
+  15b-1j-consolidate-settings: ready-for-dev   # 1 pt  - features/settings/ (SettingsView + 3 components + 2 tests)
+  15b-1k-shared-audit: ready-for-dev           # 1 pt  - Verify remaining flat files are truly cross-feature
+  15b-1l-feature-barrel-exports: ready-for-dev  # 1 pt  - Feature barrel exports + depcruise cycle check
 
   # Phase 2: Decomposition (16 stories, ~34 pts)
   # Never-scoped views (target <800)
