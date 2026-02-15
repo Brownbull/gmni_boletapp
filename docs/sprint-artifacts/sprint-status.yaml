@@ -193,8 +193,10 @@ development_status:
   15b-1h-consolidate-reports: done              # 1 pt  - features/reports/ (ReportsView + 3 test files)
   15b-1i-consolidate-scan: done                 # 2 pts - features/scan/ (delete dead views + move 3 hooks)
   15b-1j-consolidate-settings: done             # 1 pt  - features/settings/ (SettingsView + 3 components + 2 tests)
-  15b-1k-shared-audit: ready-for-dev           # 1 pt  - Verify remaining flat files are truly cross-feature
+  15b-1k-shared-audit: done                     # 1 pt  - Verify remaining flat files are truly cross-feature
   15b-1l-feature-barrel-exports: ready-for-dev  # 1 pt  - Feature barrel exports + depcruise cycle check
+  TD-15b-2-dead-code-cleanup: ready-for-dev    # 1 pt  - Delete 10 dead files from shared audit (0 consumers)
+  TD-15b-3-single-feature-file-moves: ready-for-dev  # 3 pts - Move 21 single-feature files + 3 non-thin views into feature modules
 
   # Phase 2: Decomposition (16 stories, ~34 pts)
   # Never-scoped views (target <800)
