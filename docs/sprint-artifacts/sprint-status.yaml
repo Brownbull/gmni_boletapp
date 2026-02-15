@@ -192,7 +192,7 @@ development_status:
   15b-1g-consolidate-insights: done     # 2 pts - features/insights/ (InsightsView + 22 test mirrors + CI configs)
   15b-1h-consolidate-reports: done              # 1 pt  - features/reports/ (ReportsView + 3 test files)
   15b-1i-consolidate-scan: done                 # 2 pts - features/scan/ (delete dead views + move 3 hooks)
-  15b-1j-consolidate-settings: ready-for-dev   # 1 pt  - features/settings/ (SettingsView + 3 components + 2 tests)
+  15b-1j-consolidate-settings: done             # 1 pt  - features/settings/ (SettingsView + 3 components + 2 tests)
   15b-1k-shared-audit: ready-for-dev           # 1 pt  - Verify remaining flat files are truly cross-feature
   15b-1l-feature-barrel-exports: ready-for-dev  # 1 pt  - Feature barrel exports + depcruise cycle check
 
