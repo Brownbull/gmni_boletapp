@@ -14,16 +14,16 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '../../setup/test-utils';
-import { InsightsView } from '../../../src/views/InsightsView';
-import { createMockTimestampDaysAgo } from '../../helpers';
+import { render, screen, fireEvent, waitFor } from '../../../../setup/test-utils';
+import { InsightsView } from '@features/insights/views/InsightsView';
+import { createMockTimestampDaysAgo } from '../../../../helpers';
 
 // ============================================================================
 // Mocks
 // ============================================================================
 
 // Mock the auth hook
-vi.mock('../../../src/hooks/useAuth', () => ({
+vi.mock('../../../../../src/hooks/useAuth', () => ({
   useAuth: vi.fn(),
 }));
 
@@ -62,7 +62,7 @@ vi.mock('@features/insights/hooks/useInsightProfile', () => ({
 // Story 14e-25c.2: Mock navigation store for InsightsView
 const mockNavigateBack = vi.fn();
 const mockNavigateToView = vi.fn();
-vi.mock('../../../src/shared/stores/useNavigationStore', () => ({
+vi.mock('../../../../../src/shared/stores/useNavigationStore', () => ({
   useNavigation: () => ({
     navigateBack: mockNavigateBack,
     navigateToView: mockNavigateToView,
@@ -70,7 +70,7 @@ vi.mock('../../../src/shared/stores/useNavigationStore', () => ({
   }),
 }));
 
-import { useAuth } from '../../../src/hooks/useAuth';
+import { useAuth } from '../../../../../src/hooks/useAuth';
 import { getUserInsightProfile } from '@features/insights/services/insightEngineService';
 
 
