@@ -190,7 +190,7 @@ development_status:
   15b-1f-consolidate-batch-review: done             # 2 pts - features/batch-review/ (views + hooks + components)
   TD-15b-1-intra-feature-shim-imports: done  # 1 pt  - Intra-feature shim import cleanup (batch-review, from 15b-1f review)
   15b-1g-consolidate-insights: done     # 2 pts - features/insights/ (InsightsView + 22 test mirrors + CI configs)
-  15b-1h-consolidate-reports: ready-for-dev    # 1 pt  - features/reports/ (ReportsView + 3 test files)
+  15b-1h-consolidate-reports: done              # 1 pt  - features/reports/ (ReportsView + 3 test files)
   15b-1i-consolidate-scan: ready-for-dev       # 2 pts - features/scan/ (delete dead views + move 3 hooks)
   15b-1j-consolidate-settings: ready-for-dev   # 1 pt  - features/settings/ (SettingsView + 3 components + 2 tests)
   15b-1k-shared-audit: ready-for-dev           # 1 pt  - Verify remaining flat files are truly cross-feature

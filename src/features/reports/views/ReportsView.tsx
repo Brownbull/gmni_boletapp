@@ -24,24 +24,25 @@ import {
   ReportDetailOverlay,
   type ReportDetailData,
 } from '@features/reports/components';
-import { ProfileDropdown, ProfileAvatar, getInitials } from '../components/ProfileDropdown';
+import { ProfileDropdown, ProfileAvatar, getInitials } from '@/components/ProfileDropdown';
 import {
   getAvailableReportsForYear,
   getMaxReportsForYear,
   type ReportRowData,
 } from '@features/reports/utils/reportUtils';
-import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
-import { useReducedMotion } from '../hooks/useReducedMotion';
+import { useSwipeNavigation } from '@/hooks/useSwipeNavigation';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 // Story 14e-25c.2: Internal data hooks
-import { useAuth } from '../hooks/useAuth';
-import { usePaginatedTransactions } from '../hooks/usePaginatedTransactions';
-import { useRecentScans } from '../hooks/useRecentScans';
-import { mergeTransactionsWithRecentScans } from '../utils/transactionMerge';
+import { useAuth } from '@/hooks/useAuth';
+import { usePaginatedTransactions } from '@/hooks/usePaginatedTransactions';
+import { useRecentScans } from '@/hooks/useRecentScans';
+import { mergeTransactionsWithRecentScans } from '@/utils/transactionMerge';
+import { sanitizeInput } from '@/utils/sanitize';
 // Story 14e-25c.2: Navigation via Zustand store
-import { useNavigation, useNavigationActions } from '../shared/stores/useNavigationStore';
-import type { View } from '../app/types';
-import type { Transaction } from '../types/transaction';
-import type { ReportPeriodType } from '../types/report';
+import { useNavigation, useNavigationActions } from '@/shared/stores/useNavigationStore';
+import { isValidView } from '@/app/types';
+import type { Transaction } from '@/types/transaction';
+import type { ReportPeriodType } from '@/types/report';
 import type { TemporalFilterState, HistoryFilterState } from '@/types/historyFilters';
 import { getDefaultFilterState } from '@/shared/stores/useHistoryFiltersStore';
 
@@ -107,9 +108,9 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
     [paginatedTransactions, recentScans]
   );
 
-  // Story 14e-25c.2: User info from auth
-  const userName = user?.displayName ?? '';
-  const userEmail = user?.email ?? '';
+  // Story 14e-25c.2: User info from auth (sanitized for defense-in-depth)
+  const userName = sanitizeInput(user?.displayName ?? '', { maxLength: 100 });
+  const userEmail = sanitizeInput(user?.email ?? '', { maxLength: 255 });
 
   // Profile dropdown state
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -117,7 +118,9 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
 
   // Story 14e-25c.2: Handle profile navigation via Zustand store
   const handleProfileNavigate = useCallback((view: string) => {
-    navigateToView(view as View);
+    if (isValidView(view)) {
+      navigateToView(view);
+    }
   }, [navigateToView]);
 
   const prefersReducedMotion = useReducedMotion();
