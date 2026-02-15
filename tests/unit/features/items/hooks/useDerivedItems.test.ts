@@ -10,7 +10,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import type { Transaction } from '../../../src/types/transaction';
+import type { Transaction } from '@/types/transaction';
 
 // Mock useQueryClient to return a mock query client
 const mockGetQueryData = vi.fn();
@@ -24,7 +24,7 @@ vi.mock('@tanstack/react-query', () => ({
 }));
 
 // Import after mocking
-import { useDerivedItems } from '../../../src/hooks/useDerivedItems';
+import { useDerivedItems } from '@features/items/hooks/useDerivedItems';
 
 // ============================================================================
 // Test Data
@@ -181,7 +181,7 @@ describe('useDerivedItems', () => {
         it('attempts to get cached data on first render', () => {
             renderHook(() => useDerivedItems(mockTransactions));
 
-            expect(mockGetQueryData).toHaveBeenCalled();
+            expect(mockGetQueryData).toHaveBeenCalledWith(expect.arrayContaining([expect.stringContaining('items-derived')]));
         });
 
         it('stores computed items in cache', () => {
@@ -191,7 +191,7 @@ describe('useDerivedItems', () => {
             expect(result.current.items).toHaveLength(5);
 
             // Should have called setQueryData with the computed items
-            expect(mockSetQueryData).toHaveBeenCalled();
+            expect(mockSetQueryData).toHaveBeenCalledWith(expect.arrayContaining([expect.stringContaining('items-derived')]), expect.any(Array));
             const [, cachedItems] = mockSetQueryData.mock.calls[0];
             expect(cachedItems).toHaveLength(5);
         });
