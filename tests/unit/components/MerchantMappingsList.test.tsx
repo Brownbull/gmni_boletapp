@@ -13,7 +13,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import React from 'react'
-import { MerchantMappingsList } from '../../../src/components/MerchantMappingsList'
+import { MerchantMappingsList } from '@features/settings/components/MerchantMappingsList'
 import { MerchantMapping } from '../../../src/types/merchantMapping'
 import { Timestamp } from 'firebase/firestore'
 

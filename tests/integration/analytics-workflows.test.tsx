@@ -47,7 +47,6 @@ import { Transaction } from '../../src/types/transaction';
 import { TrendsView } from '../../src/views/TrendsView';
 import { AnalyticsProvider } from '../../src/contexts/AnalyticsContext';
 import { HistoryFiltersProvider } from '../../src/contexts/HistoryFiltersContext';
-import { exportToCSV } from '../../src/utils/csv';
 // Story 14e-25b.1: Import type for mock data
 import type { TrendsViewData } from '../../src/views/TrendsView/useTrendsViewData';
 
@@ -56,7 +55,7 @@ import type { TrendsViewData } from '../../src/views/TrendsView/useTrendsViewDat
 // ============================================================================
 let mockHookReturnValue: Partial<TrendsViewData> = {};
 
-vi.mock('../../src/views/TrendsView/useTrendsViewData', () => ({
+vi.mock('@features/analytics/views/TrendsView/useTrendsViewData', () => ({
   useTrendsViewData: vi.fn(() => mockHookReturnValue),
 }));
 
@@ -422,7 +421,7 @@ describe('Analytics & Export Workflows', () => {
  * JSON EXPORT NOTE (AC#6 Adjustment)
  * ===================================
  *
- * The current implementation (TrendsView.tsx:156) only exports CSV via the exportToCSV utility.
+ * The current implementation (TrendsView.tsx:156) only exports CSV via the csvExport utility.
  * There is no JSON export button or functionality in the app.
  *
  * AC#6 originally specified "JSON export test", but this does not match the actual implementation.

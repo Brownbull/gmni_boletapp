@@ -7,7 +7,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { AppRoutes } from '../../../../src/components/App/AppRoutes';
-import type { View } from '../../../../src/components/App/types';
+import type { View } from '@app/types';
 
 describe('AppRoutes', () => {
     describe('Render prop pattern', () => {

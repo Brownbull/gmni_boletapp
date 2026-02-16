@@ -50,7 +50,8 @@ const mockHistoryViewData: UseHistoryViewDataReturn = {
 // Story 14e-25a.2b: Mock useHistoryViewData hook
 // =============================================================================
 
-vi.mock('../../../src/views/HistoryView/useHistoryViewData', () => ({
+// Story 15b-1d: Mock targets new location (HistoryView.tsx imports directly from here)
+vi.mock('../../../src/features/history/views/useHistoryViewData', () => ({
   useHistoryViewData: vi.fn(() => mockHistoryViewData),
 }))
 

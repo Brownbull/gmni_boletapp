@@ -12,7 +12,7 @@ import {
   validateTotal,
   needsTotalValidation,
   TOTAL_DISCREPANCY_THRESHOLD,
-} from '../../../src/utils/totalValidation';
+} from '@features/scan/utils/totalValidation';
 import { Transaction, TransactionItem } from '../../../src/types/transaction';
 
 // Helper to create a minimal transaction

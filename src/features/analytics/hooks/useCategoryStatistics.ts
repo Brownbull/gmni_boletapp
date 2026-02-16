@@ -14,7 +14,7 @@
 
 import { useMemo } from 'react';
 import type { Transaction, TransactionItem } from '@/types/transaction';
-import { calculateBasicStats, findMostFrequent } from '@/utils/statisticsUtils';
+import { calculateBasicStats, findMostFrequent } from '@features/analytics/utils/statisticsUtils';
 import {
   STORE_CATEGORY_GROUPS,
   ITEM_CATEGORY_TO_KEY,

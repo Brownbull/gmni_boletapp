@@ -8,7 +8,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import type { View } from '../../../../src/components/App/types';
+import type { View } from '@app/types';
 
 // Mock all view components to avoid their complex dependencies
 vi.mock('../../../../src/views/DashboardView', () => ({
@@ -51,7 +51,7 @@ vi.mock('../../../../src/views/ItemsView', () => ({
     ),
 }));
 
-vi.mock('../../../../src/views/RecentScansView', () => ({
+vi.mock('@features/scan/views/RecentScansView', () => ({
     RecentScansView: (props: Record<string, unknown>) => (
         <div data-testid="recent-scans-view" data-props={JSON.stringify(Object.keys(props))}>
             RecentScansView
@@ -67,7 +67,7 @@ vi.mock('../../../../src/views/ReportsView', () => ({
     ),
 }));
 
-vi.mock('../../../../src/views/StatementScanView', () => ({
+vi.mock('@features/scan/views/StatementScanView', () => ({
     StatementScanView: (props: Record<string, unknown>) => (
         <div data-testid="statement-scan-view" data-props={JSON.stringify(Object.keys(props))}>
             StatementScanView

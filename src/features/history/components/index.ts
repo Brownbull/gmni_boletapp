@@ -37,3 +37,5 @@ export type { DeleteTransactionsModalProps, TransactionPreview } from './DeleteT
 // Story 14.31 Session 3: Sort control for ItemsView and HistoryView
 export { SortControl } from './SortControl';
 export type { SortControlProps, SortOption } from './SortControl';
+export { CountryFlag } from './CountryFlag';
+export type { FlagSize } from './CountryFlag';

@@ -17,7 +17,7 @@ import type { User } from 'firebase/auth';
 import type { ScanState, ScanDialogType, BatchCompleteDialogData } from '@/types/scanStateMachine';
 import type { Transaction, StoreCategory } from '@/types/transaction';
 import type { CategoryMapping } from '@/types/categoryMapping';
-import type { View } from '@/components/App';
+import type { View } from '@app/types';
 import type { Services } from '@/contexts/AuthContext';
 import type { UserCredits } from '@/types/scan';
 // Story 14e-42: Import FindItemNameMatchFn for dependency injection

@@ -11,7 +11,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import React from 'react'
-import { ItemNameMappingsList } from '../../../src/components/ItemNameMappingsList'
+import { ItemNameMappingsList } from '@features/settings/components/ItemNameMappingsList'
 import type { ItemNameMapping } from '../../../src/types/itemNameMapping'
 import { Timestamp } from 'firebase/firestore'
 

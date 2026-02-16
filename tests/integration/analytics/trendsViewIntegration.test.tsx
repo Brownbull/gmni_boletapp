@@ -35,7 +35,7 @@ import type { TrendsViewData } from '../../../src/views/TrendsView/useTrendsView
 // ============================================================================
 let mockHookReturnValue: Partial<TrendsViewData> = {};
 
-vi.mock('../../../src/views/TrendsView/useTrendsViewData', () => ({
+vi.mock('@features/analytics/views/TrendsView/useTrendsViewData', () => ({
   useTrendsViewData: vi.fn(() => mockHookReturnValue),
 }));
 

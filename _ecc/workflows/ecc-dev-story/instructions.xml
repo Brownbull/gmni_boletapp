@@ -775,16 +775,27 @@
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 7: Cost Tracking + E2E Coverage Check                              -->
+  <!-- STEP 7: Cost Tracking (MANDATORY — always runs)                         -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="7" goal="Cost tracking, E2E coverage, and Firebase analysis before story completion" tag="cost-e2e">
-    <!-- MANDATORY: Cost tracking runs BEFORE story completion so it never gets skipped -->
-    <critical>You MUST execute this bash command and capture its output. Do NOT skip it. Do NOT generate the final output without running this command first.</critical>
+  <step n="7" goal="Run cost analyzer — this step is NEVER skippable" tag="cost-tracking">
+    <critical>MANDATORY STEP — You MUST execute this bash command and capture its output.
+      Do NOT skip it. Do NOT proceed to Step 8 without running this command first.
+      This step exists separately from E2E analysis so it cannot be accidentally skipped
+      when E2E is N/A.</critical>
+
     <action>Run cost analyzer: `workflow-cost --csv --stats --workflow "ecc-dev-story" --story "{{story_key}}"`</action>
     <action>Store the FULL terminal output as {{cost_report_output}} — include the COST NOTICE box</action>
 
-    <!-- 7a: Detect UI changes -->
+    <output>💰 **Cost Tracking Complete** — {{cost_report_output}}</output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 8: E2E Coverage + Firebase Analysis (conditional)                  -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="8" goal="Check E2E coverage gaps and Firebase deploy targets" tag="e2e-firebase-analysis">
+    <!-- 8a: Detect UI changes -->
     <action>Check if any files in {{progress_tracker}}.files_changed match UI component patterns:
       - "src/components/**/*.tsx" (excluding ui/ - those are shadcn primitives)
       - "src/hooks/*.ts" (hooks that drive UI behavior)
@@ -793,7 +804,7 @@
     <action>Set {{has_ui_changes}} = true/false</action>
     <action>Set {{changed_ui_files}} = list of matching UI files</action>
 
-    <!-- 7b: Check for existing E2E coverage -->
+    <!-- 8b: Check for existing E2E coverage -->
     <check if="{{has_ui_changes}}">
       <action>Search tests/e2e/*.spec.ts for data-testid values matching {{changed_ui_files}}:
         - For each changed .tsx component, extract data-testid attributes from source
@@ -803,7 +814,7 @@
       </action>
       <action>Set {{ui_missing_e2e}} = true if {{uncovered_testids}} is non-empty</action>
 
-      <!-- 7c: Assess critical path importance -->
+      <!-- 8c: Assess critical path importance -->
       <action>Evaluate if the UI changes are on a critical user path:
         - Check if story ACs reference core user flows (authentication, main canvas, toolbox browsing,
           component placement, connection wiring, YAML import/export)
@@ -823,15 +834,15 @@
     <action>Set {{has_firebase_backend_changes}} = true/false</action>
     <action>Set {{firebase_deploy_targets}} = comma-separated list of targets</action>
 
-    <output>✅ **Cost & E2E Analysis Complete** — proceeding to story completion.</output>
+    <output>✅ **E2E & Firebase Analysis Complete** — proceeding to story completion.</output>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 8: Story Completion (MUST be last step)                            -->
+  <!-- STEP 9: Story Completion (MUST be last step)                            -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="8" goal="Mark story complete, update status, and present final summary" tag="completion">
-    <critical>Story completion is the FINAL step. Cost tracking and E2E analysis already ran in Step 7.</critical>
+  <step n="9" goal="Mark story complete, update status, and present final summary" tag="completion">
+    <critical>Story completion is the FINAL step. Cost tracking (Step 7) and E2E analysis (Step 8) already ran.</critical>
 
     <action>Verify ALL tasks marked [x] complete</action>
     <action>Verify ALL functional acceptance criteria satisfied</action>

@@ -61,7 +61,7 @@ vi.mock('../../../../../src/hooks/useLocations', () => ({
   }),
 }));
 
-vi.mock('../../../../../src/components/CountryFlag', () => ({
+vi.mock('@features/history/components/CountryFlag', () => ({
   CountryFlag: ({ country }: { country: string }) => (
     <span data-testid={`flag-${country}`}>{country}</span>
   ),

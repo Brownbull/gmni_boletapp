@@ -27,7 +27,7 @@ import type {
 } from './types';
 // Story 14e-43: UIDependencies import removed - subhandler deps now use direct function types
 
-import { validateTotal, type TotalValidationResult } from '@/utils/totalValidation';
+import { validateTotal, type TotalValidationResult } from '@features/scan/utils/totalValidation';
 import { shouldShowQuickSave, calculateConfidence } from '@/utils/confidenceCheck';
 // Story 14e-42: applyItemNameMappings extracted to @features/categories
 import { applyItemNameMappings } from '@/features/categories';

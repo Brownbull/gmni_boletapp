@@ -24,8 +24,8 @@ import pkg from '../../package.json'
  * Heavy tests (excluded, run separately):
  * - tests/unit/hooks/useScanStateMachine.test.ts (1680 lines)
  * - tests/unit/components/Nav.test.tsx (1623 lines)
- * - tests/unit/services/insightEngineService.test.ts (1439 lines)
- * - tests/unit/utils/insightGenerators.test.ts (1432 lines)
+ * - tests/unit/features/insights/services/insightEngineService.test.ts (1439 lines)
+ * - tests/unit/features/insights/utils/insightGenerators.test.ts (1432 lines)
  *
  * @see vitest.config.heavy.ts for heavy test configuration
  * @see Story 14.30.6: Heavy test isolation
@@ -49,8 +49,8 @@ export default defineConfig({
       // Tier 1: 1400-1700 lines each (original 4)
       'tests/unit/hooks/useScanStateMachine.test.ts',
       'tests/unit/components/Nav.test.tsx',
-      'tests/unit/services/insightEngineService.test.ts',
-      'tests/unit/utils/insightGenerators.test.ts',
+      'tests/unit/features/insights/services/insightEngineService.test.ts',
+      'tests/unit/features/insights/utils/insightGenerators.test.ts',
       // Tier 2: 800-1100 lines each (additional 6)
       'tests/unit/csvExport.test.ts',
       'tests/unit/analytics/DrillDownCard.test.tsx',

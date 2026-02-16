@@ -718,26 +718,41 @@
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 5: Cost Tracking + E2E Coverage Check                              -->
+  <!-- STEP 5: Cost Tracking (MANDATORY — always runs)                         -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="5" goal="Cost tracking, E2E coverage, and Firebase analysis before status update">
+  <step n="5" goal="Run cost analyzer — this step is NEVER skippable" tag="cost-tracking">
+    <critical>MANDATORY STEP — You MUST execute this bash command and capture its output.
+      Do NOT skip it. Do NOT proceed to Step 6 without running this command first.
+      This step exists separately from E2E analysis so it cannot be accidentally skipped
+      when E2E is N/A.</critical>
 
-    <!-- 5a: Quick check for UI changes -->
+    <action>Run cost analyzer: `workflow-cost --csv --stats --workflow "ecc-code-review" --story "{{story_key}}"`</action>
+    <action>Store the FULL terminal output as {{cost_report_output}} — include the COST NOTICE box</action>
+
+    <output>💰 **Cost Tracking Complete** — {{cost_report_output}}</output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 6: E2E Coverage + Firebase Analysis + Commit Prep (conditional)    -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="6" goal="Check E2E coverage gaps, Firebase deploy targets, and build commit list" tag="e2e-firebase-analysis">
+    <!-- 6a: Quick check for UI changes -->
     <action>Check if any {{files_to_review}} match UI patterns:
       "src/components/**/*.tsx" (excluding ui/), "src/hooks/*.ts", "src/stores/*.ts"</action>
     <action>Set {{has_ui_changes}} = true/false</action>
 
     <check if="{{has_ui_changes}}">
-      <!-- 5b: Search existing E2E specs for coverage of changed UI -->
+      <!-- 6b: Search existing E2E specs for coverage of changed UI -->
       <action>Extract data-testid values from changed .tsx files, search tests/e2e/*.spec.ts for coverage</action>
       <action>Set {{uncovered_testids}} and {{ui_missing_e2e}}</action>
 
-      <!-- 5c: Critical path assessment -->
+      <!-- 6c: Critical path assessment -->
       <action>Check if changes are on critical user path (auth, canvas, toolbox, inspector, YAML import/export)</action>
     </check>
 
-    <!-- MANDATORY: Check for Firebase backend changes that need separate deployment -->
+    <!-- Check for Firebase backend changes that need separate deployment -->
     <action>Check if any {{files_to_review}} match Firebase backend patterns:
       - "firestore.rules" → needs `firebase deploy --only firestore:rules`
       - "firestore.indexes.json" → needs `firebase deploy --only firestore:indexes`
@@ -747,12 +762,7 @@
     <action>Set {{has_firebase_backend_changes}} = true/false</action>
     <action>Set {{firebase_deploy_targets}} = comma-separated list of targets (e.g., "firestore:rules,firestore:indexes")</action>
 
-    <!-- MANDATORY: Cost tracking runs BEFORE story status update so it never gets skipped -->
-    <critical>You MUST execute this bash command and capture its output. Do NOT skip it. Do NOT generate the final output without running this command first.</critical>
-    <action>Run cost analyzer: `workflow-cost --csv --stats --workflow "ecc-code-review" --story "{{story_key}}"`</action>
-    <action>Store the FULL terminal output as {{cost_report_output}} — include the COST NOTICE box</action>
-
-    <!-- MANDATORY: Build commit commands for the user -->
+    <!-- Build commit commands for the user -->
     <action>Build list of {{review_changed_files}} — files modified/created during THIS review session:
       - Story file (status update + review summary)
       - sprint-status.yaml (status change + any new TD entries)
@@ -760,15 +770,15 @@
       - Any source/test files modified by quick fixes in Step 4
     </action>
 
-    <output>✅ **Cost & E2E Analysis Complete** — proceeding to story status update.</output>
+    <output>✅ **E2E & Firebase Analysis Complete** — proceeding to story status update.</output>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 6: Story Status Update + Review Complete (MUST be last step)       -->
+  <!-- STEP 7: Story Status Update + Review Complete (MUST be last step)       -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="6" goal="Update story status and present final review summary">
-    <critical>Story status update is the FINAL step. Cost tracking and E2E analysis already ran in Step 5.</critical>
+  <step n="7" goal="Update story status and present final review summary">
+    <critical>Story status update is the FINAL step. Cost tracking (Step 5) and E2E analysis (Step 6) already ran.</critical>
 
     <check if="no CRITICAL or HIGH issues OR all fixed">
       <action>Update story Status to "done"</action>

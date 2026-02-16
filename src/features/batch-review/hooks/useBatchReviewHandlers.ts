@@ -21,7 +21,7 @@ import type { User } from 'firebase/auth';
 import type { Services } from '@/contexts/AuthContext';
 import type { Transaction } from '@/types/transaction';
 import type { BatchReceipt } from '@/types/batchReceipt';
-import type { View } from '@/components/App';
+import type { View } from '@app/types';
 import type { CategoryMapping } from '@/types/categoryMapping';
 import type { UserCredits } from '@/types/scan';
 import type { ScanDialogType, BatchCompleteDialogData, ScanState } from '@/types/scanStateMachine';
@@ -36,7 +36,7 @@ import { batchReviewActions, useBatchReviewStore } from '../store';
 import { useScanStore } from '@/features/scan/store';
 
 // Batch processing utilities
-import { createBatchReceiptsFromResults } from '@/hooks/useBatchReview';
+import { createBatchReceiptsFromResults } from './useBatchReview';
 
 // Existing handler utilities (pure functions to preserve)
 import { buildTransactionWithThumbnail } from '../handlers/utils';
@@ -57,7 +57,7 @@ import type {
   BatchProcessingController,
 } from '../handlers/types';
 import type { ReceiptType } from '@/services/gemini';
-import type { ProcessingResult } from '@/services/batchProcessingService';
+import type { ProcessingResult } from '@features/batch-review/services/batchProcessingService';
 
 // =============================================================================
 // Extended Batch Processing Interface (Story 14e-29b)

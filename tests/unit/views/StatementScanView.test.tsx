@@ -27,7 +27,7 @@ vi.mock('@features/scan/store', () => ({
 }));
 
 // Import after mocking
-import { StatementScanView } from '../../../src/views/StatementScanView';
+import { StatementScanView } from '@features/scan/views/StatementScanView';
 
 // Mock translation function
 const t = (key: string) => {

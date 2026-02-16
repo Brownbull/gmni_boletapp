@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { TrustMerchantPrompt } from '../../../src/components/TrustMerchantPrompt';
+import { TrustMerchantPrompt } from '@features/credit/components/TrustMerchantPrompt';
 
 describe('TrustMerchantPrompt', () => {
     const mockT = (key: string) => {

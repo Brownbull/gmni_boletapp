@@ -22,7 +22,7 @@
 
 import React, { useCallback, useEffect, useRef } from 'react';
 import { AlertTriangle, Calculator, ArrowRight, X } from 'lucide-react';
-import { TotalValidationResult } from '../../utils/totalValidation';
+import { TotalValidationResult } from '@features/scan/utils/totalValidation';
 import { formatCurrency, DEFAULT_CURRENCY } from '@/utils/currency';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
 import { useScanActiveDialog, useScanActions } from '@features/scan/store';

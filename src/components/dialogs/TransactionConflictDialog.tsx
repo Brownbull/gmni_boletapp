@@ -21,27 +21,12 @@ import { X, AlertTriangle, ChevronRight, Eye, Trash2 } from 'lucide-react';
 import { DEFAULT_CURRENCY } from '../../utils/currency';
 
 // ============================================================================
-// Types
+// Types — canonical definitions at src/types/conflict.ts (Story 15b-0d)
+// Re-exported here for backward compatibility with existing consumers
 // ============================================================================
 
-export type ConflictReason = 'has_unsaved_changes' | 'scan_in_progress' | 'credit_used';
-
-export interface ConflictingTransaction {
-  /** Merchant name if available */
-  merchant?: string;
-  /** Transaction total if available */
-  total?: number;
-  /** Currency code */
-  currency?: string;
-  /** Whether credit has been used for this scan */
-  creditUsed: boolean;
-  /** Whether there are unsaved changes */
-  hasChanges: boolean;
-  /** Whether a scan is in progress */
-  isScanning: boolean;
-  /** Source of the transaction */
-  source: 'new_scan' | 'manual_entry' | 'editing_existing';
-}
+export type { ConflictReason, ConflictingTransaction } from '@/types/conflict';
+import type { ConflictReason, ConflictingTransaction } from '@/types/conflict';
 
 export interface TransactionConflictDialogProps {
   /** Whether the modal is open */

@@ -9,7 +9,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { DateTimeTag } from '../../../src/components/DateTimeTag';
+import { DateTimeTag } from '@features/transaction-editor/components/DateTimeTag';
 
 describe('DateTimeTag', () => {
   const defaultProps = {

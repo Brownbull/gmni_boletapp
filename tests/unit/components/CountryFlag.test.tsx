@@ -6,7 +6,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { CountryFlag } from '../../../src/components/CountryFlag';
+import { CountryFlag } from '@features/history/components/CountryFlag';
 
 describe('CountryFlag', () => {
     describe('basic rendering', () => {

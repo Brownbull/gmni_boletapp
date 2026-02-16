@@ -18,7 +18,7 @@ import {
   calculateTotalProcessingTime,
   ImageProcessingState,
   BatchProcessingOptions,
-} from '../../../src/services/batchProcessingService';
+} from '@features/batch-review/services/batchProcessingService';
 import * as geminiService from '../../../src/services/gemini';
 import type { Transaction } from '../../../src/types/transaction';
 
