@@ -50,7 +50,6 @@ export const baseCiConfig: UserConfig = {
       '**/node_modules/**',
       '**/dist/**',
       // Tier 1: 1400-1700 lines each
-      'tests/unit/hooks/useScanStateMachine.test.ts',
       'tests/unit/components/Nav.test.tsx',
       'tests/unit/features/insights/services/insightEngineService.test.ts',
       'tests/unit/features/insights/utils/insightGenerators.test.ts',
@@ -61,9 +60,10 @@ export const baseCiConfig: UserConfig = {
       'tests/unit/components/session/SessionComplete.test.tsx',
       'tests/unit/services/pendingScanStorage.test.ts',
       'tests/unit/analytics/CategoryBreadcrumb.test.tsx',
-      // Tier 3: 500-700 lines (Story 14.30.8)
-      'tests/unit/hooks/useBatchProcessing.test.ts',
-      'tests/unit/hooks/useBatchReview.test.ts',
+      // Tier 3: 500-900 lines (Story 14.30.8, paths updated Story 15b)
+      'tests/unit/features/batch-review/hooks/useBatchProcessing.test.ts',
+      'tests/unit/features/batch-review/hooks/useBatchReview.test.ts',
+      'tests/unit/features/batch-review/hooks/useBatchReviewHandlers.test.ts',
     ],
     // Memory-safe execution settings
     fileParallelism: false,

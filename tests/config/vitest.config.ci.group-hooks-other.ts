@@ -3,17 +3,11 @@ import { createGroupConfig } from './vitest.config.ci.base'
 
 /**
  * Test Group: hooks-other
- * All remaining hooks (~5,400 lines)
- * Excludes: batch hooks (hooks-batch), useScanStateMachine (heavy)
- * Story 15b-1i: Scan hooks moved to features/scan/hooks/ (no longer in this glob)
+ * All remaining hooks in tests/unit/hooks/ (~5,400 lines)
+ * Story 15b: Batch hooks moved to features/batch-review/hooks/, scan hooks to features/scan/hooks/
+ * This glob now only captures hooks that remain in the flat directory.
  */
 export default defineConfig(createGroupConfig(
   'hooks-other',
   ['tests/unit/hooks/**/*.test.{ts,tsx}'],
-  [
-    // Batch hooks (in hooks-batch group)
-    'tests/unit/hooks/useBatchSession.test.ts',
-    'tests/unit/hooks/useBatchReview.test.ts',
-    'tests/unit/hooks/useBatchProcessing.test.ts',
-  ]
 ))

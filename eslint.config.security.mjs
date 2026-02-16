@@ -17,7 +17,7 @@ export default [
       'src/components/celebrations/PersonalRecordBanner.tsx',
       'src/contexts/HistoryFiltersContext.tsx',
       'src/features/history/components/IconCategoryFilter.tsx',
-      'src/views/ItemsView/ItemsView.tsx',
+      'src/features/items/views/ItemsView/ItemsView.tsx',
     ]
   },
   {
