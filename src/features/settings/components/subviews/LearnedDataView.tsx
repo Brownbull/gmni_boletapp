@@ -9,11 +9,11 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ChevronDown, ChevronUp, BookOpen, Home, Tag, CheckCircle2, Trash2, ChevronRight, X, AlertTriangle, Package } from 'lucide-react';
-import { CategoryMappingsList } from '@/components/CategoryMappingsList';
-import { MerchantMappingsList } from '@/components/MerchantMappingsList';
-import { SubcategoryMappingsList } from '@/components/SubcategoryMappingsList';
-import { TrustedMerchantsList } from '@/components/TrustedMerchantsList';
-import { ItemNameMappingsList } from '@/components/ItemNameMappingsList';
+import { CategoryMappingsList } from '@features/settings/components/CategoryMappingsList';
+import { MerchantMappingsList } from '@features/settings/components/MerchantMappingsList';
+import { SubcategoryMappingsList } from '@features/settings/components/SubcategoryMappingsList';
+import { TrustedMerchantsList } from '../TrustedMerchantsList';
+import { ItemNameMappingsList } from '@features/settings/components/ItemNameMappingsList';
 import type { CategoryMapping } from '@/types/categoryMapping';
 import type { MerchantMapping } from '@/types/merchantMapping';
 import type { SubcategoryMapping } from '@/types/subcategoryMapping';
@@ -405,8 +405,8 @@ export const LearnedDataView: React.FC<LearnedDataViewProps> = ({
         try {
             await onClearAllLearnedData();
             setShowClearDialog(false);
-        } catch (error) {
-            console.error('Failed to clear learned data:', error);
+        } catch {
+            // Error silently caught — dialog stays open, isClearing resets in finally
         } finally {
             setIsClearing(false);
         }
