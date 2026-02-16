@@ -34,10 +34,10 @@ import { DashboardView } from '../../views/DashboardView';
 import { TrendsView } from '../../views/TrendsView';
 import { InsightsView } from '../../views/InsightsView';
 import { HistoryView } from '../../views/HistoryView';
-import { RecentScansView } from '../../views/RecentScansView';
+import { RecentScansView } from '@features/scan/views/RecentScansView';
 import { ItemsView } from '../../views/ItemsView';
 import { ReportsView } from '../../views/ReportsView';
-import { StatementScanView } from '../../views/StatementScanView';
+import { StatementScanView } from '@features/scan/views/StatementScanView';
 // Story 14c-refactor.22c: Additional views for renderViewSwitch
 import { NotificationsView } from '../../views/NotificationsView';
 import { SettingsView } from '../../views/SettingsView';

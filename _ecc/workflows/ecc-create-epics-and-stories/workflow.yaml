@@ -1,0 +1,148 @@
+# ECC-Enhanced Epic & Story Creation Workflow
+name: ecc-create-epics-and-stories
+description: "Transform planning artifacts (PRD, Architecture, UX) into implementation-ready epics and stories with hardening analysis"
+author: "BMad"
+
+# ECC Integration - Orchestrator Configuration
+ecc_orchestration:
+  enabled: true
+  orchestrator: "ECC Orchestrator"
+
+  # ECC agents used in this workflow
+  agents:
+    planner:
+      subagent_type: "everything-claude-code:planner"
+      model: "opus"
+      max_turns: 7
+      purpose: "Epic design, story breakdown, FR grouping, risk flag identification"
+    architect:
+      subagent_type: "everything-claude-code:architect"
+      model: "opus"
+      max_turns: 5
+      purpose: "Hardening analysis, file specs, architectural ACs, story file generation"
+    security-reviewer:
+      subagent_type: "everything-claude-code:security-reviewer"
+      model: "sonnet"
+      max_turns: 5
+      purpose: "Security surface analysis per story (parallel with architect)"
+
+  # Workflow sequence
+  sequence: "planner (epic design) -> planner (story breakdown) -> [architect + security-reviewer] (hardening) -> architect (story files)"
+
+  # Parallel phases
+  parallel_phases:
+    hardening_analysis:
+      agents: ["architect", "security-reviewer"]
+      condition: "always (per epic)"
+      description: "Parallel hardening and security analysis per epic's story list"
+    story_file_generation:
+      agents: ["architect"]
+      batch_size: 3
+      description: "Up to 3 story files generated in parallel per epic"
+
+# Project Knowledge Integration
+project_knowledge:
+  enabled: true
+  load_at_session_start: true
+  files:
+    required:
+      - "{project-root}/_ecc/knowledge/code-review-patterns.md"
+      - "{project-root}/_ecc/knowledge/hardening-patterns.md"
+    optional:
+      - "{project-root}/.claude/rules/testing.md"
+      - "{project-root}/.claude/rules/security.md"
+      - "{project-root}/docs/architecture/*.md"
+
+# Story Sizing Guidelines (Opus 4.6)
+sizing_guidelines:
+  model: "Opus 4.6"
+  small: { tasks: "1-3", subtasks: "<=10", files: "<=4", points: "1-2" }
+  medium: { tasks: "3-6", subtasks: "<=25", files: "<=8", points: "3-5" }
+  large: { tasks: "6-8", subtasks: "<=40", files: "<=12", points: "5-8" }
+  too_large: { tasks: ">8", subtasks: ">40", files: ">12", action: "split" }
+  principles:
+    - "Prefer fewer larger stories over many micro-stories"
+    - "Group related layers (types->service->UI->tests) into single stories"
+    - "Foundation + integration can be ONE story if within limits"
+    - "Include hardening tasks BUILT-IN when possible (<=2 tasks / 8 subtasks)"
+
+# Hardening Analysis Configuration
+hardening_analysis:
+  enabled: true
+  patterns_file: "{project-root}/_ecc/knowledge/hardening-patterns.md"
+  builtin_threshold:
+    max_tasks: 2
+    max_subtasks: 8
+  classification:
+    builtin: "Add hardening tasks to existing story"
+    separate: "Create standalone hardening story"
+  target_multiplier: 1.3  # Target: <1.3x story count vs naive planning
+
+# Epic Design Principles (from BMAD)
+epic_design:
+  principles:
+    - "User-value first: each epic enables users to accomplish something meaningful"
+    - "Incremental delivery: each epic delivers value independently"
+    - "No forward dependencies: each epic works without requiring future epics"
+    - "Stories flow sequentially within epic (each builds on previous only)"
+  anti_patterns:
+    - "Technical layer epics (Database Setup, API Development, Frontend)"
+    - "Stories that require forward dependencies"
+    - "Epic 1 as 'setup everything' with no user value"
+
+# Story Format
+story_format:
+  acceptance_criteria: "Given/When/Then (Gherkin-like)"
+  architectural_acs: true  # File Location + Pattern + Anti-Pattern ACs
+  file_specification: true  # Exact file paths table
+  task_subtask_breakdown: true
+  dev_notes: true  # Architecture guidance + technical notes + hardening notes
+  initial_status: "drafted"  # Not ready-for-dev — sprint planning promotes
+
+# User Gates (approval points)
+user_gates:
+  step_1: "Requirements extraction confirmation"
+  step_2: "Epic structure approval"
+  step_3c: "Per-epic story list approval (after hardening consolidation)"
+  step_5: "Final validation approval"
+
+# Critical variables from config
+config_source: "{project-root}/_bmad/bmm/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+user_skill_level: "{config_source}:user_skill_level"
+document_output_language: "{config_source}:document_output_language"
+date: system-generated
+
+# Paths
+sprint_artifacts: "{project-root}/docs/sprint-artifacts"
+story_dir: "{sprint_artifacts}/stories"
+sprint_status: "{sprint_artifacts}/sprint-status.yaml"
+epics_dir: "{output_folder}"
+epics_file: "{epics_dir}/epics.md"
+
+# Auto-proceed — skip generic "Continue?" confirmations between steps
+auto_proceed:
+  enabled: true
+  pause_only_at:
+    - "step-1-requirements"
+    - "step-2-epic-approval"
+    - "step-3c-story-approval"
+    - "step-5-final-validation"
+
+# Context budget — read files once in orchestrator, pass to agents
+context_budget:
+  orchestrator_reads_files: true
+  agent_reads_files: false
+  agent_compact_output: true
+
+# Project knowledge paths
+project_knowledge_path: "{project-root}/_ecc/knowledge"
+project_architecture_path: "{project-root}/docs/architecture"
+
+# Workflow components
+installed_path: "{project-root}/_ecc/workflows/ecc-create-epics-and-stories"
+instructions: "{installed_path}/instructions.xml"
+
+standalone: true

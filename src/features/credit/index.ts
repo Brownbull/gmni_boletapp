@@ -14,6 +14,9 @@ export {
   type CreditHandlerContext,
 } from './handlers';
 
+// Components (Story TD-15b-3)
+export * from './components';
+
 // Feature orchestrator exports (Story 14e-18c)
 export {
   CreditFeature,

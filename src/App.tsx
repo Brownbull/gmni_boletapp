@@ -13,18 +13,17 @@
  * app-level hooks (useTransactionHandlers, useScanHandlers, etc.).
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-// App architecture components and view renderers
+// App architecture components
+import { AppLayout, AppOverlays, shouldShowTopHeader } from './components/App';
+import type { View } from '@app/types';
+// Story 15b-0b: Direct import from viewRenderers (not barrel) to break circular deps
 import {
-    AppLayout,
-    AppOverlays,
-    shouldShowTopHeader,
-    type View,
     renderStatementScanView,
     renderReportsView,
     renderRecentScansView,
     renderInsightsView,
     renderAlertsView,
-} from './components/App';
+} from './components/App/viewRenderers';
 import { useAuth } from './hooks/useAuth';
 import { useTransactions } from './hooks/useTransactions';
 import { migrateCreatedAt } from './utils/migrateCreatedAt';

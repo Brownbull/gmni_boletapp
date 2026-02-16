@@ -14,7 +14,7 @@ import {
     hasPotentialDuplicates,
     extractNumbers,
     haveSameNumbers,
-} from '../../../src/services/itemDuplicateDetectionService';
+} from '@features/items/services/itemDuplicateDetectionService';
 import type { FlattenedItem } from '../../../src/types/item';
 
 // Helper to create test items

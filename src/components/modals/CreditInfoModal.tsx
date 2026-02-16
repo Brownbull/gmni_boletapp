@@ -16,7 +16,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { X, Zap, Camera } from 'lucide-react';
-import type { CreditInfoProps } from '@managers/ModalManager';
+import type { CreditInfoProps } from '@managers/ModalManager/types';
 
 // Default translation function that returns empty string (fallbacks will be used)
 const defaultTranslate = () => '';

@@ -10,6 +10,6 @@ import { createHeavyGroupConfig } from './vitest.config.ci.base'
  * - CategoryBreadcrumb.test.tsx (772 lines)
  */
 export default defineConfig(createHeavyGroupConfig('heavy-3', [
-  'tests/unit/services/insightEngineService.test.ts',
+  'tests/unit/features/insights/services/insightEngineService.test.ts',
   'tests/unit/analytics/CategoryBreadcrumb.test.tsx',
 ]))

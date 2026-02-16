@@ -5,7 +5,7 @@
  *
  * Used by: navigationHelpers, drillDownHelpers, helpers, DonutChart
  */
-import type { CategoryData } from '@/views/TrendsView/types';
+import type { CategoryData } from '@features/analytics/views/TrendsView/types';
 
 export function makeCategoryData(name: string, value: number, percent = 50): CategoryData {
   return {

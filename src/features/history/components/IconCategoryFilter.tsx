@@ -38,7 +38,7 @@ import {
 } from '@/utils/categoryTranslations';
 import type { Language } from '@/utils/translations';
 import { useLocationDisplay } from '@/hooks/useLocations';
-import { CountryFlag } from '@/components/CountryFlag';
+import { CountryFlag } from '@features/history/components/CountryFlag';
 
 // ============================================================================
 // Types

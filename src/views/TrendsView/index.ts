@@ -1,19 +1,21 @@
 /**
- * TrendsView Module Exports
+ * TrendsView Re-export Shim
  *
- * Story 15-TD-5: Resolved file/directory naming collision
- * TrendsView.tsx moved into TrendsView/ directory
+ * Story 15b-1a: Backward compatibility shim.
+ * Canonical location: @features/analytics/views/TrendsView/
  *
- * Re-exports TrendsView component, types, and hooks.
+ * 4 source consumers + 6 test files depend on this path.
  */
 
-// Main component (now co-located in this directory)
-export { TrendsView } from './TrendsView';
-export type { TrendsViewProps } from './TrendsView';
+export {
+  TrendsView,
+  useTrendsViewData,
+} from '@features/analytics/views/TrendsView';
 
-// Re-export canonical types for backward compatibility (consumers import from @/views/TrendsView)
-export type { DrillDownPath, HistoryNavigationPayload } from './TrendsView';
-
-// Export the data hook and types
-export { useTrendsViewData } from './useTrendsViewData';
-export type { TrendsViewData, UseTrendsViewDataReturn } from './useTrendsViewData';
+export type {
+  TrendsViewProps,
+  DrillDownPath,
+  HistoryNavigationPayload,
+  TrendsViewData,
+  UseTrendsViewDataReturn,
+} from '@features/analytics/views/TrendsView';

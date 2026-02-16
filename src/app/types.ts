@@ -51,6 +51,18 @@ export type View =
     | 'statement-scan'
     | 'recent-scans';
 
+/** Runtime set of all valid View values — used for type guards */
+export const VALID_VIEWS: ReadonlySet<string> = new Set<View>([
+    'dashboard', 'scan', 'scan-result', 'edit', 'transaction-editor',
+    'trends', 'insights', 'settings', 'alerts', 'batch-capture',
+    'batch-review', 'history', 'reports', 'items', 'statement-scan', 'recent-scans',
+]);
+
+/** Type guard for View union */
+export function isValidView(value: string): value is View {
+    return VALID_VIEWS.has(value);
+}
+
 // =============================================================================
 // View Classification Utilities
 // =============================================================================

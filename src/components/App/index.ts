@@ -70,54 +70,11 @@ export { AppLayout, AppMainContent } from './AppLayout';
 export { AppRoutes } from './AppRoutes';
 
 // =============================================================================
-// View Renderers (Story 14c-refactor.22, TypeScript: 14c-refactor.22b, renderViewSwitch: 14c-refactor.22c)
-// =============================================================================
-
-export {
-    // Existing render functions
-    renderDashboardView,
-    renderTrendsView,
-    renderInsightsView,
-    renderHistoryView,
-    renderItemsView,
-    renderRecentScansView,
-    renderReportsView,
-    renderStatementScanView,
-    // Story 14c-refactor.22c: New render functions
-    renderAlertsView,
-    renderSettingsView,
-    renderTransactionEditorView,
-    renderBatchCaptureView,
-    renderBatchReviewView,
-    // Story 14c-refactor.22c: Unified switch function
-    renderViewSwitch,
-} from './viewRenderers';
-
-// =============================================================================
 // Overlays (Story 14c-refactor.22d)
 // =============================================================================
 
 export { AppOverlays } from './AppOverlays';
 export type { AppOverlaysProps } from './AppOverlays';
 
-// View Renderer Props Types (Story 14c-refactor.22b, 14c-refactor.22c)
-export type {
-    // Existing props types
-    RenderDashboardViewProps,
-    RenderTrendsViewProps,
-    RenderInsightsViewProps,
-    RenderHistoryViewProps,
-    RenderItemsViewProps,
-    RenderRecentScansViewProps,
-    RenderReportsViewProps,
-    RenderStatementScanViewProps,
-    // Story 14c-refactor.22c: New props types
-    RenderAlertsViewProps,
-    RenderSettingsViewProps,
-    RenderTransactionEditorViewProps,
-    RenderBatchCaptureViewProps,
-    RenderBatchReviewViewProps,
-    // Story 14c-refactor.22c: Unified types
-    ViewRenderProps,
-    ViewRenderPropsMap,
-} from './viewRenderers';
+// Story 15b-0b: viewRenderers re-exports REMOVED to break 3 circular deps.
+// Import render functions directly from ./viewRenderers instead of this barrel.

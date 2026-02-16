@@ -10,7 +10,7 @@ import {
   calculateMedian,
   calculateBasicStats,
   findMostFrequent,
-} from '../../../src/utils/statisticsUtils';
+} from '@features/analytics/utils/statisticsUtils';
 
 describe('calculateMedian', () => {
   it('returns 0 for empty array', () => {

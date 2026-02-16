@@ -60,7 +60,8 @@ const mockHookData = {
 // =============================================================================
 
 // Story 14e-25b.2: Mock useDashboardViewData hook
-vi.mock('../../../src/views/DashboardView/useDashboardViewData', () => ({
+// Story 15b-1b: Mock targets canonical path (DashboardView.tsx imports ./useDashboardViewData directly)
+vi.mock('../../../src/features/dashboard/views/DashboardView/useDashboardViewData', () => ({
   useDashboardViewData: vi.fn(() => mockHookData),
 }));
 
@@ -660,7 +661,7 @@ describe('DashboardView', () => {
 
       fireEvent.click(screen.getByText(tx.alias!));
 
-      expect(onEditTransaction).toHaveBeenCalled();
+      expect(onEditTransaction).toHaveBeenCalledWith(tx);
     });
   });
 
@@ -817,7 +818,9 @@ describe('DashboardView', () => {
       fireEvent.click(screen.getByTestId('view-all-link'));
 
       // Story 14e-25d: DashboardView calls useHistoryNavigation().handleNavigateToHistory
-      expect(mockHandleNavigateToHistory).toHaveBeenCalled();
+      expect(mockHandleNavigateToHistory).toHaveBeenCalledWith(
+        expect.objectContaining({ temporal: expect.objectContaining({ level: 'month' }) })
+      );
     });
   });
 });

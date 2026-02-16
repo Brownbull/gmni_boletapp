@@ -11,7 +11,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import React from 'react'
-import { SubcategoryMappingsList } from '../../../src/components/SubcategoryMappingsList'
+import { SubcategoryMappingsList } from '@features/settings/components/SubcategoryMappingsList'
 import type { SubcategoryMapping } from '../../../src/types/subcategoryMapping'
 import { Timestamp } from 'firebase/firestore'
 

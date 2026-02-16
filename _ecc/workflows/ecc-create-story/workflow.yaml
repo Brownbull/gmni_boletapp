@@ -1,6 +1,6 @@
 # ECC-Enhanced Story Creation Workflow
 name: ecc-create-story
-description: "Story creation using ECC agents orchestrated by ECC Orchestrator - Planner + Architect for technical analysis"
+description: "Adaptive story creation — classifies complexity, spawns only needed agents"
 author: "BMad"
 
 # ECC Integration - Orchestrator Configuration
@@ -8,30 +8,66 @@ ecc_orchestration:
   enabled: true
   orchestrator: "ECC Orchestrator"
 
+  # Adaptive classification tiers (cascade — first match wins)
+  classification:
+    trivial:
+      criteria: "structural move/rename + known pattern + ≤4 tasks + ≤5 files"
+      agents: []  # orchestrator generates story directly
+      description: "No subagents — orchestrator handles analysis and story generation"
+    simple:
+      criteria: "≤4 tasks + ≤8 files + (known pattern OR structural move)"
+      agents: ["planner"]
+      description: "Planner only — architect skipped, orchestrator generates file spec + ACs"
+    standard:
+      criteria: "default tier when no other tier matches"
+      agents: ["planner", "architect"]
+      description: "Full analysis — planner + architect"
+    complex:
+      criteria: "new feature OR >6 tasks OR >10 files OR (database + auth)"
+      agents: ["planner", "architect"]
+      optional_agents: ["database-reviewer", "security-reviewer"]
+      description: "Full analysis + optional parallel specialized reviewers"
+
   # ECC agents used in this workflow
   agents:
     planner:
       subagent_type: "everything-claude-code:planner"
+      model: "sonnet"
+      max_turns: 5
       purpose: "Analyze requirements, identify risks, plan implementation approach"
     architect:
       subagent_type: "everything-claude-code:architect"
+      model_standard: "sonnet"
+      model_complex: "opus"
+      max_turns: 5
       purpose: "Technical design, pattern recommendations, dependency analysis"
     database-reviewer:
       subagent_type: "everything-claude-code:database-reviewer"
+      model: "sonnet"
+      max_turns: 3
       purpose: "Schema/query analysis for stories involving database changes"
     security-reviewer:
       subagent_type: "everything-claude-code:security-reviewer"
+      model: "sonnet"
+      max_turns: 3
       purpose: "Security considerations for stories involving auth or sensitive data"
 
-  # Sequential with parallel option
-  sequence: "planner → architect → (parallel: database-reviewer + security-reviewer if needed)"
+  # Agent output constraints
+  output_constraints:
+    planner: "max 80 lines, structured tables, no code snippets"
+    architect: "max 80 lines, structured tables, no code snippets"
+    database-reviewer: "max 40 lines"
+    security-reviewer: "max 40 lines"
 
-  # Optional parallel technical review
-  parallel_phases:
-    technical_review:
-      agents: ["database-reviewer", "security-reviewer"]
-      condition: "story involves database changes or auth/sensitive data"
-      description: "Parallel specialized review for complex stories"
+  # Codebase context pre-loading
+  context_preload:
+    enabled: true
+    description: "Read relevant source files ONCE in Step 1, pass to all agents — agents MUST NOT read files themselves"
+
+  # Auto-proceed mode
+  auto_proceed:
+    enabled: true
+    pause_points: ["Step 1 (no epics found)"]
 
 # Project Knowledge Integration (replaces Atlas - migrated 2026-02-05)
 project_knowledge:
@@ -82,6 +118,13 @@ knowledge_cache_files:
   - "_ecc/knowledge/code-review-patterns.md"
   - ".claude/rules/testing.md"
   - "docs/architecture/firestore-patterns.md"
+
+# Cost tracking (mandatory)
+cost_tracking:
+  enabled: true
+  command: 'workflow-cost --csv --stats --workflow "ecc-create-story" --story "{{story_key}}"'
+  step: "7"
+  mandatory: true
 
 # Workflow components
 installed_path: "{project-root}/_ecc/workflows/ecc-create-story"

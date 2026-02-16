@@ -3,9 +3,7 @@
  *
  * Main dashboard with spending summaries, recent transactions, and quick actions.
  * Story 15-4e: Feature module creation (Phase 4).
- *
- * Note: DashboardView (3,379 lines) remains in src/views/ for now.
- * Phase 5 (story 15-5b) will decompose the mega-view into this module.
+ * Story 15b-1b: DashboardView consolidated from src/views/DashboardView/
  */
 
-// Phase 5 will add: components, hooks, utils extracted from DashboardView
+export * from './views';

@@ -1,14 +1,15 @@
 /**
- * SettingsView Module
- * Story 14e-25c.1: SettingsView owns data via useSettingsViewData
+ * SettingsView Re-export Shim
+ * Story 15b-1j: Backward compatibility for src/views/SettingsView consumers
  *
- * Re-exports the component and hook for external use.
+ * Consumers: App.tsx, viewRenderers.tsx, viewRenderers.test.tsx
+ * Canonical location: src/features/settings/views/SettingsView/
  */
 
-export { SettingsView, default } from './SettingsView';
-export type { SettingsViewProps, SettingsViewTestOverrides } from './SettingsView';
+export { SettingsView, default } from '@features/settings/views/SettingsView';
+export type { SettingsViewProps, SettingsViewTestOverrides } from '@features/settings/views/SettingsView';
 
-export { useSettingsViewData } from './useSettingsViewData';
+export { useSettingsViewData } from '@features/settings/views/SettingsView';
 export type {
     UseSettingsViewDataReturn,
     SettingsViewData,
@@ -21,4 +22,4 @@ export type {
     AccountActions,
     MappingOperations,
     TrustedMerchantOperations,
-} from './useSettingsViewData';
+} from '@features/settings/views/SettingsView';

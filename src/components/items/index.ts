@@ -1,14 +1,10 @@
 /**
- * Items Components Barrel Export
- *
- * Story 14.31: Items History View
- * Epic 14: Core Implementation
+ * Re-export shim for backward compatibility.
+ * Canonical location: @features/items/components/
+ * Story: 15b-1e
  */
-
-export { ItemCard, type ItemCardProps, type ItemCardFormatters, type ItemCardTheme } from './ItemCard';
-export { AggregatedItemCard, type AggregatedItemCardProps, type AggregatedItemCardFormatters, type AggregatedItemCardTheme } from './AggregatedItemCard';
-export { ItemCategoryFilterBar } from './ItemCategoryFilterBar';
-// Session 2: IconFilterBar for item category filtering
-export { ItemIconFilterBar } from './ItemIconFilterBar';
-// Story 14.38: Item view toggle for grouped vs original order
-export { ItemViewToggle, type ItemViewMode, type ItemViewToggleProps } from './ItemViewToggle';
+export { ItemCard, type ItemCardProps, type ItemCardFormatters, type ItemCardTheme } from '@features/items/components/ItemCard';
+export { AggregatedItemCard, type AggregatedItemCardProps, type AggregatedItemCardFormatters, type AggregatedItemCardTheme } from '@features/items/components/AggregatedItemCard';
+export { ItemCategoryFilterBar } from '@features/items/components/ItemCategoryFilterBar';
+export { ItemIconFilterBar } from '@features/items/components/ItemIconFilterBar';
+export { ItemViewToggle, type ItemViewMode, type ItemViewToggleProps } from '@features/items/components/ItemViewToggle';

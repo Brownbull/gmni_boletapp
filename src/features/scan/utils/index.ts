@@ -12,3 +12,12 @@ export {
     type ConflictingTransaction,
     type ConflictReason,
 } from './conflictDetection';
+
+export {
+    validateTotal,
+    calculateItemsSum,
+    calculateDiscrepancy,
+    needsTotalValidation,
+    TOTAL_DISCREPANCY_THRESHOLD,
+    type TotalValidationResult,
+} from './totalValidation';

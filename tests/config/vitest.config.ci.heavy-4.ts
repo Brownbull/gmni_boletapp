@@ -10,6 +10,6 @@ import { createHeavyGroupConfig } from './vitest.config.ci.base'
  * - pendingScanStorage.test.ts (786 lines)
  */
 export default defineConfig(createHeavyGroupConfig('heavy-4', [
-  'tests/unit/utils/insightGenerators.test.ts',
+  'tests/unit/features/insights/utils/insightGenerators.test.ts',
   'tests/unit/services/pendingScanStorage.test.ts',
 ]))

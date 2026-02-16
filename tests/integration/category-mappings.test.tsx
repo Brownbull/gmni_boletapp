@@ -11,7 +11,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { CategoryMappingsList, CategoryMappingsListProps } from '../../src/components/CategoryMappingsList';
+import { CategoryMappingsList, CategoryMappingsListProps } from '@features/settings/components/CategoryMappingsList';
 import { CategoryMapping } from '../../src/types/categoryMapping';
 import { Timestamp } from 'firebase/firestore';
 
