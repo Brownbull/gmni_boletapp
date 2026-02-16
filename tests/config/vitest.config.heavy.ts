@@ -10,22 +10,22 @@ import pkg from '../../package.json'
  * Same memory optimizations as vitest.config.ci.ts apply here.
  *
  * Tier 1 (1400-1700 lines each):
- * - tests/unit/hooks/useScanStateMachine.test.ts (1680 lines)
  * - tests/unit/components/Nav.test.tsx (1623 lines)
  * - tests/unit/features/insights/services/insightEngineService.test.ts (1439 lines)
  * - tests/unit/features/insights/utils/insightGenerators.test.ts (1432 lines)
  *
  * Tier 2 (800-1100 lines each):
  * - tests/unit/csvExport.test.ts (1061 lines)
+ * - tests/unit/features/batch-review/hooks/useBatchReviewHandlers.test.ts (901 lines)
  * - tests/unit/analytics/DrillDownCard.test.tsx (872 lines)
  * - tests/unit/analytics/DrillDownGrid.test.tsx (829 lines)
  * - tests/unit/components/session/SessionComplete.test.tsx (799 lines)
  * - tests/unit/services/pendingScanStorage.test.ts (786 lines)
  * - tests/unit/analytics/CategoryBreadcrumb.test.tsx (772 lines)
  *
- * Tier 3 (500-700 lines each - Story 14.30.8):
- * - tests/unit/hooks/useBatchProcessing.test.ts (646 lines)
- * - tests/unit/hooks/useBatchReview.test.ts (592 lines)
+ * Tier 3 (500-700 lines each - Story 14.30.8, paths updated Story 15b):
+ * - tests/unit/features/batch-review/hooks/useBatchProcessing.test.ts (659 lines)
+ * - tests/unit/features/batch-review/hooks/useBatchReview.test.ts (592 lines)
  *
  * Key optimizations:
  * - fileParallelism: false - Process one file at a time to prevent module cache bloat
@@ -55,20 +55,20 @@ export default defineConfig({
     // Include all heavy test files (Tier 1 + Tier 2 + Tier 3)
     include: [
       // Tier 1: 1400-1700 lines
-      'tests/unit/hooks/useScanStateMachine.test.ts',
       'tests/unit/components/Nav.test.tsx',
       'tests/unit/features/insights/services/insightEngineService.test.ts',
       'tests/unit/features/insights/utils/insightGenerators.test.ts',
       // Tier 2: 800-1100 lines
       'tests/unit/csvExport.test.ts',
+      'tests/unit/features/batch-review/hooks/useBatchReviewHandlers.test.ts',
       'tests/unit/analytics/DrillDownCard.test.tsx',
       'tests/unit/analytics/DrillDownGrid.test.tsx',
       'tests/unit/components/session/SessionComplete.test.tsx',
       'tests/unit/services/pendingScanStorage.test.ts',
       'tests/unit/analytics/CategoryBreadcrumb.test.tsx',
-      // Tier 3: 500-700 lines (Story 14.30.8)
-      'tests/unit/hooks/useBatchProcessing.test.ts',
-      'tests/unit/hooks/useBatchReview.test.ts',
+      // Tier 3: 500-700 lines (Story 14.30.8, paths updated Story 15b)
+      'tests/unit/features/batch-review/hooks/useBatchProcessing.test.ts',
+      'tests/unit/features/batch-review/hooks/useBatchReview.test.ts',
     ],
     exclude: [
       '**/node_modules/**',

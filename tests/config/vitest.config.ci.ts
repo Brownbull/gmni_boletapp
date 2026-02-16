@@ -22,10 +22,10 @@ import pkg from '../../package.json'
  * - Each shard collects coverage, merged in merge-coverage job
  *
  * Heavy tests (excluded, run separately):
- * - tests/unit/hooks/useScanStateMachine.test.ts (1680 lines)
  * - tests/unit/components/Nav.test.tsx (1623 lines)
  * - tests/unit/features/insights/services/insightEngineService.test.ts (1439 lines)
  * - tests/unit/features/insights/utils/insightGenerators.test.ts (1432 lines)
+ * - tests/unit/features/batch-review/hooks/useBatchReviewHandlers.test.ts (901 lines)
  *
  * @see vitest.config.heavy.ts for heavy test configuration
  * @see Story 14.30.6: Heavy test isolation
@@ -46,13 +46,13 @@ export default defineConfig({
       '**/node_modules/**',
       '**/dist/**',
       // Heavy test files - run in dedicated jobs (vitest.config.heavy.ts)
-      // Tier 1: 1400-1700 lines each (original 4)
-      'tests/unit/hooks/useScanStateMachine.test.ts',
+      // Tier 1: 1400-1700 lines each
       'tests/unit/components/Nav.test.tsx',
       'tests/unit/features/insights/services/insightEngineService.test.ts',
       'tests/unit/features/insights/utils/insightGenerators.test.ts',
-      // Tier 2: 800-1100 lines each (additional 6)
+      // Tier 2: 800-1100 lines each
       'tests/unit/csvExport.test.ts',
+      'tests/unit/features/batch-review/hooks/useBatchReviewHandlers.test.ts',
       'tests/unit/analytics/DrillDownCard.test.tsx',
       'tests/unit/analytics/DrillDownGrid.test.tsx',
       'tests/unit/components/session/SessionComplete.test.tsx',
