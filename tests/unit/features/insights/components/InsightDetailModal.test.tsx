@@ -13,10 +13,10 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '../../../setup/test-utils';
+import { render, screen, fireEvent } from '../../../../setup/test-utils';
 import { InsightDetailModal } from '@features/insights/components/InsightDetailModal';
-import { InsightRecord } from '../../../../src/types/insight';
-import { createMockTimestamp } from '../../../helpers';
+import { InsightRecord } from '../../../../../src/types/insight';
+import { createMockTimestamp } from '../../../../helpers';
 
 const defaultTranslations: Record<string, string> = {
   close: 'Close',

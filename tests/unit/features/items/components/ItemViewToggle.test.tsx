@@ -12,7 +12,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ItemViewToggle, type ItemViewMode } from '../../../../src/components/items/ItemViewToggle';
+import { ItemViewToggle, type ItemViewMode } from '@features/items/components/ItemViewToggle';
 
 describe('ItemViewToggle', () => {
   const mockOnViewChange = vi.fn();

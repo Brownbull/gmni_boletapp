@@ -15,7 +15,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 // Story 14d.5a: Mock imageUtils for thumbnail generation
-vi.mock('../../../src/utils/imageUtils', () => ({
+vi.mock('@features/batch-review/utils/imageUtils', () => ({
   processFilesForCapture: vi.fn(async () => []),
   generateThumbnail: vi.fn(async () => 'data:image/jpeg;base64,mock'),
   readFileAsDataUrl: vi.fn(async () => 'data:image/jpeg;base64,mock'),
@@ -46,7 +46,7 @@ vi.mock('@features/scan/store', () => ({
 
 // Story 14e-25c.2: Mock navigation store for BatchCaptureView
 const mockNavigateBack = vi.fn()
-vi.mock('../../../src/shared/stores/useNavigationStore', () => ({
+vi.mock('@/shared/stores/useNavigationStore', () => ({
   useNavigation: () => ({
     navigateBack: mockNavigateBack,
     navigateToView: vi.fn(),
@@ -55,7 +55,7 @@ vi.mock('../../../src/shared/stores/useNavigationStore', () => ({
 }))
 
 // Import after mocking
-import { BatchCaptureView } from '../../../src/views/BatchCaptureView'
+import { BatchCaptureView } from '@features/batch-review/views/BatchCaptureView'
 
 // Mock translation function
 const t = (key: string) => {

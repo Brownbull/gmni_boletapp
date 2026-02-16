@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { Transaction } from '../../../src/types/transaction';
+import type { Transaction } from '@/types/transaction';
 import {
   getWeekStart,
   getWeekEnd,

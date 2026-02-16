@@ -14,8 +14,8 @@ import {
   filterAirlocksByTemporal,
   type AirlockTemporalFilterState,
 } from '@features/insights/components/AirlockTemporalFilter';
-import { AirlockRecord } from '../../../../src/types/airlock';
-import { createMockTimestamp } from '../../../helpers';
+import { AirlockRecord } from '../../../../../src/types/airlock';
+import { createMockTimestamp } from '../../../../helpers';
 
 // ============================================================================
 // Test Helpers

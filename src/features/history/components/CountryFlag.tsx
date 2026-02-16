@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { getCountryFlag } from '../utils/countryFlags';
+import { getCountryFlag } from '@/utils/countryFlags';
 
 export type FlagSize = 'small' | 'medium' | 'large';
 

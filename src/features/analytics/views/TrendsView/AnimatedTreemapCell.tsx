@@ -1,13 +1,13 @@
 // Story 15-5b: Extracted from TrendsView.tsx
 import React, { useState, useMemo, useEffect } from 'react';
 import { Receipt, Package } from 'lucide-react';
-import { getCategoryColorsAuto } from '../../config/categoryColors';
-import { getCategoryEmoji } from '../../utils/categoryEmoji';
-import { translateCategory, translateStoreCategoryGroup, translateItemCategoryGroup, getStoreCategoryGroupEmoji, getItemCategoryGroupEmoji, getItemCategoryEmoji } from '../../utils/categoryTranslations';
-import { useCountUp } from '../../hooks/useCountUp';
+import { getCategoryColorsAuto } from '@/config/categoryColors';
+import { getCategoryEmoji } from '@/utils/categoryEmoji';
+import { translateCategory, translateStoreCategoryGroup, translateItemCategoryGroup, getStoreCategoryGroupEmoji, getItemCategoryGroupEmoji, getItemCategoryEmoji } from '@/utils/categoryTranslations';
+import { useCountUp } from '@/hooks/useCountUp';
 import { CircularProgress } from './animationComponents';
 import type { CategoryData, DonutViewMode } from './types';
-import type { StoreCategoryGroup, ItemCategoryGroup } from '../../config/categoryColors';
+import type { StoreCategoryGroup, ItemCategoryGroup } from '@/config/categoryColors';
 
 /** Animated treemap cell component with count-up effect (matches Dashboard design) */
 export const AnimatedTreemapCell: React.FC<{

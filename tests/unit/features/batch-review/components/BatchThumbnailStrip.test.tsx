@@ -9,8 +9,8 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { BatchThumbnailStrip } from '../../../src/components/batch/BatchThumbnailStrip';
-import type { CapturedImage } from '../../../src/hooks/useBatchCapture';
+import { BatchThumbnailStrip } from '@features/batch-review/components/BatchThumbnailStrip';
+import type { CapturedImage } from '@features/batch-review/hooks/useBatchCapture';
 
 // Mock translation function
 const t = (key: string) => {

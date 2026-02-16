@@ -12,7 +12,7 @@ import {
   getGenerator,
   getGeneratorsByCategory,
 } from '@features/insights/utils/insightGenerators';
-import { Transaction, TransactionItem } from '../../../src/types/transaction';
+import { Transaction, TransactionItem } from '../../../../../src/types/transaction';
 
 // ============================================================================
 // TEST FIXTURES

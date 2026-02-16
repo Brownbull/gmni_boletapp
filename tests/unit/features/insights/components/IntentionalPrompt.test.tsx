@@ -18,7 +18,7 @@ import {
   IntentionalPrompt,
   shouldShowIntentionalPrompt,
 } from '@features/insights/components/IntentionalPrompt';
-import type { InsightRecord } from '../../../../src/types/insight';
+import type { InsightRecord } from '../../../../../src/types/insight';
 
 // ============================================================================
 // Test Data

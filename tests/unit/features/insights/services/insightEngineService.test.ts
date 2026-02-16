@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { createMockTimestamp, createMockTimestampDaysAgo } from '../../helpers';
+import { createMockTimestamp, createMockTimestampDaysAgo } from '../../../../helpers';
 import {
   generateInsightForTransaction,
   calculateUserPhase,
@@ -28,15 +28,15 @@ import {
   getCategoryTotal,
   getLastWeekTotal,
 } from '@features/insights/services/insightEngineService';
-import type { Transaction } from '../../../src/types/transaction';
+import type { Transaction } from '../../../../../src/types/transaction';
 import type {
   Insight,
   InsightRecord,
   UserInsightProfile,
   LocalInsightCache,
   UserPhase,
-} from '../../../src/types/insight';
-import { INSIGHT_CACHE_KEY, PHASE_THRESHOLDS } from '../../../src/types/insight';
+} from '../../../../../src/types/insight';
+import { INSIGHT_CACHE_KEY, PHASE_THRESHOLDS } from '../../../../../src/types/insight';
 
 // ============================================================================
 // Test Data Factories

@@ -9,14 +9,14 @@
  * - isCurrentPeriod: Check if period matches today
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import type { TimePeriod, CurrentPeriod } from '@/views/TrendsView/types';
+import type { TimePeriod, CurrentPeriod } from '@features/analytics/views/TrendsView/types';
 
 import {
   getPreviousPeriodState,
   getNextPeriodState,
   getCurrentDatePeriod,
   isCurrentPeriod,
-} from '@/views/TrendsView/periodNavigationHelpers';
+} from '@features/analytics/views/TrendsView/periodNavigationHelpers';
 
 afterEach(() => {
   vi.useRealTimers();

@@ -8,7 +8,7 @@
  */
 import { useState, useCallback, useEffect } from 'react';
 import type { DonutViewMode } from './types';
-import type { DrillDownPath } from '../../types/navigation';
+import type { DrillDownPath } from '@/types/navigation';
 
 interface UseDonutDrillDownProps {
     viewMode: DonutViewMode;

@@ -8,8 +8,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { CreditWarningDialog } from '../../../../src/components/batch/CreditWarningDialog';
-import type { CreditCheckResult } from '../../../../src/services/creditService';
+import { CreditWarningDialog } from '@features/batch-review/components/CreditWarningDialog';
+import type { CreditCheckResult } from '@/services/creditService';
 
 // Mock translation function - keys must match actual component usage
 const mockT = (key: string) => {

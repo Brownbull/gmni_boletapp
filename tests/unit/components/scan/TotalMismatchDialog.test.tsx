@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { TotalMismatchDialog } from '../../../../src/components/scan/TotalMismatchDialog';
-import { TotalValidationResult } from '../../../../src/utils/totalValidation';
+import { TotalValidationResult } from '@features/scan/utils/totalValidation';
 
 describe('TotalMismatchDialog', () => {
   const defaultValidationResult: TotalValidationResult = {

@@ -15,8 +15,8 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Tag, Check } from 'lucide-react';
-import type { Language } from '../../utils/translations';
-import { translateItemGroup } from '../../utils/categoryTranslations';
+import type { Language } from '@/utils/translations';
+import { translateItemGroup } from '@/utils/categoryTranslations';
 
 // ============================================================================
 // Types

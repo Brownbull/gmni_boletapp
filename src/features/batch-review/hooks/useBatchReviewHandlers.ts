@@ -36,7 +36,7 @@ import { batchReviewActions, useBatchReviewStore } from '../store';
 import { useScanStore } from '@/features/scan/store';
 
 // Batch processing utilities
-import { createBatchReceiptsFromResults } from '@/hooks/useBatchReview';
+import { createBatchReceiptsFromResults } from './useBatchReview';
 
 // Existing handler utilities (pure functions to preserve)
 import { buildTransactionWithThumbnail } from '../handlers/utils';
@@ -57,7 +57,7 @@ import type {
   BatchProcessingController,
 } from '../handlers/types';
 import type { ReceiptType } from '@/services/gemini';
-import type { ProcessingResult } from '@/services/batchProcessingService';
+import type { ProcessingResult } from '@features/batch-review/services/batchProcessingService';
 
 // =============================================================================
 // Extended Batch Processing Interface (Story 14e-29b)

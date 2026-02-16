@@ -18,13 +18,13 @@
  */
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { Transaction } from '../types/transaction';
+import { Transaction } from '@/types/transaction';
 // Story 14d.5c: Import BatchReceipt from types file to avoid circular dependency
-import type { BatchReceipt, BatchReceiptStatus } from '../types/batchReceipt';
+import type { BatchReceipt, BatchReceiptStatus } from '@/types/batchReceipt';
 // Re-export for backwards compatibility
 export type { BatchReceipt, BatchReceiptStatus };
-import { ImageProcessingState, ProcessingResult } from '../services/batchProcessingService';
-import { calculateConfidence, QUICK_SAVE_CONFIDENCE_THRESHOLD } from '../utils/confidenceCheck';
+import { ImageProcessingState, ProcessingResult } from '@features/batch-review/services/batchProcessingService';
+import { calculateConfidence, QUICK_SAVE_CONFIDENCE_THRESHOLD } from '@/utils/confidenceCheck';
 
 /**
  * Story 14d.5c + 14e-11: Minimal adapter interface for scan store integration.

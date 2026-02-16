@@ -109,14 +109,40 @@ export type {
 } from './handlers';
 
 // =============================================================================
-// Hooks (Story 14e-29a, 14e-34b) - Consolidated handler hook and atomic actions
+// Hooks (Story 14e-29a, 14e-34b, 15b-1f)
 // =============================================================================
 
-export { useBatchReviewHandlers, useAtomicBatchActions, atomicBatchActions } from './hooks';
-export type { BatchReviewHandlersProps, BatchReviewHandlers, AtomicBatchActions, AtomicBatchActionsType } from './hooks';
+export {
+  useBatchReviewHandlers, useAtomicBatchActions, atomicBatchActions,
+  // Story 15b-1f: Consolidated from src/hooks/
+  useBatchCapture, MAX_BATCH_CAPTURE_IMAGES,
+  useBatchReview, createBatchReceiptsFromResults,
+  useBatchProcessing,
+  useBatchSession,
+} from './hooks';
+export type {
+  BatchReviewHandlersProps, BatchReviewHandlers, AtomicBatchActions, AtomicBatchActionsType,
+  // Story 15b-1f: Consolidated types
+  CapturedImage, UseBatchCaptureReturn,
+  BatchReceipt, BatchReceiptStatus, UseBatchReviewReturn, UseBatchReviewOptions,
+  BatchProcessingCallbacks, UseBatchProcessingReturn,
+  BatchSession, UseBatchSessionReturn,
+} from './hooks';
 
 // =============================================================================
-// Components (Story 14e-15)
+// Views (Story 15b-1f)
+// =============================================================================
+
+export * from './views';
+
+// =============================================================================
+// Services (Story 15b-3: Moved from src/services/)
+// =============================================================================
+
+export * from './services';
+
+// =============================================================================
+// Components (Story 14e-15, 15b-1f)
 // =============================================================================
 
 export {
@@ -127,6 +153,12 @@ export {
   ProcessingState,
   ReviewingState,
   EmptyState,
+  // Story 15b-1f: Consolidated from src/components/batch/
+  BatchCaptureUI,
+  BatchDiscardDialog,
+  CreditWarningDialog,
+  BatchProcessingView,
+  BatchThumbnailStrip,
 } from './components';
 
 export type {
@@ -138,4 +170,9 @@ export type {
   ProcessingStateProps,
   ReviewingStateProps,
   EmptyStateProps,
+  // Story 15b-1f: Consolidated types
+  BatchCaptureUIProps,
+  CreditWarningDialogProps,
+  BatchProcessingViewProps,
+  BatchThumbnailStripProps,
 } from './components';

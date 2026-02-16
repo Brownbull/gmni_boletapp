@@ -9,8 +9,8 @@
 
 import React from 'react';
 import { Receipt, Package } from 'lucide-react';
-import { useCountUp } from '../../hooks/useCountUp';
-import { formatCurrency } from '../../utils/currency';
+import { useCountUp } from '@/hooks/useCountUp';
+import { formatCurrency } from '@/utils/currency';
 
 // ============================================================================
 // CircularProgress — re-exported from shared component (Story 15-TD-6)

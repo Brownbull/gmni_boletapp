@@ -1,39 +1,39 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Trash2, Plus, Check, ChevronDown, ChevronUp, BookMarked, X, Camera, RefreshCw, ChevronLeft, Zap, Info } from 'lucide-react';
 // Profile components removed - header simplified to match mockup
-import { formatCreditsDisplay } from '../services/userCreditsService';
-import { CategoryBadge } from '../components/CategoryBadge';
-import { CategoryCombobox } from '../components/CategoryCombobox';
-import { ImageViewer } from '../components/ImageViewer';
-import { CategoryLearningPrompt } from '../components/CategoryLearningPrompt';
-import { SubcategoryLearningPrompt } from '../components/SubcategoryLearningPrompt';
-import { LearnMerchantDialog } from '../components/dialogs/LearnMerchantDialog';
-import { LocationSelect } from '../components/LocationSelect';
-import { DateTimeTag } from '../components/DateTimeTag';
-import { CurrencyTag } from '../components/CurrencyTag';
+import { formatCreditsDisplay } from '@/services/userCreditsService';
+import { CategoryBadge } from '@features/transaction-editor/components/CategoryBadge';
+import { CategoryCombobox } from '@features/transaction-editor/components/CategoryCombobox';
+import { ImageViewer } from '@/components/ImageViewer';
+import { CategoryLearningPrompt } from '@/components/CategoryLearningPrompt';
+import { SubcategoryLearningPrompt } from '@/components/SubcategoryLearningPrompt';
+import { LearnMerchantDialog } from '@/components/dialogs/LearnMerchantDialog';
+import { LocationSelect } from '@/components/LocationSelect';
+import { DateTimeTag } from '@features/transaction-editor/components/DateTimeTag';
+import { CurrencyTag } from '@features/transaction-editor/components/CurrencyTag';
 import { DEFAULT_CURRENCY } from '@/utils/currency';
-import { StoreTypeSelector } from '../components/StoreTypeSelector';
-import { AdvancedScanOptions } from '../components/AdvancedScanOptions';
-import { celebrateSuccess } from '../utils/confetti';
-import { StoreCategory, CategorySource, ItemCategory, MerchantSource } from '../types/transaction';
-import { ReceiptType } from '../services/gemini';
-import { SupportedCurrency } from '../services/userPreferencesService';
+import { StoreTypeSelector } from '@features/transaction-editor/components/StoreTypeSelector';
+import { AdvancedScanOptions } from '@features/transaction-editor/components/AdvancedScanOptions';
+import { celebrateSuccess } from '@/utils/confetti';
+import { StoreCategory, CategorySource, ItemCategory, MerchantSource } from '@/types/transaction';
+import { ReceiptType } from '@/services/gemini';
+import { SupportedCurrency } from '@/services/userPreferencesService';
 // Story 9.10: Pending scan types for visual indicator
-import { PendingScan, UserCredits } from '../types/scan';
+import { PendingScan, UserCredits } from '@/types/scan';
 // Story 9.12: Language type for translations
-import type { Language } from '../utils/translations';
+import type { Language } from '@/utils/translations';
 // Story 14.22: Category translations for item groups
-import { translateItemCategoryGroup, getItemCategoryGroupEmoji } from '../utils/categoryTranslations';
+import { translateItemCategoryGroup, getItemCategoryGroupEmoji } from '@/utils/categoryTranslations';
 // Story 14.22: Category colors and emoji for thumbnail badge
-import { getCategoryPillColors, getItemCategoryGroup, getItemGroupColors } from '../config/categoryColors';
-import { getCategoryEmoji } from '../utils/categoryEmoji';
+import { getCategoryPillColors, getItemCategoryGroup, getItemGroupColors } from '@/config/categoryColors';
+import { getCategoryEmoji } from '@/utils/categoryEmoji';
 // Story 14.22: Normalize item categories for consistent group mapping
-import { normalizeItemCategory } from '../utils/categoryNormalizer';
+import { normalizeItemCategory } from '@/utils/categoryNormalizer';
 // Story 14.38: Item view toggle
-import { ItemViewToggle, type ItemViewMode } from '../components/items/ItemViewToggle';
+import { ItemViewToggle, type ItemViewMode } from '@/components/items/ItemViewToggle';
 // Story 11.3: Animated item reveal
-import { useStaggeredReveal } from '../hooks/useStaggeredReveal';
-import { AnimatedItem } from '../components/AnimatedItem';
+import { useStaggeredReveal } from '@/hooks/useStaggeredReveal';
+import { AnimatedItem } from '@/components/AnimatedItem';
 // Story 14.15: ScanStatusIndicator removed - replaced by ScanOverlay in App.tsx
 
 /**

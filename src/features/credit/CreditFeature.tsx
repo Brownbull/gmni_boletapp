@@ -27,9 +27,9 @@ import {
 } from './handlers';
 import type { CreditCheckResult } from '@/services/creditService';
 import { checkCreditSufficiency } from '@/services/creditService';
-import { CreditWarningDialog } from '@/components/batch/CreditWarningDialog';
+import { CreditWarningDialog } from '@features/batch-review/components/CreditWarningDialog';
 // Story 14e-39: Trust prompt imports
-import { TrustMerchantPrompt } from '@/components/TrustMerchantPrompt';
+import { TrustMerchantPrompt } from '@features/credit/components/TrustMerchantPrompt';
 import type { TrustPromptEligibility } from '@/types/trust';
 
 // =============================================================================

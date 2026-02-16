@@ -15,8 +15,8 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
-import { ITEM_GROUP_TRANSLATIONS, translateItemGroup } from '../utils/categoryTranslations';
-import type { Language } from '../utils/translations';
+import { ITEM_GROUP_TRANSLATIONS, translateItemGroup } from '@/utils/categoryTranslations';
+import type { Language } from '@/utils/translations';
 
 interface CategoryComboboxProps {
     /** Currently selected category value (English canonical) */

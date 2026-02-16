@@ -16,17 +16,17 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import type { User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
-import type { Transaction } from '../../../../src/types/transaction';
-import type { UserPreferences } from '../../../../src/services/userPreferencesService';
-import type { UseScanHandlersProps } from '../../../../src/hooks/app/useScanHandlers';
+import type { Transaction } from '@/types/transaction';
+import type { UserPreferences } from '@/services/userPreferencesService';
+import type { UseScanHandlersProps } from '@features/scan/hooks/useScanHandlers';
 import type {
     QuickSaveDialogData,
     CurrencyMismatchDialogData,
     TotalMismatchDialogData,
-} from '../../../../src/types/scanStateMachine';
+} from '@/types/scanStateMachine';
 
 // Mock the firestore service module
-vi.mock('../../../../src/services/firestore', () => ({
+vi.mock('@/services/firestore', () => ({
     addTransaction: vi.fn(() => Promise.resolve('new-tx-id')),
 }));
 
@@ -49,7 +49,7 @@ vi.mock('@features/insights/services/insightEngineService', () => ({
 }));
 
 // Mock confidence check utility
-vi.mock('../../../../src/utils/confidenceCheck', () => ({
+vi.mock('@/utils/confidenceCheck', () => ({
     shouldShowQuickSave: vi.fn(() => true),
     calculateConfidence: vi.fn(() => 0.9),
 }));
@@ -84,10 +84,10 @@ vi.mock('@entities/transaction', async (importOriginal) => {
 });
 
 // Import after mocking
-import { useScanHandlers } from '../../../../src/hooks/app/useScanHandlers';
-import * as firestoreService from '../../../../src/services/firestore';
+import { useScanHandlers } from '@features/scan/hooks/useScanHandlers';
+import * as firestoreService from '@/services/firestore';
 import * as insightService from '@features/insights/services/insightEngineService';
-import * as confidenceCheck from '../../../../src/utils/confidenceCheck';
+import * as confidenceCheck from '@/utils/confidenceCheck';
 
 describe('useScanHandlers', () => {
     // Mock user and services

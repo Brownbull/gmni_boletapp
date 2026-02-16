@@ -17,7 +17,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import React from 'react';
 import { InsightCard } from '@features/insights/components/InsightCard';
 import { BuildingProfileCard } from '@features/insights/components/BuildingProfileCard';
-import { Insight } from '../../../../src/types/insight';
+import { Insight } from '../../../../../src/types/insight';
 
 // ============================================================================
 // Test Data

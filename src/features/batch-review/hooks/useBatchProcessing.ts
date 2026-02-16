@@ -19,10 +19,10 @@ import {
   ImageProcessingState,
   ProcessingResult,
   BatchProcessingOptions,
-} from '../services/batchProcessingService';
-import { Transaction } from '../types/transaction';
-import { ReceiptType } from '../services/gemini';
-import { DEFAULT_CURRENCY } from '../utils/currency';
+} from '@features/batch-review/services/batchProcessingService';
+import { Transaction } from '@/types/transaction';
+import { ReceiptType } from '@/services/gemini';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
 
 /**
  * Story 14d.5b: Callbacks for ScanContext integration.

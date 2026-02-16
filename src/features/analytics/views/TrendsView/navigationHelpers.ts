@@ -14,8 +14,8 @@ import {
     expandItemCategoryGroup,
     type StoreCategoryGroup,
     type ItemCategoryGroup,
-} from '../../config/categoryColors';
-import type { HistoryNavigationPayload, DrillDownPath } from '../../types/navigation';
+} from '@/config/categoryColors';
+import type { HistoryNavigationPayload, DrillDownPath } from '@/types/navigation';
 import type { DonutViewMode, TimePeriod, CurrentPeriod, CategoryData } from './types';
 
 /**

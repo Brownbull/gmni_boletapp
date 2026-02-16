@@ -11,15 +11,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ReportCarousel } from '@features/reports/components/ReportCarousel';
-import type { ReportCard as ReportCardType } from '../../../../src/types/report';
+import type { ReportCard as ReportCardType } from '@/types/report';
 
 // Mock useReducedMotion hook
-vi.mock('../../../../src/hooks/useReducedMotion', () => ({
+vi.mock('@/hooks/useReducedMotion', () => ({
   useReducedMotion: () => false,
 }));
 
 // Mock useSwipeNavigation hook
-vi.mock('../../../../src/hooks/useSwipeNavigation', () => ({
+vi.mock('@/hooks/useSwipeNavigation', () => ({
   useSwipeNavigation: ({ onSwipeLeft, onSwipeRight }: {
     onSwipeLeft?: () => void;
     onSwipeRight?: () => void;
@@ -215,7 +215,7 @@ describe('ReportCarousel', () => {
     });
 
     it('should work without animations when reduced motion is preferred', async () => {
-      vi.doMock('../../../../src/hooks/useReducedMotion', () => ({
+      vi.doMock('@/hooks/useReducedMotion', () => ({
         useReducedMotion: () => true,
       }));
 

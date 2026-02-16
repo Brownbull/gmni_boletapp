@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
-import { createMockTimestamp, createMockTimestampDaysAgo } from '../../helpers';
+import { createMockTimestamp, createMockTimestampDaysAgo } from '../../../../helpers';
 import {
   getOrCreateInsightProfile,
   getInsightProfile,
@@ -21,8 +21,8 @@ import {
   clearRecentInsights,
   resetInsightProfile,
 } from '@features/insights/services/insightProfileService';
-import type { UserInsightProfile, InsightRecord } from '../../../src/types/insight';
-import { MAX_RECENT_INSIGHTS } from '../../../src/types/insight';
+import type { UserInsightProfile, InsightRecord } from '../../../../../src/types/insight';
+import { MAX_RECENT_INSIGHTS } from '../../../../../src/types/insight';
 
 // Transaction mock for functions wrapped in runTransaction (TD-20)
 const mockTransaction = {

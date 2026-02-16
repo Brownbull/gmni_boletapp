@@ -1,11 +1,11 @@
 import React from 'react';
 import { BookMarked } from 'lucide-react';
 // Story 14.21: Use getCategoryPillColors for badges - always colorful regardless of fontColorMode
-import { getCategoryPillColors, getItemCategoryColors } from '../config/categoryColors';
-import { translateCategory, translateSubcategory, translateItemGroup, getItemCategoryEmoji } from '../utils/categoryTranslations';
-import { getCategoryEmoji } from '../utils/categoryEmoji';
-import type { CategorySource } from '../types/transaction';
-import type { Language } from '../utils/translations';
+import { getCategoryPillColors, getItemCategoryColors } from '@/config/categoryColors';
+import { translateCategory, translateSubcategory, translateItemGroup, getItemCategoryEmoji } from '@/utils/categoryTranslations';
+import { getCategoryEmoji } from '@/utils/categoryEmoji';
+import type { CategorySource } from '@/types/transaction';
+import type { Language } from '@/utils/translations';
 
 interface CategoryBadgeProps {
     category: string;

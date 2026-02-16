@@ -14,7 +14,7 @@
  */
 
 import Fuse from 'fuse.js';
-import type { FlattenedItem } from '../types/item';
+import type { FlattenedItem } from '@/types/item';
 import { filterAndGroupDuplicates } from '@/utils/duplicateGrouping';
 
 /**

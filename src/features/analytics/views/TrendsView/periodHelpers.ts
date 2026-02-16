@@ -7,8 +7,8 @@
  * and transaction filtering by time period.
  */
 
-import { formatCurrency } from '../../utils/currency';
-import type { Transaction } from '../../types/transaction';
+import { formatCurrency } from '@/utils/currency';
+import type { Transaction } from '@/types/transaction';
 import type { TimePeriod, CurrentPeriod } from './types';
 
 // ============================================================================

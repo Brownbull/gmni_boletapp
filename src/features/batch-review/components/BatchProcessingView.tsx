@@ -19,11 +19,11 @@
 
 import React, { useEffect, useCallback } from 'react';
 import { Check, X, Loader2, RefreshCw, Clock } from 'lucide-react';
-import { useBatchProcessing } from '../../hooks/useBatchProcessing';
-import { ImageProcessingState } from '../../services/batchProcessingService';
-import { formatCurrency as formatCurrencyFn } from '../../utils/currency';
-import type { Currency } from '../../types/settings';
-import type { ReceiptType } from '../../services/gemini';
+import { useBatchProcessing } from '../hooks/useBatchProcessing';
+import { ImageProcessingState } from '@features/batch-review/services/batchProcessingService';
+import { formatCurrency as formatCurrencyFn } from '@/utils/currency';
+import type { Currency } from '@/types/settings';
+import type { ReceiptType } from '@/services/gemini';
 
 export interface BatchProcessingViewProps {
   /** Images to process (base64 data URLs) */
@@ -42,7 +42,7 @@ export interface BatchProcessingViewProps {
   onComplete: (results: {
     successCount: number;
     failCount: number;
-    transactions: import('../../types/transaction').Transaction[];
+    transactions: import('@/types/transaction').Transaction[];
   }) => void;
   /** Called when user cancels */
   onCancel: () => void;

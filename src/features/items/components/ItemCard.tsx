@@ -16,14 +16,14 @@
 
 import React from 'react';
 import { Store } from 'lucide-react';
-import type { FlattenedItem } from '../../types/item';
-import { getItemCategoryColors, type ThemeName, type ModeName } from '../../config/categoryColors';
-import { DEFAULT_CURRENCY } from '../../utils/currency';
-import { getItemCategoryEmoji } from '../../utils/categoryTranslations';
-import { normalizeItemCategory } from '../../utils/categoryNormalizer';
-import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';
-import { useLocationDisplay } from '../../hooks/useLocations';
-import type { Language } from '../../types/settings';
+import type { FlattenedItem } from '@/types/item';
+import { getItemCategoryColors, type ThemeName, type ModeName } from '@/config/categoryColors';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
+import { getItemCategoryEmoji } from '@/utils/categoryTranslations';
+import { normalizeItemCategory } from '@/utils/categoryNormalizer';
+import { useIsForeignLocation } from '@/hooks/useIsForeignLocation';
+import { useLocationDisplay } from '@/hooks/useLocations';
+import type { Language } from '@/types/settings';
 
 // ============================================================================
 // Types

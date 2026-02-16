@@ -7,7 +7,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { useItemsViewData } from '@/views/ItemsView/useItemsViewData';
+import { useItemsViewData } from '@features/items/views/ItemsView/useItemsViewData';
 
 // =============================================================================
 // Mocks

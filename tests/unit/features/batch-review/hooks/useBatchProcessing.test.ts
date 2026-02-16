@@ -8,14 +8,14 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useBatchProcessing } from '../../../src/hooks/useBatchProcessing';
-import * as batchProcessingService from '../../../src/services/batchProcessingService';
-import type { Transaction } from '../../../src/types/transaction';
+import { useBatchProcessing } from '@features/batch-review/hooks/useBatchProcessing';
+import * as batchProcessingService from '@features/batch-review/services/batchProcessingService';
+import type { Transaction } from '@/types/transaction';
 
 // Mock the batch processing service
-vi.mock('../../../src/services/batchProcessingService', async () => {
+vi.mock('@features/batch-review/services/batchProcessingService', async () => {
   const actual = await vi.importActual<typeof batchProcessingService>(
-    '../../../src/services/batchProcessingService'
+    '@features/batch-review/services/batchProcessingService'
   );
   return {
     ...actual,

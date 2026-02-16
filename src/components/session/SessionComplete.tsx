@@ -26,39 +26,10 @@ import { TranslationKey } from '../../utils/translations';
 import { useSessionContext, useInsightActions } from '@/shared/stores';
 import { formatCurrency } from '@/utils/currency';
 
-/**
- * Session context for message selection and summary display
- */
-export interface SessionContext {
-  /** Number of transactions saved in this session */
-  transactionsSaved: number;
-  /** Number of consecutive tracking days */
-  consecutiveDays: number;
-  /** Whether this is the first receipt of the week */
-  isFirstOfWeek: boolean;
-  /** Whether a personal record was set */
-  isPersonalRecord: boolean;
-  /** Total amount saved across transactions */
-  totalAmount: number;
-  /** Currency code for formatting */
-  currency: string;
-  /** Categories touched in this session */
-  categoriesTouched: string[];
-}
-
-/**
- * Suggestion action types
- */
-export type SessionAction = 'analytics' | 'scan' | 'history';
-
-/**
- * Suggestion item structure
- */
-export interface Suggestion {
-  label: string;
-  action: SessionAction;
-  icon: React.ReactNode;
-}
+// Story 15b-0c: Session types extracted to @/types/session to break cycle 4
+// Re-exported here for backward compatibility (test files import directly from this file)
+import type { SessionContext, SessionAction, Suggestion } from '@/types/session';
+export type { SessionContext, SessionAction, Suggestion };
 
 export interface SessionCompleteProps {
   /** Session context data. Optional - uses store if not provided (Story 14e-37) */

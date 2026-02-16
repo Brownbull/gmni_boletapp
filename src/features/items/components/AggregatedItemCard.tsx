@@ -15,11 +15,11 @@
 
 import React from 'react';
 import { Store, Receipt } from 'lucide-react';
-import type { AggregatedItem } from '../../types/item';
-import { getItemCategoryColors, type ThemeName, type ModeName } from '../../config/categoryColors';
-import { getItemCategoryEmoji } from '../../utils/categoryTranslations';
-import { DEFAULT_CURRENCY } from '../../utils/currency';
-import { normalizeItemCategory } from '../../utils/categoryNormalizer';
+import type { AggregatedItem } from '@/types/item';
+import { getItemCategoryColors, type ThemeName, type ModeName } from '@/config/categoryColors';
+import { getItemCategoryEmoji } from '@/utils/categoryTranslations';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
+import { normalizeItemCategory } from '@/utils/categoryNormalizer';
 
 // ============================================================================
 // Types

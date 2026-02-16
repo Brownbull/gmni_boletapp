@@ -8,9 +8,9 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useBatchReview, BatchReceipt } from '../../../src/hooks/useBatchReview';
-import type { ProcessingResult } from '../../../src/services/batchProcessingService';
-import type { Transaction } from '../../../src/types/transaction';
+import { useBatchReview, BatchReceipt } from '@features/batch-review/hooks/useBatchReview';
+import type { ProcessingResult } from '@features/batch-review/services/batchProcessingService';
+import type { Transaction } from '@/types/transaction';
 
 describe('useBatchReview', () => {
   // Create a mock transaction

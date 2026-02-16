@@ -113,7 +113,7 @@ vi.mock('firebase/firestore', () => ({
 // =============================================================================
 
 // Import after mocks are set up
-import { useTrendsViewData } from '@/views/TrendsView/useTrendsViewData';
+import { useTrendsViewData } from '@features/analytics/views/TrendsView/useTrendsViewData';
 
 describe('useTrendsViewData', () => {
     beforeEach(() => {

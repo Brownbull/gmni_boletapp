@@ -32,7 +32,7 @@ import type { TrendsViewData } from '../../../src/views/TrendsView/useTrendsView
 // Mock the hook before any component imports that might use it
 let mockHookReturnValue: Partial<TrendsViewData> = {};
 
-vi.mock('../../../src/views/TrendsView/useTrendsViewData', () => ({
+vi.mock('@features/analytics/views/TrendsView/useTrendsViewData', () => ({
   useTrendsViewData: vi.fn(() => mockHookReturnValue),
 }));
 

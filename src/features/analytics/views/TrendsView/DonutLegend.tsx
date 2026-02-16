@@ -8,7 +8,7 @@
  */
 import React from 'react';
 import { ChevronRight } from 'lucide-react';
-import { getCategoryColorsAuto } from '../../config/categoryColors';
+import { getCategoryColorsAuto } from '@/config/categoryColors';
 import {
     translateCategory,
     translateStoreCategoryGroup,
@@ -16,8 +16,8 @@ import {
     getStoreCategoryGroupEmoji,
     getItemCategoryGroupEmoji,
     getItemCategoryEmoji,
-} from '../../utils/categoryTranslations';
-import { getCategoryEmoji } from '../../utils/categoryEmoji';
+} from '@/utils/categoryTranslations';
+import { getCategoryEmoji } from '@/utils/categoryEmoji';
 import type { CategoryData, DonutViewMode } from './types';
 import { AnimatedAmountBar, AnimatedCountPill, AnimatedPercent } from './animationComponents';
 

@@ -12,7 +12,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 // Mock the useBatchCapture hook before importing the component
-vi.mock('../../../../src/hooks/useBatchCapture', () => ({
+vi.mock('@features/batch-review/hooks/useBatchCapture', () => ({
   useBatchCapture: vi.fn(() => ({
     images: [],
     addImages: vi.fn(),
@@ -27,9 +27,9 @@ vi.mock('../../../../src/hooks/useBatchCapture', () => ({
 }));
 
 // Import after mocking
-import { BatchCaptureUI } from '../../../../src/components/batch/BatchCaptureUI';
-import { useBatchCapture } from '../../../../src/hooks/useBatchCapture';
-import type { CapturedImage } from '../../../../src/hooks/useBatchCapture';
+import { BatchCaptureUI } from '@features/batch-review/components/BatchCaptureUI';
+import { useBatchCapture } from '@features/batch-review/hooks/useBatchCapture';
+import type { CapturedImage } from '@features/batch-review/hooks/useBatchCapture';
 
 // Mock translation function
 const t = (key: string) => {

@@ -1,9 +1,9 @@
 // Story 15-5b: Extracted from TrendsView.tsx
 import React, { useMemo } from 'react';
 import { ChevronRight, Receipt, Package } from 'lucide-react';
-import { getCategoryColorsAuto, getCategoryPillColors, type StoreCategoryGroup, type ItemCategoryGroup } from '../../config/categoryColors';
-import { getCategoryEmoji } from '../../utils/categoryEmoji';
-import { translateCategory, translateStoreCategoryGroup, translateItemCategoryGroup, getStoreCategoryGroupEmoji, getItemCategoryGroupEmoji, getItemCategoryEmoji } from '../../utils/categoryTranslations';
+import { getCategoryColorsAuto, getCategoryPillColors, type StoreCategoryGroup, type ItemCategoryGroup } from '@/config/categoryColors';
+import { getCategoryEmoji } from '@/utils/categoryEmoji';
+import { translateCategory, translateStoreCategoryGroup, translateItemCategoryGroup, getStoreCategoryGroupEmoji, getItemCategoryGroupEmoji, getItemCategoryEmoji } from '@/utils/categoryTranslations';
 import type { TrendData, DonutViewMode } from './types';
 import { formatShortCurrency } from './helpers';
 

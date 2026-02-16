@@ -7,9 +7,9 @@
  */
 
 import React from 'react';
-import type { ItemNameMapping } from '../types/itemNameMapping';
-import { MappingsList } from './shared/MappingsList';
-import { itemNameMappingsConfig } from './shared/mappingsListConfigs';
+import type { ItemNameMapping } from '@/types/itemNameMapping';
+import { MappingsList } from '@/components/shared/MappingsList';
+import { itemNameMappingsConfig } from '@/components/shared/mappingsListConfigs';
 
 export interface ItemNameMappingsListProps {
   mappings: ItemNameMapping[];

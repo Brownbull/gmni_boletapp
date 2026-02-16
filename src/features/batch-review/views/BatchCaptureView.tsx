@@ -34,12 +34,12 @@ import {
   Layers,
 } from 'lucide-react';
 import { MAX_BATCH_CAPTURE_IMAGES } from '../hooks/useBatchCapture';
-import { formatCreditsDisplay } from '../services/userCreditsService';
+import { formatCreditsDisplay } from '@/services/userCreditsService';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
 import { useScanStore, useIsProcessing, useScanActions } from '@features/scan/store';
-import { processFilesForCapture, type ProcessedImage } from '../utils/imageUtils';
+import { processFilesForCapture, type ProcessedImage } from '@features/batch-review/utils/imageUtils';
 // Story 14e-25c.2: Navigation via Zustand store
-import { useNavigation } from '../shared/stores/useNavigationStore';
+import { useNavigation } from '@/shared/stores/useNavigationStore';
 
 /**
  * Story 14e-25c.2: Minimal props interface for BatchCaptureView.

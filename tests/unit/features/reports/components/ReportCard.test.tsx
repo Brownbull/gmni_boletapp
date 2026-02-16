@@ -10,10 +10,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ReportCard } from '@features/reports/components/ReportCard';
-import type { ReportCard as ReportCardType } from '../../../../src/types/report';
+import type { ReportCard as ReportCardType } from '@/types/report';
 
 // Mock useReducedMotion hook
-vi.mock('../../../../src/hooks/useReducedMotion', () => ({
+vi.mock('@/hooks/useReducedMotion', () => ({
   useReducedMotion: () => false,
 }));
 
@@ -172,7 +172,7 @@ describe('ReportCard', () => {
     });
 
     it('should work without animations when reduced motion is preferred', async () => {
-      vi.doMock('../../../../src/hooks/useReducedMotion', () => ({
+      vi.doMock('@/hooks/useReducedMotion', () => ({
         useReducedMotion: () => true,
       }));
 

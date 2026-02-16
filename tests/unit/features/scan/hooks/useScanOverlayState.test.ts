@@ -15,7 +15,7 @@ import { renderHook, act } from '@testing-library/react';
 import {
   useScanOverlayState,
   ScanOverlayStateHook,
-} from '../../../src/hooks/useScanOverlayState';
+} from '@features/scan/hooks/useScanOverlayState';
 
 describe('useScanOverlayState', () => {
   beforeEach(() => {

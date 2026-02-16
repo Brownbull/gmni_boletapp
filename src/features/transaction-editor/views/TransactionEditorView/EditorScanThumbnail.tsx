@@ -21,9 +21,9 @@ import {
   RefreshCw,
   Pencil,
 } from 'lucide-react';
-import { getCategoryPillColors } from '../../config/categoryColors';
-import { getCategoryEmoji } from '../../utils/categoryEmoji';
-import type { ScanButtonState } from '../TransactionEditorViewInternal';
+import { getCategoryPillColors } from '@/config/categoryColors';
+import { getCategoryEmoji } from '@/utils/categoryEmoji';
+import type { ScanButtonState } from '@/shared/utils/scanHelpers';
 
 // ============================================================================
 // Types

@@ -11,7 +11,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Timestamp } from 'firebase/firestore';
 import { InsightCardLarge } from '@features/insights/components/InsightCardLarge';
-import { InsightRecord, InsightCategory } from '../../../../src/types/insight';
+import { InsightRecord, InsightCategory } from '../../../../../src/types/insight';
 
 // Mock Firebase Timestamp
 vi.mock('firebase/firestore', async (importOriginal) => {

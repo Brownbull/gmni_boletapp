@@ -235,7 +235,7 @@ vi.mock('firebase/auth', () => ({
 // =============================================================================
 
 // Import after mocks are set up
-import { useSettingsViewData } from '@/views/SettingsView/useSettingsViewData';
+import { useSettingsViewData } from '@features/settings/views/SettingsView/useSettingsViewData';
 
 describe('useSettingsViewData', () => {
     beforeEach(() => {

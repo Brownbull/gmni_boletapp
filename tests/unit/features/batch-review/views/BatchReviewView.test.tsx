@@ -9,20 +9,20 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Story 14e-25d: Use test-utils (ViewHandlersContext deleted)
-import { render, screen, fireEvent, waitFor } from '../../setup/test-utils';
-import { BatchReviewView } from '../../../src/views/BatchReviewView';
-import type { ProcessingResult } from '../../../src/services/batchProcessingService';
-import type { Transaction } from '../../../src/types/transaction';
+import { render, screen, fireEvent, waitFor } from '../../../../setup/test-utils';
+import { BatchReviewView } from '@features/batch-review/views/BatchReviewView';
+import type { ProcessingResult } from '@features/batch-review/services/batchProcessingService';
+import type { Transaction } from '@/types/transaction';
 
 // Mock the useBatchReview hook
-vi.mock('../../../src/hooks/useBatchReview', () => ({
+vi.mock('@features/batch-review/hooks/useBatchReview', () => ({
   useBatchReview: vi.fn(),
 }));
 
 // Story 14e-25d: Mock navigation hooks (ViewHandlersContext deleted)
 const mockNavigateBack = vi.fn();
 
-vi.mock('../../../src/shared/stores', () => ({
+vi.mock('@/shared/stores', () => ({
   useNavigationActions: vi.fn(() => ({
     navigateBack: mockNavigateBack,
     setView: vi.fn(),
@@ -30,7 +30,7 @@ vi.mock('../../../src/shared/stores', () => ({
   })),
 }));
 
-import { useBatchReview } from '../../../src/hooks/useBatchReview';
+import { useBatchReview } from '@features/batch-review/hooks/useBatchReview';
 
 describe('BatchReviewView', () => {
   // Create mock translation function

@@ -58,3 +58,6 @@ export * from './hooks';
 
 // Re-export utils (Story 14e-40)
 export * from './utils';
+
+// Re-export views (Story 15b-3)
+export * from './views';

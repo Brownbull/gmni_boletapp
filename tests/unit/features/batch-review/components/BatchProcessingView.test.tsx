@@ -9,12 +9,12 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { BatchProcessingView } from '../../../../src/components/batch/BatchProcessingView';
-import * as useBatchProcessingHook from '../../../../src/hooks/useBatchProcessing';
-import type { Transaction } from '../../../../src/types/transaction';
+import { BatchProcessingView } from '@features/batch-review/components/BatchProcessingView';
+import * as useBatchProcessingHook from '@features/batch-review/hooks/useBatchProcessing';
+import type { Transaction } from '@/types/transaction';
 
 // Mock the useBatchProcessing hook
-vi.mock('../../../../src/hooks/useBatchProcessing', () => ({
+vi.mock('@features/batch-review/hooks/useBatchProcessing', () => ({
   useBatchProcessing: vi.fn(),
 }));
 

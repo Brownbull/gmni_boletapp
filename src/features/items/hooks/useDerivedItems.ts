@@ -26,8 +26,8 @@
 
 import { useMemo, useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import type { Transaction } from '../types/transaction';
-import type { FlattenedItem, ItemFilters, UseItemsResult } from '../types/item';
+import type { Transaction } from '@/types/transaction';
+import type { FlattenedItem, ItemFilters, UseItemsResult } from '@/types/item';
 import {
     flattenTransactionItems,
     filterItems,

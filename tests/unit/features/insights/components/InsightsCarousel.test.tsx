@@ -15,7 +15,7 @@ import {
   InsightsCarousel,
   selectHighlightedInsights,
 } from '@features/insights/components/InsightsCarousel';
-import { InsightRecord, InsightCategory } from '../../../../src/types/insight';
+import { InsightRecord, InsightCategory } from '../../../../../src/types/insight';
 
 // Mock Firebase Timestamp
 vi.mock('firebase/firestore', async (importOriginal) => {

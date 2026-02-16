@@ -10,7 +10,7 @@
 
 import React from 'react';
 import { X, Plus } from 'lucide-react';
-import type { CapturedImage } from '../../hooks/useBatchCapture';
+import type { CapturedImage } from '../hooks/useBatchCapture';
 
 export interface BatchThumbnailStripProps {
   /** Array of captured images to display */

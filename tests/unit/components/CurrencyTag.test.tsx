@@ -9,7 +9,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { CurrencyTag } from '../../../src/components/CurrencyTag';
+import { CurrencyTag } from '@features/transaction-editor/components/CurrencyTag';
 
 describe('CurrencyTag', () => {
   const defaultProps = {

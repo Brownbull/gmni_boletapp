@@ -7,7 +7,7 @@
  * Story: Prompt improvement - Total validation rule
  */
 
-import { Transaction, TransactionItem } from '../types/transaction';
+import { Transaction, TransactionItem } from '@/types/transaction';
 
 /** Discrepancy threshold (40%) - beyond this, show warning dialog */
 export const TOTAL_DISCREPANCY_THRESHOLD = 0.4;

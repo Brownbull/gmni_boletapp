@@ -7,7 +7,7 @@
  * and trend category grouping for sparklines.
  */
 
-import { getCategoryPillColors } from '../../config/categoryColors';
+import { getCategoryPillColors } from '@/config/categoryColors';
 import { applyTreemapGrouping, type MasEntryFactory } from '@/utils/categoryAggregation';
 import { calculateChange } from '@features/analytics/utils/periodComparison';
 import type { CategoryData, TrendData } from './types';

@@ -22,7 +22,7 @@ import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 import { devtools } from 'zustand/middleware';
 import type { Insight } from '@/types/insight';
-import type { SessionContext } from '@/components/session';
+import type { SessionContext } from '@/types/session';
 
 // =============================================================================
 // Types

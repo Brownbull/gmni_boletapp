@@ -19,13 +19,13 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 // Story 14.13: Animation components
-import { PageTransition } from '../../components/animation/PageTransition';
-import { TransitionChild } from '../../components/animation/TransitionChild';
+import { PageTransition } from '@/components/animation/PageTransition';
+import { TransitionChild } from '@/components/animation/TransitionChild';
 // Story 14.40: Category statistics popup
 import { CategoryStatisticsPopup } from '@features/analytics/components/CategoryStatisticsPopup';
 import { useCategoryStatistics, type CategoryFilterType } from '@features/analytics/hooks/useCategoryStatistics';
 // Story 14.14b: Profile dropdown for consistent header
-import { ProfileDropdown, ProfileAvatar, getInitials } from '../../components/ProfileDropdown';
+import { ProfileDropdown, ProfileAvatar, getInitials } from '@/components/ProfileDropdown';
 // Story 14.14b: IconFilterBar for consistent filter dropdowns
 import { IconFilterBar } from '@features/history/components/IconFilterBar';
 import { useHistoryFilters } from '@shared/hooks/useHistoryFilters';
@@ -39,23 +39,23 @@ import {
 } from '@shared/utils/historyFilterUtils';
 import type { HistoryFilterState } from '@/types/historyFilters';
 // Story 14.13: Hooks
-import { useSwipeNavigation } from '../../hooks/useSwipeNavigation';
-import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { useSwipeNavigation } from '@/hooks/useSwipeNavigation';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 // Utilities
 import {
     getContrastTextColor,
     getCurrentTheme,
     getCurrentMode,
     type ItemCategoryGroup,
-} from '../../config/categoryColors';
+} from '@/config/categoryColors';
 import { getStorageString, setStorageString, getStorageJSON, setStorageJSON } from '@/utils/storage';
-import { calculateTreemapLayout, categoryDataToTreemapItems } from '../../utils/treemapLayout';
+import { calculateTreemapLayout, categoryDataToTreemapItems } from '@/utils/treemapLayout';
 import {
     translateCategory,
     translateStoreCategoryGroup,
     translateItemCategoryGroup,
-} from '../../utils/categoryTranslations';
-import type { Transaction } from '../../types/transaction';
+} from '@/utils/categoryTranslations';
+import type { Transaction } from '@/types/transaction';
 // Story 14.13.3: Sankey chart for flow visualization
 import { SankeyChart, type SankeySelectionData } from '@features/analytics/components/SankeyChart';
 import type { SankeyMode } from '@features/analytics/utils/sankeyDataBuilder';
@@ -83,8 +83,8 @@ import type {
     DonutViewMode, CategoryData, TrendData,
 } from './types';
 // Re-export canonical types for backward compatibility (consumers import from TrendsView)
-export type { DrillDownPath, HistoryNavigationPayload } from '../../types/navigation';
-import type { HistoryNavigationPayload } from '../../types/navigation';
+export type { DrillDownPath, HistoryNavigationPayload } from '@/types/navigation';
+import type { HistoryNavigationPayload } from '@/types/navigation';
 
 /**
  * Story 14e-25b.1: TrendsView props interface.

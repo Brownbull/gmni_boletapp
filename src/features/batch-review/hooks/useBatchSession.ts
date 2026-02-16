@@ -12,8 +12,8 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { Transaction } from '../types/transaction';
-import { Insight } from '../types/insight';
+import { Transaction } from '@/types/transaction';
+import { Insight } from '@/types/insight';
 
 /**
  * Batch session state containing accumulated receipts and insights.

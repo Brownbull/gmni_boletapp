@@ -19,8 +19,8 @@
 
 import React, { useState } from 'react';
 import { CheckCircle2, Trash2, Loader2 } from 'lucide-react';
-import { TrustedMerchant } from '../types/trust';
-import { ConfirmationDialog } from './shared/ConfirmationDialog';
+import { TrustedMerchant } from '@/types/trust';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 
 export interface TrustedMerchantsListProps {
     /** List of trusted merchants */

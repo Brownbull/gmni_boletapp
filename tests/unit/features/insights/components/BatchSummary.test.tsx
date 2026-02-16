@@ -8,8 +8,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BatchSummary } from '@features/insights/components/BatchSummary';
-import { Transaction } from '../../../../src/types/transaction';
-import { Insight } from '../../../../src/types/insight';
+import { Transaction } from '../../../../../src/types/transaction';
+import { Insight } from '../../../../../src/types/insight';
 
 // Mock transaction factory
 function createMockTransaction(overrides: Partial<Transaction> = {}): Transaction {

@@ -19,14 +19,14 @@ import {
   ChevronUp,
   Pencil,
 } from 'lucide-react';
-import { CategoryBadge } from '../../components/CategoryBadge';
-import { ItemNameSuggestionIndicator } from '../../components/ItemNameSuggestionIndicator';
-import { AnimatedItem } from '../../components/AnimatedItem';
-import { ItemViewToggle, type ItemViewMode } from '../../components/items/ItemViewToggle';
-import { translateItemCategoryGroup, getItemCategoryGroupEmoji } from '../../utils/categoryTranslations';
-import { getItemGroupColors } from '../../config/categoryColors';
-import type { Transaction, TransactionItem } from '../../types/transaction';
-import type { Language } from '../../utils/translations';
+import { CategoryBadge } from '@features/transaction-editor/components/CategoryBadge';
+import { ItemNameSuggestionIndicator } from '@features/transaction-editor/components/ItemNameSuggestionIndicator';
+import { AnimatedItem } from '@/components/AnimatedItem';
+import { ItemViewToggle, type ItemViewMode } from '@/components/items/ItemViewToggle';
+import { translateItemCategoryGroup, getItemCategoryGroupEmoji } from '@/utils/categoryTranslations';
+import { getItemGroupColors } from '@/config/categoryColors';
+import type { Transaction, TransactionItem } from '@/types/transaction';
+import type { Language } from '@/utils/translations';
 import type { SuggestionData } from './useCrossStoreSuggestions';
 
 // ============================================================================

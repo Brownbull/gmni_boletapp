@@ -19,10 +19,10 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Search } from 'lucide-react';
-import { translateStoreCategory, translateItemGroup, ITEM_GROUP_TRANSLATIONS, getItemCategoryEmoji, translateStoreCategoryGroup, translateItemCategoryGroup } from '../utils/categoryTranslations';
-import { getCategoryPillColors, getItemCategoryColors, STORE_CATEGORY_GROUPS, ITEM_CATEGORY_GROUPS, ITEM_CATEGORY_TO_KEY, STORE_GROUP_INFO, ITEM_GROUP_INFO, type StoreCategoryGroup, type ItemCategoryGroup } from '../config/categoryColors';
-import { getCategoryEmoji } from '../utils/categoryEmoji';
-import type { Language } from '../utils/translations';
+import { translateStoreCategory, translateItemGroup, ITEM_GROUP_TRANSLATIONS, getItemCategoryEmoji, translateStoreCategoryGroup, translateItemCategoryGroup } from '@/utils/categoryTranslations';
+import { getCategoryPillColors, getItemCategoryColors, STORE_CATEGORY_GROUPS, ITEM_CATEGORY_GROUPS, ITEM_CATEGORY_TO_KEY, STORE_GROUP_INFO, ITEM_GROUP_INFO, type StoreCategoryGroup, type ItemCategoryGroup } from '@/config/categoryColors';
+import { getCategoryEmoji } from '@/utils/categoryEmoji';
+import type { Language } from '@/utils/translations';
 
 /** Category with display info */
 interface CategoryItem {

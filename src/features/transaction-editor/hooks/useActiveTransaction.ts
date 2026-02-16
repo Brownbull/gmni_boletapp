@@ -30,16 +30,16 @@ import { useState, useCallback, useMemo, useRef } from 'react';
 import type {
   ActiveTransaction,
   CanStartEditingResult,
-} from '../types/scan';
-import { DEFAULT_CURRENCY } from '../utils/currency';
+} from '@/types/scan';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
 import {
   createIdleActiveTransaction,
   createNewActiveTransaction,
   createEditingActiveTransaction,
   hasActiveTransactionContent,
   generateScanSessionId,
-} from '../types/scan';
-import { Transaction, StoreCategory } from '../types/transaction';
+} from '@/types/scan';
+import { Transaction, StoreCategory } from '@/types/transaction';
 
 /**
  * Result type for credit operations

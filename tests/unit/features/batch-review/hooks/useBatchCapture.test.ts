@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { MAX_BATCH_CAPTURE_IMAGES } from '../../../src/hooks/useBatchCapture';
+import { MAX_BATCH_CAPTURE_IMAGES } from '@features/batch-review/hooks/useBatchCapture';
 
 describe('useBatchCapture Hook Constants', () => {
   describe('MAX_BATCH_CAPTURE_IMAGES', () => {
@@ -29,16 +29,16 @@ describe('useBatchCapture Hook Constants', () => {
   describe('Exported Types', () => {
     it('should export CapturedImage interface', async () => {
       // Type check - if this compiles, the type is exported
-      const { CapturedImage } = await import('../../../src/hooks/useBatchCapture').then(m => ({
-        CapturedImage: null as unknown as import('../../../src/hooks/useBatchCapture').CapturedImage,
+      const { CapturedImage } = await import('@features/batch-review/hooks/useBatchCapture').then(m => ({
+        CapturedImage: null as unknown as import('@features/batch-review/hooks/useBatchCapture').CapturedImage,
       }));
       expect(true).toBe(true); // Type exists if we get here
     });
 
     it('should export UseBatchCaptureReturn interface', async () => {
       // Type check - if this compiles, the type is exported
-      const { UseBatchCaptureReturn } = await import('../../../src/hooks/useBatchCapture').then(m => ({
-        UseBatchCaptureReturn: null as unknown as import('../../../src/hooks/useBatchCapture').UseBatchCaptureReturn,
+      const { UseBatchCaptureReturn } = await import('@features/batch-review/hooks/useBatchCapture').then(m => ({
+        UseBatchCaptureReturn: null as unknown as import('@features/batch-review/hooks/useBatchCapture').UseBatchCaptureReturn,
       }));
       expect(true).toBe(true); // Type exists if we get here
     });
@@ -47,17 +47,17 @@ describe('useBatchCapture Hook Constants', () => {
 
 describe('useBatchCapture Hook API Contract', () => {
   it('should export useBatchCapture function', async () => {
-    const module = await import('../../../src/hooks/useBatchCapture');
+    const module = await import('@features/batch-review/hooks/useBatchCapture');
     expect(typeof module.useBatchCapture).toBe('function');
   });
 
   it('should export MAX_BATCH_CAPTURE_IMAGES constant', async () => {
-    const module = await import('../../../src/hooks/useBatchCapture');
+    const module = await import('@features/batch-review/hooks/useBatchCapture');
     expect(typeof module.MAX_BATCH_CAPTURE_IMAGES).toBe('number');
   });
 
   it('should have default export pointing to useBatchCapture', async () => {
-    const module = await import('../../../src/hooks/useBatchCapture');
+    const module = await import('@features/batch-review/hooks/useBatchCapture');
     expect(module.default).toBe(module.useBatchCapture);
   });
 });

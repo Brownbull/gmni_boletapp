@@ -10,8 +10,8 @@
  * - buildTrendNavigationPayload: Trend count click → HistoryNavigationPayload
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { DonutViewMode } from '@/views/TrendsView/types';
-import { makeCategoryData } from '../__fixtures__/categoryDataFactory';
+import type { DonutViewMode } from '@features/analytics/views/TrendsView/types';
+import { makeCategoryData } from '../../../../views/__fixtures__/categoryDataFactory';
 
 // ============================================================================
 // Mocks
@@ -30,7 +30,7 @@ import {
   buildTrendNavigationPayload,
   type BuildTreemapNavPayloadArgs,
   type BuildTrendNavPayloadArgs,
-} from '@/views/TrendsView/navigationHelpers';
+} from '@features/analytics/views/TrendsView/navigationHelpers';
 
 beforeEach(() => {
   vi.clearAllMocks();

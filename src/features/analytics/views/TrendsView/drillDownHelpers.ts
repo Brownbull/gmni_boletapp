@@ -8,8 +8,8 @@
  * and tendencia slides.
  */
 
-import { STORE_CATEGORY_GROUPS } from '../../config/categoryColors';
-import type { Transaction } from '../../types/transaction';
+import { STORE_CATEGORY_GROUPS } from '@/config/categoryColors';
+import type { Transaction } from '@/types/transaction';
 import {
     computeSubcategoryData,
     computeItemGroupsForStore,

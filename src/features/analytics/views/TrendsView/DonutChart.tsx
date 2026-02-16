@@ -15,18 +15,18 @@ import {
     expandItemCategoryGroup,
     type StoreCategoryGroup,
     type ItemCategoryGroup,
-} from '../../config/categoryColors';
-import { formatCurrency } from '../../utils/currency';
-import { buildProductKey } from '../../utils/categoryAggregation';
-import { normalizeItemCategory } from '../../utils/categoryNormalizer';
+} from '@/config/categoryColors';
+import { formatCurrency } from '@/utils/currency';
+import { buildProductKey } from '@/utils/categoryAggregation';
+import { normalizeItemCategory } from '@/utils/categoryNormalizer';
 import {
     translateCategory,
     translateStoreCategoryGroup,
     translateItemCategoryGroup,
-} from '../../utils/categoryTranslations';
-import { useCountUp } from '../../hooks/useCountUp';
-import type { Transaction } from '../../types/transaction';
-import type { HistoryNavigationPayload } from '../../types/navigation';
+} from '@/utils/categoryTranslations';
+import { useCountUp } from '@/hooks/useCountUp';
+import type { Transaction } from '@/types/transaction';
+import type { HistoryNavigationPayload } from '@/types/navigation';
 import type { CategoryData, DonutViewMode, TimePeriod, CurrentPeriod } from './types';
 import {
     computeTreemapCategories,

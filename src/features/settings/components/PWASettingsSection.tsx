@@ -8,8 +8,8 @@
 
 import { useState } from 'react';
 import { Smartphone, RefreshCw, Check, Download } from 'lucide-react';
-import { usePWAInstall } from '../hooks/usePWAInstall';
-import { usePWAUpdate } from '../hooks/usePWAUpdate';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { usePWAUpdate } from '@/hooks/usePWAUpdate';
 
 interface PWASettingsSectionProps {
   t: (key: string) => string;

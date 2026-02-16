@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { TrustedMerchantsList } from '../../../src/components/TrustedMerchantsList';
-import { TrustedMerchant } from '../../../src/types/trust';
-import { createMockTimestamp } from '../../helpers';
+import { TrustedMerchantsList } from '@features/settings/components/TrustedMerchantsList';
+import { TrustedMerchant } from '@/types/trust';
+import { createMockTimestamp } from '../../../../helpers';
 
 describe('TrustedMerchantsList', () => {
     const mockT = (key: string) => {

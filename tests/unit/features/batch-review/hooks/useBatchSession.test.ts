@@ -7,9 +7,9 @@
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useBatchSession } from '../../../src/hooks/useBatchSession';
-import { Transaction } from '../../../src/types/transaction';
-import { Insight } from '../../../src/types/insight';
+import { useBatchSession } from '@features/batch-review/hooks/useBatchSession';
+import { Transaction } from '@/types/transaction';
+import { Insight } from '@/types/insight';
 
 // Mock transaction factory
 function createMockTransaction(overrides: Partial<Transaction> = {}): Transaction {

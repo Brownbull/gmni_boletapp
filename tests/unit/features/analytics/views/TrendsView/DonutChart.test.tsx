@@ -9,16 +9,16 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '../../../setup/test-utils';
-import { DonutChart } from '../../../../src/views/TrendsView/DonutChart';
-import type { CategoryData, DonutViewMode } from '../../../../src/views/TrendsView/types';
-import { makeCategoryDataPartial as makeCategoryData } from '../__fixtures__/categoryDataFactory';
+import { render, screen } from '../../../../../setup/test-utils';
+import { DonutChart } from '@features/analytics/views/TrendsView/DonutChart';
+import type { CategoryData, DonutViewMode } from '@features/analytics/views/TrendsView/types';
+import { makeCategoryDataPartial as makeCategoryData } from '../../../../views/__fixtures__/categoryDataFactory';
 
 // =============================================================================
 // Mocks — heavy dependency tree, mock everything external
 // =============================================================================
 
-vi.mock('../../../../src/config/categoryColors', () => ({
+vi.mock('@/config/categoryColors', () => ({
   getCategoryColorsAuto: () => ({ bg: '#eee', fg: '#333', border: '#ccc' }),
   ALL_STORE_CATEGORY_GROUPS: [
     'food-dining', 'health-wellness', 'retail-general', 'retail-specialty',
@@ -46,19 +46,19 @@ vi.mock('../../../../src/config/categoryColors', () => ({
   expandItemCategoryGroup: (g: string) => [g],
 }));
 
-vi.mock('../../../../src/utils/currency', () => ({
+vi.mock('@/utils/currency', () => ({
   formatCurrency: (amount: number) => `$${amount.toLocaleString()}`,
 }));
 
-vi.mock('../../../../src/utils/categoryAggregation', () => ({
+vi.mock('@/utils/categoryAggregation', () => ({
   buildProductKey: (name: string, merchant: string) => `${name}::${merchant}`,
 }));
 
-vi.mock('../../../../src/utils/categoryNormalizer', () => ({
+vi.mock('@/utils/categoryNormalizer', () => ({
   normalizeItemCategory: (cat: string) => cat,
 }));
 
-vi.mock('../../../../src/utils/categoryTranslations', () => ({
+vi.mock('@/utils/categoryTranslations', () => ({
   translateCategory: (cat: string) => cat,
   translateStoreCategoryGroup: (g: string) => g,
   translateItemCategoryGroup: (g: string) => g,
@@ -67,11 +67,11 @@ vi.mock('../../../../src/utils/categoryTranslations', () => ({
   getItemCategoryEmoji: () => '🥩',
 }));
 
-vi.mock('../../../../src/hooks/useCountUp', () => ({
+vi.mock('@/hooks/useCountUp', () => ({
   useCountUp: (target: number) => target,
 }));
 
-vi.mock('../../../../src/views/TrendsView/helpers', () => ({
+vi.mock('@features/analytics/views/TrendsView/helpers', () => ({
   computeTreemapCategories: () => [],
   computeItemCategoryData: () => [],
   computeSubcategoryData: () => [],

@@ -7,9 +7,9 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Transaction } from '@/types/transaction';
-import type { TimePeriod, CurrentPeriod, CategoryData, TrendData } from '@/views/TrendsView/types';
-import { makeTx } from '../__fixtures__/transactionFactory';
-import { makeCategoryData } from '../__fixtures__/categoryDataFactory';
+import type { TimePeriod, CurrentPeriod, CategoryData, TrendData } from '@features/analytics/views/TrendsView/types';
+import { makeTx } from '../../../../views/__fixtures__/transactionFactory';
+import { makeCategoryData } from '../../../../views/__fixtures__/categoryDataFactory';
 
 // ============================================================================
 // Mocks
@@ -102,7 +102,7 @@ import {
   computeItemCategoriesInGroup,
   computeTreemapCategories,
   computeTrendCategories,
-} from '@/views/TrendsView/helpers';
+} from '@features/analytics/views/TrendsView/helpers';
 import { normalizeItemCategory } from '@/utils/categoryNormalizer';
 import { applyTreemapGrouping } from '@/utils/categoryAggregation';
 

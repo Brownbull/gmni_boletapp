@@ -7,9 +7,9 @@
  */
 
 import React from 'react';
-import type { MerchantMapping } from '../types/merchantMapping';
-import { MappingsList } from './shared/MappingsList';
-import { merchantMappingsConfig } from './shared/mappingsListConfigs';
+import type { MerchantMapping } from '@/types/merchantMapping';
+import { MappingsList } from '@/components/shared/MappingsList';
+import { merchantMappingsConfig } from '@/components/shared/mappingsListConfigs';
 
 export interface MerchantMappingsListProps {
   mappings: MerchantMapping[];

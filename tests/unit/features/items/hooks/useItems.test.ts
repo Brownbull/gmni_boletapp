@@ -18,9 +18,9 @@ import {
     groupItemsByCategory,
     calculateItemsTotal,
     extractAvailableItemFilters,
-} from '../../../src/hooks/useItems';
-import type { Transaction } from '../../../src/types/transaction';
-import type { FlattenedItem, ItemFilters } from '../../../src/types/item';
+} from '@features/items/hooks/useItems';
+import type { Transaction } from '@/types/transaction';
+import type { FlattenedItem, ItemFilters } from '@/types/item';
 
 // ============================================================================
 // Test Data

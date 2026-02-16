@@ -8,8 +8,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Transaction } from '@/types/transaction';
-import type { DonutViewMode, CurrentPeriod } from '@/views/TrendsView/types';
-import { makeTx } from '../__fixtures__/transactionFactory';
+import type { DonutViewMode, CurrentPeriod } from '@features/analytics/views/TrendsView/types';
+import { makeTx } from '../../../../views/__fixtures__/transactionFactory';
 
 // ============================================================================
 // Mocks
@@ -20,7 +20,7 @@ vi.mock('@/utils/categoryNormalizer', () => ({
 }));
 
 vi.mock('@/config/categoryColors', async () => {
-  const fixtures = await import('../__fixtures__/categoryColorsMock');
+  const fixtures = await import('../../../../views/__fixtures__/categoryColorsMock');
   return {
     STORE_CATEGORY_GROUPS: fixtures.MOCK_STORE_CATEGORY_GROUPS,
     ITEM_CATEGORY_GROUPS: fixtures.MOCK_ITEM_CATEGORY_GROUPS,
@@ -31,7 +31,7 @@ vi.mock('@/config/categoryColors', async () => {
 import {
   computePreviousPeriodTotals,
   computeDailySparkline,
-} from '@/views/TrendsView/periodComparisonHelpers';
+} from '@features/analytics/views/TrendsView/periodComparisonHelpers';
 
 beforeEach(() => {
   vi.clearAllMocks();

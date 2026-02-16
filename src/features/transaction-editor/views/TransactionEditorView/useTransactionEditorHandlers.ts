@@ -56,13 +56,14 @@ import type { ConflictResult } from '@features/scan';
 import { batchReviewActions } from '@features/batch-review';
 import { useNavigationActions } from '@/shared/stores';
 // Story 14e-36c: Transaction editor store (replaces App.tsx props)
+// Story 15b-1c: Use intra-feature relative import to avoid circular dependency via barrel
 import {
     useCurrentTransaction,
     useEditorMode,
     useNavigationList,
     useIsSaving,
     useTransactionEditorActions,
-} from '@features/transaction-editor';
+} from '../../store';
 
 // Service imports
 // Story 14d-v2-1.1: updateMemberTimestampsForTransaction removed (Epic 14c cleanup)

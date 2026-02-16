@@ -13,9 +13,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Tag, ChevronDown, Check } from 'lucide-react';
 // Unused import removed - category colors not needed for filter bar
-import { getItemCategoryEmoji } from '../../utils/categoryTranslations';
-import { normalizeItemCategory } from '../../utils/categoryNormalizer';
-import type { Language } from '../../utils/translations';
+import { getItemCategoryEmoji } from '@/utils/categoryTranslations';
+import { normalizeItemCategory } from '@/utils/categoryNormalizer';
+import type { Language } from '@/utils/translations';
 
 // ============================================================================
 // Types

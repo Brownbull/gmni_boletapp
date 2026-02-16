@@ -1,16 +1,19 @@
 /**
- * DashboardView Module Exports
+ * DashboardView Re-export Shim
  *
- * Story 15-TD-5: Resolved file/directory naming collision
- * DashboardView.tsx moved into DashboardView/ directory
+ * Story 15b-1b: Backward compatibility shim.
+ * Canonical location: @features/dashboard/views/DashboardView/
  *
- * Re-exports DashboardView component, types, and hooks.
+ * 2 source consumers + 4 test files depend on this path.
  */
 
-// Main component (now co-located in this directory)
-export { DashboardView } from './DashboardView';
-export type { DashboardViewProps } from './DashboardView';
+export {
+  DashboardView,
+  useDashboardViewData,
+} from '@features/dashboard/views/DashboardView';
 
-// Export the data hook and types
-export { useDashboardViewData } from './useDashboardViewData';
-export type { DashboardViewData, UseDashboardViewDataReturn } from './useDashboardViewData';
+export type {
+  DashboardViewProps,
+  DashboardViewData,
+  UseDashboardViewDataReturn,
+} from '@features/dashboard/views/DashboardView';

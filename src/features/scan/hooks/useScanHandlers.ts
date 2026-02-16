@@ -42,27 +42,27 @@
 import { useCallback, useMemo } from 'react';
 import type { User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
-import type { Transaction, TransactionItem } from '../../types/transaction';
-import type { UserPreferences } from '../../services/userPreferencesService';
-import type { Insight, UserInsightProfile, LocalInsightCache } from '../../types/insight';
+import type { Transaction, TransactionItem } from '@/types/transaction';
+import type { UserPreferences } from '@/services/userPreferencesService';
+import type { Insight, UserInsightProfile, LocalInsightCache } from '@/types/insight';
 import type { View } from '@app/types';
-import type { TrustPromptEligibility } from '../../types/trust';
+import type { TrustPromptEligibility } from '@/types/trust';
 import type {
     CurrencyMismatchDialogData,
     TotalMismatchDialogData,
     QuickSaveDialogData,
-} from '../../types/scanStateMachine';
-import { DIALOG_TYPES } from '../../types/scanStateMachine';
+} from '@/types/scanStateMachine';
+import { DIALOG_TYPES } from '@/types/scanStateMachine';
 import {
     addTransaction as firestoreAddTransaction,
-} from '../../services/firestore';
+} from '@/services/firestore';
 import {
     generateInsightForTransaction,
     isInsightsSilenced,
     getDefaultCache,
 } from '@features/insights/services/insightEngineService';
-import { shouldShowQuickSave, calculateConfidence } from '../../utils/confidenceCheck';
-import { parseStrictNumber } from '../../utils/validation';
+import { shouldShowQuickSave, calculateConfidence } from '@/utils/confidenceCheck';
+import { parseStrictNumber } from '@/utils/validation';
 import { hasValidItems } from '@/utils/transactionValidation';
 // Story 14e-41: reconcileItemsTotal moved to entity (single source of truth)
 import { reconcileItemsTotal as entityReconcileItemsTotal } from '@entities/transaction';

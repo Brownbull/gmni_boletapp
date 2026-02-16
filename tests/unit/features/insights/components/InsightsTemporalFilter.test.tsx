@@ -13,13 +13,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '../../../setup/test-utils';
+import { render, screen, fireEvent } from '../../../../setup/test-utils';
 import {
   InsightsTemporalFilter,
   InsightTemporalFilter,
 } from '@features/insights/components/InsightsTemporalFilter';
-import { InsightRecord } from '../../../../src/types/insight';
-import { createMockTimestamp } from '../../../helpers';
+import { InsightRecord } from '../../../../../src/types/insight';
+import { createMockTimestamp } from '../../../../helpers';
 
 const defaultTranslations: Record<string, string> = {
   allTime: 'All Time',

@@ -49,19 +49,19 @@ import {
 } from '@features/insights/components/InsightsViewSwitcher';
 import { InsightsCarousel, selectHighlightedInsights } from '@features/insights/components/InsightsCarousel';
 import { CelebrationView } from '@features/insights/components/CelebrationView';
-import { InsightRecord } from '../types/insight';
-import { useAuth } from '../hooks/useAuth';
+import { InsightRecord } from '@/types/insight';
+import { useAuth } from '@/hooks/useAuth';
 import { useInsightProfile } from '@features/insights/hooks/useInsightProfile';
-import { getISOWeekNumber } from '../utils/date';
+import { getISOWeekNumber } from '@/utils/date';
 import { getStorageString, setStorageString } from '@/utils/storage';
 import { toDateSafe } from '@/utils/timestamp';
 
 /** Long press delay for batch selection activation. */
 const LONG_PRESS_DELAY_MS = 500;
-import { ProfileDropdown, ProfileAvatar, getInitials } from '../components/ProfileDropdown';
+import { ProfileDropdown, ProfileAvatar, getInitials } from '@/components/ProfileDropdown';
 // Story 14e-25c.2: Navigation via Zustand store
-import { useNavigation } from '../shared/stores/useNavigationStore';
-import type { View } from '../app/types';
+import { useNavigation } from '@shared/stores/useNavigationStore';
+import type { View } from '@app/types';
 
 // localStorage key for view preference persistence
 const INSIGHTS_VIEW_KEY = 'boletapp_insights_view';
@@ -71,7 +71,7 @@ const INSIGHTS_VIEW_KEY = 'boletapp_insights_view';
  * Navigation callbacks migrated to useNavigation() hook.
  * onEditTransaction remains as prop (requires App.tsx coordination).
  */
-interface InsightsViewProps {
+export interface InsightsViewProps {
   /** Navigate to edit a specific transaction */
   onEditTransaction: (transactionId: string) => void;
   /** Theme for styling */

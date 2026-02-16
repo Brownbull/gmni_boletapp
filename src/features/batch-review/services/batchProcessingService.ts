@@ -8,8 +8,8 @@
  * @see docs/sprint-artifacts/epic12/story-12.2-parallel-processing-service.md
  */
 
-import { analyzeReceipt, ReceiptType } from './gemini';
-import { Transaction } from '../types/transaction';
+import { analyzeReceipt, ReceiptType } from '@/services/gemini';
+import { Transaction } from '@/types/transaction';
 import { extractErrorMessage } from '@/utils/errorHandler';
 
 /**

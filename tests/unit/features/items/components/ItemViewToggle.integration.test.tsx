@@ -10,7 +10,7 @@
 import React, { useState } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
-import { ItemViewToggle, type ItemViewMode } from '../../../../src/components/items/ItemViewToggle';
+import { ItemViewToggle, type ItemViewMode } from '@features/items/components/ItemViewToggle';
 
 // Wrapper component to test state changes
 const TestToggleWrapper: React.FC<{

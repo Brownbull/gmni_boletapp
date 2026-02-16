@@ -9,9 +9,9 @@
  */
 
 import React from 'react';
-import type { SubcategoryMapping } from '../types/subcategoryMapping';
-import { MappingsList } from './shared/MappingsList';
-import { subcategoryMappingsConfig } from './shared/mappingsListConfigs';
+import type { SubcategoryMapping } from '@/types/subcategoryMapping';
+import { MappingsList } from '@/components/shared/MappingsList';
+import { subcategoryMappingsConfig } from '@/components/shared/mappingsListConfigs';
 
 export interface SubcategoryMappingsListProps {
   mappings: SubcategoryMapping[];

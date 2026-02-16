@@ -13,7 +13,7 @@ import {
   READY_DISPLAY_MS,
   type ScanState,
   type ScanErrorType,
-} from '../../../src/hooks/useScanState';
+} from '@features/scan/hooks/useScanState';
 
 // ============================================================================
 // Test Setup

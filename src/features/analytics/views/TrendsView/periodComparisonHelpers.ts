@@ -10,13 +10,13 @@
  * These are pure functions with no React dependencies.
  */
 
-import { normalizeItemCategory } from '../../utils/categoryNormalizer';
+import { normalizeItemCategory } from '@/utils/categoryNormalizer';
 import {
     STORE_CATEGORY_GROUPS,
     ITEM_CATEGORY_GROUPS,
     ITEM_CATEGORY_TO_KEY,
-} from '../../config/categoryColors';
-import type { Transaction } from '../../types/transaction';
+} from '@/config/categoryColors';
+import type { Transaction } from '@/types/transaction';
 import type { DonutViewMode, TimePeriod, CurrentPeriod } from './types';
 
 /**

@@ -18,9 +18,9 @@
 import React, { useRef, useCallback, useState } from 'react';
 import { Camera, Images, ArrowLeft, Loader2 } from 'lucide-react';
 import { BatchThumbnailStrip } from './BatchThumbnailStrip';
-import { ConfirmationDialog } from '../shared/ConfirmationDialog';
-import { useBatchCapture, MAX_BATCH_CAPTURE_IMAGES } from '../../hooks/useBatchCapture';
-import type { CapturedImage } from '../../hooks/useBatchCapture';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
+import { useBatchCapture, MAX_BATCH_CAPTURE_IMAGES } from '../hooks/useBatchCapture';
+import type { CapturedImage } from '../hooks/useBatchCapture';
 
 export interface BatchCaptureUIProps {
   /** Whether batch mode is active */

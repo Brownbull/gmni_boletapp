@@ -45,52 +45,52 @@ import {
   Receipt,
 } from 'lucide-react';
 // Story 15-5d: Plus, RefreshCw moved to EditorItemsSection + EditorScanThumbnail
-import { formatCreditsDisplay } from '../services/userCreditsService';
-import { CategoryBadge } from '../components/CategoryBadge';
-import { CategorySelectorOverlay } from '../components/CategorySelectorOverlay';
-import { ImageViewer } from '../components/ImageViewer';
+import { formatCreditsDisplay } from '@/services/userCreditsService';
+import { CategoryBadge } from '@features/transaction-editor/components/CategoryBadge';
+import { CategorySelectorOverlay } from '@features/transaction-editor/components/CategorySelectorOverlay';
+import { ImageViewer } from '@/components/ImageViewer';
 // Story 14e-5: Learning dialogs use Modal Manager (types moved to useEditorLearningPrompts hook)
 import { useModalActions } from '@managers/ModalManager';
 // Story 15-5d: ItemNameSuggestionIndicator moved to EditorItemsSection
 // Story 15-5d: normalizeMerchantName, normalizeItemName moved to useCrossStoreSuggestions hook
-import type { ItemNameMapping } from '../types/itemNameMapping';
-import { LocationSelect } from '../components/LocationSelect';
-import { DateTimeTag } from '../components/DateTimeTag';
-import { CurrencyTag } from '../components/CurrencyTag';
+import type { ItemNameMapping } from '@/types/itemNameMapping';
+import { LocationSelect } from '@/components/LocationSelect';
+import { DateTimeTag } from '@features/transaction-editor/components/DateTimeTag';
+import { CurrencyTag } from '@features/transaction-editor/components/CurrencyTag';
 import { DEFAULT_CURRENCY } from '@/utils/currency';
-import { ProcessingOverlay } from '../components/scan/ProcessingOverlay';
+import { ProcessingOverlay } from '@/components/scan/ProcessingOverlay';
 import { ScanCompleteModal } from '@features/scan/components';
 // Story 15-5d: celebrateSuccess moved to useEditorLearningPrompts hook
-import { useReducedMotion } from '../hooks/useReducedMotion';
-import { useStaggeredReveal } from '../hooks/useStaggeredReveal';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useStaggeredReveal } from '@/hooks/useStaggeredReveal';
 // Story 15-5d: AnimatedItem moved to EditorItemsSection
 import {
   sanitizeMerchantName,
   sanitizeItemName,
   sanitizeLocation,
   sanitizeSubcategory,
-} from '../utils/sanitize';
+} from '@/utils/sanitize';
 import {
   StoreCategory,
   ItemCategory,
   Transaction,
   TransactionItem,
-} from '../types/transaction';
-import type { UserCredits } from '../types/scan';
-import type { Language } from '../utils/translations';
+} from '@/types/transaction';
+import type { UserCredits } from '@/types/scan';
+import type { Language } from '@/utils/translations';
 // Story 15-5d: translateItemCategoryGroup, getItemCategoryGroupEmoji moved to EditorItemsSection
 // Story 15-5d: translateStoreCategory moved to useEditorLearningPrompts hook
-import { getItemCategoryGroup } from '../config/categoryColors';
+import { getItemCategoryGroup } from '@/config/categoryColors';
 // Story 15-5d: getCategoryPillColors, getItemGroupColors, getCategoryEmoji moved to extracted components
-import { normalizeItemCategory } from '../utils/categoryNormalizer';
+import { normalizeItemCategory } from '@/utils/categoryNormalizer';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
 import { useIsProcessing as useScanIsProcessing, useScanActiveDialog } from '@features/scan/store';
-import { DIALOG_TYPES } from '../types/scanStateMachine';
+import { DIALOG_TYPES } from '@/types/scanStateMachine';
 // Story 14e-25d: Direct hooks (ViewHandlersContext deleted)
 import { useToast } from '@/shared/hooks';
 import { hasItemWithPrice } from '@/utils/transactionValidation';
 // Note: useModalActions imported above from @managers/ModalManager
-import type { ItemViewMode } from '../components/items/ItemViewToggle';
+import type { ItemViewMode } from '@/components/items/ItemViewToggle';
 // Story 15-5d: ItemViewToggle moved to EditorItemsSection
 import { EditorConfirmationDialogs } from './TransactionEditorView/EditorConfirmationDialogs';
 import { EditorItemsSection } from './TransactionEditorView/EditorItemsSection';
@@ -106,7 +106,8 @@ import { useEditorLearningPrompts } from './TransactionEditorView/useEditorLearn
  * - complete: Scan successful, show checkmark badge
  * - error: Scan failed, show error state with retry
  */
-export type ScanButtonState = 'idle' | 'pending' | 'scanning' | 'complete' | 'error';
+import type { ScanButtonState } from '@/shared/utils/scanHelpers';
+export type { ScanButtonState } from '@/shared/utils/scanHelpers';
 
 /**
  * Props for TransactionEditorView component

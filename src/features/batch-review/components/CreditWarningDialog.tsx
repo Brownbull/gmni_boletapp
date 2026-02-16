@@ -11,8 +11,8 @@
  */
 import React from 'react';
 import { AlertTriangle, XCircle, ArrowRight, Zap, X, Check } from 'lucide-react';
-import type { CreditCheckResult } from '../../services/creditService';
-import { isLowCreditsWarning } from '../../services/creditService';
+import type { CreditCheckResult } from '@/services/creditService';
+import { isLowCreditsWarning } from '@/services/creditService';
 
 export interface CreditWarningDialogProps {
   /** Credit check result from creditService */

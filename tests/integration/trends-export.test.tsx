@@ -19,7 +19,6 @@ import React from 'react';
 import { TrendsView } from '../../src/views/TrendsView';
 import { AnalyticsProvider } from '../../src/contexts/AnalyticsContext';
 import * as csvExport from '../../src/utils/csvExport';
-import * as subscriptionHook from '../../src/hooks/useSubscriptionTier';
 import type { Transaction } from '../../src/types/transaction';
 import type { AnalyticsNavigationState } from '../../src/types/analytics';
 
@@ -102,8 +101,6 @@ function renderWithProvider(
 describe.skip('Trends Export - Story 5.4', () => {
   let downloadMonthlyTransactionsSpy: ReturnType<typeof vi.spyOn>;
   let downloadYearlyStatisticsSpy: ReturnType<typeof vi.spyOn>;
-  let useSubscriptionTierSpy: ReturnType<typeof vi.spyOn>;
-
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -114,14 +111,6 @@ describe.skip('Trends Export - Story 5.4', () => {
     downloadYearlyStatisticsSpy = vi
       .spyOn(csvExport, 'downloadYearlyStatistics')
       .mockImplementation(() => {});
-
-    // Default: mock useSubscriptionTier to allow premium access
-    useSubscriptionTierSpy = vi
-      .spyOn(subscriptionHook, 'useSubscriptionTier')
-      .mockReturnValue({
-        tier: 'max',
-        canAccessPremiumExport: true,
-      });
   });
 
   afterEach(() => {
@@ -145,11 +134,6 @@ describe.skip('Trends Export - Story 5.4', () => {
     });
 
     it('should block download and show upgrade prompt when user is not premium', async () => {
-      useSubscriptionTierSpy.mockReturnValue({
-        tier: 'free',
-        canAccessPremiumExport: false,
-      });
-
       const onUpgradeRequired = vi.fn();
       renderWithProvider({ onUpgradeRequired });
 
@@ -223,8 +207,6 @@ describe.skip('Trends Export - Story 5.4', () => {
 describe.skip('Statistics Export & Upgrade Prompt - Story 5.5', () => {
   let downloadYearlyStatisticsSpy: ReturnType<typeof vi.spyOn>;
   let downloadMonthlyTransactionsSpy: ReturnType<typeof vi.spyOn>;
-  let useSubscriptionTierSpy: ReturnType<typeof vi.spyOn>;
-
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -234,13 +216,6 @@ describe.skip('Statistics Export & Upgrade Prompt - Story 5.5', () => {
     downloadMonthlyTransactionsSpy = vi
       .spyOn(csvExport, 'downloadMonthlyTransactions')
       .mockImplementation(() => {});
-
-    useSubscriptionTierSpy = vi
-      .spyOn(subscriptionHook, 'useSubscriptionTier')
-      .mockReturnValue({
-        tier: 'max',
-        canAccessPremiumExport: true,
-      });
   });
 
   afterEach(() => {
@@ -317,11 +292,6 @@ describe.skip('Statistics Export & Upgrade Prompt - Story 5.5', () => {
 
   describe('AC#4 & AC#5: Upgrade Prompt Modal', () => {
     it('should show upgrade prompt when non-premium user clicks download', async () => {
-      useSubscriptionTierSpy.mockReturnValue({
-        tier: 'free',
-        canAccessPremiumExport: false,
-      });
-
       const onUpgradeRequired = vi.fn();
       renderWithProvider({ onUpgradeRequired });
 
@@ -334,11 +304,6 @@ describe.skip('Statistics Export & Upgrade Prompt - Story 5.5', () => {
     });
 
     it('should not trigger export when non-premium user clicks download', async () => {
-      useSubscriptionTierSpy.mockReturnValue({
-        tier: 'free',
-        canAccessPremiumExport: false,
-      });
-
       renderWithProvider();
 
       const downloadButton = screen.getByRole('button', { name: /download/i });
@@ -372,11 +337,6 @@ describe.skip('Statistics Export & Upgrade Prompt - Story 5.5', () => {
 
   describe('Backwards Compatibility', () => {
     it('should still call onUpgradeRequired callback when blocked', async () => {
-      useSubscriptionTierSpy.mockReturnValue({
-        tier: 'free',
-        canAccessPremiumExport: false,
-      });
-
       const onUpgradeRequired = vi.fn();
       renderWithProvider({ onUpgradeRequired });
 

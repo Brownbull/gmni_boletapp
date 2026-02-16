@@ -20,13 +20,13 @@
 
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { ChevronLeft, Save, Loader2, AlertCircle, Check, X, Trash2, RotateCcw, Zap, Camera, Info, Layers } from 'lucide-react';
-import { formatCreditsDisplay } from '../services/userCreditsService';
+import { formatCreditsDisplay } from '@/services/userCreditsService';
 import { useBatchReview, BatchReceipt } from '../hooks/useBatchReview';
-import { BatchSummaryCard } from '../components/batch/BatchSummaryCard';
-import { ProcessingResult, ImageProcessingState } from '../services/batchProcessingService';
-import { Transaction } from '../types/transaction';
-import { formatCurrency } from '../utils/currency';
-import type { Currency } from '../types/settings';
+import { BatchReviewCard } from '@features/batch-review/components/BatchReviewCard';
+import { ProcessingResult, ImageProcessingState } from '@features/batch-review/services/batchProcessingService';
+import { Transaction } from '@/types/transaction';
+import { formatCurrency } from '@/utils/currency';
+import type { Currency } from '@/types/settings';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
 import { useScanStore, useScanPhase, useScanMode, useBatchProgress, useScanActions } from '@features/scan/store';
 // Story 14e-25d: Direct hooks (ViewHandlersContext deleted)
@@ -516,7 +516,7 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
               </div>
             ) : (
               receipts.map((receipt) => (
-                <BatchSummaryCard
+                <BatchReviewCard
                   key={receipt.id}
                   receipt={receipt}
                   theme={theme}

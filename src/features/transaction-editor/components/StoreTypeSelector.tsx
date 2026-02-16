@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import { ReceiptType } from '../services/gemini';
+import { ReceiptType } from '@/services/gemini';
 
 /**
  * Quick store types for the selector (subset of ReceiptType)

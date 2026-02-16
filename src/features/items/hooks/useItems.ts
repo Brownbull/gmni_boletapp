@@ -20,9 +20,9 @@
  */
 
 import { useMemo, useState, useCallback } from 'react';
-import type { Transaction } from '../types/transaction';
-import type { FlattenedItem, ItemFilters, UseItemsResult, AggregatedItem } from '../types/item';
-import { normalizeItemCategory } from '../utils/categoryNormalizer';
+import type { Transaction } from '@/types/transaction';
+import type { FlattenedItem, ItemFilters, UseItemsResult, AggregatedItem } from '@/types/item';
+import { normalizeItemCategory } from '@/utils/categoryNormalizer';
 
 // ============================================================================
 // Flattening Logic

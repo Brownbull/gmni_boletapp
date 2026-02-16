@@ -10,7 +10,7 @@
 
 import { useState } from 'react';
 import { Bell, Clock, Send, AlertCircle, Loader2 } from 'lucide-react';
-import { usePushNotifications } from '../hooks/usePushNotifications';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { Firestore } from 'firebase/firestore';
 
 interface NotificationSettingsProps {

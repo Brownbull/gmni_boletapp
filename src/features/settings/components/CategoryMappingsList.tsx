@@ -7,9 +7,9 @@
  */
 
 import React from 'react';
-import type { CategoryMapping } from '../types/categoryMapping';
-import { MappingsList } from './shared/MappingsList';
-import { categoryMappingsConfig } from './shared/mappingsListConfigs';
+import type { CategoryMapping } from '@/types/categoryMapping';
+import { MappingsList } from '@/components/shared/MappingsList';
+import { categoryMappingsConfig } from '@/components/shared/mappingsListConfigs';
 
 export interface CategoryMappingsListProps {
   mappings: CategoryMapping[];

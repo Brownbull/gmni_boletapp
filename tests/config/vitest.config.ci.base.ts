@@ -52,8 +52,8 @@ export const baseCiConfig: UserConfig = {
       // Tier 1: 1400-1700 lines each
       'tests/unit/hooks/useScanStateMachine.test.ts',
       'tests/unit/components/Nav.test.tsx',
-      'tests/unit/services/insightEngineService.test.ts',
-      'tests/unit/utils/insightGenerators.test.ts',
+      'tests/unit/features/insights/services/insightEngineService.test.ts',
+      'tests/unit/features/insights/utils/insightGenerators.test.ts',
       // Tier 2: 800-1100 lines each
       'tests/unit/csvExport.test.ts',
       'tests/unit/analytics/DrillDownCard.test.tsx',

@@ -8,7 +8,7 @@
  * item categories within groups.
  */
 
-import { normalizeItemCategory } from '../../utils/categoryNormalizer';
+import { normalizeItemCategory } from '@/utils/categoryNormalizer';
 import {
     getCategoryPillColors,
     getStoreGroupColors,
@@ -22,9 +22,9 @@ import {
     ITEM_CATEGORY_TO_KEY,
     type StoreCategoryGroup,
     type ItemCategoryGroup,
-} from '../../config/categoryColors';
+} from '@/config/categoryColors';
 import { buildProductKey } from '@/utils/categoryAggregation';
-import type { Transaction } from '../../types/transaction';
+import type { Transaction } from '@/types/transaction';
 import type { CategoryData } from './types';
 
 /**

@@ -7,8 +7,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Transaction } from '@/types/transaction';
-import { makeTx } from '../__fixtures__/transactionFactory';
-import { makeCategoryData } from '../__fixtures__/categoryDataFactory';
+import { makeTx } from '../../../../views/__fixtures__/transactionFactory';
+import { makeCategoryData } from '../../../../views/__fixtures__/categoryDataFactory';
 
 // ============================================================================
 // Mocks
@@ -19,7 +19,7 @@ const mockComputeItemCategoriesInGroup = vi.fn(() => []);
 const mockComputeSubcategoryData = vi.fn(() => []);
 const mockComputeAllCategoryData = vi.fn(() => []);
 
-vi.mock('@/views/TrendsView/aggregationHelpers', () => ({
+vi.mock('@features/analytics/views/TrendsView/aggregationHelpers', () => ({
   computeItemGroupsForStore: (...args: unknown[]) => mockComputeItemGroupsForStore(...args),
   computeItemCategoriesInGroup: (...args: unknown[]) => mockComputeItemCategoriesInGroup(...args),
   computeSubcategoryData: (...args: unknown[]) => mockComputeSubcategoryData(...args),
@@ -34,7 +34,7 @@ vi.mock('@/config/categoryColors', () => ({
   } as Record<string, string>,
 }));
 
-import { resolveDrillDownCategories } from '@/views/TrendsView/drillDownHelpers';
+import { resolveDrillDownCategories } from '@features/analytics/views/TrendsView/drillDownHelpers';
 
 beforeEach(() => {
   vi.clearAllMocks();
