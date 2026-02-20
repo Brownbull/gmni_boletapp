@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
-"""ECC PreToolUse Guard for Edit — Anti-pattern detection.
+"""ECC PreToolUse Guard for Edit — Anti-pattern detection + file size enforcement.
 
 Reads tool input JSON from stdin. Checks for known anti-patterns.
-Exit 0 = allow (no issues). Exit 1 = non-blocking warning.
+Exit 0 = allow (no issues).
+Exit 1 = non-blocking warning.
+Exit 2 = BLOCK (edit rejected — file exceeds 800-line hard limit).
 
-Hooks (from ECC-LEARNING-CYCLE-IMPROVEMENTS.md Section 2):
-  1. console.log in code
-  2. Explicit "any" type
-  3. Large file edit (>500 lines)
-  4. Unit test >300 lines
-  5. Integration test >500 lines
-  6. E2E test >400 lines
+Checks:
+  1. console.log in code → warn
+  2. Explicit "any" type → warn
+  3. File size >500 lines → warn
+  4. File size >800 lines → BLOCK
+  5. Test file size limits → warn (unit >300, integration >500, e2e >400)
+  6. E2E anti-patterns → warn (bare text selectors, long timeouts, networkidle)
 """
 import json
 import os
+import re
 import sys
 
 
@@ -49,7 +52,16 @@ def main():
         except OSError:
             line_count = 0
 
-        # 3. Large file (>500 lines)
+        # 3a. BLOCK at 800 lines — hard limit, edit rejected
+        if line_count > 800:
+            print(
+                f"\u26a0\ufe0f  BLOCKED: {os.path.basename(file_path)} is {line_count} lines "
+                f"(max 800). Split this file before adding more code.",
+                file=sys.stderr,
+            )
+            sys.exit(2)  # BLOCK — edit rejected
+
+        # 3b. Warn at 500 lines
         if line_count > 500:
             warnings.append(
                 f"\u26a0\ufe0f  Editing large file ({line_count} lines >500). Consider refactoring first."
@@ -92,7 +104,6 @@ def main():
             )
 
         # 8. Long fixed timeouts for async operations
-        import re
         long_timeouts = re.findall(r"waitForTimeout\((\d+)\)", new_string)
         for timeout_ms in long_timeouts:
             if int(timeout_ms) >= 3000:

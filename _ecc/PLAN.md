@@ -8,8 +8,7 @@ ECC is a custom development execution layer built on top of BMAD. While BMAD han
 - **Parallel agent execution** for code review (4 agents simultaneously)
 - **Adaptive review classification** (TRIVIAL/SIMPLE/STANDARD/COMPLEX)
 - **Weighted quality scoring** (Code 40%, Security 30%, Architect 20%, TDD 10%)
-- **TEA 5-dimension test quality** (Determinism, Isolation, Maintainability, Coverage, Performance)
-- **Automated hooks** (pre-edit guard, post-edit warnings, TypeScript typecheck)
+- **Automated hooks** (pre-edit guard, post-edit warnings, TypeScript typecheck, session budget, write guard)
 - **Architecture enforcement** after each task
 - **Branch guards** preventing commits to protected branches
 
@@ -27,12 +26,14 @@ CLAUDE.md       ← Project-owned. Both BMAD and ECC reference it.
 - `.claude/commands/bmad-*.md` - regenerated from manifests on install
 
 ### What ECC Manages (source of truth in `_ecc/`)
-- `_ecc/workflows/` - 6 workflow definitions
-- `_ecc/hooks/` - 3 hook scripts
-- `_ecc/knowledge/` - code-review-patterns.md
+- `_ecc/workflows/` - 8 active workflow definitions
+- `_ecc/hooks/` - 8 hook scripts
+- `_ecc/knowledge/` - code-review-patterns.md, hardening-patterns.md
 - `_ecc/rules/` - testing.md, security.md, workflow.md
-- `_ecc/config/` - settings.json, TEA customize, learning config
-- `_ecc/commands/` - 6 command stubs
+- `_ecc/config/` - settings.json, learning config
+- `_ecc/commands/` - 8 command stubs
+- `_ecc/plans/` - archived design documents (reference only)
+- `_ecc/tools/` - cozempic-toggle.sh
 
 ### After BMAD Reinstall
 
@@ -54,30 +55,47 @@ _ecc/
 │   ├── ecc-dev-story.md
 │   ├── ecc-code-review.md
 │   ├── ecc-create-story.md
+│   ├── ecc-create-epics-and-stories.md
+│   ├── ecc-e2e.md
+│   ├── ecc-impact-analysis.md
 │   ├── deploy-story.md
-│   ├── story-sizing.md
-│   └── design-system-mockup-builder.md
-├── workflows/
+│   └── story-sizing.md
+├── workflows/                       # Active workflows (in project-modules.yaml)
 │   ├── ecc-dev-story/               # TDD-first dev with agent orchestration
 │   ├── ecc-code-review/             # 4-agent parallel review
 │   ├── ecc-create-story/            # Story creation with epic context
+│   ├── ecc-create-epics-and-stories/# Epic + story generation from PRD
+│   ├── ecc-e2e/                     # Standalone E2E testing workflow
+│   ├── ecc-impact-analysis/         # Dependency graph cross-cutting analysis
 │   ├── deploy-story/                # 2-branch PR deployment
-│   ├── story-sizing/                # Opus 4.6 sizing analysis
-│   └── design-system-mockup-builder/# HTML mockup generation
+│   └── story-sizing/                # Opus 4.6 sizing analysis
 ├── hooks/
-│   ├── ecc-pre-edit-guard.py        # Catches console.log, :any, file size
+│   ├── ecc-pre-edit-guard.py        # BLOCK at 800 lines, warn at 500, catches :any/console.log
+│   ├── ecc-pre-write-guard.py       # ADR gate for new src/ files
 │   ├── ecc-post-edit-warn.py        # toHaveBeenCalled warnings
-│   └── ecc-post-edit-typecheck.sh   # tsc --noEmit after edits
+│   ├── ecc-post-edit-typecheck.sh   # tsc --noEmit after edits
+│   ├── ecc-post-memory-notify.sh    # MEMORY.md edit notification
+│   ├── ecc-session-budget.py        # Compaction counter (warn at 3)
+│   ├── ecc-session-start.sh         # Session log entry
+│   └── ecc-session-stop.sh          # Cost CSV append
 ├── knowledge/
-│   └── code-review-patterns.md      # MUST CHECK security patterns
+│   ├── code-review-patterns.md      # MUST CHECK security patterns
+│   └── hardening-patterns.md        # Performance + security hardening
 ├── rules/                           # → .claude/rules/
 │   ├── testing.md
 │   ├── security.md
 │   └── workflow.md
-└── config/
-    ├── settings.json                # → .claude/settings.json (hook config)
-    ├── bmm-tea.customize.yaml       # → _bmad/_config/agents/
-    └── learning-config.yaml         # → _bmad/bmm/config/
+├── config/
+│   ├── settings.json                # ECC source of truth → .claude/settings.json
+│   └── learning-config.yaml         # ECC continuous learning config
+├── plans/                           # Archived design docs (reference only, not active)
+│   ├── ecc-e2e.md                   # E2E workflow design rationale + multi-user decision trees
+│   └── ecc-impact-analysis.md       # Impact analysis design + madge usage patterns
+│   # NOTE: plans/ and knowledge/ are exempt from the 200-line guideline.
+│   #       The 200-line rule applies to _ecc/workflows/ and _ecc/hooks/ only.
+└── tools/
+    ├── cozempic-toggle.sh           # Optional: enable/disable cozempic session pruning
+    └── readme.md                    # Cozempic integration notes
 ```
 
 ## Cross-References
@@ -85,8 +103,6 @@ _ecc/
 ECC workflows reference these BMAD-managed paths (expected to exist after install):
 - `_bmad/core/tasks/workflow.xml` - BMAD core workflow loader
 - `_bmad/bmm/config.yaml` - project configuration (user_name, language, paths)
-- `_bmad/tea/testarch/knowledge/playwright-cli.md` - TEA browser automation reference
-- `_bmad/tea/testarch/knowledge/test-quality.md` - TEA quality scoring reference
 
 ECC workflows reference these project paths (not managed by either system):
 - `docs/architecture/TESTING-GUIDELINES.md`
@@ -100,11 +116,23 @@ ECC workflows reference these project paths (not managed by either system):
 
 **Always edit files in `_ecc/`, never in `.claude/`.**
 
-After editing, re-run setup to push changes:
+After editing hooks or rules, re-run setup to push changes:
 ```bash
 bash _ecc/setup.sh
 ```
 
-For workflow changes (instructions.xml, workflow.yaml), no setup needed - commands already point to `_ecc/workflows/`.
+For workflow changes (step files, workflow.yaml), no setup needed — commands already point to `_ecc/workflows/`.
+
+## Optional: Cozempic Integration
+
+Cozempic prunes Claude session JSONL files before compaction (~35% token reduction).
+Toggle on/off without touching ECC hooks:
+
+```bash
+bash _ecc/tools/cozempic-toggle.sh enable   # Append cozempic to SessionStart/PreCompact/Stop
+bash _ecc/tools/cozempic-toggle.sh disable  # Remove cozempic entries (ECC hooks preserved)
+bash _ecc/tools/cozempic-toggle.sh status   # Check current state
+```
 
 ## Created: 2026-02-07
+## Updated: 2026-02-20 (Session 6 — Path B migration complete)

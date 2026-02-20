@@ -12,12 +12,14 @@ ecc_orchestration:
   agents:
     planner:
       subagent_type: "everything-claude-code:planner"
-      model: "opus"
+      model_standard: "sonnet"
+      model_complex: "opus"
       max_turns: 7
       purpose: "Implementation planning and risk assessment"
     tdd-guide:
       subagent_type: "everything-claude-code:tdd-guide"
-      model: "opus"
+      model_standard: "sonnet"
+      model_complex: "opus"
       # No max_turns — iterative implementation needs many turns
       purpose: "Test-driven development, RED-GREEN-REFACTOR cycle"
     build-error-resolver:
@@ -108,6 +110,16 @@ branch_guard:
   sync_check: true          # Verify branch is up-to-date with develop
   auto_create: true          # Offer to create feature branch if on protected branch
   stash_uncommitted: true    # Stash changes before switching branches
+
+# Story Complexity Classification (determines dual-model agent selection)
+# Evaluated once in Step 1 after parsing story metrics
+story_complexity:
+  standard:
+    criteria: "≤3 tasks AND ≤10 subtasks AND ≤4 files"
+    description: "Planner + TDD Guide run at sonnet"
+  complex:
+    criteria: ">3 tasks OR >10 subtasks OR >4 files"
+    description: "Planner + TDD Guide escalate to opus"
 
 # Mid-Story Sizing Configuration (see docs/architecture/plans/ECC-MID-STORY-SIZING-PLAN.md)
 mid_story_sizing:

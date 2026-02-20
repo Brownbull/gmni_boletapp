@@ -1,0 +1,11 @@
+{
+  "note": "Initialized by Session 3 migration. Overwritten after each test run by workflow step-06.",
+  "date": "2026-02-20",
+  "workflow": null,
+  "story": null,
+  "total_tests": null,
+  "passed": null,
+  "failed": null,
+  "coverage_by_module": {},
+  "failed_tests": []
+}

@@ -12,9 +12,11 @@ ecc_orchestration:
   agents:
     e2e_runner:
       subagent_type: "everything-claude-code:e2e-runner"
+      model: "sonnet"
       purpose: "Write and run E2E tests against staging"
     code_reviewer:
       subagent_type: "everything-claude-code:code-reviewer"
+      model: "sonnet"
       purpose: "E2E test quality review with TEA 5-dimension scoring"
 
   # Sequential with post-test review
