@@ -252,6 +252,34 @@ describe('EditViewItemsSection', () => {
     });
   });
 
+  describe('Keyboard navigation (AC2)', () => {
+    // item rows are div[role="button"] — actual <button> elements are group headers, toggles, and named buttons
+    const getItemRows = () =>
+      screen.getAllByRole('button').filter(el => el.tagName !== 'BUTTON');
+
+    it.each(['Enter', ' '])('grouped view: key %s triggers onSetEditingItemIndex', (key) => {
+      const props = makeProps();
+      render(<EditViewItemsSection {...props} />);
+      fireEvent.keyDown(getItemRows()[0], { key });
+      expect(props.onSetEditingItemIndex).toHaveBeenCalledWith(expect.any(Number));
+    });
+
+    it('grouped view: unrelated key does not trigger edit', () => {
+      const props = makeProps();
+      render(<EditViewItemsSection {...props} />);
+      fireEvent.keyDown(getItemRows()[0], { key: 'Tab' });
+      expect(props.onSetEditingItemIndex).not.toHaveBeenCalled();
+    });
+
+    it.each(['Enter', ' '])('original view: key %s triggers onSetEditingItemIndex', (key) => {
+      const props = makeProps();
+      render(<EditViewItemsSection {...props} />);
+      fireEvent.click(screen.getByText('Original'));
+      fireEvent.keyDown(getItemRows()[0], { key });
+      expect(props.onSetEditingItemIndex).toHaveBeenCalledWith(expect.any(Number));
+    });
+  });
+
   describe('View mode', () => {
     // AC7
     it('renders ItemViewToggle when items.length > 0', () => {

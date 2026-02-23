@@ -16,6 +16,20 @@ import { translateItemCategoryGroup, getItemCategoryGroupEmoji } from '@/utils/c
 import { getItemCategoryGroup, getItemGroupColors } from '@/config/categoryColors';
 import { normalizeItemCategory } from '@/utils/categoryNormalizer';
 
+type ItemEditableField = 'name' | 'price' | 'category' | 'subcategory';
+
+function getItemContainerConfig(
+    i: number, shouldAnimate: boolean, played: boolean, testIdPrefix: string
+): { ItemContainer: typeof AnimatedItem | typeof React.Fragment; containerProps: Record<string, unknown> } {
+    const animate = shouldAnimate && !played;
+    return {
+        ItemContainer: animate ? AnimatedItem : React.Fragment,
+        containerProps: animate
+            ? { delay: i * 100, index: i, testId: `${testIdPrefix}-${i}` }
+            : {},
+    };
+}
+
 interface EditViewItemsSectionProps {
     currentTransaction: Transaction;
     editingItemIndex: number | null;
@@ -101,7 +115,7 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
         onSetEditingItemIndex(currentTransaction.items.length);
     };
 
-    const handleUpdateItem = (index: number, field: string, value: string | number) => {
+    const handleUpdateItem = (index: number, field: ItemEditableField, value: string | number) => {
         const newItems = [...currentTransaction.items];
         newItems[index] = { ...newItems[index], [field]: field === 'price' ? parseStrictNumber(value) : value };
         onUpdateTransaction({ ...currentTransaction, items: newItems });
@@ -155,11 +169,7 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
                                 <div className="p-2 space-y-1.5">
                                     {groupItems.map(({ item, originalIndex: i }) => {
                                         const isVisible = !shouldAnimate || i < animatedItems.length;
-                                        const animationDelay = shouldAnimate ? i * 100 : 0;
-                                        const ItemContainer = shouldAnimate && !animationPlayedRef.current ? AnimatedItem : React.Fragment;
-                                        const containerProps = shouldAnimate && !animationPlayedRef.current
-                                            ? { delay: animationDelay, index: i, testId: `edit-view-item-${i}` }
-                                            : {};
+                                        const { ItemContainer, containerProps } = getItemContainerConfig(i, shouldAnimate, animationPlayedRef.current, 'edit-view-item');
                                         if (!isVisible) return null;
 
                                         return (
@@ -176,7 +186,7 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div onClick={() => onSetEditingItemIndex(i)} className="px-2.5 py-2 rounded-lg cursor-pointer transition-colors" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                                                    <div onClick={() => onSetEditingItemIndex(i)} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSetEditingItemIndex(i); } }} className="px-2.5 py-2 rounded-lg cursor-pointer transition-colors" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
                                                         <div className="flex justify-between items-start gap-2 mb-1">
                                                             <div className="flex items-center gap-1 flex-1 min-w-0">
                                                                 <span className="text-xs font-medium truncate" style={{ color: 'var(--text-primary)' }} title={item.name}>{item.name}</span>
@@ -208,11 +218,7 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
                         <div className="divide-y" style={{ borderColor: 'var(--border-light)' }}>
                             {currentTransaction.items.map((item, i) => {
                                 const isVisible = !shouldAnimate || i < animatedItems.length;
-                                const animationDelay = shouldAnimate ? i * 100 : 0;
-                                const ItemContainer = shouldAnimate && !animationPlayedRef.current ? AnimatedItem : React.Fragment;
-                                const containerProps = shouldAnimate && !animationPlayedRef.current
-                                    ? { delay: animationDelay, index: i, testId: `edit-view-item-original-${i}` }
-                                    : {};
+                                const { ItemContainer, containerProps } = getItemContainerConfig(i, shouldAnimate, animationPlayedRef.current, 'edit-view-item-original');
                                 if (!isVisible) return null;
 
                                 return (
@@ -233,7 +239,7 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div onClick={() => onSetEditingItemIndex(i)} className="flex items-center gap-2 cursor-pointer">
+                                                <div onClick={() => onSetEditingItemIndex(i)} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSetEditingItemIndex(i); } }} className="flex items-center gap-2 cursor-pointer">
                                                     <span className="text-xs font-medium w-5 text-center flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>{i + 1}.</span>
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center justify-between gap-2">

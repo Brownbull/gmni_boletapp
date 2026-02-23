@@ -1,4 +1,4 @@
-# Tech Debt Story TD-15b-6: EditViewItemsSection Price Input Consistency + Edge Case Tests
+# Tech Debt Story TD-15b-6: EditViewItemsSection Form Consistency + Edge Case Tests
 
 **Status:** ready-for-dev
 
@@ -7,7 +7,7 @@
 
 ## Story
 
-As a **developer**, I want **the original-order view price input to use the same parsing path as the grouped view**, so that **price parsing behavior is consistent across both views and edge-case tests catch regressions**.
+As a **developer**, I want **the original-order view edit form to be consistent with the grouped view** (price parsing, display value, and translation keys), so that **both views behave identically and edge-case tests catch regressions**.
 
 ## Background
 
@@ -31,13 +31,17 @@ Story TD-15b-4 added unit tests for `EditViewItemsSection`. Code review (2026-02
 - [ ] **AC2:** Test added — `handleAddItem` with empty `items` array sets `editingItemIndex` to `0`
 - [ ] **AC3:** Test added — collapsing group A does not affect group B's `aria-expanded` state
 - [ ] **AC4:** Test added — `handleDeleteItem` on last item results in empty `items` array AND `ItemViewToggle` is no longer rendered
-- [ ] **AC5:** `npm run test:quick` passes
+- [ ] **AC5:** Original-order view price `value` attr matches grouped: `value={item.price}` (not `value={item.price || ''}`)
+- [ ] **AC6:** Original-order view price placeholder key matches grouped: `t('price')` not `t('itemPrice')` (or confirm intentional divergence in translations.ts)
+- [ ] **AC7:** `npm run test:quick` passes
 
 ## Tasks / Subtasks
 
-### Task 1: Fix price input in original-order view
-- [ ] 1.1 In `EditViewItemsSection.tsx` line ~228: change `parseFloat(e.target.value) || 0` to raw `e.target.value` (matches grouped view pattern)
-- [ ] 1.2 Verify `test:quick` still passes — existing price test covers this path via grouped view
+### Task 1: Fix original-order view price input inconsistencies
+- [ ] 1.1 In `EditViewItemsSection.tsx` line ~233: change `parseFloat(e.target.value) || 0` to raw `e.target.value` (AC1 — matches grouped view parse path)
+- [ ] 1.2 Change `value={item.price || ''}` to `value={item.price}` (AC5 — consistent display with grouped view)
+- [ ] 1.3 Check `translations.ts` for `price` vs `itemPrice` keys — align to one key for the price placeholder (AC6)
+- [ ] 1.4 Verify `test:quick` still passes
 
 ### Task 2: Add edge case tests to EditViewItemsSection.test.tsx
 - [ ] 2.1 `handleAddItem with empty items` — render with `items: []`, click add, verify `onSetEditingItemIndex(0)`
@@ -46,7 +50,7 @@ Story TD-15b-4 added unit tests for `EditViewItemsSection`. Code review (2026-02
 
 ## Dev Notes
 
-- Source story: [TD-15b-4](./TD-15b-4-editviewitems-unit-tests.md)
-- Review findings: #2 (price inconsistency), #7 (edge cases)
+- Source story: [TD-15b-4](./TD-15b-4-editviewitems-unit-tests.md), [TD-15b-5](./TD-15b-5-editviewitems-code-quality.md)
+- Review findings: #2 (price inconsistency), #7 (edge cases) from TD-15b-4 review; #3 (parse path), #4 (display value), #5 (i18n key) from TD-15b-5 review
 - Files affected: `src/features/transaction-editor/views/EditViewItemsSection.tsx` (Task 1), `src/features/transaction-editor/views/EditViewItemsSection.test.tsx` (Task 2)
 - Note: TD-15b-5 also touches `EditViewItemsSection.tsx` (type safety + a11y + DRY). If TD-15b-5 lands first, the `handleUpdateItem` signature will have typed `field: ItemEditableField`. Update test accordingly.

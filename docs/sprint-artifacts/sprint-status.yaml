@@ -205,8 +205,9 @@ development_status:
   15b-2a-decompose-edit-view: done             # 3 pts - EditView 1,713 lines
   TD-15b-2a-editview-items-extraction: done             # 3 pts - Extract items section (AC1 completion, DEPENDS: 15b-2a)
   TD-15b-4-editviewitems-unit-tests: done              # 2 pts - Unit tests for EditViewItemsSection (from TD-15b-2a review)
-  TD-15b-5-editviewitems-code-quality: ready-for-dev   # 2 pts - Type safety + a11y + DRY polish (from TD-15b-2a review)
-  TD-15b-6-editviewitems-price-consistency: ready-for-dev  # 1 pt  - Original-order price input fix + edge case tests (from TD-15b-4 review)
+  TD-15b-5-editviewitems-code-quality: done              # 2 pts - Type safety + a11y + DRY polish (from TD-15b-2a review)
+  TD-15b-6-editviewitems-price-consistency: ready-for-dev  # 1 pt  - Original-order form consistency (price + display + i18n + edge cases) (from TD-15b-4+TD-15b-5 reviews)
+  TD-15b-7-editviewitems-input-sanitization: ready-for-dev  # 1 pt  - sanitizeInput() on name/subcategory inputs (from TD-15b-5 review)
   # 15b-2b: DROPPED (2026-02-23) file merged into TEVInternal in prior story
   15b-2c-decompose-history-view: drafted       # 2 pts - HistoryView 1,083 lines
   15b-2d-decompose-items-view: drafted         # 2 pts - ItemsView 926 lines
