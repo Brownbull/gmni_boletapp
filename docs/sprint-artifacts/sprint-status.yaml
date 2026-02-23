@@ -203,7 +203,9 @@ development_status:
   #   15b-2i (723L below threshold), 15b-2j (682L below threshold)
   # Never-scoped views (target <800)
   15b-2a-decompose-edit-view: done             # 3 pts - EditView 1,713 lines
-  TD-15b-2a-editview-items-extraction: ready-for-dev  # 3 pts - Extract items section (AC1 completion, DEPENDS: 15b-2a)
+  TD-15b-2a-editview-items-extraction: done             # 3 pts - Extract items section (AC1 completion, DEPENDS: 15b-2a)
+  TD-15b-4-editviewitems-unit-tests: ready-for-dev     # 2 pts - Unit tests for EditViewItemsSection (from TD-15b-2a review)
+  TD-15b-5-editviewitems-code-quality: ready-for-dev   # 2 pts - Type safety + a11y + DRY polish (from TD-15b-2a review)
   # 15b-2b: DROPPED (2026-02-23) file merged into TEVInternal in prior story
   15b-2c-decompose-history-view: drafted       # 2 pts - HistoryView 1,083 lines
   15b-2d-decompose-items-view: drafted         # 2 pts - ItemsView 926 lines

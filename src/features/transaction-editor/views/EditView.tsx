@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Trash2, Plus, Check, ChevronDown, ChevronUp, BookMarked, Camera, RefreshCw } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, BookMarked, Camera, RefreshCw } from 'lucide-react';
 // Profile components removed - header simplified to match mockup
 import { CategoryBadge } from '@features/transaction-editor/components/CategoryBadge';
-import { CategoryCombobox } from '@features/transaction-editor/components/CategoryCombobox';
 import { ImageViewer } from '@/components/ImageViewer';
 import { CategoryLearningPrompt } from '@/components/CategoryLearningPrompt';
 import { SubcategoryLearningPrompt } from '@/components/SubcategoryLearningPrompt';
@@ -18,27 +17,20 @@ import { SupportedCurrency } from '@/services/userPreferencesService';
 import { PendingScan, UserCredits } from '@/types/scan';
 // Story 9.12: Language type for translations
 import type { Language } from '@/utils/translations';
-// Story 14.22: Category translations for item groups
-import { translateItemCategoryGroup, getItemCategoryGroupEmoji } from '@/utils/categoryTranslations';
 // Story 14.22: Category colors and emoji for thumbnail badge
-import { getCategoryPillColors, getItemCategoryGroup, getItemGroupColors } from '@/config/categoryColors';
+import { getCategoryPillColors } from '@/config/categoryColors';
 import { getCategoryEmoji } from '@/utils/categoryEmoji';
-// Story 14.22: Normalize item categories for consistent group mapping
-import { normalizeItemCategory } from '@/utils/categoryNormalizer';
-// Story 14.38: Item view toggle
-import { ItemViewToggle, type ItemViewMode } from '@/components/items/ItemViewToggle';
-// Story 11.3: Animated item reveal
-import { useStaggeredReveal } from '@/hooks/useStaggeredReveal';
-import { AnimatedItem } from '@/components/AnimatedItem';
 // Story 14.15: ScanStatusIndicator removed - replaced by ScanOverlay in App.tsx
 // Story 15b-2a: Types and pure helpers extracted to editViewHelpers.ts
-import { TransactionItem, Transaction } from './editViewHelpers';
+import { Transaction } from './editViewHelpers';
 // Story 15b-2a: Learning flow hook
 import { useEditViewLearningFlow } from './useEditViewLearningFlow';
 // Story 15b-2a: Sub-components
 import { EditViewHeader } from './EditViewHeader';
 import { EditViewScanSection } from './EditViewScanSection';
 import { EditViewDialogs } from './EditViewDialogs';
+// Story TD-15b-2a: Items section extracted to EditViewItemsSection
+import { EditViewItemsSection } from './EditViewItemsSection';
 
 interface EditViewProps {
     currentTransaction: Transaction;
@@ -179,10 +171,6 @@ export const EditView: React.FC<EditViewProps> = ({
     const titleInputRef = useRef<HTMLInputElement>(null);
     // Story 14.22: Category dropdown state
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-    // Story 14.22: Collapsed item groups state (all expanded by default)
-    const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
-    // Story 14.38: Item view mode toggle (grouped vs original order)
-    const [itemViewMode, setItemViewMode] = useState<ItemViewMode>('grouped');
 
     // Story 14.15: Scan state management moved to App.tsx with ScanOverlay
     // The old ScanStatusIndicator and useScanState hook in EditView have been removed.
@@ -298,65 +286,6 @@ export const EditView: React.FC<EditViewProps> = ({
     // Story 9.10 AC#6, #7: Check if user has credits for scanning
     const hasCredits = (userCredits?.remaining ?? 0) > 0;
 
-    // Story 11.3: Staggered reveal for items (AC #1, #2, #5)
-    // Track if animation has already played to prevent re-animation on edits
-    const animationPlayedRef = useRef(false);
-    const shouldAnimate = animateItems && !animationPlayedRef.current;
-    const { visibleItems: animatedItems, isComplete: animationComplete } = useStaggeredReveal(
-        shouldAnimate ? currentTransaction.items : [],
-        {
-            staggerMs: 100,      // AC #2: 100ms stagger between items
-            initialDelayMs: 300, // AC #4: Header appears first
-            maxDurationMs: 2500, // AC #5: Complete within ~2.5 seconds
-        }
-    );
-
-    // Mark animation as played once complete
-    useEffect(() => {
-        if (animationComplete && shouldAnimate) {
-            animationPlayedRef.current = true;
-        }
-    }, [animationComplete, shouldAnimate]);
-
-    // Story 14.22: Group items by item category GROUP (not individual category)
-    // Maps item.category -> normalized English -> item group (e.g., "Frutas y Verduras" -> "Produce" -> "food-fresh")
-    const itemsByGroup = useMemo(() => {
-        const groups: Record<string, Array<{ item: TransactionItem; originalIndex: number }>> = {};
-
-        currentTransaction.items.forEach((item, index) => {
-            // Normalize the item category to English, then get its group
-            const normalizedCategory = normalizeItemCategory((item.category as string) || 'Other');
-            const groupKey = getItemCategoryGroup(normalizedCategory);
-
-            if (!groups[groupKey]) {
-                groups[groupKey] = [];
-            }
-            groups[groupKey].push({ item, originalIndex: index });
-        });
-
-        // Sort groups alphabetically, and sort items within each group by price descending
-        return Object.entries(groups)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([groupKey, items]) => ({
-                groupKey, // e.g., "food-fresh", "food-packaged", "other-item"
-                items: items.sort((a, b) => b.item.price - a.item.price), // Sort by price descending
-                total: items.reduce((sum, { item }) => sum + item.price, 0),
-            }));
-    }, [currentTransaction.items]);
-
-    // Story 14.22: Toggle group collapse state
-    const toggleGroupCollapse = (category: string) => {
-        setCollapsedGroups(prev => {
-            const next = new Set(prev);
-            if (next.has(category)) {
-                next.delete(category);
-            } else {
-                next.add(category);
-            }
-            return next;
-        });
-    };
-
     // Input styling using CSS variables
     const inputStyle: React.CSSProperties = {
         backgroundColor: isDark ? '#1e293b' : '#f8fafc',
@@ -365,26 +294,6 @@ export const EditView: React.FC<EditViewProps> = ({
     };
 
     const hasImages = currentTransaction.imageUrls && currentTransaction.imageUrls.length > 0;
-
-    const handleAddItem = () => {
-        onUpdateTransaction({
-            ...currentTransaction,
-            items: [...currentTransaction.items, { name: '', price: 0, category: 'Other', subcategory: '' }]
-        });
-        onSetEditingItemIndex(currentTransaction.items.length);
-    };
-
-    const handleUpdateItem = (index: number, field: string, value: string | number) => {
-        const newItems = [...currentTransaction.items];
-        newItems[index] = { ...newItems[index], [field]: field === 'price' ? parseStrictNumber(value) : value };
-        onUpdateTransaction({ ...currentTransaction, items: newItems });
-    };
-
-    const handleDeleteItem = (index: number) => {
-        const newItems = currentTransaction.items.filter((_, x) => x !== index);
-        onUpdateTransaction({ ...currentTransaction, items: newItems });
-        onSetEditingItemIndex(null);
-    };
 
     // Story 14.15b: Handle re-scan button click - show confirmation first
     const handleRescanClick = () => {
@@ -686,377 +595,22 @@ export const EditView: React.FC<EditViewProps> = ({
                     </button>
                 )}
 
-                {/* ITEMS section - Story 14.38: Toggle between grouped and original order */}
-                <div className="mb-4">
-                    {/* Story 14.38: Full-width item view toggle (replaces "ITEMS" subtitle) */}
-                    {currentTransaction.items && currentTransaction.items.length > 0 && (
-                        <div className="mb-3">
-                            <ItemViewToggle
-                                activeView={itemViewMode}
-                                onViewChange={setItemViewMode}
-                                t={t}
-                            />
-                        </div>
-                    )}
-
-                    {/* Items grouped by item category GROUP (e.g., "food-fresh", "food-packaged") */}
-                    <div className="space-y-3">
-                        {/* Grouped view */}
-                        {itemViewMode === 'grouped' && itemsByGroup.map(({ groupKey, items: groupItems, total: groupTotal }) => {
-                            const isCollapsed = collapsedGroups.has(groupKey);
-                            // Use item group colors (not individual category colors)
-                            const groupColors = getItemGroupColors(groupKey as Parameters<typeof getItemGroupColors>[0], 'normal', isDark ? 'dark' : 'light');
-                            const groupEmoji = getItemCategoryGroupEmoji(groupKey);
-                            // Translate group name to current language (e.g., "food-fresh" -> "Alimentos Frescos")
-                            const translatedGroup = translateItemCategoryGroup(groupKey, language);
-
-                            return (
-                                <div
-                                    key={groupKey}
-                                    className="rounded-xl overflow-hidden"
-                                    style={{
-                                        backgroundColor: 'var(--bg-secondary)',
-                                        border: '1px solid var(--border-light)',
-                                    }}
-                                >
-                                    {/* Group header - clickable to toggle */}
-                                    <button
-                                        onClick={() => toggleGroupCollapse(groupKey)}
-                                        className="w-full flex items-center justify-between px-3 py-2.5 transition-colors"
-                                        style={{ backgroundColor: groupColors.bg }}
-                                        aria-expanded={!isCollapsed}
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm">{groupEmoji}</span>
-                                            <span
-                                                className="text-sm font-semibold"
-                                                style={{ color: groupColors.fg }}
-                                            >
-                                                {translatedGroup}
-                                            </span>
-                                            <span
-                                                className="text-xs px-1.5 py-0.5 rounded-full font-medium"
-                                                style={{
-                                                    backgroundColor: 'rgba(0,0,0,0.1)',
-                                                    color: groupColors.fg,
-                                                }}
-                                            >
-                                                {groupItems.length}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span
-                                                className="text-sm font-bold"
-                                                style={{ color: groupColors.fg }}
-                                            >
-                                                {formatCurrency(groupTotal, displayCurrency)}
-                                            </span>
-                                            {isCollapsed ? (
-                                                <ChevronDown size={16} style={{ color: groupColors.fg }} />
-                                            ) : (
-                                                <ChevronUp size={16} style={{ color: groupColors.fg }} />
-                                            )}
-                                        </div>
-                                    </button>
-
-                                    {/* Items in this category */}
-                                    {!isCollapsed && (
-                                        <div className="p-2 space-y-1.5">
-                                            {groupItems.map(({ item, originalIndex: i }) => {
-                                                const isVisible = !shouldAnimate || i < animatedItems.length;
-                                                const animationDelay = shouldAnimate ? i * 100 : 0;
-                                                const ItemContainer = shouldAnimate && !animationPlayedRef.current ? AnimatedItem : React.Fragment;
-                                                const containerProps = shouldAnimate && !animationPlayedRef.current
-                                                    ? { delay: animationDelay, index: i, testId: `edit-view-item-${i}` }
-                                                    : {};
-
-                                                if (!isVisible) return null;
-
-                                                return (
-                                                    <ItemContainer key={i} {...containerProps}>
-                                                        {editingItemIndex === i ? (
-                                                            /* Editing state */
-                                                            <div
-                                                                className="p-3 rounded-lg space-y-2"
-                                                                style={{ backgroundColor: 'var(--bg-tertiary)' }}
-                                                            >
-                                                                <input
-                                                                    className="w-full p-2 border rounded-lg text-sm"
-                                                                    style={inputStyle}
-                                                                    value={item.name}
-                                                                    onChange={e => handleUpdateItem(i, 'name', e.target.value)}
-                                                                    placeholder={t('itemName')}
-                                                                    autoFocus
-                                                                />
-                                                                <input
-                                                                    type="number"
-                                                                    className="w-full p-2 border rounded-lg text-sm"
-                                                                    style={inputStyle}
-                                                                    value={item.price}
-                                                                    onChange={e => handleUpdateItem(i, 'price', e.target.value)}
-                                                                    placeholder={t('price')}
-                                                                />
-                                                                <CategoryCombobox
-                                                                    value={(item.category as string) || ''}
-                                                                    onChange={(value) => handleUpdateItem(i, 'category', value)}
-                                                                    language={language}
-                                                                    theme={theme as 'light' | 'dark'}
-                                                                    placeholder={t('itemCat')}
-                                                                    ariaLabel={t('itemCat')}
-                                                                />
-                                                                <input
-                                                                    className="w-full p-2 border rounded-lg text-sm"
-                                                                    style={inputStyle}
-                                                                    value={item.subcategory || ''}
-                                                                    onChange={e => handleUpdateItem(i, 'subcategory', e.target.value)}
-                                                                    placeholder={t('itemSubcat')}
-                                                                />
-                                                                <div className="flex justify-end gap-2 pt-1">
-                                                                    <button
-                                                                        onClick={() => handleDeleteItem(i)}
-                                                                        className="min-w-10 min-h-10 p-2 rounded-lg flex items-center justify-center"
-                                                                        style={{ color: 'var(--error)', backgroundColor: isDark ? 'rgba(248, 113, 113, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}
-                                                                        aria-label={t('deleteItem')}
-                                                                    >
-                                                                        <Trash2 size={18} strokeWidth={2} />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => onSetEditingItemIndex(null)}
-                                                                        className="min-w-10 min-h-10 p-2 rounded-lg flex items-center justify-center"
-                                                                        style={{ color: 'var(--success)', backgroundColor: isDark ? 'rgba(34, 197, 94, 0.1)' : 'rgba(34, 197, 94, 0.1)' }}
-                                                                        aria-label={t('confirmItem')}
-                                                                    >
-                                                                        <Check size={18} strokeWidth={2} />
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            /* Display state - smaller font than group headers */
-                                                            <div
-                                                                onClick={() => onSetEditingItemIndex(i)}
-                                                                className="px-2.5 py-2 rounded-lg cursor-pointer transition-colors"
-                                                                style={{ backgroundColor: 'var(--bg-tertiary)' }}
-                                                            >
-                                                                {/* Row 1: Name and Price */}
-                                                                <div className="flex justify-between items-start gap-2 mb-1">
-                                                                    <div className="flex items-center gap-1 flex-1 min-w-0">
-                                                                        <span
-                                                                            className="text-xs font-medium truncate"
-                                                                            style={{ color: 'var(--text-primary)' }}
-                                                                            title={item.name}
-                                                                        >
-                                                                            {item.name}
-                                                                        </span>
-                                                                        {/* Edit pencil icon */}
-                                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="2" style={{ opacity: 0.6, flexShrink: 0 }}>
-                                                                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-                                                                        </svg>
-                                                                    </div>
-                                                                    <span
-                                                                        className="text-xs font-semibold flex-shrink-0"
-                                                                        style={{ color: 'var(--text-primary)' }}
-                                                                    >
-                                                                        {formatCurrency(item.price, displayCurrency)}
-                                                                    </span>
-                                                                </div>
-                                                                {/* Row 2: Category/Subcategory on left, Quantity on right */}
-                                                                <div className="flex justify-between items-center">
-                                                                    {/* Left: Category and Subcategory badges */}
-                                                                    <div className="flex flex-wrap items-center gap-1">
-                                                                        <CategoryBadge
-                                                                            category={(item.category as string) || 'Other'}
-                                                                            lang={language}
-                                                                            mini
-                                                                        />
-                                                                        {item.subcategory && (
-                                                                            <span
-                                                                                className="text-xs px-1.5 py-0.5 rounded-full"
-                                                                                style={{
-                                                                                    backgroundColor: 'var(--bg-secondary)',
-                                                                                    color: 'var(--text-tertiary)',
-                                                                                }}
-                                                                            >
-                                                                                {item.subcategory}
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                    {/* Right: Quantity - only show if > 1 */}
-                                                                    {(item.qty ?? 1) > 1 && (
-                                                                        <span
-                                                                            className="text-xs font-medium flex-shrink-0"
-                                                                            style={{ color: 'var(--text-tertiary)' }}
-                                                                        >
-                                                                            x{Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </ItemContainer>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-
-                        {/* Original order view - Story 14.38: items in array index order */}
-                        {itemViewMode === 'original' && currentTransaction.items && (
-                            <div
-                                className="rounded-xl overflow-hidden"
-                                style={{
-                                    backgroundColor: 'var(--bg-secondary)',
-                                    border: '1px solid var(--border-light)',
-                                }}
-                            >
-                                <div className="divide-y" style={{ borderColor: 'var(--border-light)' }}>
-                                    {currentTransaction.items.map((item, i) => {
-                                        const isVisible = !shouldAnimate || i < animatedItems.length;
-                                        const animationDelay = shouldAnimate ? i * 100 : 0;
-                                        const ItemContainer = shouldAnimate && !animationPlayedRef.current ? AnimatedItem : React.Fragment;
-                                        const containerProps = shouldAnimate && !animationPlayedRef.current
-                                            ? { delay: animationDelay, index: i, testId: `edit-view-item-original-${i}` }
-                                            : {};
-
-                                        if (!isVisible) return null;
-
-                                        return (
-                                            <ItemContainer key={i} {...containerProps}>
-                                                <div
-                                                    className="px-3 py-2.5 transition-colors"
-                                                    style={{
-                                                        backgroundColor: i % 2 === 1 ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
-                                                    }}
-                                                >
-                                                    {editingItemIndex === i ? (
-                                                        /* Editing state in original view */
-                                                        <div className="space-y-2">
-                                                            <div className="flex items-center gap-2">
-                                                                <span
-                                                                    className="text-xs font-medium w-5 text-center flex-shrink-0"
-                                                                    style={{ color: 'var(--text-tertiary)' }}
-                                                                >
-                                                                    {i + 1}.
-                                                                </span>
-                                                                <input
-                                                                    className="flex-1 p-2 border rounded-lg text-sm"
-                                                                    style={inputStyle}
-                                                                    value={item.name}
-                                                                    onChange={e => handleUpdateItem(i, 'name', e.target.value)}
-                                                                    placeholder={t('itemName')}
-                                                                    autoFocus
-                                                                />
-                                                            </div>
-                                                            <div className="flex items-center gap-2 pl-7">
-                                                                <input
-                                                                    type="number"
-                                                                    step="0.01"
-                                                                    className="w-24 p-2 border rounded-lg text-sm"
-                                                                    style={inputStyle}
-                                                                    value={item.price || ''}
-                                                                    onChange={e => handleUpdateItem(i, 'price', parseFloat(e.target.value) || 0)}
-                                                                    placeholder={t('itemPrice')}
-                                                                />
-                                                                <CategoryBadge category={(item.category as string) || 'Other'} lang={language} mini />
-                                                                <div className="flex-1" />
-                                                                <button
-                                                                    onClick={() => handleDeleteItem(i)}
-                                                                    className="min-w-8 min-h-8 p-1 rounded-lg flex items-center justify-center"
-                                                                    style={{ color: 'var(--error)', backgroundColor: isDark ? 'rgba(248, 113, 113, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}
-                                                                    aria-label={t('deleteItem')}
-                                                                >
-                                                                    <Trash2 size={14} strokeWidth={2} />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => onSetEditingItemIndex(null)}
-                                                                    className="min-w-8 min-h-8 p-1 rounded-lg flex items-center justify-center"
-                                                                    style={{ color: 'var(--success)', backgroundColor: 'rgba(34, 197, 94, 0.1)' }}
-                                                                    aria-label={t('confirmItem')}
-                                                                >
-                                                                    <Check size={14} strokeWidth={2} />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        /* Display state in original view */
-                                                        <div
-                                                            onClick={() => onSetEditingItemIndex(i)}
-                                                            className="flex items-center gap-2 cursor-pointer"
-                                                        >
-                                                            <span
-                                                                className="text-xs font-medium w-5 text-center flex-shrink-0"
-                                                                style={{ color: 'var(--text-tertiary)' }}
-                                                            >
-                                                                {i + 1}.
-                                                            </span>
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className="flex items-center justify-between gap-2">
-                                                                    <div className="flex items-center gap-1 min-w-0 flex-1">
-                                                                        <span
-                                                                            className="text-xs font-medium truncate"
-                                                                            style={{ color: 'var(--text-primary)' }}
-                                                                            title={item.name}
-                                                                        >
-                                                                            {item.name}
-                                                                        </span>
-                                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="2" style={{ opacity: 0.6, flexShrink: 0 }}>
-                                                                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-                                                                        </svg>
-                                                                    </div>
-                                                                    <span
-                                                                        className="text-xs font-semibold flex-shrink-0"
-                                                                        style={{ color: 'var(--text-primary)' }}
-                                                                    >
-                                                                        {formatCurrency(item.price, displayCurrency)}
-                                                                    </span>
-                                                                </div>
-                                                                <div className="flex items-center gap-1 mt-0.5">
-                                                                    <CategoryBadge category={(item.category as string) || 'Other'} lang={language} mini />
-                                                                    {item.subcategory && (
-                                                                        <span
-                                                                            className="text-xs px-1.5 py-0.5 rounded-full"
-                                                                            style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-tertiary)' }}
-                                                                        >
-                                                                            {item.subcategory}
-                                                                        </span>
-                                                                    )}
-                                                                    {(item.qty ?? 1) > 1 && (
-                                                                        <span
-                                                                            className="text-xs font-medium"
-                                                                            style={{ color: 'var(--text-tertiary)' }}
-                                                                        >
-                                                                            x{Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </ItemContainer>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Add Item button - dashed border style */}
-                    <button
-                        onClick={handleAddItem}
-                        className="w-full p-2.5 mt-3 rounded-lg border-2 border-dashed flex items-center justify-center gap-1.5 transition-colors"
-                        style={{
-                            borderColor: 'var(--border-light)',
-                            color: 'var(--primary)',
-                            backgroundColor: 'transparent',
-                        }}
-                        aria-label={t('addItem')}
-                    >
-                        <Plus size={14} strokeWidth={2.5} />
-                        <span className="text-sm font-medium">{t('addItem')}</span>
-                    </button>
-                </div>
+                {/* Story TD-15b-2a: Items section extracted to EditViewItemsSection */}
+                <EditViewItemsSection
+                    currentTransaction={currentTransaction}
+                    editingItemIndex={editingItemIndex}
+                    onSetEditingItemIndex={onSetEditingItemIndex}
+                    onUpdateTransaction={onUpdateTransaction}
+                    language={language}
+                    theme={theme}
+                    t={t}
+                    formatCurrency={formatCurrency}
+                    parseStrictNumber={parseStrictNumber}
+                    displayCurrency={displayCurrency}
+                    isDark={isDark}
+                    inputStyle={inputStyle}
+                    animateItems={animateItems}
+                />
 
                 {/* Total row */}
                 <div

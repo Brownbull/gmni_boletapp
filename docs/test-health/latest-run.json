@@ -1,11 +1,26 @@
 {
-  "note": "Initialized by Session 3 migration. Overwritten after each test run by workflow step-06.",
-  "date": "2026-02-20",
-  "workflow": null,
-  "story": null,
-  "total_tests": null,
-  "passed": null,
-  "failed": null,
+  "date": "2026-02-23",
+  "workflow": "ecc-dev-story",
+  "story": "TD-15b-2a",
+  "total_unit_files": 276,
+  "total_unit_tests": 6810,
+  "unit_passed": 6810,
+  "unit_failed": 0,
+  "integration_files": 25,
+  "integration_passed": 15,
+  "integration_failed": 9,
+  "integration_failure_reason": "SYSTEMIC/INFRASTRUCTURE — Firebase emulator not running (ECONNREFUSED 127.0.0.1:8080). Not a code regression.",
   "coverage_by_module": {},
-  "failed_tests": []
+  "failed_tests": [
+    "tests/integration/analytics-workflows.test.tsx",
+    "tests/integration/auth-flow.test.tsx",
+    "tests/integration/cascade-delete.test.tsx",
+    "tests/integration/categoryMappingService.test.ts",
+    "tests/integration/crud-operations.test.tsx",
+    "tests/integration/data-isolation.test.ts",
+    "tests/integration/data-persistence.test.tsx",
+    "tests/integration/firestore-rules.test.ts",
+    "tests/integration/merchantMappingService.test.ts"
+  ],
+  "notes": "All failures are infrastructure-only (emulator not running). Unit suite fully green. Story ACs (AC6: test:quick passes) met."
 }
