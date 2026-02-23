@@ -280,6 +280,66 @@ describe('EditViewItemsSection', () => {
     });
   });
 
+  describe('Edge cases', () => {
+    // TD-15b-6 AC2: handleAddItem with empty items — editingItemIndex should be 0
+    it('handleAddItem with empty items — sets editingItemIndex to 0', () => {
+      const props = makeProps();
+      const tx = makeTransaction({ items: [] });
+      render(<EditViewItemsSection {...props} currentTransaction={tx} />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'addItem' }));
+
+      expect(props.onSetEditingItemIndex).toHaveBeenCalledWith(0);
+      expect(props.onUpdateTransaction).toHaveBeenCalledWith({
+        ...tx,
+        items: [{ name: '', price: 0, category: 'Other', subcategory: '' }],
+      });
+    });
+
+    // TD-15b-6 AC3: collapsing group A must not affect group B aria-expanded state
+    it('toggleGroupCollapse — collapsing group A does not affect group B', () => {
+      const tx = makeTransaction({
+        items: [
+          { name: 'Apple', price: 5, category: 'Produce' },
+          { name: 'Cola', price: 2, category: 'Beverages' },
+        ],
+      });
+      const { container } = render(<EditViewItemsSection {...makeProps()} currentTransaction={tx} />);
+
+      const groupHeaders = container.querySelectorAll('button[aria-expanded]');
+      // Alphabetical order: Beverages (0), Produce (1)
+      const groupA = groupHeaders[0] as HTMLElement;
+      const groupB = groupHeaders[1] as HTMLElement;
+
+      expect(groupA).toHaveAttribute('aria-expanded', 'true');
+      expect(groupB).toHaveAttribute('aria-expanded', 'true');
+
+      fireEvent.click(groupA);
+
+      expect(groupA).toHaveAttribute('aria-expanded', 'false');
+      expect(groupB).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    // TD-15b-6 AC4: delete last item — ItemViewToggle no longer rendered after rerender with empty items
+    it('handleDeleteItem on last item — ItemViewToggle absent after parent re-renders with empty items', () => {
+      const props = makeProps();
+      const tx = makeTransaction({ items: [{ name: 'Solo', price: 5, category: 'Other' }] });
+      const { rerender } = render(
+        <EditViewItemsSection {...props} currentTransaction={tx} editingItemIndex={0} />
+      );
+
+      expect(screen.getByTestId('item-view-toggle')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'deleteItem' }));
+
+      // Simulate parent re-rendering with updated empty items
+      rerender(
+        <EditViewItemsSection {...props} currentTransaction={{ ...tx, items: [] }} editingItemIndex={null} />
+      );
+      expect(screen.queryByTestId('item-view-toggle')).not.toBeInTheDocument();
+    });
+  });
+
   describe('View mode', () => {
     // AC7
     it('renders ItemViewToggle when items.length > 0', () => {

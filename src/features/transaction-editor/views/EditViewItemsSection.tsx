@@ -231,7 +231,7 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
                                                         <input className="flex-1 p-2 border rounded-lg text-sm" style={inputStyle} value={item.name} onChange={e => handleUpdateItem(i, 'name', e.target.value)} placeholder={t('itemName')} autoFocus />
                                                     </div>
                                                     <div className="flex items-center gap-2 pl-7">
-                                                        <input type="number" step="0.01" className="w-24 p-2 border rounded-lg text-sm" style={inputStyle} value={item.price || ''} onChange={e => handleUpdateItem(i, 'price', parseFloat(e.target.value) || 0)} placeholder={t('itemPrice')} />
+                                                        <input type="number" step="0.01" className="w-24 p-2 border rounded-lg text-sm" style={inputStyle} value={item.price} onChange={e => handleUpdateItem(i, 'price', e.target.value)} placeholder={t('price')} />
                                                         <CategoryBadge category={(item.category as string) || 'Other'} lang={language} mini />
                                                         <div className="flex-1" />
                                                         <button onClick={() => handleDeleteItem(i)} className="min-w-8 min-h-8 p-1 rounded-lg flex items-center justify-center" style={{ color: 'var(--error)', backgroundColor: isDark ? 'rgba(248, 113, 113, 0.1)' : 'rgba(239, 68, 68, 0.1)' }} aria-label={t('deleteItem')}><Trash2 size={14} strokeWidth={2} /></button>
