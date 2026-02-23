@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Trash2, Plus, Check, ChevronDown, ChevronUp, BookMarked, X, Camera, RefreshCw, ChevronLeft, Zap, Info } from 'lucide-react';
+import { Trash2, Plus, Check, ChevronDown, ChevronUp, BookMarked, Camera, RefreshCw } from 'lucide-react';
 // Profile components removed - header simplified to match mockup
-import { formatCreditsDisplay } from '@/services/userCreditsService';
 import { CategoryBadge } from '@features/transaction-editor/components/CategoryBadge';
 import { CategoryCombobox } from '@features/transaction-editor/components/CategoryCombobox';
 import { ImageViewer } from '@/components/ImageViewer';
@@ -12,10 +11,7 @@ import { LocationSelect } from '@/components/LocationSelect';
 import { DateTimeTag } from '@features/transaction-editor/components/DateTimeTag';
 import { CurrencyTag } from '@features/transaction-editor/components/CurrencyTag';
 import { DEFAULT_CURRENCY } from '@/utils/currency';
-import { StoreTypeSelector } from '@features/transaction-editor/components/StoreTypeSelector';
-import { AdvancedScanOptions } from '@features/transaction-editor/components/AdvancedScanOptions';
-import { celebrateSuccess } from '@/utils/confetti';
-import { StoreCategory, CategorySource, ItemCategory, MerchantSource } from '@/types/transaction';
+import { StoreCategory } from '@/types/transaction';
 import { ReceiptType } from '@/services/gemini';
 import { SupportedCurrency } from '@/services/userPreferencesService';
 // Story 9.10: Pending scan types for visual indicator
@@ -35,50 +31,14 @@ import { ItemViewToggle, type ItemViewMode } from '@/components/items/ItemViewTo
 import { useStaggeredReveal } from '@/hooks/useStaggeredReveal';
 import { AnimatedItem } from '@/components/AnimatedItem';
 // Story 14.15: ScanStatusIndicator removed - replaced by ScanOverlay in App.tsx
-
-/**
- * Local TransactionItem interface for EditView.
- * Story 9.2: Updated to use ItemCategory type for proper typing.
- */
-interface TransactionItem {
-    name: string;
-    price: number;
-    /** Story 9.2: Item category using ItemCategory type */
-    category?: ItemCategory | string;
-    subcategory?: string;
-    categorySource?: CategorySource;
-    /** Story 9.15: Source of subcategory assignment */
-    subcategorySource?: CategorySource;
-    /** Story 14.15b: Item quantity (default 1) */
-    qty?: number;
-}
-
-interface Transaction {
-    id?: string;
-    merchant: string;
-    alias?: string;
-    date: string;
-    total: number;
-    category: string;
-    items: TransactionItem[];
-    imageUrls?: string[];
-    thumbnailUrl?: string;
-    // Story 9.3: New v2.6.0 fields for display
-    /** Purchase time in HH:mm format (e.g., "15:01") */
-    time?: string;
-    /** Country name from receipt */
-    country?: string;
-    /** City name from receipt */
-    city?: string;
-    /** ISO 4217 currency code (e.g., "GBP") */
-    currency?: string;
-    /** Document type: "receipt" | "invoice" | "ticket" */
-    receiptType?: string;
-    /** Version of prompt used for AI extraction */
-    promptVersion?: string;
-    /** Source of the merchant name (scan, learned, user) */
-    merchantSource?: MerchantSource;
-}
+// Story 15b-2a: Types and pure helpers extracted to editViewHelpers.ts
+import { TransactionItem, Transaction } from './editViewHelpers';
+// Story 15b-2a: Learning flow hook
+import { useEditViewLearningFlow } from './useEditViewLearningFlow';
+// Story 15b-2a: Sub-components
+import { EditViewHeader } from './EditViewHeader';
+import { EditViewScanSection } from './EditViewScanSection';
+import { EditViewDialogs } from './EditViewDialogs';
 
 interface EditViewProps {
     currentTransaction: Transaction;
@@ -224,23 +184,10 @@ export const EditView: React.FC<EditViewProps> = ({
     // Story 14.38: Item view mode toggle (grouped vs original order)
     const [itemViewMode, setItemViewMode] = useState<ItemViewMode>('grouped');
 
-    // Story 6.3: Category learning prompt state
-    const [showLearningPrompt, setShowLearningPrompt] = useState(false);
-    const [itemsToLearn, setItemsToLearn] = useState<Array<{ itemName: string; newGroup: string }>>([]);
-
-    // Story 9.15: Subcategory learning prompt state
-    const [showSubcategoryLearningPrompt, setShowSubcategoryLearningPrompt] = useState(false);
-    const [subcategoriesToLearn, setSubcategoriesToLearn] = useState<Array<{ itemName: string; newSubcategory: string }>>([]);
-
-    // Story 9.16: Loading state for learning prompts to prevent duplicate saves (AC #1, #2)
-    const [savingMappings, setSavingMappings] = useState(false);
-
     // Story 14.15: Scan state management moved to App.tsx with ScanOverlay
     // The old ScanStatusIndicator and useScanState hook in EditView have been removed.
     // Scan progress, errors, and completion are now handled by the ScanOverlay component.
 
-    // Story 9.6: Merchant learning prompt state
-    const [showMerchantLearningPrompt, setShowMerchantLearningPrompt] = useState(false);
     // Track original alias on mount for detecting changes
     const originalAliasRef = useRef<string | null>(null);
 
@@ -252,6 +199,17 @@ export const EditView: React.FC<EditViewProps> = ({
     }>({
         items: [],
         capturedForTransactionKey: null,
+    });
+
+    // Story 15b-2a: Learning flow hook encapsulates the 3-stage learning chain
+    const {
+        showLearningPrompt, itemsToLearn, handleLearnConfirm, handleLearnDismiss,
+        showSubcategoryLearningPrompt, subcategoriesToLearn, handleSubcategoryLearnConfirm, handleSubcategoryLearnDismiss,
+        showMerchantLearningPrompt, handleLearnMerchantConfirm, handleLearnMerchantDismiss,
+        savingMappings, handleSaveWithLearning,
+    } = useEditViewLearningFlow({
+        onSave, onSaveMapping, onSaveMerchantMapping, onSaveSubcategoryMapping,
+        onShowToast, t, currentTransaction, originalItemGroupsRef, originalAliasRef,
     });
 
     // Capture original item groups ONCE when transaction data first becomes available
@@ -266,7 +224,7 @@ export const EditView: React.FC<EditViewProps> = ({
             originalItemGroupsRef.current = {
                 items: currentTransaction.items.map(item => ({
                     name: item.name,
-                    category: item.category || '',
+                    category: (item.category as string) || '',
                     subcategory: item.subcategory || ''
                 })),
                 capturedForTransactionKey: transactionKey,
@@ -367,7 +325,7 @@ export const EditView: React.FC<EditViewProps> = ({
 
         currentTransaction.items.forEach((item, index) => {
             // Normalize the item category to English, then get its group
-            const normalizedCategory = normalizeItemCategory(item.category || 'Other');
+            const normalizedCategory = normalizeItemCategory((item.category as string) || 'Other');
             const groupKey = getItemCategoryGroup(normalizedCategory);
 
             if (!groups[groupKey]) {
@@ -416,7 +374,7 @@ export const EditView: React.FC<EditViewProps> = ({
         onSetEditingItemIndex(currentTransaction.items.length);
     };
 
-    const handleUpdateItem = (index: number, field: string, value: any) => {
+    const handleUpdateItem = (index: number, field: string, value: string | number) => {
         const newItems = [...currentTransaction.items];
         newItems[index] = { ...newItems[index], [field]: field === 'price' ? parseStrictNumber(value) : value };
         onUpdateTransaction({ ...currentTransaction, items: newItems });
@@ -426,223 +384,6 @@ export const EditView: React.FC<EditViewProps> = ({
         const newItems = currentTransaction.items.filter((_, x) => x !== index);
         onUpdateTransaction({ ...currentTransaction, items: newItems });
         onSetEditingItemIndex(null);
-    };
-
-    // Story 6.3: Find ALL items whose group (category) has changed
-    // Returns array of { itemName, newGroup } for all changed items
-    const findAllChangedItemGroups = (): Array<{ itemName: string; newGroup: string }> => {
-        const originalItems = originalItemGroupsRef.current.items;
-        const currentItems = currentTransaction.items;
-        const changedItems: Array<{ itemName: string; newGroup: string }> = [];
-
-        // Check each item to see if its group changed
-        for (let i = 0; i < currentItems.length; i++) {
-            const currentItem = currentItems[i];
-            const originalItem = originalItems[i];
-
-            // Skip if no original item to compare (new item added)
-            if (!originalItem) continue;
-
-            // Skip if item has no name
-            if (!currentItem.name) continue;
-
-            // Check if group changed (and new group is not empty)
-            const currentGroup = currentItem.category || '';
-            const originalGroup = originalItem.category || '';
-
-            if (currentGroup && currentGroup !== originalGroup) {
-                changedItems.push({
-                    itemName: currentItem.name,
-                    newGroup: currentGroup
-                });
-            }
-        }
-
-        return changedItems;
-    };
-
-    // Story 9.15: Find ALL items whose subcategory has changed
-    // Returns array of { itemName, newSubcategory } for all changed items
-    const findAllChangedSubcategories = (): Array<{ itemName: string; newSubcategory: string }> => {
-        const originalItems = originalItemGroupsRef.current.items;
-        const currentItems = currentTransaction.items;
-        const changedItems: Array<{ itemName: string; newSubcategory: string }> = [];
-
-        // Check each item to see if its subcategory changed
-        for (let i = 0; i < currentItems.length; i++) {
-            const currentItem = currentItems[i];
-            const originalItem = originalItems[i];
-
-            // Skip if no original item to compare (new item added)
-            if (!originalItem) continue;
-
-            // Skip if item has no name
-            if (!currentItem.name) continue;
-
-            // Check if subcategory changed (and new subcategory is not empty)
-            const currentSubcategory = currentItem.subcategory || '';
-            const originalSubcategory = originalItem.subcategory || '';
-
-            if (currentSubcategory && currentSubcategory !== originalSubcategory) {
-                changedItems.push({
-                    itemName: currentItem.name,
-                    newSubcategory: currentSubcategory
-                });
-            }
-        }
-
-        return changedItems;
-    };
-
-    // Story 9.6: Check if merchant alias was changed
-    const hasMerchantAliasChanged = (): boolean => {
-        // We need a merchant name (from scan) and an alias change to trigger learning
-        if (!currentTransaction.merchant) return false;
-        const currentAlias = currentTransaction.alias || '';
-        const originalAlias = originalAliasRef.current || '';
-        // Only show prompt if alias changed AND is not empty
-        return currentAlias !== originalAlias && currentAlias.length > 0;
-    };
-
-    // Story 9.6: Proceed to merchant learning check or save directly
-    const proceedToMerchantLearningOrSave = async () => {
-        // Check if merchant alias was changed
-        if (hasMerchantAliasChanged() && onSaveMerchantMapping) {
-            setShowMerchantLearningPrompt(true);
-        } else {
-            // No merchant changes, save directly
-            await onSave();
-        }
-    };
-
-    // Story 9.15: Proceed to subcategory learning check, then merchant learning, then save
-    const proceedToSubcategoryLearningOrNext = async () => {
-        const changedSubcategories = findAllChangedSubcategories();
-        if (changedSubcategories.length > 0 && onSaveSubcategoryMapping) {
-            setSubcategoriesToLearn(changedSubcategories);
-            setShowSubcategoryLearningPrompt(true);
-        } else {
-            // No subcategory changes, proceed to merchant learning check
-            await proceedToMerchantLearningOrSave();
-        }
-    };
-
-    // Story 6.3 & 9.15: Handle save with category and subcategory learning prompts
-    // Shows prompts BEFORE saving if changes detected, because onSave navigates away
-    const handleSaveWithLearning = async () => {
-        // Check if any item's group was changed
-        const changedItems = findAllChangedItemGroups();
-
-        // Only show category prompt if:
-        // 1. At least one item's group was changed
-        // 2. onSaveMapping function is available
-        if (changedItems.length > 0 && onSaveMapping) {
-            // Show category prompt first - subcategory prompt will follow after confirmation
-            setItemsToLearn(changedItems);
-            setShowLearningPrompt(true);
-        } else {
-            // No category changes, proceed to subcategory learning check
-            await proceedToSubcategoryLearningOrNext();
-        }
-    };
-
-    // Story 6.3: Handle learning prompt confirmation
-    // Story 9.16: Added loading state to prevent duplicate saves (AC #1, #2)
-    const handleLearnConfirm = async () => {
-        if (onSaveMapping && itemsToLearn.length > 0) {
-            setSavingMappings(true);
-            try {
-                // Save mappings for ALL changed items
-                for (const item of itemsToLearn) {
-                    await onSaveMapping(item.itemName, item.newGroup as StoreCategory, 'user');
-                }
-                // AC#5: Show success toast
-                if (onShowToast) {
-                    onShowToast(t('learnCategorySuccess'));
-                }
-            } catch (error) {
-                console.error('Failed to save category mappings:', error);
-            } finally {
-                setSavingMappings(false);
-            }
-        }
-        setShowLearningPrompt(false);
-        setItemsToLearn([]);
-        // After category learning, chain to subcategory learning check
-        await proceedToSubcategoryLearningOrNext();
-    };
-
-    // Story 6.3: Handle learning prompt dismiss
-    const handleLearnDismiss = async () => {
-        setShowLearningPrompt(false);
-        setItemsToLearn([]);
-        // After category dialog dismissed, chain to subcategory learning check
-        await proceedToSubcategoryLearningOrNext();
-    };
-
-    // Story 9.15: Handle subcategory learning prompt confirmation
-    // Story 9.16: Added loading state to prevent duplicate saves (AC #1, #2)
-    const handleSubcategoryLearnConfirm = async () => {
-        if (onSaveSubcategoryMapping && subcategoriesToLearn.length > 0) {
-            setSavingMappings(true);
-            try {
-                // Save subcategory mappings for ALL changed items
-                for (const item of subcategoriesToLearn) {
-                    await onSaveSubcategoryMapping(item.itemName, item.newSubcategory, 'user');
-                }
-                // Show success toast
-                if (onShowToast) {
-                    onShowToast(t('learnSubcategorySuccess'));
-                }
-            } catch (error) {
-                console.error('Failed to save subcategory mappings:', error);
-            } finally {
-                setSavingMappings(false);
-            }
-        }
-        setShowSubcategoryLearningPrompt(false);
-        setSubcategoriesToLearn([]);
-        // After subcategory learning, proceed to merchant learning check
-        await proceedToMerchantLearningOrSave();
-    };
-
-    // Story 9.15: Handle subcategory learning prompt dismiss
-    const handleSubcategoryLearnDismiss = async () => {
-        setShowSubcategoryLearningPrompt(false);
-        setSubcategoriesToLearn([]);
-        // After subcategory dialog dismissed, proceed to merchant learning check
-        await proceedToMerchantLearningOrSave();
-    };
-
-    // Story 9.6: Handle merchant learning prompt confirmation (AC#3)
-    const handleLearnMerchantConfirm = async () => {
-        if (onSaveMerchantMapping && currentTransaction.merchant) {
-            try {
-                // Save merchant mapping: original merchant → alias
-                await onSaveMerchantMapping(
-                    currentTransaction.merchant, // original merchant name from scan
-                    currentTransaction.alias || '' // user's correction (alias)
-                );
-                // Celebrate with confetti! 🎉
-                celebrateSuccess();
-                // Show success toast
-                if (onShowToast) {
-                    onShowToast(t('learnMerchantSuccess'));
-                }
-            } catch (error) {
-                console.error('Failed to save merchant mapping:', error);
-            }
-        }
-        setShowMerchantLearningPrompt(false);
-        // Now save the transaction
-        await onSave();
-    };
-
-    // Story 9.6: Handle merchant learning prompt dismiss (AC#4)
-    const handleLearnMerchantDismiss = async () => {
-        setShowMerchantLearningPrompt(false);
-        // Still save the transaction even if user skipped learning
-        await onSave();
     };
 
     // Story 14.15b: Handle re-scan button click - show confirmation first
@@ -669,110 +410,19 @@ export const EditView: React.FC<EditViewProps> = ({
                 paddingBottom: 'calc(6rem + var(--safe-bottom, 0px))',
             }}
         >
-            {/* Story 14.15b: Header matching ScanResultView exactly */}
-            <div
-                className="sticky px-4"
-                style={{
-                    top: 0,
-                    zIndex: 50,
-                    backgroundColor: 'var(--bg)',
-                }}
-            >
-                <div
-                    className="flex items-center justify-between"
-                    style={{
-                        height: '72px',
-                        paddingTop: 'max(env(safe-area-inset-top, 0px), 8px)',
-                    }}
-                >
-                {/* Left side: Back button + Title */}
-                <div className="flex items-center gap-0">
-                    <button
-                        onClick={onBack}
-                        className="min-w-10 min-h-10 flex items-center justify-center -ml-1"
-                        aria-label={t('back')}
-                        style={{ color: 'var(--text-primary)' }}
-                    >
-                        <ChevronLeft size={28} strokeWidth={2.5} />
-                    </button>
-                    <h1
-                        className="font-semibold"
-                        style={{
-                            fontFamily: 'var(--font-family)',
-                            color: 'var(--text-primary)',
-                            fontWeight: 700,
-                            fontSize: '20px',
-                        }}
-                    >
-                        {t('myPurchase')}
-                    </h1>
-                    {/* Batch context */}
-                    {batchContext && (
-                        <span className="text-xs ml-2" style={{ color: 'var(--text-secondary)' }}>
-                            ({batchContext.index}/{batchContext.total})
-                        </span>
-                    )}
-                </div>
-
-                {/* Right side: Credit badges + Close button */}
-                <div className="flex items-center gap-2">
-                    {/* Credit badges - tappable to show info modal */}
-                    {(superCredits !== undefined || scanCredits !== undefined) && (
-                        <button
-                            onClick={onCreditInfoClick}
-                            className="flex items-center gap-1.5 px-2 py-1 rounded-full transition-all active:scale-95"
-                            style={{
-                                backgroundColor: 'var(--bg-secondary)',
-                                border: '1px solid var(--border-light)',
-                            }}
-                            aria-label={t('creditInfo')}
-                        >
-                            {/* Super credits (gold) */}
-                            {superCredits !== undefined && (
-                                <div
-                                    className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold"
-                                    style={{
-                                        backgroundColor: '#fef3c7',
-                                        color: '#92400e',
-                                    }}
-                                >
-                                    <Zap size={10} strokeWidth={2.5} />
-                                    <span>{formatCreditsDisplay(superCredits)}</span>
-                                </div>
-                            )}
-                            {/* Normal credits (theme color) */}
-                            {scanCredits !== undefined && (
-                                <div
-                                    className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold"
-                                    style={{
-                                        backgroundColor: 'var(--primary-light)',
-                                        color: 'var(--primary)',
-                                    }}
-                                >
-                                    <Camera size={10} strokeWidth={2.5} />
-                                    <span>{formatCreditsDisplay(scanCredits)}</span>
-                                </div>
-                            )}
-                            {/* Info icon */}
-                            <Info size={12} style={{ color: 'var(--text-tertiary)' }} />
-                        </button>
-                    )}
-                    {/* Delete/Close button - Trash icon for existing transactions, X for new */}
-                    <button
-                        onClick={currentTransaction.id ? () => setShowDeleteConfirm(true) : (onCancel ? handleCancelClick : onBack)}
-                        className="min-w-10 min-h-10 flex items-center justify-center"
-                        aria-label={currentTransaction.id ? t('delete') : t('cancel')}
-                        style={{ color: currentTransaction.id ? 'var(--negative-primary)' : 'var(--text-primary)' }}
-                    >
-                        {currentTransaction.id ? (
-                            <Trash2 size={22} strokeWidth={2} />
-                        ) : (
-                            <X size={24} strokeWidth={2} />
-                        )}
-                    </button>
-                </div>
-                </div>
-            </div>
+            {/* Story 15b-2a: Header extracted to EditViewHeader */}
+            <EditViewHeader
+                onBack={onBack}
+                t={t}
+                batchContext={batchContext}
+                superCredits={superCredits}
+                scanCredits={scanCredits}
+                onCreditInfoClick={onCreditInfoClick}
+                currentTransaction={currentTransaction}
+                handleCancelClick={handleCancelClick}
+                onCancel={onCancel}
+                setShowDeleteConfirm={setShowDeleteConfirm}
+            />
 
             {/* Main content with edge spacing - reduced padding for more width */}
             <div className="px-2 pb-4">
@@ -794,115 +444,24 @@ export const EditView: React.FC<EditViewProps> = ({
             )}
 
             {/* Story 9.9: Scan Section - Only for new transactions without photos */}
+            {/* Story 15b-2a: Scan section extracted to EditViewScanSection */}
             {!currentTransaction.id && onAddPhoto && (
-                <div className="mb-4">
-                    {/* Show "Scan Receipt" button only when no photos exist */}
-                    {!hasImages && (!scanImages || scanImages.length === 0) && (
-                        <button
-                            onClick={onAddPhoto}
-                            className="w-full p-6 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-colors"
-                            style={{
-                                borderColor: 'var(--primary)',
-                                backgroundColor: isDark ? 'rgba(96, 165, 250, 0.05)' : 'var(--primary-light)',
-                                color: 'var(--primary)',
-                            }}
-                            aria-label={t('scanReceipt')}
-                        >
-                            <Camera size={32} strokeWidth={1.5} />
-                            <span className="font-bold">{t('scanReceipt')}</span>
-                            <span className="text-sm opacity-70" style={{ color: 'var(--secondary)' }}>
-                                {t('tapToScan')}
-                            </span>
-                        </button>
-                    )}
-
-                    {/* Show scan images grid when photos have been added */}
-                    {scanImages && scanImages.length > 0 && (
-                        <div className="space-y-3">
-                            <div className="grid grid-cols-2 gap-2">
-                                {scanImages.map((img, i) => (
-                                    <div key={i} className="relative">
-                                        <img
-                                            src={img}
-                                            alt={`Scan ${i + 1}`}
-                                            className="w-full h-24 object-cover rounded-lg"
-                                        />
-                                        {onRemovePhoto && (
-                                            <button
-                                                onClick={() => onRemovePhoto(i)}
-                                                className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center bg-red-500 text-white"
-                                                aria-label={`Remove photo ${i + 1}`}
-                                            >
-                                                <X size={14} />
-                                            </button>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Add Photo button */}
-                            <button
-                                onClick={onAddPhoto}
-                                className="w-full py-2 border-2 rounded-lg font-medium flex items-center justify-center gap-2"
-                                style={{
-                                    borderColor: 'var(--primary)',
-                                    color: 'var(--primary)',
-                                    backgroundColor: 'transparent',
-                                }}
-                            >
-                                <Plus size={18} />
-                                {t('addPhoto')}
-                            </button>
-
-                            {/* Story 9.8 AC#1: Store Type Quick-Select Labels */}
-                            {onSetScanStoreType && (
-                                <StoreTypeSelector
-                                    selected={scanStoreType || 'auto'}
-                                    onSelect={onSetScanStoreType}
-                                    t={t}
-                                    theme={theme as 'light' | 'dark'}
-                                />
-                            )}
-
-                            {/* Story 9.8 AC#2: Advanced Options with Currency Dropdown */}
-                            {onSetScanCurrency && scanCurrency && (
-                                <AdvancedScanOptions
-                                    currency={scanCurrency}
-                                    onCurrencyChange={onSetScanCurrency}
-                                    t={t}
-                                    theme={theme as 'light' | 'dark'}
-                                />
-                            )}
-
-                            {/* Process Scan button - Story 9.10 AC#7: Disabled when no credits */}
-                            {onProcessScan && !isAnalyzing && (
-                                <button
-                                    onClick={onProcessScan}
-                                    disabled={!hasCredits}
-                                    className="w-full py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-opacity"
-                                    style={{
-                                        backgroundColor: hasCredits ? 'var(--success)' : 'var(--secondary)',
-                                        opacity: !hasCredits ? 0.7 : 1,
-                                        cursor: hasCredits ? 'pointer' : 'not-allowed',
-                                    }}
-                                    title={!hasCredits ? t('noCreditsMessage') : undefined}
-                                >
-                                    {!hasCredits ? (
-                                        <>
-                                            <Camera size={20} />
-                                            {t('noCreditsButton')}
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Camera size={20} />
-                                            {t('processScan')}
-                                        </>
-                                    )}
-                                </button>
-                            )}
-                        </div>
-                    )}
-                </div>
+                <EditViewScanSection
+                    currentTransaction={currentTransaction}
+                    onAddPhoto={onAddPhoto}
+                    scanImages={scanImages}
+                    onRemovePhoto={onRemovePhoto}
+                    scanStoreType={scanStoreType}
+                    onSetScanStoreType={onSetScanStoreType}
+                    scanCurrency={scanCurrency}
+                    onSetScanCurrency={onSetScanCurrency}
+                    onProcessScan={onProcessScan}
+                    isAnalyzing={isAnalyzing}
+                    hasCredits={hasCredits}
+                    isDark={isDark}
+                    t={t}
+                    theme={theme}
+                />
             )}
 
             {/* ImageViewer Modal */}
@@ -1129,7 +688,7 @@ export const EditView: React.FC<EditViewProps> = ({
 
                 {/* ITEMS section - Story 14.38: Toggle between grouped and original order */}
                 <div className="mb-4">
-                    {/* Story 14.38: Full-width item view toggle (replaces "ÍTEMS" subtitle) */}
+                    {/* Story 14.38: Full-width item view toggle (replaces "ITEMS" subtitle) */}
                     {currentTransaction.items && currentTransaction.items.length > 0 && (
                         <div className="mb-3">
                             <ItemViewToggle
@@ -1146,7 +705,7 @@ export const EditView: React.FC<EditViewProps> = ({
                         {itemViewMode === 'grouped' && itemsByGroup.map(({ groupKey, items: groupItems, total: groupTotal }) => {
                             const isCollapsed = collapsedGroups.has(groupKey);
                             // Use item group colors (not individual category colors)
-                            const groupColors = getItemGroupColors(groupKey as any, 'normal', isDark ? 'dark' : 'light');
+                            const groupColors = getItemGroupColors(groupKey as Parameters<typeof getItemGroupColors>[0], 'normal', isDark ? 'dark' : 'light');
                             const groupEmoji = getItemCategoryGroupEmoji(groupKey);
                             // Translate group name to current language (e.g., "food-fresh" -> "Alimentos Frescos")
                             const translatedGroup = translateItemCategoryGroup(groupKey, language);
@@ -1238,7 +797,7 @@ export const EditView: React.FC<EditViewProps> = ({
                                                                     placeholder={t('price')}
                                                                 />
                                                                 <CategoryCombobox
-                                                                    value={item.category || ''}
+                                                                    value={(item.category as string) || ''}
                                                                     onChange={(value) => handleUpdateItem(i, 'category', value)}
                                                                     language={language}
                                                                     theme={theme as 'light' | 'dark'}
@@ -1305,7 +864,7 @@ export const EditView: React.FC<EditViewProps> = ({
                                                                     {/* Left: Category and Subcategory badges */}
                                                                     <div className="flex flex-wrap items-center gap-1">
                                                                         <CategoryBadge
-                                                                            category={item.category || 'Other'}
+                                                                            category={(item.category as string) || 'Other'}
                                                                             lang={language}
                                                                             mini
                                                                         />
@@ -1399,7 +958,7 @@ export const EditView: React.FC<EditViewProps> = ({
                                                                     onChange={e => handleUpdateItem(i, 'price', parseFloat(e.target.value) || 0)}
                                                                     placeholder={t('itemPrice')}
                                                                 />
-                                                                <CategoryBadge category={item.category || 'Other'} lang={language} mini />
+                                                                <CategoryBadge category={(item.category as string) || 'Other'} lang={language} mini />
                                                                 <div className="flex-1" />
                                                                 <button
                                                                     onClick={() => handleDeleteItem(i)}
@@ -1453,7 +1012,7 @@ export const EditView: React.FC<EditViewProps> = ({
                                                                     </span>
                                                                 </div>
                                                                 <div className="flex items-center gap-1 mt-0.5">
-                                                                    <CategoryBadge category={item.category || 'Other'} lang={language} mini />
+                                                                    <CategoryBadge category={(item.category as string) || 'Other'} lang={language} mini />
                                                                     {item.subcategory && (
                                                                         <span
                                                                             className="text-xs px-1.5 py-0.5 rounded-full"
@@ -1619,192 +1178,22 @@ export const EditView: React.FC<EditViewProps> = ({
                 theme={theme as 'light' | 'dark'}
             />
 
-            {/* Story 9.9: Cancel Confirmation Dialog */}
-            {/* Story 9.10: Enhanced with credit warning when scan was processed */}
-            {showCancelConfirm && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-                    onClick={() => setShowCancelConfirm(false)}
-                >
-                    <div
-                        className="mx-4 p-6 rounded-xl shadow-xl max-w-sm w-full"
-                        style={{ backgroundColor: 'var(--surface)' }}
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <h2
-                            className="text-lg font-bold mb-2"
-                            style={{ color: 'var(--primary)' }}
-                        >
-                            {t('discardChanges')}
-                        </h2>
-                        {/* Story 9.10: Credit warning when scan was processed */}
-                        {(pendingScan?.status === 'analyzed' || pendingScan?.status === 'error') && (
-                            <div
-                                className="p-3 rounded-lg mb-4 flex items-start gap-2"
-                                style={{
-                                    backgroundColor: isDark ? 'rgba(251, 191, 36, 0.15)' : 'rgba(251, 191, 36, 0.1)',
-                                    border: '1px solid',
-                                    borderColor: isDark ? 'rgba(251, 191, 36, 0.4)' : 'rgba(251, 191, 36, 0.5)',
-                                }}
-                            >
-                                <span className="text-amber-500 text-lg">⚠️</span>
-                                <span
-                                    className="text-sm font-medium"
-                                    style={{ color: isDark ? '#fbbf24' : '#d97706' }}
-                                >
-                                    {t('creditAlreadyUsed')}
-                                </span>
-                            </div>
-                        )}
-                        <p
-                            className="text-sm mb-6"
-                            style={{ color: 'var(--secondary)' }}
-                        >
-                            {t('discardChangesMessage')}
-                        </p>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowCancelConfirm(false)}
-                                className="flex-1 py-2 px-4 rounded-lg border font-medium"
-                                style={{
-                                    borderColor: isDark ? '#475569' : '#e2e8f0',
-                                    color: 'var(--primary)',
-                                    backgroundColor: 'transparent',
-                                }}
-                            >
-                                {t('back')}
-                            </button>
-                            <button
-                                onClick={handleConfirmCancel}
-                                className="flex-1 py-2 px-4 rounded-lg font-medium text-white"
-                                style={{ backgroundColor: 'var(--error)' }}
-                            >
-                                {t('confirm')}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Story 14.15b: Re-scan Confirmation Dialog */}
-            {showRescanConfirm && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-                    onClick={() => setShowRescanConfirm(false)}
-                >
-                    <div
-                        className="mx-4 p-6 rounded-xl shadow-xl max-w-sm w-full"
-                        style={{ backgroundColor: 'var(--surface)' }}
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div className="flex items-center gap-3 mb-4">
-                            <div
-                                className="w-10 h-10 rounded-full flex items-center justify-center"
-                                style={{
-                                    backgroundColor: isDark ? 'rgba(96, 165, 250, 0.15)' : 'rgba(59, 130, 246, 0.1)',
-                                }}
-                            >
-                                <RefreshCw size={20} style={{ color: 'var(--accent)' }} />
-                            </div>
-                            <h2
-                                className="text-lg font-bold"
-                                style={{ color: 'var(--primary)' }}
-                            >
-                                {t('rescanConfirmTitle')}
-                            </h2>
-                        </div>
-                        <p
-                            className="text-sm mb-6"
-                            style={{ color: 'var(--secondary)' }}
-                        >
-                            {t('rescanConfirmMessage')}
-                        </p>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowRescanConfirm(false)}
-                                className="flex-1 py-2 px-4 rounded-lg border font-medium"
-                                style={{
-                                    borderColor: isDark ? '#475569' : '#e2e8f0',
-                                    color: 'var(--primary)',
-                                    backgroundColor: 'transparent',
-                                }}
-                            >
-                                {t('cancel')}
-                            </button>
-                            <button
-                                onClick={handleConfirmRescan}
-                                className="flex-1 py-2 px-4 rounded-lg font-medium text-white flex items-center justify-center gap-2"
-                                style={{ backgroundColor: 'var(--accent)' }}
-                            >
-                                <RefreshCw size={16} strokeWidth={2} />
-                                {t('confirm')}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Story 14.22: Delete Confirmation Dialog */}
-            {showDeleteConfirm && currentTransaction.id && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-                    onClick={() => setShowDeleteConfirm(false)}
-                >
-                    <div
-                        className="mx-4 p-6 rounded-xl shadow-xl max-w-sm w-full"
-                        style={{ backgroundColor: 'var(--surface)' }}
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div className="flex items-center gap-3 mb-4">
-                            <div
-                                className="w-10 h-10 rounded-full flex items-center justify-center"
-                                style={{
-                                    backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)',
-                                }}
-                            >
-                                <Trash2 size={20} style={{ color: 'var(--error)' }} />
-                            </div>
-                            <h2
-                                className="text-lg font-bold"
-                                style={{ color: 'var(--text-primary)' }}
-                            >
-                                {t('deleteConfirmTitle')}
-                            </h2>
-                        </div>
-                        <p
-                            className="text-sm mb-6"
-                            style={{ color: 'var(--text-secondary)' }}
-                        >
-                            {t('deleteConfirmMessage')}
-                        </p>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowDeleteConfirm(false)}
-                                className="flex-1 py-2 px-4 rounded-lg border font-medium flex items-center justify-center gap-2"
-                                style={{
-                                    borderColor: isDark ? '#475569' : '#e2e8f0',
-                                    color: 'var(--text-primary)',
-                                    backgroundColor: 'transparent',
-                                }}
-                            >
-                                <ChevronLeft size={16} strokeWidth={2} />
-                                {t('cancel')}
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setShowDeleteConfirm(false);
-                                    onDelete(currentTransaction.id!);
-                                }}
-                                className="flex-1 py-2 px-4 rounded-lg font-medium text-white flex items-center justify-center gap-2"
-                                style={{ backgroundColor: 'var(--error)' }}
-                            >
-                                <Trash2 size={16} strokeWidth={2} />
-                                {t('delete')}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Story 15b-2a: Confirmation dialogs extracted to EditViewDialogs */}
+            <EditViewDialogs
+                showCancelConfirm={showCancelConfirm}
+                setShowCancelConfirm={setShowCancelConfirm}
+                handleConfirmCancel={handleConfirmCancel}
+                pendingScan={pendingScan}
+                isDark={isDark}
+                t={t}
+                showRescanConfirm={showRescanConfirm}
+                setShowRescanConfirm={setShowRescanConfirm}
+                handleConfirmRescan={handleConfirmRescan}
+                showDeleteConfirm={showDeleteConfirm}
+                setShowDeleteConfirm={setShowDeleteConfirm}
+                currentTransaction={currentTransaction}
+                onDelete={onDelete}
+            />
             </div>
         </div>
     );
