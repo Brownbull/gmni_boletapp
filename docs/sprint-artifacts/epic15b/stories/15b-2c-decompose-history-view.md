@@ -4,7 +4,7 @@
 **Phase:** 2 - Decomposition
 **Points:** 2
 **Priority:** HIGH
-**Status:** drafted
+**Status:** done
 
 ## Overview
 
@@ -24,12 +24,12 @@ After extraction, HistoryView.tsx will be ~500-550 lines (state setup, memo chai
 
 ## Functional Acceptance Criteria
 
-- [ ] **AC1:** HistoryView.tsx reduced to <800 lines
-- [ ] **AC2:** Each extracted file is <400 lines
-- [ ] **AC3:** Behavior snapshot: all existing tests pass before AND after extraction
-- [ ] **AC4:** No new functionality added -- pure decomposition
-- [ ] **AC5:** Fan-out of HistoryView.tsx decreased (from 28 to ~18 unique import sources)
-- [ ] **AC6:** `npm run test:quick` passes with 0 failures
+- [x] **AC1:** HistoryView.tsx reduced to <800 lines
+- [x] **AC2:** Each extracted file is <400 lines
+- [x] **AC3:** Behavior snapshot: all existing tests pass before AND after extraction
+- [x] **AC4:** No new functionality added -- pure decomposition
+- [x] **AC5:** Fan-out of HistoryView.tsx decreased (from 28 to ~18 unique import sources)
+- [x] **AC6:** `npm run test:quick` passes with 0 failures
 
 ## Architectural Acceptance Criteria (MANDATORY)
 
@@ -37,31 +37,31 @@ After extraction, HistoryView.tsx will be ~500-550 lines (state setup, memo chai
 
 ### File Location Requirements
 
-- [ ] **AC-ARCH-LOC-1:** Constants at `src/features/history/views/historyViewConstants.ts`
-- [ ] **AC-ARCH-LOC-2:** Hook at `src/features/history/views/useCollapsibleHeader.ts`
-- [ ] **AC-ARCH-LOC-3:** Header component at `src/features/history/components/HistoryHeader.tsx`
-- [ ] **AC-ARCH-LOC-4:** Pagination component at `src/features/history/components/HistoryPagination.tsx`
-- [ ] **AC-ARCH-LOC-5:** Empty states at `src/features/history/components/HistoryEmptyStates.tsx`
-- [ ] **AC-ARCH-LOC-6:** Constants test at `tests/unit/features/history/views/historyViewConstants.test.ts`
-- [ ] **AC-ARCH-LOC-7:** Hook test at `tests/unit/features/history/views/useCollapsibleHeader.test.ts`
+- [x] **AC-ARCH-LOC-1:** Constants at `src/features/history/views/historyViewConstants.ts`
+- [x] **AC-ARCH-LOC-2:** Hook at `src/features/history/views/useCollapsibleHeader.ts`
+- [x] **AC-ARCH-LOC-3:** Header component at `src/features/history/components/HistoryHeader.tsx`
+- [x] **AC-ARCH-LOC-4:** Pagination component at `src/features/history/components/HistoryPagination.tsx`
+- [x] **AC-ARCH-LOC-5:** Empty states at `src/features/history/components/HistoryEmptyStates.tsx`
+- [x] **AC-ARCH-LOC-6:** Constants test at `tests/unit/features/history/views/historyViewConstants.test.ts`
+- [x] **AC-ARCH-LOC-7:** Hook test at `tests/unit/features/history/views/useCollapsibleHeader.test.ts`
 
 ### Pattern Requirements
 
-- [ ] **AC-ARCH-PATTERN-1:** FSD compliance -- extracted views-layer files in `features/history/views/`, extracted presentation components in `features/history/components/`
-- [ ] **AC-ARCH-PATTERN-2:** All extracted files use `@/` or `@features/` aliases for external imports -- zero `../../` relative imports
-- [ ] **AC-ARCH-PATTERN-3:** Internal sibling imports use `./` relative paths (e.g., `./historyViewConstants`)
-- [ ] **AC-ARCH-PATTERN-4:** Extracted components accept props interfaces (not global state) -- data flows down from HistoryView
-- [ ] **AC-ARCH-PATTERN-5:** `sortTransactionsWithinGroups` is a named export, testable in isolation
-- [ ] **AC-ARCH-PATTERN-6:** Test directory mirrors source: `tests/unit/features/history/views/` and `tests/unit/features/history/components/`
+- [x] **AC-ARCH-PATTERN-1:** FSD compliance -- extracted views-layer files in `features/history/views/`, extracted presentation components in `features/history/components/`
+- [x] **AC-ARCH-PATTERN-2:** All extracted files use `@/` or `@features/` aliases for external imports -- zero `../../` relative imports
+- [x] **AC-ARCH-PATTERN-3:** Internal sibling imports use `./` relative paths (e.g., `./historyViewConstants`)
+- [x] **AC-ARCH-PATTERN-4:** Extracted components accept props interfaces (not global state) -- data flows down from HistoryView
+- [x] **AC-ARCH-PATTERN-5:** `sortTransactionsWithinGroups` is a named export, testable in isolation
+- [x] **AC-ARCH-PATTERN-6:** Test directory mirrors source: `tests/unit/features/history/views/` and `tests/unit/features/history/components/`
 
 ### Anti-Pattern Requirements (Must NOT Happen)
 
-- [ ] **AC-ARCH-NO-1:** No circular dependency -- HistoryView must NOT import from the history feature barrel (`@features/history`); must use deep paths (`@features/history/components/*`)
-- [ ] **AC-ARCH-NO-2:** No `../../` relative imports in any extracted or modified file (only `./` siblings allowed)
-- [ ] **AC-ARCH-NO-3:** No behavior changes -- zero function signature, prop, or return type modifications in existing public APIs
-- [ ] **AC-ARCH-NO-4:** No new external dependencies added -- extracted files only re-use existing imports
-- [ ] **AC-ARCH-NO-5:** No hook extraction from HistoryViewInner that changes the hook call order (React rules of hooks)
-- [ ] **AC-ARCH-NO-6:** Extracted sub-components must NOT call hooks themselves (except `useCollapsibleHeader` which is a new hook file called in the parent). Sub-components receive data via props.
+- [x] **AC-ARCH-NO-1:** No circular dependency -- HistoryView must NOT import from the history feature barrel (`@features/history`); must use deep paths (`@features/history/components/*`)
+- [x] **AC-ARCH-NO-2:** No `../../` relative imports in any extracted or modified file (only `./` siblings allowed)
+- [x] **AC-ARCH-NO-3:** No behavior changes -- zero function signature, prop, or return type modifications in existing public APIs
+- [x] **AC-ARCH-NO-4:** No new external dependencies added -- extracted files only re-use existing imports
+- [x] **AC-ARCH-NO-5:** No hook extraction from HistoryViewInner that changes the hook call order (React rules of hooks)
+- [x] **AC-ARCH-NO-6:** Extracted sub-components must NOT call hooks themselves (except `useCollapsibleHeader` which is a new hook file called in the parent). Sub-components receive data via props.
 
 ## File Specification
 
@@ -142,39 +142,39 @@ Both empty-state `<TransitionChild>` blocks:
 
 ### Task 1: Establish test baseline (1 subtask)
 
-- [ ] 1.1 Run `npm run test:quick` and record pass count. Run `npx vitest run tests/unit/components/HistoryViewThumbnails.test.tsx` specifically. Save output as baseline reference.
+- [x]1.1 Run `npm run test:quick` and record pass count. Run `npx vitest run tests/unit/components/HistoryViewThumbnails.test.tsx` specifically. Save output as baseline reference.
 
 ### Task 2: Extract constants and pure helpers (5 subtasks)
 
-- [ ] 2.1 Create `src/features/history/views/historyViewConstants.ts` with: `PAGE_SIZE_OPTIONS`, `PageSizeOption`, `DEFAULT_PAGE_SIZE`, `HistorySortKey`, `HISTORY_SORT_OPTIONS`, `DEFAULT_HISTORY_SORT_KEY`, `DEFAULT_HISTORY_SORT_DIRECTION`, `sortTransactionsWithinGroups()`
-- [ ] 2.2 Add `import type { Transaction } from '@/types/transaction'` and `import type { SortOption } from '@features/history/components/SortControl'` to the constants file
-- [ ] 2.3 Update HistoryView.tsx: remove inline constants/function, add `import { PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE, HISTORY_SORT_OPTIONS, DEFAULT_HISTORY_SORT_KEY, DEFAULT_HISTORY_SORT_DIRECTION, sortTransactionsWithinGroups } from './historyViewConstants'` and `import type { HistorySortKey, PageSizeOption } from './historyViewConstants'`
-- [ ] 2.4 Create `tests/unit/features/history/views/historyViewConstants.test.ts` -- test `sortTransactionsWithinGroups` with date/total/merchant keys, asc/desc directions
-- [ ] 2.5 Run `npx tsc --noEmit` -- verify no type errors
+- [x]2.1 Create `src/features/history/views/historyViewConstants.ts` with: `PAGE_SIZE_OPTIONS`, `PageSizeOption`, `DEFAULT_PAGE_SIZE`, `HistorySortKey`, `HISTORY_SORT_OPTIONS`, `DEFAULT_HISTORY_SORT_KEY`, `DEFAULT_HISTORY_SORT_DIRECTION`, `sortTransactionsWithinGroups()`
+- [x]2.2 Add `import type { Transaction } from '@/types/transaction'` and `import type { SortOption } from '@features/history/components/SortControl'` to the constants file
+- [x]2.3 Update HistoryView.tsx: remove inline constants/function, add `import { PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE, HISTORY_SORT_OPTIONS, DEFAULT_HISTORY_SORT_KEY, DEFAULT_HISTORY_SORT_DIRECTION, sortTransactionsWithinGroups } from './historyViewConstants'` and `import type { HistorySortKey, PageSizeOption } from './historyViewConstants'`
+- [x]2.4 Create `tests/unit/features/history/views/historyViewConstants.test.ts` -- test `sortTransactionsWithinGroups` with date/total/merchant keys, asc/desc directions
+- [x]2.5 Run `npx tsc --noEmit` -- verify no type errors
 
 ### Task 3: Extract useCollapsibleHeader hook (4 subtasks)
 
-- [ ] 3.1 Create `src/features/history/views/useCollapsibleHeader.ts` -- extract the scroll detection `useEffect`, `lastScrollY` ref, `lastCollapseTime` ref, `scrollThreshold`/`scrollDeltaThreshold` constants, `isHeaderCollapsed` state, `containerRef`, and `scrollContainerRef` into a hook returning `{ isHeaderCollapsed, containerRef, scrollContainerRef }`
-- [ ] 3.2 Update HistoryView.tsx: remove inline scroll logic, replace with `const { isHeaderCollapsed, containerRef, scrollContainerRef } = useCollapsibleHeader()`
-- [ ] 3.3 Create `tests/unit/features/history/views/useCollapsibleHeader.test.ts` -- test that hook returns initial state (not collapsed) and returns refs
-- [ ] 3.4 Run `npx tsc --noEmit` -- verify no type errors
+- [x]3.1 Create `src/features/history/views/useCollapsibleHeader.ts` -- extract the scroll detection `useEffect`, `lastScrollY` ref, `lastCollapseTime` ref, `scrollThreshold`/`scrollDeltaThreshold` constants, `isHeaderCollapsed` state, `containerRef`, and `scrollContainerRef` into a hook returning `{ isHeaderCollapsed, containerRef, scrollContainerRef }`
+- [x]3.2 Update HistoryView.tsx: remove inline scroll logic, replace with `const { isHeaderCollapsed, containerRef, scrollContainerRef } = useCollapsibleHeader()`
+- [x]3.3 Create `tests/unit/features/history/views/useCollapsibleHeader.test.ts` -- test that hook returns initial state (not collapsed) and returns refs
+- [x]3.4 Run `npx tsc --noEmit` -- verify no type errors
 
 ### Task 4: Extract UI sub-components (6 subtasks)
 
-- [ ] 4.1 Create `src/features/history/components/HistoryEmptyStates.tsx` -- extract the two empty-state JSX blocks. Define `HistoryEmptyStatesProps` interface with: `hasActiveFilters`, `showDuplicatesOnly`, `transactionsToDisplayLength`, `lang`, `t`
-- [ ] 4.2 Create `src/features/history/components/HistoryPagination.tsx` -- extract pagination controls JSX. Define `HistoryPaginationProps` interface with: `currentPage`, `totalFilteredPages`, `pageSize`, `goToPage`, `setPageSize`, `lang`, `t`, `isAtListenerLimit`, `hasMore`, `isLoadingMore`, `onLoadMoreTransactions`, `pageSizeOptions`
-- [ ] 4.3 Create `src/features/history/components/HistoryHeader.tsx` -- extract sticky header JSX (title bar + collapsible section). Define `HistoryHeaderProps` interface grouping related props
-- [ ] 4.4 Update HistoryView.tsx: replace extracted JSX blocks with `<HistoryHeader ... />`, `<HistoryEmptyStates ... />`, `<HistoryPagination ... />`
-- [ ] 4.5 Update `src/features/history/components/index.ts` -- add exports for `HistoryHeader`, `HistoryPagination`, `HistoryEmptyStates`
-- [ ] 4.6 Run `npx tsc --noEmit` -- verify no type errors
+- [x]4.1 Create `src/features/history/components/HistoryEmptyStates.tsx` -- extract the two empty-state JSX blocks. Define `HistoryEmptyStatesProps` interface with: `hasActiveFilters`, `showDuplicatesOnly`, `transactionsToDisplayLength`, `lang`, `t`
+- [x]4.2 Create `src/features/history/components/HistoryPagination.tsx` -- extract pagination controls JSX. Define `HistoryPaginationProps` interface with: `currentPage`, `totalFilteredPages`, `pageSize`, `goToPage`, `setPageSize`, `lang`, `t`, `isAtListenerLimit`, `hasMore`, `isLoadingMore`, `onLoadMoreTransactions`, `pageSizeOptions`
+- [x]4.3 Create `src/features/history/components/HistoryHeader.tsx` -- extract sticky header JSX (title bar + collapsible section). Define `HistoryHeaderProps` interface grouping related props
+- [x]4.4 Update HistoryView.tsx: replace extracted JSX blocks with `<HistoryHeader ... />`, `<HistoryEmptyStates ... />`, `<HistoryPagination ... />`
+- [x]4.5 Update `src/features/history/components/index.ts` -- add exports for `HistoryHeader`, `HistoryPagination`, `HistoryEmptyStates`
+- [x]4.6 Run `npx tsc --noEmit` -- verify no type errors
 
 ### Task 5: Verification and cleanup (5 subtasks)
 
-- [ ] 5.1 Run `npm run test:quick` -- all tests pass, compare with Task 1 baseline
-- [ ] 5.2 Run `npx vitest run tests/unit/components/HistoryViewThumbnails.test.tsx` -- existing tests still pass
-- [ ] 5.3 Count lines: `wc -l src/features/history/views/HistoryView.tsx` must be < 800; verify each new file < 400
-- [ ] 5.4 Count imports: `grep -c '^import' src/features/history/views/HistoryView.tsx` should show decreased unique sources (target ~18, down from 28)
-- [ ] 5.5 Run `npx madge --circular src/features/history/` -- verify 0 circular dependencies
+- [x]5.1 Run `npm run test:quick` -- all tests pass, compare with Task 1 baseline
+- [x]5.2 Run `npx vitest run tests/unit/components/HistoryViewThumbnails.test.tsx` -- existing tests still pass
+- [x]5.3 Count lines: `wc -l src/features/history/views/HistoryView.tsx` must be < 800; verify each new file < 400
+- [x]5.4 Count imports: `grep -c '^import' src/features/history/views/HistoryView.tsx` should show decreased unique sources (target ~18, down from 28)
+- [x]5.5 Run `npx madge --circular src/features/history/` -- verify 0 circular dependencies
 
 ## Dev Notes
 
@@ -227,3 +227,4 @@ Both empty-state `<TransitionChild>` blocks:
 |------|--------|
 | 2026-02-13 | Initial draft |
 | 2026-02-23 | Complete rewrite. Full architecture discovery: analyzed 1,169-line source, identified 5 extraction targets (constants, hook, 3 sub-components), specified 9 files, 21 subtasks. Replaces minimal draft. |
+| 2026-02-24 | ECC Code Review: APPROVE 9/10. Fixed: HistoryHeader.tsx sibling imports (AC-ARCH-PATTERN-3). Pre-existing LOW: searchQuery sanitization, duplicateCount validation (not introduced by this story). Agents: code-reviewer, security-reviewer. |

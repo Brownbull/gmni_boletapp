@@ -39,3 +39,10 @@ export { SortControl } from './SortControl';
 export type { SortControlProps, SortOption } from './SortControl';
 export { CountryFlag } from './CountryFlag';
 export type { FlagSize } from './CountryFlag';
+// Story 15b-2c: Extracted sub-components from HistoryView
+export { HistoryHeader } from './HistoryHeader';
+export type { HistoryHeaderProps } from './HistoryHeader';
+export { HistoryPagination } from './HistoryPagination';
+export type { HistoryPaginationProps } from './HistoryPagination';
+export { HistoryEmptyStates } from './HistoryEmptyStates';
+export type { HistoryEmptyStatesProps } from './HistoryEmptyStates';
