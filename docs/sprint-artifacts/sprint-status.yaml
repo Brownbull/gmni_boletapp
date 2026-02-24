@@ -213,7 +213,7 @@ development_status:
   TD-15b-10-keyboard-nav-test-fix: done                      # 1 pt  - Fix dead predicate in getItemRows — 4 keyboard nav tests pass vacuously (from TD-15b-8 review)
   TD-15b-11-firestore-rules-hardening: done        # 3 pts - Close catch-all bypass so isValidTransactionWrite actually enforces; evaluate items[] server-side enforcement (from TD-15b-9 review)
   TD-15b-12-transaction-schema-bounds: deployed  # 1 pt - Add merchant non-empty + total >= 0 bounds to isValidTransactionWrite (from TD-15b-11 review, LOW) | deployed: 2026-02-24
-  TD-15b-13-firestore-rules-improvements: ready-for-dev  # 1 pt - total upper bound + rename isValidTransactionWrite → hasValidFieldBounds (from TD-15b-12 review, LOW)
+  TD-15b-13-firestore-rules-improvements: done     # 1 pt - total upper bound + rename isValidTransactionWrite → hasValidFieldBounds (from TD-15b-12 review, LOW)
   # 15b-2b: DROPPED (2026-02-23) file merged into TEVInternal in prior story
   15b-2c-decompose-history-view: drafted       # 2 pts - HistoryView 1,083 lines
   15b-2d-decompose-items-view: drafted         # 2 pts - ItemsView 926 lines

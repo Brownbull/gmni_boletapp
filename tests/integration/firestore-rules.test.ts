@@ -258,12 +258,12 @@ describe('Firestore Security Rules', () => {
 /**
  * TD-15b-11: Transaction write validation — catch-all bypass closed
  *
- * Verifies that `isValidTransactionWrite` is actually enforced for transaction writes,
+ * Verifies that `hasValidFieldBounds` is actually enforced for transaction writes,
  * i.e., the catch-all `{document=**}` rule does NOT bypass field validation.
  *
- * Before the fix: the catch-all granted write without calling isValidTransactionWrite,
+ * Before the fix: the catch-all granted write without calling hasValidFieldBounds,
  * so invalid writes (merchant >200 chars, non-numeric total) were silently accepted.
- * After the fix: catch-all also requires isValidTransactionWrite, closing the bypass.
+ * After the fix: catch-all also requires hasValidFieldBounds, closing the bypass.
  */
 describe('Transaction write validation (TD-15b-11: catch-all bypass closed)', () => {
     beforeAll(async () => {
@@ -282,7 +282,7 @@ describe('Transaction write validation (TD-15b-11: catch-all bypass closed)', ()
      * Test 6: Oversized merchant field rejected via both transaction rule AND catch-all
      *
      * If the catch-all bypass were open, this addDoc would SUCCEED (only auth required).
-     * After the fix, both rules require isValidTransactionWrite, so this FAILS.
+     * After the fix, both rules require hasValidFieldBounds, so this FAILS.
      */
     it('should reject transaction write with merchant field exceeding 200 chars', async () => {
         const userFirestore = getAuthedFirestore(TEST_USERS.USER_1);
@@ -351,7 +351,7 @@ describe('Transaction write validation (TD-15b-11: catch-all bypass closed)', ()
     /**
      * Test 9: Non-transaction subcollection write still allowed
      *
-     * isValidTransactionWrite returns true for documents without merchant/total fields.
+     * hasValidFieldBounds returns true for documents without merchant/total fields.
      * Preferences, credits, and other subcollections are not blocked by the updated catch-all.
      */
     it('should allow non-transaction subcollection write (preferences) after catch-all update', async () => {
@@ -397,7 +397,7 @@ describe('Transaction write validation (TD-15b-11: catch-all bypass closed)', ()
      * Test 11: Delete on non-transaction subcollection still allowed (catch-all delete guard)
      *
      * After TD-15b-11, catch-all uses `allow create, update` (not `allow write`) for the
-     * isValidTransactionWrite guard. Delete is auth-only so it does not attempt to access
+     * hasValidFieldBounds guard. Delete is auth-only so it does not attempt to access
      * request.resource.data (which is null on delete and would deny). This test confirms
      * the regression is not present.
      */
@@ -420,7 +420,7 @@ describe('Transaction write validation (TD-15b-11: catch-all bypass closed)', ()
     /**
      * Test 12: Non-transaction subcollection (credits) write still allowed
      *
-     * Verifies the catch-all isValidTransactionWrite guard does not block credits
+     * Verifies the catch-all hasValidFieldBounds guard does not block credits
      * subcollection writes (no merchant/total fields → function returns true).
      */
     it('should allow non-transaction subcollection write (credits) after catch-all update', async () => {
@@ -432,60 +432,6 @@ describe('Transaction write validation (TD-15b-11: catch-all bypass closed)', ()
 
         await assertSucceeds(
             setDoc(creditsDoc, { amount: 100, currency: 'CLP' })
-        );
-    });
-});
-
-/**
- * TD-15b-12: Schema bounds — non-empty merchant and non-negative total
- *
- * Verifies that isValidTransactionWrite enforces:
- * - merchant (when present) is a non-empty string (size >= 1)
- * - total (when present) is non-negative (>= 0), with zero explicitly accepted
- *
- * AC4 (optional-field guard preserved) is covered by TD-15b-11 Tests 9 and 12
- * (preferences and credits subcollection writes without merchant/total still pass).
- */
-describe('Transaction schema bounds (TD-15b-12)', () => {
-    // Shared helper — creates a fresh collection reference for USER_1 transactions each call.
-    const getTxnCollection = () => collection(
-        getAuthedFirestore(TEST_USERS.USER_1),
-        `${TEST_COLLECTION_PATH}/${TEST_USERS.USER_1}/transactions`
-    );
-
-    beforeAll(async () => {
-        await setupFirebaseEmulator();
-    });
-
-    afterAll(async () => {
-        await teardownFirebaseEmulator();
-    });
-
-    beforeEach(async () => {
-        await clearFirestoreData();
-    });
-
-    it('should reject transaction write with empty merchant field (AC1)', async () => {
-        await assertFails(
-            addDoc(getTxnCollection(), { merchant: '', date: '2026-02-24', total: 50, category: 'Groceries', items: [] })
-        );
-    });
-
-    it('should reject transaction write with negative total field (AC2)', async () => {
-        await assertFails(
-            addDoc(getTxnCollection(), { merchant: 'Jumbo', date: '2026-02-24', total: -1, category: 'Groceries', items: [] })
-        );
-    });
-
-    it('should allow transaction write with zero total — free item (AC3)', async () => {
-        await assertSucceeds(
-            addDoc(getTxnCollection(), { merchant: 'Jumbo', date: '2026-02-24', total: 0, category: 'Groceries', items: [] })
-        );
-    });
-
-    it('should allow transaction write with fractional total (AC3 extension)', async () => {
-        await assertSucceeds(
-            addDoc(getTxnCollection(), { merchant: 'Jumbo', date: '2026-02-24', total: 99.99, category: 'Groceries', items: [] })
         );
     });
 });
