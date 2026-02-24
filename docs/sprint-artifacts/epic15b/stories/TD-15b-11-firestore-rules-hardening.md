@@ -1,6 +1,6 @@
 # Tech Debt Story TD-15b-11: Firestore Rules Architecture Hardening
 
-**Status:** review
+**Status:** done
 
 > **Source:** ECC Code Review (2026-02-23) on story TD-15b-9
 > **Priority:** HIGH | **Estimated Effort:** 3 pts
@@ -135,3 +135,25 @@ match /artifacts/{appId}/users/{userId}/{document=**} {
 ### Source story
 - [TD-15b-9](./TD-15b-9-sanitization-boundary-audit.md)
 - Review findings: #1 (CRITICAL, security-reviewer), #2 (HIGH, code+security)
+
+---
+
+## Senior Developer Review (ECC) — 2026-02-24
+
+**Agents:** code-reviewer, security-reviewer | **Classification:** STANDARD | **Score:** 8.0/10
+
+**Outcome:** APPROVED WITH FIXES — 3 quick fixes applied, 1 TD story created
+
+### Deferred Items
+
+| TD Story | Description | Priority | Action |
+|----------|-------------|----------|--------|
+| [TD-15b-12](./TD-15b-12-transaction-schema-bounds.md) | merchant non-empty + total >= 0 bounds in isValidTransactionWrite | LOW | CREATED |
+
+### Fixes Applied in Review
+
+| # | Sev | Finding | Fix |
+|---|-----|---------|-----|
+| 1 | HIGH | `allow write` in catch-all included delete; `request.resource.data` null on delete → non-transaction subcollection deletes DENIED | Changed to `allow create, update` + separate `allow delete: if auth` |
+| 2 | MEDIUM | No delete test for non-transaction subcollection | Added Test 11 (delete preferences) |
+| 6 | INFO | Only `preferences` tested; `credits` not verified | Added Test 12 (credits write) |

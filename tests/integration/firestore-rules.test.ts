@@ -392,4 +392,46 @@ describe('Transaction write validation (TD-15b-11: catch-all bypass closed)', ()
             })
         );
     });
+
+    /**
+     * Test 11: Delete on non-transaction subcollection still allowed (catch-all delete guard)
+     *
+     * After TD-15b-11, catch-all uses `allow create, update` (not `allow write`) for the
+     * isValidTransactionWrite guard. Delete is auth-only so it does not attempt to access
+     * request.resource.data (which is null on delete and would deny). This test confirms
+     * the regression is not present.
+     */
+    it('should allow delete on non-transaction subcollection (preferences) after catch-all update', async () => {
+        const userFirestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const preferencesDoc = doc(
+            userFirestore,
+            `${TEST_COLLECTION_PATH}/${TEST_USERS.USER_1}/preferences/settings`
+        );
+
+        // First create the document
+        await assertSucceeds(
+            setDoc(preferencesDoc, { language: 'es', currency: 'CLP', theme: 'dark' })
+        );
+
+        // Then delete it — must also be allowed
+        await assertSucceeds(deleteDoc(preferencesDoc));
+    });
+
+    /**
+     * Test 12: Non-transaction subcollection (credits) write still allowed
+     *
+     * Verifies the catch-all isValidTransactionWrite guard does not block credits
+     * subcollection writes (no merchant/total fields → function returns true).
+     */
+    it('should allow non-transaction subcollection write (credits) after catch-all update', async () => {
+        const userFirestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const creditsDoc = doc(
+            userFirestore,
+            `${TEST_COLLECTION_PATH}/${TEST_USERS.USER_1}/credits/balance`
+        );
+
+        await assertSucceeds(
+            setDoc(creditsDoc, { amount: 100, currency: 'CLP' })
+        );
+    });
 });
