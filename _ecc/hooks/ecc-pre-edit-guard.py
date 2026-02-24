@@ -12,11 +12,13 @@ Checks:
   3. File size >500 lines → warn
   4. File size >800 lines → BLOCK
   5. Test file size limits → warn (unit >300, integration >500, e2e >400)
-  6. E2E anti-patterns → warn (bare text selectors, long timeouts, networkidle)
+  6. Churn count >20 → warn, >40 → BLOCK (A4 / L2-004 gravity well)
+  7. E2E anti-patterns → warn (bare text selectors, long timeouts, networkidle)
 """
 import json
 import os
 import re
+import subprocess
 import sys
 
 
@@ -94,6 +96,43 @@ def main():
                     "Per E2E-TEST-CONVENTIONS.md, consider splitting journey."
                 )
 
+    # Churn count check (A4 / L2-004) — gravity-well detection
+    # Exempt: sprint-status files are expected to have many commits (one per story completion)
+    _churn_exempt = {"sprint-status.yaml", "sprint-status_epics1to13.yaml"}
+    if file_path and os.path.isfile(file_path) and os.path.basename(file_path) not in _churn_exempt:
+        try:
+            repo_result = subprocess.run(
+                ["git", "rev-parse", "--show-toplevel"],
+                capture_output=True, text=True,
+                cwd=os.path.dirname(os.path.abspath(file_path)) or ".",
+                timeout=5,
+            )
+            if repo_result.returncode == 0:
+                repo_root = repo_result.stdout.strip()
+                churn_result = subprocess.run(
+                    ["git", "log", "--follow", "--oneline", "--", file_path],
+                    capture_output=True, text=True, cwd=repo_root, timeout=5,
+                )
+                touch_count = (
+                    len(churn_result.stdout.strip().splitlines())
+                    if churn_result.returncode == 0
+                    else 0
+                )
+                if touch_count >= 40:
+                    print(
+                        f"\u26d4 BLOCKED: {os.path.basename(file_path)} modified {touch_count} times. "
+                        "Gravity well. Create a refactor story before modifying further.",
+                        file=sys.stderr,
+                    )
+                    sys.exit(2)
+                elif touch_count >= 20:
+                    warnings.append(
+                        f"\u26a0\ufe0f  CHURN: {os.path.basename(file_path)} modified {touch_count} times. "
+                        "Consider a refactor story before this change."
+                    )
+        except Exception:
+            pass  # git unavailable or not a repo — skip
+
     # 7-9. E2E anti-pattern detection (only for e2e spec files)
     if "e2e" in file_path and file_path.endswith(".spec.ts"):
         # 7. Bare text=Ajustes selector (matches 2 elements in strict mode)
@@ -117,6 +156,16 @@ def main():
             warnings.append(
                 "\u26a0\ufe0f  E2E: 'networkidle' never resolves with Firebase WebSocket. "
                 "Use waitForSelector for specific elements instead."
+            )
+
+    # Playwright config parallelism check (D-003 / L2-007)
+    # Parallel E2E = shared staging data corruption.
+    if "playwright.config" in file_path:
+        if re.search(r"workers\s*:\s*[2-9]", new_string) or \
+           re.search(r"fullyParallel\s*:\s*true", new_string):
+            warnings.append(
+                "E2E: Parallel test execution detected in playwright config. "
+                "Run serially (fullyParallel: false, workers: 1) to prevent shared staging data corruption."
             )
 
     if warnings:

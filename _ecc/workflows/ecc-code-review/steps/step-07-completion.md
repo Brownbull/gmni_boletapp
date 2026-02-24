@@ -25,6 +25,14 @@ Cost tracking, E2E coverage check, Firebase analysis, commit commands, and final
   <action>Check if {{files_to_review}} match: "firestore.rules", "firestore.indexes.json", "storage.rules", "functions/src/**"</action>
   <action>Set {{has_firebase_backend_changes}} = true/false | Set {{firebase_deploy_targets}} = list of targets</action>
 
+  <!-- Git Staging Verification (MUST CHECK #1) -->
+  <critical>CODE REVIEW PATTERN #1: Untracked files WILL NOT be committed — verify before commit</critical>
+  <action>Run `git status --porcelain | grep "^??"` → check for untracked new TD story files or quick-fix files</action>
+  <check if="any new files show as '??' (untracked)">
+    <output>**GIT STAGING WARNING** — Untracked files will NOT be in the commit: {{untracked_files}}</output>
+    <action>Stage all new files: `git add {{created_files_list}}`</action>
+  </check>
+
   <!-- Build commit file list -->
   <action>Build {{review_changed_files}}: story file, sprint-status.yaml, new TD story files, source/test files from quick fixes</action>
 

@@ -31,6 +31,7 @@
   - [ ] Step 4: Cross-Epic Analysis         -> steps/step-04-cross-epic.md
   - [ ] Step 5: Final Validation            -> steps/step-05-validation.md
   - [ ] Step 6: Output Finalization         -> steps/step-06-finalization.md
+  - [ ] Step 7: Compound Health Check       -> steps/step-07-compound-health.md
   -->
 
   <step n="0" goal="Load project knowledge" tag="knowledge-init">
@@ -83,6 +84,10 @@
 
   <step n="6" goal="Output finalization" tag="finalization">
     <action>Load, read completely, and execute steps/step-06-finalization.md</action>
+  </step>
+
+  <step n="7" goal="Behavioral health snapshot and correction story injection" tag="compound-health">
+    <action>Load, read completely, and execute steps/step-07-compound-health.md</action>
   </step>
 
 </workflow>

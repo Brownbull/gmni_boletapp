@@ -75,3 +75,15 @@ Find next ready story, load it, parse ACs, classify complexity, extract architec
     Consider running `/ecc-impact-analysis {{story_key}}` to check for sprint conflicts.
   </output>
 </check>
+
+<!-- E2E ISOLATION GATE (A7 / L2-007) -->
+<check if="story title or ACs contain: e2e, end-to-end, playwright, cypress, integration test">
+  <output>**⚠️  E2E STORY DETECTED**
+
+    Before implementation, confirm fixture isolation:
+    Will this test use isolated fixtures (no shared staging state, no live API calls)?
+
+    BoletApp evidence: 44 CI config changes for E2E infrastructure, ultimately excluded from CI.
+    Cause: tests sharing state are unreliable and too expensive to maintain.</output>
+  <ask>Confirm: [Y] isolated fixtures will be used / [N] explain why isolation isn't possible</ask>
+</check>

@@ -1,0 +1,526 @@
+<workflow>
+  <critical>The workflow execution engine is governed by: {project-root}/_bmad/core/tasks/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+
+  <critical>COPILOT PLAYBOOK GENERATOR — This workflow produces a DOCUMENT, not architecture decisions</critical>
+  <critical>Do NOT make architectural decisions. Do NOT create architecture.md. ONLY generate the playbook.</critical>
+  <critical>The playbook contains copy-paste prompts for each of the 8 architecture steps in Copilot Chat.</critical>
+
+  <!-- ================================================================== -->
+  <!-- STEP 0: Load Input Documents                                        -->
+  <!-- ================================================================== -->
+
+  <step n="0" goal="Discover and load all input documents for embedding in playbook" tag="doc-discovery">
+    <action>Search for and load these documents:
+      - PRD: {planning_artifacts}/prd.md (REQUIRED — abort if missing)
+      - UX Design: {planning_artifacts}/*.html or {planning_artifacts}/ux-*.md (optional)
+      - Research: docs/brainstorming/*.md (optional)
+      - Project Context: docs/brainstorming/00-project-vision.md (optional)
+    </action>
+
+    <action>Extract from PRD:
+      - {{all_frs}}: every functional requirement (FR ID + full text)
+      - {{all_nfrs}}: every non-functional requirement (NFR ID + full text)
+      - {{project_description}}: project overview / description
+      - {{tech_preferences}}: any technology preferences mentioned
+    </action>
+
+    <action>Extract from UX (if found):
+      - {{ux_summary}}: key UX decisions, responsive requirements, component patterns
+    </action>
+
+    <action>Extract from Research/Vision (if found):
+      - {{vision_summary}}: core product vision, constraints, priorities
+    </action>
+
+    <check if="PRD not found">
+      <output>**ERROR:** PRD not found at {planning_artifacts}/prd.md
+
+        The architecture workflow requires a completed PRD.
+        Run `/bmad-bmm-create-prd` first (or its Copilot equivalent).
+      </output>
+      <stop/>
+    </check>
+
+    <output>**Documents Loaded**
+
+      - PRD: loaded ({{fr_count}} FRs, {{nfr_count}} NFRs)
+      - UX: {{ux_status}}
+      - Research/Vision: {{vision_status}}
+
+      Generating architecture playbook...
+    </output>
+  </step>
+
+  <!-- ================================================================== -->
+  <!-- STEP 1: Generate the Playbook                                       -->
+  <!-- ================================================================== -->
+
+  <step n="1" goal="Generate the complete architecture Copilot playbook" tag="generate-playbook">
+    <critical>Each prompt must be SELF-CONTAINED — Copilot has no memory between chats.</critical>
+    <critical>Include ALL relevant context (FRs, NFRs, vision) IN each prompt where needed.</critical>
+    <critical>The playbook guides the user through collaborative decisions — not auto-generated answers.</critical>
+
+    <template-output file="copilot-playbook-architecture.md" path="{output_folder}/implementation-artifacts">
+
+# Copilot Playbook: Architecture Decision Document
+
+> **Generated:** {{date}}
+> **Project:** {{project_name}}
+> **PRD:** `{{prd_path}}`
+>
+> This playbook mirrors the `bmad-bmm-create-architecture` workflow (8 steps)
+> but provides copy-paste prompts for GitHub Copilot Chat.
+> Work through each step sequentially. Each step builds on the previous one.
+
+---
+
+## How to Use This Playbook
+
+1. **Work step by step** — each step builds on prior decisions
+2. **Copy the prompt** into Copilot Chat and review the response
+3. **Make decisions** — Copilot proposes, YOU decide
+4. **Append to your architecture document** — copy approved sections into `architecture.md`
+5. **Mark checkboxes** as you complete each step
+6. **Iterate** — re-run any step if you want to change a decision
+
+> **Output file:** Create `{{planning_artifacts}}/architecture.md` and build it incrementally.
+>
+> **Tip:** Use `#file:path` syntax in Copilot to reference existing documents.
+
+---
+
+## Step 0: Initialize Architecture Document
+
+Create the file `{{planning_artifacts}}/architecture.md` with this starter content:
+
+```markdown
+# Architecture Decision Document
+
+**Project:** {{project_name}}
+**Date:** {{date}}
+**Status:** In Progress
+
+---
+```
+
+- [ ] Architecture document created
+
+---
+
+## Step 1: Project Context Analysis
+
+**Goal:** Extract requirements, assess scale, and identify cross-cutting concerns.
+
+**Copy this prompt into Copilot Chat:**
+
+````
+I'm creating an architecture for my project. Analyze the project context and requirements below.
+
+## Project Description
+{{project_description}}
+
+## Functional Requirements
+{{all_frs}}
+
+## Non-Functional Requirements
+{{all_nfrs}}
+
+{{#if ux_summary}}
+## UX Requirements
+{{ux_summary}}
+{{/if}}
+
+{{#if vision_summary}}
+## Project Vision & Constraints
+{{vision_summary}}
+{{/if}}
+
+---
+
+**Analyze and produce:**
+
+1. **Project Scale Assessment:**
+   - Small / Medium / Large / Enterprise
+   - Expected users, data volume, traffic patterns
+   - Team size and skill considerations
+
+2. **Cross-Cutting Concerns:**
+   - Authentication & authorization needs
+   - Data persistence requirements
+   - Real-time vs batch processing
+   - Deployment environment (cloud, self-hosted, hybrid)
+   - Performance-critical paths
+   - Security requirements
+
+3. **Technical Constraints:**
+   - Any technology mandates from the requirements
+   - Budget or infrastructure constraints
+   - Integration requirements with external systems
+
+4. **Key Architectural Drivers:**
+   - Which NFRs most heavily influence architecture
+   - Trade-offs to consider (e.g., simplicity vs scalability)
+
+Do NOT recommend specific technologies yet — only analyze the requirements.
+````
+
+### After Copilot Responds:
+1. Review the analysis — correct anything that's wrong
+2. Copy the approved analysis into your `architecture.md` under a `## Project Context` section
+- [ ] Project context analysis complete and added to architecture.md
+
+---
+
+## Step 2: Technology Evaluation
+
+**Goal:** Discover technology preferences and evaluate starter templates/frameworks.
+
+**Copy this prompt into Copilot Chat:**
+
+````
+Based on this project context, help me evaluate technology choices.
+
+## Project Context (from Step 1)
+[Paste your approved project context analysis here]
+
+## Requirements Summary
+- {{fr_count}} functional requirements
+- {{nfr_count}} non-functional requirements
+{{#if tech_preferences}}
+
+## Existing Technology Preferences
+{{tech_preferences}}
+{{/if}}
+
+---
+
+**For each technology category, propose 2-3 options with trade-offs:**
+
+1. **Frontend Framework** — considering: component complexity, learning curve, ecosystem
+2. **State Management** — considering: complexity, developer experience, performance
+3. **Styling Solution** — considering: design system needs, theming, maintainability
+4. **Backend/API** — considering: scale, real-time needs, team expertise
+5. **Database** — considering: data model, query patterns, scalability
+6. **Authentication** — considering: user types, security requirements
+7. **Hosting/Deployment** — considering: cost, complexity, scaling needs
+
+For each option include:
+- Why it fits this project
+- Key trade-off vs alternatives
+- Current version and maturity status
+
+Also evaluate if a **starter template** exists that bundles several of these choices
+(e.g., create-next-app, create-vite, etc.) and what architectural decisions it pre-makes.
+````
+
+### After Copilot Responds:
+1. **Decide on each category** — pick the technology that fits your project
+2. Copy your decisions into `architecture.md` under a `## Technology Decisions` section
+3. Format as a decision table: Technology | Choice | Rationale
+- [ ] Technology decisions made and documented
+
+---
+
+## Step 3: Core Architectural Decisions
+
+**Goal:** Make detailed decisions across all architecture domains.
+
+**Copy this prompt into Copilot Chat:**
+
+````
+I've chosen my technology stack. Now help me make detailed architectural decisions.
+
+## Technology Stack
+[Paste your technology decisions from Step 2]
+
+## Project Requirements
+{{all_frs}}
+
+{{all_nfrs}}
+
+---
+
+**Facilitate decisions for each category:**
+
+### Data Architecture
+- Database schema approach (relational, document, hybrid)
+- Data access patterns (ORM, query builder, raw SQL, SDK)
+- Caching strategy (if needed)
+- Data validation approach (where and how)
+
+### Authentication & Security
+- Auth flow (OAuth, JWT, session-based, provider-managed)
+- Authorization model (RBAC, ABAC, simple)
+- Secret management approach
+- Input validation strategy
+
+### API & Communication
+- API style (REST, GraphQL, RPC, SDK-based)
+- Real-time communication (if needed): WebSocket, SSE, polling
+- Error handling patterns
+- API versioning approach
+
+### Frontend Architecture
+- Component organization (feature-based, atomic, page-based)
+- State management patterns (global vs local, which state where)
+- Routing strategy
+- Form handling approach
+
+### Infrastructure & Deployment
+- CI/CD pipeline
+- Environment strategy (dev, staging, production)
+- Monitoring and logging
+- Build and bundling approach
+
+For EACH decision, provide:
+- The decision
+- Rationale (why this over alternatives)
+- Implications (what this means for implementation)
+````
+
+### After Copilot Responds:
+1. Review each decision — challenge anything you disagree with
+2. Copy approved decisions into `architecture.md` under `## Core Decisions`
+3. Use subsections for each category
+- [ ] Core architectural decisions documented
+
+---
+
+## Step 4: Implementation Patterns
+
+**Goal:** Define consistency rules so multiple developers (or AI agents) write compatible code.
+
+**Copy this prompt into Copilot Chat:**
+
+````
+Based on my architecture decisions, define implementation patterns for consistency.
+
+## Architecture Decisions
+[Paste your core decisions from Step 3]
+
+## Technology Stack
+[Paste your technology decisions from Step 2]
+
+---
+
+**Define patterns for each category:**
+
+### Naming Patterns
+- Database naming: tables, columns, indexes, constraints
+- API naming: endpoints, query params, response fields
+- Code naming: files, components, functions, variables, types
+- Constants and enums
+
+### Structure Patterns
+- Project directory structure (complete tree)
+- File organization within directories
+- Module/feature boundaries
+- Import ordering conventions
+
+### Format Patterns
+- API response format (envelope, pagination, errors)
+- Date/time handling (timezone, format)
+- ID generation (UUID, auto-increment, nanoid)
+- Data serialization conventions
+
+### Communication Patterns
+- Event naming and payload structure (if applicable)
+- State management update patterns
+- Component communication (props, context, events, stores)
+- Error propagation chain
+
+### Process Patterns
+- Error handling (try/catch, Result types, error boundaries)
+- Loading states (skeleton, spinner, optimistic)
+- Form validation (client, server, both)
+- Logging levels and format
+
+For each pattern, provide:
+- The rule (be specific and unambiguous)
+- Example code snippet
+- Why this pattern (prevents what problem)
+````
+
+### After Copilot Responds:
+1. Review patterns — ensure they match your team's preferences
+2. Copy into `architecture.md` under `## Implementation Patterns`
+- [ ] Implementation patterns documented
+
+---
+
+## Step 5: Project Structure
+
+**Goal:** Create the complete project directory tree and map requirements to files.
+
+**Copy this prompt into Copilot Chat:**
+
+````
+Create a complete project directory structure based on my architecture.
+
+## Architecture Summary
+[Paste key decisions from Steps 2-4]
+
+## Implementation Patterns
+[Paste the Structure Patterns section from Step 4]
+
+## Functional Requirements
+{{all_frs}}
+
+---
+
+**Produce:**
+
+1. **Complete directory tree** — every folder, with brief description of what goes where
+   ```
+   project-root/
+   ├── src/
+   │   ├── components/    # description
+   │   ├── ...
+   ```
+
+2. **Requirement-to-file mapping** — for each FR, list which file(s) implement it:
+   | FR | Primary File(s) | Description |
+   |----|----------------|-------------|
+
+3. **Architectural boundaries** — where modules connect and integration points:
+   - Which modules are allowed to import from which
+   - Where shared types/utilities live
+   - Data flow between layers
+````
+
+### After Copilot Responds:
+1. Review the structure — adjust for your project's specific needs
+2. Copy into `architecture.md` under `## Project Structure`
+- [ ] Project structure documented
+
+---
+
+## Step 6: Architecture Validation
+
+**Goal:** Validate that all decisions are coherent, all requirements are covered, and no gaps exist.
+
+**Copy this prompt into Copilot Chat:**
+
+````
+Perform an adversarial review of my architecture document. Find gaps, conflicts, and risks.
+
+## Complete Architecture Document
+[Paste your entire architecture.md content here]
+
+## Functional Requirements (for coverage check)
+{{all_frs}}
+
+## Non-Functional Requirements (for coverage check)
+{{all_nfrs}}
+
+---
+
+**Validate and report:**
+
+1. **Decision Coherence:**
+   - Are all technology choices compatible?
+   - Do patterns conflict with each other?
+   - Are there implicit assumptions that should be explicit?
+
+2. **Requirements Coverage:**
+   - For EACH FR: is there a clear architectural path to implementation?
+   - For EACH NFR: is there an architectural decision that addresses it?
+   - List any uncovered requirements
+
+3. **Implementation Readiness:**
+   - Can a developer start coding from this document?
+   - Are there ambiguous decisions that need clarification?
+   - Are there missing patterns that will cause inconsistency?
+
+4. **Risk Assessment:**
+   - **Critical gaps** (must fix before implementation)
+   - **Important gaps** (should fix soon)
+   - **Nice-to-have** (can defer)
+
+5. **Completeness Checklist:**
+   - [ ] All FRs have implementation path
+   - [ ] All NFRs have architectural support
+   - [ ] No conflicting decisions
+   - [ ] Project structure covers all features
+   - [ ] Patterns are specific enough for consistent implementation
+
+Be ADVERSARIAL — assume something is wrong and try to find it.
+````
+
+### After Copilot Responds:
+1. Address all **Critical** findings before proceeding
+2. Document **Important** findings as known gaps in `architecture.md`
+3. Update any sections that need correction
+- [ ] Validation complete, critical gaps addressed
+
+---
+
+## Step 7: Finalize Architecture Document
+
+### Final Checklist
+
+- [ ] Project Context section complete
+- [ ] Technology Decisions documented with rationale
+- [ ] Core Decisions across all 5 categories
+- [ ] Implementation Patterns defined
+- [ ] Project Structure with directory tree
+- [ ] Validation passed (no critical gaps)
+- [ ] Architecture status set to "Complete" in document header
+
+### Post-Completion
+
+After completing the architecture:
+1. Run `/bmad-bmm-create-epics-and-stories` (or its Copilot playbook) to create epics
+2. Run `/bmad-bmm-check-implementation-readiness` (or its Copilot playbook) to validate everything
+
+---
+
+## Tracking
+
+### Decision Log
+<!-- Track key decisions and their rationale -->
+| Step | Decision | Rationale | Date |
+|------|----------|-----------|------|
+| | | | |
+
+### Open Questions
+<!-- Track questions that need resolution -->
+
+### Iteration Notes
+<!-- Track changes if you revisit earlier steps -->
+
+    </template-output>
+  </step>
+
+  <!-- ================================================================== -->
+  <!-- STEP 2: Save and Present                                            -->
+  <!-- ================================================================== -->
+
+  <step n="2" goal="Save playbook and inform user" tag="save-playbook">
+    <action>Save the generated playbook to: {output_folder}/implementation-artifacts/copilot-playbook-architecture.md</action>
+
+    <output>**Architecture Copilot Playbook Generated**
+
+      **File:** `{output_folder}/implementation-artifacts/copilot-playbook-architecture.md`
+
+      **Playbook Structure (mirrors 8-step architecture workflow):**
+      - Step 0: Initialize document
+      - Step 1: Project Context Analysis
+      - Step 2: Technology Evaluation
+      - Step 3: Core Architectural Decisions
+      - Step 4: Implementation Patterns
+      - Step 5: Project Structure
+      - Step 6: Architecture Validation
+      - Step 7: Finalize
+
+      **Total prompts:** 6 major prompts (Steps 1-6)
+
+      Each prompt is self-contained with your project's FRs, NFRs, and vision embedded.
+      Work through sequentially — each step builds on previous decisions.
+    </output>
+  </step>
+
+</workflow>

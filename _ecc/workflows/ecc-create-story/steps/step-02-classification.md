@@ -57,4 +57,23 @@ Classify story complexity for adaptive agent selection. Not every story needs pl
     {{#if classification == "TRIVIAL"}}
     Orchestrator will generate story directly — no subagents needed.
     {{/if}}</output>
+
+  <!-- SPIKE-FIRST GATE (A1 / L2-001): Infrastructure pattern detection -->
+  <action>Check story title and parent epic title for spike-keywords:
+    sync, real-time, migration, delta, distributed, integration, new service,
+    new provider, offline, cache invalidation, webhook</action>
+  <check if="spike-keyword found">
+    <action>Check sprint-status.yaml for a story in this epic with
+      'spike' or 'POC' in its title and status=complete.</action>
+    <check if="no completed spike story found">
+      <output>**⚠️  INFRASTRUCTURE PATTERN: {{spike_keyword}}**
+
+        A spike story must be completed before implementation stories can be created.
+        Create first: "Spike: validate [approach] feasibility"
+
+        BoletApp evidence: Epic 14c (delta sync) — 19 days, 78K lines deleted, zero shipped.
+        Cause: full implementation without validating the approach first.</output>
+      <ask>Create a spike story first? [Y] or acknowledge risk and continue? [N + reason]</ask>
+    </check>
+  </check>
 </step>

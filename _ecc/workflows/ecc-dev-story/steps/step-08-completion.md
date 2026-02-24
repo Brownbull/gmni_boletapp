@@ -33,6 +33,15 @@ Cost tracking, E2E/Firebase analysis, final story status update, and summary.
 </action>
 <action>Set {{has_firebase_backend_changes}} = true/false | Set {{firebase_deploy_targets}} = list</action>
 
+<!-- Git Staging Verification (MUST CHECK #1) -->
+<critical>CODE REVIEW PATTERN #1: Untracked files WILL NOT be committed — verify before commit</critical>
+<action>Run `git status --porcelain | grep "^??"` → check for untracked story/source files</action>
+<check if="any NEW files from this story show as '??' (untracked)">
+  <output>**GIT STAGING WARNING** — Untracked files will NOT be in the commit: {{untracked_files}}</output>
+  <action>Stage all created files: `git add {{created_files_list}}`</action>
+  <action>Confirm: `git status --porcelain | grep "^A "` — all story files show as staged</action>
+</check>
+
 <!-- Story Completion -->
 <action>Verify ALL tasks marked [x] complete</action>
 <action>Verify ALL functional acceptance criteria satisfied</action>

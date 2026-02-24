@@ -1,0 +1,77 @@
+<workflow id="ecc-backprop" name="Backprop: Behavioral Retrospective & Forward Propagation">
+  <critical>The workflow execution engine is governed by: {project-root}/_bmad/core/tasks/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} tailored to {user_skill_level}</critical>
+  <critical>BACKPROP WORKFLOW: Analyze → Classify → Propagate
+    Sequence: context → observe → review → classify → neurons → gaps → actions → implement → validate → deploy
+    This workflow produces: docs/01-observe/, docs/02-understand/, docs/03-act/, _template/ updates</critical>
+  <critical>SOLO SCALE: Calibrated for solo developer projects.
+    No bureaucratic overhead. Stop when signal-to-noise drops. Use DOCK POINTS liberally.</critical>
+  <critical>AUTO-PROCEED MODE: Skip all generic "Continue?" confirmations.
+    Only pause at Steps 2, 6, and 9 user gates. All other steps auto-proceed.</critical>
+
+  <!--
+  STEP PROCESSING RULES (read before executing any step):
+  1. Load ONE step file at a time — read entirely before executing
+  2. Execute steps in order — no skipping
+  3. HALT at every <ask> tag — wait for user response before continuing
+  4. Mark each step [x] in checklist BEFORE loading next step
+  5. After compaction: re-read THIS file to find current position
+  6. DOCK POINTS at steps 1, 4, 7 — safe session stop markers
+
+  AGENTS: explore(sonnet) | planner(opus) | orchestrator handles most steps
+
+  PROGRESS CHECKLIST — update [x] as each step completes:
+  - [ ] Step 0: Context Init         -> steps/step-00-context.md
+  - [ ] Step 1: Observe              -> steps/step-01-observe.md        [DOCK POINT]
+  - [ ] Step 2: Evidence Review      -> steps/step-02-evidence-review.md
+  - [ ] Step 3: Classify             -> steps/step-03-classify.md
+  - [ ] Step 4: Neurons              -> steps/step-04-neurons.md        [DOCK POINT]
+  - [ ] Step 5: Gaps                 -> steps/step-05-gaps.md
+  - [ ] Step 6: Actions              -> steps/step-06-actions.md
+  - [ ] Step 7: Implement            -> steps/step-07-implement.md      [DOCK POINT]
+  - [ ] Step 8: Validate             -> steps/step-08-validate.md
+  - [ ] Step 9: Deploy               -> steps/step-09-deploy.md
+  -->
+
+  <step n="0" goal="Load execution context and prior state" tag="context-init">
+    <action>Load, read completely, and execute steps/step-00-context.md</action>
+  </step>
+
+  <step n="1" goal="Run analysis scripts and populate docs/01-observe/" tag="observe">
+    <action>Load, read completely, and execute steps/step-01-observe.md</action>
+  </step>
+
+  <step n="2" goal="Human validates raw findings before classification" tag="evidence-review">
+    <action>Load, read completely, and execute steps/step-02-evidence-review.md</action>
+  </step>
+
+  <step n="3" goal="Classify findings against L2 taxonomy" tag="classify">
+    <action>Load, read completely, and execute steps/step-03-classify.md</action>
+  </step>
+
+  <step n="4" goal="Write L2 neuron files from confirmed findings" tag="neurons">
+    <action>Load, read completely, and execute steps/step-04-neurons.md</action>
+  </step>
+
+  <step n="5" goal="Map L2 neurons to FF-A, FF-B, FF-C prevention layers" tag="gaps">
+    <action>Load, read completely, and execute steps/step-05-gaps.md</action>
+  </step>
+
+  <step n="6" goal="Prioritize action items — human approval gate" tag="actions">
+    <action>Load, read completely, and execute steps/step-06-actions.md</action>
+  </step>
+
+  <step n="7" goal="Implement approved gates in _template/" tag="implement">
+    <action>Load, read completely, and execute steps/step-07-implement.md</action>
+  </step>
+
+  <step n="8" goal="Validate: smoke test + behavioral health snapshot" tag="validate">
+    <action>Load, read completely, and execute steps/step-08-validate.md</action>
+  </step>
+
+  <step n="9" goal="Deploy _template/ changes to target project(s)" tag="deploy">
+    <action>Load, read completely, and execute steps/step-09-deploy.md</action>
+  </step>
+
+</workflow>

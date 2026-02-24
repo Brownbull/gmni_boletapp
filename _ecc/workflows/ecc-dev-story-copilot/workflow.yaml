@@ -1,0 +1,76 @@
+# ECC Dev Story — Copilot Playbook Generator
+name: ecc-dev-story-copilot
+description: "Generates a step-by-step Copilot playbook from a story — same phases as ecc-dev-story but outputs prompts instead of spawning agents"
+author: "BMad"
+
+# This workflow does NOT use ECC agent orchestration.
+# Instead, it generates a markdown playbook document with:
+#   - Copy-paste prompts for each phase
+#   - Context blocks to paste into Copilot
+#   - Manual checkpoints and verification steps
+#   - Instructions for updating the playbook as you progress
+
+ecc_orchestration:
+  enabled: false
+  reason: "This workflow generates a document — it does not execute code"
+
+# Output configuration
+output:
+  format: "markdown"
+  file_pattern: "copilot-playbook-{{story_key}}.md"
+  output_dir: "{project-root}/_bmad-output/implementation-artifacts"
+
+# Project Knowledge — same sources as ecc-dev-story
+project_knowledge:
+  enabled: true
+  load_at_session_start: true
+  files:
+    required:
+      - "{project-root}/_ecc/knowledge/code-review-patterns.md"
+    optional:
+      - "{project-root}/docs/architecture/*.md"
+
+# Critical variables from config
+config_source: "{project-root}/_bmad/bmm/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+user_skill_level: "{config_source}:user_skill_level"
+document_output_language: "{config_source}:document_output_language"
+date: system-generated
+
+sprint_artifacts: "{project-root}/docs/sprint-artifacts"
+story_dir: "{sprint_artifacts}/stories"
+story_file: ""
+sprint_status: "{sprint_artifacts}/sprint-status.yaml"
+
+# Project knowledge paths
+project_knowledge_path: "{project-root}/_ecc/knowledge"
+project_architecture_path: "{project-root}/docs/architecture"
+
+# Workflow components
+installed_path: "{project-root}/_ecc/workflows/ecc-dev-story-copilot"
+instructions: "{installed_path}/instructions.xml"
+
+# Branch guard — same rules, but the playbook documents them as manual steps
+branch_guard:
+  enabled: true
+  protected_branches: ["main", "dev"]
+  branch_from: "dev"
+  naming_convention: "feature/{{story_key}}"
+
+# Mid-story sizing — thresholds included in playbook for manual checking
+mid_story_sizing:
+  thresholds:
+    large:
+      max_tasks: 4
+      max_subtasks: 15
+      max_files: 8
+    too_large:
+      trigger: ">4 tasks OR >15 subtasks OR >8 files"
+  growth_alerts:
+    file_growth: 3
+    subtask_growth: 5
+    loc_per_task: 500
+
+standalone: true
