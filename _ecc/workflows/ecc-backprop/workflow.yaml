@@ -1,0 +1,83 @@
+# ECC Backprop Workflow — Retrospective Analysis & Forward Propagation
+name: ecc-backprop
+description: "Analyze a project's git history for behavioral anti-patterns, classify against L2 taxonomy, and propagate improvements back into _template/"
+author: "BMad"
+
+# ECC Integration - Orchestrator Configuration
+ecc_orchestration:
+  enabled: true
+  orchestrator: "ECC Orchestrator"
+
+  agents:
+    explore:
+      subagent_type: "Explore"
+      model: "sonnet"
+      max_turns: 5
+      purpose: "Codebase exploration: scan commit history, find config files, map project structure"
+    planner:
+      subagent_type: "everything-claude-code:planner"
+      model: "opus"
+      max_turns: 5
+      purpose: "L2 neuron synthesis: transform evidence into structured behavioral pattern docs"
+
+  sequence: "orchestrator (observe+scripts) -> planner (classify+neurons) -> orchestrator (gaps+actions+implement+validate+deploy)"
+
+  parallel_phases:
+    classification:
+      agents: ["planner"]
+      condition: "step-03 only"
+      description: "Classify findings against L2 taxonomy — planner provides synthesis quality"
+
+# Project Knowledge Integration
+project_knowledge:
+  enabled: true
+  load_at_session_start: true
+  files:
+    required:
+      - "{backprop_root}/docs/02-understand/01-taxonomy/01-meta-patterns.md"
+      - "{backprop_root}/docs/02-understand/01-taxonomy/02-code-patterns.md"
+      - "{backprop_root}/docs/02-understand/01-taxonomy/03-methodology.md"
+    optional:
+      - "{backprop_root}/docs/02-understand/02-neurons/09-baseline.json"
+      - "{backprop_root}/docs/execution-plan.md"
+
+# DOCK POINTS — natural session stop markers
+dock_points:
+  step_01: "After running analysis scripts — raw data ready for review"
+  step_04: "After writing L2 neuron files — taxonomy complete"
+  step_07: "After each implemented gate — safe to stop between items"
+
+# User gates (approval points)
+user_gates:
+  step_02: "Evidence review — validate raw findings before classification"
+  step_06: "Action item prioritization — approve work queue before implementation"
+  step_09: "Deploy scope — confirm which target projects receive template"
+
+# Paths
+backprop_root: "{project-root}"
+target_project: ""  # set at runtime via step-00 prompt
+
+# Config source
+config_source: "{project-root}/_bmad/bmm/config.yaml"
+communication_language: "{config_source}:communication_language"
+user_skill_level: "{config_source}:user_skill_level"
+
+# Auto-proceed — skip generic confirmations
+auto_proceed:
+  enabled: true
+  pause_only_at:
+    - "step-02-evidence-review"
+    - "step-06-actions-approval"
+    - "step-09-deploy-scope"
+
+# Context budget
+context_budget:
+  orchestrator_reads_files: true
+  agent_reads_files: false
+  agent_compact_output: true
+
+# Workflow components
+installed_path: "{project-root}/_ecc/workflows/ecc-backprop"
+instructions: "{installed_path}/instructions.xml"
+
+standalone: true

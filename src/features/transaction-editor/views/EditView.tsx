@@ -1,9 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Trash2, Plus, Check, ChevronDown, ChevronUp, BookMarked, X, Camera, RefreshCw, ChevronLeft, Zap, Info } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, BookMarked, Camera, RefreshCw } from 'lucide-react';
 // Profile components removed - header simplified to match mockup
-import { formatCreditsDisplay } from '@/services/userCreditsService';
 import { CategoryBadge } from '@features/transaction-editor/components/CategoryBadge';
-import { CategoryCombobox } from '@features/transaction-editor/components/CategoryCombobox';
 import { ImageViewer } from '@/components/ImageViewer';
 import { CategoryLearningPrompt } from '@/components/CategoryLearningPrompt';
 import { SubcategoryLearningPrompt } from '@/components/SubcategoryLearningPrompt';
@@ -12,73 +10,27 @@ import { LocationSelect } from '@/components/LocationSelect';
 import { DateTimeTag } from '@features/transaction-editor/components/DateTimeTag';
 import { CurrencyTag } from '@features/transaction-editor/components/CurrencyTag';
 import { DEFAULT_CURRENCY } from '@/utils/currency';
-import { StoreTypeSelector } from '@features/transaction-editor/components/StoreTypeSelector';
-import { AdvancedScanOptions } from '@features/transaction-editor/components/AdvancedScanOptions';
-import { celebrateSuccess } from '@/utils/confetti';
-import { StoreCategory, CategorySource, ItemCategory, MerchantSource } from '@/types/transaction';
+import { StoreCategory } from '@/types/transaction';
 import { ReceiptType } from '@/services/gemini';
 import { SupportedCurrency } from '@/services/userPreferencesService';
 // Story 9.10: Pending scan types for visual indicator
 import { PendingScan, UserCredits } from '@/types/scan';
 // Story 9.12: Language type for translations
 import type { Language } from '@/utils/translations';
-// Story 14.22: Category translations for item groups
-import { translateItemCategoryGroup, getItemCategoryGroupEmoji } from '@/utils/categoryTranslations';
 // Story 14.22: Category colors and emoji for thumbnail badge
-import { getCategoryPillColors, getItemCategoryGroup, getItemGroupColors } from '@/config/categoryColors';
+import { getCategoryPillColors } from '@/config/categoryColors';
 import { getCategoryEmoji } from '@/utils/categoryEmoji';
-// Story 14.22: Normalize item categories for consistent group mapping
-import { normalizeItemCategory } from '@/utils/categoryNormalizer';
-// Story 14.38: Item view toggle
-import { ItemViewToggle, type ItemViewMode } from '@/components/items/ItemViewToggle';
-// Story 11.3: Animated item reveal
-import { useStaggeredReveal } from '@/hooks/useStaggeredReveal';
-import { AnimatedItem } from '@/components/AnimatedItem';
 // Story 14.15: ScanStatusIndicator removed - replaced by ScanOverlay in App.tsx
-
-/**
- * Local TransactionItem interface for EditView.
- * Story 9.2: Updated to use ItemCategory type for proper typing.
- */
-interface TransactionItem {
-    name: string;
-    price: number;
-    /** Story 9.2: Item category using ItemCategory type */
-    category?: ItemCategory | string;
-    subcategory?: string;
-    categorySource?: CategorySource;
-    /** Story 9.15: Source of subcategory assignment */
-    subcategorySource?: CategorySource;
-    /** Story 14.15b: Item quantity (default 1) */
-    qty?: number;
-}
-
-interface Transaction {
-    id?: string;
-    merchant: string;
-    alias?: string;
-    date: string;
-    total: number;
-    category: string;
-    items: TransactionItem[];
-    imageUrls?: string[];
-    thumbnailUrl?: string;
-    // Story 9.3: New v2.6.0 fields for display
-    /** Purchase time in HH:mm format (e.g., "15:01") */
-    time?: string;
-    /** Country name from receipt */
-    country?: string;
-    /** City name from receipt */
-    city?: string;
-    /** ISO 4217 currency code (e.g., "GBP") */
-    currency?: string;
-    /** Document type: "receipt" | "invoice" | "ticket" */
-    receiptType?: string;
-    /** Version of prompt used for AI extraction */
-    promptVersion?: string;
-    /** Source of the merchant name (scan, learned, user) */
-    merchantSource?: MerchantSource;
-}
+// Story 15b-2a: Types and pure helpers extracted to editViewHelpers.ts
+import { Transaction } from './editViewHelpers';
+// Story 15b-2a: Learning flow hook
+import { useEditViewLearningFlow } from './useEditViewLearningFlow';
+// Story 15b-2a: Sub-components
+import { EditViewHeader } from './EditViewHeader';
+import { EditViewScanSection } from './EditViewScanSection';
+import { EditViewDialogs } from './EditViewDialogs';
+// Story TD-15b-2a: Items section extracted to EditViewItemsSection
+import { EditViewItemsSection } from './EditViewItemsSection';
 
 interface EditViewProps {
     currentTransaction: Transaction;
@@ -219,28 +171,11 @@ export const EditView: React.FC<EditViewProps> = ({
     const titleInputRef = useRef<HTMLInputElement>(null);
     // Story 14.22: Category dropdown state
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-    // Story 14.22: Collapsed item groups state (all expanded by default)
-    const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
-    // Story 14.38: Item view mode toggle (grouped vs original order)
-    const [itemViewMode, setItemViewMode] = useState<ItemViewMode>('grouped');
-
-    // Story 6.3: Category learning prompt state
-    const [showLearningPrompt, setShowLearningPrompt] = useState(false);
-    const [itemsToLearn, setItemsToLearn] = useState<Array<{ itemName: string; newGroup: string }>>([]);
-
-    // Story 9.15: Subcategory learning prompt state
-    const [showSubcategoryLearningPrompt, setShowSubcategoryLearningPrompt] = useState(false);
-    const [subcategoriesToLearn, setSubcategoriesToLearn] = useState<Array<{ itemName: string; newSubcategory: string }>>([]);
-
-    // Story 9.16: Loading state for learning prompts to prevent duplicate saves (AC #1, #2)
-    const [savingMappings, setSavingMappings] = useState(false);
 
     // Story 14.15: Scan state management moved to App.tsx with ScanOverlay
     // The old ScanStatusIndicator and useScanState hook in EditView have been removed.
     // Scan progress, errors, and completion are now handled by the ScanOverlay component.
 
-    // Story 9.6: Merchant learning prompt state
-    const [showMerchantLearningPrompt, setShowMerchantLearningPrompt] = useState(false);
     // Track original alias on mount for detecting changes
     const originalAliasRef = useRef<string | null>(null);
 
@@ -252,6 +187,17 @@ export const EditView: React.FC<EditViewProps> = ({
     }>({
         items: [],
         capturedForTransactionKey: null,
+    });
+
+    // Story 15b-2a: Learning flow hook encapsulates the 3-stage learning chain
+    const {
+        showLearningPrompt, itemsToLearn, handleLearnConfirm, handleLearnDismiss,
+        showSubcategoryLearningPrompt, subcategoriesToLearn, handleSubcategoryLearnConfirm, handleSubcategoryLearnDismiss,
+        showMerchantLearningPrompt, handleLearnMerchantConfirm, handleLearnMerchantDismiss,
+        savingMappings, handleSaveWithLearning,
+    } = useEditViewLearningFlow({
+        onSave, onSaveMapping, onSaveMerchantMapping, onSaveSubcategoryMapping,
+        onShowToast, t, currentTransaction, originalItemGroupsRef, originalAliasRef,
     });
 
     // Capture original item groups ONCE when transaction data first becomes available
@@ -266,7 +212,7 @@ export const EditView: React.FC<EditViewProps> = ({
             originalItemGroupsRef.current = {
                 items: currentTransaction.items.map(item => ({
                     name: item.name,
-                    category: item.category || '',
+                    category: (item.category as string) || '',
                     subcategory: item.subcategory || ''
                 })),
                 capturedForTransactionKey: transactionKey,
@@ -340,65 +286,6 @@ export const EditView: React.FC<EditViewProps> = ({
     // Story 9.10 AC#6, #7: Check if user has credits for scanning
     const hasCredits = (userCredits?.remaining ?? 0) > 0;
 
-    // Story 11.3: Staggered reveal for items (AC #1, #2, #5)
-    // Track if animation has already played to prevent re-animation on edits
-    const animationPlayedRef = useRef(false);
-    const shouldAnimate = animateItems && !animationPlayedRef.current;
-    const { visibleItems: animatedItems, isComplete: animationComplete } = useStaggeredReveal(
-        shouldAnimate ? currentTransaction.items : [],
-        {
-            staggerMs: 100,      // AC #2: 100ms stagger between items
-            initialDelayMs: 300, // AC #4: Header appears first
-            maxDurationMs: 2500, // AC #5: Complete within ~2.5 seconds
-        }
-    );
-
-    // Mark animation as played once complete
-    useEffect(() => {
-        if (animationComplete && shouldAnimate) {
-            animationPlayedRef.current = true;
-        }
-    }, [animationComplete, shouldAnimate]);
-
-    // Story 14.22: Group items by item category GROUP (not individual category)
-    // Maps item.category -> normalized English -> item group (e.g., "Frutas y Verduras" -> "Produce" -> "food-fresh")
-    const itemsByGroup = useMemo(() => {
-        const groups: Record<string, Array<{ item: TransactionItem; originalIndex: number }>> = {};
-
-        currentTransaction.items.forEach((item, index) => {
-            // Normalize the item category to English, then get its group
-            const normalizedCategory = normalizeItemCategory(item.category || 'Other');
-            const groupKey = getItemCategoryGroup(normalizedCategory);
-
-            if (!groups[groupKey]) {
-                groups[groupKey] = [];
-            }
-            groups[groupKey].push({ item, originalIndex: index });
-        });
-
-        // Sort groups alphabetically, and sort items within each group by price descending
-        return Object.entries(groups)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([groupKey, items]) => ({
-                groupKey, // e.g., "food-fresh", "food-packaged", "other-item"
-                items: items.sort((a, b) => b.item.price - a.item.price), // Sort by price descending
-                total: items.reduce((sum, { item }) => sum + item.price, 0),
-            }));
-    }, [currentTransaction.items]);
-
-    // Story 14.22: Toggle group collapse state
-    const toggleGroupCollapse = (category: string) => {
-        setCollapsedGroups(prev => {
-            const next = new Set(prev);
-            if (next.has(category)) {
-                next.delete(category);
-            } else {
-                next.add(category);
-            }
-            return next;
-        });
-    };
-
     // Input styling using CSS variables
     const inputStyle: React.CSSProperties = {
         backgroundColor: isDark ? '#1e293b' : '#f8fafc',
@@ -407,243 +294,6 @@ export const EditView: React.FC<EditViewProps> = ({
     };
 
     const hasImages = currentTransaction.imageUrls && currentTransaction.imageUrls.length > 0;
-
-    const handleAddItem = () => {
-        onUpdateTransaction({
-            ...currentTransaction,
-            items: [...currentTransaction.items, { name: '', price: 0, category: 'Other', subcategory: '' }]
-        });
-        onSetEditingItemIndex(currentTransaction.items.length);
-    };
-
-    const handleUpdateItem = (index: number, field: string, value: any) => {
-        const newItems = [...currentTransaction.items];
-        newItems[index] = { ...newItems[index], [field]: field === 'price' ? parseStrictNumber(value) : value };
-        onUpdateTransaction({ ...currentTransaction, items: newItems });
-    };
-
-    const handleDeleteItem = (index: number) => {
-        const newItems = currentTransaction.items.filter((_, x) => x !== index);
-        onUpdateTransaction({ ...currentTransaction, items: newItems });
-        onSetEditingItemIndex(null);
-    };
-
-    // Story 6.3: Find ALL items whose group (category) has changed
-    // Returns array of { itemName, newGroup } for all changed items
-    const findAllChangedItemGroups = (): Array<{ itemName: string; newGroup: string }> => {
-        const originalItems = originalItemGroupsRef.current.items;
-        const currentItems = currentTransaction.items;
-        const changedItems: Array<{ itemName: string; newGroup: string }> = [];
-
-        // Check each item to see if its group changed
-        for (let i = 0; i < currentItems.length; i++) {
-            const currentItem = currentItems[i];
-            const originalItem = originalItems[i];
-
-            // Skip if no original item to compare (new item added)
-            if (!originalItem) continue;
-
-            // Skip if item has no name
-            if (!currentItem.name) continue;
-
-            // Check if group changed (and new group is not empty)
-            const currentGroup = currentItem.category || '';
-            const originalGroup = originalItem.category || '';
-
-            if (currentGroup && currentGroup !== originalGroup) {
-                changedItems.push({
-                    itemName: currentItem.name,
-                    newGroup: currentGroup
-                });
-            }
-        }
-
-        return changedItems;
-    };
-
-    // Story 9.15: Find ALL items whose subcategory has changed
-    // Returns array of { itemName, newSubcategory } for all changed items
-    const findAllChangedSubcategories = (): Array<{ itemName: string; newSubcategory: string }> => {
-        const originalItems = originalItemGroupsRef.current.items;
-        const currentItems = currentTransaction.items;
-        const changedItems: Array<{ itemName: string; newSubcategory: string }> = [];
-
-        // Check each item to see if its subcategory changed
-        for (let i = 0; i < currentItems.length; i++) {
-            const currentItem = currentItems[i];
-            const originalItem = originalItems[i];
-
-            // Skip if no original item to compare (new item added)
-            if (!originalItem) continue;
-
-            // Skip if item has no name
-            if (!currentItem.name) continue;
-
-            // Check if subcategory changed (and new subcategory is not empty)
-            const currentSubcategory = currentItem.subcategory || '';
-            const originalSubcategory = originalItem.subcategory || '';
-
-            if (currentSubcategory && currentSubcategory !== originalSubcategory) {
-                changedItems.push({
-                    itemName: currentItem.name,
-                    newSubcategory: currentSubcategory
-                });
-            }
-        }
-
-        return changedItems;
-    };
-
-    // Story 9.6: Check if merchant alias was changed
-    const hasMerchantAliasChanged = (): boolean => {
-        // We need a merchant name (from scan) and an alias change to trigger learning
-        if (!currentTransaction.merchant) return false;
-        const currentAlias = currentTransaction.alias || '';
-        const originalAlias = originalAliasRef.current || '';
-        // Only show prompt if alias changed AND is not empty
-        return currentAlias !== originalAlias && currentAlias.length > 0;
-    };
-
-    // Story 9.6: Proceed to merchant learning check or save directly
-    const proceedToMerchantLearningOrSave = async () => {
-        // Check if merchant alias was changed
-        if (hasMerchantAliasChanged() && onSaveMerchantMapping) {
-            setShowMerchantLearningPrompt(true);
-        } else {
-            // No merchant changes, save directly
-            await onSave();
-        }
-    };
-
-    // Story 9.15: Proceed to subcategory learning check, then merchant learning, then save
-    const proceedToSubcategoryLearningOrNext = async () => {
-        const changedSubcategories = findAllChangedSubcategories();
-        if (changedSubcategories.length > 0 && onSaveSubcategoryMapping) {
-            setSubcategoriesToLearn(changedSubcategories);
-            setShowSubcategoryLearningPrompt(true);
-        } else {
-            // No subcategory changes, proceed to merchant learning check
-            await proceedToMerchantLearningOrSave();
-        }
-    };
-
-    // Story 6.3 & 9.15: Handle save with category and subcategory learning prompts
-    // Shows prompts BEFORE saving if changes detected, because onSave navigates away
-    const handleSaveWithLearning = async () => {
-        // Check if any item's group was changed
-        const changedItems = findAllChangedItemGroups();
-
-        // Only show category prompt if:
-        // 1. At least one item's group was changed
-        // 2. onSaveMapping function is available
-        if (changedItems.length > 0 && onSaveMapping) {
-            // Show category prompt first - subcategory prompt will follow after confirmation
-            setItemsToLearn(changedItems);
-            setShowLearningPrompt(true);
-        } else {
-            // No category changes, proceed to subcategory learning check
-            await proceedToSubcategoryLearningOrNext();
-        }
-    };
-
-    // Story 6.3: Handle learning prompt confirmation
-    // Story 9.16: Added loading state to prevent duplicate saves (AC #1, #2)
-    const handleLearnConfirm = async () => {
-        if (onSaveMapping && itemsToLearn.length > 0) {
-            setSavingMappings(true);
-            try {
-                // Save mappings for ALL changed items
-                for (const item of itemsToLearn) {
-                    await onSaveMapping(item.itemName, item.newGroup as StoreCategory, 'user');
-                }
-                // AC#5: Show success toast
-                if (onShowToast) {
-                    onShowToast(t('learnCategorySuccess'));
-                }
-            } catch (error) {
-                console.error('Failed to save category mappings:', error);
-            } finally {
-                setSavingMappings(false);
-            }
-        }
-        setShowLearningPrompt(false);
-        setItemsToLearn([]);
-        // After category learning, chain to subcategory learning check
-        await proceedToSubcategoryLearningOrNext();
-    };
-
-    // Story 6.3: Handle learning prompt dismiss
-    const handleLearnDismiss = async () => {
-        setShowLearningPrompt(false);
-        setItemsToLearn([]);
-        // After category dialog dismissed, chain to subcategory learning check
-        await proceedToSubcategoryLearningOrNext();
-    };
-
-    // Story 9.15: Handle subcategory learning prompt confirmation
-    // Story 9.16: Added loading state to prevent duplicate saves (AC #1, #2)
-    const handleSubcategoryLearnConfirm = async () => {
-        if (onSaveSubcategoryMapping && subcategoriesToLearn.length > 0) {
-            setSavingMappings(true);
-            try {
-                // Save subcategory mappings for ALL changed items
-                for (const item of subcategoriesToLearn) {
-                    await onSaveSubcategoryMapping(item.itemName, item.newSubcategory, 'user');
-                }
-                // Show success toast
-                if (onShowToast) {
-                    onShowToast(t('learnSubcategorySuccess'));
-                }
-            } catch (error) {
-                console.error('Failed to save subcategory mappings:', error);
-            } finally {
-                setSavingMappings(false);
-            }
-        }
-        setShowSubcategoryLearningPrompt(false);
-        setSubcategoriesToLearn([]);
-        // After subcategory learning, proceed to merchant learning check
-        await proceedToMerchantLearningOrSave();
-    };
-
-    // Story 9.15: Handle subcategory learning prompt dismiss
-    const handleSubcategoryLearnDismiss = async () => {
-        setShowSubcategoryLearningPrompt(false);
-        setSubcategoriesToLearn([]);
-        // After subcategory dialog dismissed, proceed to merchant learning check
-        await proceedToMerchantLearningOrSave();
-    };
-
-    // Story 9.6: Handle merchant learning prompt confirmation (AC#3)
-    const handleLearnMerchantConfirm = async () => {
-        if (onSaveMerchantMapping && currentTransaction.merchant) {
-            try {
-                // Save merchant mapping: original merchant → alias
-                await onSaveMerchantMapping(
-                    currentTransaction.merchant, // original merchant name from scan
-                    currentTransaction.alias || '' // user's correction (alias)
-                );
-                // Celebrate with confetti! 🎉
-                celebrateSuccess();
-                // Show success toast
-                if (onShowToast) {
-                    onShowToast(t('learnMerchantSuccess'));
-                }
-            } catch (error) {
-                console.error('Failed to save merchant mapping:', error);
-            }
-        }
-        setShowMerchantLearningPrompt(false);
-        // Now save the transaction
-        await onSave();
-    };
-
-    // Story 9.6: Handle merchant learning prompt dismiss (AC#4)
-    const handleLearnMerchantDismiss = async () => {
-        setShowMerchantLearningPrompt(false);
-        // Still save the transaction even if user skipped learning
-        await onSave();
-    };
 
     // Story 14.15b: Handle re-scan button click - show confirmation first
     const handleRescanClick = () => {
@@ -669,110 +319,19 @@ export const EditView: React.FC<EditViewProps> = ({
                 paddingBottom: 'calc(6rem + var(--safe-bottom, 0px))',
             }}
         >
-            {/* Story 14.15b: Header matching ScanResultView exactly */}
-            <div
-                className="sticky px-4"
-                style={{
-                    top: 0,
-                    zIndex: 50,
-                    backgroundColor: 'var(--bg)',
-                }}
-            >
-                <div
-                    className="flex items-center justify-between"
-                    style={{
-                        height: '72px',
-                        paddingTop: 'max(env(safe-area-inset-top, 0px), 8px)',
-                    }}
-                >
-                {/* Left side: Back button + Title */}
-                <div className="flex items-center gap-0">
-                    <button
-                        onClick={onBack}
-                        className="min-w-10 min-h-10 flex items-center justify-center -ml-1"
-                        aria-label={t('back')}
-                        style={{ color: 'var(--text-primary)' }}
-                    >
-                        <ChevronLeft size={28} strokeWidth={2.5} />
-                    </button>
-                    <h1
-                        className="font-semibold"
-                        style={{
-                            fontFamily: 'var(--font-family)',
-                            color: 'var(--text-primary)',
-                            fontWeight: 700,
-                            fontSize: '20px',
-                        }}
-                    >
-                        {t('myPurchase')}
-                    </h1>
-                    {/* Batch context */}
-                    {batchContext && (
-                        <span className="text-xs ml-2" style={{ color: 'var(--text-secondary)' }}>
-                            ({batchContext.index}/{batchContext.total})
-                        </span>
-                    )}
-                </div>
-
-                {/* Right side: Credit badges + Close button */}
-                <div className="flex items-center gap-2">
-                    {/* Credit badges - tappable to show info modal */}
-                    {(superCredits !== undefined || scanCredits !== undefined) && (
-                        <button
-                            onClick={onCreditInfoClick}
-                            className="flex items-center gap-1.5 px-2 py-1 rounded-full transition-all active:scale-95"
-                            style={{
-                                backgroundColor: 'var(--bg-secondary)',
-                                border: '1px solid var(--border-light)',
-                            }}
-                            aria-label={t('creditInfo')}
-                        >
-                            {/* Super credits (gold) */}
-                            {superCredits !== undefined && (
-                                <div
-                                    className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold"
-                                    style={{
-                                        backgroundColor: '#fef3c7',
-                                        color: '#92400e',
-                                    }}
-                                >
-                                    <Zap size={10} strokeWidth={2.5} />
-                                    <span>{formatCreditsDisplay(superCredits)}</span>
-                                </div>
-                            )}
-                            {/* Normal credits (theme color) */}
-                            {scanCredits !== undefined && (
-                                <div
-                                    className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold"
-                                    style={{
-                                        backgroundColor: 'var(--primary-light)',
-                                        color: 'var(--primary)',
-                                    }}
-                                >
-                                    <Camera size={10} strokeWidth={2.5} />
-                                    <span>{formatCreditsDisplay(scanCredits)}</span>
-                                </div>
-                            )}
-                            {/* Info icon */}
-                            <Info size={12} style={{ color: 'var(--text-tertiary)' }} />
-                        </button>
-                    )}
-                    {/* Delete/Close button - Trash icon for existing transactions, X for new */}
-                    <button
-                        onClick={currentTransaction.id ? () => setShowDeleteConfirm(true) : (onCancel ? handleCancelClick : onBack)}
-                        className="min-w-10 min-h-10 flex items-center justify-center"
-                        aria-label={currentTransaction.id ? t('delete') : t('cancel')}
-                        style={{ color: currentTransaction.id ? 'var(--negative-primary)' : 'var(--text-primary)' }}
-                    >
-                        {currentTransaction.id ? (
-                            <Trash2 size={22} strokeWidth={2} />
-                        ) : (
-                            <X size={24} strokeWidth={2} />
-                        )}
-                    </button>
-                </div>
-                </div>
-            </div>
+            {/* Story 15b-2a: Header extracted to EditViewHeader */}
+            <EditViewHeader
+                onBack={onBack}
+                t={t}
+                batchContext={batchContext}
+                superCredits={superCredits}
+                scanCredits={scanCredits}
+                onCreditInfoClick={onCreditInfoClick}
+                currentTransaction={currentTransaction}
+                handleCancelClick={handleCancelClick}
+                onCancel={onCancel}
+                setShowDeleteConfirm={setShowDeleteConfirm}
+            />
 
             {/* Main content with edge spacing - reduced padding for more width */}
             <div className="px-2 pb-4">
@@ -794,115 +353,24 @@ export const EditView: React.FC<EditViewProps> = ({
             )}
 
             {/* Story 9.9: Scan Section - Only for new transactions without photos */}
+            {/* Story 15b-2a: Scan section extracted to EditViewScanSection */}
             {!currentTransaction.id && onAddPhoto && (
-                <div className="mb-4">
-                    {/* Show "Scan Receipt" button only when no photos exist */}
-                    {!hasImages && (!scanImages || scanImages.length === 0) && (
-                        <button
-                            onClick={onAddPhoto}
-                            className="w-full p-6 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-colors"
-                            style={{
-                                borderColor: 'var(--primary)',
-                                backgroundColor: isDark ? 'rgba(96, 165, 250, 0.05)' : 'var(--primary-light)',
-                                color: 'var(--primary)',
-                            }}
-                            aria-label={t('scanReceipt')}
-                        >
-                            <Camera size={32} strokeWidth={1.5} />
-                            <span className="font-bold">{t('scanReceipt')}</span>
-                            <span className="text-sm opacity-70" style={{ color: 'var(--secondary)' }}>
-                                {t('tapToScan')}
-                            </span>
-                        </button>
-                    )}
-
-                    {/* Show scan images grid when photos have been added */}
-                    {scanImages && scanImages.length > 0 && (
-                        <div className="space-y-3">
-                            <div className="grid grid-cols-2 gap-2">
-                                {scanImages.map((img, i) => (
-                                    <div key={i} className="relative">
-                                        <img
-                                            src={img}
-                                            alt={`Scan ${i + 1}`}
-                                            className="w-full h-24 object-cover rounded-lg"
-                                        />
-                                        {onRemovePhoto && (
-                                            <button
-                                                onClick={() => onRemovePhoto(i)}
-                                                className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center bg-red-500 text-white"
-                                                aria-label={`Remove photo ${i + 1}`}
-                                            >
-                                                <X size={14} />
-                                            </button>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Add Photo button */}
-                            <button
-                                onClick={onAddPhoto}
-                                className="w-full py-2 border-2 rounded-lg font-medium flex items-center justify-center gap-2"
-                                style={{
-                                    borderColor: 'var(--primary)',
-                                    color: 'var(--primary)',
-                                    backgroundColor: 'transparent',
-                                }}
-                            >
-                                <Plus size={18} />
-                                {t('addPhoto')}
-                            </button>
-
-                            {/* Story 9.8 AC#1: Store Type Quick-Select Labels */}
-                            {onSetScanStoreType && (
-                                <StoreTypeSelector
-                                    selected={scanStoreType || 'auto'}
-                                    onSelect={onSetScanStoreType}
-                                    t={t}
-                                    theme={theme as 'light' | 'dark'}
-                                />
-                            )}
-
-                            {/* Story 9.8 AC#2: Advanced Options with Currency Dropdown */}
-                            {onSetScanCurrency && scanCurrency && (
-                                <AdvancedScanOptions
-                                    currency={scanCurrency}
-                                    onCurrencyChange={onSetScanCurrency}
-                                    t={t}
-                                    theme={theme as 'light' | 'dark'}
-                                />
-                            )}
-
-                            {/* Process Scan button - Story 9.10 AC#7: Disabled when no credits */}
-                            {onProcessScan && !isAnalyzing && (
-                                <button
-                                    onClick={onProcessScan}
-                                    disabled={!hasCredits}
-                                    className="w-full py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-opacity"
-                                    style={{
-                                        backgroundColor: hasCredits ? 'var(--success)' : 'var(--secondary)',
-                                        opacity: !hasCredits ? 0.7 : 1,
-                                        cursor: hasCredits ? 'pointer' : 'not-allowed',
-                                    }}
-                                    title={!hasCredits ? t('noCreditsMessage') : undefined}
-                                >
-                                    {!hasCredits ? (
-                                        <>
-                                            <Camera size={20} />
-                                            {t('noCreditsButton')}
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Camera size={20} />
-                                            {t('processScan')}
-                                        </>
-                                    )}
-                                </button>
-                            )}
-                        </div>
-                    )}
-                </div>
+                <EditViewScanSection
+                    currentTransaction={currentTransaction}
+                    onAddPhoto={onAddPhoto}
+                    scanImages={scanImages}
+                    onRemovePhoto={onRemovePhoto}
+                    scanStoreType={scanStoreType}
+                    onSetScanStoreType={onSetScanStoreType}
+                    scanCurrency={scanCurrency}
+                    onSetScanCurrency={onSetScanCurrency}
+                    onProcessScan={onProcessScan}
+                    isAnalyzing={isAnalyzing}
+                    hasCredits={hasCredits}
+                    isDark={isDark}
+                    t={t}
+                    theme={theme}
+                />
             )}
 
             {/* ImageViewer Modal */}
@@ -1127,377 +595,22 @@ export const EditView: React.FC<EditViewProps> = ({
                     </button>
                 )}
 
-                {/* ITEMS section - Story 14.38: Toggle between grouped and original order */}
-                <div className="mb-4">
-                    {/* Story 14.38: Full-width item view toggle (replaces "ÍTEMS" subtitle) */}
-                    {currentTransaction.items && currentTransaction.items.length > 0 && (
-                        <div className="mb-3">
-                            <ItemViewToggle
-                                activeView={itemViewMode}
-                                onViewChange={setItemViewMode}
-                                t={t}
-                            />
-                        </div>
-                    )}
-
-                    {/* Items grouped by item category GROUP (e.g., "food-fresh", "food-packaged") */}
-                    <div className="space-y-3">
-                        {/* Grouped view */}
-                        {itemViewMode === 'grouped' && itemsByGroup.map(({ groupKey, items: groupItems, total: groupTotal }) => {
-                            const isCollapsed = collapsedGroups.has(groupKey);
-                            // Use item group colors (not individual category colors)
-                            const groupColors = getItemGroupColors(groupKey as any, 'normal', isDark ? 'dark' : 'light');
-                            const groupEmoji = getItemCategoryGroupEmoji(groupKey);
-                            // Translate group name to current language (e.g., "food-fresh" -> "Alimentos Frescos")
-                            const translatedGroup = translateItemCategoryGroup(groupKey, language);
-
-                            return (
-                                <div
-                                    key={groupKey}
-                                    className="rounded-xl overflow-hidden"
-                                    style={{
-                                        backgroundColor: 'var(--bg-secondary)',
-                                        border: '1px solid var(--border-light)',
-                                    }}
-                                >
-                                    {/* Group header - clickable to toggle */}
-                                    <button
-                                        onClick={() => toggleGroupCollapse(groupKey)}
-                                        className="w-full flex items-center justify-between px-3 py-2.5 transition-colors"
-                                        style={{ backgroundColor: groupColors.bg }}
-                                        aria-expanded={!isCollapsed}
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm">{groupEmoji}</span>
-                                            <span
-                                                className="text-sm font-semibold"
-                                                style={{ color: groupColors.fg }}
-                                            >
-                                                {translatedGroup}
-                                            </span>
-                                            <span
-                                                className="text-xs px-1.5 py-0.5 rounded-full font-medium"
-                                                style={{
-                                                    backgroundColor: 'rgba(0,0,0,0.1)',
-                                                    color: groupColors.fg,
-                                                }}
-                                            >
-                                                {groupItems.length}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span
-                                                className="text-sm font-bold"
-                                                style={{ color: groupColors.fg }}
-                                            >
-                                                {formatCurrency(groupTotal, displayCurrency)}
-                                            </span>
-                                            {isCollapsed ? (
-                                                <ChevronDown size={16} style={{ color: groupColors.fg }} />
-                                            ) : (
-                                                <ChevronUp size={16} style={{ color: groupColors.fg }} />
-                                            )}
-                                        </div>
-                                    </button>
-
-                                    {/* Items in this category */}
-                                    {!isCollapsed && (
-                                        <div className="p-2 space-y-1.5">
-                                            {groupItems.map(({ item, originalIndex: i }) => {
-                                                const isVisible = !shouldAnimate || i < animatedItems.length;
-                                                const animationDelay = shouldAnimate ? i * 100 : 0;
-                                                const ItemContainer = shouldAnimate && !animationPlayedRef.current ? AnimatedItem : React.Fragment;
-                                                const containerProps = shouldAnimate && !animationPlayedRef.current
-                                                    ? { delay: animationDelay, index: i, testId: `edit-view-item-${i}` }
-                                                    : {};
-
-                                                if (!isVisible) return null;
-
-                                                return (
-                                                    <ItemContainer key={i} {...containerProps}>
-                                                        {editingItemIndex === i ? (
-                                                            /* Editing state */
-                                                            <div
-                                                                className="p-3 rounded-lg space-y-2"
-                                                                style={{ backgroundColor: 'var(--bg-tertiary)' }}
-                                                            >
-                                                                <input
-                                                                    className="w-full p-2 border rounded-lg text-sm"
-                                                                    style={inputStyle}
-                                                                    value={item.name}
-                                                                    onChange={e => handleUpdateItem(i, 'name', e.target.value)}
-                                                                    placeholder={t('itemName')}
-                                                                    autoFocus
-                                                                />
-                                                                <input
-                                                                    type="number"
-                                                                    className="w-full p-2 border rounded-lg text-sm"
-                                                                    style={inputStyle}
-                                                                    value={item.price}
-                                                                    onChange={e => handleUpdateItem(i, 'price', e.target.value)}
-                                                                    placeholder={t('price')}
-                                                                />
-                                                                <CategoryCombobox
-                                                                    value={item.category || ''}
-                                                                    onChange={(value) => handleUpdateItem(i, 'category', value)}
-                                                                    language={language}
-                                                                    theme={theme as 'light' | 'dark'}
-                                                                    placeholder={t('itemCat')}
-                                                                    ariaLabel={t('itemCat')}
-                                                                />
-                                                                <input
-                                                                    className="w-full p-2 border rounded-lg text-sm"
-                                                                    style={inputStyle}
-                                                                    value={item.subcategory || ''}
-                                                                    onChange={e => handleUpdateItem(i, 'subcategory', e.target.value)}
-                                                                    placeholder={t('itemSubcat')}
-                                                                />
-                                                                <div className="flex justify-end gap-2 pt-1">
-                                                                    <button
-                                                                        onClick={() => handleDeleteItem(i)}
-                                                                        className="min-w-10 min-h-10 p-2 rounded-lg flex items-center justify-center"
-                                                                        style={{ color: 'var(--error)', backgroundColor: isDark ? 'rgba(248, 113, 113, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}
-                                                                        aria-label={t('deleteItem')}
-                                                                    >
-                                                                        <Trash2 size={18} strokeWidth={2} />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => onSetEditingItemIndex(null)}
-                                                                        className="min-w-10 min-h-10 p-2 rounded-lg flex items-center justify-center"
-                                                                        style={{ color: 'var(--success)', backgroundColor: isDark ? 'rgba(34, 197, 94, 0.1)' : 'rgba(34, 197, 94, 0.1)' }}
-                                                                        aria-label={t('confirmItem')}
-                                                                    >
-                                                                        <Check size={18} strokeWidth={2} />
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            /* Display state - smaller font than group headers */
-                                                            <div
-                                                                onClick={() => onSetEditingItemIndex(i)}
-                                                                className="px-2.5 py-2 rounded-lg cursor-pointer transition-colors"
-                                                                style={{ backgroundColor: 'var(--bg-tertiary)' }}
-                                                            >
-                                                                {/* Row 1: Name and Price */}
-                                                                <div className="flex justify-between items-start gap-2 mb-1">
-                                                                    <div className="flex items-center gap-1 flex-1 min-w-0">
-                                                                        <span
-                                                                            className="text-xs font-medium truncate"
-                                                                            style={{ color: 'var(--text-primary)' }}
-                                                                            title={item.name}
-                                                                        >
-                                                                            {item.name}
-                                                                        </span>
-                                                                        {/* Edit pencil icon */}
-                                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="2" style={{ opacity: 0.6, flexShrink: 0 }}>
-                                                                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-                                                                        </svg>
-                                                                    </div>
-                                                                    <span
-                                                                        className="text-xs font-semibold flex-shrink-0"
-                                                                        style={{ color: 'var(--text-primary)' }}
-                                                                    >
-                                                                        {formatCurrency(item.price, displayCurrency)}
-                                                                    </span>
-                                                                </div>
-                                                                {/* Row 2: Category/Subcategory on left, Quantity on right */}
-                                                                <div className="flex justify-between items-center">
-                                                                    {/* Left: Category and Subcategory badges */}
-                                                                    <div className="flex flex-wrap items-center gap-1">
-                                                                        <CategoryBadge
-                                                                            category={item.category || 'Other'}
-                                                                            lang={language}
-                                                                            mini
-                                                                        />
-                                                                        {item.subcategory && (
-                                                                            <span
-                                                                                className="text-xs px-1.5 py-0.5 rounded-full"
-                                                                                style={{
-                                                                                    backgroundColor: 'var(--bg-secondary)',
-                                                                                    color: 'var(--text-tertiary)',
-                                                                                }}
-                                                                            >
-                                                                                {item.subcategory}
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                    {/* Right: Quantity - only show if > 1 */}
-                                                                    {(item.qty ?? 1) > 1 && (
-                                                                        <span
-                                                                            className="text-xs font-medium flex-shrink-0"
-                                                                            style={{ color: 'var(--text-tertiary)' }}
-                                                                        >
-                                                                            x{Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </ItemContainer>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-
-                        {/* Original order view - Story 14.38: items in array index order */}
-                        {itemViewMode === 'original' && currentTransaction.items && (
-                            <div
-                                className="rounded-xl overflow-hidden"
-                                style={{
-                                    backgroundColor: 'var(--bg-secondary)',
-                                    border: '1px solid var(--border-light)',
-                                }}
-                            >
-                                <div className="divide-y" style={{ borderColor: 'var(--border-light)' }}>
-                                    {currentTransaction.items.map((item, i) => {
-                                        const isVisible = !shouldAnimate || i < animatedItems.length;
-                                        const animationDelay = shouldAnimate ? i * 100 : 0;
-                                        const ItemContainer = shouldAnimate && !animationPlayedRef.current ? AnimatedItem : React.Fragment;
-                                        const containerProps = shouldAnimate && !animationPlayedRef.current
-                                            ? { delay: animationDelay, index: i, testId: `edit-view-item-original-${i}` }
-                                            : {};
-
-                                        if (!isVisible) return null;
-
-                                        return (
-                                            <ItemContainer key={i} {...containerProps}>
-                                                <div
-                                                    className="px-3 py-2.5 transition-colors"
-                                                    style={{
-                                                        backgroundColor: i % 2 === 1 ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
-                                                    }}
-                                                >
-                                                    {editingItemIndex === i ? (
-                                                        /* Editing state in original view */
-                                                        <div className="space-y-2">
-                                                            <div className="flex items-center gap-2">
-                                                                <span
-                                                                    className="text-xs font-medium w-5 text-center flex-shrink-0"
-                                                                    style={{ color: 'var(--text-tertiary)' }}
-                                                                >
-                                                                    {i + 1}.
-                                                                </span>
-                                                                <input
-                                                                    className="flex-1 p-2 border rounded-lg text-sm"
-                                                                    style={inputStyle}
-                                                                    value={item.name}
-                                                                    onChange={e => handleUpdateItem(i, 'name', e.target.value)}
-                                                                    placeholder={t('itemName')}
-                                                                    autoFocus
-                                                                />
-                                                            </div>
-                                                            <div className="flex items-center gap-2 pl-7">
-                                                                <input
-                                                                    type="number"
-                                                                    step="0.01"
-                                                                    className="w-24 p-2 border rounded-lg text-sm"
-                                                                    style={inputStyle}
-                                                                    value={item.price || ''}
-                                                                    onChange={e => handleUpdateItem(i, 'price', parseFloat(e.target.value) || 0)}
-                                                                    placeholder={t('itemPrice')}
-                                                                />
-                                                                <CategoryBadge category={item.category || 'Other'} lang={language} mini />
-                                                                <div className="flex-1" />
-                                                                <button
-                                                                    onClick={() => handleDeleteItem(i)}
-                                                                    className="min-w-8 min-h-8 p-1 rounded-lg flex items-center justify-center"
-                                                                    style={{ color: 'var(--error)', backgroundColor: isDark ? 'rgba(248, 113, 113, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}
-                                                                    aria-label={t('deleteItem')}
-                                                                >
-                                                                    <Trash2 size={14} strokeWidth={2} />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => onSetEditingItemIndex(null)}
-                                                                    className="min-w-8 min-h-8 p-1 rounded-lg flex items-center justify-center"
-                                                                    style={{ color: 'var(--success)', backgroundColor: 'rgba(34, 197, 94, 0.1)' }}
-                                                                    aria-label={t('confirmItem')}
-                                                                >
-                                                                    <Check size={14} strokeWidth={2} />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        /* Display state in original view */
-                                                        <div
-                                                            onClick={() => onSetEditingItemIndex(i)}
-                                                            className="flex items-center gap-2 cursor-pointer"
-                                                        >
-                                                            <span
-                                                                className="text-xs font-medium w-5 text-center flex-shrink-0"
-                                                                style={{ color: 'var(--text-tertiary)' }}
-                                                            >
-                                                                {i + 1}.
-                                                            </span>
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className="flex items-center justify-between gap-2">
-                                                                    <div className="flex items-center gap-1 min-w-0 flex-1">
-                                                                        <span
-                                                                            className="text-xs font-medium truncate"
-                                                                            style={{ color: 'var(--text-primary)' }}
-                                                                            title={item.name}
-                                                                        >
-                                                                            {item.name}
-                                                                        </span>
-                                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="2" style={{ opacity: 0.6, flexShrink: 0 }}>
-                                                                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-                                                                        </svg>
-                                                                    </div>
-                                                                    <span
-                                                                        className="text-xs font-semibold flex-shrink-0"
-                                                                        style={{ color: 'var(--text-primary)' }}
-                                                                    >
-                                                                        {formatCurrency(item.price, displayCurrency)}
-                                                                    </span>
-                                                                </div>
-                                                                <div className="flex items-center gap-1 mt-0.5">
-                                                                    <CategoryBadge category={item.category || 'Other'} lang={language} mini />
-                                                                    {item.subcategory && (
-                                                                        <span
-                                                                            className="text-xs px-1.5 py-0.5 rounded-full"
-                                                                            style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-tertiary)' }}
-                                                                        >
-                                                                            {item.subcategory}
-                                                                        </span>
-                                                                    )}
-                                                                    {(item.qty ?? 1) > 1 && (
-                                                                        <span
-                                                                            className="text-xs font-medium"
-                                                                            style={{ color: 'var(--text-tertiary)' }}
-                                                                        >
-                                                                            x{Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </ItemContainer>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Add Item button - dashed border style */}
-                    <button
-                        onClick={handleAddItem}
-                        className="w-full p-2.5 mt-3 rounded-lg border-2 border-dashed flex items-center justify-center gap-1.5 transition-colors"
-                        style={{
-                            borderColor: 'var(--border-light)',
-                            color: 'var(--primary)',
-                            backgroundColor: 'transparent',
-                        }}
-                        aria-label={t('addItem')}
-                    >
-                        <Plus size={14} strokeWidth={2.5} />
-                        <span className="text-sm font-medium">{t('addItem')}</span>
-                    </button>
-                </div>
+                {/* Story TD-15b-2a: Items section extracted to EditViewItemsSection */}
+                <EditViewItemsSection
+                    currentTransaction={currentTransaction}
+                    editingItemIndex={editingItemIndex}
+                    onSetEditingItemIndex={onSetEditingItemIndex}
+                    onUpdateTransaction={onUpdateTransaction}
+                    language={language}
+                    theme={theme}
+                    t={t}
+                    formatCurrency={formatCurrency}
+                    parseStrictNumber={parseStrictNumber}
+                    displayCurrency={displayCurrency}
+                    isDark={isDark}
+                    inputStyle={inputStyle}
+                    animateItems={animateItems}
+                />
 
                 {/* Total row */}
                 <div
@@ -1619,192 +732,22 @@ export const EditView: React.FC<EditViewProps> = ({
                 theme={theme as 'light' | 'dark'}
             />
 
-            {/* Story 9.9: Cancel Confirmation Dialog */}
-            {/* Story 9.10: Enhanced with credit warning when scan was processed */}
-            {showCancelConfirm && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-                    onClick={() => setShowCancelConfirm(false)}
-                >
-                    <div
-                        className="mx-4 p-6 rounded-xl shadow-xl max-w-sm w-full"
-                        style={{ backgroundColor: 'var(--surface)' }}
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <h2
-                            className="text-lg font-bold mb-2"
-                            style={{ color: 'var(--primary)' }}
-                        >
-                            {t('discardChanges')}
-                        </h2>
-                        {/* Story 9.10: Credit warning when scan was processed */}
-                        {(pendingScan?.status === 'analyzed' || pendingScan?.status === 'error') && (
-                            <div
-                                className="p-3 rounded-lg mb-4 flex items-start gap-2"
-                                style={{
-                                    backgroundColor: isDark ? 'rgba(251, 191, 36, 0.15)' : 'rgba(251, 191, 36, 0.1)',
-                                    border: '1px solid',
-                                    borderColor: isDark ? 'rgba(251, 191, 36, 0.4)' : 'rgba(251, 191, 36, 0.5)',
-                                }}
-                            >
-                                <span className="text-amber-500 text-lg">⚠️</span>
-                                <span
-                                    className="text-sm font-medium"
-                                    style={{ color: isDark ? '#fbbf24' : '#d97706' }}
-                                >
-                                    {t('creditAlreadyUsed')}
-                                </span>
-                            </div>
-                        )}
-                        <p
-                            className="text-sm mb-6"
-                            style={{ color: 'var(--secondary)' }}
-                        >
-                            {t('discardChangesMessage')}
-                        </p>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowCancelConfirm(false)}
-                                className="flex-1 py-2 px-4 rounded-lg border font-medium"
-                                style={{
-                                    borderColor: isDark ? '#475569' : '#e2e8f0',
-                                    color: 'var(--primary)',
-                                    backgroundColor: 'transparent',
-                                }}
-                            >
-                                {t('back')}
-                            </button>
-                            <button
-                                onClick={handleConfirmCancel}
-                                className="flex-1 py-2 px-4 rounded-lg font-medium text-white"
-                                style={{ backgroundColor: 'var(--error)' }}
-                            >
-                                {t('confirm')}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Story 14.15b: Re-scan Confirmation Dialog */}
-            {showRescanConfirm && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-                    onClick={() => setShowRescanConfirm(false)}
-                >
-                    <div
-                        className="mx-4 p-6 rounded-xl shadow-xl max-w-sm w-full"
-                        style={{ backgroundColor: 'var(--surface)' }}
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div className="flex items-center gap-3 mb-4">
-                            <div
-                                className="w-10 h-10 rounded-full flex items-center justify-center"
-                                style={{
-                                    backgroundColor: isDark ? 'rgba(96, 165, 250, 0.15)' : 'rgba(59, 130, 246, 0.1)',
-                                }}
-                            >
-                                <RefreshCw size={20} style={{ color: 'var(--accent)' }} />
-                            </div>
-                            <h2
-                                className="text-lg font-bold"
-                                style={{ color: 'var(--primary)' }}
-                            >
-                                {t('rescanConfirmTitle')}
-                            </h2>
-                        </div>
-                        <p
-                            className="text-sm mb-6"
-                            style={{ color: 'var(--secondary)' }}
-                        >
-                            {t('rescanConfirmMessage')}
-                        </p>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowRescanConfirm(false)}
-                                className="flex-1 py-2 px-4 rounded-lg border font-medium"
-                                style={{
-                                    borderColor: isDark ? '#475569' : '#e2e8f0',
-                                    color: 'var(--primary)',
-                                    backgroundColor: 'transparent',
-                                }}
-                            >
-                                {t('cancel')}
-                            </button>
-                            <button
-                                onClick={handleConfirmRescan}
-                                className="flex-1 py-2 px-4 rounded-lg font-medium text-white flex items-center justify-center gap-2"
-                                style={{ backgroundColor: 'var(--accent)' }}
-                            >
-                                <RefreshCw size={16} strokeWidth={2} />
-                                {t('confirm')}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Story 14.22: Delete Confirmation Dialog */}
-            {showDeleteConfirm && currentTransaction.id && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-                    onClick={() => setShowDeleteConfirm(false)}
-                >
-                    <div
-                        className="mx-4 p-6 rounded-xl shadow-xl max-w-sm w-full"
-                        style={{ backgroundColor: 'var(--surface)' }}
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div className="flex items-center gap-3 mb-4">
-                            <div
-                                className="w-10 h-10 rounded-full flex items-center justify-center"
-                                style={{
-                                    backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)',
-                                }}
-                            >
-                                <Trash2 size={20} style={{ color: 'var(--error)' }} />
-                            </div>
-                            <h2
-                                className="text-lg font-bold"
-                                style={{ color: 'var(--text-primary)' }}
-                            >
-                                {t('deleteConfirmTitle')}
-                            </h2>
-                        </div>
-                        <p
-                            className="text-sm mb-6"
-                            style={{ color: 'var(--text-secondary)' }}
-                        >
-                            {t('deleteConfirmMessage')}
-                        </p>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowDeleteConfirm(false)}
-                                className="flex-1 py-2 px-4 rounded-lg border font-medium flex items-center justify-center gap-2"
-                                style={{
-                                    borderColor: isDark ? '#475569' : '#e2e8f0',
-                                    color: 'var(--text-primary)',
-                                    backgroundColor: 'transparent',
-                                }}
-                            >
-                                <ChevronLeft size={16} strokeWidth={2} />
-                                {t('cancel')}
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setShowDeleteConfirm(false);
-                                    onDelete(currentTransaction.id!);
-                                }}
-                                className="flex-1 py-2 px-4 rounded-lg font-medium text-white flex items-center justify-center gap-2"
-                                style={{ backgroundColor: 'var(--error)' }}
-                            >
-                                <Trash2 size={16} strokeWidth={2} />
-                                {t('delete')}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Story 15b-2a: Confirmation dialogs extracted to EditViewDialogs */}
+            <EditViewDialogs
+                showCancelConfirm={showCancelConfirm}
+                setShowCancelConfirm={setShowCancelConfirm}
+                handleConfirmCancel={handleConfirmCancel}
+                pendingScan={pendingScan}
+                isDark={isDark}
+                t={t}
+                showRescanConfirm={showRescanConfirm}
+                setShowRescanConfirm={setShowRescanConfirm}
+                handleConfirmRescan={handleConfirmRescan}
+                showDeleteConfirm={showDeleteConfirm}
+                setShowDeleteConfirm={setShowDeleteConfirm}
+                currentTransaction={currentTransaction}
+                onDelete={onDelete}
+            />
             </div>
         </div>
     );

@@ -132,7 +132,11 @@ export function sanitizeInput(
 /**
  * Sanitizes a merchant name with appropriate settings.
  *
- * @param name - The merchant name from user input
+ * Storage-layer limit: 200 chars. Merchant names originate from user input or AI
+ * receipt extraction. The 200-char limit matches the Firestore validation rule
+ * added in TD-15b-9 (`isValidTransactionWrite`).
+ *
+ * @param name - The merchant name from user input or AI extraction
  * @returns Sanitized merchant name
  */
 export function sanitizeMerchantName(name: string | null | undefined): string {
@@ -142,7 +146,18 @@ export function sanitizeMerchantName(name: string | null | undefined): string {
 /**
  * Sanitizes an item name with appropriate settings.
  *
- * @param name - The item name from user input
+ * Storage-layer limit: 200 chars (permits AI-extracted names which may be longer than the UI limit).
+ *
+ * Two-layer maxLength design (intentional, not a bug):
+ * - Storage layer (this helper, maxLength 200): used when saving to Firestore
+ *   (TransactionEditorViewInternal.tsx) and in mapping services. AI receipt scans can
+ *   produce item names up to ~150 chars; 200 provides headroom.
+ * - UI edit layer (EditViewItemsSection.tsx): inline sanitizeInput(100) — stricter
+ *   display/edit constraint that prevents overly long names in the UI input field.
+ *
+ * Firestore stores up to 200 chars; the UI editing surface limits new user input to 100 chars.
+ *
+ * @param name - The item name from user input or AI extraction
  * @returns Sanitized item name
  */
 export function sanitizeItemName(name: string | null | undefined): string {
@@ -162,7 +177,17 @@ export function sanitizeLocation(location: string | null | undefined): string {
 /**
  * Sanitizes a subcategory string.
  *
- * @param subcategory - The subcategory from user input
+ * Storage-layer limit: 100 chars (permits AI-extracted subcategories which may exceed the UI limit).
+ *
+ * Two-layer maxLength design (intentional, not a bug):
+ * - Storage layer (this helper, maxLength 100): used when saving to Firestore
+ *   (TransactionEditorViewInternal.tsx) and in mapping services.
+ * - UI edit layer (EditViewItemsSection.tsx): inline sanitizeInput(50) — stricter
+ *   display/edit constraint for the subcategory input field.
+ *
+ * Firestore stores up to 100 chars; the UI editing surface limits new user input to 50 chars.
+ *
+ * @param subcategory - The subcategory from user input or AI extraction
  * @returns Sanitized subcategory string
  */
 export function sanitizeSubcategory(subcategory: string | null | undefined): string {
@@ -179,8 +204,13 @@ export function sanitizeSubcategory(subcategory: string | null | undefined): str
 export function sanitizeNumericInput(value: string | null | undefined): string {
   if (value == null) return '';
 
+  // Pre-truncate to prevent processing excessively long inputs (defense-in-depth).
+  // 30 chars is sufficient for any realistic numeric value (e.g., "-123456789.123456").
+  const MAX_NUMERIC_LENGTH = 30;
+  const raw = String(value).substring(0, MAX_NUMERIC_LENGTH);
+
   // Remove anything that's not a digit, decimal point, or minus sign
-  const cleaned = String(value).replace(/[^\d.-]/g, '');
+  const cleaned = raw.replace(/[^\d.-]/g, '');
 
   // Ensure only one decimal point and one minus at the start
   const parts = cleaned.split('.');

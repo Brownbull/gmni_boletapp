@@ -1,0 +1,11 @@
+# Known flaky tests — excluded from regression detection.
+# Add tests here when they've been confirmed as infrastructure-related,
+# not code-related. Review monthly and remove if fixed.
+#
+# Format:
+#   - test: "test file path or test name pattern"
+#     reason: "why it's flaky"
+#     added: "YYYY-MM-DD"
+#     issue: "#123 (optional — link to tracking issue)"
+
+flaky_tests: []

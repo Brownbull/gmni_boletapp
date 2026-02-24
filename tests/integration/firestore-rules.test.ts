@@ -20,7 +20,7 @@ import {
     assertSucceeds,
     assertFails,
 } from '../setup/firebase-emulator';
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
 
 describe('Firestore Security Rules', () => {
     beforeAll(async () => {
@@ -252,5 +252,186 @@ describe('Firestore Security Rules', () => {
             `artifacts/boletapp-d609f/transactions` // Missing users/{userId}
         );
         await assertFails(getDocs(wrongPathCollection));
+    });
+});
+
+/**
+ * TD-15b-11: Transaction write validation — catch-all bypass closed
+ *
+ * Verifies that `isValidTransactionWrite` is actually enforced for transaction writes,
+ * i.e., the catch-all `{document=**}` rule does NOT bypass field validation.
+ *
+ * Before the fix: the catch-all granted write without calling isValidTransactionWrite,
+ * so invalid writes (merchant >200 chars, non-numeric total) were silently accepted.
+ * After the fix: catch-all also requires isValidTransactionWrite, closing the bypass.
+ */
+describe('Transaction write validation (TD-15b-11: catch-all bypass closed)', () => {
+    beforeAll(async () => {
+        await setupFirebaseEmulator();
+    });
+
+    afterAll(async () => {
+        await teardownFirebaseEmulator();
+    });
+
+    beforeEach(async () => {
+        await clearFirestoreData();
+    });
+
+    /**
+     * Test 6: Oversized merchant field rejected via both transaction rule AND catch-all
+     *
+     * If the catch-all bypass were open, this addDoc would SUCCEED (only auth required).
+     * After the fix, both rules require isValidTransactionWrite, so this FAILS.
+     */
+    it('should reject transaction write with merchant field exceeding 200 chars', async () => {
+        const userFirestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const txnCollection = collection(
+            userFirestore,
+            `${TEST_COLLECTION_PATH}/${TEST_USERS.USER_1}/transactions`
+        );
+
+        await assertFails(
+            addDoc(txnCollection, {
+                merchant: 'x'.repeat(201),
+                date: '2026-02-24',
+                total: 50.00,
+                category: 'Groceries',
+                items: [],
+            })
+        );
+    });
+
+    /**
+     * Test 7: Non-numeric total field rejected
+     *
+     * total must be a number when present. A string value is rejected.
+     */
+    it('should reject transaction write with non-numeric total field', async () => {
+        const userFirestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const txnCollection = collection(
+            userFirestore,
+            `${TEST_COLLECTION_PATH}/${TEST_USERS.USER_1}/transactions`
+        );
+
+        await assertFails(
+            addDoc(txnCollection, {
+                merchant: 'Valid Merchant',
+                date: '2026-02-24',
+                total: 'not-a-number',
+                category: 'Groceries',
+                items: [],
+            })
+        );
+    });
+
+    /**
+     * Test 8: Valid transaction write accepted
+     *
+     * Confirms the fix doesn't break normal transaction writes.
+     */
+    it('should allow valid transaction write within field limits', async () => {
+        const userFirestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const txnCollection = collection(
+            userFirestore,
+            `${TEST_COLLECTION_PATH}/${TEST_USERS.USER_1}/transactions`
+        );
+
+        await assertSucceeds(
+            addDoc(txnCollection, {
+                merchant: 'Jumbo',
+                date: '2026-02-24',
+                total: 9990,
+                category: 'Groceries',
+                items: [{ name: 'Leche', quantity: 2, price: 4995 }],
+            })
+        );
+    });
+
+    /**
+     * Test 9: Non-transaction subcollection write still allowed
+     *
+     * isValidTransactionWrite returns true for documents without merchant/total fields.
+     * Preferences, credits, and other subcollections are not blocked by the updated catch-all.
+     */
+    it('should allow non-transaction subcollection write (preferences) after catch-all update', async () => {
+        const userFirestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const preferencesDoc = doc(
+            userFirestore,
+            `${TEST_COLLECTION_PATH}/${TEST_USERS.USER_1}/preferences/settings`
+        );
+
+        await assertSucceeds(
+            setDoc(preferencesDoc, {
+                language: 'es',
+                currency: 'CLP',
+                theme: 'dark',
+            })
+        );
+    });
+
+    /**
+     * Test 10: Transaction with exactly 200-char merchant accepted (boundary condition)
+     *
+     * Validates that the boundary is inclusive (<=200, not <200).
+     */
+    it('should allow transaction write with merchant field at exactly 200 chars', async () => {
+        const userFirestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const txnCollection = collection(
+            userFirestore,
+            `${TEST_COLLECTION_PATH}/${TEST_USERS.USER_1}/transactions`
+        );
+
+        await assertSucceeds(
+            addDoc(txnCollection, {
+                merchant: 'x'.repeat(200),
+                date: '2026-02-24',
+                total: 100,
+                category: 'Other',
+                items: [],
+            })
+        );
+    });
+
+    /**
+     * Test 11: Delete on non-transaction subcollection still allowed (catch-all delete guard)
+     *
+     * After TD-15b-11, catch-all uses `allow create, update` (not `allow write`) for the
+     * isValidTransactionWrite guard. Delete is auth-only so it does not attempt to access
+     * request.resource.data (which is null on delete and would deny). This test confirms
+     * the regression is not present.
+     */
+    it('should allow delete on non-transaction subcollection (preferences) after catch-all update', async () => {
+        const userFirestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const preferencesDoc = doc(
+            userFirestore,
+            `${TEST_COLLECTION_PATH}/${TEST_USERS.USER_1}/preferences/settings`
+        );
+
+        // First create the document
+        await assertSucceeds(
+            setDoc(preferencesDoc, { language: 'es', currency: 'CLP', theme: 'dark' })
+        );
+
+        // Then delete it — must also be allowed
+        await assertSucceeds(deleteDoc(preferencesDoc));
+    });
+
+    /**
+     * Test 12: Non-transaction subcollection (credits) write still allowed
+     *
+     * Verifies the catch-all isValidTransactionWrite guard does not block credits
+     * subcollection writes (no merchant/total fields → function returns true).
+     */
+    it('should allow non-transaction subcollection write (credits) after catch-all update', async () => {
+        const userFirestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const creditsDoc = doc(
+            userFirestore,
+            `${TEST_COLLECTION_PATH}/${TEST_USERS.USER_1}/credits/balance`
+        );
+
+        await assertSucceeds(
+            setDoc(creditsDoc, { amount: 100, currency: 'CLP' })
+        );
     });
 });

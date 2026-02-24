@@ -17,7 +17,8 @@ ecc_orchestration:
       purpose: "Code quality, maintainability, best practices"
     security-reviewer:
       subagent_type: "everything-claude-code:security-reviewer"
-      model: "sonnet"
+      model_standard: "sonnet"
+      model_complex: "opus"
       max_turns: 5
       purpose: "OWASP Top 10, secrets, vulnerabilities"
     architect:
@@ -27,7 +28,7 @@ ecc_orchestration:
       purpose: "Architecture compliance, patterns, design"
     tdd-guide:
       subagent_type: "everything-claude-code:tdd-guide"
-      model: "haiku"
+      model: "sonnet"
       max_turns: 5
       purpose: "Test coverage, TDD compliance, test quality"
 

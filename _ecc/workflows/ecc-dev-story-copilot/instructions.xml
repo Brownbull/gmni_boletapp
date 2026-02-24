@@ -1,0 +1,487 @@
+<workflow>
+  <critical>The workflow execution engine is governed by: {project-root}/_bmad/core/tasks/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+
+  <critical>COPILOT PLAYBOOK GENERATOR — This workflow produces a DOCUMENT, not code</critical>
+  <critical>Do NOT spawn ECC agents. Do NOT write code. ONLY generate the playbook markdown file.</critical>
+  <critical>The playbook contains copy-paste prompts, context blocks, and manual checkpoints for Copilot Chat.</critical>
+
+  <!-- ================================================================== -->
+  <!-- STEP 0: Project Knowledge Loading                                   -->
+  <!-- ================================================================== -->
+
+  <step n="0" goal="Load project knowledge to embed in playbook" tag="knowledge-init">
+    <action>Load {project-root}/_ecc/knowledge/code-review-patterns.md -> {{cached_review_patterns}}</action>
+    <action>Load any docs/architecture/*.md files that exist -> {{cached_architecture}}</action>
+    <action>Load {project-root}/.claude/rules/testing.md -> {{cached_testing_rules}}</action>
+    <action>Load {project-root}/.claude/rules/security.md -> {{cached_security_rules}}</action>
+
+    <output>**Copilot Playbook Generator Initialized**
+
+      Knowledge loaded:
+      - Code review patterns: loaded
+      - Architecture docs: loaded (if available)
+      - Testing guidelines: loaded
+      - Security rules: loaded
+
+      These will be embedded in the playbook as context blocks.
+    </output>
+  </step>
+
+  <!-- ================================================================== -->
+  <!-- STEP 1: Find and Load Story                                         -->
+  <!-- ================================================================== -->
+
+  <step n="1" goal="Find next ready story and extract all context" tag="story-discovery">
+    <check if="{{story_path}} is provided">
+      <action>Use {{story_path}} directly</action>
+      <action>Read COMPLETE story file</action>
+      <action>Extract story_key from filename or metadata</action>
+      <goto anchor="parse_story" />
+    </check>
+
+    <check if="{{sprint_status}} file exists">
+      <action>Load the FULL file: {{sprint_status}}</action>
+      <action>Find the FIRST story with status "ready-for-dev"</action>
+
+      <check if="no ready-for-dev story found">
+        <output>No ready-for-dev stories found in sprint-status.yaml
+
+          **Options:**
+          1. Run `ecc-create-story` to create next story with ECC planning
+          2. Specify a particular story file path
+        </output>
+        <ask>Choose option [1] or [2], or provide story path:</ask>
+      </check>
+    </check>
+
+    <anchor id="parse_story" />
+    <action>Parse the COMPLETE story file and extract:
+      - {{story_key}}: story identifier (e.g., "1-5")
+      - {{story_title}}: full story title
+      - {{story_overview}}: overview paragraph
+      - {{functional_acs}}: all functional acceptance criteria (full text)
+      - {{architectural_acs}}: all architectural acceptance criteria (full text)
+        - {{file_location_acs}}: file path requirements
+        - {{pattern_acs}}: pattern requirements
+        - {{antipattern_acs}}: anti-pattern requirements
+      - {{file_specification}}: complete file specification table
+      - {{tasks_and_subtasks}}: all tasks with subtasks (full text)
+      - {{dev_notes}}: complete dev notes section
+      - {{cross_cutting_deps}}: dependency information
+    </action>
+
+    <action>Identify incomplete tasks (unchecked [ ]) -> {{incomplete_tasks}}</action>
+    <action>Count: {{total_tasks}}, {{total_subtasks}}, {{total_files}}</action>
+  </step>
+
+  <!-- ================================================================== -->
+  <!-- STEP 2: Generate the Playbook Document                              -->
+  <!-- ================================================================== -->
+
+  <step n="2" goal="Generate the complete Copilot playbook document" tag="generate-playbook">
+    <critical>Generate the playbook using the template below. Fill ALL placeholders with actual story data.</critical>
+    <critical>Each phase prompt must be SELF-CONTAINED — Copilot has no memory between chats.</critical>
+    <critical>Include ALL relevant context IN each prompt — architecture patterns, ACs, file paths.</critical>
+
+    <template-output file="copilot-playbook-{{story_key}}.md" path="{output_folder}/implementation-artifacts">
+
+# Copilot Playbook: Story {{story_key}} — {{story_title}}
+
+> **Generated:** {{date}}
+> **Story:** `{{story_file_path}}`
+> **Sprint Status:** `{{sprint_status}}`
+>
+> This playbook mirrors the `ecc-dev-story` workflow but provides copy-paste prompts
+> for GitHub Copilot Chat. Work through each phase sequentially. Mark checkboxes as you go.
+
+---
+
+## How to Use This Playbook
+
+1. **Work phase by phase** — each phase has a Copilot prompt with all context embedded
+2. **Copy the prompt** from the code block and paste it into Copilot Chat (or Copilot Edits)
+3. **Review Copilot's output** before accepting — verify it matches the acceptance criteria
+4. **Run the verification commands** listed after each phase
+5. **Mark the checkbox** `[x]` in this document when a phase is complete
+6. **Update the tracking section** at the bottom with files changed and notes
+
+> **Tip:** For large prompts, use **Copilot Edits** (Ctrl+Shift+I) which handles multi-file
+> changes better than inline Chat. Reference specific files with `#file:path/to/file.ts`.
+
+---
+
+## Pre-Flight Checklist
+
+- [ ] **Branch setup** — Run these commands before starting:
+  ```bash
+  git checkout dev
+  git pull origin dev
+  git checkout -b feature/story-{{story_key}}
+  ```
+- [ ] **Verify branch:** `git branch --show-current` should show `feature/story-{{story_key}}`
+- [ ] **Dependencies up to date:** `npm install`
+- [ ] **Clean build baseline:** `npm run build` passes
+- [ ] **Sprint status updated:** Change `{{story_key_slug}}` from `ready-for-dev` to `in-progress` in `{{sprint_status}}`
+
+---
+
+## Phase 1: Implementation Planning
+
+**Goal:** Get Copilot to analyze the story and produce an implementation plan.
+
+**Copy this prompt into Copilot Chat:**
+
+````
+I need to implement Story {{story_key}}: {{story_title}}.
+
+## Story Overview
+{{story_overview}}
+
+## Tasks to Implement
+{{incomplete_tasks_formatted}}
+
+## File Specification
+{{file_specification}}
+
+## Architecture Requirements
+{{architectural_acs}}
+
+## Dev Notes (Architecture Guidance)
+{{dev_notes_architecture_section}}
+
+---
+
+**Your job:** Create a detailed implementation plan covering:
+1. Implementation approach for each task (in order)
+2. Exact file changes required (match the File Specification table)
+3. Dependencies between tasks
+4. Testing strategy for each task (TDD: write tests first)
+5. Risk areas or potential pitfalls
+
+Do NOT write any code yet. Only produce the plan.
+````
+
+### Phase 1 Verification
+- [ ] Plan covers all {{total_tasks}} tasks
+- [ ] File paths match the File Specification table exactly
+- [ ] Plan follows TDD order (tests before implementation)
+- [ ] No files outside the documented locations
+
+### Phase 1 Complexity Check
+
+Compare the plan against story limits:
+- Tasks: {{total_tasks}} (max 4 for large story)
+- Subtasks: {{total_subtasks}} (max 15)
+- Files: {{total_files}} (max 8)
+
+If the plan reveals significantly more work than the story specifies, consider splitting before proceeding.
+
+---
+
+## Phase 2: TDD Implementation (Per Task)
+
+Work through each task below sequentially. For each task:
+1. First prompt Copilot to write the **tests** (RED phase)
+2. Then prompt Copilot to write the **implementation** (GREEN phase)
+3. Run tests to verify
+4. Refactor if needed (REFACTOR phase)
+
+{{for_each_task_section}}
+
+---
+
+## Phase 3: Consolidated Validation
+
+**Goal:** Run the full test suite, lint, and build to catch any issues.
+
+```bash
+# 1. Full test suite
+npm run test:quick
+
+# 2. Lint check
+npm run lint
+
+# 3. Build (includes type checking)
+npm run build
+```
+
+- [ ] All tests pass
+- [ ] No lint errors
+- [ ] Build succeeds
+
+**If tests fail**, paste the error into Copilot:
+
+````
+These tests are failing after implementing Story {{story_key}}. Fix them with minimal changes.
+Do NOT refactor unrelated code. Do NOT change the architecture.
+
+**Test failures:**
+[paste test output here]
+
+**Files I changed in this story:**
+{{file_list_for_prompt}}
+````
+
+**If build fails**, paste the error into Copilot:
+
+````
+The build is failing after implementing Story {{story_key}}. Fix the build/type errors with minimal changes.
+Do NOT refactor unrelated code. Do NOT change architecture. Only fix what's needed to make the build pass.
+
+**Build errors:**
+[paste build output here]
+````
+
+---
+
+## Phase 4: Code Review
+
+**Goal:** Have Copilot review the implementation for quality and security issues.
+
+**Copy this prompt into Copilot Chat:**
+
+````
+Review the following files I changed for Story {{story_key}}: {{story_title}}.
+
+## Files Changed
+{{file_list_for_prompt}}
+
+## Code Review Checklist
+
+### Quality Checks
+- Code quality and maintainability
+- Error handling (no swallowed errors)
+- Performance issues (unnecessary re-renders, missing memoization)
+- Test quality (meaningful assertions, not just `toHaveBeenCalled`)
+- Proper TypeScript types (no `any`, proper generics)
+
+### Security Checks (OWASP Top 10)
+- No hardcoded secrets or credentials
+- Input validation on user-provided data
+- No `dangerouslySetInnerHTML` with user content
+- No `eval()`, `new Function()`, or dynamic `import()` on user input
+- URL validation (https:// only, no javascript: URIs)
+
+### Architecture Checks
+{{architectural_acs}}
+
+### Must-Check Patterns
+1. **Git Staging:** All new/modified files are staged (`git status`)
+2. **Input Sanitization:** User string inputs validated before use
+3. **Feature Exports:** New types re-exported from barrel exports
+4. **Mock Consistency:** Test mocks match refactored service interfaces
+
+Report findings as: HIGH (must fix) / MEDIUM (should fix) / LOW (nice to have)
+````
+
+### Phase 4 Verification
+- [ ] No HIGH severity issues (or all fixed)
+- [ ] MEDIUM issues addressed or documented
+- [ ] Architecture ACs satisfied
+
+---
+
+## Phase 5: Story Completion
+
+### Final Checklist
+
+- [ ] ALL tasks marked `[x]` in story file
+- [ ] ALL functional acceptance criteria satisfied
+- [ ] ALL architectural acceptance criteria satisfied
+- [ ] Tests pass: `npm run test:quick`
+- [ ] Build passes: `npm run build`
+- [ ] Story status updated to `review` in both:
+  - Story file (`docs/sprint-artifacts/stories/story-{{story_key}}.md`)
+  - Sprint status (`{{sprint_status}}`)
+
+### Update Sprint Status
+
+Change `{{story_key_slug}}` from `in-progress` to `review` in `{{sprint_status}}`.
+
+> **IMPORTANT:** Mark as `review`, NOT `done`. Reviewers mark `done` after approval.
+
+### E2E Coverage Check
+
+Were any of these file types changed?
+- `src/components/**/*.tsx` (excluding `ui/`)
+- `src/hooks/*.ts`
+- `src/stores/*.ts`
+
+If yes, consider running E2E tests or noting the gap:
+```bash
+npm run test:e2e
+```
+
+---
+
+## Tracking
+
+### Files Changed
+<!-- Update this list as you complete each phase -->
+| File | Action | Phase |
+|------|--------|-------|
+| | | |
+
+### Notes
+<!-- Add implementation notes, deviations, or issues discovered -->
+
+### Time Log
+<!-- Optional: track time per phase for future estimation -->
+| Phase | Started | Completed |
+|-------|---------|-----------|
+| Pre-Flight | | |
+| Phase 1: Planning | | |
+| Phase 2: TDD Implementation | | |
+| Phase 3: Validation | | |
+| Phase 4: Review | | |
+| Phase 5: Completion | | |
+
+    </template-output>
+
+    <critical>IMPORTANT: The {{for_each_task_section}} placeholder above must be expanded inline.
+    Generate a Phase 2 subsection for EACH incomplete task in the story, following the per-task template below.</critical>
+
+    <!-- PER-TASK TEMPLATE — repeat for each task -->
+    <per-task-template>
+    For each incomplete task, generate this structure inside Phase 2:
+
+### Task N: [Task Title]
+
+Subtasks: [list from story]
+
+#### Step A: Write Tests (RED)
+
+**Copy this prompt into Copilot Chat:**
+
+````
+I'm implementing Task N of Story {{story_key}}: [Task Title]
+
+## What This Task Does
+[task description and subtasks from story]
+
+## File Specification
+[relevant files for this task from the File Specification table]
+
+## Architecture Requirements
+[relevant architectural ACs for this task]
+
+## Anti-Patterns to Avoid
+[relevant anti-pattern ACs]
+
+## Dev Notes
+[relevant technical notes for this task]
+
+---
+
+**Write the unit tests FIRST (TDD RED phase).**
+
+Create test file(s) at the exact path(s) specified in the File Specification.
+Tests should cover all subtasks and acceptance criteria for this task.
+Tests should FAIL at this point (implementation doesn't exist yet).
+
+Follow these testing conventions:
+- Use Vitest with `describe`/`it` blocks
+- Use `data-testid` for component queries
+- Mock external dependencies (stores, services)
+- Test behavior, not implementation details
+- Include both happy path and edge cases
+````
+
+**Verification:**
+```bash
+npx vitest run [test-file-path] # Should FAIL (RED phase)
+```
+- [ ] Tests written and failing as expected
+
+#### Step B: Implement (GREEN)
+
+**Copy this prompt into Copilot Chat:**
+
+````
+Now implement the minimal code to make the tests pass for Task N of Story {{story_key}}.
+
+## Tests to Satisfy
+#file:[test-file-path]
+
+## File Specification
+[files to create/modify for this task]
+
+## Architecture Requirements
+[relevant pattern ACs]
+
+## Anti-Patterns to Avoid
+[relevant anti-pattern ACs]
+
+---
+
+**Write the MINIMAL implementation to make tests pass (TDD GREEN phase).**
+
+Create/modify files at the EXACT paths specified. Do not create files elsewhere.
+Follow the documented architecture patterns. Do not over-engineer.
+````
+
+**Verification:**
+```bash
+npx vitest run [test-file-path] # Should PASS (GREEN phase)
+```
+- [ ] All tests passing
+
+#### Step C: Refactor (optional)
+
+If the code needs cleanup, prompt Copilot:
+
+````
+Refactor the implementation for Task N of Story {{story_key}} while keeping all tests green.
+Focus on: readability, removing duplication, proper naming.
+Do NOT change behavior. Do NOT add features. Keep it minimal.
+
+#file:[implementation-file-path]
+#file:[test-file-path]
+````
+
+- [ ] Tests still passing after refactor
+- [ ] Task N complete
+
+---
+
+    </per-task-template>
+  </step>
+
+  <!-- ================================================================== -->
+  <!-- STEP 3: Save and Present Playbook                                   -->
+  <!-- ================================================================== -->
+
+  <step n="3" goal="Save playbook and inform user" tag="save-playbook">
+    <action>Save the generated playbook to: {output_folder}/implementation-artifacts/copilot-playbook-{{story_key}}.md</action>
+
+    <output>**Copilot Playbook Generated**
+
+      **File:** `{output_folder}/implementation-artifacts/copilot-playbook-{{story_key}}.md`
+      **Story:** {{story_key}} — {{story_title}}
+
+      **Playbook Structure:**
+      - Pre-Flight Checklist (branch setup, dependencies)
+      - Phase 1: Implementation Planning (1 prompt)
+      - Phase 2: TDD Implementation ({{task_count}} tasks × 2-3 prompts each)
+      - Phase 3: Consolidated Validation (test/lint/build commands)
+      - Phase 4: Code Review (1 prompt)
+      - Phase 5: Story Completion (checklist + status updates)
+
+      **Total prompts to paste:** ~{{prompt_count}}
+
+      **How to use:**
+      1. Open the playbook file
+      2. Complete the Pre-Flight Checklist
+      3. Work through each phase, copying prompts into Copilot Chat
+      4. Mark checkboxes as you complete each step
+      5. Update the Tracking section at the bottom
+
+      **Tip:** Use Copilot Edits (Ctrl+Shift+I) for multi-file changes.
+      Reference files with `#file:path/to/file.ts` in prompts.
+    </output>
+  </step>
+
+</workflow>

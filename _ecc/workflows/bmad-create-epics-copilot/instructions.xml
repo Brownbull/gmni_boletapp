@@ -1,0 +1,503 @@
+<workflow>
+  <critical>The workflow execution engine is governed by: {project-root}/_bmad/core/tasks/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+
+  <critical>COPILOT PLAYBOOK GENERATOR — This workflow produces a DOCUMENT, not epics/stories</critical>
+  <critical>Do NOT create epics or stories. Do NOT create epics.md. ONLY generate the playbook.</critical>
+  <critical>The playbook contains copy-paste prompts for the 4-step epic creation process in Copilot Chat.</critical>
+
+  <!-- ================================================================== -->
+  <!-- STEP 0: Load Input Documents                                        -->
+  <!-- ================================================================== -->
+
+  <step n="0" goal="Discover and load all input documents for embedding in playbook" tag="doc-discovery">
+    <action>Search for and load these documents:
+      - PRD: {planning_artifacts}/prd.md (REQUIRED — abort if missing)
+      - Architecture: {planning_artifacts}/architecture.md (REQUIRED — abort if missing)
+      - UX Design: {planning_artifacts}/*.html or {planning_artifacts}/ux-*.md (optional)
+    </action>
+
+    <action>Extract from PRD:
+      - {{all_frs}}: every functional requirement (FR ID + full text)
+      - {{all_nfrs}}: every non-functional requirement (NFR ID + full text)
+      - {{project_description}}: project overview
+    </action>
+
+    <action>Extract from Architecture:
+      - {{tech_stack}}: technology stack summary
+      - {{project_structure}}: directory structure
+      - {{starter_template}}: starter template info (if any — impacts Epic 1 Story 1)
+      - {{architecture_patterns}}: implementation patterns summary
+      - {{architecture_decisions}}: core decision summaries
+    </action>
+
+    <action>Extract from UX (if found):
+      - {{ux_summary}}: key UX decisions and component patterns
+    </action>
+
+    <check if="PRD or Architecture not found">
+      <output>**ERROR:** Missing required documents.
+
+        The epics workflow requires:
+        - PRD at {planning_artifacts}/prd.md
+        - Architecture at {planning_artifacts}/architecture.md
+
+        Create these first using the appropriate workflows.
+      </output>
+      <stop/>
+    </check>
+
+    <output>**Documents Loaded**
+
+      - PRD: loaded ({{fr_count}} FRs, {{nfr_count}} NFRs)
+      - Architecture: loaded
+      - UX: {{ux_status}}
+      - Starter template detected: {{starter_template_status}}
+
+      Generating epics playbook...
+    </output>
+  </step>
+
+  <!-- ================================================================== -->
+  <!-- STEP 1: Generate the Playbook                                       -->
+  <!-- ================================================================== -->
+
+  <step n="1" goal="Generate the complete epics Copilot playbook" tag="generate-playbook">
+    <critical>Each prompt must be SELF-CONTAINED — Copilot has no memory between chats.</critical>
+    <critical>Embed the CRITICAL rules about user-value epics, no forward dependencies, and JIT database creation.</critical>
+    <critical>The playbook guides the user through epic design — the user makes final decisions.</critical>
+
+    <template-output file="copilot-playbook-epics.md" path="{output_folder}/implementation-artifacts">
+
+# Copilot Playbook: Epics & Stories Creation
+
+> **Generated:** {{date}}
+> **Project:** {{project_name}}
+> **PRD:** `{{prd_path}}`
+> **Architecture:** `{{architecture_path}}`
+>
+> This playbook mirrors the `bmad-bmm-create-epics-and-stories` workflow (4 steps)
+> but provides copy-paste prompts for GitHub Copilot Chat.
+
+---
+
+## How to Use This Playbook
+
+1. **Work step by step** — each step builds on the previous
+2. **Copy the prompt** into Copilot Chat and review the response
+3. **Review and approve** each step before moving on
+4. **Build the epics document** incrementally by copying approved output into `epics.md`
+5. **Mark checkboxes** as you complete each step
+
+> **Output file:** Create `{{planning_artifacts}}/epics.md` and build it incrementally.
+
+---
+
+## Critical Rules (Embedded in All Prompts)
+
+These rules are enforced throughout the workflow. Copilot prompts include them, but review output against these:
+
+1. **User-Value Epics:** Epics must be organized by USER OUTCOMES, not technical layers
+   - CORRECT: "User Authentication & Profiles" (delivers user value)
+   - WRONG: "Database Setup" or "API Development" (technical layers, no user value)
+
+2. **Epic Independence:** Each epic must be standalone — Epic N cannot require Epic N+1 to function
+
+3. **No Forward Dependencies:** Story 1.2 can use Story 1.1's output, but CANNOT depend on Story 1.4
+
+4. **Just-In-Time Database:** Tables are created in the story that FIRST NEEDS them, NOT all upfront
+
+5. **Starter Template:** If architecture specifies a starter template, Epic 1 Story 1 MUST be project setup
+
+6. **Story Sizing:** Each story must be completable by a single developer in one session
+
+---
+
+## Step 0: Initialize Epics Document
+
+Create `{{planning_artifacts}}/epics.md` with this starter:
+
+```markdown
+# Epics & Stories
+
+**Project:** {{project_name}}
+**Date:** {{date}}
+**Status:** In Progress
+
+## Requirements Inventory
+
+### Functional Requirements
+[Will be populated in Step 1]
+
+### Non-Functional Requirements
+[Will be populated in Step 1]
+
+### Additional Requirements
+[Will be populated in Step 1]
+
+## FR Coverage Map
+[Will be populated in Step 2]
+
+## Epics
+[Will be populated in Steps 2-3]
+```
+
+- [ ] Epics document created
+
+---
+
+## Step 1: Validate Prerequisites & Extract Requirements
+
+**Goal:** Extract all requirements from PRD and Architecture for the epics to cover.
+
+**Copy this prompt into Copilot Chat:**
+
+````
+I need to extract ALL requirements from my PRD and Architecture to prepare for epic creation.
+
+## PRD Content
+{{all_frs}}
+
+{{all_nfrs}}
+
+## Architecture Decisions
+{{architecture_decisions}}
+
+## Technology Stack
+{{tech_stack}}
+
+{{#if starter_template}}
+## Starter Template
+{{starter_template}}
+**NOTE:** Since a starter template is specified, Epic 1 Story 1 MUST be "Set up project from starter template."
+{{/if}}
+
+{{#if ux_summary}}
+## UX Requirements
+{{ux_summary}}
+{{/if}}
+
+---
+
+**Extract and organize:**
+
+1. **Functional Requirements:** List every FR with ID and full text
+2. **Non-Functional Requirements:** List every NFR with ID and full text
+3. **Additional Requirements from Architecture:**
+   - Starter template setup requirements (if any)
+   - Infrastructure/deployment requirements
+   - Integration requirements
+   - Security requirements from architecture decisions
+4. **Additional Requirements from UX (if any):**
+   - Responsive design requirements
+   - Accessibility requirements
+   - Browser compatibility requirements
+
+Format as a clean markdown list for each category.
+Verify the count: {{fr_count}} FRs and {{nfr_count}} NFRs expected.
+````
+
+### After Copilot Responds:
+1. Verify all FRs and NFRs are captured (compare against your PRD)
+2. Copy the organized requirements into your `epics.md` under the Requirements Inventory sections
+- [ ] All requirements extracted and documented
+
+---
+
+## Step 2: Design Epic Structure
+
+**Goal:** Organize requirements into user-value-focused epics with an FR coverage map.
+
+**Copy this prompt into Copilot Chat:**
+
+````
+Design epics for my project. Epics must be organized by USER VALUE, not technical layers.
+
+## Requirements to Cover
+[Paste your requirements from Step 1]
+
+## Architecture Summary
+{{tech_stack}}
+{{project_structure}}
+
+{{#if starter_template}}
+## IMPORTANT: Starter Template
+{{starter_template}}
+Epic 1 Story 1 MUST be project setup from this starter template.
+{{/if}}
+
+---
+
+## CRITICAL RULES — You MUST follow these:
+
+1. **User-Value Focus:** Each epic delivers COMPLETE user-facing functionality
+   - CORRECT examples: "User can build architectures visually", "User sees trade-off feedback"
+   - WRONG examples: "Database Setup", "API Layer", "Frontend Components"
+
+2. **Epic Independence:** Each epic must be STANDALONE — usable without later epics
+   - Epic 1 works fully on its own
+   - Epic 2 may USE Epic 1's output but doesn't require Epic 3
+
+3. **Sequential Building:** Epics build on each other but don't depend forward
+   - Epic 2 can require Epic 1 (backward OK)
+   - Epic 2 CANNOT require Epic 3 (forward NOT OK)
+
+---
+
+**Produce:**
+
+1. **Epic List:**
+   For each epic:
+   - Epic number and title (user-value-focused)
+   - User outcome (what can the user DO after this epic)
+   - FRs covered (list FR IDs)
+   - NFRs addressed
+   - Estimated story count
+
+2. **FR Coverage Map:**
+   | FR ID | FR Description | Epic |
+   |-------|---------------|------|
+   Every FR must appear in exactly one epic.
+
+3. **Verification:**
+   - Confirm 100% FR coverage
+   - Confirm each epic has standalone value
+   - Confirm no forward dependencies
+````
+
+### After Copilot Responds:
+1. **Verify user-value focus** — reject any "Database Setup" or "API Layer" epics
+2. **Verify independence** — each epic works without future epics
+3. **Verify 100% FR coverage** — every FR assigned to an epic
+4. Copy the approved epic list and FR coverage map into `epics.md`
+- [ ] Epic structure approved and documented
+
+---
+
+## Step 3: Create Stories (Per Epic)
+
+**Goal:** Generate detailed stories for each epic with acceptance criteria.
+
+Work through each epic sequentially. For each epic, use this prompt template:
+
+### Epic [N] Stories
+
+**Copy this prompt into Copilot Chat (customize for each epic):**
+
+````
+Create detailed stories for Epic [N]: [Epic Title].
+
+## Epic Goal
+[Paste the epic's user outcome and FR list from Step 2]
+
+## Architecture Context
+{{tech_stack}}
+{{architecture_patterns}}
+
+## Project Structure
+{{project_structure}}
+
+{{#if starter_template}}
+{{#if epic_is_first}}
+## IMPORTANT: First Story Must Be Starter Template Setup
+{{starter_template}}
+Story 1 of Epic 1 must set up the project from the starter template.
+{{/if}}
+{{/if}}
+
+---
+
+## CRITICAL RULES — You MUST follow these:
+
+1. **No Forward Dependencies:**
+   - Story 1.2 CAN use Story 1.1 output (backward OK)
+   - Story 1.2 CANNOT depend on Story 1.4 (forward NOT OK)
+
+2. **Just-In-Time Database/Entities:**
+   - Create tables/entities in the story that FIRST NEEDS them
+   - Do NOT create all tables in Story 1
+   - WRONG: Story 1.1 creates users, posts, comments, tags tables
+   - RIGHT: Story 1.1 creates users table (registration needs it)
+
+3. **Story Sizing:**
+   - Each story completable by one developer in one session
+   - If a story has >4 tasks or >15 subtasks, split it
+
+4. **Acceptance Criteria Format:**
+   Use Given/When/Then (BDD):
+   ```
+   **Given** [precondition]
+   **When** [action]
+   **Then** [expected result]
+   **And** [additional criteria]
+   ```
+
+---
+
+**For each story produce:**
+
+### Story [N].[M]: [Title]
+**As a** [user type], **I want** [capability], **So that** [value/benefit].
+
+**Acceptance Criteria:**
+- AC-1: Given/When/Then format
+- AC-2: Given/When/Then format
+- ...
+
+**Tasks:**
+1. [Specific implementation task]
+2. [Specific implementation task]
+...
+
+**Dependencies:** [Which prior stories this depends on, or "None"]
+````
+
+### After Copilot Responds (repeat for each epic):
+1. **Verify no forward dependencies** — each story only depends on earlier stories
+2. **Verify JIT database creation** — no "create all tables" story
+3. **Verify sizing** — each story is a single dev session
+4. **Verify AC format** — Given/When/Then for each criterion
+5. Copy approved stories into `epics.md` under the appropriate epic section
+
+- [ ] Epic 1 stories complete
+- [ ] Epic 2 stories complete
+- [ ] Epic 3 stories complete
+- [ ] Epic [N] stories complete (add rows as needed)
+
+---
+
+## Step 4: Final Validation
+
+**Goal:** Validate complete coverage, dependency integrity, and story quality.
+
+**Copy this prompt into Copilot Chat:**
+
+````
+Perform an adversarial review of my epics and stories document. Find gaps and violations.
+
+## Complete Epics Document
+[Paste your entire epics.md content here]
+
+## Original Requirements (for coverage check)
+### Functional Requirements
+{{all_frs}}
+
+### Non-Functional Requirements
+{{all_nfrs}}
+
+---
+
+## Validate Against These Rules:
+
+### 1. FR Coverage (CRITICAL)
+- Every FR from the PRD MUST be covered by at least one story
+- List any MISSING FRs
+
+### 2. Epic Quality
+- Each epic MUST deliver user value (not technical value)
+- Each epic MUST be independently functional
+- Flag any epic that is a "technical layer" (database, API, etc.)
+
+### 3. Story Dependencies (CRITICAL)
+- NO forward dependencies allowed
+- Story 1.2 depending on Story 1.4 is a VIOLATION
+- List ALL dependency violations found
+
+### 4. Database/Entity Creation
+- Tables MUST be created in the story that first needs them
+- Flag any "create all tables upfront" pattern
+
+### 5. Starter Template
+{{#if starter_template}}
+- Epic 1 Story 1 MUST be starter template setup
+- Verify this is present
+{{/if}}
+
+### 6. Story Sizing
+- Each story should be completable in one dev session
+- Flag stories with >4 tasks or >15 subtasks
+
+### 7. Acceptance Criteria
+- Every story MUST have Given/When/Then ACs
+- Flag stories with vague or missing ACs
+
+**Report format:**
+- **CRITICAL:** Must fix before proceeding
+- **MAJOR:** Should fix for quality
+- **MINOR:** Nice to have
+````
+
+### After Copilot Responds:
+1. Fix all CRITICAL issues
+2. Address MAJOR issues
+3. Update `epics.md` with corrections
+- [ ] Validation complete, all critical issues resolved
+
+---
+
+## Step 5: Finalize
+
+### Final Checklist
+
+- [ ] All FRs covered by at least one story
+- [ ] All epics deliver user value (not technical layers)
+- [ ] No forward dependencies between stories
+- [ ] Database/entities created just-in-time
+- [ ] Starter template setup in Epic 1 Story 1 (if applicable)
+- [ ] All stories have Given/When/Then acceptance criteria
+- [ ] All stories are single-session sized
+- [ ] Epics document status set to "Complete"
+
+### Post-Completion
+
+After completing epics:
+1. Run `/bmad-bmm-check-implementation-readiness` (or its Copilot playbook)
+2. Then proceed to implementation with `/ecc-dev-story` or `/ecc-dev-story-copilot`
+
+---
+
+## Tracking
+
+### Epic Summary
+| Epic | Title | Stories | FRs Covered |
+|------|-------|---------|-------------|
+| | | | |
+
+### Iteration Notes
+<!-- Track changes if you revisit earlier steps -->
+
+    </template-output>
+  </step>
+
+  <!-- ================================================================== -->
+  <!-- STEP 2: Save and Present                                            -->
+  <!-- ================================================================== -->
+
+  <step n="2" goal="Save playbook and inform user" tag="save-playbook">
+    <action>Save the generated playbook to: {output_folder}/implementation-artifacts/copilot-playbook-epics.md</action>
+
+    <output>**Epics Copilot Playbook Generated**
+
+      **File:** `{output_folder}/implementation-artifacts/copilot-playbook-epics.md`
+
+      **Playbook Structure (mirrors 4-step epic creation workflow):**
+      - Step 0: Initialize document
+      - Step 1: Extract requirements from PRD + Architecture
+      - Step 2: Design epic structure (user-value-focused)
+      - Step 3: Create stories per epic (with BDD acceptance criteria)
+      - Step 4: Final validation (adversarial review)
+      - Step 5: Finalize
+
+      **Total prompts:** ~{{prompt_count}} (1 per step + 1 per epic in Step 3)
+
+      **Critical rules embedded in every prompt:**
+      - User-value epics (not technical layers)
+      - No forward dependencies
+      - Just-in-time database creation
+      - Given/When/Then acceptance criteria
+    </output>
+  </step>
+
+</workflow>

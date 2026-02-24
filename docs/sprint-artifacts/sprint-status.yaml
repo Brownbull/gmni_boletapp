@@ -198,44 +198,56 @@ development_status:
   TD-15b-2-dead-code-cleanup: done      # 1 pt  - Delete 10 dead files from shared audit (0 consumers)
   TD-15b-3-single-feature-file-moves: done    # 3 pts - Move 21 single-feature files + 3 non-thin views into feature modules
 
-  # Phase 2: Decomposition (16 stories, ~34 pts)
+  # Phase 2: Decomposition (16->11 stories, ~34->27 pts after 2026-02-23 triage)
+  # Dropped (2026-02-23): 15b-2b (file deleted), 15b-2g/2h (803/804L at target),
+  #   15b-2i (723L below threshold), 15b-2j (682L below threshold)
   # Never-scoped views (target <800)
-  15b-2a-decompose-edit-view: backlog          # 3 pts - EditView 1,811 lines
-  15b-2b-decompose-scan-result-view: backlog   # 3 pts - ScanResultView 1,554 lines
-  15b-2c-decompose-history-view: backlog       # 2 pts - HistoryView 1,168 lines
-  15b-2d-decompose-items-view: backlog         # 2 pts - ItemsView 1,003 lines
+  15b-2a-decompose-edit-view: done             # 3 pts - EditView 1,713 lines
+  TD-15b-2a-editview-items-extraction: done             # 3 pts - Extract items section (AC1 completion, DEPENDS: 15b-2a)
+  TD-15b-4-editviewitems-unit-tests: done              # 2 pts - Unit tests for EditViewItemsSection (from TD-15b-2a review)
+  TD-15b-5-editviewitems-code-quality: done              # 2 pts - Type safety + a11y + DRY polish (from TD-15b-2a review)
+  TD-15b-6-editviewitems-price-consistency: done  # 1 pt  - Original-order form consistency (price + display + i18n + edge cases) (from TD-15b-4+TD-15b-5 reviews)
+  TD-15b-7-editviewitems-input-sanitization: done  # 1 pt  - sanitizeInput() on name/subcategory inputs (from TD-15b-5 review)
+  TD-15b-8-editviewitems-test-file-split: done          # 1 pt  - Split 368-line test file into 2 files under 300 lines (from TD-15b-6 review)
+  TD-15b-9-sanitization-boundary-audit: done           # 2 pts - Align sanitizeItemName/sanitizeSubcategory maxLength constants + Firestore rules audit (from TD-15b-7 review)
+  TD-15b-10-keyboard-nav-test-fix: done                      # 1 pt  - Fix dead predicate in getItemRows — 4 keyboard nav tests pass vacuously (from TD-15b-8 review)
+  TD-15b-11-firestore-rules-hardening: done        # 3 pts - Close catch-all bypass so isValidTransactionWrite actually enforces; evaluate items[] server-side enforcement (from TD-15b-9 review)
+  TD-15b-12-transaction-schema-bounds: ready-for-dev  # 1 pt - Add merchant non-empty + total >= 0 bounds to isValidTransactionWrite (from TD-15b-11 review, LOW)
+  # 15b-2b: DROPPED (2026-02-23) file merged into TEVInternal in prior story
+  15b-2c-decompose-history-view: drafted       # 2 pts - HistoryView 1,083 lines
+  15b-2d-decompose-items-view: drafted         # 2 pts - ItemsView 926 lines
   # Feature-internal large files (target <800)
-  15b-2e-decompose-report-utils: backlog       # 3 pts - reportUtils.ts 2,401 lines
-  15b-2f-decompose-sankey-data-builder: backlog  # 2 pts - sankeyDataBuilder.ts 1,037 lines
-  15b-2g-decompose-sankey-chart: backlog       # 2 pts - SankeyChart.tsx 890 lines
-  15b-2h-decompose-use-scan-store: backlog     # 2 pts - useScanStore.ts 946 lines
-  15b-2i-decompose-drill-down-grid: backlog    # 2 pts - DrillDownGrid.tsx 808 lines
-  15b-2j-decompose-batch-review-handlers: backlog  # 1 pt  - useBatchReviewHandlers.ts 768 lines
-  15b-2k-decompose-history-filter-utils: backlog   # 2 pts - historyFilterUtils.ts 1,075 lines
-  15b-2l-decompose-scan-handlers: backlog      # 2 pts - useScanHandlers.ts 956 lines
+  15b-2e-decompose-report-utils: drafted       # 3 pts - reportUtils.ts 2,093 lines
+  15b-2f-decompose-sankey-data-builder: drafted  # 2 pts - sankeyDataBuilder.ts 906 lines
+  # 15b-2g: DROPPED (2026-02-23) 803 lines, essentially at target
+  # 15b-2h: DROPPED (2026-02-23) 804 lines, essentially at target
+  # 15b-2i: DROPPED (2026-02-23) 723 lines, below 800-line threshold
+  # 15b-2j: DROPPED (2026-02-23) 682 lines, below 800-line threshold
+  15b-2k-decompose-history-filter-utils: drafted   # 2 pts - historyFilterUtils.ts 949 lines
+  15b-2l-decompose-scan-handlers: drafted      # 2 pts - useScanHandlers.ts 861 lines
   # Plateaued views round 2 (target <1,200)
-  15b-2m-trends-view-extraction: backlog       # 3 pts - TrendsView further extraction 1,981 lines
-  15b-2n-dashboard-view-extraction: backlog    # 3 pts - DashboardView further extraction 1,485 lines
-  15b-2o-editor-view-extraction: backlog       # 3 pts - TransactionEditorViewInternal 1,421 lines
-  15b-2p-icon-filter-extraction: backlog       # 2 pts - IconCategoryFilter further extraction 1,106 lines
+  15b-2m-trends-view-extraction: drafted       # 3 pts - TrendsView 1,803 lines
+  15b-2n-dashboard-view-extraction: drafted    # 3 pts - DashboardView 1,358 lines
+  15b-2o-editor-view-extraction: drafted       # 3 pts - TransactionEditorViewInternal 1,317 lines
+  15b-2p-icon-filter-extraction: drafted       # 2 pts - IconCategoryFilter 1,030 lines
 
   # Phase 3: Infrastructure Hardening (7 stories, ~15 pts)
-  15b-3a-dal-transaction-hooks: backlog        # 2 pts - Migrate transaction hooks to TransactionRepository
-  15b-3b-dal-trust-preferences: backlog        # 2 pts - Migrate trust + preferences hooks to repositories
-  15b-3c-dal-records-airlock-insight: backlog   # 3 pts - Migrate records + airlock + insight profile hooks
-  15b-3d-dal-credits-hooks: backlog            # 2 pts - Migrate credits hooks to CreditsRepository
-  15b-3e-dal-remaining-firebase: backlog       # 2 pts - Migrate remaining view/component Firebase imports
-  15b-3f-analytics-context-zustand: backlog    # 2 pts - AnalyticsContext -> Zustand
-  15b-3g-notification-context-zustand: backlog # 2 pts - NotificationContext -> Zustand + HistoryFiltersContext removal
+  15b-3a-dal-transaction-hooks: drafted        # 2 pts - Migrate transaction hooks to TransactionRepository
+  15b-3b-dal-trust-preferences: drafted        # 2 pts - Migrate trust + preferences hooks to repositories
+  15b-3c-dal-records-airlock-insight: drafted   # 3 pts - Migrate records + airlock + insight profile hooks
+  15b-3d-dal-credits-hooks: drafted            # 2 pts - Migrate credits hooks to CreditsRepository
+  15b-3e-dal-remaining-firebase: drafted       # 2 pts - Migrate remaining view/component Firebase imports
+  15b-3f-analytics-context-zustand: drafted    # 2 pts - AnalyticsContext -> Zustand
+  15b-3g-notification-context-zustand: drafted # 2 pts - NotificationContext -> Zustand + HistoryFiltersContext removal
 
   # Phase 4: High-Coupling Architecture (7 stories, ~14 pts)
-  15b-4a-transaction-type-design: backlog      # 2 pts - Design transaction.ts sub-type schema (analysis only)
-  15b-4b-transaction-type-split: backlog       # 2 pts - Split transaction.ts into domain sub-types + re-export shim
-  15b-4c-transaction-consumers-batch1: backlog # 2 pts - Update type consumers (services + repos)
-  15b-4d-transaction-consumers-batch2: backlog # 2 pts - Update type consumers (hooks + features)
-  15b-4e-transaction-consumers-batch3: backlog # 2 pts - Update type consumers (views + components + cleanup)
-  15b-4f-app-tsx-fanout-reduction: backlog     # 3 pts - App.tsx fan-out reduction (extract feature orchestrators)
-  15b-4g-final-dependency-validation: backlog  # 1 pt  - Final dependency graph validation + epic metrics
+  15b-4a-transaction-type-design: drafted      # 2 pts - Design transaction.ts sub-type schema (analysis only)
+  15b-4b-transaction-type-split: drafted       # 2 pts - Split transaction.ts into domain sub-types + re-export shim
+  15b-4c-transaction-consumers-batch1: drafted # 2 pts - Update type consumers (services + repos)
+  15b-4d-transaction-consumers-batch2: drafted # 2 pts - Update type consumers (hooks + features)
+  15b-4e-transaction-consumers-batch3: drafted # 2 pts - Update type consumers (views + components + cleanup)
+  15b-4f-app-tsx-fanout-reduction: drafted     # 3 pts - App.tsx fan-out reduction (extract feature orchestrators)
+  15b-4g-final-dependency-validation: drafted  # 1 pt  - Final dependency graph validation + epic metrics
 
   epic-15b-retrospective: optional
 

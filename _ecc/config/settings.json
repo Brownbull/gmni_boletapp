@@ -1,7 +1,8 @@
 {
+  "enableAllProjectMcpServers": true,
   "permissions": {
     "allow": [
-      "mcp__plugin_superpowers-chrome_*"
+      "mcp__ast-grep_*"
     ]
   },
   "hooks": {
@@ -12,6 +13,16 @@
           {
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/_ecc/hooks/ecc-pre-edit-guard.py\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/_ecc/hooks/ecc-pre-write-guard.py\"",
             "timeout": 5
           }
         ]
@@ -35,6 +46,49 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/_ecc/hooks/ecc-post-edit-typecheck.sh\"",
             "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/_ecc/hooks/ecc-post-memory-notify.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/_ecc/hooks/ecc-session-start.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/_ecc/hooks/ecc-session-budget.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/_ecc/hooks/ecc-session-stop.sh\"",
+            "timeout": 10
           }
         ]
       }
