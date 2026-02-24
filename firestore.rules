@@ -8,20 +8,22 @@ service cloud.firestore {
     // ============================================================================
     match /artifacts/{appId}/users/{userId}/transactions/{transactionId} {
       allow read: if request.auth != null && request.auth.uid == userId;
-      // Validate top-level field lengths on create/update (TD-15b-9)
+      // Validate top-level field lengths on create/update (TD-15b-9, TD-15b-11, TD-15b-12, TD-15b-13)
       allow create, update: if request.auth != null
         && request.auth.uid == userId
-        && isValidTransactionWrite(request.resource.data);
+        && hasValidFieldBounds(request.resource.data);
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Validate top-level transaction field types/lengths on write (TD-15b-9, TD-15b-11, TD-15b-12).
+    // Validate top-level transaction field types/lengths on write (TD-15b-9, TD-15b-11, TD-15b-12, TD-15b-13).
     //
     // Scope of enforcement:
     // - merchant field: non-empty string (1–200 chars) if present (TD-15b-12 added >= 1 bound);
     //   whitespace-only strings (e.g. " ") pass size() >= 1 — CEL has no .trim();
     //   enforcement of non-whitespace content is at the client layer (sanitizeInput).
-    // - total field: non-negative number if present (TD-15b-12 added >= 0 bound); zero is valid
+    // - total field: non-negative and <= 999,999,999 if present (TD-15b-12 added >= 0 bound;
+    //   TD-15b-13 added <= 999999999 upper cap — ≈ ₡1M CLP; single transactions exceeding
+    //   this value are almost certainly data entry errors); zero is valid.
     // - Other scalars (date, category): type enforcement at client layer (sanitize.ts);
     //   string-length validation would require knowing exact max values — tracked as future work.
     // - items[].name / items[].subcategory: NOT validated here — Firestore rules cannot
@@ -31,13 +33,15 @@ service cloud.firestore {
     //   Server-side items[] enforcement options evaluated in TD-15b-11 Dev Notes —
     //   all options exceed story budget; tracked as future work.
     //
-    // Architectural note (TD-15b-11): This function uses optional field guards so it returns
-    // true for documents that lack merchant/total fields (preferences, credits, etc.).
+    // Architectural note (TD-15b-11, TD-15b-13): This function uses optional field guards so it
+    // returns true for documents that lack merchant/total fields (preferences, credits, etc.).
+    // Renamed from isValidTransactionWrite (TD-15b-13): the function is called on ALL
+    // subcollection writes, not just transaction writes — hasValidFieldBounds reflects this.
     // The catch-all user-data rule below also calls this function on create/update, which
     // closes the bypass that previously allowed invalid transaction writes via the wildcard.
-    function isValidTransactionWrite(data) {
+    function hasValidFieldBounds(data) {
       return (!('merchant' in data) || (data.merchant is string && data.merchant.size() >= 1 && data.merchant.size() <= 200))
-        && (!('total' in data) || (data.total is number && data.total >= 0));
+        && (!('total' in data) || (data.total is number && data.total >= 0 && data.total <= 999999999));
     }
 
     // ============================================================================
@@ -51,7 +55,7 @@ service cloud.firestore {
     // ============================================================================
     // User Data Isolation
     // Each user can only access their own data (all subcollections).
-    // create/update requires isValidTransactionWrite to close the catch-all bypass
+    // create/update requires hasValidFieldBounds to close the catch-all bypass
     // (TD-15b-11). The function returns true for non-transaction documents (no
     // merchant/total fields), so preferences, credits, and other subcollections are
     // unaffected. delete is auth-only (request.resource is null on delete — same
@@ -61,7 +65,7 @@ service cloud.firestore {
       allow read: if request.auth != null && request.auth.uid == userId;
       allow create, update: if request.auth != null
         && request.auth.uid == userId
-        && isValidTransactionWrite(request.resource.data);
+        && hasValidFieldBounds(request.resource.data);
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
 

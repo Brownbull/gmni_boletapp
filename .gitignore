@@ -121,6 +121,7 @@ docs/archive/
 # Workflow cost tracking (generated per-environment)
 docs/sprint-artifacts/workflow-costs.csv
 docs/sprint-artifacts/workflow-cost-stats.json
+docs/cost-tracking/session-costs.csv
 
 # Generated dependency diagrams
 dependency-diagrams/
