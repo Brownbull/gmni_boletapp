@@ -253,30 +253,41 @@ describe('EditViewItemsSection', () => {
   });
 
   describe('Keyboard navigation (AC2)', () => {
-    // item rows are div[role="button"] — actual <button> elements are group headers, toggles, and named buttons
-    const getItemRows = () =>
-      screen.getAllByRole('button').filter(el => el.tagName !== 'BUTTON');
+    // item rows are div[role="button"] — actual <button> elements are group headers,
+    // the view toggle buttons, and the Add Item button.
+    // container.querySelectorAll avoids ambiguity from getAllByRole + tagName filter.
+    const getItemRows = (container: HTMLElement) =>
+      Array.from(container.querySelectorAll<HTMLElement>('div[role="button"]'));
 
     it.each(['Enter', ' '])('grouped view: key %s triggers onSetEditingItemIndex', (key) => {
       const props = makeProps();
-      render(<EditViewItemsSection {...props} />);
-      fireEvent.keyDown(getItemRows()[0], { key });
-      expect(props.onSetEditingItemIndex).toHaveBeenCalledWith(expect.any(Number));
+      const { container } = render(<EditViewItemsSection {...props} />);
+      const rows = getItemRows(container);
+      expect(rows.length).toBeGreaterThan(0); // guard: selector must return actual elements
+      fireEvent.keyDown(rows[0], { key });
+      // Grouped view sorts groups alphabetically: Meat (M) < Produce (P).
+      // The first visible row is Steak, which has originalIndex 1 in the items array.
+      expect(props.onSetEditingItemIndex).toHaveBeenCalledWith(1);
     });
 
     it('grouped view: unrelated key does not trigger edit', () => {
       const props = makeProps();
-      render(<EditViewItemsSection {...props} />);
-      fireEvent.keyDown(getItemRows()[0], { key: 'Tab' });
+      const { container } = render(<EditViewItemsSection {...props} />);
+      const rows = getItemRows(container);
+      expect(rows.length).toBeGreaterThan(0); // guard: selector must return actual elements
+      fireEvent.keyDown(rows[0], { key: 'Tab' });
       expect(props.onSetEditingItemIndex).not.toHaveBeenCalled();
     });
 
     it.each(['Enter', ' '])('original view: key %s triggers onSetEditingItemIndex', (key) => {
       const props = makeProps();
-      render(<EditViewItemsSection {...props} />);
+      const { container } = render(<EditViewItemsSection {...props} />);
       fireEvent.click(screen.getByText('Original'));
-      fireEvent.keyDown(getItemRows()[0], { key });
-      expect(props.onSetEditingItemIndex).toHaveBeenCalledWith(expect.any(Number));
+      const rows = getItemRows(container);
+      expect(rows.length).toBeGreaterThan(0); // guard: selector must return actual elements
+      fireEvent.keyDown(rows[0], { key });
+      // Original view renders items in array order: Apple at index 0 is the first row.
+      expect(props.onSetEditingItemIndex).toHaveBeenCalledWith(0);
     });
   });
 });

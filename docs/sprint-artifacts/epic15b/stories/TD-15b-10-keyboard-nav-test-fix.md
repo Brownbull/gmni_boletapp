@@ -1,6 +1,6 @@
 # Tech Debt Story TD-15b-10: Keyboard Navigation Test Fix
 
-**Status:** ready-for-dev
+**Status:** done
 
 > **Source:** ECC Code Review (2026-02-23) on story TD-15b-8
 > **Priority:** MEDIUM | **Estimated Effort:** 1 pt
@@ -32,13 +32,13 @@ The fix requires inspecting the `EditViewItemsSection` source to identify which 
 ## Tasks / Subtasks
 
 ### Task 1: Investigate
-- [ ] 1.1 Read `EditViewItemsSection.tsx` to find the element that handles `onKeyDown` for item row selection
-- [ ] 1.2 Determine the correct query (`getByRole`, `queryAllByRole`, or DOM query) to select item rows
+- [x] 1.1 Read `EditViewItemsSection.tsx` to find the element that handles `onKeyDown` for item row selection
+- [x] 1.2 Determine the correct query (`getByRole`, `queryAllByRole`, or DOM query) to select item rows
 
 ### Task 2: Fix
-- [ ] 2.1 Update `getItemRows` helper with correct selector
-- [ ] 2.2 Tighten `onSetEditingItemIndex` assertion to use specific index (not `expect.any(Number)`) where deterministic
-- [ ] 2.3 Run `npx vitest run src/features/transaction-editor/views/` — all 27 tests pass
+- [x] 2.1 Update `getItemRows` helper with correct selector
+- [x] 2.2 Tighten `onSetEditingItemIndex` assertion to use specific index (not `expect.any(Number)`) where deterministic
+- [x] 2.3 Run `npx vitest run src/features/transaction-editor/views/` — all 27 tests pass
 
 ## Dev Notes
 
@@ -47,3 +47,14 @@ The fix requires inspecting the `EditViewItemsSection` source to identify which 
 - Files affected: `src/features/transaction-editor/views/EditViewItemsSection.grouped.test.tsx`
 - Pre-existing defect — inherited from original file before the split; not a regression of TD-15b-8
 - If item rows use `div[role="button"]`, then `getAllByRole('button')` already includes them and the filter just needs adjustment (e.g., filter by tagName `'DIV'` or use `querySelectorAll('[role="button"]')`)
+
+## Senior Developer Review (ECC) — 2026-02-23
+
+| Field | Value |
+|-------|-------|
+| Date | 2026-02-23 |
+| Agents | code-reviewer (TRIVIAL classification) |
+| Score | 8.5/10 |
+| Outcome | APPROVED |
+| Quick fixes applied | 2 (guard assertions in 3 test locations + file staging) |
+| TD stories created | 0 |
