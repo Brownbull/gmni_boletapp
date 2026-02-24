@@ -208,8 +208,9 @@ development_status:
   TD-15b-5-editviewitems-code-quality: done              # 2 pts - Type safety + a11y + DRY polish (from TD-15b-2a review)
   TD-15b-6-editviewitems-price-consistency: done  # 1 pt  - Original-order form consistency (price + display + i18n + edge cases) (from TD-15b-4+TD-15b-5 reviews)
   TD-15b-7-editviewitems-input-sanitization: done  # 1 pt  - sanitizeInput() on name/subcategory inputs (from TD-15b-5 review)
-  TD-15b-8-editviewitems-test-file-split: ready-for-dev  # 1 pt  - Split 368-line test file into 2 files under 300 lines (from TD-15b-6 review)
+  TD-15b-8-editviewitems-test-file-split: done          # 1 pt  - Split 368-line test file into 2 files under 300 lines (from TD-15b-6 review)
   TD-15b-9-sanitization-boundary-audit: ready-for-dev  # 2 pts - Align sanitizeItemName/sanitizeSubcategory maxLength constants + Firestore rules audit (from TD-15b-7 review)
+  TD-15b-10-keyboard-nav-test-fix: ready-for-dev       # 1 pt  - Fix dead predicate in getItemRows — 4 keyboard nav tests pass vacuously (from TD-15b-8 review)
   # 15b-2b: DROPPED (2026-02-23) file merged into TEVInternal in prior story
   15b-2c-decompose-history-view: drafted       # 2 pts - HistoryView 1,083 lines
   15b-2d-decompose-items-view: drafted         # 2 pts - ItemsView 926 lines
