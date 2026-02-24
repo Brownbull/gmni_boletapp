@@ -1,6 +1,6 @@
 # Tech Debt Story TD-15b-7: EditViewItemsSection Input Sanitization
 
-**Status:** ready-for-dev
+**Status:** done
 
 > **Source:** ECC Code Review (2026-02-23) on story TD-15b-5
 > **Priority:** LOW | **Estimated Effort:** 1 pt
@@ -24,17 +24,24 @@ This is a pre-existing pattern inherited from `EditView.tsx` before the TD-15b-2
 ## Tasks / Subtasks
 
 ### Task 1: Add sanitization to item name inputs
-- [ ] 1.1 Import `sanitizeInput` from `@/utils/sanitize` in `EditViewItemsSection.tsx`
-- [ ] 1.2 Grouped view name input (line ~178): wrap with `sanitizeInput(e.target.value, { maxLength: 100 })`
-- [ ] 1.3 Original-order view name input (line ~230): same
+- [x] 1.1 Import `sanitizeInput` from `@/utils/sanitize` in `EditViewItemsSection.tsx`
+- [x] 1.2 Grouped view name input (line ~178): wrap with `sanitizeInput(e.target.value, { maxLength: 100 })`
+- [x] 1.3 Original-order view name input (line ~230): same
 
 ### Task 2: Add sanitization to subcategory inputs
-- [ ] 2.1 Grouped view subcategory input (line ~181): wrap with `sanitizeInput(e.target.value, { maxLength: 50 })`
-- [ ] 2.2 Original-order view does not render a subcategory input — confirm and document
+- [x] 2.1 Grouped view subcategory input (line ~181): wrap with `sanitizeInput(e.target.value, { maxLength: 50 })`
+- [x] 2.2 Original-order view does not render a subcategory input — confirmed: only name + price + category + delete/confirm buttons
 
 ### Task 3: Verify
-- [ ] 3.1 Run `npm run test:quick` — confirm all pass
-- [ ] 3.2 Run `npx tsc --noEmit` — confirm clean
+- [x] 3.1 Run `npm run test:quick` — confirm all pass (6810/6810, 276 files)
+- [x] 3.2 Run `npx tsc --noEmit` — confirm clean
+
+## Senior Developer Review (ECC)
+
+> **Date:** 2026-02-23 | **Classification:** STANDARD | **Agents:** code-reviewer, security-reviewer
+> **Outcome:** ✅ APPROVED 8.5/10 (code: 8/10, security: 9/10)
+> **Quick fixes applied (3):** sanitizeNumericInput on price inputs, strengthened test assertions to direct index checks, added onerror attribute-injection test
+> **TD created (1):** [TD-15b-9](./TD-15b-9-sanitization-boundary-audit.md) — sanitization maxLength alignment + Firestore rules audit
 
 ## Dev Notes
 

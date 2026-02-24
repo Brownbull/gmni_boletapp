@@ -340,6 +340,98 @@ describe('EditViewItemsSection', () => {
     });
   });
 
+  describe('Input sanitization (TD-15b-7 AC1, AC2)', () => {
+    // AC1: grouped view name — XSS stripped
+    it('grouped view name input — strips XSS before calling handleUpdateItem', () => {
+      const props = makeProps();
+      render(<EditViewItemsSection {...props} editingItemIndex={0} />);
+
+      fireEvent.change(screen.getByPlaceholderText('itemName'), {
+        target: { value: '<script>alert(1)</script>Clean' },
+      });
+
+      // Direct index check: editing item 0 in default fixture
+      const updatedTx = props.onUpdateTransaction.mock.calls[0][0];
+      expect(updatedTx.items[0].name).toBe('Clean');
+    });
+
+    // AC1: grouped view name — maxLength 100 enforced
+    it('grouped view name input — truncates to maxLength 100', () => {
+      const props = makeProps();
+      render(<EditViewItemsSection {...props} editingItemIndex={0} />);
+
+      fireEvent.change(screen.getByPlaceholderText('itemName'), {
+        target: { value: 'a'.repeat(105) },
+      });
+
+      const updatedTx = props.onUpdateTransaction.mock.calls[0][0];
+      expect(updatedTx.items[0].name).toBe('a'.repeat(100));
+    });
+
+    // AC2: grouped view subcategory — XSS stripped
+    it('grouped view subcategory input — strips XSS before calling handleUpdateItem', () => {
+      const props = makeProps();
+      render(<EditViewItemsSection {...props} editingItemIndex={0} />);
+
+      fireEvent.change(screen.getByPlaceholderText('itemSubcat'), {
+        target: { value: '<script>alert(1)</script>Organic' },
+      });
+
+      const updatedTx = props.onUpdateTransaction.mock.calls[0][0];
+      expect(updatedTx.items[0].subcategory).toBe('Organic');
+    });
+
+    // AC2: grouped view subcategory — maxLength 50 enforced
+    it('grouped view subcategory input — truncates to maxLength 50', () => {
+      const props = makeProps();
+      render(<EditViewItemsSection {...props} editingItemIndex={0} />);
+
+      fireEvent.change(screen.getByPlaceholderText('itemSubcat'), {
+        target: { value: 'b'.repeat(55) },
+      });
+
+      const updatedTx = props.onUpdateTransaction.mock.calls[0][0];
+      expect(updatedTx.items[0].subcategory).toBe('b'.repeat(50));
+    });
+
+    // AC1: original-order view name — XSS stripped
+    it('original-order view name input — strips XSS before calling handleUpdateItem', () => {
+      const props = makeProps();
+      render(<EditViewItemsSection {...props} editingItemIndex={0} />);
+
+      fireEvent.click(screen.getByText('Original'));
+
+      fireEvent.change(screen.getByPlaceholderText('itemName'), {
+        target: { value: '<script>alert(1)</script>Cleaned' },
+      });
+
+      const updatedTx = props.onUpdateTransaction.mock.calls[0][0];
+      expect(updatedTx.items[0].name).toBe('Cleaned');
+    });
+
+    // Finding #6: event-handler attribute injection vector
+    it('grouped view name input — strips onerror attribute injection', () => {
+      const props = makeProps();
+      render(<EditViewItemsSection {...props} editingItemIndex={0} />);
+
+      fireEvent.change(screen.getByPlaceholderText('itemName'), {
+        target: { value: '<img onerror=alert(1)>Safe' },
+      });
+
+      const updatedTx = props.onUpdateTransaction.mock.calls[0][0];
+      expect(updatedTx.items[0].name).not.toContain('onerror');
+    });
+
+    // AC2 (original-order view): no subcategory input — Task 2.2 confirmation
+    it('original-order view does not render subcategory input', () => {
+      render(<EditViewItemsSection {...makeProps()} editingItemIndex={0} />);
+
+      fireEvent.click(screen.getByText('Original'));
+
+      expect(screen.queryByPlaceholderText('itemSubcat')).not.toBeInTheDocument();
+    });
+  });
+
   describe('View mode', () => {
     // AC7
     it('renders ItemViewToggle when items.length > 0', () => {

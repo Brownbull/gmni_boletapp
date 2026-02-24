@@ -15,6 +15,7 @@ import type { Language } from '@/utils/translations';
 import { translateItemCategoryGroup, getItemCategoryGroupEmoji } from '@/utils/categoryTranslations';
 import { getItemCategoryGroup, getItemGroupColors } from '@/config/categoryColors';
 import { normalizeItemCategory } from '@/utils/categoryNormalizer';
+import { sanitizeInput, sanitizeNumericInput } from '@/utils/sanitize';
 
 type ItemEditableField = 'name' | 'price' | 'category' | 'subcategory';
 
@@ -176,10 +177,10 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
                                             <ItemContainer key={i} {...containerProps}>
                                                 {editingItemIndex === i ? (
                                                     <div className="p-3 rounded-lg space-y-2" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                                                        <input className="w-full p-2 border rounded-lg text-sm" style={inputStyle} value={item.name} onChange={e => handleUpdateItem(i, 'name', e.target.value)} placeholder={t('itemName')} autoFocus />
-                                                        <input type="number" className="w-full p-2 border rounded-lg text-sm" style={inputStyle} value={item.price} onChange={e => handleUpdateItem(i, 'price', e.target.value)} placeholder={t('price')} />
+                                                        <input className="w-full p-2 border rounded-lg text-sm" style={inputStyle} value={item.name} onChange={e => handleUpdateItem(i, 'name', sanitizeInput(e.target.value, { maxLength: 100 }))} placeholder={t('itemName')} autoFocus />
+                                                        <input type="number" className="w-full p-2 border rounded-lg text-sm" style={inputStyle} value={item.price} onChange={e => handleUpdateItem(i, 'price', sanitizeNumericInput(e.target.value))} placeholder={t('price')} />
                                                         <CategoryCombobox value={(item.category as string) || ''} onChange={(value) => handleUpdateItem(i, 'category', value)} language={language} theme={theme as 'light' | 'dark'} placeholder={t('itemCat')} ariaLabel={t('itemCat')} />
-                                                        <input className="w-full p-2 border rounded-lg text-sm" style={inputStyle} value={item.subcategory || ''} onChange={e => handleUpdateItem(i, 'subcategory', e.target.value)} placeholder={t('itemSubcat')} />
+                                                        <input className="w-full p-2 border rounded-lg text-sm" style={inputStyle} value={item.subcategory || ''} onChange={e => handleUpdateItem(i, 'subcategory', sanitizeInput(e.target.value, { maxLength: 50 }))} placeholder={t('itemSubcat')} />
                                                         <div className="flex justify-end gap-2 pt-1">
                                                             <button onClick={() => handleDeleteItem(i)} className="min-w-10 min-h-10 p-2 rounded-lg flex items-center justify-center" style={{ color: 'var(--error)', backgroundColor: isDark ? 'rgba(248, 113, 113, 0.1)' : 'rgba(239, 68, 68, 0.1)' }} aria-label={t('deleteItem')}><Trash2 size={18} strokeWidth={2} /></button>
                                                             <button onClick={() => onSetEditingItemIndex(null)} className="min-w-10 min-h-10 p-2 rounded-lg flex items-center justify-center" style={{ color: 'var(--success)', backgroundColor: isDark ? 'rgba(34, 197, 94, 0.1)' : 'rgba(34, 197, 94, 0.1)' }} aria-label={t('confirmItem')}><Check size={18} strokeWidth={2} /></button>
@@ -228,10 +229,10 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
                                                 <div className="space-y-2">
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-xs font-medium w-5 text-center flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>{i + 1}.</span>
-                                                        <input className="flex-1 p-2 border rounded-lg text-sm" style={inputStyle} value={item.name} onChange={e => handleUpdateItem(i, 'name', e.target.value)} placeholder={t('itemName')} autoFocus />
+                                                        <input className="flex-1 p-2 border rounded-lg text-sm" style={inputStyle} value={item.name} onChange={e => handleUpdateItem(i, 'name', sanitizeInput(e.target.value, { maxLength: 100 }))} placeholder={t('itemName')} autoFocus />
                                                     </div>
                                                     <div className="flex items-center gap-2 pl-7">
-                                                        <input type="number" step="0.01" className="w-24 p-2 border rounded-lg text-sm" style={inputStyle} value={item.price} onChange={e => handleUpdateItem(i, 'price', e.target.value)} placeholder={t('price')} />
+                                                        <input type="number" step="0.01" className="w-24 p-2 border rounded-lg text-sm" style={inputStyle} value={item.price} onChange={e => handleUpdateItem(i, 'price', sanitizeNumericInput(e.target.value))} placeholder={t('price')} />
                                                         <CategoryBadge category={(item.category as string) || 'Other'} lang={language} mini />
                                                         <div className="flex-1" />
                                                         <button onClick={() => handleDeleteItem(i)} className="min-w-8 min-h-8 p-1 rounded-lg flex items-center justify-center" style={{ color: 'var(--error)', backgroundColor: isDark ? 'rgba(248, 113, 113, 0.1)' : 'rgba(239, 68, 68, 0.1)' }} aria-label={t('deleteItem')}><Trash2 size={14} strokeWidth={2} /></button>
