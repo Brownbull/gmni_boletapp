@@ -135,7 +135,7 @@ describe('EditViewItemsSection', () => {
     });
 
     // Task 2.3 — AC4 (price field uses parseStrictNumber)
-    it('handleUpdateItem price — passes raw value through parseStrictNumber prop', () => {
+    it('handleUpdateItem price — passes sanitized numeric value through parseStrictNumber prop', () => {
       const props = makeProps();
       const parseStrictNumber = vi.fn().mockReturnValue(12.5);
       render(<EditViewItemsSection {...props} editingItemIndex={0} parseStrictNumber={parseStrictNumber} />);

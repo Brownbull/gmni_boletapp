@@ -7,8 +7,34 @@ service cloud.firestore {
     // Simplified after Epic 14c-refactor: Cross-user shared group access removed
     // ============================================================================
     match /artifacts/{appId}/users/{userId}/transactions/{transactionId} {
-      // Owner can read and write their own transactions
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // Validate top-level field lengths on create/update (TD-15b-9)
+      allow create, update: if request.auth != null
+        && request.auth.uid == userId
+        && isValidTransactionWrite(request.resource.data);
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Validate top-level transaction field types/lengths on write (TD-15b-9, TD-15b-10).
+    //
+    // Scope of enforcement:
+    // - merchant field: string, max 200 chars
+    // - total field: must be numeric type if present
+    // - Other scalars (date, category): type enforcement at client layer (sanitize.ts);
+    //   string-length validation would require knowing exact max values — tracked as future work.
+    // - items[].name / items[].subcategory: NOT validated here — Firestore rules cannot
+    //   iterate list elements to check per-item field lengths. Item-level length enforcement
+    //   is handled at the client layer via sanitizeItemName(200)/sanitizeSubcategory(100)
+    //   in sanitize.ts and inline sanitizeInput(100/50) in EditViewItemsSection.tsx.
+    //
+    // Architectural note: The catch-all user-data rule below (match .../{document=**})
+    // also grants write access for authenticated users. Firestore grants access if ANY
+    // matching rule allows it, so this function enforces intent but may be bypassed by
+    // that wildcard. Primary enforcement remains at the client layer (sanitize.ts).
+    // Restructuring rules to remove the overlap is tracked as future work (TD-15b-10).
+    function isValidTransactionWrite(data) {
+      return (!('merchant' in data) || (data.merchant is string && data.merchant.size() <= 200))
+        && (!('total' in data) || data.total is number);
     }
 
     // ============================================================================
