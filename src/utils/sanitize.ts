@@ -134,7 +134,7 @@ export function sanitizeInput(
  *
  * Storage-layer limit: 200 chars. Merchant names originate from user input or AI
  * receipt extraction. The 200-char limit matches the Firestore validation rule
- * added in TD-15b-9 (`isValidTransactionWrite`).
+ * added in TD-15b-9 (`hasValidFieldBounds`, renamed from `isValidTransactionWrite` in TD-15b-13).
  *
  * @param name - The merchant name from user input or AI extraction
  * @returns Sanitized merchant name
