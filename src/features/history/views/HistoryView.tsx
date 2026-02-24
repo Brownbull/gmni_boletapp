@@ -3,6 +3,7 @@
  *
  * Story 9.19: History Transaction Filters
  * Story 14.14: Transaction List Redesign
+ * Story 15b-2c: Decomposed into sub-files
  *
  * Features:
  * - Card-based transaction display with expandable items
@@ -17,19 +18,12 @@
  */
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { Inbox, FileText, ChevronLeft, ChevronRight, Camera, BarChart2, Loader2, Download, AlertTriangle } from 'lucide-react';
-import { ProfileDropdown, ProfileAvatar, getInitials } from '@/components/ProfileDropdown';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { ImageViewer } from '@/components/ImageViewer';
-import { IconFilterBar } from '@features/history/components/IconFilterBar';
-import { TemporalBreadcrumb } from '@features/history/components/TemporalBreadcrumb';
-import { SearchBar } from '@features/history/components/SearchBar';
 // Story 14.15b: Use consolidated TransactionCard from shared transactions folder
 import { TransactionCard } from '@/components/transactions';
 import { DateGroupHeader, groupTransactionsByDate, formatDateGroupLabel, calculateGroupTotal } from '@features/history/components/DateGroupHeader';
-import { FilterChips } from '@features/history/components/FilterChips';
 // Story 14.31 Session 3: Sort control
-import { SortControl } from '@features/history/components/SortControl';
-import type { SortOption } from '@features/history/components/SortControl';
 import { SelectionBar } from '@features/history/components/SelectionBar';
 // Story 14e-5: DeleteTransactionsModal now uses Modal Manager
 import type { TransactionPreview } from '@features/history/components/DeleteTransactionsModal';
@@ -49,8 +43,6 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useSelectionMode } from '@/hooks/useSelectionMode';
 import { getFirestore } from 'firebase/firestore';
 import { deleteTransactionsBatch } from '@/services/firestore';
-// Story 9.12: Category translations (AC #1, #2)
-// Note: Language type now comes from useHistoryViewData hook
 // Story 14.15c: CSV Export utilities
 import { downloadMonthlyTransactions, downloadYearlyStatistics } from '@/utils/csvExport';
 // Story 14e-25d: Direct navigation from store (ViewHandlersContext deleted)
@@ -59,95 +51,26 @@ import { useNavigationActions } from '@/shared/stores';
 import type { View } from '@app/types';
 // Story 14e-25a.2b: HistoryView data hook
 import { useHistoryViewData, type UseHistoryViewDataReturn } from './useHistoryViewData';
-
-// ============================================================================
-// Constants
-// ============================================================================
-
-/**
- * Story 14.14: Page size options for transaction list pagination.
- * Default is 15 items per page, with options to switch to 30 or 60.
- */
-const PAGE_SIZE_OPTIONS = [15, 30, 60] as const;
-type PageSizeOption = typeof PAGE_SIZE_OPTIONS[number];
-const DEFAULT_PAGE_SIZE: PageSizeOption = 15;
-
-/**
- * Story 14.31 Session 3: Sort options for History view.
- * - Date (newest first) - default
- * - Scan date (when scanned/ingresado)
- * - Total (highest/lowest)
- * - Store name (A-Z)
- */
-// Story 14.31: Removed 'scanDate' option - now has dedicated RecentScansView
-type HistorySortKey = 'date' | 'total' | 'merchant';
-const HISTORY_SORT_OPTIONS: SortOption[] = [
-    { key: 'date', labelEn: 'Date', labelEs: 'Fecha' },
-    { key: 'total', labelEn: 'Total', labelEs: 'Total' },
-    { key: 'merchant', labelEn: 'Store', labelEs: 'Tienda' },
-];
-const DEFAULT_HISTORY_SORT_KEY: HistorySortKey = 'date';
-const DEFAULT_HISTORY_SORT_DIRECTION: 'asc' | 'desc' = 'desc';
-
-/**
- * Story 14.31 Session 3: Sort transactions within date groups.
- * When sorting by non-date criteria, items within each date group are sorted.
- * Note: scanDate sort was moved to dedicated RecentScansView.
- */
-function sortTransactionsWithinGroups(
-    txs: Transaction[],
-    sortBy: HistorySortKey,
-    direction: 'asc' | 'desc'
-): Transaction[] {
-    if (sortBy === 'date') {
-        // For date sort, sort all transactions by date
-        return [...txs].sort((a, b) => {
-            const comparison = a.date.localeCompare(b.date);
-            return direction === 'desc' ? -comparison : comparison;
-        });
-    }
-
-    // For non-date sorts, group by date first, then sort within groups
-    const grouped = new Map<string, Transaction[]>();
-    for (const tx of txs) {
-        const date = tx.date;
-        if (!grouped.has(date)) {
-            grouped.set(date, []);
-        }
-        grouped.get(date)!.push(tx);
-    }
-
-    // Sort each group by the selected criteria
-    for (const [_date, groupTxs] of grouped) {
-        groupTxs.sort((a, b) => {
-            let comparison = 0;
-            switch (sortBy) {
-                case 'total':
-                    comparison = a.total - b.total;
-                    break;
-                case 'merchant':
-                    comparison = (a.alias || a.merchant).localeCompare(b.alias || b.merchant);
-                    break;
-            }
-            return direction === 'desc' ? -comparison : comparison;
-        });
-    }
-
-    // Flatten back to array, maintaining date order (newest first by default)
-    const sortedDates = Array.from(grouped.keys()).sort((a, b) => b.localeCompare(a));
-    const result: Transaction[] = [];
-    for (const date of sortedDates) {
-        result.push(...grouped.get(date)!);
-    }
-    return result;
-}
+// Story 14e-25a.2b: Use imported Transaction type from shared types
+import type { Transaction } from '@/types/transaction';
+// Story 15b-2c: Extracted constants, hook, and sub-components
+import {
+    PAGE_SIZE_OPTIONS,
+    DEFAULT_PAGE_SIZE,
+    HISTORY_SORT_OPTIONS,
+    DEFAULT_HISTORY_SORT_KEY,
+    DEFAULT_HISTORY_SORT_DIRECTION,
+    sortTransactionsWithinGroups,
+} from './historyViewConstants';
+import type { HistorySortKey, PageSizeOption } from './historyViewConstants';
+import { useCollapsibleHeader } from './useCollapsibleHeader';
+import { HistoryHeader } from '@features/history/components/HistoryHeader';
+import { HistoryEmptyStates } from '@features/history/components/HistoryEmptyStates';
+import { HistoryPagination } from '@features/history/components/HistoryPagination';
 
 // ============================================================================
 // Types
 // ============================================================================
-
-// Story 14e-25a.2b: Use imported Transaction type from shared types
-import type { Transaction } from '@/types/transaction';
 
 /**
  * Story 14e-25a.2b: HistoryView Props
@@ -220,8 +143,8 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
     const [pageSize, setPageSize] = useState<PageSizeOption>(DEFAULT_PAGE_SIZE);
     // Story 14.14: Internal page state - ignore historyPage prop, manage internally
     const [currentPage, setCurrentPage] = useState(1);
-    // Story 14.14: Collapsible header state
-    const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
+    // Story 15b-2c: Collapsible header extracted to useCollapsibleHeader hook
+    const { isHeaderCollapsed, containerRef, scrollContainerRef } = useCollapsibleHeader();
     // Story 14.15: Selection mode for batch operations
     // Story 14e-25a.2b: Only destructure values actually used
     const {
@@ -257,10 +180,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
         onNavigateToView(view as View);
     }, [onNavigateToView]);
 
-    const lastScrollY = useRef(0);
-    const scrollThreshold = 80; // Pixels to scroll before collapsing (increased for stability)
-    const scrollDeltaThreshold = 15; // Minimum scroll delta to trigger state change
-    const lastCollapseTime = useRef(0); // Debounce timer
     const {
         state: filterState,
         hasActiveFilters,
@@ -273,72 +192,8 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
 
     // Story 14.14: Animation and swipe hooks
     const prefersReducedMotion = useReducedMotion();
-    const containerRef = useRef<HTMLDivElement>(null);
-    const scrollContainerRef = useRef<HTMLElement | null>(null);
     // Story 14.27: Track when "load more" completes to scroll to top
     const wasLoadingMore = useRef(false);
-
-    // Story 14.14: Find scroll parent and set up scroll detection for collapsible header
-    useEffect(() => {
-        // Find the scrolling parent element (main element with overflow-y-auto)
-        const findScrollParent = (element: HTMLElement | null): HTMLElement | null => {
-            if (!element) return null;
-            let parent = element.parentElement;
-            while (parent) {
-                const style = getComputedStyle(parent);
-                if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
-                    return parent;
-                }
-                parent = parent.parentElement;
-            }
-            return null;
-        };
-
-        if (containerRef.current) {
-            scrollContainerRef.current = findScrollParent(containerRef.current);
-        }
-
-        const handleScroll = () => {
-            const scrollContainer = scrollContainerRef.current;
-            const currentScrollY = scrollContainer ? scrollContainer.scrollTop : window.scrollY;
-            const now = Date.now();
-
-            // At top of page - always expand (no debounce)
-            if (currentScrollY <= 10) {
-                setIsHeaderCollapsed(false);
-                lastScrollY.current = currentScrollY;
-                lastCollapseTime.current = now;
-                return;
-            }
-
-            const scrollDelta = currentScrollY - lastScrollY.current;
-            const timeSinceLastChange = now - lastCollapseTime.current;
-
-            // Debounce: wait at least 150ms between state changes to prevent flickering
-            if (timeSinceLastChange < 150) {
-                lastScrollY.current = currentScrollY;
-                return;
-            }
-
-            // Scrolling down past threshold - collapse (require larger delta)
-            if (scrollDelta > scrollDeltaThreshold && currentScrollY > scrollThreshold) {
-                setIsHeaderCollapsed(true);
-                lastCollapseTime.current = now;
-            }
-            // Scrolling up significantly - expand
-            else if (scrollDelta < -scrollDeltaThreshold) {
-                setIsHeaderCollapsed(false);
-                lastCollapseTime.current = now;
-            }
-
-            lastScrollY.current = currentScrollY;
-        };
-
-        // Attach to scroll parent if found, otherwise use window
-        const scrollTarget = scrollContainerRef.current || window;
-        scrollTarget.addEventListener('scroll', handleScroll, { passive: true });
-        return () => scrollTarget.removeEventListener('scroll', handleScroll);
-    }, []);
 
     // Story 14.14 AC #4: Swipe navigation for time periods
     const {
@@ -400,22 +255,18 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
     }, [filteredTransactions, showDuplicatesOnly]);
 
     // Story 9.19 AC #5: Reset pagination when filters change
-    // Use a ref to track if this is the first render or an actual filter change
     const prevFilterStateRef = useRef<string | null>(null);
     useEffect(() => {
         const currentFilterKey = JSON.stringify(filterState);
-        // Only reset if filters actually changed (not on initial render or page navigation)
         if (prevFilterStateRef.current !== null && prevFilterStateRef.current !== currentFilterKey) {
             setCurrentPage(1);
         }
         prevFilterStateRef.current = currentFilterKey;
     }, [filterState]);
 
-    // Story 14.27: Scroll to top when "load more" completes (like turning to next page in a book)
+    // Story 14.27: Scroll to top when "load more" completes
     useEffect(() => {
-        // Detect transition from loading -> not loading
         if (wasLoadingMore.current && !isLoadingMore) {
-            // Loading just finished - scroll to top
             if (scrollContainerRef.current) {
                 scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
@@ -434,7 +285,7 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
         }
     }, []);
 
-    // Story 14.27: Navigate to page and scroll to top (like turning pages in a book)
+    // Story 14.27: Navigate to page and scroll to top
     const goToPage = useCallback((page: number) => {
         setCurrentPage(page);
         scrollToTop();
@@ -446,7 +297,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
     const transactionsToDisplay = showDuplicatesOnly ? duplicateTransactions : filteredTransactions;
     const totalFilteredPages = Math.max(1, Math.ceil(transactionsToDisplay.length / pageSize));
     const paginatedTransactions = useMemo(() => {
-        // Apply sorting first
         const sorted = sortTransactionsWithinGroups(transactionsToDisplay as Transaction[], sortBy, sortDirection);
         const startIndex = (currentPage - 1) * pageSize;
         return sorted.slice(startIndex, startIndex + pageSize);
@@ -491,8 +341,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
     }, []);
 
     // Story 14.15c: Determine export type based on temporal filter level
-    // Month/Week/Day = detailed export with items (FileText icon)
-    // Year/Quarter = statistics export without items (BarChart2 icon)
     const isStatisticsExport = useMemo(() => {
         const level = filterState.temporal.level;
         return level === 'year' || level === 'quarter' || level === 'all';
@@ -509,10 +357,8 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
             const month = filterState.temporal.month?.split('-')[1] || '01';
 
             if (level === 'year' || level === 'quarter' || level === 'all') {
-                // Statistics export - year/quarter view, no items detail
                 downloadYearlyStatistics(filteredTransactions as any, year);
             } else {
-                // Detailed export - month/week/day view, with items detail
                 downloadMonthlyTransactions(filteredTransactions as any, year, month);
             }
         } catch (err) {
@@ -526,7 +372,7 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
     const handleSortChange = useCallback((key: string, direction: 'asc' | 'desc') => {
         setSortBy(key as HistorySortKey);
         setSortDirection(direction);
-        goToPage(1); // Reset to first page when sort changes
+        goToPage(1);
     }, [goToPage]);
 
     // Calculate total item count for stagger animation
@@ -582,8 +428,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
             await deleteTransactionsBatch(db, userId, appId, transactionIds);
             closeModal(); // Story 14e-5: Use Modal Manager to close
             exitSelectionMode();
-            // Story 14e-25a.2b: No onTransactionsDeleted callback needed
-            // Hook data auto-refreshes via Firestore listeners
         } catch (err) {
             console.error('[HistoryView] Failed to delete transactions:', err);
             throw err; // Re-throw so modal can show error
@@ -602,215 +446,37 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
             >
-                {/* Story 14.14: Sticky header section with solid background and collapsible elements */}
-                {/* Story 14.15b: Header height and padding aligned with ReportsView (72px height) */}
-                {/* z-50 ensures header stays above all content when scrolling */}
-                <div
-                    className="sticky px-4"
-                    style={{
-                        top: 0,
-                        zIndex: 50,
-                        backgroundColor: 'var(--bg)',
-                        // Ensure solid background covers scrolling content
-                        boxShadow: isHeaderCollapsed ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
-                    }}
-                >
-                    {/* Fixed height header row - matches ReportsView exactly */}
-                    <div
-                        className="flex items-center justify-between"
-                        style={{
-                            height: '72px',
-                            paddingTop: 'max(env(safe-area-inset-top, 0px), 8px)',
-                        }}
-                    >
-                        {/* Left side: Back button + Title */}
-                        <div className="flex items-center gap-0">
-                            {/* Back button - ChevronLeft style */}
-                            <button
-                                onClick={onBack}
-                                className="min-w-10 min-h-10 flex items-center justify-center -ml-1"
-                                aria-label={lang === 'es' ? 'Volver' : 'Back'}
-                                data-testid="back-button"
-                                style={{ color: 'var(--text-primary)' }}
-                            >
-                                <ChevronLeft size={28} strokeWidth={2.5} />
-                            </button>
-                            <h1
-                                className="font-semibold"
-                                style={{
-                                    fontFamily: 'var(--font-family)',
-                                    color: 'var(--text-primary)',
-                                    fontWeight: 700,
-                                    fontSize: '20px',
-                                }}
-                            >
-                                {t('purchases')}
-                            </h1>
-                            {/* Story 14.13b: Clear all filters button moved to FilterChips component */}
-                        </div>
-                        {/* Right side: Filters + Profile */}
-                        <div className="flex items-center gap-3 relative">
-                            <IconFilterBar
-                                availableFilters={availableFilters}
-                                t={t}
-                                locale={lang}
-                            />
-                            {/* Profile Avatar with Dropdown */}
-                            <ProfileAvatar
-                                ref={profileButtonRef}
-                                initials={getInitials(userName)}
-                                onClick={() => setIsProfileOpen(!isProfileOpen)}
-                            />
-                            <ProfileDropdown
-                                isOpen={isProfileOpen}
-                                onClose={() => setIsProfileOpen(false)}
-                                userName={userName}
-                                userEmail={userEmail}
-                                onNavigate={handleProfileNavigate}
-                                theme={theme}
-                                t={t}
-                                triggerRef={profileButtonRef}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Collapsible section: Search bar, Breadcrumbs, Transaction count, Filter chips */}
-                    {/* Everything except title bar collapses when scrolling down */}
-                    {/* Story 14.31 Session 3: overflow visible when expanded to allow sort dropdown */}
-                    <div
-                        className="transition-all duration-200 ease-out"
-                        style={{
-                            maxHeight: isHeaderCollapsed ? '0px' : '300px',
-                            opacity: isHeaderCollapsed ? 0 : 1,
-                            overflow: isHeaderCollapsed ? 'hidden' : 'visible',
-                            // Use pointer-events to prevent interaction when collapsed
-                            pointerEvents: isHeaderCollapsed ? 'none' : 'auto',
-                        }}
-                    >
-                        {/* Search bar */}
-                        <div className="mb-3">
-                            <SearchBar
-                                value={searchQuery}
-                                onChange={setSearchQuery}
-                                placeholder={lang === 'es' ? 'Buscar transacciones...' : 'Search transactions...'}
-                            />
-                        </div>
-
-                        {/* Temporal breadcrumb navigation - 5 dropdown buttons */}
-                        {/* z-index 40 - lower than IconFilterBar dropdown (z-index 70) */}
-                        <div className="relative" style={{ zIndex: 40 }}>
-                            <TemporalBreadcrumb locale={lang} availableFilters={availableFilters} />
-                        </div>
-
-                        {/* Filter count with duplicate warning, sort control and download button */}
-                        <div
-                            className="flex items-center justify-between py-2"
-                        >
-                            <div className="flex items-center gap-2">
-                                {/* Story 14.13: Duplicate warning icon */}
-                                {hasAnyDuplicates && (
-                                    <button
-                                        onClick={() => {
-                                            setShowDuplicatesOnly(!showDuplicatesOnly);
-                                            setCurrentPage(1); // Reset to page 1 when toggling
-                                        }}
-                                        className={`flex items-center justify-center w-6 h-6 rounded-full transition-all ${
-                                            showDuplicatesOnly ? 'ring-2 ring-offset-1 ring-amber-500' : ''
-                                        }`}
-                                        style={{
-                                            backgroundColor: 'var(--warning-bg, #fef3c7)',
-                                            color: 'var(--warning-text, #d97706)',
-                                        }}
-                                        aria-label={
-                                            showDuplicatesOnly
-                                                ? (lang === 'es' ? 'Mostrar todas las compras' : 'Show all purchases')
-                                                : (lang === 'es' ? `${duplicateCount} posibles duplicados - click para filtrar` : `${duplicateCount} potential duplicates - click to filter`)
-                                        }
-                                        title={
-                                            showDuplicatesOnly
-                                                ? (lang === 'es' ? 'Mostrar todos' : 'Show all')
-                                                : (lang === 'es' ? `${duplicateCount} posibles duplicados` : `${duplicateCount} potential duplicates`)
-                                        }
-                                    >
-                                        <AlertTriangle size={14} />
-                                    </button>
-                                )}
-                                {/* Transaction count - shows filtered or duplicate count */}
-                                <span
-                                    className="text-sm"
-                                    style={{ color: 'var(--text-tertiary)' }}
-                                >
-                                    {showDuplicatesOnly ? duplicateTransactions.length : filteredTransactions.length} {lang === 'es' ? 'compras' : 'purchases'}
-                                </span>
-                                {/* Story 14.31 Session 3: Sort control */}
-                                <SortControl
-                                    options={HISTORY_SORT_OPTIONS}
-                                    currentSort={sortBy}
-                                    sortDirection={sortDirection}
-                                    onSortChange={handleSortChange}
-                                    lang={lang}
-                                />
-                            </div>
-                            {/* Story 14.15c: Download pill - two icons showing type + download action */}
-                            {filteredTransactions.length > 0 && (
-                                <button
-                                    onClick={handleExport}
-                                    disabled={isExporting}
-                                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-colors hover:bg-[var(--bg-tertiary)] disabled:opacity-50"
-                                    style={{
-                                        color: 'var(--text-tertiary)',
-                                        backgroundColor: 'var(--bg-secondary)',
-                                    }}
-                                    aria-label={isStatisticsExport
-                                        ? (lang === 'es' ? 'Descargar estadísticas' : 'Download statistics')
-                                        : (lang === 'es' ? 'Descargar transacciones' : 'Download transactions')
-                                    }
-                                    title={isStatisticsExport
-                                        ? (lang === 'es' ? 'Descargar estadísticas (CSV)' : 'Download statistics (CSV)')
-                                        : (lang === 'es' ? 'Descargar con detalle de productos (CSV)' : 'Download with product details (CSV)')
-                                    }
-                                >
-                                    {/* Type icon: BarChart2 for stats, FileText for detailed */}
-                                    {isStatisticsExport ? (
-                                        <BarChart2 size={16} />
-                                    ) : (
-                                        <FileText size={16} />
-                                    )}
-                                    {/* Download icon or spinner */}
-                                    {isExporting ? (
-                                        <Loader2 size={16} className="animate-spin" />
-                                    ) : (
-                                        <Download size={16} />
-                                    )}
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Story 14.14 AC #3: Filter chips for active filters */}
-                        <FilterChips locale={lang} t={t} />
-
-                        {/* Story 14.13: Duplicate filter chip */}
-                        {showDuplicatesOnly && (
-                            <div className="flex flex-wrap gap-1.5 pb-2">
-                                <button
-                                    onClick={() => {
-                                        setShowDuplicatesOnly(false);
-                                        setCurrentPage(1);
-                                    }}
-                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs"
-                                    style={{
-                                        backgroundColor: 'var(--warning-text, #d97706)',
-                                        color: 'white',
-                                    }}
-                                >
-                                    <AlertTriangle size={10} />
-                                    {lang === 'es' ? 'Duplicados' : 'Duplicates'}
-                                    <span className="text-xs">&times;</span>
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                {/* Story 15b-2c: Header extracted to HistoryHeader component */}
+                <HistoryHeader
+                    lang={lang}
+                    t={t}
+                    onBack={onBack}
+                    userName={userName}
+                    userEmail={userEmail}
+                    isProfileOpen={isProfileOpen}
+                    setIsProfileOpen={setIsProfileOpen}
+                    handleProfileNavigate={handleProfileNavigate}
+                    profileButtonRef={profileButtonRef}
+                    theme={theme}
+                    availableFilters={availableFilters}
+                    isHeaderCollapsed={isHeaderCollapsed}
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    sortBy={sortBy}
+                    sortDirection={sortDirection}
+                    sortOptions={HISTORY_SORT_OPTIONS}
+                    handleSortChange={handleSortChange}
+                    filteredTransactionsLength={filteredTransactions.length}
+                    isStatisticsExport={isStatisticsExport}
+                    isExporting={isExporting}
+                    handleExport={handleExport}
+                    hasAnyDuplicates={hasAnyDuplicates}
+                    duplicateCount={duplicateCount}
+                    showDuplicatesOnly={showDuplicatesOnly}
+                    setShowDuplicatesOnly={setShowDuplicatesOnly}
+                    duplicateTransactionsLength={duplicateTransactions.length}
+                    setCurrentPage={setCurrentPage}
+                />
 
                 {/* Content area with horizontal padding - matches header padding */}
                 <div className="px-3">
@@ -871,71 +537,14 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
                     </div>
                 )}
 
-                {/* Empty state: No transactions at all */}
-                {transactionsToDisplay.length === 0 && !hasActiveFilters && !showDuplicatesOnly && (
-                    <TransitionChild index={0} totalItems={1}>
-                        <div
-                            className="flex flex-col items-center justify-center py-16 text-center"
-                            data-testid="empty-state"
-                        >
-                            <div
-                                className="w-20 h-20 rounded-full flex items-center justify-center mb-5"
-                                style={{ backgroundColor: 'var(--bg-tertiary)' }}
-                            >
-                                <FileText size={40} strokeWidth={1.5} style={{ color: 'var(--text-tertiary)' }} />
-                            </div>
-                            <h2
-                                className="text-lg font-bold mb-2"
-                                style={{ color: 'var(--text-primary)' }}
-                            >
-                                {t('noTransactions')}
-                            </h2>
-                            <p
-                                className="text-sm mb-5 max-w-[240px]"
-                                style={{ color: 'var(--text-secondary)' }}
-                            >
-                                {t('scanFirstReceipt')}
-                            </p>
-                            <button
-                                className="flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-sm text-white"
-                                style={{ backgroundColor: 'var(--primary)' }}
-                                aria-label={t('scanReceipt')}
-                            >
-                                <Camera size={18} />
-                                {t('scanReceipt')}
-                            </button>
-                        </div>
-                    </TransitionChild>
-                )}
-
-                {/* Empty state: No matching filters or no duplicates */}
-                {transactionsToDisplay.length === 0 && (hasActiveFilters || showDuplicatesOnly) && (
-                    <TransitionChild index={0} totalItems={1}>
-                        <div
-                            className="flex flex-col items-center justify-center py-16 text-center"
-                            data-testid="empty-filter-state"
-                        >
-                            <div
-                                className="w-20 h-20 rounded-full flex items-center justify-center mb-5"
-                                style={{ backgroundColor: 'var(--bg-tertiary)' }}
-                            >
-                                <Inbox size={40} strokeWidth={1.5} style={{ color: 'var(--text-tertiary)' }} />
-                            </div>
-                            <h2
-                                className="text-lg font-bold mb-2"
-                                style={{ color: 'var(--text-primary)' }}
-                            >
-                                {t('noMatchingTransactions')}
-                            </h2>
-                            <p
-                                className="text-sm max-w-[240px]"
-                                style={{ color: 'var(--text-secondary)' }}
-                            >
-                                {t('tryDifferentFilters')}
-                            </p>
-                        </div>
-                    </TransitionChild>
-                )}
+                {/* Story 15b-2c: Empty states extracted to HistoryEmptyStates component */}
+                <HistoryEmptyStates
+                    hasActiveFilters={hasActiveFilters}
+                    showDuplicatesOnly={showDuplicatesOnly}
+                    transactionsToDisplayLength={transactionsToDisplay.length}
+                    lang={lang}
+                    t={t}
+                />
 
                 {/* Transaction list with date grouping (Story 14.14 AC #2) */}
                 {filteredTransactions.length > 0 && (
@@ -952,7 +561,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
                                         key={`header-${dateKey}-${currentPage}`}
                                         index={headerIndex}
                                         totalItems={totalItems}
-                                        // Story 14.14: All items animate simultaneously (no stagger)
                                         initialDelayMs={0}
                                         staggerMs={0}
                                     >
@@ -978,7 +586,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
                                             key={`${tx.id}-${currentPage}`}
                                             index={cardIndex}
                                             totalItems={totalItems}
-                                            // Story 14.14: All items animate simultaneously (no stagger)
                                             initialDelayMs={0}
                                             staggerMs={0}
                                         >
@@ -1040,104 +647,22 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
                     </div>
                 )}
 
-                {/* Pagination controls - Updated for filtered results */}
+                {/* Story 15b-2c: Pagination extracted to HistoryPagination component */}
                 {filteredTransactions.length > 0 && (
-                    <div className="flex flex-col items-center gap-3 mt-6">
-                        {/* Page navigation - Story 14.14: Circular buttons with arrows */}
-                        {/* Story 14.27: Scrolls to top on page change (like turning pages in a book) */}
-                        <div className="flex items-center gap-4">
-                            <button
-                                disabled={currentPage === 1}
-                                onClick={() => goToPage(currentPage - 1)}
-                                className="w-11 h-11 rounded-full flex items-center justify-center disabled:opacity-40 transition-colors"
-                                style={{
-                                    backgroundColor: 'var(--surface)',
-                                    border: '1px solid var(--border-light)',
-                                }}
-                                aria-label={t('previousPage')}
-                            >
-                                <ChevronLeft size={20} style={{ color: 'var(--text-primary)' }} />
-                            </button>
-                            <span className="py-2 text-sm min-w-[50px] text-center" style={{ color: 'var(--text-secondary)' }}>
-                                {currentPage} / {totalFilteredPages}
-                            </span>
-                            <button
-                                disabled={currentPage >= totalFilteredPages}
-                                onClick={() => goToPage(currentPage + 1)}
-                                className="w-11 h-11 rounded-full flex items-center justify-center disabled:opacity-40 transition-colors"
-                                style={{
-                                    backgroundColor: 'var(--surface)',
-                                    border: '1px solid var(--border-light)',
-                                }}
-                                aria-label={t('nextPage')}
-                            >
-                                <ChevronRight size={20} style={{ color: 'var(--text-primary)' }} />
-                            </button>
-                        </div>
-                        {/* Story 14.14: Page size selector */}
-                        <div className="flex items-center gap-2" data-testid="page-size-selector">
-                            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                                {lang === 'es' ? 'Por página:' : 'Per page:'}
-                            </span>
-                            {PAGE_SIZE_OPTIONS.map((size) => (
-                                <button
-                                    key={size}
-                                    onClick={() => {
-                                        setPageSize(size);
-                                        goToPage(1); // Reset to first page and scroll to top
-                                    }}
-                                    className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                                        pageSize === size ? 'font-semibold' : ''
-                                    }`}
-                                    style={{
-                                        backgroundColor: pageSize === size ? 'var(--primary)' : 'transparent',
-                                        color: pageSize === size ? 'white' : 'var(--text-secondary)',
-                                    }}
-                                    aria-label={`${lang === 'es' ? 'Mostrar' : 'Show'} ${size} ${lang === 'es' ? 'por página' : 'per page'}`}
-                                    aria-pressed={pageSize === size}
-                                    data-testid={`page-size-${size}`}
-                                >
-                                    {size}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Story 14.27: Load more button for pagination */}
-                        {/* Show when at listener limit and on last page of client-side pagination */}
-                        {/* Scrolls to top after loading completes (useEffect watches isLoadingMore) */}
-                        {isAtListenerLimit && hasMore && currentPage >= totalFilteredPages && (
-                            <button
-                                onClick={onLoadMoreTransactions}
-                                disabled={isLoadingMore}
-                                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors"
-                                style={{
-                                    backgroundColor: 'var(--surface)',
-                                    border: '1px solid var(--border-light)',
-                                    color: 'var(--text-primary)',
-                                }}
-                                data-testid="load-more-transactions"
-                            >
-                                {isLoadingMore ? (
-                                    <>
-                                        <Loader2 size={16} className="animate-spin" />
-                                        <span>{lang === 'es' ? 'Cargando...' : 'Loading...'}</span>
-                                    </>
-                                ) : (
-                                    <span>{lang === 'es' ? 'Cargar más transacciones' : 'Load more transactions'}</span>
-                                )}
-                            </button>
-                        )}
-
-                        {/* Story 14.27: End of history indicator */}
-                        {isAtListenerLimit && !hasMore && currentPage >= totalFilteredPages && (
-                            <span
-                                className="text-xs py-2"
-                                style={{ color: 'var(--text-tertiary)' }}
-                            >
-                                {lang === 'es' ? 'Fin del historial' : 'End of history'}
-                            </span>
-                        )}
-                    </div>
+                    <HistoryPagination
+                        currentPage={currentPage}
+                        totalFilteredPages={totalFilteredPages}
+                        pageSize={pageSize}
+                        goToPage={goToPage}
+                        setPageSize={setPageSize}
+                        lang={lang}
+                        t={t}
+                        isAtListenerLimit={isAtListenerLimit}
+                        hasMore={hasMore}
+                        isLoadingMore={isLoadingMore}
+                        onLoadMoreTransactions={onLoadMoreTransactions}
+                        pageSizeOptions={PAGE_SIZE_OPTIONS}
+                    />
                 )}
                 </div>
 

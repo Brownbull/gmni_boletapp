@@ -4,7 +4,7 @@
 **Phase:** 2 - Decomposition
 **Points:** 2
 **Priority:** HIGH
-**Status:** drafted
+**Status:** done
 
 ## Overview
 
@@ -14,12 +14,12 @@ Decompose `src/features/items/views/ItemsView/ItemsView.tsx` (1,003 lines, 18 ho
 
 ## Functional Acceptance Criteria
 
-- [ ] **AC1:** ItemsView.tsx reduced to <500 lines (from 1,003)
-- [ ] **AC2:** Each extracted file is under 250 lines
-- [ ] **AC3:** Behavior snapshot: all existing tests pass before AND after extraction
-- [ ] **AC4:** No new functionality added -- pure decomposition
-- [ ] **AC5:** `npm run test:quick` passes
-- [ ] **AC6:** Export surface unchanged: `ItemsView`, `ItemsViewProps` still exported from barrel
+- [x] **AC1:** ItemsView.tsx reduced to <500 lines (from 1,003) — now 449 lines
+- [x] **AC2:** Each extracted file is under 250 lines — max is 241 (itemsViewFilters.ts)
+- [x] **AC3:** Behavior snapshot: all existing tests pass before AND after extraction — 277 files, 6833 tests
+- [x] **AC4:** No new functionality added -- pure decomposition
+- [x] **AC5:** `npm run test:quick` passes
+- [x] **AC6:** Export surface unchanged: `ItemsView`, `ItemsViewProps` still exported from barrel
 
 ## Architectural Acceptance Criteria (MANDATORY)
 
@@ -27,31 +27,31 @@ Decompose `src/features/items/views/ItemsView/ItemsView.tsx` (1,003 lines, 18 ho
 
 ### File Location Requirements
 
-- [ ] **AC-ARCH-LOC-1:** All extracted files located within `src/features/items/views/ItemsView/` (same directory as parent)
-- [ ] **AC-ARCH-LOC-2:** Constants/types file at `src/features/items/views/ItemsView/itemsViewConstants.ts`
-- [ ] **AC-ARCH-LOC-3:** Empty state component at `src/features/items/views/ItemsView/ItemsViewEmptyState.tsx`
-- [ ] **AC-ARCH-LOC-4:** Filter helpers at `src/features/items/views/ItemsView/itemsViewFilters.ts`
-- [ ] **AC-ARCH-LOC-5:** Header component at `src/features/items/views/ItemsView/ItemsViewHeader.tsx`
-- [ ] **AC-ARCH-LOC-6:** Pagination component at `src/features/items/views/ItemsView/ItemsViewPagination.tsx`
-- [ ] **AC-ARCH-LOC-7:** Unit tests at `tests/unit/features/items/views/ItemsView/itemsViewFilters.test.ts`
-- [ ] **AC-ARCH-LOC-8:** Barrel file at `src/features/items/views/ItemsView/index.ts` unchanged (still exports `ItemsView`, `useItemsViewData`, types)
+- [x] **AC-ARCH-LOC-1:** All extracted files located within `src/features/items/views/ItemsView/` (same directory as parent)
+- [x] **AC-ARCH-LOC-2:** Constants/types file at `src/features/items/views/ItemsView/itemsViewConstants.ts`
+- [x] **AC-ARCH-LOC-3:** Empty state component at `src/features/items/views/ItemsView/ItemsViewEmptyState.tsx`
+- [x] **AC-ARCH-LOC-4:** Filter helpers at `src/features/items/views/ItemsView/itemsViewFilters.ts`
+- [x] **AC-ARCH-LOC-5:** Header component at `src/features/items/views/ItemsView/ItemsViewHeader.tsx`
+- [x] **AC-ARCH-LOC-6:** Pagination component at `src/features/items/views/ItemsView/ItemsViewPagination.tsx`
+- [x] **AC-ARCH-LOC-7:** Unit tests at `tests/unit/features/items/views/ItemsView/itemsViewFilters.test.ts`
+- [x] **AC-ARCH-LOC-8:** Barrel file at `src/features/items/views/ItemsView/index.ts` unchanged (still exports `ItemsView`, `useItemsViewData`, types)
 
 ### Pattern Requirements
 
-- [ ] **AC-ARCH-PATTERN-1:** Extracted files use `./` relative imports for intra-directory references (e.g., `./itemsViewConstants`)
-- [ ] **AC-ARCH-PATTERN-2:** Extracted files use `@/` or `@features/` aliases for external imports -- zero `../../` relative imports
-- [ ] **AC-ARCH-PATTERN-3:** Pure helper functions in `itemsViewFilters.ts` have NO React imports (pure TypeScript)
-- [ ] **AC-ARCH-PATTERN-4:** Extracted sub-components receive data via props, not hooks -- hooks stay in main `ItemsView.tsx`
-- [ ] **AC-ARCH-PATTERN-5:** Constants file exports ALL constants/types currently defined at module scope in ItemsView.tsx
-- [ ] **AC-ARCH-PATTERN-6:** Test directory mirrors source: `tests/unit/features/items/views/ItemsView/`
+- [x] **AC-ARCH-PATTERN-1:** Extracted files use `./` relative imports for intra-directory references (e.g., `./itemsViewConstants`)
+- [x] **AC-ARCH-PATTERN-2:** Extracted files use `@/` or `@features/` aliases for external imports -- zero `../../` relative imports
+- [x] **AC-ARCH-PATTERN-3:** Pure helper functions in `itemsViewFilters.ts` have NO React imports (pure TypeScript)
+- [x] **AC-ARCH-PATTERN-4:** Extracted sub-components receive data via props, not hooks -- hooks stay in main `ItemsView.tsx`
+- [x] **AC-ARCH-PATTERN-5:** Constants file exports ALL constants/types currently defined at module scope in ItemsView.tsx
+- [x] **AC-ARCH-PATTERN-6:** Test directory mirrors source: `tests/unit/features/items/views/ItemsView/`
 
 ### Anti-Pattern Requirements (Must NOT Happen)
 
-- [ ] **AC-ARCH-NO-1:** No new barrel exports -- extracted files are internal to ItemsView, NOT exported from feature barrel
-- [ ] **AC-ARCH-NO-2:** No hook extraction -- all 18 hooks remain in `ItemsView.tsx` (hook refactoring is separate work)
-- [ ] **AC-ARCH-NO-3:** No new circular dependencies -- `npx madge --circular src/features/items/` returns 0
-- [ ] **AC-ARCH-NO-4:** No behavior changes -- the `filteredItems` useMemo produces identical output before and after
-- [ ] **AC-ARCH-NO-5:** No new external dependencies -- extracted files import only from modules already imported by ItemsView.tsx
+- [x] **AC-ARCH-NO-1:** No new barrel exports -- extracted files are internal to ItemsView, NOT exported from feature barrel
+- [x] **AC-ARCH-NO-2:** No hook extraction -- all 18 hooks remain in `ItemsView.tsx` (hook refactoring is separate work)
+- [x] **AC-ARCH-NO-3:** No new circular dependencies -- `npx madge --circular src/features/items/` returns 0
+- [x] **AC-ARCH-NO-4:** No behavior changes -- the `filteredItems` useMemo produces identical output before and after
+- [x] **AC-ARCH-NO-5:** No new external dependencies -- extracted files import only from modules already imported by ItemsView.tsx
 
 ## File Specification
 
@@ -89,62 +89,40 @@ Decompose `src/features/items/views/ItemsView/ItemsView.tsx` (1,003 lines, 18 ho
 
 ### Task 1: Establish baseline (3 subtasks)
 
-- [ ] 1.1 Run `npm run test:quick` -- record pass count and any pre-existing failures
-- [ ] 1.2 Run `npx tsc --noEmit` -- confirm clean TypeScript compilation
-- [ ] 1.3 Count current lines: `wc -l src/features/items/views/ItemsView/ItemsView.tsx` (expect ~1,003)
+- [x] 1.1 Run `npm run test:quick` -- record pass count and any pre-existing failures — 276 files, 6810 tests pass
+- [x] 1.2 Run `npx tsc --noEmit` -- confirm clean TypeScript compilation
+- [x] 1.3 Count current lines: `wc -l src/features/items/views/ItemsView/ItemsView.tsx` — 1,003 lines
 
 ### Task 2: Extract constants, types, and EmptyState (4 subtasks)
 
-- [ ] 2.1 Create `src/features/items/views/ItemsView/itemsViewConstants.ts`:
-  - Move `PAGE_SIZE_OPTIONS`, `PageSizeOption`, `DEFAULT_PAGE_SIZE`
-  - Move `ItemSortKey`, `ITEM_SORT_OPTIONS`, `DEFAULT_SORT_KEY`, `DEFAULT_SORT_DIRECTION`
-  - Move `ItemsViewProps` interface -- requires importing `UseItemsViewDataReturn` from `./useItemsViewData`
-  - Add needed type imports (`SortOption` from `@features/history/components/SortControl`, `UseItemsViewDataReturn` from `./useItemsViewData`)
-- [ ] 2.2 Create `src/features/items/views/ItemsView/ItemsViewEmptyState.tsx`:
-  - Move `EmptyStateProps` interface and `EmptyState` component
-  - Imports needed: `React`, `Inbox`, `Package` from lucide-react
-- [ ] 2.3 Update `ItemsView.tsx` to import from `./itemsViewConstants` and `./ItemsViewEmptyState`
-- [ ] 2.4 Run `npx tsc --noEmit` -- fix any type errors
+- [x] 2.1 Create `src/features/items/views/ItemsView/itemsViewConstants.ts` (63 lines)
+- [x] 2.2 Create `src/features/items/views/ItemsView/ItemsViewEmptyState.tsx` (60 lines)
+- [x] 2.3 Update `ItemsView.tsx` to import from `./itemsViewConstants` and `./ItemsViewEmptyState`
+- [x] 2.4 Run `npx tsc --noEmit` -- clean
 
 ### Task 3: Extract filter logic as pure functions (4 subtasks)
 
-- [ ] 3.1 Create `src/features/items/views/ItemsView/itemsViewFilters.ts`:
-  - Extract `computeTemporalDateRange(temporal)` -- temporal level to startDate/endDate computation
-  - Extract `applyDrillDownFilters(items, drillDownPath)` -- store/item category multi-dimension filtering
-  - Extract `applyLegacyCategoryFilters(items, categoryState)` -- fallback single-dimension filtering
-  - Export composed `applyAllItemsFilters(baseItems, temporal, category)` calling the three above in sequence
-  - Type imports: `FlattenedItem` from `@/types/item`, category types from `@/config/categoryColors`, `normalizeItemCategory` from `@/utils/categoryNormalizer`, `StoreCategory` from `@/types/transaction`
-  - NO React imports -- pure TypeScript functions only
-- [ ] 3.2 Replace the large `filteredItems` useMemo body in `ItemsView.tsx` with: `useMemo(() => applyAllItemsFilters(baseFilteredItems, filterState.temporal, filterState.category), [baseFilteredItems, filterState.temporal, filterState.category])`
-- [ ] 3.3 Create `tests/unit/features/items/views/ItemsView/itemsViewFilters.test.ts`:
-  - Test `computeTemporalDateRange` for each temporal level (year, quarter, month, week, day, dateRange, none)
-  - Test `applyDrillDownFilters` with storeCategory, storeGroup (including 'other'), itemGroup (including 'other-item'), itemCategory, subcategory
-  - Test `applyLegacyCategoryFilters` with group-level and category-level filter states
-  - Test `applyAllItemsFilters` end-to-end composition (date + category filters combined)
-- [ ] 3.4 Run `npx vitest run tests/unit/features/items/views/ItemsView/` -- all tests pass
+- [x] 3.1 Create `src/features/items/views/ItemsView/itemsViewFilters.ts` (241 lines) — 4 pure functions, no React imports
+- [x] 3.2 Replace filteredItems useMemo body with `applyAllItemsFilters` call
+- [x] 3.3 Create `tests/unit/features/items/views/ItemsView/itemsViewFilters.test.ts` (195 lines) — 23 tests
+- [x] 3.4 Run filter tests — all 23 pass
 
 ### Task 4: Extract header and pagination sub-components (5 subtasks)
 
-- [ ] 4.1 Create `src/features/items/views/ItemsView/ItemsViewHeader.tsx`:
-  - Extract the sticky header `<div>` block as `ItemsViewHeader` component
-  - Define `ItemsViewHeaderProps` interface with all data the header needs: `lang`, `isHeaderCollapsed`, `searchTerm`, `onSearchChange`, `availableFilters`, `t`, `sortBy`, `sortDirection`, `onSortChange`, `aggregatedItemsCount`, `duplicateItemsCount`, `showDuplicatesOnly`, `onToggleDuplicates`, `hasAnyDuplicates`, `hasActiveFilters`, `onClearFilters`, `filterState`, `isExporting`, `onExport`, `onBack`, `userName`, `userEmail`, `isProfileOpen`, `onToggleProfile`, `onCloseProfile`, `onProfileNavigate`, `profileButtonRef`, `theme`
-  - Component-level imports: `SearchBar`, `TemporalBreadcrumb`, `IconFilterBar`, `FilterChips`, `SortControl` from `@features/history/components/`, profile components from `@/components/ProfileDropdown`, lucide icons, `ITEM_SORT_OPTIONS` from `./itemsViewConstants`
-- [ ] 4.2 Create `src/features/items/views/ItemsView/ItemsViewPagination.tsx`:
-  - Extract pagination controls block as `ItemsViewPagination` component
-  - Define `ItemsViewPaginationProps` interface: `currentPage`, `totalPages`, `pageSize`, `onGoToPage`, `onPageSizeChange`, `lang`
-  - Imports: `ChevronLeft`, `ChevronRight` from lucide-react, `PAGE_SIZE_OPTIONS` from `./itemsViewConstants`
-- [ ] 4.3 Update `ItemsView.tsx` to import and render `<ItemsViewHeader>` and `<ItemsViewPagination>` in place of inline JSX
-- [ ] 4.4 Run `npx tsc --noEmit` -- fix any type errors
-- [ ] 4.5 Run `npm run test:quick` -- all tests pass
+- [x] 4.1 Create `src/features/items/views/ItemsView/ItemsViewHeader.tsx` (187 lines) — ~28 props, destructured
+- [x] 4.2 Create `src/features/items/views/ItemsView/ItemsViewPagination.tsx` (91 lines)
+- [x] 4.3 Update `ItemsView.tsx` to import and render extracted components
+- [x] 4.4 Run `npx tsc --noEmit` -- clean
+- [x] 4.5 Run `npm run test:quick` -- 277 files, 6833 tests pass
 
 ### Task 5: Verification and cleanup (6 subtasks)
 
-- [ ] 5.1 Count final lines: `wc -l src/features/items/views/ItemsView/ItemsView.tsx` (target: <500)
-- [ ] 5.2 Count all extracted files: each under 250 lines
-- [ ] 5.3 Verify no circular deps: `npx madge --circular src/features/items/`
-- [ ] 5.4 Verify no `../../` imports: `grep -rE "from '\.\./\.\." src/features/items/views/ItemsView/` returns 0 matches
-- [ ] 5.5 Verify barrel unchanged: `git diff src/features/items/views/ItemsView/index.ts` shows no changes
-- [ ] 5.6 Run `npm run test:quick` -- final pass confirmation
+- [x] 5.1 Count final lines: 449 (target: <500)
+- [x] 5.2 Count all extracted files: max 241 (target: <250 each)
+- [x] 5.3 Verify no circular deps: `npx madge --circular` returns 0
+- [x] 5.4 Verify no `../../` imports: 0 matches
+- [x] 5.5 Verify barrel unchanged: no diff
+- [x] 5.6 Run `npm run test:quick` -- final pass, 277 files, 6833 tests
 
 ## Dev Notes
 
@@ -202,3 +180,4 @@ Decompose `src/features/items/views/ItemsView/ItemsView.tsx` (1,003 lines, 18 ho
 |------|--------|
 | 2026-02-13 | Initial draft from ecc-create-epics-and-stories |
 | 2026-02-23 | Full rewrite: Architecture discovery (read 1,003-line source + all related files), added Architectural ACs (8 LOC + 6 PATTERN + 5 NO), exact file specification (6 new + 1 modified + 8 unchanged), detailed task/subtask breakdown (5 tasks, 22 subtasks), dev notes with 5 critical pitfalls, line count budget. Priority upgraded MEDIUM->HIGH (file exceeds 800-line hook-enforced limit). |
+| 2026-02-24 | ECC Code Review: APPROVE 8.5/10. STANDARD classification (code-reviewer + security-reviewer). 1 quick fix (Spanish accents in Pagination). 6 pre-existing items deferred (all inherited from original 1,003-line file). No regressions, no architectural violations, all 19 ACs pass. |
