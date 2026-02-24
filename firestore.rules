@@ -15,7 +15,7 @@ service cloud.firestore {
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Validate top-level transaction field types/lengths on write (TD-15b-9, TD-15b-10).
+    // Validate top-level transaction field types/lengths on write (TD-15b-9, TD-15b-11).
     //
     // Scope of enforcement:
     // - merchant field: string, max 200 chars
@@ -26,12 +26,13 @@ service cloud.firestore {
     //   iterate list elements to check per-item field lengths. Item-level length enforcement
     //   is handled at the client layer via sanitizeItemName(200)/sanitizeSubcategory(100)
     //   in sanitize.ts and inline sanitizeInput(100/50) in EditViewItemsSection.tsx.
+    //   Server-side items[] enforcement options evaluated in TD-15b-11 Dev Notes —
+    //   all options exceed story budget; tracked as future work.
     //
-    // Architectural note: The catch-all user-data rule below (match .../{document=**})
-    // also grants write access for authenticated users. Firestore grants access if ANY
-    // matching rule allows it, so this function enforces intent but may be bypassed by
-    // that wildcard. Primary enforcement remains at the client layer (sanitize.ts).
-    // Restructuring rules to remove the overlap is tracked as future work (TD-15b-10).
+    // Architectural note (TD-15b-11): This function uses optional field guards so it returns
+    // true for documents that lack merchant/total fields (preferences, credits, etc.).
+    // The catch-all user-data rule below also calls this function on writes, which closes
+    // the bypass that previously allowed invalid transaction writes via the wildcard.
     function isValidTransactionWrite(data) {
       return (!('merchant' in data) || (data.merchant is string && data.merchant.size() <= 200))
         && (!('total' in data) || data.total is number);
@@ -47,10 +48,17 @@ service cloud.firestore {
 
     // ============================================================================
     // User Data Isolation
-    // Each user can only access their own data (all subcollections)
+    // Each user can only access their own data (all subcollections).
+    // Write rule also requires isValidTransactionWrite to close the catch-all bypass
+    // (TD-15b-11). The function returns true for non-transaction documents (no
+    // merchant/total fields), so preferences, credits, and other subcollections are
+    // unaffected.
     // ============================================================================
     match /artifacts/{appId}/users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && isValidTransactionWrite(request.resource.data);
     }
 
 

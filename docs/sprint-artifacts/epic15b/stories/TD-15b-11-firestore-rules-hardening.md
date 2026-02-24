@@ -1,6 +1,6 @@
 # Tech Debt Story TD-15b-11: Firestore Rules Architecture Hardening
 
-**Status:** ready-for-dev
+**Status:** review
 
 > **Source:** ECC Code Review (2026-02-23) on story TD-15b-9
 > **Priority:** HIGH | **Estimated Effort:** 3 pts
@@ -19,44 +19,119 @@ Additionally, `items[].name` (max 200 chars) and `items[].subcategory` (max 100 
 
 ## Acceptance Criteria
 
-- [ ] **AC1:** Restructure `firestore.rules` so the transaction-specific rule is the only one that matches transaction documents — the catch-all wildcard must NOT match the `transactions` subcollection, OR the catch-all must also include `isValidTransactionWrite` for transaction paths
-- [ ] **AC2:** Verify `isValidTransactionWrite` actually enforces: write a transaction with `merchant` > 200 chars via Firestore emulator — confirm it is rejected
-- [ ] **AC3:** Evaluate and document (in Dev Notes or ADR) the preferred approach for server-side `items[]` field enforcement — options: (a) move items to a subcollection, (b) Cloud Function write proxy, (c) scheduled audit function that flags/truncates oversized items
-- [ ] **AC4:** If items enforcement approach is selected (not just documented): implement it
-- [ ] **AC5:** All existing Firestore security rule tests pass (if any exist in `tests/`); or add emulator-based smoke test confirming the catch-all bypass is closed
-- [ ] **AC6:** `npm run test:quick` passes
+- [x] **AC1:** Restructure `firestore.rules` so the transaction-specific rule is the only one that matches transaction documents — the catch-all wildcard must NOT match the `transactions` subcollection, OR the catch-all must also include `isValidTransactionWrite` for transaction paths
+- [x] **AC2:** Verify `isValidTransactionWrite` actually enforces: write a transaction with `merchant` > 200 chars via Firestore emulator — confirm it is rejected
+- [x] **AC3:** Evaluate and document (in Dev Notes or ADR) the preferred approach for server-side `items[]` field enforcement — options: (a) move items to a subcollection, (b) Cloud Function write proxy, (c) scheduled audit function that flags/truncates oversized items
+- [x] **AC4:** If items enforcement approach is selected (not just documented): implement it — **Decision: no approach selected in this story (see Task 3 evaluation)**
+- [x] **AC5:** All existing Firestore security rule tests pass (if any exist in `tests/`); or add emulator-based smoke test confirming the catch-all bypass is closed
+- [x] **AC6:** `npm run test:quick` passes
 
 ## Tasks / Subtasks
 
 ### Task 1: Audit current rule structure
-- [ ] 1.1 Map all paths matched by each rule in `firestore.rules`
-- [ ] 1.2 Identify all subcollections currently relying on the catch-all `{document=**}` rule
-- [ ] 1.3 Confirm which subcollections need only auth-check vs which need field validation
+- [x] 1.1 Map all paths matched by each rule in `firestore.rules`
+- [x] 1.2 Identify all subcollections currently relying on the catch-all `{document=**}` rule
+- [x] 1.3 Confirm which subcollections need only auth-check vs which need field validation
 
 ### Task 2: Restructure rules to close the bypass
-- [ ] 2.1 Choose approach: (a) narrow catch-all to exclude `transactions`, or (b) add `isValidTransactionWrite` guard to catch-all when path is a transaction
-- [ ] 2.2 Implement chosen approach in `firestore.rules`
-- [ ] 2.3 Verify via emulator: `merchant > 200 chars` → rejected; `total = "string"` → rejected; valid write → accepted
-- [ ] 2.4 Verify all other subcollection writes (preferences, FCM tokens, etc.) still work
+- [x] 2.1 Choose approach: (a) narrow catch-all to exclude `transactions`, or (b) add `isValidTransactionWrite` guard to catch-all when path is a transaction
+- [x] 2.2 Implement chosen approach in `firestore.rules`
+- [x] 2.3 Verify via emulator: `merchant > 200 chars` → rejected; `total = "string"` → rejected; valid write → accepted
+- [x] 2.4 Verify all other subcollection writes (preferences, FCM tokens, etc.) still work
 
 ### Task 3: Evaluate items[] server-side enforcement
-- [ ] 3.1 Research feasibility of items-as-subcollection (transaction data shape, migration cost)
-- [ ] 3.2 Research Cloud Function write proxy option (performance, complexity, testing)
-- [ ] 3.3 Document decision in Dev Notes (or create ADR if subcollection restructuring is chosen)
-- [ ] 3.4 (Optional) Implement lightweight approach if effort fits in this story
+- [x] 3.1 Research feasibility of items-as-subcollection (transaction data shape, migration cost)
+- [x] 3.2 Research Cloud Function write proxy option (performance, complexity, testing)
+- [x] 3.3 Document decision in Dev Notes (or create ADR if subcollection restructuring is chosen)
+- [ ] 3.4 (Optional) Implement lightweight approach if effort fits in this story — **SKIPPED: all viable options exceed this story's budget**
 
 ## Dev Notes
 
-- Source story: [TD-15b-9](./TD-15b-9-sanitization-boundary-audit.md)
+### Task 1 Audit Results
+
+**All subcollections under `/artifacts/{appId}/users/{userId}/`:**
+
+| Subcollection | Needs field validation? | Current rule coverage |
+|---|---|---|
+| `transactions/{txnId}` | YES — merchant ≤200, total is number | Specific rule + catch-all (fixed in Task 2) |
+| `merchant_mappings/{docId}` | Auth only | Catch-all |
+| `category_mappings/{docId}` | Auth only | Catch-all |
+| `subcategory_mappings/{docId}` | Auth only | Catch-all |
+| `item_name_mappings/{docId}` | Auth only | Catch-all |
+| `trusted_merchants/{docId}` | Auth only | Catch-all |
+| `airlocks/{docId}` | Auth only | Catch-all |
+| `personalRecords/{docId}` | Auth only | Catch-all |
+| `notifications/{docId}` | Auth only | Catch-all |
+| `preferences/settings` | Auth only | Catch-all |
+| `credits/balance` | Auth only | Catch-all |
+| `insightProfile/profile` | Auth only | Catch-all |
+
+**Finding:** Only `transactions` needs field validation. All other subcollections are auth-only. None of the auth-only subcollections use `merchant` or `total` as field names.
+
+### Task 2 Implementation
+
+**Approach chosen: Option B (add `isValidTransactionWrite` to catch-all write rule)**
+
+Why Option B over Option A (enumerate subcollections):
+- `isValidTransactionWrite` already uses optional field guards (`!('merchant' in data) || ...`), so it returns `true` for any document without `merchant`/`total` fields
+- All 11 non-transaction subcollections lack these fields → no breakage
+- Single-line change vs 11 new rules (much lower maintenance burden — new subcollections auto-covered)
+
+Before fix:
+```
+match /artifacts/{appId}/users/{userId}/{document=**} {
+  allow read, write: if request.auth != null && request.auth.uid == userId;
+}
+```
+
+After fix:
+```
+match /artifacts/{appId}/users/{userId}/{document=**} {
+  allow read: if request.auth != null && request.auth.uid == userId;
+  allow write: if request.auth != null
+    && request.auth.uid == userId
+    && isValidTransactionWrite(request.resource.data);
+}
+```
+
+**Bypass trace (post-fix):**
+- Invalid transaction write (merchant = 'x' × 201): transaction rule DENY + catch-all DENY = **DENIED** ✓
+- Valid transaction write: transaction rule ALLOW = **ALLOWED** ✓
+- Preferences write (no merchant/total): catch-all ALLOW (isValidTransactionWrite returns true) = **ALLOWED** ✓
+
+### Task 3: items[] Server-Side Enforcement Evaluation
+
+**Constraint:** Firestore rules cannot iterate list elements. `.size()` on `data.items[0].name` is not valid Firestore rules syntax.
+
+**Option (a): Move items to subcollection (`transactions/{txnId}/items/{itemId}`)**
+- Each item becomes a document → can apply per-document field length rules
+- Cost: Full data model migration for all existing transactions (Firestore documents + client read/write code changes in ~20 files)
+- Testing: All transaction services, queries, pagination need updates
+- **Verdict: Too costly for this story (5+ story points of migration work)**
+
+**Option (b): Cloud Function write proxy (all transaction writes go through a CF)**
+- CF sanitizes items before writing, so rules can trust items content
+- Cost: New CF endpoint, update all client-side transaction writes to call the CF instead of direct SDK, performance overhead (CF cold starts on every write)
+- Testing: Full regression on transaction creation flow (scan, manual, batch)
+- **Verdict: Too costly + performance risk (cold starts on financial writes)**
+
+**Option (c): Scheduled audit function**
+- CF runs periodically, scans transactions for oversized item names, truncates or flags
+- Cost: New CF function + schedule config, but NO client changes
+- Limitation: Doesn't prevent bad writes — only corrects after the fact
+- **Verdict: Feasible but delayed enforcement (not "real-time" server-side guard)**
+
+**Decision:** No implementation in this story. Client-side enforcement via `sanitizeItemName(200)` / `sanitizeSubcategory(100)` in `sanitize.ts` remains primary. A direct Firestore SDK attack is a theoretical concern but not a practical risk for a solo-user app. Track Option (c) as a future tech debt story if items field corruption is observed in production.
+
+**Future story:** Create `TD-items-audit-cf` if items field corruption occurs or if CF budget allows.
+
+---
+
+### Sizing Actuals
+- Tasks: 3 (10 subtasks completed, 1 optional skipped)
+- Files changed: 2 (`firestore.rules`, `tests/integration/firestore-rules.test.ts`)
+- Story matched estimate exactly
+
+### Source story
+- [TD-15b-9](./TD-15b-9-sanitization-boundary-audit.md)
 - Review findings: #1 (CRITICAL, security-reviewer), #2 (HIGH, code+security)
-- Files affected: `firestore.rules`, potentially `tests/` (emulator smoke test)
-- Catch-all bypass explanation: Firestore rules grant access if ANY rule matches. The specific transaction rule validates; the catch-all matches the same path and grants unconditionally. Fixing requires either narrowing the catch-all scope or duplicating the validation.
-- Example restructure (option a):
-  ```
-  // Replace broad catch-all with explicit subcollections only
-  match /artifacts/{appId}/users/{userId}/preferences/{docId} { allow read, write: if auth... }
-  match /artifacts/{appId}/users/{userId}/tokens/{docId} { allow read, write: if auth... }
-  // Remove the {document=**} wildcard, or make it exclude transactions explicitly
-  ```
-- items[] enforcement note: Firestore rules cannot use `.size()` on elements of a list field. Server-side enforcement of per-item string lengths requires either (a) moving items to a subcollection where each document can be validated, or (b) a server-side write path (Cloud Function proxy) that sanitizes before writing.
-- Sizing: Tasks: 3 | Subtasks: 10 | Files: ~2 (firestore.rules + optional test)

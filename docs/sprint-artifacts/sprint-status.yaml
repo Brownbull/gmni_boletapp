@@ -211,7 +211,7 @@ development_status:
   TD-15b-8-editviewitems-test-file-split: done          # 1 pt  - Split 368-line test file into 2 files under 300 lines (from TD-15b-6 review)
   TD-15b-9-sanitization-boundary-audit: done           # 2 pts - Align sanitizeItemName/sanitizeSubcategory maxLength constants + Firestore rules audit (from TD-15b-7 review)
   TD-15b-10-keyboard-nav-test-fix: done                      # 1 pt  - Fix dead predicate in getItemRows — 4 keyboard nav tests pass vacuously (from TD-15b-8 review)
-  TD-15b-11-firestore-rules-hardening: ready-for-dev   # 3 pts - Close catch-all bypass so isValidTransactionWrite actually enforces; evaluate items[] server-side enforcement (from TD-15b-9 review)
+  TD-15b-11-firestore-rules-hardening: review     # 3 pts - Close catch-all bypass so isValidTransactionWrite actually enforces; evaluate items[] server-side enforcement (from TD-15b-9 review)
   # 15b-2b: DROPPED (2026-02-23) file merged into TEVInternal in prior story
   15b-2c-decompose-history-view: drafted       # 2 pts - HistoryView 1,083 lines
   15b-2d-decompose-items-view: drafted         # 2 pts - ItemsView 926 lines
