@@ -15,11 +15,13 @@ service cloud.firestore {
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Validate top-level transaction field types/lengths on write (TD-15b-9, TD-15b-11).
+    // Validate top-level transaction field types/lengths on write (TD-15b-9, TD-15b-11, TD-15b-12).
     //
     // Scope of enforcement:
-    // - merchant field: string, max 200 chars
-    // - total field: must be numeric type if present
+    // - merchant field: non-empty string (1–200 chars) if present (TD-15b-12 added >= 1 bound);
+    //   whitespace-only strings (e.g. " ") pass size() >= 1 — CEL has no .trim();
+    //   enforcement of non-whitespace content is at the client layer (sanitizeInput).
+    // - total field: non-negative number if present (TD-15b-12 added >= 0 bound); zero is valid
     // - Other scalars (date, category): type enforcement at client layer (sanitize.ts);
     //   string-length validation would require knowing exact max values — tracked as future work.
     // - items[].name / items[].subcategory: NOT validated here — Firestore rules cannot
@@ -34,8 +36,8 @@ service cloud.firestore {
     // The catch-all user-data rule below also calls this function on create/update, which
     // closes the bypass that previously allowed invalid transaction writes via the wildcard.
     function isValidTransactionWrite(data) {
-      return (!('merchant' in data) || (data.merchant is string && data.merchant.size() <= 200))
-        && (!('total' in data) || data.total is number);
+      return (!('merchant' in data) || (data.merchant is string && data.merchant.size() >= 1 && data.merchant.size() <= 200))
+        && (!('total' in data) || (data.total is number && data.total >= 0));
     }
 
     // ============================================================================
