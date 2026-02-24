@@ -1,10 +1,10 @@
 {
-  "date": "2026-02-23",
+  "date": "2026-02-24",
   "workflow": "ecc-code-review",
-  "story": "TD-15b-10",
-  "total_unit_files": 1,
-  "total_unit_tests": 14,
-  "unit_passed": 14,
+  "story": "TD-15b-12",
+  "total_unit_files": 276,
+  "total_unit_tests": 6810,
+  "unit_passed": 6810,
   "unit_failed": 0,
   "integration_files": 0,
   "integration_passed": 0,
@@ -12,5 +12,5 @@
   "integration_failure_reason": "",
   "coverage_by_module": {},
   "failed_tests": [],
-  "notes": "Keyboard nav test fix. All 14 tests pass. Guard assertions added (rows.length > 0) in 3 locations. File staged."
+  "notes": "Schema bounds hardening. 5 quick fixes applied (whitespace comment, fractional test, test setup refactor, style fix, AC4 comment). test:quick all green."
 }
