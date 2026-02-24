@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
-"""ECC PreToolUse Guard for Edit — Anti-pattern detection.
+"""ECC PreToolUse Guard for Edit — Anti-pattern detection + file size enforcement.
 
 Reads tool input JSON from stdin. Checks for known anti-patterns.
-Exit 0 = allow (no issues). Exit 1 = non-blocking warning.
+Exit 0 = allow (no issues).
+Exit 1 = non-blocking warning.
+Exit 2 = BLOCK (edit rejected — file exceeds 800-line hard limit).
 
-Hooks (from ECC-LEARNING-CYCLE-IMPROVEMENTS.md Section 2):
-  1. console.log in code
-  2. Explicit "any" type
-  3. Large file edit (>500 lines)
-  4. Unit test >300 lines
-  5. Integration test >500 lines
-  6. E2E test >400 lines
+Checks:
+  1. console.log in code → warn
+  2. Explicit "any" type → warn
+  3. File size >500 lines → warn
+  4. File size >800 lines → BLOCK
+  5. Test file size limits → warn (unit >300, integration >500, e2e >400)
+  6. Churn count >20 → warn, >40 → BLOCK (A4 / L2-004 gravity well)
+  7. E2E anti-patterns → warn (bare text selectors, long timeouts, networkidle)
 """
 import json
 import os
+import re
+import subprocess
 import sys
 
 
@@ -49,7 +54,16 @@ def main():
         except OSError:
             line_count = 0
 
-        # 3. Large file (>500 lines)
+        # 3a. BLOCK at 800 lines — hard limit, edit rejected
+        if line_count > 800:
+            print(
+                f"\u26a0\ufe0f  BLOCKED: {os.path.basename(file_path)} is {line_count} lines "
+                f"(max 800). Split this file before adding more code.",
+                file=sys.stderr,
+            )
+            sys.exit(2)  # BLOCK — edit rejected
+
+        # 3b. Warn at 500 lines
         if line_count > 500:
             warnings.append(
                 f"\u26a0\ufe0f  Editing large file ({line_count} lines >500). Consider refactoring first."
@@ -82,6 +96,43 @@ def main():
                     "Per E2E-TEST-CONVENTIONS.md, consider splitting journey."
                 )
 
+    # Churn count check (A4 / L2-004) — gravity-well detection
+    # Exempt: sprint-status files are expected to have many commits (one per story completion)
+    _churn_exempt = {"sprint-status.yaml", "sprint-status_epics1to13.yaml"}
+    if file_path and os.path.isfile(file_path) and os.path.basename(file_path) not in _churn_exempt:
+        try:
+            repo_result = subprocess.run(
+                ["git", "rev-parse", "--show-toplevel"],
+                capture_output=True, text=True,
+                cwd=os.path.dirname(os.path.abspath(file_path)) or ".",
+                timeout=5,
+            )
+            if repo_result.returncode == 0:
+                repo_root = repo_result.stdout.strip()
+                churn_result = subprocess.run(
+                    ["git", "log", "--follow", "--oneline", "--", file_path],
+                    capture_output=True, text=True, cwd=repo_root, timeout=5,
+                )
+                touch_count = (
+                    len(churn_result.stdout.strip().splitlines())
+                    if churn_result.returncode == 0
+                    else 0
+                )
+                if touch_count >= 40:
+                    print(
+                        f"\u26d4 BLOCKED: {os.path.basename(file_path)} modified {touch_count} times. "
+                        "Gravity well. Create a refactor story before modifying further.",
+                        file=sys.stderr,
+                    )
+                    sys.exit(2)
+                elif touch_count >= 20:
+                    warnings.append(
+                        f"\u26a0\ufe0f  CHURN: {os.path.basename(file_path)} modified {touch_count} times. "
+                        "Consider a refactor story before this change."
+                    )
+        except Exception:
+            pass  # git unavailable or not a repo — skip
+
     # 7-9. E2E anti-pattern detection (only for e2e spec files)
     if "e2e" in file_path and file_path.endswith(".spec.ts"):
         # 7. Bare text=Ajustes selector (matches 2 elements in strict mode)
@@ -92,7 +143,6 @@ def main():
             )
 
         # 8. Long fixed timeouts for async operations
-        import re
         long_timeouts = re.findall(r"waitForTimeout\((\d+)\)", new_string)
         for timeout_ms in long_timeouts:
             if int(timeout_ms) >= 3000:
@@ -106,6 +156,16 @@ def main():
             warnings.append(
                 "\u26a0\ufe0f  E2E: 'networkidle' never resolves with Firebase WebSocket. "
                 "Use waitForSelector for specific elements instead."
+            )
+
+    # Playwright config parallelism check (D-003 / L2-007)
+    # Parallel E2E = shared staging data corruption.
+    if "playwright.config" in file_path:
+        if re.search(r"workers\s*:\s*[2-9]", new_string) or \
+           re.search(r"fullyParallel\s*:\s*true", new_string):
+            warnings.append(
+                "E2E: Parallel test execution detected in playwright config. "
+                "Run serially (fullyParallel: false, workers: 1) to prevent shared staging data corruption."
             )
 
     if warnings:

@@ -1,418 +1,53 @@
-<workflow>
+<workflow id="deploy-story" name="Deploy Story">
   <critical>The workflow execution engine is governed by: {project-root}/_bmad/core/tasks/workflow.xml</critical>
   <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
-  <critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
-
+  <critical>Communicate all responses in {communication_language} tailored to {user_skill_level}</critical>
   <critical>This workflow deploys a completed story through the 2-branch PR-based pipeline</critical>
   <critical>NEVER push directly to develop or main - always use PRs via `gh pr create` + `gh pr merge`</critical>
   <critical>NEVER use `git merge` to merge into protected branches - use `gh pr merge` instead</critical>
   <critical>Pre-deployment validation is REQUIRED before production deployment</critical>
 
-  <step n="0" goal="Firebase MCP pre-flight check">
-    <critical>Firebase MCP tools are needed for post-deployment verification (rules, functions, logs).
-      Check if Firebase MCP is enabled before starting the deployment pipeline.</critical>
+  <!--
+  STEP PROCESSING RULES (read before executing any step):
+  1. Load ONE step file at a time - read entirely before executing
+  2. Execute steps in checklist order - no skipping or reordering
+  3. HALT at every <ask> tag - wait for user response before continuing
+  4. Mark each step [x] in the checklist BEFORE loading the next step
+  5. After compaction: re-read THIS file to find your current position
 
-    <action>Read {project-root}/.mcp.json</action>
-    <action>Check if mcpServers.firebase.disabled == true</action>
+  PIPELINE: feature-branch -> develop (squash PR) -> main (merge PR) -> Firebase auto-deploy
 
-    <check if="firebase.disabled is true">
-      <output>**FIREBASE MCP DISABLED**
+  PROGRESS CHECKLIST - update [x] as each step completes:
+  - [ ] Step 0: Preflight               -> steps/step-00-preflight.md
+  - [ ] Step 1: Validation              -> steps/step-01-validation.md
+  - [ ] Step 2: PR to develop           -> steps/step-02-pr-develop.md
+  - [ ] Step 3: PR to main              -> steps/step-03-pr-main.md
+  - [ ] Step 4: Firebase Deploy          -> steps/step-04-firebase-deploy.md
+  - [ ] Step 5: Cleanup and Complete     -> steps/step-05-cleanup-and-complete.md
+  -->
 
-        The Firebase MCP server is disabled in `.mcp.json`.
-        It is needed for post-deployment verification (security rules, function logs, etc.).
-
-        To enable it:
-        1. Set `"disabled": false` in `.mcp.json` under `mcpServers.firebase`
-        2. Restart the Claude Code session for MCP changes to take effect
-
-        The `firebase deploy` CLI command will work either way, but you will not
-        have access to Firebase MCP tools for verification after deployment.</output>
-      <ask>Continue deployment without Firebase MCP tools? [Y/N]</ask>
-      <check if="user says N">
-        <action>Update {project-root}/.mcp.json: set mcpServers.firebase.disabled = false</action>
-        <output>Firebase MCP enabled in `.mcp.json`. **Please restart the session** and re-run `/deploy-story`.</output>
-        <action>EXIT workflow</action>
-      </check>
-      <check if="user says Y">
-        <output>Proceeding without Firebase MCP tools. Post-deployment verification will be limited to CLI.</output>
-      </check>
-    </check>
-
-    <check if="firebase.disabled is false or firebase entry not found">
-      <output>Firebase MCP: available</output>
-    </check>
+  <step n="0" goal="Firebase MCP pre-flight + story verification + branch guard" tag="preflight">
+    <action>Load, read completely, and execute steps/step-00-preflight.md</action>
   </step>
 
-  <step n="1" goal="Verify story is ready for deployment">
-    <action>If {{story_path}} not provided, ask user which story to deploy</action>
-    <action>Read COMPLETE story file</action>
-    <action>Extract {{story_key}} from filename</action>
-    <action>Extract story Status field</action>
-
-    <check if="story status != 'done'">
-      <output>**DEPLOYMENT BLOCKED**
-
-        Story status is "{{story_status}}" - must be "done" to deploy.
-
-        Run `code-review` first to complete the story.</output>
-      <action>EXIT workflow</action>
-    </check>
-
-    <action>Run `git status --porcelain` to check for uncommitted changes</action>
-    <check if="uncommitted changes exist">
-      <output>**WARNING: Uncommitted Changes Detected**
-
-        Please commit or stash changes before deployment.</output>
-      <ask>Commit changes now? [Y/N]</ask>
-      <check if="user says Y">
-        <action>Stage relevant files with `git add` (specific files, not -A)</action>
-        <action>Run `git commit -m "chore: pre-deployment cleanup for {{story_key}}"`</action>
-      </check>
-      <check if="user says N">
-        <output>Deployment cancelled. Commit changes and retry.</output>
-        <action>EXIT workflow</action>
-      </check>
-    </check>
-
-    <action>Detect current branch with `git branch --show-current`</action>
-    <action>Set {{current_branch}} = result</action>
-
-    <check if="{{current_branch}} == 'main' OR {{current_branch}} == 'develop'">
-      <output>**DEPLOYMENT BLOCKED**
-
-        You are on a protected branch ({{current_branch}}).
-        Deployments must originate from a feature/fix/chore branch.
-
-        Create a feature branch first: `git checkout -b feature/...`</output>
-      <action>EXIT workflow</action>
-    </check>
-
-    <output>**Story Ready for Deployment**
-
-      **Story:** {{story_key}}
-      **Current Branch:** {{current_branch}}
-      **Status:** done
-
-      Deployment pipeline: {{current_branch}} -> develop (squash PR) -> main (merge PR)</output>
+  <step n="1" goal="Pre-deployment validation" tag="validation">
+    <action>Load, read completely, and execute steps/step-01-validation.md</action>
   </step>
 
-  <step n="2" goal="Pre-deployment validation">
-    <critical>Validate deployment against project patterns before any PRs</critical>
-
-    <action>Load project patterns from {project-root}/_ecc/knowledge/code-review-patterns.md</action>
-    <action>Load architecture docs from {project-root}/docs/architecture/</action>
-
-    <output>**Pre-Deployment Validation**
-
-      Checking alignment with documented architecture and patterns...</output>
-
-    <!-- Cross-cutting impact analysis -->
-    <action>Identify workflows affected by this story's changes:
-      1. Parse story acceptance criteria for user journey references
-      2. Map file changes to affected features
-      3. Identify downstream impacts
-    </action>
-
-    <!-- Architectural alignment -->
-    <action>Check implementation against architecture docs:
-      1. Verify patterns used match documented ADRs
-      2. Check for undocumented architectural decisions
-      3. Flag any deviations from standards
-    </action>
-
-    <check if="critical architectural conflicts found">
-      <output>**DEPLOYMENT BLOCK**
-
-        Critical architectural conflicts detected:
-        {{conflict_list}}
-
-        Resolve these issues before deployment.</output>
-      <ask>Override deployment block? (Not recommended) [Y/N]</ask>
-      <check if="user says N">
-        <action>EXIT workflow</action>
-      </check>
-      <check if="user says Y">
-        <action>Log override decision</action>
-        <output>Deployment block overridden by user. Proceeding with caution.</output>
-      </check>
-    </check>
-
-    <output>**Validation: PASSED**
-
-      Patterns validated: {{chain_count}}
-      Architectural alignment: Confirmed
-      Downstream impacts: {{impact_summary}}</output>
+  <step n="2" goal="Create PR to develop (squash merge)" tag="pr-develop">
+    <action>Load, read completely, and execute steps/step-02-pr-develop.md</action>
   </step>
 
-  <step n="3" goal="Create PR to develop (squash merge)">
-    <action>Run `git fetch origin`</action>
-    <action>Run `git push -u origin {{current_branch}}`</action>
-
-    <output>**Step 1/2: PR to develop**
-
-      Creating PR: {{current_branch}} -> develop (squash merge)
-
-      This integrates your feature into the development branch.</output>
-
-    <ask>Proceed with PR to develop? [Y/N]</ask>
-    <check if="user says N">
-      <output>Deployment paused. Resume when ready.</output>
-      <action>EXIT workflow</action>
-    </check>
-
-    <action>Run `gh pr create --base develop --title "{{story_key}}: {{story_title}}" --body "## Summary
-
-{{story_summary}}
-
-## Story
-{{story_key}}
-
-## Acceptance Criteria
-{{acceptance_criteria_summary}}
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"`</action>
-
-    <action>Set {{develop_pr_url}} = PR URL from output</action>
-
-    <output>**PR Created:** {{develop_pr_url}}
-
-      Waiting for CI checks to pass...</output>
-
-    <action>Run `gh pr checks {{develop_pr_url}} --watch` to wait for CI</action>
-
-    <check if="CI checks fail">
-      <output>**CI CHECKS FAILED**
-
-        Fix the failing checks on branch {{current_branch}} and push again.
-        The PR will re-run CI automatically.
-
-        Do NOT bypass CI - fix the issue first.</output>
-      <action>EXIT workflow</action>
-    </check>
-
-    <output>**CI Checks Passed**
-
-      Squash-merging PR to develop...</output>
-
-    <action>Run `gh pr merge {{develop_pr_url}} --squash --delete-branch`</action>
-
-    <check if="merge fails">
-      <output>**MERGE FAILED**
-
-        Check the PR for merge conflicts or review requirements.
-        Resolve and retry.</output>
-      <action>EXIT workflow</action>
-    </check>
-
-    <output>**Merged to develop (squash)**
-
-      Feature branch {{current_branch}} auto-deleted.
-      CI validates on push to develop.</output>
+  <step n="3" goal="Create PR to main (merge commit)" tag="pr-main">
+    <action>Load, read completely, and execute steps/step-03-pr-main.md</action>
   </step>
 
-  <step n="4" goal="Create PR to main (merge commit)">
-    <action>Run `git checkout develop`</action>
-    <action>Run `git pull origin develop`</action>
-
-    <output>**Step 2/2: PR to main (production)**
-
-      Creating PR: develop -> main (merge commit, preserves history)
-
-      This deploys to production via Firebase auto-deploy on merge to main.</output>
-
-    <ask>**FINAL CONFIRMATION**: Create PR to main for production deployment? [Y/N]</ask>
-    <check if="user says N">
-      <output>Deployment paused at develop. Story is integrated but not in production.
-        You can create the PR to main later.</output>
-      <action>Set {{final_environment}} = "develop"</action>
-      <action>GOTO step 6</action>
-    </check>
-
-    <action>Run `gh pr create --base main --title "Release: {{story_key}}" --body "## Release
-
-Promoting develop to main for story {{story_key}}.
-
-## Changes
-{{story_summary}}
-
-Auto-deploys to Firebase on merge.
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"`</action>
-
-    <action>Set {{main_pr_url}} = PR URL from output</action>
-
-    <output>**PR Created:** {{main_pr_url}}
-
-      Waiting for CI checks to pass...</output>
-
-    <action>Run `gh pr checks {{main_pr_url}} --watch` to wait for CI</action>
-
-    <check if="CI checks fail">
-      <output>**CI CHECKS FAILED**
-
-        Fix the failing checks on develop and push again.
-        The PR will re-run CI automatically.
-
-        Do NOT bypass CI - fix the issue first.</output>
-      <action>EXIT workflow</action>
-    </check>
-
-    <output>**CI Checks Passed**
-
-      Merge-committing PR to main...</output>
-
-    <action>Run `gh pr merge {{main_pr_url}} --merge`</action>
-
-    <check if="merge fails">
-      <output>**MERGE FAILED**
-
-        Check the PR for merge conflicts or review requirements.
-        Resolve and retry.</output>
-      <action>EXIT workflow</action>
-    </check>
-
-    <action>Set {{final_environment}} = "production"</action>
-
-    <output>**Merged to main**
-
-      Firebase Hosting auto-deploys on merge to main.
-      Production URL: {deployment_urls.production}
-
-      Checking if Firebase backend deployment is needed...</output>
+  <step n="4" goal="Firebase backend deployment (if needed)" tag="firebase-deploy">
+    <action>Load, read completely, and execute steps/step-04-firebase-deploy.md</action>
   </step>
 
-  <step n="5" goal="Firebase backend deployment (if needed)">
-    <critical>Hosting auto-deploys on merge, but rules/indexes/functions do NOT.
-      See docs/firebase/DEPLOYMENT-MANIFEST.md for the full artifact inventory.</critical>
-
-    <action>Run `git diff origin/main~1..origin/main --name-only | grep -E '^(firestore\.(rules|indexes\.json)|storage\.rules|functions/src/)'`</action>
-    <action>Set {{backend_files_changed}} = result (may be empty)</action>
-
-    <check if="{{backend_files_changed}} is empty">
-      <output>**No Firebase backend changes detected** — hosting-only deployment.
-        Skipping backend deploy.</output>
-      <action>GOTO step 6</action>
-    </check>
-
-    <output>**Firebase Backend Changes Detected**
-
-      The following backend files changed in this deployment:
-      ```
-      {{backend_files_changed}}
-      ```
-
-      These require manual `firebase deploy` after merge to main.</output>
-
-    <!-- Determine deploy targets -->
-    <action>Set {{deploy_targets}} = ""</action>
-    <check if="firestore.rules in {{backend_files_changed}}">
-      <action>Append "firestore:rules" to {{deploy_targets}}</action>
-    </check>
-    <check if="firestore.indexes.json in {{backend_files_changed}}">
-      <action>Append "firestore:indexes" to {{deploy_targets}}</action>
-    </check>
-    <check if="storage.rules in {{backend_files_changed}}">
-      <action>Append "storage" to {{deploy_targets}}</action>
-    </check>
-    <check if="functions/src/ files in {{backend_files_changed}}">
-      <action>Run `cd functions && npm run build && cd ..`</action>
-      <action>Append "functions" to {{deploy_targets}}</action>
-    </check>
-
-    <ask>Deploy Firebase backend to production?
-
-      Targets: {{deploy_targets}}
-      Command: `firebase deploy --only {{deploy_targets}} --project boletapp-d609f`
-
-      [Y/N]</ask>
-
-    <check if="user says Y">
-      <action>Run `firebase deploy --only {{deploy_targets}} --project boletapp-d609f`</action>
-
-      <check if="deploy fails">
-        <output>**BACKEND DEPLOY FAILED**
-
-          Check error output above. Common issues:
-          - Eventarc permissions for v2 functions (retry in 2-5 min)
-          - Storage not initialized on project
-          - Build errors in functions/
-
-          Fix and retry: `firebase deploy --only {{deploy_targets}} --project boletapp-d609f`</output>
-      </check>
-
-      <check if="deploy succeeds">
-        <output>**Backend deployed to production**
-
-          Deployed: {{deploy_targets}}
-
-          Syncing to staging (rules + indexes only)...</output>
-
-        <!-- Keep staging in sync for Firestore rules/indexes -->
-        <check if="firestore:rules or firestore:indexes in {{deploy_targets}}">
-          <action>Run `firebase deploy --only firestore:rules,firestore:indexes --project boletapp-staging`</action>
-          <output>Staging Firestore rules/indexes synced.</output>
-        </check>
-      </check>
-    </check>
-
-    <check if="user says N">
-      <output>**Backend deployment skipped.**
-
-        You can deploy later with:
-        `firebase deploy --only {{deploy_targets}} --project boletapp-d609f`
-
-        See `docs/firebase/DEPLOYMENT-MANIFEST.md` for full reference.</output>
-    </check>
-  </step>
-
-  <step n="6" goal="Branch cleanup and sync">
-    <action>Run `git fetch --prune`</action>
-    <action>Run `git checkout develop`</action>
-    <action>Run `git pull origin develop`</action>
-
-    <output>**Branch Cleanup**
-
-      Remote branches pruned.
-      Local develop branch synced with origin.</output>
-  </step>
-
-  <step n="7" goal="Update sprint status">
-    <check if="{sprint_status} file exists">
-      <action>Load {sprint_status}</action>
-      <action>Update development_status[{{story_key}}] = "deployed"</action>
-      <action>Add deployed_to: {{final_environment}}</action>
-      <action>Add deployed_at: {{date}}</action>
-      <action>Save file preserving structure</action>
-      <output>Sprint status updated: {{story_key}} -> deployed ({{final_environment}})</output>
-    </check>
-  </step>
-
-  <step n="8" goal="Deployment summary">
-    <output>**DEPLOYMENT COMPLETE**
-
-      **Story:** {{story_key}}
-      **Final Environment:** {{final_environment}}
-      **Production URL:** {deployment_urls.production}
-
-      **Pipeline Executed:**
-      - Story status verified (done)
-      - Pre-deployment validation passed
-      - PR to develop (squash merge) {{#if develop_pr_url}}{{develop_pr_url}}{{/if}}
-      {{#if final_environment == 'production'}}- PR to main (merge commit) {{main_pr_url}}
-      - Firebase Hosting auto-deployed
-      {{#if deploy_targets}}- Firebase backend deployed: {{deploy_targets}}
-      - Staging synced (rules + indexes){{else}}- No backend changes detected{{/if}}{{else}}- Production deployment skipped{{/if}}
-      - Branches cleaned up
-      - Sprint status synced
-
-      **Next Steps:**
-      - Run `/workflow-close` to verify tests, status files, and branch state
-      - Verify production functionality at {deployment_urls.production}
-      {{#if deploy_targets}}- Verify backend in Firebase Console (functions list, rules, indexes)
-      - Update `docs/firebase/DEPLOYMENT-MANIFEST.md` parity table{{/if}}
-      - Run `/sprint-status` to see sprint progress
-      - Continue with next story via `/ecc-create-story`
-      - **Disable Firebase MCP** when done: set `"disabled": true` in `.mcp.json` to free ~5.7k context tokens</output>
+  <step n="5" goal="Branch cleanup + sprint status + summary" tag="cleanup-and-complete">
+    <action>Load, read completely, and execute steps/step-05-cleanup-and-complete.md</action>
   </step>
 
 </workflow>

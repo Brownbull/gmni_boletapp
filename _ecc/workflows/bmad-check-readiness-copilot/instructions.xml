@@ -1,0 +1,571 @@
+<workflow>
+  <critical>The workflow execution engine is governed by: {project-root}/_bmad/core/tasks/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+
+  <critical>COPILOT PLAYBOOK GENERATOR — This workflow produces a DOCUMENT, not a readiness review</critical>
+  <critical>Do NOT perform the review. ONLY generate the playbook with prompts for Copilot Chat.</critical>
+  <critical>The playbook contains copy-paste prompts for the 6-step adversarial readiness check.</critical>
+
+  <!-- ================================================================== -->
+  <!-- STEP 0: Load Input Documents                                        -->
+  <!-- ================================================================== -->
+
+  <step n="0" goal="Discover and load all input documents for embedding in playbook" tag="doc-discovery">
+    <action>Search for and load these documents:
+      - PRD: {planning_artifacts}/prd.md (REQUIRED)
+      - Architecture: {planning_artifacts}/architecture.md (REQUIRED)
+      - Epics: {planning_artifacts}/epics.md (REQUIRED)
+      - UX Design: {planning_artifacts}/*.html or {planning_artifacts}/ux-*.md (optional)
+    </action>
+
+    <action>Extract from PRD:
+      - {{all_frs}}: every functional requirement (FR ID + full text)
+      - {{all_nfrs}}: every non-functional requirement (NFR ID + full text)
+    </action>
+
+    <action>Extract from Architecture:
+      - {{tech_stack}}: technology stack
+      - {{starter_template}}: starter template info (if any)
+      - {{architecture_summary}}: key decisions summary
+    </action>
+
+    <action>Extract from Epics:
+      - {{epics_list}}: all epics with titles and story counts
+      - {{fr_coverage_map}}: FR-to-epic mapping
+      - {{all_stories}}: all stories with ACs (full text)
+    </action>
+
+    <check if="PRD, Architecture, or Epics not found">
+      <output>**ERROR:** Missing required documents.
+
+        The readiness check requires ALL three:
+        - PRD at {planning_artifacts}/prd.md
+        - Architecture at {planning_artifacts}/architecture.md
+        - Epics at {planning_artifacts}/epics.md
+
+        Create missing documents first.
+      </output>
+      <stop/>
+    </check>
+
+    <output>**Documents Loaded**
+
+      - PRD: loaded ({{fr_count}} FRs, {{nfr_count}} NFRs)
+      - Architecture: loaded
+      - Epics: loaded ({{epic_count}} epics, {{story_count}} stories)
+      - UX: {{ux_status}}
+
+      Generating readiness check playbook...
+    </output>
+  </step>
+
+  <!-- ================================================================== -->
+  <!-- STEP 1: Generate the Playbook                                       -->
+  <!-- ================================================================== -->
+
+  <step n="1" goal="Generate the complete readiness check Copilot playbook" tag="generate-playbook">
+    <critical>Each prompt must be SELF-CONTAINED — Copilot has no memory between chats.</critical>
+    <critical>Prompts must enforce ADVERSARIAL stance — assume something is wrong and find it.</critical>
+    <critical>The playbook checks ALL six dimensions: documents, PRD, coverage, UX, quality, and final assessment.</critical>
+
+    <template-output file="copilot-playbook-readiness.md" path="{output_folder}/implementation-artifacts">
+
+# Copilot Playbook: Implementation Readiness Check
+
+> **Generated:** {{date}}
+> **Project:** {{project_name}}
+> **PRD:** `{{prd_path}}`
+> **Architecture:** `{{architecture_path}}`
+> **Epics:** `{{epics_path}}`
+>
+> This playbook mirrors the `bmad-bmm-check-implementation-readiness` workflow (6 steps).
+> It performs an **adversarial review** — the goal is to find gaps before implementation starts.
+
+---
+
+## How to Use This Playbook
+
+1. **Work through all 6 checks sequentially**
+2. **Copy each prompt** into Copilot Chat
+3. **Collect findings** — append them to the readiness report
+4. **Fix critical issues** before proceeding to implementation
+5. **The final assessment** determines if you're ready to build
+
+> **Output file:** Create `{{planning_artifacts}}/readiness-report-{{date}}.md`
+>
+> **Mindset:** Be ADVERSARIAL. Assume something is wrong. Try to find it.
+
+---
+
+## Initialize Readiness Report
+
+Create `{{planning_artifacts}}/readiness-report-{{date}}.md` with:
+
+```markdown
+# Implementation Readiness Assessment Report
+
+**Project:** {{project_name}}
+**Date:** {{date}}
+**Status:** In Progress
+
+## Document Inventory
+[Step 1 output]
+
+## PRD Analysis
+[Step 2 output]
+
+## Epic Coverage Validation
+[Step 3 output]
+
+## UX Alignment
+[Step 4 output]
+
+## Epic Quality Review
+[Step 5 output]
+
+## Final Assessment
+[Step 6 output]
+```
+
+- [ ] Readiness report initialized
+
+---
+
+## Check 1: Document Inventory
+
+**Goal:** Verify all required planning documents exist and are consistent.
+
+**Copy this prompt into Copilot Chat:**
+
+````
+I need to verify my planning documents are complete and consistent before implementation.
+
+## Documents Found:
+
+### PRD
+- Path: {{prd_path}}
+- FRs found: {{fr_count}}
+- NFRs found: {{nfr_count}}
+
+### Architecture
+- Path: {{architecture_path}}
+- Tech stack: {{tech_stack}}
+{{#if starter_template}}
+- Starter template: {{starter_template}}
+{{/if}}
+
+### Epics & Stories
+- Path: {{epics_path}}
+- Epics: {{epic_count}}
+- Stories: {{story_count}}
+
+{{#if ux_path}}
+### UX Design
+- Path: {{ux_path}}
+{{/if}}
+
+---
+
+**Check for:**
+
+1. **Document Completeness:**
+   - Does the PRD have clearly numbered FRs and NFRs?
+   - Does the Architecture cover all decision categories (data, auth, API, frontend, infrastructure)?
+   - Does the Epics document have a FR coverage map?
+
+2. **Cross-Document Consistency:**
+   - Does the Architecture reference the same FRs as the PRD?
+   - Do the Epics reference the same tech stack as the Architecture?
+   - Are there naming inconsistencies between documents?
+
+3. **Version/Duplication Issues:**
+   - Are there multiple versions of any document?
+   - Are there conflicting statements between documents?
+
+**Report findings as:** CRITICAL / MAJOR / MINOR
+````
+
+### After Copilot Responds:
+1. Copy findings into readiness report under "Document Inventory"
+2. Note any critical issues to fix
+- [ ] Document inventory check complete
+
+---
+
+## Check 2: PRD Analysis
+
+**Goal:** Deep analysis of PRD completeness and quality.
+
+**Copy this prompt into Copilot Chat:**
+
+````
+Perform a deep analysis of this PRD. Be adversarial — find gaps, ambiguities, and issues.
+
+## Complete PRD Requirements
+
+### Functional Requirements
+{{all_frs}}
+
+### Non-Functional Requirements
+{{all_nfrs}}
+
+---
+
+**Analyze:**
+
+1. **FR Quality:**
+   - Are all FRs specific and testable (not vague)?
+   - Are there implicit requirements that should be explicit?
+   - Are there overlapping or duplicate FRs?
+   - Are there conflicting FRs?
+
+2. **NFR Quality:**
+   - Are NFRs measurable (e.g., "response time < 200ms" vs "should be fast")?
+   - Are there missing NFR categories (security, performance, scalability, accessibility)?
+   - Do NFRs align with the project scale?
+
+3. **Missing Requirements:**
+   - Error handling requirements?
+   - Edge cases?
+   - Data migration or backward compatibility?
+   - Internationalization?
+
+4. **Ambiguity Check:**
+   - List any FRs that could be interpreted multiple ways
+   - List any FRs with undefined terms
+
+**Report findings as:** CRITICAL / MAJOR / MINOR
+Include FR/NFR IDs in findings for traceability.
+````
+
+### After Copilot Responds:
+1. Copy findings into readiness report under "PRD Analysis"
+- [ ] PRD analysis complete
+
+---
+
+## Check 3: Epic Coverage Validation
+
+**Goal:** Verify every FR is covered by at least one story in the epics.
+
+**Copy this prompt into Copilot Chat:**
+
+````
+Validate that my epics and stories cover ALL functional requirements from the PRD.
+
+## Functional Requirements (from PRD)
+{{all_frs}}
+
+## Epic Structure and FR Coverage Map
+{{epics_list}}
+
+{{fr_coverage_map}}
+
+## All Stories (with Acceptance Criteria)
+{{all_stories}}
+
+---
+
+**Perform these checks:**
+
+1. **FR Coverage Matrix:**
+   Create a matrix showing:
+   | FR ID | FR Description | Covered By (Epic.Story) | Status |
+   |-------|---------------|------------------------|--------|
+
+   Status: COVERED / MISSING / PARTIAL
+
+2. **Coverage Percentage:** X/{{fr_count}} FRs covered = X%
+
+3. **Missing FRs:** List any FR that has NO story covering it
+
+4. **Partial Coverage:** List FRs where the story only partially addresses the requirement
+
+5. **NFR Coverage:** For each NFR, is there at least one story or architectural decision
+   that addresses it? List uncovered NFRs.
+
+6. **Over-Coverage:** Are any stories doing work NOT traceable to a requirement?
+   (This isn't necessarily bad but should be intentional)
+
+**Be thorough — check EVERY FR individually.**
+**Report findings as:** CRITICAL (missing FR) / MAJOR (partial) / MINOR (over-coverage)
+````
+
+### After Copilot Responds:
+1. Copy the coverage matrix into readiness report under "Epic Coverage Validation"
+2. Flag any MISSING FRs as critical
+- [ ] Coverage validation complete
+
+---
+
+## Check 4: UX Alignment
+
+**Goal:** Verify UX design aligns with PRD and Architecture.
+
+{{#if ux_path}}
+
+**Copy this prompt into Copilot Chat:**
+
+````
+Validate alignment between my UX design and the PRD/Architecture.
+
+## UX Design Summary
+{{ux_summary}}
+
+## PRD Requirements (relevant to UX)
+{{all_frs}}
+
+## Architecture (frontend-relevant decisions)
+{{tech_stack}}
+{{architecture_patterns}}
+
+---
+
+**Check:**
+
+1. **UX ↔ PRD Alignment:**
+   - Does the UX implement all user-facing FRs?
+   - Are there UX elements with no corresponding FR?
+   - Are there FRs with no UX representation?
+
+2. **UX ↔ Architecture Alignment:**
+   - Does the UX match the chosen frontend framework's capabilities?
+   - Are the component patterns consistent with the architecture's structure decisions?
+   - Do responsive/accessibility requirements match architectural decisions?
+
+3. **Gaps:**
+   - Missing screens or workflows?
+   - Undefined interaction patterns?
+   - Error state designs missing?
+
+**Report findings as:** CRITICAL / MAJOR / MINOR
+````
+
+{{/if}}
+{{#if NOT ux_path}}
+
+> **No UX document found.** Consider whether your project needs explicit UX design.
+> If the UX is implied in the PRD or Architecture, note this in the report.
+> If UX design is needed but missing, flag as a finding.
+
+- [ ] UX alignment: N/A (no UX document) or flagged as gap
+
+{{/if}}
+
+### After Copilot Responds:
+1. Copy findings into readiness report under "UX Alignment"
+- [ ] UX alignment check complete
+
+---
+
+## Check 5: Epic Quality Review (CRITICAL)
+
+**Goal:** Adversarial review of epic/story quality against best practices.
+
+**This is the most important check. Copy this prompt into Copilot Chat:**
+
+````
+Perform a RIGOROUS adversarial review of my epics and stories against these mandatory rules.
+
+## Complete Epics & Stories
+{{all_stories}}
+
+## Architecture Context
+{{tech_stack}}
+{{#if starter_template}}
+Starter template: {{starter_template}}
+{{/if}}
+
+---
+
+## MANDATORY RULES — Check EVERY story against ALL of these:
+
+### Rule 1: User-Value Epics (NOT technical layers)
+- VIOLATION: Epic titled "Database Setup", "API Development", "Frontend Components"
+- CORRECT: Epic titled "User Authentication & Profiles", "Content Management"
+- CHECK: Does every epic title describe a USER OUTCOME?
+
+### Rule 2: Epic Independence
+- VIOLATION: Epic 2 cannot function without Epic 3
+- CORRECT: Epic 2 works fully on its own (may use Epic 1's foundation)
+- CHECK: Can each epic be shipped independently?
+
+### Rule 3: No Forward Dependencies (CRITICAL)
+- VIOLATION: Story 1.2 depends on Story 1.4
+- CORRECT: Story 1.2 only depends on Story 1.1 (backward OK)
+- CHECK: For EVERY story, are all dependencies on EARLIER stories only?
+
+### Rule 4: Just-In-Time Database/Entity Creation
+- VIOLATION: Story 1.1 creates users, posts, comments, tags, categories tables
+- CORRECT: Story 1.1 creates users table (registration needs it), Story 2.1 creates posts table (content creation needs it)
+- CHECK: Is each table created in the FIRST story that needs it?
+
+### Rule 5: Starter Template Setup
+{{#if starter_template}}
+- REQUIRED: Epic 1 Story 1 MUST be "Set up project from starter template"
+- CHECK: Is this present?
+{{/if}}
+{{#if NOT starter_template}}
+- No starter template specified — skip this check
+{{/if}}
+
+### Rule 6: Story Sizing
+- VIOLATION: Story with >4 tasks or >15 subtasks
+- CHECK: Is every story completable in one dev session?
+
+### Rule 7: Acceptance Criteria Quality
+- REQUIRED: Given/When/Then (BDD) format
+- VIOLATION: Vague ACs like "system works correctly"
+- CHECK: Is every AC specific and testable?
+
+---
+
+**For each violation found, report:**
+- **Severity:** CRITICAL / MAJOR / MINOR
+- **Rule violated:** Which rule number
+- **Location:** Which epic/story
+- **Issue:** What's wrong
+- **Fix:** How to resolve it
+
+**Be ADVERSARIAL — assume violations exist and find them.**
+````
+
+### After Copilot Responds:
+1. This is the most important check — take all CRITICAL findings seriously
+2. Copy findings into readiness report under "Epic Quality Review"
+3. Fix critical violations in your epics.md before proceeding
+- [ ] Epic quality review complete
+- [ ] All CRITICAL violations fixed
+
+---
+
+## Check 6: Final Assessment
+
+**Goal:** Compile all findings into a go/no-go decision.
+
+**Copy this prompt into Copilot Chat:**
+
+````
+Based on all the findings below, provide a final implementation readiness assessment.
+
+## All Findings
+
+### Document Inventory
+[Paste Check 1 findings]
+
+### PRD Analysis
+[Paste Check 2 findings]
+
+### Epic Coverage Validation
+[Paste Check 3 findings]
+
+### UX Alignment
+[Paste Check 4 findings]
+
+### Epic Quality Review
+[Paste Check 5 findings]
+
+---
+
+**Provide:**
+
+1. **Overall Status:** One of:
+   - **READY** — No critical issues, can proceed to implementation
+   - **NEEDS WORK** — Critical issues exist but are fixable, estimate effort
+   - **NOT READY** — Fundamental issues require significant rework
+
+2. **Critical Issues Summary:**
+   List all unresolved CRITICAL findings with specific fix instructions
+
+3. **Risk Assessment:**
+   - What could go wrong during implementation if current gaps aren't fixed?
+   - Which issues will cause the most rework if discovered late?
+
+4. **Recommendations:**
+   - Ordered list of actions before starting implementation
+   - Which documents need updates?
+   - Estimated effort for fixes
+
+5. **Confidence Score:** X/10 for implementation readiness
+````
+
+### After Copilot Responds:
+1. Copy the final assessment into your readiness report
+2. If status is NEEDS WORK: fix the listed issues and re-run relevant checks
+3. If status is READY: proceed to implementation!
+- [ ] Final assessment complete
+
+---
+
+## Summary & Next Steps
+
+### Final Checklist
+
+- [ ] All 6 checks completed
+- [ ] All CRITICAL issues resolved
+- [ ] Readiness report saved at `{{planning_artifacts}}/readiness-report-{{date}}.md`
+- [ ] Overall status: _________________ (READY / NEEDS WORK / NOT READY)
+
+### If READY:
+1. Proceed to implementation using `/ecc-dev-story` or `/ecc-dev-story-copilot`
+2. Start with Epic 1, Story 1
+
+### If NEEDS WORK:
+1. Fix issues listed in the readiness report
+2. Re-run affected checks
+3. Update the final assessment
+
+### If NOT READY:
+1. Revisit the planning artifacts that need rework
+2. Use the appropriate workflow to redo them:
+   - PRD issues → `/bmad-bmm-create-prd` or its Copilot playbook
+   - Architecture issues → `/bmad-bmm-create-architecture` or its Copilot playbook
+   - Epic issues → `/bmad-bmm-create-epics-and-stories` or its Copilot playbook
+
+---
+
+## Tracking
+
+### Findings Summary
+| Check | Critical | Major | Minor | Status |
+|-------|----------|-------|-------|--------|
+| 1. Document Inventory | | | | |
+| 2. PRD Analysis | | | | |
+| 3. Epic Coverage | | | | |
+| 4. UX Alignment | | | | |
+| 5. Epic Quality | | | | |
+| 6. Final Assessment | | | | |
+
+    </template-output>
+  </step>
+
+  <!-- ================================================================== -->
+  <!-- STEP 2: Save and Present                                            -->
+  <!-- ================================================================== -->
+
+  <step n="2" goal="Save playbook and inform user" tag="save-playbook">
+    <action>Save the generated playbook to: {output_folder}/implementation-artifacts/copilot-playbook-readiness.md</action>
+
+    <output>**Readiness Check Copilot Playbook Generated**
+
+      **File:** `{output_folder}/implementation-artifacts/copilot-playbook-readiness.md`
+
+      **Playbook Structure (mirrors 6-step readiness check):**
+      - Check 1: Document Inventory
+      - Check 2: PRD Analysis (deep, adversarial)
+      - Check 3: Epic Coverage Validation (FR-by-FR)
+      - Check 4: UX Alignment
+      - Check 5: Epic Quality Review (7 mandatory rules)
+      - Check 6: Final Assessment (go/no-go)
+
+      **Total prompts:** 6 adversarial review prompts
+
+      **Approach:** Each prompt enforces adversarial stance — assume something
+      is wrong and systematically find it. All project requirements are embedded
+      inline so Copilot can perform thorough validation.
+    </output>
+  </step>
+
+</workflow>

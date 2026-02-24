@@ -1,7 +1,7 @@
 # Code Review Patterns
 
-> **Source:** Atlas Migration 2026-02-05
-> **Purpose:** MUST CHECK patterns for ECC code reviewers, extracted from Atlas lessons learned
+> **Source:** Production retrospective analysis
+> **Purpose:** MUST CHECK patterns for ECC code reviewers
 > **Usage:** Loaded by `ecc-code-review` and `ecc-dev-story` workflows at Step 0
 
 ---
@@ -17,10 +17,9 @@
 | All CREATE files staged | `git status --porcelain \| grep "^??"` | No output |
 | All MODIFY files staged | `git status --porcelain \| grep "^ M"` | No output |
 | No split staging | `git status --porcelain \| grep "^MM"` | No output |
-| Security rules staged | `git status --porcelain firestore.rules` | `M ` (not ` M`) |
 | Story file tracked | `git status --porcelain <story-file>` | `A ` or `M ` |
 
-**Historical frequency:** Found in 6+ stories (14d-v2-1-4c-1, 5a, 5b-1, 5b-2, 6b, 6e).
+**Historical frequency:** High — found repeatedly across multiple stories.
 
 **Pattern:** Foundation stories that CREATE new files need extra staging verification. Stories extending prior story files need both old and new changes verified.
 
@@ -32,33 +31,32 @@
 
 | Check | Rule |
 |-------|------|
-| User string inputs | Must go through `sanitizeInput()` from `@/utils/sanitize` |
-| Name fields | `sanitizeInput(input.name, { maxLength: 100 })` |
-| Icon fields | `sanitizeInput(input.icon, { maxLength: 10 })` |
+| User string inputs | Must go through `<your-sanitize-fn>()` from `<your-utils-path>/sanitize` |
+| Name fields | `sanitize(input.name, { maxLength: 100 })` |
 | Service functions | ALL service functions accepting user strings must sanitize |
 
 **Verification:**
 ```bash
 # Audit sanitization usage in services
-grep -r "sanitizeInput" src/features/*/services/
-grep -r "sanitizeInput" src/services/
+grep -r "sanitize" <src>/<features>/*/services/
+grep -r "sanitize" <src>/<services>/
 ```
 
-**Historical frequency:** Found in 3+ stories (14d-v2-1-4c-1, 5b-1, 6b).
+**Historical frequency:** High — found in multiple stories across service layers.
 
 ---
 
-### 3. Firestore Batch Operations
+### 3. Database Batch Operations
 
 **Severity:** HIGH - Silent failure on large datasets
 
 | Check | Rule |
 |-------|------|
-| `writeBatch()` usage | MUST implement 500-operation chunking |
+| Batch write usage | MUST implement operation-count chunking (e.g., 500-op limit for Firestore) |
 | ALL batch operations | If one function chunks, verify ALL functions in file do too |
-| Batch commit | Use `commitBatchWithRetry()` with exponential backoff |
+| Batch commit | Use retry with exponential backoff |
 
-**Pattern:**
+**Pattern (Firestore example):**
 ```typescript
 const BATCH_SIZE = 500;
 let batch = writeBatch(db);
@@ -74,7 +72,7 @@ for (const doc of docs) {
 if (opCount > 0) await batch.commit();
 ```
 
-**Historical frequency:** Found in story 14d-v2-1-7b - `deleteSubcollection()` and `deletePendingInvitationsForGroup()` were missing batch handling while `clearTransactionsSharedGroupId()` had it.
+**Historical frequency:** High — deletion functions missing batch handling while similar functions in same file had it.
 
 ---
 
@@ -84,8 +82,8 @@ if (opCount > 0) await batch.commit();
 
 | Check | Rule |
 |-------|------|
-| `getDoc()` then `deleteDoc()` | FLAG - must use `runTransaction()` |
-| `getDoc()` then `updateDoc()` | FLAG - must use `runTransaction()` |
+| `read()` then `delete()` | FLAG - must use atomic transaction |
+| `read()` then `update()` | FLAG - must use atomic transaction |
 | Authorization + mutation | MUST be in same transaction |
 | Client-side auth check | Flag for TOCTOU review |
 
@@ -101,63 +99,33 @@ await runTransaction(db, async (transaction) => {
 });
 ```
 
-**Historical frequency:** Found in 3+ stories (14d-v2-1-7b deletion, 7g edit, 8b cloud function).
+**Historical frequency:** High — found in deletion, update, and cloud function stories.
 
-**Note:** Applies to ALL authorization-before-mutation functions, not just deletion. When fixed in one function, audit ALL similar functions in the same file.
+**Note:** Applies to ALL authorization-before-mutation functions. When fixed in one function, audit ALL similar functions in the same file.
 
 ---
 
 ### 5. Feature Module Exports
 
-**Severity:** MEDIUM - FSD architecture compliance
+**Severity:** MEDIUM - Architecture compliance
 
 | Check | Rule |
 |-------|------|
-| New types in `src/types/` | Also re-export from `src/features/*/types.ts` + `index.ts` |
+| New types | Also re-export from feature barrel `index.ts` |
 | New utilities | Verify imported in `src/` (not just tests) |
-| Feature barrel exports | `src/features/{name}/index.ts` must export all public API |
+| Feature barrel exports | Feature `index.ts` must export all public API |
 | Naming collisions | Check existing functions with same name before creating |
 
 **Verification:**
 ```bash
 # Verify type re-exports from feature modules
-grep -r "TypeName" src/features/*/index.ts
+grep -r "TypeName" <src>/<features>/*/index.ts
 
 # Verify utility is imported in src/ (not just tests)
-grep -r "from.*newUtilFile" src/ --include="*.ts" --include="*.tsx"
-
-# Check for naming collisions
-grep -r "function functionName" src/ --include="*.ts" --include="*.tsx"
+grep -r "from.*newUtilFile" <src>/ --include="*.ts" --include="*.tsx"
 ```
 
-**Historical frequency:** Found in stories 14d-v2-1-4a (type export gap), 14d-v2-1-2b (utility not integrated).
-
----
-
-## Additional Review Checks
-
-### Defensive Timestamps
-- Firestore timestamps: use `?.toDate?.()` with try/catch
-- Historical: Caused production errors in Epic 14c and 14d
-
-### Real-Time Query Limits
-- All `onSnapshot` queries must have `limit()` applied
-- Prevent unbounded listener costs
-
-### i18n Completeness
-- No hardcoded user-facing strings
-- Search `translations.ts` for existing keys before adding new ones
-- Verify keys exist; don't rely on fallbacks
-
-### Test Mock Consistency
-- When refactoring to transactions, update test mocks accordingly
-- `mockGetDoc + mockUpdateDoc` -> `mockTransactionGet + mockTransactionUpdate`
-- Search ALL test files for deleted module mocks after Context-to-Store migrations
-
-### Integration Verification
-- "Props exist" does NOT mean "Props are used" - check parent passes them
-- Verify parent component actually passes optional props to children
-- `grep -r "ComponentName" src/ --include="*.tsx" | grep -v "test"` to find usages
+**Historical frequency:** Medium — found in stories involving new types and utilities.
 
 ---
 
@@ -167,70 +135,60 @@ grep -r "function functionName" src/ --include="*.ts" --include="*.tsx"
 
 | Check | Rule |
 |-------|------|
-| Pre-flight research | Component `.tsx` files read before writing E2E selectors |
+| Pre-flight research | Component source files read before writing E2E selectors |
 | Selector priority | `data-testid` > `getByRole` > scoped locator > bare `text=` |
-| No `text=Ajustes` | Use `getByRole('menuitem', { name: 'Ajustes' })` (strict mode) |
 | Cleanup pattern | ALL test data wrapped in `try/finally` cleanup blocks |
 | Pre-test cleanup | Delete residual E2E data before creating new test data |
-| Multi-user cleanup | Bidirectional: non-owner leaves first, then owner deletes |
 | Wait strategy | `element.waitFor()` for async ops, `waitForTimeout` only for settling (<1s) |
-| No `networkidle` | Firebase WebSocket prevents `networkidle` from resolving |
 | Optimistic updates | Poll for resolved values, don't read DOM during PENDING state |
-| SPA reload | Always re-navigate via UI after `page.reload()` |
-| Test data naming | `E2E` prefix + `Date.now()` suffix for cleanup targeting |
+| Test data naming | Unique prefix + `Date.now()` suffix for cleanup targeting |
 | Phantom testIds | Verify EVERY `data-testid` exists in component source before using |
 
 **Verification:**
 ```bash
-# Check for bare text selectors in E2E files
-grep -r "text=Ajustes" tests/e2e/
 # Check for long fixed timeouts
-grep -rE "waitForTimeout\([3-9]\d{3}" tests/e2e/
-# Check for networkidle
-grep -r "networkidle" tests/e2e/
+grep -rE "waitForTimeout\([3-9]\d{3}" <tests>/e2e/
+# Check for networkidle (Firebase WebSocket prevents resolution)
+grep -r "networkidle" <tests>/e2e/
 # Check for try/finally cleanup
-grep -rA2 "afterEach\|afterAll\|cleanup" tests/e2e/
+grep -rA2 "afterEach\|afterAll\|cleanup" <tests>/e2e/
 ```
 
-**Historical frequency:** Story 14d-v2-1-14 consumed 23 test runs (60% AVOIDABLE) due to selector guessing, missing optimistic update handling, and orphan accumulation. Enforcement implemented 2026-02-05: pre-flight checklist, pre-edit hooks, conventions rewrite, shared helpers module.
+**Historical frequency:** High — individual stories consumed 20+ test runs due to selector guessing and orphan accumulation.
 
 ---
 
-### 7. CSS Color Injection Prevention
+### 7. Database-Sourced Value Injection Prevention
 
-**Severity:** MEDIUM - CSS injection via Firestore-sourced colors
+**Severity:** MEDIUM - Injection via database-sourced values (e.g., CSS, HTML)
 
 | Check | Rule |
 |-------|------|
-| `group.color` in style props | Must use `safeCSSColor()` from `@/utils/validationUtils` |
-| `invitation.groupColor` in style props | Must use `safeCSSColor()` |
-| Any Firestore-sourced color in CSS | Must use `safeCSSColor()` |
+| DB-sourced values in style props | Must use `<your-validation-fn>()` |
+| DB-sourced values in HTML | Must sanitize before rendering |
 | Custom fallback values | Must be hardcoded strings, not user input |
-| New color-rendering components | Verify `safeCSSColor()` wrapping before merge |
 
 **Pattern:**
 ```typescript
-import { safeCSSColor } from '@/utils/validationUtils';
-
 // GOOD: Validated at rendering boundary
-style={{ backgroundColor: safeCSSColor(group.color) }}
+style={{ backgroundColor: validateColor(record.color) }}
 
-// GOOD: With custom fallback (hardcoded only)
-style={{ background: safeCSSColor(group.color, 'var(--primary, #2563eb)') }}
-
-// BAD: Raw Firestore value in CSS
-style={{ backgroundColor: group.color }}
+// BAD: Raw database value in CSS
+style={{ backgroundColor: record.color }}
 ```
 
-**Verification:**
-```bash
-# Find potential ungated color usage in style props
-grep -rn "group\.color" src/ --include="*.tsx" | grep -v safeCSSColor | grep -v "import"
-grep -rn "groupColor" src/ --include="*.tsx" | grep "backgroundColor\|background:\|color:" | grep -v safeCSSColor
-```
-
-**Historical frequency:** TD-CONSOLIDATED-7 (2026-02-08). Applied defense-in-depth across 23 components. ColorPicker and EditGroupDialog were gaps caught during ECC code review.
+**Historical frequency:** Medium — found during code review across multiple components.
 
 ---
 
-*Source: Atlas Migration 2026-02-05 + E2E Lessons Learned 2026-02-05 + TD-CONSOLIDATED-7 CSS Color Review 2026-02-08*
+## Additional Review Checks
+
+- **Defensive timestamps:** Use optional chaining + try/catch when converting DB timestamps
+- **Real-time query limits:** All live-query listeners must have a `limit()` applied (unbounded listener cost)
+- **i18n completeness:** No hardcoded user-facing strings; search translation files for existing keys first
+- **Test mock consistency:** When refactoring to transactions, update test mocks accordingly
+- **Integration verification:** "Props exist" does NOT mean "Props are used" — verify parent passes them
+
+---
+
+*Source: Production retrospective analysis + E2E lessons learned*
