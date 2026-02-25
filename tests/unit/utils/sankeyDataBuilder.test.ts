@@ -167,6 +167,10 @@ describe('sankeyDataBuilder helpers', () => {
             expect(isMasNode({ name: 'L1_Más', originalName: 'Más', isMas: true, level: 1, value: 100, count: 5, itemStyle: { color: '#999' } })).toBe(true);
             expect(isMasNode({ name: 'L1_Supermarket', originalName: 'Supermarket', level: 1, value: 100, count: 5, itemStyle: { color: '#999' } })).toBe(false);
         });
+
+        it('returns true when only originalName is "Más" (no isMas flag)', () => {
+            expect(isMasNode({ name: 'L1_Más', originalName: 'Más', level: 1, value: 100, count: 5, itemStyle: { color: '#999' } })).toBe(true);
+        });
     });
 
     describe('getMasCount', () => {
@@ -443,6 +447,54 @@ describe('buildSankeyData - 4-level mode', () => {
         expect(l1ToL2.length).toBeGreaterThan(0);
         expect(l2ToL3.length).toBeGreaterThan(0);
         expect(l3ToL4.length).toBeGreaterThan(0);
+    });
+});
+
+// ============================================================================
+// LINK DEDUP TESTS (AC2)
+// ============================================================================
+
+describe('buildSankeyData - link dedup via Map', () => {
+    it('merges flows from different store categories to same item category into one link', () => {
+        // Two different store categories both route to Produce
+        const transactions = [
+            createTransaction('Supermarket', [
+                { name: 'Apples', price: 5000, category: 'Produce' },
+            ]),
+            createTransaction('Restaurant', [
+                { name: 'Salad Greens', price: 3000, category: 'Produce' },
+            ]),
+        ];
+        const data = buildSankeyData(transactions, '2-level');
+
+        // Both store categories are visible (each is 62.5% and 37.5%), both above threshold
+        // Both route to L2_Produce — should be 2 separate links (different sources)
+        const produceLinks = data.links.filter(l => l.target === 'L2_Produce');
+        expect(produceLinks).toHaveLength(2);
+
+        // Same source→target should never appear twice (dedup invariant)
+        const linkKeys = data.links.map(l => `${l.source}→${l.target}`);
+        const uniqueKeys = new Set(linkKeys);
+        expect(uniqueKeys.size).toBe(linkKeys.length);
+    });
+
+    it('sums values when same source→target appears multiple times in aggregation', () => {
+        // Two transactions from same store category to same item category
+        const transactions = [
+            createTransaction('Supermarket', [
+                { name: 'Apples', price: 5000, category: 'Produce' },
+            ]),
+            createTransaction('Supermarket', [
+                { name: 'Oranges', price: 3000, category: 'Produce' },
+            ]),
+        ];
+        const data = buildSankeyData(transactions, '2-level');
+
+        const link = data.links.find(
+            l => l.source === 'L1_Supermarket' && l.target === 'L2_Produce'
+        );
+        expect(link).toBeDefined();
+        expect(link!.value).toBe(8000); // 5000 + 3000 summed via Map dedup
     });
 });
 

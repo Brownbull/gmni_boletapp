@@ -215,11 +215,14 @@ development_status:
   TD-15b-12-transaction-schema-bounds: deployed  # 1 pt - Add merchant non-empty + total >= 0 bounds to isValidTransactionWrite (from TD-15b-11 review, LOW) | deployed: 2026-02-24
   TD-15b-13-firestore-rules-improvements: deployed  # 1 pt - total upper bound + rename isValidTransactionWrite → hasValidFieldBounds (from TD-15b-12 review, LOW) | deployed: 2026-02-24
   # 15b-2b: DROPPED (2026-02-23) file merged into TEVInternal in prior story
-  15b-2c-decompose-history-view: done             # 2 pts - HistoryView 1,169→693 lines
-  15b-2d-decompose-items-view: done             # 2 pts - ItemsView 1003→449 lines
+  15b-2c-decompose-history-view: deployed         # 2 pts - HistoryView 1,169→693 lines | deployed: 2026-02-24
+  15b-2d-decompose-items-view: deployed          # 2 pts - ItemsView 1003→449 lines | deployed: 2026-02-24
   # Feature-internal large files (target <800)
-  15b-2e-decompose-report-utils: drafted       # 3 pts - reportUtils.ts 2,093 lines
-  15b-2f-decompose-sankey-data-builder: drafted  # 2 pts - sankeyDataBuilder.ts 906 lines
+  15b-2e-decompose-report-utils: done            # 3 pts - reportUtils.ts 2,401→5 modules (max 602L) | done: 2026-02-24
+  TD-15b-14-report-utils-data-robustness: done    # 2 pts - parseDate validation + trendPercent overflow guard (from 15b-2e review, LOW) | done: 2026-02-24
+  15b-2f-decompose-sankey-data-builder: done    # 2 pts - sankeyDataBuilder.ts 1,038→584 lines | done: 2026-02-25
+  TD-15b-15-sankey-builder-quality: done  # 2 pts - applyThreshold mutation fix + link dedup optimization + explicit price guard (from 15b-2f review, LOW) | done: 2026-02-25
+  TD-15b-16-sankey-builder-polish: ready-for-dev  # 2 pts - Extract addLink/splitFlowKey helpers + 3-level mode test coverage (from TD-15b-15 review, LOW)
   # 15b-2g: DROPPED (2026-02-23) 803 lines, essentially at target
   # 15b-2h: DROPPED (2026-02-23) 804 lines, essentially at target
   # 15b-2i: DROPPED (2026-02-23) 723 lines, below 800-line threshold
