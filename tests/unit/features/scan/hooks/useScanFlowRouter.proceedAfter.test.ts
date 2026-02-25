@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { DIALOG_TYPES } from '@/types/scanStateMachine';
-import { createDefaultFlowRouterProps, createMockTransaction } from './useScanFlowRouter.testHelper';
+import { mockDb, createDefaultFlowRouterProps, createMockTransaction } from './useScanFlowRouter.testHelper';
 
 // Mock firestore service
 vi.mock('@/services/firestore', () => ({
@@ -48,7 +48,7 @@ describe('useScanFlowRouter — proceedAfterCurrencyResolved', () => {
             await result.current.proceedAfterCurrencyResolved(createMockTransaction());
         });
 
-        expect(firestoreService.addTransaction).toHaveBeenCalled();
+        expect(firestoreService.addTransaction).toHaveBeenCalledWith(mockDb, 'test-user-123', 'test-app-id', expect.objectContaining({ merchant: 'Test Store' }));
         expect(setCurrentTransaction).toHaveBeenCalledWith(null);
         expect(setToastMessage).toHaveBeenCalledWith({ text: 'autoSaved', type: 'success' });
         expect(setView).toHaveBeenCalledWith('dashboard');
@@ -72,8 +72,9 @@ describe('useScanFlowRouter — proceedAfterCurrencyResolved', () => {
 
     it('should fall through to edit view for low confidence', async () => {
         const setAnimateEditViewItems = vi.fn();
+        const showScanDialog = vi.fn();
         vi.mocked(confidenceCheck.shouldShowQuickSave).mockReturnValue(false);
-        const props = createDefaultFlowRouterProps({ setAnimateEditViewItems });
+        const props = createDefaultFlowRouterProps({ setAnimateEditViewItems, showScanDialog });
         const { result } = renderHook(() => useScanFlowRouter(props));
 
         await act(async () => {
@@ -81,9 +82,12 @@ describe('useScanFlowRouter — proceedAfterCurrencyResolved', () => {
         });
 
         expect(setAnimateEditViewItems).toHaveBeenCalledWith(true);
+        expect(firestoreService.addTransaction).not.toHaveBeenCalled();
+        expect(showScanDialog).not.toHaveBeenCalled();
     });
 
     it('should fall back to quick save when auto-save fails', async () => {
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         const checkTrusted = vi.fn(() => Promise.resolve(true));
         const showScanDialog = vi.fn();
         vi.mocked(firestoreService.addTransaction).mockRejectedValueOnce(new Error('Save failed'));
@@ -99,6 +103,8 @@ describe('useScanFlowRouter — proceedAfterCurrencyResolved', () => {
             DIALOG_TYPES.QUICKSAVE,
             expect.objectContaining({ confidence: 0.9 })
         );
+        expect(consoleSpy).toHaveBeenCalled();
+        consoleSpy.mockRestore();
     });
 
     it('should dispatch process success and set current transaction', async () => {
@@ -135,5 +141,29 @@ describe('useScanFlowRouter — proceedAfterCurrencyResolved', () => {
         });
 
         expect(checkTrusted).toHaveBeenCalledWith('Alias Store');
+    });
+
+    it('should not auto-save when user is null', async () => {
+        const checkTrusted = vi.fn(() => Promise.resolve(true));
+        const props = createDefaultFlowRouterProps({ user: null, checkTrusted });
+        const { result } = renderHook(() => useScanFlowRouter(props));
+
+        await act(async () => {
+            await result.current.proceedAfterCurrencyResolved(createMockTransaction());
+        });
+
+        expect(firestoreService.addTransaction).not.toHaveBeenCalled();
+    });
+
+    it('should not auto-save when services is null', async () => {
+        const checkTrusted = vi.fn(() => Promise.resolve(true));
+        const props = createDefaultFlowRouterProps({ services: null, checkTrusted });
+        const { result } = renderHook(() => useScanFlowRouter(props));
+
+        await act(async () => {
+            await result.current.proceedAfterCurrencyResolved(createMockTransaction());
+        });
+
+        expect(firestoreService.addTransaction).not.toHaveBeenCalled();
     });
 });
