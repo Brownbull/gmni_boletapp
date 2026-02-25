@@ -229,7 +229,7 @@ development_status:
   # 15b-2j: DROPPED (2026-02-23) 682 lines, below 800-line threshold
   15b-2k-decompose-history-filter-utils: done     # 2 pts - historyFilterUtils.ts 1,075→676 lines | done: 2026-02-25
   TD-15b-17-history-filter-utils-polish: done  # 1 pt - Break madge circular dep + hoist inner helpers (from 15b-2k review, LOW) | done: 2026-02-25
-  TD-15b-18-temporal-utils-test-coverage: ready-for-dev  # 2 pts - Unit tests for temporalFormatters + temporalFilterBuilders (from TD-15b-17 review, LOW)
+  TD-15b-18-temporal-utils-test-coverage: done  # 2 pts - Unit tests for temporalFormatters + temporalFilterBuilders (from TD-15b-17 review, LOW) | done: 2026-02-25
   15b-2l-decompose-scan-handlers: drafted      # 2 pts - useScanHandlers.ts 861 lines
   # Plateaued views round 2 (target <1,200)
   15b-2m-trends-view-extraction: drafted       # 3 pts - TrendsView 1,803 lines
