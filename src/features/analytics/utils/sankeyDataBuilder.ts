@@ -76,6 +76,26 @@ export function getNodeLevel(name: string): number {
     return match ? parseInt(match[1], 10) : 0;
 }
 
+/** Adds or accumulates a link in the link map. Uses source→target as the dedup key. */
+function addLink(linkMap: Map<string, SankeyLink>, source: string, target: string, value: number): void {
+    const key = `${source}→${target}`;
+    const existing = linkMap.get(key);
+    if (existing) { existing.value += value; }
+    else { linkMap.set(key, { source, target, value }); }
+}
+
+/**
+ * Splits a flow key of format "A→B" into its two parts.
+ * Throws if the key does not contain exactly one separator.
+ */
+export function splitFlowKey(key: string): [string, string] {
+    const parts = key.split('→');
+    if (parts.length !== 2) {
+        throw new Error(`splitFlowKey: expected "A→B" format, got: "${key}"`);
+    }
+    return [parts[0], parts[1]];
+}
+
 // ============================================================================
 // MAIN BUILDER
 // ============================================================================
@@ -123,7 +143,7 @@ function build2LevelSankey(
     theme: ThemeName, colorMode: ModeName
 ): SankeyData {
     const nodes: SankeyNode[] = [];
-    const links: SankeyLink[] = [];
+    const linkMap = new Map<string, SankeyLink>();
 
     // Level 1: Store Categories
     const storeCategories: CategoryAggregate[] = [];
@@ -181,35 +201,16 @@ function build2LevelSankey(
 
     // Create links
     agg.storeCategoryToItemCategory.forEach((value, key) => {
-        const [storeCat, itemCat] = key.split('→');
+        const [storeCat, itemCat] = splitFlowKey(key);
 
-        let sourceNode: string;
-        if (visibleStoreCategories.has(storeCat)) {
-            sourceNode = nodeName(1, storeCat);
-        } else if (storeCatFiltered.masNode) {
-            sourceNode = nodeName(1, 'Más');
-        } else {
-            return;
-        }
-
-        let targetNode: string;
-        if (visibleItemCategories.has(itemCat)) {
-            targetNode = nodeName(2, itemCat);
-        } else if (itemCatFiltered.masNode) {
-            targetNode = nodeName(2, 'Más');
-        } else {
-            return;
-        }
-
-        const existingLink = links.find(l => l.source === sourceNode && l.target === targetNode);
-        if (existingLink) {
-            existingLink.value += value;
-        } else {
-            links.push({ source: sourceNode, target: targetNode, value });
-        }
+        const sourceNode = visibleStoreCategories.has(storeCat)
+            ? nodeName(1, storeCat) : storeCatFiltered.masNode ? nodeName(1, 'Más') : null;
+        const targetNode = visibleItemCategories.has(itemCat)
+            ? nodeName(2, itemCat) : itemCatFiltered.masNode ? nodeName(2, 'Más') : null;
+        if (sourceNode && targetNode) { addLink(linkMap, sourceNode, targetNode, value); }
     });
 
-    return { nodes, links };
+    return { nodes, links: [...linkMap.values()] };
 }
 
 function build3LevelGroupsSankey(
@@ -217,7 +218,7 @@ function build3LevelGroupsSankey(
     theme: ThemeName, colorMode: ModeName
 ): SankeyData {
     const nodes: SankeyNode[] = [];
-    const links: SankeyLink[] = [];
+    const linkMap = new Map<string, SankeyLink>();
 
     // Level 1: Store Groups
     const storeGroups: CategoryAggregate[] = [];
@@ -294,31 +295,25 @@ function build3LevelGroupsSankey(
         });
     }
 
-    const addLink = (source: string, target: string, value: number) => {
-        const existing = links.find(l => l.source === source && l.target === target);
-        if (existing) { existing.value += value; }
-        else { links.push({ source, target, value }); }
-    };
-
     agg.storeGroupToStoreCategory.forEach((value, key) => {
-        const [storeGroup, storeCat] = key.split('→');
+        const [storeGroup, storeCat] = splitFlowKey(key);
         const sourceNode = visibleStoreGroups.has(storeGroup)
             ? nodeName(1, storeGroup) : storeGroupFiltered.masNode ? nodeName(1, 'Más') : null;
         const targetNode = visibleStoreCategories.has(storeCat)
             ? nodeName(2, storeCat) : storeCatFiltered.masNode ? nodeName(2, 'Más') : null;
-        if (sourceNode && targetNode) { addLink(sourceNode, targetNode, value); }
+        if (sourceNode && targetNode) { addLink(linkMap, sourceNode, targetNode, value); }
     });
 
     agg.storeCategoryToItemGroup.forEach((value, key) => {
-        const [storeCat, itemGroup] = key.split('→');
+        const [storeCat, itemGroup] = splitFlowKey(key);
         const sourceNode = visibleStoreCategories.has(storeCat)
             ? nodeName(2, storeCat) : storeCatFiltered.masNode ? nodeName(2, 'Más') : null;
         const targetNode = visibleItemGroups.has(itemGroup)
             ? nodeName(3, itemGroup) : itemGroupFiltered.masNode ? nodeName(3, 'Más') : null;
-        if (sourceNode && targetNode) { addLink(sourceNode, targetNode, value); }
+        if (sourceNode && targetNode) { addLink(linkMap, sourceNode, targetNode, value); }
     });
 
-    return { nodes, links };
+    return { nodes, links: [...linkMap.values()] };
 }
 
 function build3LevelCategoriesSankey(
@@ -326,7 +321,7 @@ function build3LevelCategoriesSankey(
     theme: ThemeName, colorMode: ModeName
 ): SankeyData {
     const nodes: SankeyNode[] = [];
-    const links: SankeyLink[] = [];
+    const linkMap = new Map<string, SankeyLink>();
 
     // Level 1: Store Categories
     const storeCategories: CategoryAggregate[] = [];
@@ -403,31 +398,25 @@ function build3LevelCategoriesSankey(
         });
     }
 
-    const addLink = (source: string, target: string, value: number) => {
-        const existing = links.find(l => l.source === source && l.target === target);
-        if (existing) { existing.value += value; }
-        else { links.push({ source, target, value }); }
-    };
-
     agg.storeCategoryToItemGroup.forEach((value, key) => {
-        const [storeCat, itemGroup] = key.split('→');
+        const [storeCat, itemGroup] = splitFlowKey(key);
         const sourceNode = visibleStoreCategories.has(storeCat)
             ? nodeName(1, storeCat) : storeCatFiltered.masNode ? nodeName(1, 'Más') : null;
         const targetNode = visibleItemGroups.has(itemGroup)
             ? nodeName(2, itemGroup) : itemGroupFiltered.masNode ? nodeName(2, 'Más') : null;
-        if (sourceNode && targetNode) { addLink(sourceNode, targetNode, value); }
+        if (sourceNode && targetNode) { addLink(linkMap, sourceNode, targetNode, value); }
     });
 
     agg.itemGroupToItemCategory.forEach((value, key) => {
-        const [itemGroup, itemCat] = key.split('→');
+        const [itemGroup, itemCat] = splitFlowKey(key);
         const sourceNode = visibleItemGroups.has(itemGroup)
             ? nodeName(2, itemGroup) : itemGroupFiltered.masNode ? nodeName(2, 'Más') : null;
         const targetNode = visibleItemCategories.has(itemCat)
             ? nodeName(3, itemCat) : itemCatFiltered.masNode ? nodeName(3, 'Más') : null;
-        if (sourceNode && targetNode) { addLink(sourceNode, targetNode, value); }
+        if (sourceNode && targetNode) { addLink(linkMap, sourceNode, targetNode, value); }
     });
 
-    return { nodes, links };
+    return { nodes, links: [...linkMap.values()] };
 }
 
 function build4LevelSankey(
@@ -435,7 +424,7 @@ function build4LevelSankey(
     theme: ThemeName, colorMode: ModeName
 ): SankeyData {
     const nodes: SankeyNode[] = [];
-    const links: SankeyLink[] = [];
+    const linkMap = new Map<string, SankeyLink>();
 
     // Level 1: Store Groups
     const storeGroups: CategoryAggregate[] = [];
@@ -537,40 +526,34 @@ function build4LevelSankey(
         });
     }
 
-    const addLink = (source: string, target: string, value: number) => {
-        const existing = links.find(l => l.source === source && l.target === target);
-        if (existing) { existing.value += value; }
-        else { links.push({ source, target, value }); }
-    };
-
     agg.storeGroupToStoreCategory.forEach((value, key) => {
-        const [storeGroup, storeCat] = key.split('→');
+        const [storeGroup, storeCat] = splitFlowKey(key);
         const sourceNode = visibleStoreGroups.has(storeGroup)
             ? nodeName(1, storeGroup) : storeGroupFiltered.masNode ? nodeName(1, 'Más') : null;
         const targetNode = visibleStoreCategories.has(storeCat)
             ? nodeName(2, storeCat) : storeCatFiltered.masNode ? nodeName(2, 'Más') : null;
-        if (sourceNode && targetNode) { addLink(sourceNode, targetNode, value); }
+        if (sourceNode && targetNode) { addLink(linkMap, sourceNode, targetNode, value); }
     });
 
     agg.storeCategoryToItemGroup.forEach((value, key) => {
-        const [storeCat, itemGroup] = key.split('→');
+        const [storeCat, itemGroup] = splitFlowKey(key);
         const sourceNode = visibleStoreCategories.has(storeCat)
             ? nodeName(2, storeCat) : storeCatFiltered.masNode ? nodeName(2, 'Más') : null;
         const targetNode = visibleItemGroups.has(itemGroup)
             ? nodeName(3, itemGroup) : itemGroupFiltered.masNode ? nodeName(3, 'Más') : null;
-        if (sourceNode && targetNode) { addLink(sourceNode, targetNode, value); }
+        if (sourceNode && targetNode) { addLink(linkMap, sourceNode, targetNode, value); }
     });
 
     agg.itemGroupToItemCategory.forEach((value, key) => {
-        const [itemGroup, itemCat] = key.split('→');
+        const [itemGroup, itemCat] = splitFlowKey(key);
         const sourceNode = visibleItemGroups.has(itemGroup)
             ? nodeName(3, itemGroup) : itemGroupFiltered.masNode ? nodeName(3, 'Más') : null;
         const targetNode = visibleItemCategories.has(itemCat)
             ? nodeName(4, itemCat) : itemCatFiltered.masNode ? nodeName(4, 'Más') : null;
-        if (sourceNode && targetNode) { addLink(sourceNode, targetNode, value); }
+        if (sourceNode && targetNode) { addLink(linkMap, sourceNode, targetNode, value); }
     });
 
-    return { nodes, links };
+    return { nodes, links: [...linkMap.values()] };
 }
 
 /** Checks if a node is a "Más" (aggregated) node. */

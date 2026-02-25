@@ -222,7 +222,7 @@ development_status:
   TD-15b-14-report-utils-data-robustness: done    # 2 pts - parseDate validation + trendPercent overflow guard (from 15b-2e review, LOW) | done: 2026-02-24
   15b-2f-decompose-sankey-data-builder: done    # 2 pts - sankeyDataBuilder.ts 1,038→584 lines | done: 2026-02-25
   TD-15b-15-sankey-builder-quality: done  # 2 pts - applyThreshold mutation fix + link dedup optimization + explicit price guard (from 15b-2f review, LOW) | done: 2026-02-25
-  TD-15b-16-sankey-builder-polish: ready-for-dev  # 2 pts - Extract addLink/splitFlowKey helpers + 3-level mode test coverage (from TD-15b-15 review, LOW)
+  TD-15b-16-sankey-builder-polish: done  # 2 pts - Extract addLink/splitFlowKey helpers + 3-level mode test coverage (from TD-15b-15 review, LOW) | done: 2026-02-25
   # 15b-2g: DROPPED (2026-02-23) 803 lines, essentially at target
   # 15b-2h: DROPPED (2026-02-23) 804 lines, essentially at target
   # 15b-2i: DROPPED (2026-02-23) 723 lines, below 800-line threshold

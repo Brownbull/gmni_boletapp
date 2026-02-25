@@ -14,6 +14,7 @@ import {
     getDefaultExpansion,
     isMasNode,
     getMasCount,
+    splitFlowKey,
     type SankeyExpansionState,
 } from '@features/analytics/utils/sankeyDataBuilder';
 import type { Transaction } from '../../../src/types/transaction';
@@ -177,6 +178,26 @@ describe('sankeyDataBuilder helpers', () => {
         it('returns category count from "Más" node', () => {
             expect(getMasCount({ name: 'L1_Más', originalName: 'Más', isMas: true, level: 1, value: 100, count: 5, categoryCount: 3, itemStyle: { color: '#999' } })).toBe(3);
             expect(getMasCount({ name: 'L1_Supermarket', originalName: 'Supermarket', level: 1, value: 100, count: 5, itemStyle: { color: '#999' } })).toBe(0);
+        });
+    });
+
+    describe('splitFlowKey', () => {
+        it('splits a valid A→B key into two parts', () => {
+            const [a, b] = splitFlowKey('Supermarket→Produce');
+            expect(a).toBe('Supermarket');
+            expect(b).toBe('Produce');
+        });
+
+        it('throws on a key with no separator', () => {
+            expect(() => splitFlowKey('NoSeparator')).toThrow(
+                'splitFlowKey: expected "A→B" format, got: "NoSeparator"'
+            );
+        });
+
+        it('throws on a key with multiple separators', () => {
+            expect(() => splitFlowKey('A→B→C')).toThrow(
+                'splitFlowKey: expected "A→B" format'
+            );
         });
     });
 });
@@ -521,5 +542,93 @@ describe('buildSankeyData - theme integration', () => {
         masNodes.forEach(node => {
             expect(node.itemStyle.color).toBe('#9ca3af'); // Gray
         });
+    });
+});
+
+// ============================================================================
+// 3-LEVEL-GROUPS MODE TESTS (AC3)
+// ============================================================================
+
+describe('buildSankeyData - 3-level-groups mode', () => {
+    it('generates nodes at exactly 3 levels', () => {
+        const transactions = createSampleTransactions();
+        const data = buildSankeyData(transactions, '3-level-groups');
+
+        const level1Nodes = data.nodes.filter(n => n.level === 1);
+        const level2Nodes = data.nodes.filter(n => n.level === 2);
+        const level3Nodes = data.nodes.filter(n => n.level === 3);
+        const level4Nodes = data.nodes.filter(n => n.level === 4);
+
+        expect(level1Nodes.length).toBeGreaterThan(0); // Store groups
+        expect(level2Nodes.length).toBeGreaterThan(0); // Store categories
+        expect(level3Nodes.length).toBeGreaterThan(0); // Item groups
+        expect(level4Nodes).toHaveLength(0);            // No level 4 in 3-level mode
+    });
+
+    it('creates links only between adjacent levels', () => {
+        const transactions = createSampleTransactions();
+        const data = buildSankeyData(transactions, '3-level-groups');
+
+        expect(data.links.length).toBeGreaterThan(0);
+        data.links.forEach(link => {
+            const sourceLevel = getNodeLevel(link.source);
+            const targetLevel = getNodeLevel(link.target);
+            expect(targetLevel - sourceLevel).toBe(1);
+        });
+    });
+
+    it('has links for both L1→L2 and L2→L3 transitions', () => {
+        const transactions = createSampleTransactions();
+        const data = buildSankeyData(transactions, '3-level-groups');
+
+        const l1ToL2 = data.links.filter(l => l.source.startsWith('L1_') && l.target.startsWith('L2_'));
+        const l2ToL3 = data.links.filter(l => l.source.startsWith('L2_') && l.target.startsWith('L3_'));
+
+        expect(l1ToL2.length).toBeGreaterThan(0);
+        expect(l2ToL3.length).toBeGreaterThan(0);
+    });
+});
+
+// ============================================================================
+// 3-LEVEL-CATEGORIES MODE TESTS (AC3)
+// ============================================================================
+
+describe('buildSankeyData - 3-level-categories mode', () => {
+    it('generates nodes at exactly 3 levels', () => {
+        const transactions = createSampleTransactions();
+        const data = buildSankeyData(transactions, '3-level-categories');
+
+        const level1Nodes = data.nodes.filter(n => n.level === 1);
+        const level2Nodes = data.nodes.filter(n => n.level === 2);
+        const level3Nodes = data.nodes.filter(n => n.level === 3);
+        const level4Nodes = data.nodes.filter(n => n.level === 4);
+
+        expect(level1Nodes.length).toBeGreaterThan(0); // Store categories
+        expect(level2Nodes.length).toBeGreaterThan(0); // Item groups
+        expect(level3Nodes.length).toBeGreaterThan(0); // Item categories
+        expect(level4Nodes).toHaveLength(0);            // No level 4 in 3-level mode
+    });
+
+    it('creates links only between adjacent levels', () => {
+        const transactions = createSampleTransactions();
+        const data = buildSankeyData(transactions, '3-level-categories');
+
+        expect(data.links.length).toBeGreaterThan(0);
+        data.links.forEach(link => {
+            const sourceLevel = getNodeLevel(link.source);
+            const targetLevel = getNodeLevel(link.target);
+            expect(targetLevel - sourceLevel).toBe(1);
+        });
+    });
+
+    it('has links for both L1→L2 and L2→L3 transitions', () => {
+        const transactions = createSampleTransactions();
+        const data = buildSankeyData(transactions, '3-level-categories');
+
+        const l1ToL2 = data.links.filter(l => l.source.startsWith('L1_') && l.target.startsWith('L2_'));
+        const l2ToL3 = data.links.filter(l => l.source.startsWith('L2_') && l.target.startsWith('L3_'));
+
+        expect(l1ToL2.length).toBeGreaterThan(0);
+        expect(l2ToL3.length).toBeGreaterThan(0);
     });
 });
