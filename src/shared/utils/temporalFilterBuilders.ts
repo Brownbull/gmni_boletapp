@@ -11,6 +11,33 @@
 
 import type { TemporalFilterState } from '@/types/historyFilters';
 
+// ============================================================================
+// Module-Level Helpers (TD-15b-17: hoisted from buildCascadingTemporalFilter)
+// ============================================================================
+
+function getFirstMonthOfQuarter(y: string, q: string): string {
+  const qNum = parseInt(q.replace('Q', ''), 10);
+  const monthNum = (qNum - 1) * 3 + 1;
+  return `${y}-${String(monthNum).padStart(2, '0')}`;
+}
+
+function getQuarterFromMonthStr(m: string): string {
+  const monthNum = parseInt(m.split('-')[1], 10);
+  return `Q${Math.ceil(monthNum / 3)}`;
+}
+
+const FIRST_WEEK = 1;
+
+function getFirstDayOfWeek(m: string, w: number): string {
+  const [y, mon] = m.split('-');
+  const dayNum = (w - 1) * 7 + 1;
+  return `${y}-${mon}-${String(dayNum).padStart(2, '0')}`;
+}
+
+// ============================================================================
+// Cascading Filter Builders
+// ============================================================================
+
 /**
  * Build a complete temporal filter state with cascading defaults.
  * When a higher-level dimension changes, lower-level dimensions cascade to their first valid values.
@@ -33,29 +60,6 @@ export function buildCascadingTemporalFilter(
   week?: number,
   day?: string
 ): TemporalFilterState {
-  // Helper: get first month of a quarter
-  const getFirstMonthOfQuarter = (y: string, q: string): string => {
-    const qNum = parseInt(q.replace('Q', ''), 10);
-    const monthNum = (qNum - 1) * 3 + 1;
-    return `${y}-${String(monthNum).padStart(2, '0')}`;
-  };
-
-  // Helper: get quarter from month
-  const getQuarterFromMonthStr = (m: string): string => {
-    const monthNum = parseInt(m.split('-')[1], 10);
-    return `Q${Math.ceil(monthNum / 3)}`;
-  };
-
-  // Helper: get first week (always 1)
-  const getFirstWeek = (): number => 1;
-
-  // Helper: get first day of a week in a month
-  const getFirstDayOfWeek = (m: string, w: number): string => {
-    const [y, mon] = m.split('-');
-    const dayNum = (w - 1) * 7 + 1;
-    return `${y}-${mon}-${String(dayNum).padStart(2, '0')}`;
-  };
-
   // Build the filter based on level
   if (level === 'year') {
     return { level: 'year', year };
@@ -82,7 +86,7 @@ export function buildCascadingTemporalFilter(
     // Ensure month is within the quarter
     const monthQuarter = getQuarterFromMonthStr(m);
     const finalMonth = monthQuarter === q ? m : getFirstMonthOfQuarter(year, q);
-    const w = week !== undefined ? week : getFirstWeek();
+    const w = week !== undefined ? week : FIRST_WEEK;
     return { level: 'week', year, quarter: q, month: finalMonth, week: w };
   }
 
@@ -92,7 +96,7 @@ export function buildCascadingTemporalFilter(
     // Ensure month is within the quarter
     const monthQuarter = getQuarterFromMonthStr(m);
     const finalMonth = monthQuarter === q ? m : getFirstMonthOfQuarter(year, q);
-    const w = week !== undefined ? week : getFirstWeek();
+    const w = week !== undefined ? week : FIRST_WEEK;
     const d = day || getFirstDayOfWeek(finalMonth, w);
     return { level: 'day', year, quarter: q, month: finalMonth, week: w, day: d };
   }
@@ -122,7 +126,7 @@ export function buildQuarterFilter(year: string, quarter: string): TemporalFilte
  * Updates quarter if needed, cascades to Week 1 → Day 1
  */
 export function buildMonthFilter(year: string, month: string): TemporalFilterState {
-  const quarter = `Q${Math.ceil(parseInt(month.split('-')[1], 10) / 3)}`;
+  const quarter = getQuarterFromMonthStr(month);
   return buildCascadingTemporalFilter('month', year, quarter, month);
 }
 
@@ -131,7 +135,7 @@ export function buildMonthFilter(year: string, month: string): TemporalFilterSta
  * Cascades to first day of week
  */
 export function buildWeekFilter(year: string, month: string, week: number): TemporalFilterState {
-  const quarter = `Q${Math.ceil(parseInt(month.split('-')[1], 10) / 3)}`;
+  const quarter = getQuarterFromMonthStr(month);
   return buildCascadingTemporalFilter('week', year, quarter, month, week);
 }
 
@@ -140,6 +144,6 @@ export function buildWeekFilter(year: string, month: string, week: number): Temp
  * Full specification - no cascading needed
  */
 export function buildDayFilter(year: string, month: string, week: number, day: string): TemporalFilterState {
-  const quarter = `Q${Math.ceil(parseInt(month.split('-')[1], 10) / 3)}`;
+  const quarter = getQuarterFromMonthStr(month);
   return buildCascadingTemporalFilter('day', year, quarter, month, week, day);
 }

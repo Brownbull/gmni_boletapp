@@ -528,54 +528,6 @@ export function filterTransactionsByHistoryFilters(
 // ============================================================================
 
 /**
- * Format temporal filter selection for display (breadcrumb style).
- * Story 9.20: Added quarter display support.
- */
-export function formatTemporalRange(
-  temporal: TemporalFilterState,
-  locale: string = 'en'
-): string {
-  if (temporal.level === 'all') {
-    return locale === 'es' ? 'Todo el tiempo' : 'All time';
-  }
-
-  const parts: string[] = [];
-
-  if (temporal.year) {
-    parts.push(temporal.year);
-  }
-
-  // Quarter display (Story 9.20)
-  if (temporal.quarter) {
-    const quarterNum = parseInt(temporal.quarter.replace('Q', ''), 10);
-    const quarterLabel = locale === 'es' ? `T${quarterNum}` : temporal.quarter;
-    parts.push(quarterLabel);
-  }
-
-  if (temporal.month) {
-    const [, monthNum] = temporal.month.split('-');
-    const date = new Date(2024, parseInt(monthNum, 10) - 1, 1);
-    const monthName = date.toLocaleDateString(
-      locale === 'es' ? 'es-ES' : 'en-US',
-      { month: 'long' }
-    );
-    parts.push(monthName);
-  }
-
-  if (temporal.week !== undefined) {
-    const weekLabel = locale === 'es' ? `Sem ${temporal.week}` : `W${temporal.week}`;
-    parts.push(weekLabel);
-  }
-
-  if (temporal.day) {
-    const dayNum = parseInt(temporal.day.split('-')[2], 10);
-    parts.push(dayNum.toString());
-  }
-
-  return parts.join(' > ');
-}
-
-/**
  * Format category filter selection for display (breadcrumb style).
  */
 export function formatCategoryPath(
@@ -671,6 +623,7 @@ export function getWeekLabel(month: string, week: number, locale: string = 'en')
   return `${shortMonth} ${startDay}-${endDay}`;
 }
 
-// Re-export extracted modules (Story 15b-2k)
+// Re-export extracted modules (Story 15b-2k, TD-15b-17)
+export * from './temporalFormatters';
 export * from './temporalNavigation';
 export * from './temporalFilterBuilders';

@@ -9,7 +9,7 @@
  */
 
 import type { TemporalFilterState } from '@/types/historyFilters';
-import { formatTemporalRange } from './historyFilterUtils';
+import { formatTemporalRange } from './temporalFormatters';
 
 /**
  * Calculate the next temporal period based on current temporal state.
