@@ -1,16 +1,1 @@
-{
-  "date": "2026-02-24",
-  "workflow": "ecc-code-review",
-  "story": "TD-15b-12",
-  "total_unit_files": 276,
-  "total_unit_tests": 6810,
-  "unit_passed": 6810,
-  "unit_failed": 0,
-  "integration_files": 0,
-  "integration_passed": 0,
-  "integration_failed": 0,
-  "integration_failure_reason": "",
-  "coverage_by_module": {},
-  "failed_tests": [],
-  "notes": "Schema bounds hardening. 5 quick fixes applied (whitespace comment, fractional test, test setup refactor, style fix, AC4 comment). test:quick all green."
-}
+{"date":"2026-02-25","story":"15b-2l-decompose-scan-handlers","total":6995,"passed":6962,"skipped":33,"failed":0,"files":286}
