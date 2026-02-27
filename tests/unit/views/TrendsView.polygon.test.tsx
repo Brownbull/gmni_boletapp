@@ -115,6 +115,7 @@ const mockT = (key: string) => {
     upgradeRequired: 'Upgrade required',
     totalSpent: 'Total Spent',
     transactions: 'Transactions',
+    analytics: 'Explora',
     // Story 14.14b: IconFilterBar translations
     temporalFilter: 'Time filter',
     categoryFilter: 'Category filter',
