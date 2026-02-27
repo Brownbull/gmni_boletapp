@@ -126,9 +126,16 @@ describe('safeCSSColor', () => {
         expect(safeCSSColor(undefined)).toBe('#10b981');
     });
 
-    it('returns custom fallback when provided', () => {
-        expect(safeCSSColor('invalid', 'var(--primary, #2563eb)')).toBe('var(--primary, #2563eb)');
+    it('rejects invalid custom fallback and returns default', () => {
+        expect(safeCSSColor('invalid', 'var(--primary, #2563eb)')).toBe('#10b981');
+        expect(safeCSSColor('invalid', 'var(--evil)')).toBe('#10b981');
+        expect(safeCSSColor('', 'not-a-color')).toBe('#10b981');
+    });
+
+    it('accepts valid hex custom fallback', () => {
+        expect(safeCSSColor('invalid', '#ff0000')).toBe('#ff0000');
         expect(safeCSSColor('', '#ff0000')).toBe('#ff0000');
+        expect(safeCSSColor(null, '#abc')).toBe('#aabbcc');
     });
 
     it('ignores custom fallback when color is valid', () => {

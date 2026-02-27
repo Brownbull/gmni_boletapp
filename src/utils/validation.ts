@@ -47,21 +47,27 @@ export function validateCSSColor(color: string): boolean {
     return VALID_HEX_COLOR_REGEX.test(color);
 }
 
+/** Expands 3-digit hex (#abc) to 6-digit (#aabbcc). Caller must ensure input is a validated hex color. */
+function expandHex(hex: string): string {
+    if (hex.length === 4) {
+        const [, r, g, b] = hex;
+        return `#${r}${r}${g}${g}${b}${b}`;
+    }
+    return hex;
+}
+
 /**
  * Returns a safe, normalized CSS color, falling back to a default if invalid.
  * Normalizes 3-digit hex (#abc) to 6-digit (#aabbcc) so that downstream
  * alpha suffix concatenation (e.g. + '20') produces valid 8-digit hex.
+ * Both `color` and `fallback` are validated and normalized.
  * Use at rendering boundaries to prevent CSS injection.
  */
 export function safeCSSColor(color: string | undefined | null, fallback: string = DEFAULT_CSS_COLOR_FALLBACK): string {
     if (color && validateCSSColor(color)) {
-        if (color.length === 4) {
-            const [, r, g, b] = color;
-            return `#${r}${r}${g}${g}${b}${b}`;
-        }
-        return color;
+        return expandHex(color);
     }
-    return fallback;
+    return validateCSSColor(fallback) ? expandHex(fallback) : DEFAULT_CSS_COLOR_FALLBACK;
 }
 
 // =============================================================================
