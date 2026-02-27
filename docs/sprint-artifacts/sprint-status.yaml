@@ -237,7 +237,8 @@ development_status:
   15b-2m-trends-view-extraction: done      # 3 pts - TrendsView 1,981→1,226 lines | done: 2026-02-25
   TD-15b-21-trends-view-polish: done  # 1 pt - Runtime guards, i18n, line trim (from 15b-2m review, LOW) | done: 2026-02-27
   TD-15b-22-trends-view-minor-hardening: done  # 1 pt - CSS color validation + shared locale guard + sync pattern (from TD-15b-21 review, LOW) | done: 2026-02-27
-  TD-15b-23-safecsscolor-hex-normalization: ready-for-dev  # 1 pt - Normalize 3-digit hex to 6-digit in safeCSSColor (from TD-15b-22 review, LOW)
+  TD-15b-23-safecsscolor-hex-normalization: done  # 1 pt - Normalize 3-digit hex to 6-digit in safeCSSColor (from TD-15b-22 review, LOW) | done: 2026-02-27
+  TD-15b-24-safecsscolor-fallback-validation: ready-for-dev  # 1 pt - Validate fallback parameter in safeCSSColor (from TD-15b-23 review, LOW)
   15b-2n-dashboard-view-extraction: drafted    # 3 pts - DashboardView 1,358 lines
   15b-2o-editor-view-extraction: drafted       # 3 pts - TransactionEditorViewInternal 1,317 lines
   15b-2p-icon-filter-extraction: drafted       # 2 pts - IconCategoryFilter 1,030 lines

@@ -48,12 +48,33 @@ export function validateCSSColor(color: string): boolean {
 }
 
 /**
- * Returns a safe CSS color, falling back to a default if invalid.
+ * Returns a safe, normalized CSS color, falling back to a default if invalid.
+ * Normalizes 3-digit hex (#abc) to 6-digit (#aabbcc) so that downstream
+ * alpha suffix concatenation (e.g. + '20') produces valid 8-digit hex.
  * Use at rendering boundaries to prevent CSS injection.
  */
 export function safeCSSColor(color: string | undefined | null, fallback: string = DEFAULT_CSS_COLOR_FALLBACK): string {
     if (color && validateCSSColor(color)) {
+        if (color.length === 4) {
+            const [, r, g, b] = color;
+            return `#${r}${r}${g}${g}${b}${b}`;
+        }
         return color;
     }
     return fallback;
+}
+
+// =============================================================================
+// Locale Validation (TD-15b-22: Shared locale guard)
+// =============================================================================
+
+/**
+ * Sanitizes a locale string to a supported locale.
+ * Returns 'es' (Spanish) as default for unsupported values.
+ */
+export function sanitizeLocale(locale: string): 'es' | 'en' {
+    if (locale === 'es' || locale === 'en') {
+        return locale;
+    }
+    return 'es';
 }

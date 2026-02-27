@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { validateCSSColor, safeCSSColor } from '../../../src/utils/validation';
+import { validateCSSColor, safeCSSColor, sanitizeLocale } from '../../../src/utils/validation';
 
 // =========================================================================
 // validateCSSColor Tests (TD-CONSOLIDATED-7: CSS Color Injection Prevention)
@@ -93,10 +93,25 @@ describe('validateCSSColor', () => {
 // safeCSSColor Tests (TD-CONSOLIDATED-7: CSS Color Injection Prevention)
 // =========================================================================
 describe('safeCSSColor', () => {
-    it('returns valid hex color unchanged', () => {
+    it('returns valid 6-digit hex color unchanged', () => {
         expect(safeCSSColor('#10b981')).toBe('#10b981');
-        expect(safeCSSColor('#abc')).toBe('#abc');
         expect(safeCSSColor('#ABCDEF')).toBe('#ABCDEF');
+        expect(safeCSSColor('#000000')).toBe('#000000');
+        expect(safeCSSColor('#ffffff')).toBe('#ffffff');
+    });
+
+    it('normalizes 3-digit hex to 6-digit', () => {
+        expect(safeCSSColor('#abc')).toBe('#aabbcc');
+        expect(safeCSSColor('#ABC')).toBe('#AABBCC');
+        expect(safeCSSColor('#123')).toBe('#112233');
+        expect(safeCSSColor('#fff')).toBe('#ffffff');
+        expect(safeCSSColor('#000')).toBe('#000000');
+    });
+
+    it('produces valid 8-digit hex when alpha suffix is appended', () => {
+        const color = safeCSSColor('#abc') + '20';
+        expect(color).toBe('#aabbcc20');
+        expect(color).toHaveLength(9);
     });
 
     it('returns default fallback for invalid input', () => {
@@ -118,5 +133,28 @@ describe('safeCSSColor', () => {
 
     it('ignores custom fallback when color is valid', () => {
         expect(safeCSSColor('#abcdef', '#000')).toBe('#abcdef');
+    });
+});
+
+// =========================================================================
+// sanitizeLocale Tests (TD-15b-22: Shared locale guard)
+// =========================================================================
+describe('sanitizeLocale', () => {
+    it('returns es for es input', () => {
+        expect(sanitizeLocale('es')).toBe('es');
+    });
+
+    it('returns en for en input', () => {
+        expect(sanitizeLocale('en')).toBe('en');
+    });
+
+    it('defaults to es for unsupported locale', () => {
+        expect(sanitizeLocale('fr')).toBe('es');
+        expect(sanitizeLocale('de')).toBe('es');
+        expect(sanitizeLocale('xyz')).toBe('es');
+    });
+
+    it('defaults to es for empty string', () => {
+        expect(sanitizeLocale('')).toBe('es');
     });
 });
