@@ -29,16 +29,16 @@
 import { useMemo, useCallback } from 'react';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { User } from 'firebase/auth';
-import type { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
+import type { PaginationCursor } from '@/repositories/types';
 import { Services } from './useAuth';
 import { useTransactions } from './useTransactions';
 import { QUERY_KEYS } from '../lib/queryKeys';
 import {
-    getTransactionPage,
+    createTransactionRepository,
     LISTENER_LIMITS,
     PAGINATION_PAGE_SIZE,
     type TransactionPage,
-} from '../services/firestore';
+} from '@/repositories/transactionRepository';
 import { Transaction } from '../types/transaction';
 import { getSafeDate, parseStrictNumber } from '../utils/validation';
 
@@ -125,24 +125,18 @@ export function usePaginatedTransactions(
         queryKey: QUERY_KEYS.transactionsPaginated(userId, appId),
         queryFn: async ({ pageParam }): Promise<TransactionPage> => {
             if (!services?.db || !userId) {
-                return { transactions: [], lastDoc: null, hasMore: false };
+                return { transactions: [], cursor: undefined, hasMore: false };
             }
 
-            // pageParam is the cursor (last doc from previous page)
-            const cursor = pageParam as QueryDocumentSnapshot<DocumentData> | undefined;
-            return getTransactionPage(
-                services.db,
-                userId,
-                appId,
-                cursor,
-                PAGINATION_PAGE_SIZE
-            );
+            // pageParam is the cursor (opaque PaginationCursor from previous page)
+            const repo = createTransactionRepository({ db: services.db, userId, appId });
+            return repo.getPage(pageParam as PaginationCursor, PAGINATION_PAGE_SIZE);
         },
-        getNextPageParam: (lastPage): QueryDocumentSnapshot<DocumentData> | undefined => {
+        getNextPageParam: (lastPage): PaginationCursor | undefined => {
             // Return cursor for next page, or undefined if no more pages
-            return lastPage.hasMore && lastPage.lastDoc ? lastPage.lastDoc : undefined;
+            return lastPage.hasMore && lastPage.cursor ? lastPage.cursor : undefined;
         },
-        initialPageParam: undefined as QueryDocumentSnapshot<DocumentData> | undefined,
+        initialPageParam: undefined as PaginationCursor | undefined,
         enabled: enabled && isAtListenerLimit, // Only enable pagination if we hit the listener limit
         staleTime: 5 * 60 * 1000, // 5 minutes
         gcTime: 30 * 60 * 1000, // 30 minutes cache

@@ -4,7 +4,7 @@
 **Phase:** 4 - Architecture
 **Points:** 1
 **Priority:** LOW
-**Status:** drafted
+**Status:** ready-for-dev
 
 ## Overview
 
@@ -202,3 +202,4 @@ If any metric is not met:
 |------|--------|
 | 2026-02-13 | Initial stub |
 | 2026-02-23 | Full rewrite with codebase research. Established 7 target metrics. Corrected transaction.ts baseline from 109 to 101 (actual count). Revised transaction.ts target from <50 to <88 with rationale. Added Node.js one-liners for metrics extraction. |
+| 2026-02-27 | ECC re-creation validation: Baseline reconciliation — App.tsx 78 (not 62), transaction.ts 110 (not 101). Layer violation check must cover `src/app/hooks/`. `depcruise` must be locally installed. Status: ready-for-dev. |

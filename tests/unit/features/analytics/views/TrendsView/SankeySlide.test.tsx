@@ -126,4 +126,24 @@ describe('SankeySlide', () => {
         render(<SankeySlide {...makeProps({ locale: 'xyz' })} />);
         expect(screen.getByTestId('sankey-chart')).toHaveAttribute('data-locale', 'es');
     });
+
+    describe('CSS color validation', () => {
+        it('renders selection with valid hex color', () => {
+            render(<SankeySlide {...makeProps({ sankeySelectionData: mockSelectionData })} />);
+            const amountText = screen.getByText('$150K (45%)');
+            // Valid hex color should be applied
+            expect(amountText).toHaveStyle({ color: '#ff6b6b' });
+        });
+
+        it('falls back to default color for invalid color value', () => {
+            const badColorData: SankeySelectionData = {
+                ...mockSelectionData,
+                color: 'javascript:alert(1)',
+            };
+            render(<SankeySlide {...makeProps({ sankeySelectionData: badColorData })} />);
+            const amountText = screen.getByText('$150K (45%)');
+            // Invalid color should fall back to default
+            expect(amountText).toHaveStyle({ color: '#10b981' });
+        });
+    });
 });

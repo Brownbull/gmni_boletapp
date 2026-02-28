@@ -73,16 +73,17 @@ export function applyThreshold(
     // Sort by value descending
     const sorted = [...categories].sort(byNumberDesc('value'));
 
-    // Calculate percentages
-    sorted.forEach(cat => {
-        cat.percent = (cat.value / total) * 100;
-    });
+    // Calculate percentages — return NEW objects, never mutate inputs
+    const sortedWithPercent = sorted.map(cat => ({
+        ...cat,
+        percent: (cat.value / total) * 100,
+    }));
 
     // Find categories above threshold
-    const aboveThreshold = sorted.filter(cat => cat.percent >= THRESHOLD_PERCENT);
+    const aboveThreshold = sortedWithPercent.filter(cat => cat.percent >= THRESHOLD_PERCENT);
 
     // Find categories below threshold
-    const belowThreshold = sorted.filter(cat => cat.percent < THRESHOLD_PERCENT);
+    const belowThreshold = sortedWithPercent.filter(cat => cat.percent < THRESHOLD_PERCENT);
 
     // Determine how many below-threshold to show
     // Always show at least one below threshold (if exists) + expansion count

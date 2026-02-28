@@ -12,7 +12,7 @@ import { CurrencyTag } from '@features/transaction-editor/components/CurrencyTag
 import { DEFAULT_CURRENCY } from '@/utils/currency';
 import { StoreCategory } from '@/types/transaction';
 import { ReceiptType } from '@/services/gemini';
-import { SupportedCurrency } from '@/services/userPreferencesService';
+import type { SupportedCurrency } from '@/types/preferences';
 // Story 9.10: Pending scan types for visual indicator
 import { PendingScan, UserCredits } from '@/types/scan';
 // Story 9.12: Language type for translations

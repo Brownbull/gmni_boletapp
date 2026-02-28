@@ -4,7 +4,7 @@
 **Phase:** 2 - Decomposition
 **Points:** 3
 **Priority:** HIGH
-**Status:** drafted
+**Status:** done
 
 ## Overview
 
@@ -12,12 +12,12 @@ Decompose `reportUtils.ts` (2,401 lines) -- the largest utility file in the code
 
 ## Functional Acceptance Criteria
 
-- [ ] **AC1:** `reportUtils.ts` reduced to a re-export barrel of <50 lines
-- [ ] **AC2:** Each extracted file is <800 lines
-- [ ] **AC3:** All existing tests pass before AND after extraction (including `tests/unit/features/reports/utils/reportUtils.test.ts`)
-- [ ] **AC4:** No new functionality added -- pure decomposition
-- [ ] **AC5:** All 3 source consumers (`ReportsView.tsx`, `ReportDetailOverlay.tsx`, `index.ts`) import correctly without changes (re-export barrel preserves all paths)
-- [ ] **AC6:** `npm run test:quick` passes with 0 failures
+- [x] **AC1:** `reportUtils.ts` reduced to a re-export barrel of <50 lines
+- [x] **AC2:** Each extracted file is <800 lines
+- [x] **AC3:** All existing tests pass before AND after extraction (including `tests/unit/features/reports/utils/reportUtils.test.ts`)
+- [x] **AC4:** No new functionality added -- pure decomposition
+- [x] **AC5:** All 3 source consumers (`ReportsView.tsx`, `ReportDetailOverlay.tsx`, `index.ts`) import correctly without changes (re-export barrel preserves all paths)
+- [x] **AC6:** `npm run test:quick` passes with 0 failures
 
 ## Architectural Acceptance Criteria (MANDATORY)
 
@@ -25,31 +25,31 @@ Decompose `reportUtils.ts` (2,401 lines) -- the largest utility file in the code
 
 ### File Location Requirements
 
-- [ ] **AC-ARCH-LOC-1:** Date and period utilities at `src/features/reports/utils/reportDateUtils.ts`
-- [ ] **AC-ARCH-LOC-2:** Category grouping and formatting at `src/features/reports/utils/reportCategoryGrouping.ts`
-- [ ] **AC-ARCH-LOC-3:** Core report generation at `src/features/reports/utils/reportGeneration.ts`
-- [ ] **AC-ARCH-LOC-4:** Year-based report generation and insights at `src/features/reports/utils/reportYearGeneration.ts`
-- [ ] **AC-ARCH-LOC-5:** Re-export barrel at `src/features/reports/utils/reportUtils.ts` (existing path preserved)
-- [ ] **AC-ARCH-LOC-6:** Existing test file at `tests/unit/features/reports/utils/reportUtils.test.ts` updated to import from new file paths (or kept importing from barrel -- either is valid)
+- [x] **AC-ARCH-LOC-1:** Date and period utilities at `src/features/reports/utils/reportDateUtils.ts`
+- [x] **AC-ARCH-LOC-2:** Category grouping and formatting at `src/features/reports/utils/reportCategoryGrouping.ts`
+- [x] **AC-ARCH-LOC-3:** Core report generation at `src/features/reports/utils/reportGeneration.ts`
+- [x] **AC-ARCH-LOC-4:** Year-based report generation and insights at `src/features/reports/utils/reportYearGeneration.ts`
+- [x] **AC-ARCH-LOC-5:** Re-export barrel at `src/features/reports/utils/reportUtils.ts` (existing path preserved)
+- [x] **AC-ARCH-LOC-6:** Existing test file at `tests/unit/features/reports/utils/reportUtils.test.ts` updated to import from new file paths (or kept importing from barrel -- either is valid)
 
 ### Pattern Requirements
 
-- [ ] **AC-ARCH-PATTERN-1:** All extracted files use `@/` or `@features/` path aliases for external imports -- zero `../../` relative imports
-- [ ] **AC-ARCH-PATTERN-2:** Extracted files import from each other via relative `./` paths (same directory)
-- [ ] **AC-ARCH-PATTERN-3:** `reportDateUtils.ts` contains ONLY pure functions with zero external imports beyond `@/types/transaction` (for the `Transaction` type used by filter functions)
-- [ ] **AC-ARCH-PATTERN-4:** `reportCategoryGrouping.ts` imports date utilities from `./reportDateUtils` if needed, and type imports from `@/types/*`
-- [ ] **AC-ARCH-PATTERN-5:** `reportGeneration.ts` imports from `./reportDateUtils` and `./reportCategoryGrouping` -- dependency flows one direction (date -> grouping -> generation)
-- [ ] **AC-ARCH-PATTERN-6:** `reportYearGeneration.ts` imports from all three upstream files -- sits at the top of the dependency chain
-- [ ] **AC-ARCH-PATTERN-7:** `reportUtils.ts` re-exports EVERYTHING from all 4 extracted files using `export * from './...'` syntax
-- [ ] **AC-ARCH-PATTERN-8:** `ReportRowData` interface and `ItemBreakdown` interface are co-located with the functions that produce them (in `reportGeneration.ts` and `reportCategoryGrouping.ts` respectively)
+- [x] **AC-ARCH-PATTERN-1:** All extracted files use `@/` or `@features/` path aliases for external imports -- zero `../../` relative imports
+- [x] **AC-ARCH-PATTERN-2:** Extracted files import from each other via relative `./` paths (same directory)
+- [x] **AC-ARCH-PATTERN-3:** `reportDateUtils.ts` contains ONLY pure functions with zero external imports beyond `@/types/transaction` (for the `Transaction` type used by filter functions)
+- [x] **AC-ARCH-PATTERN-4:** `reportCategoryGrouping.ts` imports date utilities from `./reportDateUtils` if needed, and type imports from `@/types/*`
+- [x] **AC-ARCH-PATTERN-5:** `reportGeneration.ts` imports from `./reportDateUtils` and `./reportCategoryGrouping` -- dependency flows one direction (date -> grouping -> generation)
+- [x] **AC-ARCH-PATTERN-6:** `reportYearGeneration.ts` imports from all three upstream files -- sits at the top of the dependency chain
+- [x] **AC-ARCH-PATTERN-7:** `reportUtils.ts` re-exports EVERYTHING from all 4 extracted files using `export * from './...'` syntax
+- [x] **AC-ARCH-PATTERN-8:** `ReportRowData` interface and `ItemBreakdown` interface are co-located with the functions that produce them (in `reportGeneration.ts` and `reportCategoryGrouping.ts` respectively)
 
 ### Anti-Pattern Requirements (Must NOT Happen)
 
-- [ ] **AC-ARCH-NO-1:** No circular dependencies -- extracted files must NOT import from `reportUtils.ts` (the barrel) or from downstream files (generation must not import from yearGeneration)
-- [ ] **AC-ARCH-NO-2:** No new `console.log` statements in extracted files
-- [ ] **AC-ARCH-NO-3:** No `: any` types in extracted files
-- [ ] **AC-ARCH-NO-4:** No feature barrel modification -- `src/features/reports/index.ts` continues to `export * from './utils'` unchanged
-- [ ] **AC-ARCH-NO-5:** No consumer import changes required -- `ReportsView.tsx`, `ReportDetailOverlay.tsx`, and the test file continue to work with existing import paths because the re-export barrel preserves the public API
+- [x] **AC-ARCH-NO-1:** No circular dependencies -- extracted files must NOT import from `reportUtils.ts` (the barrel) or from downstream files (generation must not import from yearGeneration)
+- [x] **AC-ARCH-NO-2:** No new `console.log` statements in extracted files
+- [x] **AC-ARCH-NO-3:** No `: any` types in extracted files
+- [x] **AC-ARCH-NO-4:** No feature barrel modification -- `src/features/reports/index.ts` continues to `export * from './utils'` unchanged
+- [x] **AC-ARCH-NO-5:** No consumer import changes required -- `ReportsView.tsx`, `ReportDetailOverlay.tsx`, and the test file continue to work with existing import paths because the re-export barrel preserves the public API
 
 ## File Specification
 
@@ -67,7 +67,8 @@ Decompose `reportUtils.ts` (2,401 lines) -- the largest utility file in the code
 | reportDateUtils.ts | `src/features/reports/utils/reportDateUtils.ts` | Date utilities + period range/filter functions | ~250 |
 | reportCategoryGrouping.ts | `src/features/reports/utils/reportCategoryGrouping.ts` | Category breakdown, store/item grouping, formatCategoryName | ~450 |
 | reportGeneration.ts | `src/features/reports/utils/reportGeneration.ts` | Core summary generators, report cards, ReportRowData, getAvailableReports, getTimeFilterLabel | ~530 |
-| reportYearGeneration.ts | `src/features/reports/utils/reportYearGeneration.ts` | Insight/highlight helpers, year-based generation, getAvailableReportsForYear, getMaxReportsForYear | ~780 |
+| reportInsights.ts | `src/features/reports/utils/reportInsights.ts` | Insight/highlight helpers (internal, not re-exported via barrel) | ~436 |
+| reportYearGeneration.ts | `src/features/reports/utils/reportYearGeneration.ts` | Year-based generation, getAvailableReportsForYear, getMaxReportsForYear | ~522 |
 
 ### Unchanged Files
 
@@ -82,63 +83,63 @@ Decompose `reportUtils.ts` (2,401 lines) -- the largest utility file in the code
 
 ### Task 1: Establish baseline
 
-- [ ] 1.1 Run `npm run test:quick` and record total pass count
-- [ ] 1.2 Run `npx vitest run tests/unit/features/reports/utils/reportUtils.test.ts` and confirm all tests pass
-- [ ] 1.3 Count current lines: `wc -l src/features/reports/utils/reportUtils.ts` (expect 2,401)
-- [ ] 1.4 Verify consumer imports: `grep -rn "from.*reportUtils" src/ tests/ --include="*.ts" --include="*.tsx"` (expect 4 files)
+- [x] 1.1 Run `npm run test:quick` and record total pass count
+- [x] 1.2 Run `npx vitest run tests/unit/features/reports/utils/reportUtils.test.ts` and confirm all tests pass
+- [x] 1.3 Count current lines: `wc -l src/features/reports/utils/reportUtils.ts` (expect 2,401)
+- [x] 1.4 Verify consumer imports: `grep -rn "from.*reportUtils" src/ tests/ --include="*.ts" --include="*.tsx"` (expect 4 files)
 
 ### Task 2: Extract reportDateUtils.ts (date utilities + period filters)
 
-- [ ] 2.1 Create `src/features/reports/utils/reportDateUtils.ts`
-- [ ] 2.2 Move week utility functions (lines ~66-123): `getWeekStart`, `getWeekEnd`, `getISOWeekNumber`, `parseDate`, `isDateInWeek`, `getWeekRange`
-- [ ] 2.3 Move `filterTransactionsByWeek` and `calculateTotal` functions
-- [ ] 2.4 Move month utility functions: `getMonthStart`, `getMonthEnd`, `getMonthRange`, `isDateInMonth`, `filterTransactionsByMonth`
-- [ ] 2.5 Move quarter utility functions: `getQuarterStart`, `getQuarterEnd`, `getQuarterNumber`, `getQuarterRange`, `isDateInQuarter`, `filterTransactionsByQuarter`
-- [ ] 2.6 Move year utility functions: `getYearStart`, `getYearEnd`, `getYearRange`, `isDateInYear`, `filterTransactionsByYear`
-- [ ] 2.7 Add import: `import type { Transaction } from '@/types/transaction';`
-- [ ] 2.8 Run `npx tsc --noEmit` -- fix any type errors
+- [x] 2.1 Create `src/features/reports/utils/reportDateUtils.ts`
+- [x] 2.2 Move week utility functions (lines ~66-123): `getWeekStart`, `getWeekEnd`, `getISOWeekNumber`, `parseDate`, `isDateInWeek`, `getWeekRange`
+- [x] 2.3 Move `filterTransactionsByWeek` and `calculateTotal` functions
+- [x] 2.4 Move month utility functions: `getMonthStart`, `getMonthEnd`, `getMonthRange`, `isDateInMonth`, `filterTransactionsByMonth`
+- [x] 2.5 Move quarter utility functions: `getQuarterStart`, `getQuarterEnd`, `getQuarterNumber`, `getQuarterRange`, `isDateInQuarter`, `filterTransactionsByQuarter`
+- [x] 2.6 Move year utility functions: `getYearStart`, `getYearEnd`, `getYearRange`, `isDateInYear`, `filterTransactionsByYear`
+- [x] 2.7 Add import: `import type { Transaction } from '@/types/transaction';`
+- [x] 2.8 Run `npx tsc --noEmit` -- fix any type errors
 
 ### Task 3: Extract reportCategoryGrouping.ts (category breakdown + grouping + formatting)
 
-- [ ] 3.1 Create `src/features/reports/utils/reportCategoryGrouping.ts`
-- [ ] 3.2 Move `NEUTRAL_THRESHOLD` constant
-- [ ] 3.3 Move `getCategoryBreakdown` function
-- [ ] 3.4 Move `groupCategoriesByStoreGroup` and `sortGroupsAlphabetically` functions
-- [ ] 3.5 Move `ItemBreakdown` interface and `getItemBreakdown` private function
-- [ ] 3.6 Move `groupItemsByItemCategory` function
-- [ ] 3.7 Move `formatCategoryName` function
-- [ ] 3.8 Add type and utility imports: `Transaction`, `StoreCategory` from `@/types/transaction`; report types from `@/types/report`; `getCategoryEmoji` from `@/utils/categoryEmoji`; category config from `@/config/categoryColors`; `translateItemGroup` from `@/utils/categoryTranslations`
-- [ ] 3.9 Run `npx tsc --noEmit` -- fix any type errors
+- [x] 3.1 Create `src/features/reports/utils/reportCategoryGrouping.ts`
+- [x] 3.2 Move `NEUTRAL_THRESHOLD` constant
+- [x] 3.3 Move `getCategoryBreakdown` function
+- [x] 3.4 Move `groupCategoriesByStoreGroup` and `sortGroupsAlphabetically` functions
+- [x] 3.5 Move `ItemBreakdown` interface and `getItemBreakdown` private function
+- [x] 3.6 Move `groupItemsByItemCategory` function
+- [x] 3.7 Move `formatCategoryName` function
+- [x] 3.8 Add type and utility imports: `Transaction`, `StoreCategory` from `@/types/transaction`; report types from `@/types/report`; `getCategoryEmoji` from `@/utils/categoryEmoji`; category config from `@/config/categoryColors`; `translateItemGroup` from `@/utils/categoryTranslations`
+- [x] 3.9 Run `npx tsc --noEmit` -- fix any type errors
 
 ### Task 4: Extract reportGeneration.ts (core summary + card generators)
 
-- [ ] 4.1 Create `src/features/reports/utils/reportGeneration.ts`
-- [ ] 4.2 Move `MIN_TRANSACTIONS_FOR_REPORT` and `MAX_CATEGORY_CARDS` constants
-- [ ] 4.3 Move `ReportRowData` interface; add import for `ReportPeriodType` from `@/types/report`
-- [ ] 4.4 Move `generateWeeklySummary` function
-- [ ] 4.5 Move `generateReportCards` and `generateEmptyStateCard` functions
-- [ ] 4.6 Move `generateMonthlySummary`, `generateQuarterlySummary`, `generateYearlySummary`
-- [ ] 4.7 Move `generateWeeklyReportRow`, `getAvailableReports`, `getTimeFilterLabel`
-- [ ] 4.8 Add imports from `./reportDateUtils`: all date/filter functions used by generators
-- [ ] 4.9 Add imports from `./reportCategoryGrouping`: `getCategoryBreakdown`, `groupCategoriesByStoreGroup`, `sortGroupsAlphabetically`, `groupItemsByItemCategory`, `formatCategoryName`, `NEUTRAL_THRESHOLD`
-- [ ] 4.10 Add type imports from `@/types/transaction` and `@/types/report`
-- [ ] 4.11 Run `npx tsc --noEmit` -- fix any type errors
+- [x] 4.1 Create `src/features/reports/utils/reportGeneration.ts`
+- [x] 4.2 Move `MIN_TRANSACTIONS_FOR_REPORT` and `MAX_CATEGORY_CARDS` constants
+- [x] 4.3 Move `ReportRowData` interface; add import for `ReportPeriodType` from `@/types/report`
+- [x] 4.4 Move `generateWeeklySummary` function
+- [x] 4.5 Move `generateReportCards` and `generateEmptyStateCard` functions
+- [x] 4.6 Move `generateMonthlySummary`, `generateQuarterlySummary`, `generateYearlySummary`
+- [x] 4.7 Move `generateWeeklyReportRow`, `getAvailableReports`, `getTimeFilterLabel`
+- [x] 4.8 Add imports from `./reportDateUtils`: all date/filter functions used by generators
+- [x] 4.9 Add imports from `./reportCategoryGrouping`: `getCategoryBreakdown`, `groupCategoriesByStoreGroup`, `sortGroupsAlphabetically`, `groupItemsByItemCategory`, `formatCategoryName`, `NEUTRAL_THRESHOLD`
+- [x] 4.10 Add type imports from `@/types/transaction` and `@/types/report`
+- [x] 4.11 Run `npx tsc --noEmit` -- fix any type errors
 
 ### Task 5: Extract reportYearGeneration.ts (insights + year-based generation)
 
-- [ ] 5.1 Create `src/features/reports/utils/reportYearGeneration.ts`
-- [ ] 5.2 Move `HOLIDAY_MONTHS` constant and all private insight/highlight helpers: `generateMonthlyPersonaInsight`, `formatWeekDateRange`, `generateMonthlyHighlights`, `generateQuarterlyHighlights`, `generateQuarterlyPersonaInsight`, `generateYearlyHighlights`, `generateYearlyPersonaInsight`
-- [ ] 5.3 Move `filterTransactionsBySpecificYear` private function
-- [ ] 5.4 Move year-based generation functions: `generateWeeklyReportsForYear`, `generateMonthlyReportsForYear`, `generateQuarterlyReportsForYear`, `generateYearlyReportForYear`
-- [ ] 5.5 Move exported `getAvailableReportsForYear` and `getMaxReportsForYear`
-- [ ] 5.6 Add imports from `./reportDateUtils`, `./reportCategoryGrouping`, `./reportGeneration` as needed
-- [ ] 5.7 Add type imports from `@/types/transaction` and `@/types/report`
-- [ ] 5.8 Verify line count: `wc -l src/features/reports/utils/reportYearGeneration.ts` -- if >800, split insight helpers into `reportInsights.ts`
-- [ ] 5.9 Run `npx tsc --noEmit` -- fix any type errors
+- [x] 5.1 Create `src/features/reports/utils/reportYearGeneration.ts`
+- [x] 5.2 Move `HOLIDAY_MONTHS` constant and all private insight/highlight helpers: `generateMonthlyPersonaInsight`, `formatWeekDateRange`, `generateMonthlyHighlights`, `generateQuarterlyHighlights`, `generateQuarterlyPersonaInsight`, `generateYearlyHighlights`, `generateYearlyPersonaInsight`
+- [x] 5.3 Move `filterTransactionsBySpecificYear` private function
+- [x] 5.4 Move year-based generation functions: `generateWeeklyReportsForYear`, `generateMonthlyReportsForYear`, `generateQuarterlyReportsForYear`, `generateYearlyReportForYear`
+- [x] 5.5 Move exported `getAvailableReportsForYear` and `getMaxReportsForYear`
+- [x] 5.6 Add imports from `./reportDateUtils`, `./reportCategoryGrouping`, `./reportGeneration` as needed
+- [x] 5.7 Add type imports from `@/types/transaction` and `@/types/report`
+- [x] 5.8 Verify line count: `wc -l src/features/reports/utils/reportYearGeneration.ts` -- if >800, split insight helpers into `reportInsights.ts`
+- [x] 5.9 Run `npx tsc --noEmit` -- fix any type errors
 
 ### Task 6: Convert reportUtils.ts to re-export barrel and verify
 
-- [ ] 6.1 Replace `reportUtils.ts` content with re-export barrel:
+- [x] 6.1 Replace `reportUtils.ts` content with re-export barrel:
   ```typescript
   /**
    * Report Utilities - Re-export Barrel
@@ -150,12 +151,12 @@ Decompose `reportUtils.ts` (2,401 lines) -- the largest utility file in the code
   export * from './reportGeneration';
   export * from './reportYearGeneration';
   ```
-- [ ] 6.2 Verify `wc -l src/features/reports/utils/reportUtils.ts` shows <50 lines
-- [ ] 6.3 Verify all 4 extracted files are <800 lines
-- [ ] 6.4 Verify no circular deps: `npx madge --circular src/features/reports/utils/`
-- [ ] 6.5 Run `npx vitest run tests/unit/features/reports/utils/reportUtils.test.ts` -- all tests pass
-- [ ] 6.6 Run `npm run test:quick` -- all tests pass with same count as baseline
-- [ ] 6.7 Verify no consumer changes needed: `grep -rn "from.*reportUtils" src/ tests/ --include="*.ts" --include="*.tsx"` shows same 4 files as baseline
+- [x] 6.2 Verify `wc -l src/features/reports/utils/reportUtils.ts` shows <50 lines
+- [x] 6.3 Verify all 4 extracted files are <800 lines
+- [x] 6.4 Verify no circular deps: `npx madge --circular src/features/reports/utils/`
+- [x] 6.5 Run `npx vitest run tests/unit/features/reports/utils/reportUtils.test.ts` -- all tests pass
+- [x] 6.6 Run `npm run test:quick` -- all tests pass with same count as baseline
+- [x] 6.7 Verify no consumer changes needed: `grep -rn "from.*reportUtils" src/ tests/ --include="*.ts" --include="*.tsx"` shows same 4 files as baseline
 
 ## Dev Notes
 
@@ -207,3 +208,23 @@ reportYearGeneration.ts     (imports from all three upstream files)
 |------|--------|
 | 2026-02-13 | Initial draft (skeleton with estimated line counts) |
 | 2026-02-23 | Full rewrite from architecture discovery. Analyzed all 2,401 lines: 37 exports (35 functions + 1 interface + 1 type), 9 private helpers, 3 constants. 4-file domain split: reportDateUtils (~250L), reportCategoryGrouping (~450L), reportGeneration (~530L), reportYearGeneration (~780L). Re-export barrel strategy eliminates all consumer changes. 3 source consumers confirmed. 18 architectural ACs, 6 tasks, 24 subtasks, 7 files. |
+| 2026-02-24 | Implementation complete. 5 modules (not 4) due to pitfall #5: reportYearGeneration exceeded 800 lines, so insight helpers split into reportInsights.ts (436L). Final line counts: dateUtils 284, categoryGrouping 476, generation 602, insights 436, yearGeneration 522, barrel 16. Total 2,336 lines (65 lines dead code removed). All 38 tests pass, 6,851 full suite tests pass. Code review: APPROVED. |
+| 2026-02-24 | ECC Code Review: STANDARD classification (code-reviewer + security-reviewer). Score 9/10. 2 quick fixes applied (parseDate consistency, maxReports cap). 2 pre-existing items deferred to TD-15b-14. |
+
+## Senior Developer Review (ECC)
+
+| Field | Value |
+|-------|-------|
+| Date | 2026-02-24 |
+| Classification | STANDARD |
+| Agents | code-reviewer (9/10), security-reviewer (9/10) |
+| Overall Score | 9/10 |
+| Outcome | APPROVED |
+| Quick Fixes | 2 (filterTransactionsBySpecificYear parseDate consistency, getAvailableReports maxReports cap) |
+| Deferred Items | 2 → TD-15b-14 (parseDate validation, trendPercent overflow guard) |
+
+### Deferred Item Tracking
+
+| TD Story | Description | Priority | Action |
+|----------|-------------|----------|--------|
+| TD-15b-14 | parseDate silent failure + trendPercent overflow (pre-existing) | LOW | CREATED |

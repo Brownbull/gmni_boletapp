@@ -1,10 +1,30 @@
 import { getCurrency } from '../../shared/schema/currencies';
+import type { SupportedCurrency } from '@/types/preferences';
 
 /**
  * Default currency for the application (Chilean Pesos).
  * Use this instead of hardcoding 'CLP' in fallbacks and prop defaults.
  */
 export const DEFAULT_CURRENCY = 'CLP';
+
+/**
+ * Currency information for display purposes
+ * Matches CURRENCY_INFO from functions/src/prompts/input-hints.ts
+ *
+ * Story 15b-3b: Moved from userPreferencesService.ts
+ */
+export const CURRENCY_INFO: Record<SupportedCurrency, { name: string; nameEs: string; symbol: string }> = {
+  CLP: { name: 'Chilean Peso', nameEs: 'Peso Chileno', symbol: '$' },
+  USD: { name: 'US Dollar', nameEs: 'Dólar Estadounidense', symbol: '$' },
+  EUR: { name: 'Euro', nameEs: 'Euro', symbol: '€' },
+};
+
+/**
+ * List of supported currencies for dropdown options
+ *
+ * Story 15b-3b: Moved from userPreferencesService.ts
+ */
+export const SUPPORTED_CURRENCIES: SupportedCurrency[] = ['CLP', 'USD', 'EUR'];
 
 /**
  * Format a currency amount for display.

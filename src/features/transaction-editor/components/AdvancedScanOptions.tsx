@@ -8,7 +8,8 @@
 
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { SupportedCurrency, SUPPORTED_CURRENCIES } from '@/services/userPreferencesService';
+import type { SupportedCurrency } from '@/types/preferences';
+import { SUPPORTED_CURRENCIES } from '@/utils/currency';
 
 interface AdvancedScanOptionsProps {
     /** Currently selected currency */

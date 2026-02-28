@@ -4,7 +4,7 @@
 **Phase:** 3 - Infrastructure
 **Points:** 3
 **Priority:** MEDIUM
-**Status:** drafted
+**Status:** ready-for-dev
 
 ## Overview
 
@@ -182,3 +182,4 @@ vi.mock('@/repositories', () => ({
 |------|--------|
 | 2026-02-13 | Initial stub with estimated ~8 consumers across 3 services |
 | 2026-02-23 | Full rewrite. Grep audit found 3 actual consumers (not 8). Airlock has ZERO consumers outside its repository. Added TOCTOU verification, interface decision block for usePersonalRecords, InsightsView double-load pattern note, and per-file migration instructions. |
+| 2026-02-27 | ECC re-creation validation: Validated accurate. Note: `useInsightProfile.ts` has two service imports (insightProfileService + insightEngineService) — only insightProfileService migrates. Status: ready-for-dev. |

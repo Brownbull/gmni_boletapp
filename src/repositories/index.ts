@@ -16,7 +16,7 @@ export type { RepositoryContext, PaginationCursor, Unsubscribe } from './types';
 
 // Transaction
 export type { ITransactionRepository, TransactionPage } from './transactionRepository';
-export { createTransactionRepository } from './transactionRepository';
+export { createTransactionRepository, LISTENER_LIMITS, PAGINATION_PAGE_SIZE } from './transactionRepository';
 
 // Mapping (generic)
 export type { IMappingRepository } from './mappingRepository';

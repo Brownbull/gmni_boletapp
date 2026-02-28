@@ -23,7 +23,7 @@ import { User } from 'firebase/auth';
 import { Services } from './useAuth';
 import { useFirestoreSubscription } from './useFirestoreSubscription';
 import { QUERY_KEYS } from '../lib/queryKeys';
-import { subscribeToTransactions } from '../services/firestore';
+import { createTransactionRepository } from '@/repositories/transactionRepository';
 import { Transaction } from '../types/transaction';
 import { getSafeDate, parseStrictNumber } from '../utils/validation';
 
@@ -73,17 +73,15 @@ export function useTransactions(user: User | null, services: Services | null): T
     // Subscribe to transactions with React Query caching
     const { data } = useFirestoreSubscription<Transaction[]>(
         queryKey,
-        (callback) => subscribeToTransactions(
-            services!.db,
-            user!.uid,
-            services!.appId,
-            (docs) => {
+        (callback) => {
+            const repo = createTransactionRepository({ db: services!.db, userId: user!.uid, appId: services!.appId });
+            return repo.subscribe((docs) => {
                 // Sanitize and sort before passing to cache
                 const sanitized = sanitizeTransactions(docs);
                 const sorted = sortByDateDesc(sanitized);
                 callback(sorted);
-            }
-        ),
+            });
+        },
         { enabled }
     );
 

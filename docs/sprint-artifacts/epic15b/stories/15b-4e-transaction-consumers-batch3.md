@@ -4,7 +4,7 @@
 **Phase:** 4 - Architecture
 **Points:** 3
 **Priority:** MEDIUM
-**Status:** drafted
+**Status:** ready-for-dev
 
 ## Overview
 
@@ -149,3 +149,4 @@ npx vitest run tests/unit/features/dashboard/
 |------|--------|
 | 2026-02-13 | Initial draft (views import TransactionDisplay sub-type) |
 | 2026-02-23 | Full rewrite. Sub-typing abandoned. Refocused on `import → import type` for views + components. Identified 5 confirmed runtime-usage files to preserve. Added cleanup task for 15b-4b shim removal. |
+| 2026-02-27 | ECC re-creation validation: ~9 of 13 files likely already using `import type`. Effective diff is small. Status: ready-for-dev. |

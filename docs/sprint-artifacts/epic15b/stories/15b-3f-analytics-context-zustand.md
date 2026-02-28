@@ -4,7 +4,7 @@
 **Phase:** 3 - Infrastructure
 **Points:** 3
 **Priority:** MEDIUM
-**Status:** drafted
+**Status:** ready-for-dev
 
 ## Overview
 
@@ -241,3 +241,4 @@ Follow `src/shared/stores/useHistoryFiltersStore.ts`:
 |------|--------|
 | 2026-02-13 | Initial draft |
 | 2026-02-23 | Full rewrite. State shape: 4 fields (temporal, category, chartMode, drillDownMode). 6 reducer actions. 5 component consumers via useAnalyticsNavigation hook. 2 Provider locations. 16 test files to update. Key insight: useAnalyticsNavigation preserved as API facade with dispatch adapter for zero consumer changes. Points raised from 2 to 3. |
+| 2026-02-27 | ECC re-creation validation: Validated accurate. 16 test files confirmed. Action creator re-export from store noted. Status: ready-for-dev. |

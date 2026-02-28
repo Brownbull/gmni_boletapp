@@ -4,7 +4,7 @@
 **Phase:** 4 - Architecture
 **Points:** 3
 **Priority:** MEDIUM
-**Status:** drafted
+**Status:** ready-for-dev
 
 ## Overview
 
@@ -146,3 +146,4 @@ Hooks have good test coverage. For each hook file:
 |------|--------|
 | 2026-02-13 | Initial draft (hooks import TransactionDisplay sub-type) |
 | 2026-02-23 | Full rewrite. Sub-typing abandoned. Refocused on `import → import type` for hooks + feature utils. Identified confirmed runtime-usage exceptions. |
+| 2026-02-27 | ECC re-creation validation: `useBatchSession.ts` and `useBatchReview.ts` flagged as likely runtime (audit carefully). Phase 2+3 dependency noted — re-audit after both phases complete. Status: ready-for-dev. |

@@ -239,27 +239,30 @@ development_status:
   TD-15b-22-trends-view-minor-hardening: done  # 1 pt - CSS color validation + shared locale guard + sync pattern (from TD-15b-21 review, LOW) | done: 2026-02-27
   TD-15b-23-safecsscolor-hex-normalization: done  # 1 pt - Normalize 3-digit hex to 6-digit in safeCSSColor (from TD-15b-22 review, LOW) | done: 2026-02-27
   TD-15b-24-safecsscolor-fallback-validation: done  # 1 pt - Validate fallback parameter in safeCSSColor (from TD-15b-23 review, LOW) | done: 2026-02-27
-  15b-2n-dashboard-view-extraction: drafted    # 3 pts - DashboardView 1,358 lines
-  15b-2o-editor-view-extraction: drafted       # 3 pts - TransactionEditorViewInternal 1,317 lines
-  15b-2p-icon-filter-extraction: drafted       # 2 pts - IconCategoryFilter 1,030 lines
+  15b-2n-dashboard-view-extraction: done  # 3 pts - DashboardView 1,485→1,147 lines (3 extractions) | done: 2026-02-27
+  15b-2o-editor-view-extraction: done       # 3 pts - TransactionEditorViewInternal 1,422→1,133 lines (3 extractions) | done: 2026-02-27
+  15b-2p-icon-filter-extraction: done       # 2 pts - IconCategoryFilter 1,106→665 lines (3 extractions) | done: 2026-02-27
+  TD-15b-25-icon-filter-quality: done    # 2 pts - DRY consolidation + dispatch typing + LocationTabSection tests (from 15b-2p review, LOW) | done: 2026-02-27
 
   # Phase 3: Infrastructure Hardening (7 stories, ~15 pts)
-  15b-3a-dal-transaction-hooks: drafted        # 2 pts - Migrate transaction hooks to TransactionRepository
-  15b-3b-dal-trust-preferences: drafted        # 2 pts - Migrate trust + preferences hooks to repositories
-  15b-3c-dal-records-airlock-insight: drafted   # 3 pts - Migrate records + airlock + insight profile hooks
-  15b-3d-dal-credits-hooks: drafted            # 2 pts - Migrate credits hooks to CreditsRepository
-  15b-3e-dal-remaining-firebase: drafted       # 2 pts - Migrate remaining view/component Firebase imports
-  15b-3f-analytics-context-zustand: drafted    # 2 pts - AnalyticsContext -> Zustand
-  15b-3g-notification-context-zustand: drafted # 2 pts - NotificationContext -> Zustand + HistoryFiltersContext removal
+  15b-3a-dal-transaction-hooks: done  # 3 pts - Migrate 10 transaction hooks to TransactionRepository | done: 2026-02-28
+  TD-15b-26-transaction-hook-test-coverage: ready-for-dev  # 2 pts - Mock layer upgrade + useTransactions/useRecentScans tests (from 15b-3a review, LOW) | DEPENDS: 15b-3a
+  TD-15b-27-dal-migration-cleanup: ready-for-dev  # 2 pts - Subscription guards + sanitize dedup + transient repo docs (from 15b-3a review, LOW) | DEPENDS: 15b-3a
+  15b-3b-dal-trust-preferences: done  # 2 pts - Migrate trust + preferences type/constant imports | done: 2026-02-28
+  15b-3c-dal-records-airlock-insight: ready-for-dev  # 3 pts - Migrate records + airlock + insight profile hooks
+  15b-3d-dal-credits-hooks: ready-for-dev      # 2 pts - Migrate credits hooks to CreditsRepository
+  15b-3e-dal-remaining-firebase: ready-for-dev # 2 pts - Migrate remaining view/component Firebase imports
+  15b-3f-analytics-context-zustand: ready-for-dev  # 3 pts - AnalyticsContext -> Zustand store
+  15b-3g-notification-context-zustand: ready-for-dev  # 2 pts - NotificationContext deletion + HistoryFiltersContext -> hook
 
-  # Phase 4: High-Coupling Architecture (7 stories, ~14 pts)
-  15b-4a-transaction-type-design: drafted      # 2 pts - Design transaction.ts sub-type schema (analysis only)
-  15b-4b-transaction-type-split: drafted       # 2 pts - Split transaction.ts into domain sub-types + re-export shim
-  15b-4c-transaction-consumers-batch1: drafted # 2 pts - Update type consumers (services + repos)
-  15b-4d-transaction-consumers-batch2: drafted # 2 pts - Update type consumers (hooks + features)
-  15b-4e-transaction-consumers-batch3: drafted # 2 pts - Update type consumers (views + components + cleanup)
-  15b-4f-app-tsx-fanout-reduction: drafted     # 3 pts - App.tsx fan-out reduction (extract feature orchestrators)
-  15b-4g-final-dependency-validation: drafted  # 1 pt  - Final dependency graph validation + epic metrics
+  # Phase 4: High-Coupling Architecture (7 stories, ~20 pts)
+  15b-4a-transaction-type-design: ready-for-dev  # 2 pts - Design transaction type refactoring strategy (analysis only)
+  15b-4b-transaction-type-split: ready-for-dev   # 3 pts - Redirect ~12 category-only consumers to shared/schema/categories
+  15b-4c-transaction-consumers-batch1: ready-for-dev  # 3 pts - Fix import type in services + batch handlers
+  15b-4d-transaction-consumers-batch2: ready-for-dev  # 3 pts - Fix import type in hooks + feature utils
+  15b-4e-transaction-consumers-batch3: ready-for-dev  # 3 pts - Fix import type in views + components + cleanup
+  15b-4f-app-tsx-fanout-reduction: ready-for-dev  # 5 pts - App.tsx fan-out reduction (5 domain orchestrators)
+  15b-4g-final-dependency-validation: ready-for-dev  # 1 pt  - Final dependency graph validation + epic metrics
 
   epic-15b-retrospective: optional
 

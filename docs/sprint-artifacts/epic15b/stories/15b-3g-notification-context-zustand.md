@@ -4,7 +4,7 @@
 **Phase:** 3 - Infrastructure
 **Points:** 2
 **Priority:** MEDIUM
-**Status:** drafted
+**Status:** ready-for-dev
 
 ## Overview
 
@@ -182,3 +182,4 @@ These feature-scoped contexts are acceptable and NOT targeted for removal:
 |------|--------|
 | 2026-02-13 | Initial draft (story stub) |
 | 2026-02-23 | Full rewrite with codebase research. Key finding: NotificationContext has 0 consumers (dead code, no Zustand migration needed). HistoryFiltersContext is NOT dead -- 8 usages as Zustand initialization boundary. Replaced "create useNotificationStore" task with straight deletion. Added useHistoryFiltersInit hook as HistoryFiltersProvider replacement. Identified render function pattern pitfall (hooks in plain functions). |
+| 2026-02-27 | ECC re-creation validation: `NotificationContext.test.tsx` does not exist (Task 2.4 is no-op). Status: ready-for-dev. |

@@ -29,23 +29,18 @@
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
-  Trash2,
   Check,
   ChevronDown,
   ChevronUp,
   BookMarked,
-  X,
-  Camera,
   ChevronLeft,
   ChevronRight,
-  Zap,
-  Info,
   Pencil,
   Layers,
   Receipt,
 } from 'lucide-react';
 // Story 15-5d: Plus, RefreshCw moved to EditorItemsSection + EditorScanThumbnail
-import { formatCreditsDisplay } from '@/services/userCreditsService';
+// Story 15b-2o: formatCreditsDisplay moved to EditorHeaderBar
 import { CategoryBadge } from '@features/transaction-editor/components/CategoryBadge';
 import { CategorySelectorOverlay } from '@features/transaction-editor/components/CategorySelectorOverlay';
 import { ImageViewer } from '@/components/ImageViewer';
@@ -53,7 +48,6 @@ import { ImageViewer } from '@/components/ImageViewer';
 import { useModalActions } from '@managers/ModalManager';
 // Story 15-5d: ItemNameSuggestionIndicator moved to EditorItemsSection
 // Story 15-5d: normalizeMerchantName, normalizeItemName moved to useCrossStoreSuggestions hook
-import type { ItemNameMapping } from '@/types/itemNameMapping';
 import { LocationSelect } from '@/components/LocationSelect';
 import { DateTimeTag } from '@features/transaction-editor/components/DateTimeTag';
 import { CurrencyTag } from '@features/transaction-editor/components/CurrencyTag';
@@ -76,8 +70,6 @@ import {
   Transaction,
   TransactionItem,
 } from '@/types/transaction';
-import type { UserCredits } from '@/types/scan';
-import type { Language } from '@/utils/translations';
 // Story 15-5d: translateItemCategoryGroup, getItemCategoryGroupEmoji moved to EditorItemsSection
 // Story 15-5d: translateStoreCategory moved to useEditorLearningPrompts hook
 import { getItemCategoryGroup } from '@/config/categoryColors';
@@ -97,163 +89,12 @@ import { EditorItemsSection } from './TransactionEditorView/EditorItemsSection';
 import { EditorScanThumbnail } from './TransactionEditorView/EditorScanThumbnail';
 import { useCrossStoreSuggestions } from './TransactionEditorView/useCrossStoreSuggestions';
 import { useEditorLearningPrompts } from './TransactionEditorView/useEditorLearningPrompts';
+import { useEditorSwipeGestures } from './TransactionEditorView/useEditorSwipeGestures';
+import { EditorHeaderBar } from './TransactionEditorView/EditorHeaderBar';
 
-/**
- * Scan button state machine
- * - idle: No photo selected, show camera icon with dashed border
- * - pending: Photo selected but not processed, show "Escanear" button
- * - scanning: Processing in progress, show shining animation
- * - complete: Scan successful, show checkmark badge
- * - error: Scan failed, show error state with retry
- */
-import type { ScanButtonState } from '@/shared/utils/scanHelpers';
-export type { ScanButtonState } from '@/shared/utils/scanHelpers';
-
-/**
- * Props for TransactionEditorView component
- */
-export interface TransactionEditorViewProps {
-  // Core
-  /** Transaction data (null for blank new transaction) */
-  transaction: Transaction | null;
-  /** Mode: 'new' for new transactions, 'existing' for editing */
-  mode: 'new' | 'existing';
-  /**
-   * Story 14.24: Read-only mode for viewing transactions
-   * When true:
-   * - All fields are disabled/non-interactive
-   * - Re-scan button is hidden
-   * - Edit button appears at bottom instead of Save
-   * - Clicking Edit triggers onRequestEdit callback with conflict check
-   */
-  readOnly?: boolean;
-  /** Callback when user clicks Edit button in read-only mode */
-  onRequestEdit?: () => void;
-
-  /**
-   * When true:
-   * - Strict read-only mode (no Edit button shown at all)
-   * - Owner info displayed in header
-   * - Prevents any edit attempts
-   */
-  isOtherUserTransaction?: boolean;
-  /** Owner profile info for display when isOtherUserTransaction is true */
-  ownerProfile?: { displayName?: string; photoURL?: string | null } | null;
-  /**
-   * Owner's user ID for profile color in header ProfileIndicator
-   * NOTE: Currently unused - prop is passed but not rendered.
-   * "owner's profile icon appears in the top-left" but current implementation
-   * shows text "Added by [Name]" instead. Keeping prop for future enhancement.
-   */
-  ownerId?: string;
-
-  // Scan state
-  /** Current state of the scan button */
-  scanButtonState: ScanButtonState;
-  /** Whether processing/analyzing is in progress */
-  isProcessing: boolean;
-  /** Estimated time remaining for processing in seconds */
-  processingEta?: number | null;
-  /** Error message from scan processing */
-  scanError?: string | null;
-  /** v9.7.0: Skip showing ScanCompleteModal (e.g., when coming from QuickSaveCard edit) */
-  skipScanCompleteModal?: boolean;
-
-  // Images
-  /** Receipt image thumbnail URL (after successful scan or existing transaction) */
-  thumbnailUrl?: string;
-  /** Pending image URL (selected but not yet processed) */
-  pendingImageUrl?: string;
-
-  // Callbacks
-  /** Callback when transaction data changes (parent-managed state) */
-  onUpdateTransaction: (transaction: Transaction) => void;
-  /** Callback when user saves the transaction */
-  onSave: (transaction: Transaction) => Promise<void>;
-  /** Callback when user clicks back/cancel */
-  onCancel: () => void;
-  /** Callback when user selects a photo */
-  onPhotoSelect: (file: File) => void;
-  /** Callback when user clicks process/scan button */
-  onProcessScan: () => void;
-  /** Callback to retry after error */
-  onRetry: () => void;
-  /** Callback for re-scan (existing transactions only) */
-  onRescan?: () => Promise<void>;
-  /** Whether re-scan is in progress */
-  isRescanning?: boolean;
-  /** Callback when user deletes transaction (existing only) */
-  onDelete?: (id: string) => void;
-
-  // Learning callbacks
-  /** Save category mapping function */
-  onSaveMapping?: (item: string, category: StoreCategory, source?: 'user' | 'ai') => Promise<string>;
-  /** Save merchant mapping function - v9.6.1: Now accepts optional storeCategory */
-  onSaveMerchantMapping?: (originalMerchant: string, targetMerchant: string, storeCategory?: StoreCategory) => Promise<string>;
-  /** Save subcategory mapping function */
-  onSaveSubcategoryMapping?: (item: string, subcategory: string, source?: 'user' | 'ai') => Promise<string>;
-  /** v9.7.0: Save item name mapping function (per-store item name learning) */
-  onSaveItemNameMapping?: (normalizedMerchant: string, originalItemName: string, targetItemName: string, targetCategory?: ItemCategory) => Promise<string>;
-  /**
-   * @deprecated Story 14e-25d: View uses showToast() from useToast() directly.
-   * This prop is no longer needed.
-   */
-  onShowToast?: (text: string) => void;
-
-  // UI
-  /** Theme for styling */
-  theme: 'light' | 'dark';
-  /** Translation function */
-  t: (key: string) => string;
-  /** Currency format function */
-  formatCurrency: (amount: number, currency: string) => string;
-  /** Default currency code from settings */
-  currency: string;
-  /** Language for translations */
-  lang: Language;
-  /** User's credit balance */
-  credits: UserCredits;
-  /** Store categories for dropdown */
-  storeCategories: string[];
-  /** Distinct aliases for autocomplete */
-  distinctAliases?: string[];
-
-  // Context
-  /** Batch context for editing from batch review queue */
-  batchContext?: { index: number; total: number } | null;
-  /** Callback to navigate to previous receipt in batch */
-  onBatchPrevious?: () => void;
-  /** Callback to navigate to next receipt in batch */
-  onBatchNext?: () => void;
-  /** Default city from settings */
-  defaultCity?: string;
-  /** Default country from settings */
-  defaultCountry?: string;
-
-  // Optional UI callbacks
-  /**
-   * @deprecated Story 14e-25d: View uses openModal() from useModalActions() directly.
-   * This prop is no longer needed.
-   */
-  onCreditInfoClick?: () => void;
-  /** Whether save is in progress */
-  isSaving?: boolean;
-  /** Animate items on initial load */
-  animateItems?: boolean;
-  /** Whether a credit was already used for this scan */
-  creditUsed?: boolean;
-
-  // Phase 4: Cross-Store Suggestions
-  /** All item name mappings for cross-store suggestions */
-  itemNameMappings?: ItemNameMapping[];
-
-  // Batch mode
-  /** Callback when user clicks batch scan button */
-  onBatchModeClick?: () => void;
-
-}
-
-// Note: Item categories are used via CategoryCombobox component which handles the full list internally
+// Story 15b-2o: Types extracted to editorViewTypes.ts
+import type { TransactionEditorViewProps, ScanButtonState } from './TransactionEditorView/editorViewTypes';
+export type { TransactionEditorViewProps, ScanButtonState } from './TransactionEditorView/editorViewTypes';
 
 /**
  * TransactionEditorView - Unified transaction editor component
@@ -359,12 +200,20 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   // ScanCompleteModal state (for new transactions only)
   const [showScanCompleteModal, setShowScanCompleteModal] = useState(false);
 
-  // Story 14.13 Session 6: Swipe gesture state for multi-transaction navigation
-  const [swipeTouchStart, setSwipeTouchStart] = useState<number | null>(null);
-  const [swipeOffset, setSwipeOffset] = useState(0);
-  // Track transaction ID to detect changes and trigger fade-in animation
-  const [fadeInKey, setFadeInKey] = useState(0);
-  const prevTransactionIdRef = useRef<string | undefined>(transaction?.id);
+  // Story 15b-2o: Swipe gesture state extracted to useEditorSwipeGestures hook
+  const {
+    swipeOffset,
+    swipeTouchStart,
+    fadeInKey,
+    handleSwipeTouchStart,
+    handleSwipeTouchMove,
+    handleSwipeTouchEnd,
+  } = useEditorSwipeGestures({
+    batchContext,
+    onBatchPrevious,
+    onBatchNext,
+    transactionId: transaction?.id,
+  });
 
   // Story 15-5d: Learning prompt states moved to useEditorLearningPrompts hook
   // Story 15-5d: Handler refs moved to useEditorLearningPrompts + useCrossStoreSuggestions hooks
@@ -472,15 +321,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
     if (!initialTransactionRef.current ||
         (initialTransactionRef.current.id || 'new') !== transactionKey) {
       initialTransactionRef.current = JSON.parse(JSON.stringify(transaction));
-    }
-  }, [transaction?.id]);
-
-  // Story 14.13 Session 6: Detect transaction change and trigger fade-in animation
-  useEffect(() => {
-    if (transaction?.id !== prevTransactionIdRef.current) {
-      prevTransactionIdRef.current = transaction?.id;
-      // Increment key to trigger CSS animation
-      setFadeInKey(prev => prev + 1);
     }
   }, [transaction?.id]);
 
@@ -596,54 +436,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
       onCancel();
     }
   }, [shouldWarnOnCancel, onCancel]);
-
-  // Story 14.13 Session 6: Swipe gesture handlers for multi-transaction navigation
-  // Only enable when batchContext is present (navigating through multiple transactions)
-  const canSwipePrevious = batchContext && batchContext.index > 1 && onBatchPrevious;
-  const canSwipeNext = batchContext && batchContext.index < batchContext.total && onBatchNext;
-  const canSwipe = canSwipePrevious || canSwipeNext;
-  const minSwipeDistance = 50;
-
-  const handleSwipeTouchStart = useCallback((e: React.TouchEvent) => {
-    if (!canSwipe) return;
-    setSwipeTouchStart(e.targetTouches[0].clientX);
-    setSwipeOffset(0);
-  }, [canSwipe]);
-
-  const handleSwipeTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!canSwipe || swipeTouchStart === null) return;
-    const currentX = e.targetTouches[0].clientX;
-    let offset = currentX - swipeTouchStart;
-
-    // Apply resistance at boundaries (20% movement when can't swipe that direction)
-    if (offset > 0 && !canSwipePrevious) {
-      offset = offset * 0.2;
-    } else if (offset < 0 && !canSwipeNext) {
-      offset = offset * 0.2;
-    }
-
-    setSwipeOffset(offset);
-  }, [canSwipe, swipeTouchStart, canSwipePrevious, canSwipeNext]);
-
-  const handleSwipeTouchEnd = useCallback(() => {
-    if (!canSwipe || swipeTouchStart === null) {
-      setSwipeTouchStart(null);
-      setSwipeOffset(0);
-      return;
-    }
-
-    const distance = -swipeOffset; // Negative offset = left swipe = next
-
-    if (distance > minSwipeDistance && canSwipeNext && onBatchNext) {
-      onBatchNext();
-    } else if (distance < -minSwipeDistance && canSwipePrevious && onBatchPrevious) {
-      onBatchPrevious();
-    }
-
-    // Reset touch state
-    setSwipeTouchStart(null);
-    setSwipeOffset(0);
-  }, [canSwipe, swipeTouchStart, swipeOffset, canSwipeNext, canSwipePrevious, onBatchNext, onBatchPrevious]);
 
   // Toggle group collapse
   const toggleGroupCollapse = (groupKey: string) => {
@@ -841,98 +633,16 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
         `}
       </style>
 
-      {/* Header */}
-      <div
-        className="sticky px-4"
-        style={{
-          top: 0,
-          zIndex: 50,
-          backgroundColor: 'var(--bg)',
-        }}
-      >
-        <div
-          className="flex items-center justify-between"
-          style={{
-            height: '72px',
-            paddingTop: 'max(env(safe-area-inset-top, 0px), 8px)',
-          }}
-        >
-          {/* Left side: Back button + Title */}
-          <div className="flex items-center gap-0">
-            <button
-              onClick={handleCancelClick}
-              className="min-w-10 min-h-10 flex items-center justify-center -ml-1"
-              aria-label={t('back')}
-              style={{ color: 'var(--text-primary)' }}
-            >
-              <ChevronLeft size={28} strokeWidth={2.5} />
-            </button>
-            <h1
-              className="font-semibold"
-              style={{
-                fontFamily: 'var(--font-family)',
-                color: 'var(--text-primary)',
-                fontWeight: 700,
-                fontSize: '20px',
-              }}
-            >
-              {mode === 'new' ? (t('scanViewTitle') || 'Escanea') : t('myPurchase')}
-            </h1>
-          </div>
-
-          {/* Right side: Credit badges + Close/Delete button */}
-          <div className="flex items-center gap-2">
-            {/* Credit badges */}
-            {/* Story 14e-25d: Now uses useModalActions() directly (ViewHandlersContext deleted) */}
-            {credits && (
-              <button
-                onClick={openCreditInfoModal}
-                className="flex items-center gap-1.5 px-2 py-1 rounded-full transition-all active:scale-95"
-                style={{
-                  backgroundColor: 'var(--bg-secondary)',
-                  border: '1px solid var(--border-light)',
-                }}
-                aria-label={t('creditInfo')}
-              >
-                <div
-                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold"
-                  style={{ backgroundColor: '#fef3c7', color: '#92400e' }}
-                >
-                  <Zap size={10} strokeWidth={2.5} />
-                  <span>{formatCreditsDisplay(credits.superRemaining)}</span>
-                </div>
-                <div
-                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold"
-                  style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)' }}
-                >
-                  <Camera size={10} strokeWidth={2.5} />
-                  <span>{formatCreditsDisplay(credits.remaining)}</span>
-                </div>
-                <Info size={12} style={{ color: 'var(--text-tertiary)' }} />
-              </button>
-            )}
-            {/* Close/Delete button */}
-            <button
-              onClick={
-                mode === 'existing' && transaction?.id
-                  ? () => setShowDeleteConfirm(true)
-                  : handleCancelClick
-              }
-              className="min-w-10 min-h-10 flex items-center justify-center"
-              aria-label={mode === 'existing' && transaction?.id ? t('delete') : t('cancel')}
-              style={{
-                color: mode === 'existing' && transaction?.id ? 'var(--negative-primary)' : 'var(--text-primary)',
-              }}
-            >
-              {mode === 'existing' && transaction?.id ? (
-                <Trash2 size={22} strokeWidth={2} />
-              ) : (
-                <X size={24} strokeWidth={2} />
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Story 15b-2o: Header extracted to EditorHeaderBar */}
+      <EditorHeaderBar
+        mode={mode}
+        transactionId={transaction?.id}
+        credits={credits}
+        onCancelClick={handleCancelClick}
+        onDeleteClick={() => setShowDeleteConfirm(true)}
+        onCreditInfoClick={openCreditInfoModal}
+        t={t}
+      />
 
       {/* Batch counter pill with navigation - shown between header and main content when editing from batch */}
       {batchContext && (
@@ -1179,9 +889,9 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
               transactionId={transaction?.id}
               displayCategory={displayTransaction.category || 'Other'}
               hasImages={hasImages}
-              readOnly={readOnly}
               isOtherUserTransaction={isOtherUserTransaction}
               isRescanning={isRescanning}
+              readOnly={readOnly}
               onShowImageViewer={() => setShowImageViewer(true)}
               onRetry={onRetry}
               onProcessScan={onProcessScan}

@@ -4,7 +4,7 @@
 **Phase:** 4 - Architecture
 **Points:** 3
 **Priority:** MEDIUM
-**Status:** drafted
+**Status:** ready-for-dev
 
 ## Overview
 
@@ -133,3 +133,4 @@ Do NOT batch-update multiple files then test. Fix one file, run tests, fix the n
 |------|--------|
 | 2026-02-13 | Initial draft (sub-typing approach — services import TransactionMutation) |
 | 2026-02-23 | Full rewrite. Sub-typing abandoned — flat Transaction is correct. Refocused on `import → import type` mechanical fix for services + batch handlers. No new types needed. |
+| 2026-02-27 | ECC re-creation validation: 4 of 9 files likely already using `import type`. Effective diff is small. Phase 3 dependency noted — re-audit after Phase 3 completes. Status: ready-for-dev. |

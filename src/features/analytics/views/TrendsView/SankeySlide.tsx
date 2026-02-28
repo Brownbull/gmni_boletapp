@@ -12,6 +12,7 @@ import { SankeyChart, type SankeySelectionData } from '@features/analytics/compo
 import type { SankeyMode } from '@features/analytics/utils/sankeyDataBuilder';
 import type { ThemeName, ModeName } from '@/config/categoryColors';
 import type { Transaction } from '@/types/transaction';
+import { safeCSSColor, sanitizeLocale } from '@/utils/validation';
 
 export interface SankeySlideProps {
     sankeySelectionData: SankeySelectionData | null;
@@ -50,7 +51,7 @@ export const SankeySlide: React.FC<SankeySlideProps> = ({
     sankeySelectedNode,
     handleSankeySelectionChange,
 }) => {
-    const safeLocale: 'es' | 'en' = (locale === 'es' || locale === 'en') ? locale : 'es';
+    const safeLocale = sanitizeLocale(locale);
 
     return (
         <div
@@ -71,8 +72,8 @@ export const SankeySlide: React.FC<SankeySlideProps> = ({
                         <span
                             className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-sm font-semibold max-w-full"
                             style={{
-                                backgroundColor: sankeySelectionData.color + '20', // 20% opacity background
-                                color: sankeySelectionData.color,
+                                backgroundColor: safeCSSColor(sankeySelectionData.color) + '20', // 20% opacity background
+                                color: safeCSSColor(sankeySelectionData.color),
                             }}
                         >
                             {sankeySelectionData.isLink ? (
@@ -95,7 +96,7 @@ export const SankeySlide: React.FC<SankeySlideProps> = ({
                         {/* Line 2: Amount and percentage in category color - LARGER font */}
                         <span
                             className="text-sm font-semibold"
-                            style={{ color: sankeySelectionData.color }}
+                            style={{ color: safeCSSColor(sankeySelectionData.color) }}
                         >
                             {sankeySelectionData.amountK} ({sankeySelectionData.percent})
                         </span>

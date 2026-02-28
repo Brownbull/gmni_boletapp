@@ -172,4 +172,16 @@ describe('applyThreshold', () => {
         const catB = result.visible.find(c => c.name === 'B');
         expect(catB?.percent).toBeCloseTo(30, 1);
     });
+
+    it('does not mutate input category objects', () => {
+        const cats = [makeCat('A', 7000), makeCat('B', 3000)];
+        const originalPercentA = cats[0].percent;
+        const originalPercentB = cats[1].percent;
+
+        applyThreshold(cats, 10000, 0);
+
+        // Input objects must not be modified
+        expect(cats[0].percent).toBe(originalPercentA);
+        expect(cats[1].percent).toBe(originalPercentB);
+    });
 });

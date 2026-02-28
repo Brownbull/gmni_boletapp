@@ -21,9 +21,7 @@ import type {
     QuickSaveDialogData,
 } from '@/types/scanStateMachine';
 import { DIALOG_TYPES } from '@/types/scanStateMachine';
-import {
-    addTransaction as firestoreAddTransaction,
-} from '@/services/firestore';
+import { createTransactionRepository } from '@/repositories/transactionRepository';
 import { shouldShowQuickSave, calculateConfidence } from '@/utils/confidenceCheck';
 
 /**
@@ -186,7 +184,8 @@ export function useScanFlowRouter(props: UseScanFlowRouterProps): UseScanFlowRou
         if (isTrusted && services && user) {
             // Auto-save for trusted merchants
             try {
-                await firestoreAddTransaction(services.db, user.uid, services.appId, finalTransaction);
+                const repo = createTransactionRepository({ db: services.db, userId: user.uid, appId: services.appId });
+                await repo.add(finalTransaction);
                 setCurrentTransaction(null);
                 setToastMessage({ text: t('autoSaved'), type: 'success' });
                 setView('dashboard');
@@ -249,7 +248,8 @@ export function useScanFlowRouter(props: UseScanFlowRouterProps): UseScanFlowRou
         if (isTrusted && services && user) {
             // Auto-save for trusted merchants
             try {
-                await firestoreAddTransaction(services.db, user.uid, services.appId, transaction);
+                const repo = createTransactionRepository({ db: services.db, userId: user.uid, appId: services.appId });
+                await repo.add(transaction);
                 setCurrentTransaction(null);
                 setToastMessage({ text: t('autoSaved'), type: 'success' });
                 setView('dashboard');

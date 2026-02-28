@@ -4,7 +4,7 @@
 **Phase:** 2 - Decomposition
 **Points:** 2
 **Priority:** LOW
-**Status:** drafted
+**Status:** done
 
 ## Overview
 
@@ -12,11 +12,11 @@ IconCategoryFilter.tsx is currently 1,107 lines with 10 import dependencies. Epi
 
 ## Functional Acceptance Criteria
 
-- [ ] **AC1:** IconCategoryFilter.tsx reduced to <800 lines (from 1,107)
-- [ ] **AC2:** Each extracted file is <400 lines
-- [ ] **AC3:** All existing tests pass before AND after extraction (including `tests/unit/features/history/components/IconCategoryFilter.test.tsx`)
-- [ ] **AC4:** No new functionality added -- pure decomposition
-- [ ] **AC5:** `npm run test:quick` passes with 0 failures
+- [x] **AC1:** IconCategoryFilter.tsx reduced to <800 lines (from 1,107)
+- [x] **AC2:** Each extracted file is <400 lines
+- [x] **AC3:** All existing tests pass before AND after extraction (including `tests/unit/features/history/components/IconCategoryFilter.test.tsx`)
+- [x] **AC4:** No new functionality added -- pure decomposition
+- [x] **AC5:** `npm run test:quick` passes with 0 failures
 
 ## Architectural Acceptance Criteria (MANDATORY)
 
@@ -24,27 +24,27 @@ IconCategoryFilter.tsx is currently 1,107 lines with 10 import dependencies. Epi
 
 ### File Location Requirements
 
-- [ ] **AC-ARCH-LOC-1:** Grouped category sections at `src/features/history/components/GroupedCategoriesSection.tsx`
-- [ ] **AC-ARCH-LOC-2:** Location tab section at `src/features/history/components/LocationTabSection.tsx`
-- [ ] **AC-ARCH-LOC-3:** Pending animation styles at `src/features/history/components/filterAnimationStyles.ts`
-- [ ] **AC-ARCH-LOC-4:** Grouped categories tests at `tests/unit/features/history/components/GroupedCategoriesSection.test.tsx`
+- [x] **AC-ARCH-LOC-1:** Grouped category sections at `src/features/history/components/GroupedCategoriesSection.tsx`
+- [x] **AC-ARCH-LOC-2:** Location tab section at `src/features/history/components/LocationTabSection.tsx`
+- [x] **AC-ARCH-LOC-3:** Pending animation styles at `src/features/history/components/filterAnimationStyles.ts`
+- [x] **AC-ARCH-LOC-4:** Grouped categories tests at `tests/unit/features/history/components/GroupedCategoriesSection.test.tsx`
 
 ### Pattern Requirements
 
-- [ ] **AC-ARCH-PATTERN-1:** All extracted files use `@/` or `@features/` path aliases for external imports -- zero `../../` relative imports
-- [ ] **AC-ARCH-PATTERN-2:** IconCategoryFilter.tsx imports extracted modules via relative `./` paths (same directory)
-- [ ] **AC-ARCH-PATTERN-3:** `filterAnimationStyles.ts` contains ONLY string constants -- no React imports, no hooks, no side effects
-- [ ] **AC-ARCH-PATTERN-4:** `GroupedCategoriesSection.tsx` exports two named components (`StoreGroupedCategoriesSection` and `ItemGroupedCategoriesSection`) with the same prop interfaces they currently have
-- [ ] **AC-ARCH-PATTERN-5:** `LocationTabSection` accepts all data as props -- no direct store access, no `useLocationDisplay` hook call (the parent passes `getCountryName` and `getCityName` as props)
-- [ ] **AC-ARCH-PATTERN-6:** The duplicated `toSentenceCase` helper is extracted once into `GroupedCategoriesSection.tsx` as a shared private function (not exported)
+- [x] **AC-ARCH-PATTERN-1:** All extracted files use `@/` or `@features/` path aliases for external imports -- zero `../../` relative imports
+- [x] **AC-ARCH-PATTERN-2:** IconCategoryFilter.tsx imports extracted modules via relative `./` paths (same directory)
+- [x] **AC-ARCH-PATTERN-3:** `filterAnimationStyles.ts` contains ONLY string constants -- no React imports, no hooks, no side effects
+- [x] **AC-ARCH-PATTERN-4:** `GroupedCategoriesSection.tsx` exports two named components (`StoreGroupedCategoriesSection` and `ItemGroupedCategoriesSection`) with the same prop interfaces they currently have
+- [x] **AC-ARCH-PATTERN-5:** `LocationTabSection` accepts all data as props -- no direct store access, no `useLocationDisplay` hook call (the parent passes `getCountryName` and `getCityName` as props)
+- [x] **AC-ARCH-PATTERN-6:** The duplicated `toSentenceCase` helper is extracted once into `GroupedCategoriesSection.tsx` as a shared private function (not exported)
 
 ### Anti-Pattern Requirements (Must NOT Happen)
 
-- [ ] **AC-ARCH-NO-1:** No circular dependency -- extracted files must NOT import from `@features/history` barrel (`src/features/history/components/index.ts`)
-- [ ] **AC-ARCH-NO-2:** No new `console.log` statements in extracted files
-- [ ] **AC-ARCH-NO-3:** No `: any` types in extracted files -- use proper TypeScript types
-- [ ] **AC-ARCH-NO-4:** No state lifting -- all `useState`, `useMemo`, `useEffect` calls in `CategoryFilterDropdownMenu` stay in `CategoryFilterDropdownMenu`; only presentation sub-components move out
-- [ ] **AC-ARCH-NO-5:** No barrel modification -- `src/features/history/components/index.ts` must NOT be modified (extracted files are internal implementation details, not public API)
+- [x] **AC-ARCH-NO-1:** No circular dependency -- extracted files must NOT import from `@features/history` barrel (`src/features/history/components/index.ts`)
+- [x] **AC-ARCH-NO-2:** No new `console.log` statements in extracted files
+- [x] **AC-ARCH-NO-3:** No `: any` types in extracted files -- use proper TypeScript types
+- [x] **AC-ARCH-NO-4:** No state lifting -- all `useState`, `useMemo`, `useEffect` calls in `CategoryFilterDropdownMenu` stay in `CategoryFilterDropdownMenu`; only presentation sub-components move out
+- [x] **AC-ARCH-NO-5:** No barrel modification -- `src/features/history/components/index.ts` must NOT be modified (extracted files are internal implementation details, not public API)
 
 ## File Specification
 
@@ -76,53 +76,53 @@ IconCategoryFilter.tsx is currently 1,107 lines with 10 import dependencies. Epi
 
 ### Task 1: Establish baseline
 
-- [ ] 1.1 Run `npm run test:quick` and record total pass count
-- [ ] 1.2 Run `npx vitest run tests/unit/features/history/components/IconCategoryFilter.test.tsx` and confirm all pass
-- [ ] 1.3 Count current IconCategoryFilter.tsx lines: `wc -l src/features/history/components/IconCategoryFilter.tsx` (expect 1,107)
-- [ ] 1.4 Record current fan-out: count import lines in IconCategoryFilter.tsx (expect ~10 import statements)
+- [x] 1.1 Run `npm run test:quick` and record total pass count
+- [x] 1.2 Run `npx vitest run tests/unit/features/history/components/IconCategoryFilter.test.tsx` and confirm all pass
+- [x] 1.3 Count current IconCategoryFilter.tsx lines: `wc -l src/features/history/components/IconCategoryFilter.tsx` (expect 1,107)
+- [x] 1.4 Record current fan-out: count import lines in IconCategoryFilter.tsx (expect ~10 import statements)
 
 ### Task 2: Extract StoreGroupedCategoriesSection and ItemGroupedCategoriesSection into GroupedCategoriesSection.tsx
 
-- [ ] 2.1 Create `src/features/history/components/GroupedCategoriesSection.tsx`
-- [ ] 2.2 Move the `StoreGroupedCategoriesSectionProps` interface (lines 83-89) and `StoreGroupedCategoriesSection` function component (lines 91-213) to the new file
-- [ ] 2.3 Move the `ItemGroupedCategoriesSectionProps` interface (lines 219-225) and `ItemGroupedCategoriesSection` function component (lines 227-349) to the new file
-- [ ] 2.4 Extract the duplicated `toSentenceCase` helper as a single shared private function at module scope (used by both components, currently duplicated at lines 113-116 and 249-252)
-- [ ] 2.5 Add required imports: `React`, `useState` from `'react'`; `Check` from `'lucide-react'`; category color utilities from `@/config/categoryColors`; emoji/translation utilities from `@/utils/categoryEmoji` and `@/utils/categoryTranslations`; `Language` type from `@/utils/translations`
-- [ ] 2.6 Export both components as named exports and both props interfaces
-- [ ] 2.7 Update IconCategoryFilter.tsx: replace inline definitions with `import { StoreGroupedCategoriesSection, ItemGroupedCategoriesSection } from './GroupedCategoriesSection'`
-- [ ] 2.8 Run `npx tsc --noEmit` -- fix any type errors
-- [ ] 2.9 Run `npx vitest run tests/unit/features/history/components/IconCategoryFilter.test.tsx` -- confirm all pass
-- [ ] 2.10 Create `tests/unit/features/history/components/GroupedCategoriesSection.test.tsx` with render tests for both components: group expansion toggle, category toggle callback, group toggle callback, and `toSentenceCase` formatting visible in group headers
+- [x] 2.1 Create `src/features/history/components/GroupedCategoriesSection.tsx`
+- [x] 2.2 Move the `StoreGroupedCategoriesSectionProps` interface (lines 83-89) and `StoreGroupedCategoriesSection` function component (lines 91-213) to the new file
+- [x] 2.3 Move the `ItemGroupedCategoriesSectionProps` interface (lines 219-225) and `ItemGroupedCategoriesSection` function component (lines 227-349) to the new file
+- [x] 2.4 Extract the duplicated `toSentenceCase` helper as a single shared private function at module scope (used by both components, currently duplicated at lines 113-116 and 249-252)
+- [x] 2.5 Add required imports: `React`, `useState` from `'react'`; `Check` from `'lucide-react'`; category color utilities from `@/config/categoryColors`; emoji/translation utilities from `@/utils/categoryEmoji` and `@/utils/categoryTranslations`; `Language` type from `@/utils/translations`
+- [x] 2.6 Export both components as named exports and both props interfaces
+- [x] 2.7 Update IconCategoryFilter.tsx: replace inline definitions with `import { StoreGroupedCategoriesSection, ItemGroupedCategoriesSection } from './GroupedCategoriesSection'`
+- [x] 2.8 Run `npx tsc --noEmit` -- fix any type errors
+- [x] 2.9 Run `npx vitest run tests/unit/features/history/components/IconCategoryFilter.test.tsx` -- confirm all pass
+- [x] 2.10 Create `tests/unit/features/history/components/GroupedCategoriesSection.test.tsx` with render tests for both components: group expansion toggle, category toggle callback, group toggle callback, and `toSentenceCase` formatting visible in group headers
 
 ### Task 3: Extract LocationTabSection into LocationTabSection.tsx
 
-- [ ] 3.1 Create `src/features/history/components/LocationTabSection.tsx`
-- [ ] 3.2 Define `LocationTabSectionProps` interface with props: `sortedCountries: string[]`, `availableFilters: AvailableFilters`, `expandedCountries: Set<string>`, `pendingLocations: Set<string>`, `getCountryName: (code: string) => string`, `getCityName: (code: string) => string`, `getCountrySelectionState: (country: string) => 'all' | 'some' | 'none'`, `toggleCountryExpansion: (country: string) => void`, `handleCountryToggle: (country: string) => void`, `handleCityToggle: (city: string) => void`, `t: (key: string) => string`, `lang: Language`
-- [ ] 3.3 Move the location tab JSX block (the `activeTab === 2` branch content, ~lines 943-1064) into the new component
-- [ ] 3.4 Add required imports: `React` from `'react'`; `ChevronDown`, `Check` from `'lucide-react'`; `CountryFlag` from `./CountryFlag`; `Language` type from `@/utils/translations`; `AvailableFilters` type from `@shared/utils/historyFilterUtils`
-- [ ] 3.5 Update IconCategoryFilter.tsx: replace inline location JSX with `<LocationTabSection sortedCountries={sortedCountries} ... />`
-- [ ] 3.6 Run `npx tsc --noEmit` -- fix any type errors
-- [ ] 3.7 Run `npx vitest run tests/unit/features/history/components/IconCategoryFilter.test.tsx` -- confirm location tab tests still pass
+- [x] 3.1 Create `src/features/history/components/LocationTabSection.tsx`
+- [x] 3.2 Define `LocationTabSectionProps` interface with props: `sortedCountries: string[]`, `availableFilters: AvailableFilters`, `expandedCountries: Set<string>`, `pendingLocations: Set<string>`, `getCountryName: (code: string) => string`, `getCityName: (code: string) => string`, `getCountrySelectionState: (country: string) => 'all' | 'some' | 'none'`, `toggleCountryExpansion: (country: string) => void`, `handleCountryToggle: (country: string) => void`, `handleCityToggle: (city: string) => void`, `t: (key: string) => string`, `lang: Language`
+- [x] 3.3 Move the location tab JSX block (the `activeTab === 2` branch content, ~lines 943-1064) into the new component
+- [x] 3.4 Add required imports: `React` from `'react'`; `ChevronDown`, `Check` from `'lucide-react'`; `CountryFlag` from `./CountryFlag`; `Language` type from `@/utils/translations`; `AvailableFilters` type from `@shared/utils/historyFilterUtils`
+- [x] 3.5 Update IconCategoryFilter.tsx: replace inline location JSX with `<LocationTabSection sortedCountries={sortedCountries} ... />`
+- [x] 3.6 Run `npx tsc --noEmit` -- fix any type errors
+- [x] 3.7 Run `npx vitest run tests/unit/features/history/components/IconCategoryFilter.test.tsx` -- confirm location tab tests still pass
 
 ### Task 4: Extract filterAnimationStyles into filterAnimationStyles.ts
 
-- [ ] 4.1 Create `src/features/history/components/filterAnimationStyles.ts`
-- [ ] 4.2 Move the pending animation CSS string (the `@keyframes pendingShine` and `.pending-pulse` rules) to an exported constant: `export const PENDING_ANIMATION_CSS: string`
-- [ ] 4.3 Move the icon size CSS string (the `.filter-tab-icon` and `[data-font-size]` rules) to an exported constant: `export const ICON_SIZE_CSS: string`
-- [ ] 4.4 Update IconCategoryFilter.tsx: replace inline style string literals with `import { ICON_SIZE_CSS, PENDING_ANIMATION_CSS } from './filterAnimationStyles'`
-- [ ] 4.5 Note: preserve the conditional render for `PENDING_ANIMATION_CSS` -- it is currently rendered only when `isTransactionsPending || isItemsPending || isLocationsPending`; do NOT render it unconditionally
-- [ ] 4.6 Run `npx tsc --noEmit` -- fix any type errors
+- [x] 4.1 Create `src/features/history/components/filterAnimationStyles.ts`
+- [x] 4.2 Move the pending animation CSS string (the `@keyframes pendingShine` and `.pending-pulse` rules) to an exported constant: `export const PENDING_ANIMATION_CSS: string`
+- [x] 4.3 Move the icon size CSS string (the `.filter-tab-icon` and `[data-font-size]` rules) to an exported constant: `export const ICON_SIZE_CSS: string`
+- [x] 4.4 Update IconCategoryFilter.tsx: replace inline style string literals with `import { ICON_SIZE_CSS, PENDING_ANIMATION_CSS } from './filterAnimationStyles'`
+- [x] 4.5 Note: preserve the conditional render for `PENDING_ANIMATION_CSS` -- it is currently rendered only when `isTransactionsPending || isItemsPending || isLocationsPending`; do NOT render it unconditionally
+- [x] 4.6 Run `npx tsc --noEmit` -- fix any type errors
 
 ### Task 5: Verify extraction and run full test suite
 
-- [ ] 5.1 Count final IconCategoryFilter.tsx lines: `wc -l src/features/history/components/IconCategoryFilter.tsx` (target: <800)
-- [ ] 5.2 Verify all extracted files are <400 lines each
-- [ ] 5.3 Verify no `../../` imports in extracted files: `grep -rE "from '\.\./\.\." src/features/history/components/GroupedCategoriesSection.tsx src/features/history/components/LocationTabSection.tsx src/features/history/components/filterAnimationStyles.ts` returns 0
-- [ ] 5.4 Verify no circular deps: `npx madge --circular src/features/history/components/`
-- [ ] 5.5 Verify barrel is unchanged: `git diff src/features/history/components/index.ts` returns empty
-- [ ] 5.6 Run `npm run test:quick` -- all tests pass
-- [ ] 5.7 Run `npx vitest run tests/unit/features/history/components/IconCategoryFilter.test.tsx` -- all tests pass
-- [ ] 5.8 Record final import count in IconCategoryFilter.tsx -- must be lower than 10 (category color, emoji, and translation imports moved to GroupedCategoriesSection.tsx)
+- [x] 5.1 Count final IconCategoryFilter.tsx lines: `wc -l src/features/history/components/IconCategoryFilter.tsx` (target: <800)
+- [x] 5.2 Verify all extracted files are <400 lines each
+- [x] 5.3 Verify no `../../` imports in extracted files: `grep -rE "from '\.\./\.\." src/features/history/components/GroupedCategoriesSection.tsx src/features/history/components/LocationTabSection.tsx src/features/history/components/filterAnimationStyles.ts` returns 0
+- [x] 5.4 Verify no circular deps: `npx madge --circular src/features/history/components/`
+- [x] 5.5 Verify barrel is unchanged: `git diff src/features/history/components/index.ts` returns empty
+- [x] 5.6 Run `npm run test:quick` -- all tests pass
+- [x] 5.7 Run `npx vitest run tests/unit/features/history/components/IconCategoryFilter.test.tsx` -- all tests pass
+- [x] 5.8 Record final import count in IconCategoryFilter.tsx -- must be lower than 10 (category color, emoji, and translation imports moved to GroupedCategoriesSection.tsx)
 
 ## Dev Notes
 
@@ -154,9 +154,18 @@ IconCategoryFilter.tsx is currently 1,107 lines with 10 import dependencies. Epi
 - **Agents consulted:** Architect
 - **Dependencies:** None -- IconCategoryFilter is imported only by IconFilterBar.tsx and is self-contained
 
+## Deferred Items (from Code Review 2026-02-27)
+
+| TD Story | Description | Priority | Action |
+|----------|-------------|----------|--------|
+| TD-15b-25 | DRY consolidation (Store/Item sections ~95% identical) + dispatch typing + LocationTabSection tests | LOW | CREATED |
+| — | Inline `<style>` CSP compliance (affects multiple components) | LOW | Phase 5 backlog note |
+
 ## Change Log
 
 | Date | Change |
 |------|--------|
 | 2026-02-13 | Initial draft |
 | 2026-02-23 | Full rewrite. Source analysis of IconCategoryFilter.tsx (1,107 lines, 10 imports, 0 existing sub-files). 3 extraction targets: GroupedCategoriesSection.tsx (~200L with 2 sub-components + shared helper), LocationTabSection.tsx (~140L presentation component), filterAnimationStyles.ts (~40L CSS constants). Target residual: ~750 lines. 10 architectural ACs, 5 tasks, 22 subtasks, 6 files. |
+| 2026-02-27 | ECC re-creation validation: Import count corrected 10→9. GroupedCategoriesSection estimate ~200L→~275L (both sections are 135L each). filterAnimationStyles estimate ~40L→~55L (includes both CSS blocks). Status: ready-for-dev. |
+| 2026-02-27 | Code review: APPROVE 8.75/10. Quick fixes: removed unused locale prop, added aria-labels, fixed city sort mutation, improved test selectors. Created TD-15b-25 for DRY + typing + test coverage. |

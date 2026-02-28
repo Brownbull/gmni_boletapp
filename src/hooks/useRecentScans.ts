@@ -25,7 +25,7 @@ import { User } from 'firebase/auth';
 import { Services } from './useAuth';
 import { useFirestoreSubscription } from './useFirestoreSubscription';
 import { QUERY_KEYS } from '../lib/queryKeys';
-import { subscribeToRecentScans } from '../services/firestore';
+import { createTransactionRepository } from '@/repositories/transactionRepository';
 import { Transaction } from '../types/transaction';
 import { getSafeDate, parseStrictNumber } from '../utils/validation';
 
@@ -66,17 +66,15 @@ export function useRecentScans(user: User | null, services: Services | null): Tr
     // Subscribe to recent scans with React Query caching
     const { data } = useFirestoreSubscription<Transaction[]>(
         queryKey,
-        (callback) => subscribeToRecentScans(
-            services!.db,
-            user!.uid,
-            services!.appId,
-            (docs) => {
+        (callback) => {
+            const repo = createTransactionRepository({ db: services!.db, userId: user!.uid, appId: services!.appId });
+            return repo.subscribeRecentScans((docs) => {
                 // Sanitize before passing to cache
                 // Note: Already ordered by createdAt desc from Firestore query
                 const sanitized = sanitizeTransactions(docs);
                 callback(sanitized);
-            }
-        ),
+            });
+        },
         { enabled }
     );
 

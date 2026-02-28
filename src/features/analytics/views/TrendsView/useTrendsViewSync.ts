@@ -135,10 +135,10 @@ export function useTrendsViewSync({
             setCurrentPeriodLocal(newPeriod);
         }
 
-        // Reset flag after state updates
-        setTimeout(() => {
+        // Reset flag after state updates (microtask runs after current synchronous batch)
+        queueMicrotask(() => {
             isUpdatingFromContext.current = false;
-        }, 0);
+        });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- timePeriod and currentPeriod intentionally omitted to prevent sync loops (this effect updates them)
     }, [filterState.temporal]);
 
@@ -276,7 +276,7 @@ export function useTrendsViewSync({
                 const monthStr = `${newPeriod.year}-${String(newPeriod.month).padStart(2, '0')}`;
                 const quarterStr = `Q${newPeriod.quarter}`;
 
-                // Use setTimeout to dispatch after state update
+                // setTimeout(0) intentional: dispatch after React state batch commit (macro-task)
                 setTimeout(() => {
                     switch (timePeriod) {
                         case 'year':

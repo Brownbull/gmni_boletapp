@@ -4,7 +4,7 @@
 **Phase:** 4 - Architecture
 **Points:** 5
 **Priority:** HIGH
-**Status:** drafted
+**Status:** ready-for-dev
 
 ## Overview
 
@@ -199,3 +199,4 @@ New orchestrators need unit tests. Existing App.tsx tests should continue to pas
 |------|--------|
 | 2026-02-13 | Initial stub (reduce App.tsx from 74 to <30 deps) |
 | 2026-02-23 | Full rewrite with codebase research. Confirmed 82 import lines (~62 unique sources). Designed 5 orchestrator clustering strategy. Identified critical preserved logic: setScanImages auto-transition, navigateToView branching. |
+| 2026-02-27 | ECC re-creation validation: Fan-out baseline is 78 (depcruise), not 62 (grep). `navigateToView` has `mainRef` dependency that cannot move to orchestrator without parameter threading — keep in App.tsx. 15b-3f+3g must complete first. Status: ready-for-dev. |

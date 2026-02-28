@@ -41,8 +41,7 @@ import { useHistoryFilters } from '@shared/hooks/useHistoryFilters';
 import { useSwipeNavigation } from '@/hooks/useSwipeNavigation';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useSelectionMode } from '@/hooks/useSelectionMode';
-import { getFirestore } from 'firebase/firestore';
-import { deleteTransactionsBatch } from '@/services/firestore';
+import { useTransactionRepository } from '@/repositories';
 // Story 14.15c: CSV Export utilities
 import { downloadMonthlyTransactions, downloadYearlyStatistics } from '@/utils/csvExport';
 // Story 14e-25d: Direct navigation from store (ViewHandlersContext deleted)
@@ -125,6 +124,9 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
         formatDate,
         onEditTransaction,
     } = { ...hookData, ..._testOverrides };
+
+    // Story 15b-3a: DAL migration — repository replaces direct service imports
+    const txRepo = useTransactionRepository();
 
     // Derive additional values from hook data
     const userId = user.uid;
@@ -422,10 +424,10 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
         }
 
         const transactionIds = Array.from(selectedIds);
+        if (!txRepo) throw new Error('Not authenticated');
 
         try {
-            const db = getFirestore();
-            await deleteTransactionsBatch(db, userId, appId, transactionIds);
+            await txRepo.deleteBatch(transactionIds);
             closeModal(); // Story 14e-5: Use Modal Manager to close
             exitSelectionMode();
         } catch (err) {

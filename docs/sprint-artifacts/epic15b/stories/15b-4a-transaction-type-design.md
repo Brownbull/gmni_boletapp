@@ -4,7 +4,7 @@
 **Phase:** 4 - Architecture
 **Points:** 2
 **Priority:** HIGH
-**Status:** drafted
+**Status:** ready-for-dev
 
 ## Overview
 
@@ -128,3 +128,4 @@ The canonical categories file is at `shared/schema/categories.ts` (repo root, NO
 |------|--------|
 | 2026-02-13 | Initial draft (stub) |
 | 2026-02-23 | Full rewrite with codebase research. Key finding: 101 actual consumers (not 109), Transaction is a flat type that doesn't benefit from sub-typing. Redirecting ~15 category-only consumers to shared/schema/categories is the correct approach. Target revised from <50 to <88. |
+| 2026-02-27 | ECC re-creation validation: Consumer count corrected 101→110. Category-only count verified ~12 (not 48 from initial exploration). `CategorySource`/`MerchantSource` must be added to `shared/schema/categories.ts`. Target revised ≤88→≤100. Status: ready-for-dev. |

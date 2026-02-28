@@ -57,7 +57,7 @@ import type {
   TotalMismatchDialogData,
 } from '@/types/scanStateMachine';
 import type { ScanOverlayStateHook } from '@/hooks/useScanOverlayState';
-import type { SupportedCurrency } from '@/services/userPreferencesService';
+import type { SupportedCurrency } from '@/types/preferences';
 import { DEFAULT_CURRENCY } from '@/utils/currency';
 import type { HistoryNavigationPayload } from '@/views/TrendsView';
 

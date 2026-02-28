@@ -9,7 +9,7 @@
 import type { User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import type { Transaction } from '@/types/transaction';
-import type { UserPreferences } from '@/services/userPreferencesService';
+import type { UserPreferences } from '@/types/preferences';
 import type { Insight, UserInsightProfile, LocalInsightCache } from '@/types/insight';
 import type { View } from '@app/types';
 import type { TrustPromptEligibility } from '@/types/trust';

@@ -54,7 +54,7 @@ import {
 import { useCategoriesContextOptional } from '@features/categories';
 import { TRANSLATIONS } from '@/utils/translations';
 import type { SettingsSubView } from '@/types/settings';
-import type { SupportedCurrency, ForeignLocationDisplayFormat } from '@/services/userPreferencesService';
+import type { SupportedCurrency, ForeignLocationDisplayFormat } from '@/types/preferences';
 import type { CategoryMapping } from '@/types/categoryMapping';
 import type { SubcategoryMapping } from '@/types/subcategoryMapping';
 import type { MerchantMapping } from '@/types/merchantMapping';

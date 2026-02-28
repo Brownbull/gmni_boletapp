@@ -4,7 +4,7 @@
 **Phase:** 4 - Architecture
 **Points:** 3
 **Priority:** HIGH
-**Status:** drafted
+**Status:** ready-for-dev
 
 ## Overview
 
@@ -156,3 +156,4 @@ For mixed-import files, the cleaner approach is to keep a single import of every
 |------|--------|
 | 2026-02-13 | Initial stub (proposed complex sub-type split) |
 | 2026-02-23 | Full rewrite. Design radically simplified: redirect category-only consumers instead of sub-type split. CRITICAL fix: `@shared/*` alias maps to `src/shared/`, NOT root `shared/` — relative paths required. Target: reduce from 101 to ≤88 dependents. |
+| 2026-02-27 | ECC re-creation validation: Actual category-only consumers ~12 (not 48 from initial exploration). `editViewHelpers.ts` added to file spec. Target revised ≤88→≤100 consistent with 15b-4a. Status: ready-for-dev. |

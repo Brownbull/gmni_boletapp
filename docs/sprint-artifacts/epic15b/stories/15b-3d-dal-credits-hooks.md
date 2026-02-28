@@ -4,7 +4,7 @@
 **Phase:** 3 - Infrastructure
 **Points:** 2
 **Priority:** MEDIUM
-**Status:** drafted
+**Status:** ready-for-dev
 
 ## Overview
 
@@ -188,3 +188,4 @@ import { formatCreditsDisplay } from '@/utils/creditFormatters';
 |------|--------|
 | 2026-02-13 | Initial draft (placeholder with ~4 consumers estimated) |
 | 2026-02-23 | Full rewrite. Grep found 7 actual consumers (1 hook + 6 formatter imports). Discovered CreditsRepository missing `add()`/`addSuper()` methods. Added Task 2 for repository extension. Split formatters to `src/utils/creditFormatters.ts` (pure functions do not belong in repository). Detailed migration patterns and pitfalls documented. |
+| 2026-02-27 | ECC re-creation validation: Added `EditViewHeader.tsx` as 8th formatter consumer (from 15b-2l decomposition). Consumers 7→8, files 10→11. Status: ready-for-dev. |

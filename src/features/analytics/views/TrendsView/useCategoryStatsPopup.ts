@@ -20,6 +20,7 @@ import {
 import { useCategoryStatistics, type CategoryFilterType } from '@features/analytics/hooks/useCategoryStatistics';
 import type { HistoryNavigationPayload } from '@/types/navigation';
 import type { Transaction } from '@/types/transaction';
+import { sanitizeLocale } from '@/utils/validation';
 import type { DonutViewMode, TimePeriod, CurrentPeriod } from './types';
 
 export interface StatsPopupCategory {
@@ -164,7 +165,7 @@ export function useCategoryStatsPopup({
 
     // Get translated category name for popup display
     const getTranslatedCategoryName = useCallback((name: string, type: CategoryFilterType): string => {
-        const lang: 'en' | 'es' = (locale === 'en' || locale === 'es') ? locale : 'es';
+        const lang = sanitizeLocale(locale);
         if (type === 'store-category') {
             return translateCategory(name, lang);
         } else if (type === 'store-group') {

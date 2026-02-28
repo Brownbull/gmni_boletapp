@@ -46,9 +46,7 @@ import type {
     TotalMismatchDialogData,
     QuickSaveDialogData,
 } from '@/types/scanStateMachine';
-import {
-    addTransaction as firestoreAddTransaction,
-} from '@/services/firestore';
+import { createTransactionRepository } from '@/repositories/transactionRepository';
 import {
     generateInsightForTransaction,
     isInsightsSilenced,
@@ -255,7 +253,6 @@ export function useScanHandlers(
             return;
         }
 
-        const { db, appId } = services;
         setIsQuickSaving(true);
 
         const tDoc = {
@@ -276,7 +273,8 @@ export function useScanHandlers(
             const cacheOrDefault = insightCache || getDefaultCache();
             const silenced = isInsightsSilenced(cacheOrDefault);
 
-            const transactionId = await firestoreAddTransaction(db, user.uid, appId, tDoc);
+            const repo = createTransactionRepository({ db: services.db, userId: user.uid, appId: services.appId });
+            const transactionId = await repo.add(tDoc);
             const txWithId = { ...tDoc, id: transactionId } as Transaction;
 
             const insight = await generateInsightForTransaction(

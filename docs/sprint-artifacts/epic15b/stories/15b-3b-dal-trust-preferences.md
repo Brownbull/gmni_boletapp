@@ -4,7 +4,7 @@
 **Phase:** 3 - Infrastructure
 **Points:** 2
 **Priority:** MEDIUM
-**Status:** drafted
+**Status:** done
 
 ## Overview
 
@@ -12,11 +12,11 @@ Trust migration is already complete -- zero consumers import directly from `merc
 
 ## Functional Acceptance Criteria
 
-- [ ] **AC1:** Trust service -- confirmed zero non-repository consumers (no work needed)
-- [ ] **AC2:** All `userPreferencesService` type imports redirected to `src/types/preferences.ts` (10 files)
-- [ ] **AC3:** All `userPreferencesService` constant imports (`SUPPORTED_CURRENCIES`, `CURRENCY_INFO`) redirected to a shared module (2 files)
-- [ ] **AC4:** No direct `userPreferencesService` imports in non-repository files after migration
-- [ ] **AC5:** `npm run test:quick` passes with 0 failures
+- [x] **AC1:** Trust service -- confirmed zero non-repository consumers (no work needed)
+- [x] **AC2:** All `userPreferencesService` type imports redirected to `src/types/preferences.ts` (12 files)
+- [x] **AC3:** All `userPreferencesService` constant imports (`SUPPORTED_CURRENCIES`, `CURRENCY_INFO`) redirected to a shared module (2 files)
+- [x] **AC4:** No direct `userPreferencesService` imports in non-repository files after migration
+- [x] **AC5:** `npm run test:quick` passes with 0 failures (296 files, 7114 tests)
 
 ## Architectural Acceptance Criteria (MANDATORY)
 
@@ -24,24 +24,24 @@ Trust migration is already complete -- zero consumers import directly from `merc
 
 ### File Location Requirements
 
-- [ ] **AC-ARCH-LOC-1:** New types file at `src/types/preferences.ts` containing `SupportedCurrency`, `SupportedFontFamily`, `ForeignLocationDisplayFormat`, `UserPreferences`
-- [ ] **AC-ARCH-LOC-2:** `SUPPORTED_CURRENCIES` and `CURRENCY_INFO` constants moved to `src/utils/currency.ts` (existing file, natural home for currency data)
-- [ ] **AC-ARCH-LOC-3:** `src/services/userPreferencesService.ts` re-imports types from `src/types/preferences.ts` and constants from `src/utils/currency.ts` (service becomes consumer, not source)
-- [ ] **AC-ARCH-LOC-4:** `src/repositories/preferencesRepository.ts` imports types from `src/types/preferences.ts`
+- [x] **AC-ARCH-LOC-1:** New types file at `src/types/preferences.ts` containing `SupportedCurrency`, `SupportedFontFamily`, `ForeignLocationDisplayFormat`, `UserPreferences`
+- [x] **AC-ARCH-LOC-2:** `SUPPORTED_CURRENCIES` and `CURRENCY_INFO` constants moved to `src/utils/currency.ts` (existing file, natural home for currency data)
+- [x] **AC-ARCH-LOC-3:** `src/services/userPreferencesService.ts` re-imports types from `src/types/preferences.ts` and constants from `src/utils/currency.ts` (service becomes consumer, not source)
+- [x] **AC-ARCH-LOC-4:** `src/repositories/preferencesRepository.ts` imports types from `src/types/preferences.ts`
 
 ### Pattern Requirements
 
-- [ ] **AC-ARCH-PATTERN-1:** Consumer imports use `@/types/preferences` for types and `@/utils/currency` for constants
-- [ ] **AC-ARCH-PATTERN-2:** All bare `import { SupportedCurrency }` statements converted to `import type { SupportedCurrency }` where only types are imported (at minimum `App.tsx` and `EditView.tsx`)
-- [ ] **AC-ARCH-PATTERN-3:** `src/types/settings.ts` existing `Currency` type alias retained for backward compat -- do NOT merge with `SupportedCurrency` in this story
-- [ ] **AC-ARCH-PATTERN-4:** `userPreferencesService.ts` re-exports all types and constants it previously defined, for backward compat with tests and functions
+- [x] **AC-ARCH-PATTERN-1:** Consumer imports use `@/types/preferences` for types and `@/utils/currency` for constants
+- [x] **AC-ARCH-PATTERN-2:** All bare `import { SupportedCurrency }` statements converted to `import type { SupportedCurrency }` where only types are imported (App.tsx, EditView.tsx, EditViewScanSection.tsx)
+- [x] **AC-ARCH-PATTERN-3:** `src/types/settings.ts` existing `Currency` type alias retained for backward compat -- do NOT merge with `SupportedCurrency` in this story
+- [x] **AC-ARCH-PATTERN-4:** `userPreferencesService.ts` re-exports all types and constants it previously defined, for backward compat with tests and functions
 
 ### Anti-Pattern Requirements (Must NOT Happen)
 
-- [ ] **AC-ARCH-NO-1:** No new business logic added during extraction -- pure type/constant relocation
-- [ ] **AC-ARCH-NO-2:** No changes to `userPreferencesService.ts` runtime behavior -- only import sources change
-- [ ] **AC-ARCH-NO-3:** No function signature changes in any consumer
-- [ ] **AC-ARCH-NO-4:** No consolidation of `Currency` (settings.ts) and `SupportedCurrency` (preferences.ts) in this story -- that is a separate cleanup
+- [x] **AC-ARCH-NO-1:** No new business logic added during extraction -- pure type/constant relocation
+- [x] **AC-ARCH-NO-2:** No changes to `userPreferencesService.ts` runtime behavior -- only import sources change
+- [x] **AC-ARCH-NO-3:** No function signature changes in any consumer
+- [x] **AC-ARCH-NO-4:** No consolidation of `Currency` (settings.ts) and `SupportedCurrency` (preferences.ts) in this story -- that is a separate cleanup
 
 ## File Specification
 
@@ -83,46 +83,47 @@ Trust migration is already complete -- zero consumers import directly from `merc
 
 ### Task 1: Establish baseline and confirm trust status
 
-- [ ] 1.1 Run `npm run test:quick` and record total pass count
-- [ ] 1.2 `grep -rn "from.*merchantTrustService" src/ --include="*.ts" --include="*.tsx" | grep -v repositories/` -- confirm 0 lines (trust fully migrated)
-- [ ] 1.3 `grep -rn "from.*userPreferencesService" src/ --include="*.ts" --include="*.tsx" | grep -v repositories/ | grep -v "services/userPreferencesService"` -- confirm 10 consumer files
+- [x] 1.1 Run `npm run test:quick` and record total pass count — 296 files, 7114 tests
+- [x] 1.2 Trust: 0 non-repo consumers (fully migrated)
+- [x] 1.3 Preferences: 12 non-repo consumers (not 10 — 2 additional from 15b-2l decomposition: scanHandlerTypes.ts, EditViewScanSection.tsx)
 
 ### Task 2: Create src/types/preferences.ts and relocate constants
 
-- [ ] 2.1 Create `src/types/preferences.ts` with types extracted from `userPreferencesService.ts`: `SupportedCurrency`, `SupportedFontFamily`, `ForeignLocationDisplayFormat`, `UserPreferences`
-- [ ] 2.2 Move `SUPPORTED_CURRENCIES` array and `CURRENCY_INFO` record to `src/utils/currency.ts` (import `SupportedCurrency` from `@/types/preferences`)
-- [ ] 2.3 Update `src/services/userPreferencesService.ts` to import types from `@/types/preferences` and constants from `@/utils/currency`, re-exporting both for backward compat
-- [ ] 2.4 Update `src/repositories/preferencesRepository.ts` to import `UserPreferences` from `@/types/preferences`
-- [ ] 2.5 Run `npx tsc --noEmit` -- must compile clean
+- [x] 2.1 Created `src/types/preferences.ts` with `SupportedCurrency`, `SupportedFontFamily`, `ForeignLocationDisplayFormat`, `UserPreferences`
+- [x] 2.2 Moved `SUPPORTED_CURRENCIES` and `CURRENCY_INFO` to `src/utils/currency.ts`
+- [x] 2.3 Updated `userPreferencesService.ts`: re-exports types from `@/types/preferences`, constants from `@/utils/currency`
+- [x] 2.4 Updated `preferencesRepository.ts`: imports `UserPreferences` from `@/types/preferences`
+- [x] 2.5 `npx tsc --noEmit` — clean
 
-### Task 3: Migrate type-only consumers (6 files)
+### Task 3: Migrate type-only consumers (7 files — 6 original + scanHandlerTypes.ts)
 
-- [ ] 3.1 `src/components/transactions/TransactionCard.tsx` -- change `import type { ForeignLocationDisplayFormat }` source to `@/types/preferences`
-- [ ] 3.2 `src/features/settings/views/SettingsView/useSettingsViewData.ts` -- change `import type { SupportedCurrency, ForeignLocationDisplayFormat }` source to `@/types/preferences`
-- [ ] 3.3 `src/hooks/app/useTransactionHandlers.ts` -- change `import type { UserPreferences }` source to `@/types/preferences`
-- [ ] 3.4 `src/features/scan/hooks/useScanHandlers.ts` -- change `import type { UserPreferences }` source to `@/types/preferences`
-- [ ] 3.5 `src/features/scan/hooks/useScanInitiation.ts` -- change `import type { SupportedCurrency }` source to `@/types/preferences`
-- [ ] 3.6 `src/features/scan/ScanFeature.tsx` -- change `import type { SupportedCurrency }` source to `@/types/preferences`
-- [ ] 3.7 Run `npx tsc --noEmit` -- must compile clean
+- [x] 3.1 `TransactionCard.tsx` — `import type { ForeignLocationDisplayFormat }` from `@/types/preferences`
+- [x] 3.2 `useSettingsViewData.ts` — `import type { SupportedCurrency, ForeignLocationDisplayFormat }` from `@/types/preferences`
+- [x] 3.3 `useTransactionHandlers.ts` — `import type { UserPreferences }` from `@/types/preferences`
+- [x] 3.4 `scanHandlerTypes.ts` — `import type { UserPreferences }` from `@/types/preferences` (replaces useScanHandlers.ts per 15b-2l)
+- [x] 3.5 `useScanInitiation.ts` — `import type { SupportedCurrency }` from `@/types/preferences`
+- [x] 3.6 `ScanFeature.tsx` — `import type { SupportedCurrency }` from `@/types/preferences`
+- [x] 3.7 `npx tsc --noEmit` — clean
 
-### Task 4: Migrate runtime + type consumers (4 files)
+### Task 4: Migrate runtime + type consumers (5 files — 4 original + EditViewScanSection.tsx)
 
-- [ ] 4.1 `src/features/settings/components/subviews/EscaneoView.tsx` -- split: types from `@/types/preferences`, `SUPPORTED_CURRENCIES` from `@/utils/currency`
-- [ ] 4.2 `src/features/transaction-editor/components/AdvancedScanOptions.tsx` -- split: type from `@/types/preferences`, `SUPPORTED_CURRENCIES` from `@/utils/currency`
-- [ ] 4.3 `src/App.tsx` -- change `import { SupportedCurrency }` to `import type { SupportedCurrency } from '@/types/preferences'`
-- [ ] 4.4 `src/features/transaction-editor/views/EditView.tsx` -- change `import { SupportedCurrency }` to `import type { SupportedCurrency } from '@/types/preferences'`
-- [ ] 4.5 Run `npx tsc --noEmit` -- must compile clean
+- [x] 4.1 `EscaneoView.tsx` — types from `@/types/preferences`, `SUPPORTED_CURRENCIES` from `@/utils/currency`
+- [x] 4.2 `AdvancedScanOptions.tsx` — type from `@/types/preferences`, `SUPPORTED_CURRENCIES` from `@/utils/currency`
+- [x] 4.3 `App.tsx` — `import type { SupportedCurrency }` from `@/types/preferences`
+- [x] 4.4 `EditView.tsx` — `import type { SupportedCurrency }` from `@/types/preferences`
+- [x] 4.4b `EditViewScanSection.tsx` — `import type { SupportedCurrency }` from `@/types/preferences` (added per 15b-2l)
+- [x] 4.5 `npx tsc --noEmit` — clean
 
 ### Task 5: Migrate useUserPreferences hook
 
-- [ ] 5.1 `src/hooks/useUserPreferences.ts` -- change type imports to `from '@/types/preferences'`
-- [ ] 5.2 Run `npx tsc --noEmit` -- must compile clean
+- [x] 5.1 `useUserPreferences.ts` — type imports from `@/types/preferences`
+- [x] 5.2 `npx tsc --noEmit` — clean
 
 ### Task 6: Final verification
 
-- [ ] 6.1 `grep -rn "from.*userPreferencesService" src/ --include="*.ts" --include="*.tsx" | grep -v repositories/ | grep -v "services/userPreferencesService"` -- must return 0 lines
-- [ ] 6.2 Verify tests still import correctly: `grep -rn "userPreferencesService" tests/` -- backward compat re-exports ensure these still work
-- [ ] 6.3 Run `npm run test:quick` -- all pass, same count as baseline
+- [x] 6.1 0 non-repo/non-service import statements from `userPreferencesService`
+- [x] 6.2 4 test files still import from service — backward compat re-exports work
+- [x] 6.3 `npm run test:quick` — 296 files, 7114 tests (same as baseline)
 
 ## Dev Notes
 
@@ -185,9 +186,23 @@ import type { SupportedCurrency, UserPreferences } from '@/types/preferences';
 - **Agents consulted:** Architect
 - **Dependencies:** None -- trust is done, preferences hook already on repository
 
+## Senior Developer Review (ECC)
+
+| Field | Value |
+|-------|-------|
+| Date | 2026-02-28 |
+| Classification | COMPLEX (by file count; actual risk LOW) |
+| Agents | code-reviewer, security-reviewer, architect, tdd-guide |
+| Score | 9.75/10 |
+| Outcome | APPROVE |
+| Quick fixes | 0 |
+| TD stories | 0 |
+| Findings | 1 LOW (test file import paths — safe via re-exports, cosmetic) |
+
 ## Change Log
 
 | Date | Change |
 |------|--------|
 | 2026-02-13 | Initial draft (stub with estimated counts) |
 | 2026-02-23 | Full rewrite. Trust confirmed 100% migrated (0 consumers). Preferences confirmed 10 consumers, all type/constant imports only (data-access already on repository). Story refocused from DAL hook migration to type/constant extraction from service layer. Precise file spec with exact paths and import lines. |
+| 2026-02-27 | ECC re-creation validation: Added `scanHandlerTypes.ts` and `EditViewScanSection.tsx` as consumers (from 15b-2l decomposition). Consumers 10→13, files 14→16. Status: ready-for-dev. |

@@ -4,7 +4,7 @@
 **Phase:** 3 - Infrastructure
 **Points:** 2
 **Priority:** MEDIUM
-**Status:** drafted
+**Status:** ready-for-dev
 
 ## Overview
 
@@ -154,3 +154,4 @@ After DAL stories 15b-3a through 15b-3d migrate hooks to use repositories, 5 vie
 |------|--------|
 | 2026-02-13 | Initial draft -- placeholder with high-level tasks |
 | 2026-02-23 | Full rewrite with codebase research. Identified 6 files: 3 views with runtime `getFirestore`/`signOut` imports, 1 component with runtime `Timestamp` import used as type, 2 components with missing `type` keyword on `Firestore` import. Defined specific replacement strategies. Note: 15b-3a may cover HistoryView + DashboardView; verify before executing Task 2. |
+| 2026-02-27 | ECC re-creation validation: Validated accurate. Elevated 15b-3a overlap to prerequisite check subtask. Status: ready-for-dev. |

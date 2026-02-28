@@ -111,7 +111,7 @@ import { HistoryFiltersProvider } from './contexts/HistoryFiltersContext';
 import type { HistoryFilterState, TemporalFilterState } from '@/types/historyFilters';
 import type { HistoryNavigationPayload } from '@features/analytics/utils/analyticsToHistoryFilters';
 import { analyzeReceipt, ReceiptType } from './services/gemini';
-import { SupportedCurrency } from './services/userPreferencesService';
+import type { SupportedCurrency } from '@/types/preferences';
 import { addTransaction as firestoreAddTransaction } from './services/firestore';
 import {
     generateInsightForTransaction,
