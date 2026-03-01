@@ -13,7 +13,7 @@ import {
     type StoreCategoryGroup,
     type ItemCategoryGroup,
 } from '@/config/categoryColors';
-import type { StoreCategory } from '@/types/transaction';
+import type { StoreCategory } from '../../../../../shared/schema/categories';
 import type { FlattenedItem } from '@/types/item';
 import type { TemporalFilterState, CategoryFilterState } from '@/types/historyFilters';
 

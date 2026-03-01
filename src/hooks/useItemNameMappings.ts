@@ -22,7 +22,7 @@ import { normalizeItemName, MAPPING_CONFIG } from '../services/itemNameMappingSe
 import { createMappingRepository } from '@/repositories'
 import { normalizeMerchantName } from '../services/merchantMappingService'
 import { ItemNameMapping, ItemNameMatchResult, NewItemNameMapping } from '../types/itemNameMapping'
-import type { ItemCategory } from '../types/transaction'
+import type { ItemCategory } from '../../shared/schema/categories'
 
 /**
  * Capitalize each word in a string (Title Case)

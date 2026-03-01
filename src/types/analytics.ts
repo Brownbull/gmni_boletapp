@@ -2,9 +2,9 @@
  * Analytics Navigation Types
  *
  * Defines the type system for dual-axis navigation (temporal + category)
- * in the analytics views. All navigation state flows through AnalyticsContext.
+ * in the analytics views. All navigation state flows through useAnalyticsStore.
  *
- * @see docs/architecture-epic7.md - ADR-010: React Context for Analytics State Management
+ * @see Story 15b-3f: Migrated from AnalyticsContext to Zustand store
  */
 
 // ============================================================================
@@ -156,11 +156,4 @@ export interface ChartData {
 // Context Value Type
 // ============================================================================
 
-/**
- * Value provided by AnalyticsContext.
- * Components should access this via useAnalyticsNavigation() hook, NOT useContext directly.
- */
-export interface AnalyticsContextValue {
-  state: AnalyticsNavigationState;
-  dispatch: React.Dispatch<NavigationAction>;
-}
+// Story 15b-3f: AnalyticsContextValue removed (dead code — zero imports after Zustand migration).

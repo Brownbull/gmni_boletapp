@@ -9,10 +9,6 @@
  * Architecture Reference: Epic 14e - Feature-Based Architecture
  */
 
-import type { ReactNode } from 'react';
-import type { FontFamily } from '../types/settings';
-import type { Firestore } from 'firebase/firestore';
-
 // =============================================================================
 // View Types
 // =============================================================================
@@ -125,41 +121,4 @@ export function isFullScreenView(view: View): boolean {
 // Provider Props Types
 // =============================================================================
 
-/**
- * Props for AppProviders component.
- *
- * AppProviders wraps children with app-level context providers:
- * - NotificationProvider (in-app notifications)
- * Note: ThemeProvider removed (15-7c, theme via useSettingsStore)
- * Note: AppStateProvider removed (15-7b, toasts via useToast)
- *
- * External providers (Auth, Query, Scan) remain in main.tsx.
- * View-scoped providers (Analytics, HistoryFilters) remain per-view.
- *
- * Story 14e-45: NavigationProvider removed - navigation now uses Zustand:
- * - Navigation state: useNavigationStore from @/shared/stores
- * - Navigation actions: useNavigationActions() from @/shared/stores
- *
- * Story 14e-25d: ViewHandlersProvider removed - views now use direct hooks:
- * - Toast: useToast() from @/shared/hooks
- * - Modals: useModalActions() from @/managers/ModalManager
- * - History navigation: useHistoryNavigation() from @/shared/hooks
- *
- * @see docs/sprint-artifacts/epic14e-feature-architecture/architecture-decision.md
- */
-export interface AppProvidersProps {
-    /** Children to render inside all providers */
-    children: ReactNode;
-
-    /** Font family from Firestore preferences (defaults to 'outfit') */
-    fontFamily?: FontFamily;
-
-    /** Firestore database instance (null if not initialized) */
-    db?: Firestore | null;
-
-    /** Current user ID (null if not authenticated) */
-    userId?: string | null;
-
-    /** Firebase app ID (null if not initialized) */
-    appId?: string | null;
-}
+// Story 15b-3g: AppProvidersProps removed — defined inline in AppProviders.tsx

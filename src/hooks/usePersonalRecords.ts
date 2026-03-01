@@ -16,9 +16,9 @@ import type { Transaction } from '../types/transaction';
 import type { PersonalRecord } from '../types/personalRecord';
 import {
     detectAndFilterRecords,
-    storePersonalRecord,
     getCurrentWeekId,
 } from '@features/insights/services/recordsService';
+import { useRecordsRepository } from '@/repositories';
 
 /**
  * Options for usePersonalRecords hook
@@ -86,6 +86,7 @@ export function usePersonalRecords({
     userId,
     appId,
 }: UsePersonalRecordsOptions): UsePersonalRecordsResult {
+    const recordsRepo = useRecordsRepository();
     const [recordToCelebrate, setRecordToCelebrate] = useState<PersonalRecord | null>(null);
     const [showRecordBanner, setShowRecordBanner] = useState(false);
 
@@ -153,7 +154,7 @@ export function usePersonalRecords({
             setRecordToCelebrate(result.recordToCelebrate);
 
             // Store the record in Firestore (fire-and-forget)
-            storePersonalRecord(db, userId, appId, result.recordToCelebrate).catch((error) => {
+            recordsRepo?.store(result.recordToCelebrate).catch((error) => {
                 console.warn('[PersonalRecords] Failed to store record:', error);
             });
 

@@ -3,8 +3,7 @@
  * This file contains ONLY pure functions and type definitions.
  * NO React imports. NO side effects.
  */
-import { ItemCategory, CategorySource } from '@/types/transaction';
-import type { MerchantSource } from '@/types/transaction';
+import type { ItemCategory, CategorySource, MerchantSource } from '../../../../shared/schema/categories';
 
 /**
  * Local TransactionItem interface for EditView.

@@ -2,7 +2,7 @@
  * History Filters Store — Story 15-7a
  *
  * Zustand store replacing HistoryFiltersContext's useReducer state management.
- * The HistoryFiltersProvider component remains as a thin initialization boundary.
+ * Story 15b-3g: HistoryFiltersProvider deleted — initialization now via useHistoryFiltersInit hook.
  *
  * State shape matches the original HistoryFilterState interface.
  * dispatch() processes HistoryFilterAction objects for backward compatibility.
@@ -83,7 +83,7 @@ function historyFiltersReducer(
 interface HistoryFiltersStoreState extends HistoryFilterState {
     /** Process a filter action (backward-compatible with useReducer dispatch) */
     dispatch: (action: HistoryFilterAction) => void;
-    /** Initialize filters (called by HistoryFiltersProvider on mount) */
+    /** Initialize filters (called by useHistoryFiltersInit on mount) */
     initializeFilters: (state: HistoryFilterState) => void;
 }
 

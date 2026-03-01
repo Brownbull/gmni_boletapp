@@ -1,14 +1,14 @@
 /**
- * useAnalyticsNavigation Hook
+ * useAnalyticsNavigation Hook — Story 15b-3f
  *
- * Custom hook for accessing analytics navigation state and dispatch.
- * This is the ONLY way components should access AnalyticsContext.
- *
- * @see docs/architecture-epic7.md - Pattern 1: Context Consumer Pattern
+ * Custom hook for accessing analytics navigation state.
+ * This is the ONLY way components should access analytics state.
+ * Internally delegates to useAnalyticsStore (Zustand).
  */
 
-import { useContext, useMemo } from 'react';
-import { AnalyticsContext } from '@/contexts/AnalyticsContext';
+import { useCallback } from 'react';
+import { useShallow } from 'zustand/react/shallow';
+import { useAnalyticsStore } from '../stores/useAnalyticsStore';
 import type {
   AnalyticsNavigationState,
   NavigationAction,
@@ -56,10 +56,8 @@ export interface UseAnalyticsNavigationReturn {
 }
 
 /**
- * Hook for accessing analytics navigation context.
- *
- * IMPORTANT: Must be used within an AnalyticsProvider.
- * Throws a helpful error if used outside the provider.
+ * Hook for accessing analytics navigation state.
+ * Zustand stores are always available — no Provider required.
  *
  * @example
  * function MyComponent() {
@@ -71,41 +69,41 @@ export interface UseAnalyticsNavigationReturn {
  *
  *   return <div>Current year: {temporal.year}</div>;
  * }
- *
- * @throws Error if used outside AnalyticsProvider
  */
 export function useAnalyticsNavigation(): UseAnalyticsNavigationReturn {
-  const context = useContext(AnalyticsContext);
-
-  if (context === null) {
-    throw new Error(
-      'useAnalyticsNavigation must be used within an AnalyticsProvider. ' +
-        'Wrap your component tree with <AnalyticsProvider> from src/contexts/AnalyticsContext.tsx'
-    );
-  }
-
-  const { state, dispatch } = context;
-
-  // Memoized selectors to prevent unnecessary recalculations
-  const selectors = useMemo(
-    () => ({
-      temporal: state.temporal,
-      category: state.category,
-      chartMode: state.chartMode,
-      drillDownMode: state.drillDownMode, // Story 7.16
-      temporalLevel: state.temporal.level,
-      categoryLevel: state.category.level,
-      isYearLevel: state.temporal.level === 'year',
-      hasCategoryFilter: state.category.level !== 'all',
-      isComparisonMode: state.chartMode === 'comparison',
-    }),
-    [state]
+  const { temporal, category, chartMode, drillDownMode } = useAnalyticsStore(
+    useShallow((s) => ({
+      temporal: s.temporal,
+      category: s.category,
+      chartMode: s.chartMode,
+      drillDownMode: s.drillDownMode,
+    }))
   );
+
+  const storeDispatch = useAnalyticsStore((s) => s.dispatch);
+
+  // Backward-compatible dispatch matching React.Dispatch<NavigationAction> type
+  const dispatch: React.Dispatch<NavigationAction> = useCallback(
+    (action: NavigationAction) => {
+      storeDispatch(action);
+    },
+    [storeDispatch]
+  );
+
+  const state: AnalyticsNavigationState = { temporal, category, chartMode, drillDownMode };
 
   return {
     state,
     dispatch,
-    ...selectors,
+    temporal,
+    category,
+    chartMode,
+    drillDownMode,
+    temporalLevel: temporal.level,
+    categoryLevel: category.level,
+    isYearLevel: temporal.level === 'year',
+    hasCategoryFilter: category.level !== 'all',
+    isComparisonMode: chartMode === 'comparison',
   };
 }
 

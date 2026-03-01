@@ -161,7 +161,7 @@ export function useTransactionEditorData(
     const defaultCountry = preferences.defaultCountry || '';
 
     // === User Credits ===
-    const { credits: userCredits } = useUserCredits(user, services);
+    const { credits: userCredits } = useUserCredits(user);
 
     // === Transactions (for distinct aliases) ===
     const transactions = useTransactions(user, services);

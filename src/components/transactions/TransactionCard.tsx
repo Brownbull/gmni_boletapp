@@ -17,7 +17,7 @@
 
 import React, { useState } from 'react';
 import { ChevronDown, AlertTriangle, Receipt, Package, Check } from 'lucide-react';
-import { Transaction, TransactionItem as TransactionItemType } from '../../types/transaction';
+import type { Transaction, TransactionItem as TransactionItemType } from '../../types/transaction';
 import { getCategoryEmoji } from '../../utils/categoryEmoji';
 import { getCategoryColors, getCategoryColorsAuto, type ThemeName, type ModeName } from '../../config/categoryColors';
 import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';

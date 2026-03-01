@@ -246,23 +246,33 @@ development_status:
 
   # Phase 3: Infrastructure Hardening (7 stories, ~15 pts)
   15b-3a-dal-transaction-hooks: done  # 3 pts - Migrate 10 transaction hooks to TransactionRepository | done: 2026-02-28
-  TD-15b-26-transaction-hook-test-coverage: ready-for-dev  # 2 pts - Mock layer upgrade + useTransactions/useRecentScans tests (from 15b-3a review, LOW) | DEPENDS: 15b-3a
-  TD-15b-27-dal-migration-cleanup: ready-for-dev  # 2 pts - Subscription guards + sanitize dedup + transient repo docs (from 15b-3a review, LOW) | DEPENDS: 15b-3a
+  TD-15b-26-transaction-hook-test-coverage: done  # 2 pts - Mock layer upgrade + useTransactions/useRecentScans tests (from 15b-3a review, LOW) | done: 2026-02-28
+  TD-15b-27-dal-migration-cleanup: done  # 2 pts - Subscription guards + sanitize dedup + transient repo docs (from 15b-3a review, LOW) | done: 2026-02-28
   15b-3b-dal-trust-preferences: done  # 2 pts - Migrate trust + preferences type/constant imports | done: 2026-02-28
-  15b-3c-dal-records-airlock-insight: ready-for-dev  # 3 pts - Migrate records + airlock + insight profile hooks
-  15b-3d-dal-credits-hooks: ready-for-dev      # 2 pts - Migrate credits hooks to CreditsRepository
-  15b-3e-dal-remaining-firebase: ready-for-dev # 2 pts - Migrate remaining view/component Firebase imports
-  15b-3f-analytics-context-zustand: ready-for-dev  # 3 pts - AnalyticsContext -> Zustand store
-  15b-3g-notification-context-zustand: ready-for-dev  # 2 pts - NotificationContext deletion + HistoryFiltersContext -> hook
+  15b-3c-dal-records-airlock-insight: done  # 3 pts - Migrate records + airlock + insight profile hooks | done: 2026-02-28
+  15b-3d-dal-credits-hooks: done      # 2 pts - Migrate credits hooks to CreditsRepository | done: 2026-02-28
+  TD-15b-28-credits-hook-cleanup: done  # 1 pt - Test split + dead imports + repo validation + error sanitization (from 15b-3d review, LOW) | done: 2026-02-28
+  15b-3e-dal-remaining-firebase: done   # 2 pts - Migrate remaining view/component Firebase imports | done: 2026-02-28
+  15b-3f-analytics-context-zustand: done  # 3 pts - AnalyticsContext -> Zustand store | done: 2026-02-28
+  TD-15b-29-drilldowngrid-stale-comments: done  # 1 pt - Stale AnalyticsContext comments in DrillDownGrid.tsx (808L, blocked by hook) (from 15b-3f review, LOW) | done: 2026-02-28
+  15b-3g-notification-context-zustand: done  # 2 pts - NotificationContext deletion + HistoryFiltersContext -> hook | done: 2026-02-28
+  TD-15b-30-stale-historyfilters-comments: done  # 1 pt - Stale HistoryFiltersProvider/Context comments in 5 files (from 15b-3g review, LOW) | done: 2026-02-28
 
   # Phase 4: High-Coupling Architecture (7 stories, ~20 pts)
-  15b-4a-transaction-type-design: ready-for-dev  # 2 pts - Design transaction type refactoring strategy (analysis only)
-  15b-4b-transaction-type-split: ready-for-dev   # 3 pts - Redirect ~12 category-only consumers to shared/schema/categories
-  15b-4c-transaction-consumers-batch1: ready-for-dev  # 3 pts - Fix import type in services + batch handlers
-  15b-4d-transaction-consumers-batch2: ready-for-dev  # 3 pts - Fix import type in hooks + feature utils
-  15b-4e-transaction-consumers-batch3: ready-for-dev  # 3 pts - Fix import type in views + components + cleanup
+  15b-4a-transaction-type-design: done  # 2 pts - Design transaction type refactoring strategy (analysis only) | done: 2026-02-28
+  15b-4b-transaction-type-split: done   # 3 pts - Redirect ~12 category-only consumers to shared/schema/categories | done: 2026-02-28
+  15b-4c-transaction-consumers-batch1: done  # 3 pts - Fix import type in services + batch handlers | done: 2026-02-28
+  15b-4d-transaction-consumers-batch2: done  # 3 pts - Fix import type in hooks + feature utils | done: 2026-02-28
+  TD-15b-31-batch-review-error-logging: done  # 1 pt - Sanitize console.error in useBatchReview.ts (from 15b-4d review, LOW) | done: 2026-02-28
+  15b-4e-transaction-consumers-batch3: done  # 3 pts - Fix import type in views + components + cleanup | done: 2026-03-01
+  TD-15b-32-dashboardview-test-parallel-flake: done  # 2 pts - Fix DashboardView 17-test parallel flake (from 15b-4e review, LOW) | done: 2026-03-01
+  TD-15b-33-transaction-import-type-completion: ready-for-dev  # 1 pt - Convert 5 remaining files + remove category shim from transaction.ts (from 15b-4e review, LOW)
+  TD-15b-34-dashboardview-test-shared-mocks: ready-for-dev  # 1 pt - DRY mock blocks + renderDashboardView helper across 3 split test files (from TD-15b-32 review, LOW)
   15b-4f-app-tsx-fanout-reduction: ready-for-dev  # 5 pts - App.tsx fan-out reduction (5 domain orchestrators)
   15b-4g-final-dependency-validation: ready-for-dev  # 1 pt  - Final dependency graph validation + epic metrics
+
+  # Phase 5: Infrastructure Hardening (1 story, 5 pts)
+  15b-5a-scan-infrastructure-hardening: ready-for-dev  # 5 pts - Fix scan error recovery + migrate functions.config() + upgrade Gemini + E2E smoke test
 
   epic-15b-retrospective: optional
 

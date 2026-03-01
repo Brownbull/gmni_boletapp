@@ -17,7 +17,7 @@ import { normalizeMerchantName, MAPPING_CONFIG } from '../services/merchantMappi
 import { createMappingRepository } from '@/repositories'
 import { findMerchantMatch } from '../services/merchantMatcherService'
 import { MerchantMapping, MerchantMatchResult, NewMerchantMapping } from '../types/merchantMapping'
-import type { StoreCategory } from '../types/transaction'
+import type { StoreCategory } from '../../shared/schema/categories'
 
 /**
  * Capitalize each word in a string (Title Case)

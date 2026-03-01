@@ -15,7 +15,7 @@
 import React from 'react';
 import { ChevronRight, Check } from 'lucide-react';
 import { AirlockRecord } from '@/types/airlock';
-import { Timestamp } from 'firebase/firestore';
+import type { TimestampLike } from '@/utils/timestamp';
 import { toDateSafe } from '@/utils/timestamp';
 
 interface AirlockHistoryCardProps {
@@ -39,7 +39,7 @@ interface AirlockHistoryCardProps {
  * Format a Firestore Timestamp or Date for display.
  * Shows relative time for recent dates, full date for older ones.
  */
-function formatDate(timestamp: Timestamp | Date | undefined, t: (key: string) => string): string {
+function formatDate(timestamp: TimestampLike | undefined, t: (key: string) => string): string {
   const date = toDateSafe(timestamp);
   if (!date) return '';
 

@@ -35,9 +35,9 @@ export interface CreditFirebaseServices {
  */
 export function useCreditState(
   user: User | null,
-  services: CreditFirebaseServices | null
+  _services?: CreditFirebaseServices | null
 ) {
-  const creditsResult = useUserCredits(user, services);
+  const creditsResult = useUserCredits(user);
 
   // Stable reference for consumers - includes all properties and functions
   // Functions are stable via useCallback in useUserCredits

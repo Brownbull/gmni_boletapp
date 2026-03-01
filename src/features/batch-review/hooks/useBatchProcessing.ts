@@ -20,7 +20,7 @@ import {
   ProcessingResult,
   BatchProcessingOptions,
 } from '@features/batch-review/services/batchProcessingService';
-import { Transaction } from '@/types/transaction';
+import type { Transaction } from '@/types/transaction';
 import { ReceiptType } from '@/services/gemini';
 import { DEFAULT_CURRENCY } from '@/utils/currency';
 

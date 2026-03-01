@@ -1,47 +1,34 @@
 /**
- * Analytics Reducer Unit Tests
+ * Analytics Store Unit Tests
  *
- * Tests for the analytics context reducer and state management.
+ * Tests for the analytics Zustand store actions and state management.
+ * Migrated from AnalyticsContext reducer tests to Zustand store tests (Story 15b-3f).
  *
  * Story 7.1 - Analytics Navigation Context
- * AC #1: AnalyticsContext provider initializes navigation state with current year, "all categories", and aggregation mode
+ * AC #1: Store initializes navigation state with current year, "all categories", and aggregation mode
  * AC #2: State includes temporal, category, and chartMode
- * AC #3: Actions available via dispatch: SET_TEMPORAL_LEVEL, SET_CATEGORY_FILTER, TOGGLE_CHART_MODE, RESET_TO_YEAR, CLEAR_CATEGORY_FILTER
+ * AC #3: Actions available: setTemporalLevel, setCategoryFilter, toggleChartMode, resetToYear, clearCategoryFilter
  * AC #6: Temporal and category filters work independently (dual-axis independence)
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import React from 'react';
-import {
-  AnalyticsProvider,
-  setTemporalLevel,
-  setCategoryFilter,
-  toggleChartMode,
-  resetToYear,
-  clearCategoryFilter,
-} from '../../../src/contexts/AnalyticsContext';
+import { useAnalyticsStore } from '@features/analytics/stores/useAnalyticsStore';
 import { useAnalyticsNavigation } from '@features/analytics/hooks/useAnalyticsNavigation';
+import { getDefaultNavigationState } from '@features/analytics/utils/analyticsHelpers';
 import type { AnalyticsNavigationState } from '../../../src/types/analytics';
 
-// Helper to create a wrapper with AnalyticsProvider
-function createWrapper(initialState?: AnalyticsNavigationState) {
-  return function Wrapper({ children }: { children: React.ReactNode }) {
-    return (
-      <AnalyticsProvider initialState={initialState}>
-        {children}
-      </AnalyticsProvider>
-    );
-  };
-}
+beforeEach(() => {
+  useAnalyticsStore.setState(getDefaultNavigationState('2024'));
+});
 
-describe('AnalyticsContext - Initial State', () => {
+describe('Analytics Store - Initial State', () => {
   it('AC #1: initializes with current year, all categories, and aggregation mode', () => {
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(),
-    });
-
+    // Reset to current year for this test
     const currentYear = new Date().getFullYear().toString();
+    useAnalyticsStore.setState(getDefaultNavigationState(currentYear));
+
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     expect(result.current.state.temporal.level).toBe('year');
     expect(result.current.state.temporal.year).toBe(currentYear);
@@ -50,9 +37,7 @@ describe('AnalyticsContext - Initial State', () => {
   });
 
   it('AC #2: state shape includes temporal, category, and chartMode', () => {
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     expect(result.current.state).toHaveProperty('temporal');
     expect(result.current.state).toHaveProperty('category');
@@ -66,18 +51,21 @@ describe('AnalyticsContext - Initial State', () => {
     expect(result.current.state.category).toHaveProperty('level');
   });
 
-  it('accepts custom initial state for testing', () => {
+  it('accepts custom initial state via setState', () => {
     const customState: AnalyticsNavigationState = {
       temporal: { level: 'month', year: '2024', quarter: 'Q4', month: '2024-10' },
       category: { level: 'category', category: 'Food' },
       chartMode: 'comparison',
+      drillDownMode: 'temporal',
     };
 
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(customState),
-    });
+    useAnalyticsStore.setState(customState);
 
-    expect(result.current.state).toEqual(customState);
+    const { result } = renderHook(() => useAnalyticsNavigation());
+
+    expect(result.current.state.temporal).toEqual(customState.temporal);
+    expect(result.current.state.category).toEqual(customState.category);
+    expect(result.current.state.chartMode).toBe(customState.chartMode);
   });
 
   /**
@@ -99,9 +87,9 @@ describe('AnalyticsContext - Initial State', () => {
       drillDownMode: 'temporal',
     };
 
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(thisMonthState),
-    });
+    useAnalyticsStore.setState(thisMonthState);
+
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     // AC #1: View should be at month level
     expect(result.current.state.temporal.level).toBe('month');
@@ -117,15 +105,13 @@ describe('AnalyticsContext - Initial State', () => {
   });
 });
 
-describe('AnalyticsContext - SET_TEMPORAL_LEVEL Action', () => {
+describe('Analytics Store - SET_TEMPORAL_LEVEL Action', () => {
   it('AC #3: updates temporal position', () => {
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     act(() => {
       result.current.dispatch(
-        setTemporalLevel({ level: 'quarter', year: '2024', quarter: 'Q4' })
+        { type: 'SET_TEMPORAL_LEVEL', payload: { level: 'quarter', year: '2024', quarter: 'Q4' } }
       );
     });
 
@@ -135,20 +121,19 @@ describe('AnalyticsContext - SET_TEMPORAL_LEVEL Action', () => {
   });
 
   it('AC #6: changing temporal PRESERVES category filter (dual-axis independence)', () => {
-    const initialState: AnalyticsNavigationState = {
+    useAnalyticsStore.setState({
       temporal: { level: 'year', year: '2024' },
       category: { level: 'category', category: 'Food' },
       chartMode: 'aggregation',
-    };
-
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(initialState),
+      drillDownMode: 'temporal',
     });
+
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     // Change temporal to quarter
     act(() => {
       result.current.dispatch(
-        setTemporalLevel({ level: 'quarter', year: '2024', quarter: 'Q4' })
+        { type: 'SET_TEMPORAL_LEVEL', payload: { level: 'quarter', year: '2024', quarter: 'Q4' } }
       );
     });
 
@@ -158,18 +143,16 @@ describe('AnalyticsContext - SET_TEMPORAL_LEVEL Action', () => {
   });
 
   it('can drill down to month level', () => {
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     act(() => {
       result.current.dispatch(
-        setTemporalLevel({
+        { type: 'SET_TEMPORAL_LEVEL', payload: {
           level: 'month',
           year: '2024',
           quarter: 'Q4',
           month: '2024-10',
-        })
+        } }
       );
     });
 
@@ -178,19 +161,17 @@ describe('AnalyticsContext - SET_TEMPORAL_LEVEL Action', () => {
   });
 
   it('can drill down to week level', () => {
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     act(() => {
       result.current.dispatch(
-        setTemporalLevel({
+        { type: 'SET_TEMPORAL_LEVEL', payload: {
           level: 'week',
           year: '2024',
           quarter: 'Q4',
           month: '2024-10',
           week: 2,
-        })
+        } }
       );
     });
 
@@ -199,20 +180,18 @@ describe('AnalyticsContext - SET_TEMPORAL_LEVEL Action', () => {
   });
 
   it('can drill down to day level', () => {
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     act(() => {
       result.current.dispatch(
-        setTemporalLevel({
+        { type: 'SET_TEMPORAL_LEVEL', payload: {
           level: 'day',
           year: '2024',
           quarter: 'Q4',
           month: '2024-10',
           week: 2,
           day: '2024-10-15',
-        })
+        } }
       );
     });
 
@@ -221,15 +200,13 @@ describe('AnalyticsContext - SET_TEMPORAL_LEVEL Action', () => {
   });
 });
 
-describe('AnalyticsContext - SET_CATEGORY_FILTER Action', () => {
+describe('Analytics Store - SET_CATEGORY_FILTER Action', () => {
   it('AC #3: updates category filter', () => {
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     act(() => {
       result.current.dispatch(
-        setCategoryFilter({ level: 'category', category: 'Food' })
+        { type: 'SET_CATEGORY_FILTER', payload: { level: 'category', category: 'Food' } }
       );
     });
 
@@ -238,20 +215,19 @@ describe('AnalyticsContext - SET_CATEGORY_FILTER Action', () => {
   });
 
   it('AC #6: changing category PRESERVES temporal position (dual-axis independence)', () => {
-    const initialState: AnalyticsNavigationState = {
+    useAnalyticsStore.setState({
       temporal: { level: 'month', year: '2024', quarter: 'Q4', month: '2024-10' },
       category: { level: 'all' },
       chartMode: 'aggregation',
-    };
-
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(initialState),
+      drillDownMode: 'temporal',
     });
+
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     // Change category filter
     act(() => {
       result.current.dispatch(
-        setCategoryFilter({ level: 'category', category: 'Food' })
+        { type: 'SET_CATEGORY_FILTER', payload: { level: 'category', category: 'Food' } }
       );
     });
 
@@ -261,17 +237,15 @@ describe('AnalyticsContext - SET_CATEGORY_FILTER Action', () => {
   });
 
   it('can filter to group level', () => {
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     act(() => {
       result.current.dispatch(
-        setCategoryFilter({
+        { type: 'SET_CATEGORY_FILTER', payload: {
           level: 'group',
           category: 'Food',
           group: 'Groceries',
-        })
+        } }
       );
     });
 
@@ -280,18 +254,16 @@ describe('AnalyticsContext - SET_CATEGORY_FILTER Action', () => {
   });
 
   it('can filter to subcategory level', () => {
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     act(() => {
       result.current.dispatch(
-        setCategoryFilter({
+        { type: 'SET_CATEGORY_FILTER', payload: {
           level: 'subcategory',
           category: 'Food',
           group: 'Groceries',
           subcategory: 'Meats',
-        })
+        } }
       );
     });
 
@@ -300,52 +272,48 @@ describe('AnalyticsContext - SET_CATEGORY_FILTER Action', () => {
   });
 });
 
-describe('AnalyticsContext - TOGGLE_CHART_MODE Action', () => {
+describe('Analytics Store - TOGGLE_CHART_MODE Action', () => {
   it('AC #3: toggles from aggregation to comparison', () => {
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     expect(result.current.state.chartMode).toBe('aggregation');
 
     act(() => {
-      result.current.dispatch(toggleChartMode());
+      result.current.dispatch({ type: 'TOGGLE_CHART_MODE' });
     });
 
     expect(result.current.state.chartMode).toBe('comparison');
   });
 
   it('AC #3: toggles from comparison to aggregation', () => {
-    const initialState: AnalyticsNavigationState = {
+    useAnalyticsStore.setState({
       temporal: { level: 'year', year: '2024' },
       category: { level: 'all' },
       chartMode: 'comparison',
-    };
-
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(initialState),
+      drillDownMode: 'temporal',
     });
 
+    const { result } = renderHook(() => useAnalyticsNavigation());
+
     act(() => {
-      result.current.dispatch(toggleChartMode());
+      result.current.dispatch({ type: 'TOGGLE_CHART_MODE' });
     });
 
     expect(result.current.state.chartMode).toBe('aggregation');
   });
 
   it('toggling chart mode preserves temporal and category', () => {
-    const initialState: AnalyticsNavigationState = {
+    useAnalyticsStore.setState({
       temporal: { level: 'month', year: '2024', quarter: 'Q4', month: '2024-10' },
       category: { level: 'category', category: 'Food' },
       chartMode: 'aggregation',
-    };
-
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(initialState),
+      drillDownMode: 'temporal',
     });
 
+    const { result } = renderHook(() => useAnalyticsNavigation());
+
     act(() => {
-      result.current.dispatch(toggleChartMode());
+      result.current.dispatch({ type: 'TOGGLE_CHART_MODE' });
     });
 
     // Both axes should be preserved
@@ -354,20 +322,19 @@ describe('AnalyticsContext - TOGGLE_CHART_MODE Action', () => {
   });
 });
 
-describe('AnalyticsContext - RESET_TO_YEAR Action', () => {
+describe('Analytics Store - RESET_TO_YEAR Action', () => {
   it('AC #3: resets temporal to year level', () => {
-    const initialState: AnalyticsNavigationState = {
+    useAnalyticsStore.setState({
       temporal: { level: 'month', year: '2024', quarter: 'Q4', month: '2024-10' },
       category: { level: 'all' },
       chartMode: 'aggregation',
-    };
-
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(initialState),
+      drillDownMode: 'temporal',
     });
 
+    const { result } = renderHook(() => useAnalyticsNavigation());
+
     act(() => {
-      result.current.dispatch(resetToYear('2024'));
+      result.current.dispatch({ type: 'RESET_TO_YEAR', payload: { year: '2024' } });
     });
 
     expect(result.current.state.temporal.level).toBe('year');
@@ -377,18 +344,17 @@ describe('AnalyticsContext - RESET_TO_YEAR Action', () => {
   });
 
   it('AC #6: RESET_TO_YEAR preserves category filter (dual-axis independence)', () => {
-    const initialState: AnalyticsNavigationState = {
+    useAnalyticsStore.setState({
       temporal: { level: 'week', year: '2024', quarter: 'Q4', month: '2024-10', week: 2 },
       category: { level: 'group', category: 'Food', group: 'Groceries' },
       chartMode: 'aggregation',
-    };
-
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(initialState),
+      drillDownMode: 'temporal',
     });
 
+    const { result } = renderHook(() => useAnalyticsNavigation());
+
     act(() => {
-      result.current.dispatch(resetToYear('2024'));
+      result.current.dispatch({ type: 'RESET_TO_YEAR', payload: { year: '2024' } });
     });
 
     // Temporal reset
@@ -400,32 +366,29 @@ describe('AnalyticsContext - RESET_TO_YEAR Action', () => {
   });
 
   it('can reset to a different year', () => {
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     act(() => {
-      result.current.dispatch(resetToYear('2023'));
+      result.current.dispatch({ type: 'RESET_TO_YEAR', payload: { year: '2023' } });
     });
 
     expect(result.current.state.temporal.year).toBe('2023');
   });
 });
 
-describe('AnalyticsContext - CLEAR_CATEGORY_FILTER Action', () => {
+describe('Analytics Store - CLEAR_CATEGORY_FILTER Action', () => {
   it('AC #3: clears category filter to "all"', () => {
-    const initialState: AnalyticsNavigationState = {
+    useAnalyticsStore.setState({
       temporal: { level: 'year', year: '2024' },
       category: { level: 'subcategory', category: 'Food', group: 'Groceries', subcategory: 'Meats' },
       chartMode: 'aggregation',
-    };
-
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(initialState),
+      drillDownMode: 'temporal',
     });
 
+    const { result } = renderHook(() => useAnalyticsNavigation());
+
     act(() => {
-      result.current.dispatch(clearCategoryFilter());
+      result.current.dispatch({ type: 'CLEAR_CATEGORY_FILTER' });
     });
 
     expect(result.current.state.category.level).toBe('all');
@@ -435,18 +398,17 @@ describe('AnalyticsContext - CLEAR_CATEGORY_FILTER Action', () => {
   });
 
   it('AC #6: CLEAR_CATEGORY_FILTER preserves temporal position (dual-axis independence)', () => {
-    const initialState: AnalyticsNavigationState = {
+    useAnalyticsStore.setState({
       temporal: { level: 'week', year: '2024', quarter: 'Q4', month: '2024-10', week: 2 },
       category: { level: 'category', category: 'Food' },
       chartMode: 'comparison',
-    };
-
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(initialState),
+      drillDownMode: 'temporal',
     });
 
+    const { result } = renderHook(() => useAnalyticsNavigation());
+
     act(() => {
-      result.current.dispatch(clearCategoryFilter());
+      result.current.dispatch({ type: 'CLEAR_CATEGORY_FILTER' });
     });
 
     // Category cleared
@@ -461,35 +423,33 @@ describe('AnalyticsContext - CLEAR_CATEGORY_FILTER Action', () => {
   });
 });
 
-describe('AnalyticsContext - Dual-Axis Independence Complex Scenarios', () => {
+describe('Analytics Store - Dual-Axis Independence Complex Scenarios', () => {
   it('changing temporal then category maintains independence', () => {
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     // Drill into quarter
     act(() => {
       result.current.dispatch(
-        setTemporalLevel({ level: 'quarter', year: '2024', quarter: 'Q4' })
+        { type: 'SET_TEMPORAL_LEVEL', payload: { level: 'quarter', year: '2024', quarter: 'Q4' } }
       );
     });
 
     // Add category filter
     act(() => {
       result.current.dispatch(
-        setCategoryFilter({ level: 'category', category: 'Food' })
+        { type: 'SET_CATEGORY_FILTER', payload: { level: 'category', category: 'Food' } }
       );
     });
 
     // Drill further into month
     act(() => {
       result.current.dispatch(
-        setTemporalLevel({
+        { type: 'SET_TEMPORAL_LEVEL', payload: {
           level: 'month',
           year: '2024',
           quarter: 'Q4',
           month: '2024-10',
-        })
+        } }
       );
     });
 
@@ -501,38 +461,37 @@ describe('AnalyticsContext - Dual-Axis Independence Complex Scenarios', () => {
   });
 
   it('multiple category changes preserve temporal', () => {
-    const initialState: AnalyticsNavigationState = {
+    useAnalyticsStore.setState({
       temporal: { level: 'month', year: '2024', quarter: 'Q4', month: '2024-10' },
       category: { level: 'all' },
       chartMode: 'aggregation',
-    };
-
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(initialState),
+      drillDownMode: 'temporal',
     });
+
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     // Filter to Food
     act(() => {
       result.current.dispatch(
-        setCategoryFilter({ level: 'category', category: 'Food' })
+        { type: 'SET_CATEGORY_FILTER', payload: { level: 'category', category: 'Food' } }
       );
     });
 
     // Drill to Groceries
     act(() => {
       result.current.dispatch(
-        setCategoryFilter({
+        { type: 'SET_CATEGORY_FILTER', payload: {
           level: 'group',
           category: 'Food',
           group: 'Groceries',
-        })
+        } }
       );
     });
 
     // Change to different category entirely
     act(() => {
       result.current.dispatch(
-        setCategoryFilter({ level: 'category', category: 'Transport' })
+        { type: 'SET_CATEGORY_FILTER', payload: { level: 'category', category: 'Transport' } }
       );
     });
 
@@ -543,38 +502,50 @@ describe('AnalyticsContext - Dual-Axis Independence Complex Scenarios', () => {
   });
 });
 
-describe('AnalyticsContext - Action Creators', () => {
-  it('setTemporalLevel creates correct action', () => {
-    const action = setTemporalLevel({ level: 'quarter', year: '2024', quarter: 'Q4' });
-    expect(action).toEqual({
-      type: 'SET_TEMPORAL_LEVEL',
-      payload: { level: 'quarter', year: '2024', quarter: 'Q4' },
+describe('Analytics Store - Direct Store Actions', () => {
+  it('setTemporalLevel updates temporal via store action', () => {
+    useAnalyticsStore.getState().setTemporalLevel({ level: 'quarter', year: '2024', quarter: 'Q4' });
+
+    const state = useAnalyticsStore.getState();
+    expect(state.temporal.level).toBe('quarter');
+    expect(state.temporal.quarter).toBe('Q4');
+  });
+
+  it('setCategoryFilter updates category via store action', () => {
+    useAnalyticsStore.getState().setCategoryFilter({ level: 'category', category: 'Food' });
+
+    const state = useAnalyticsStore.getState();
+    expect(state.category.level).toBe('category');
+    expect(state.category.category).toBe('Food');
+  });
+
+  it('toggleChartMode toggles via store action', () => {
+    expect(useAnalyticsStore.getState().chartMode).toBe('aggregation');
+
+    useAnalyticsStore.getState().toggleChartMode();
+
+    expect(useAnalyticsStore.getState().chartMode).toBe('comparison');
+  });
+
+  it('resetToYear resets temporal via store action', () => {
+    useAnalyticsStore.setState({
+      temporal: { level: 'month', year: '2024', quarter: 'Q4', month: '2024-10' },
     });
+
+    useAnalyticsStore.getState().resetToYear('2024');
+
+    const state = useAnalyticsStore.getState();
+    expect(state.temporal.level).toBe('year');
+    expect(state.temporal.year).toBe('2024');
   });
 
-  it('setCategoryFilter creates correct action', () => {
-    const action = setCategoryFilter({ level: 'category', category: 'Food' });
-    expect(action).toEqual({
-      type: 'SET_CATEGORY_FILTER',
-      payload: { level: 'category', category: 'Food' },
+  it('clearCategoryFilter clears via store action', () => {
+    useAnalyticsStore.setState({
+      category: { level: 'category', category: 'Food' },
     });
-  });
 
-  it('toggleChartMode creates correct action', () => {
-    const action = toggleChartMode();
-    expect(action).toEqual({ type: 'TOGGLE_CHART_MODE' });
-  });
+    useAnalyticsStore.getState().clearCategoryFilter();
 
-  it('resetToYear creates correct action', () => {
-    const action = resetToYear('2024');
-    expect(action).toEqual({
-      type: 'RESET_TO_YEAR',
-      payload: { year: '2024' },
-    });
-  });
-
-  it('clearCategoryFilter creates correct action', () => {
-    const action = clearCategoryFilter();
-    expect(action).toEqual({ type: 'CLEAR_CATEGORY_FILTER' });
+    expect(useAnalyticsStore.getState().category.level).toBe('all');
   });
 });

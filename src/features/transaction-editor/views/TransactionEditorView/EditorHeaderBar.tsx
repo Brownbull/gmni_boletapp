@@ -14,7 +14,7 @@ import {
   Zap,
   Info,
 } from 'lucide-react';
-import { formatCreditsDisplay } from '@/services/userCreditsService';
+import { formatCreditsDisplay } from '@/utils/creditFormatters';
 import type { UserCredits } from '@/types/scan';
 
 export interface EditorHeaderBarProps {

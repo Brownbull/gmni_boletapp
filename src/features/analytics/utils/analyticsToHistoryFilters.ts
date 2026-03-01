@@ -43,7 +43,7 @@ export function temporalPositionToFilter(
 
     case 'quarter':
       // AC #6: Quarter navigation maps to quarter filter
-      // HistoryFiltersContext now supports quarter level (added in Story 9.20)
+      // useHistoryFiltersStore now supports quarter level (added in Story 9.20)
       return {
         level: 'quarter',
         year: position.year,

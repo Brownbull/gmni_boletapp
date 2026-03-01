@@ -11,7 +11,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { AnalyticsProvider } from '../../../src/contexts/AnalyticsContext';
+import { useAnalyticsStore } from '@features/analytics/stores/useAnalyticsStore';
+import { getDefaultNavigationState } from '@features/analytics/utils/analyticsHelpers';
 import { TemporalBreadcrumb } from '@features/analytics/components/TemporalBreadcrumb';
 import { useAnalyticsNavigation } from '@features/analytics/hooks/useAnalyticsNavigation';
 import type { AnalyticsNavigationState } from '../../../src/types/analytics';
@@ -20,22 +21,19 @@ import type { AnalyticsNavigationState } from '../../../src/types/analytics';
 // Test Helpers
 // ============================================================================
 
-function createWrapper(initialState?: AnalyticsNavigationState) {
-  return function Wrapper({ children }: { children: React.ReactNode }) {
-    return (
-      <AnalyticsProvider initialState={initialState}>
-        {children}
-      </AnalyticsProvider>
-    );
-  };
-}
-
-function renderWithProvider(
+function renderWithStore(
   ui: React.ReactElement,
   initialState?: AnalyticsNavigationState
 ) {
-  return render(ui, { wrapper: createWrapper(initialState) });
+  if (initialState) {
+    useAnalyticsStore.setState(initialState);
+  }
+  return render(ui);
 }
+
+beforeEach(() => {
+  useAnalyticsStore.setState(getDefaultNavigationState('2024'));
+});
 
 // Default states for testing
 const yearState: AnalyticsNavigationState = {
@@ -81,40 +79,40 @@ const withCategoryFilter: AnalyticsNavigationState = {
 describe('TemporalBreadcrumb - AC #1: Collapsed state renders current level', () => {
   // Story 7.18 extension: Icon-only buttons with aria-label for accessibility
   it('shows year label in aria-label when at year level', () => {
-    renderWithProvider(<TemporalBreadcrumb />, yearState);
+    renderWithStore(<TemporalBreadcrumb />, yearState);
 
     expect(screen.getByRole('navigation', { name: 'Time period' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Time period: 2024/i })).toBeInTheDocument();
   });
 
   it('shows quarter label in aria-label when at quarter level', () => {
-    renderWithProvider(<TemporalBreadcrumb />, quarterState);
+    renderWithStore(<TemporalBreadcrumb />, quarterState);
 
     expect(screen.getByRole('button', { name: /Time period: Q4/i })).toBeInTheDocument();
   });
 
   it('shows month name in aria-label when at month level', () => {
-    renderWithProvider(<TemporalBreadcrumb locale="en" />, monthState);
+    renderWithStore(<TemporalBreadcrumb locale="en" />, monthState);
 
     expect(screen.getByRole('button', { name: /Time period: October/i })).toBeInTheDocument();
   });
 
   it('shows week range in aria-label when at week level', () => {
-    renderWithProvider(<TemporalBreadcrumb locale="en" />, weekState);
+    renderWithStore(<TemporalBreadcrumb locale="en" />, weekState);
 
     // Week 2 of October: Oct 8-14
     expect(screen.getByRole('button', { name: /Time period: Oct 8-14/i })).toBeInTheDocument();
   });
 
   it('shows day label in aria-label when at day level', () => {
-    renderWithProvider(<TemporalBreadcrumb locale="en" />, dayState);
+    renderWithStore(<TemporalBreadcrumb locale="en" />, dayState);
 
     // October 10
     expect(screen.getByRole('button', { name: /Time period: Oct 10/i })).toBeInTheDocument();
   });
 
   it('displays Calendar icon', () => {
-    const { container } = renderWithProvider(<TemporalBreadcrumb />, yearState);
+    const { container } = renderWithStore(<TemporalBreadcrumb />, yearState);
 
     // Lucide icons render as SVG - Story 7.18: icon-only button
     const svg = container.querySelector('svg');
@@ -123,7 +121,7 @@ describe('TemporalBreadcrumb - AC #1: Collapsed state renders current level', ()
 
   // Story 7.18 extension: ChevronDown removed - icon-only buttons
   it('displays only Calendar icon (no chevron)', () => {
-    const { container } = renderWithProvider(<TemporalBreadcrumb />, yearState);
+    const { container } = renderWithStore(<TemporalBreadcrumb />, yearState);
 
     // Should have only one SVG: Calendar (ChevronDown removed)
     const svgs = container.querySelectorAll('svg');
@@ -138,7 +136,7 @@ describe('TemporalBreadcrumb - AC #1: Collapsed state renders current level', ()
 describe('TemporalBreadcrumb - AC #2: Dropdown shows full path when open', () => {
   it('shows dropdown when button is clicked', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, monthState);
+    renderWithStore(<TemporalBreadcrumb />, monthState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -148,7 +146,7 @@ describe('TemporalBreadcrumb - AC #2: Dropdown shows full path when open', () =>
 
   it('shows full path in dropdown', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb locale="en" />, monthState);
+    renderWithStore(<TemporalBreadcrumb locale="en" />, monthState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -164,7 +162,7 @@ describe('TemporalBreadcrumb - AC #2: Dropdown shows full path when open', () =>
 
   it('shows 5 levels at day depth', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb locale="en" />, dayState);
+    renderWithStore(<TemporalBreadcrumb locale="en" />, dayState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -181,7 +179,7 @@ describe('TemporalBreadcrumb - AC #2: Dropdown shows full path when open', () =>
 describe('TemporalBreadcrumb - AC #3: Each ancestor level is tappable', () => {
   it('all dropdown items are buttons', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, monthState);
+    renderWithStore(<TemporalBreadcrumb />, monthState);
 
     const toggleButton = screen.getByRole('button');
     await user.click(toggleButton);
@@ -200,7 +198,7 @@ describe('TemporalBreadcrumb - AC #3: Each ancestor level is tappable', () => {
 describe('TemporalBreadcrumb - AC #4: Current level is highlighted', () => {
   it('current level has distinct styling (bold)', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, monthState);
+    renderWithStore(<TemporalBreadcrumb />, monthState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -213,7 +211,7 @@ describe('TemporalBreadcrumb - AC #4: Current level is highlighted', () => {
 
   it('current level has aria-selected=true', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, monthState);
+    renderWithStore(<TemporalBreadcrumb />, monthState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -226,7 +224,7 @@ describe('TemporalBreadcrumb - AC #4: Current level is highlighted', () => {
 
   it('ancestor levels have aria-selected=false', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, monthState);
+    renderWithStore(<TemporalBreadcrumb />, monthState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -245,7 +243,7 @@ describe('TemporalBreadcrumb - AC #4: Current level is highlighted', () => {
 describe('TemporalBreadcrumb - AC #5: Outside click closes dropdown', () => {
   it('closes dropdown when clicking outside', async () => {
     const user = userEvent.setup();
-    const { container } = renderWithProvider(<TemporalBreadcrumb />, monthState);
+    const { container } = renderWithStore(<TemporalBreadcrumb />, monthState);
 
     // Open dropdown
     const button = screen.getByRole('button');
@@ -262,7 +260,7 @@ describe('TemporalBreadcrumb - AC #5: Outside click closes dropdown', () => {
 
   it('does not close when clicking inside dropdown', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, monthState);
+    renderWithStore(<TemporalBreadcrumb />, monthState);
 
     // Open dropdown
     const button = screen.getByRole('button');
@@ -284,7 +282,7 @@ describe('TemporalBreadcrumb - AC #5: Outside click closes dropdown', () => {
 describe('TemporalBreadcrumb - AC #6: Escape closes dropdown', () => {
   it('closes dropdown when pressing Escape', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, monthState);
+    renderWithStore(<TemporalBreadcrumb />, monthState);
 
     // Open dropdown
     const button = screen.getByRole('button');
@@ -301,7 +299,7 @@ describe('TemporalBreadcrumb - AC #6: Escape closes dropdown', () => {
 
   it('returns focus to button after Escape', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, monthState);
+    renderWithStore(<TemporalBreadcrumb />, monthState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -321,7 +319,7 @@ describe('TemporalBreadcrumb - AC #6: Escape closes dropdown', () => {
 describe('TemporalBreadcrumb - AC #7: Navigation preserves category filter', () => {
   it('dispatches SET_TEMPORAL_LEVEL on ancestor tap', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, monthState);
+    renderWithStore(<TemporalBreadcrumb />, monthState);
 
     // Open dropdown
     const button = screen.getByRole('button');
@@ -355,7 +353,7 @@ describe('TemporalBreadcrumb - AC #7: Navigation preserves category filter', () 
       );
     }
 
-    renderWithProvider(<TestComponentWithCategory />, withCategoryFilter);
+    renderWithStore(<TestComponentWithCategory />, withCategoryFilter);
 
     // Initially, category filter is "Food"
     expect(screen.getByTestId('category')).toHaveTextContent('category');
@@ -380,7 +378,7 @@ describe('TemporalBreadcrumb - AC #7: Navigation preserves category filter', () 
 describe('TemporalBreadcrumb - AC #8: Immediate state updates', () => {
   it('breadcrumb updates immediately after navigation', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb locale="en" />, monthState);
+    renderWithStore(<TemporalBreadcrumb locale="en" />, monthState);
 
     // Initially shows "October" in aria-label - Story 7.18: icon-only buttons
     expect(screen.getByRole('button', { name: /Time period: October/i })).toBeInTheDocument();
@@ -406,7 +404,7 @@ describe('TemporalBreadcrumb - AC #8: Immediate state updates', () => {
 describe('TemporalBreadcrumb - AC #9: Keyboard accessibility', () => {
   it('button receives focus on Tab', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, yearState);
+    renderWithStore(<TemporalBreadcrumb />, yearState);
 
     // Tab into the component
     await user.tab();
@@ -417,7 +415,7 @@ describe('TemporalBreadcrumb - AC #9: Keyboard accessibility', () => {
 
   it('Enter opens dropdown', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, monthState);
+    renderWithStore(<TemporalBreadcrumb />, monthState);
 
     const button = screen.getByRole('button');
     button.focus();
@@ -429,7 +427,7 @@ describe('TemporalBreadcrumb - AC #9: Keyboard accessibility', () => {
 
   it('Space opens dropdown', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, monthState);
+    renderWithStore(<TemporalBreadcrumb />, monthState);
 
     const button = screen.getByRole('button');
     button.focus();
@@ -441,7 +439,7 @@ describe('TemporalBreadcrumb - AC #9: Keyboard accessibility', () => {
 
   it('ArrowDown navigates to next option', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, monthState);
+    renderWithStore(<TemporalBreadcrumb />, monthState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -466,7 +464,7 @@ describe('TemporalBreadcrumb - AC #9: Keyboard accessibility', () => {
 
   it('ArrowUp navigates to previous option', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, monthState);
+    renderWithStore(<TemporalBreadcrumb />, monthState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -486,7 +484,7 @@ describe('TemporalBreadcrumb - AC #9: Keyboard accessibility', () => {
 
   it('Home key goes to first option', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, monthState);
+    renderWithStore(<TemporalBreadcrumb />, monthState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -503,7 +501,7 @@ describe('TemporalBreadcrumb - AC #9: Keyboard accessibility', () => {
 
   it('End key goes to last option', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, monthState);
+    renderWithStore(<TemporalBreadcrumb />, monthState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -528,7 +526,7 @@ describe('TemporalBreadcrumb - AC #9: Keyboard accessibility', () => {
 
 describe('TemporalBreadcrumb - AC #10: Touch targets', () => {
   it('button has 40px dimensions (w-10 h-10) for compact layout', () => {
-    renderWithProvider(<TemporalBreadcrumb />, yearState);
+    renderWithStore(<TemporalBreadcrumb />, yearState);
 
     const button = screen.getByRole('button');
     // Story 7.18: Icon-only button with transparent background for compact layout
@@ -538,7 +536,7 @@ describe('TemporalBreadcrumb - AC #10: Touch targets', () => {
 
   it('dropdown options have min-h-11 class', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, monthState);
+    renderWithStore(<TemporalBreadcrumb />, monthState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -556,19 +554,19 @@ describe('TemporalBreadcrumb - AC #10: Touch targets', () => {
 
 describe('TemporalBreadcrumb - AC #11: ARIA attributes', () => {
   it('container has role="navigation"', () => {
-    renderWithProvider(<TemporalBreadcrumb />, yearState);
+    renderWithStore(<TemporalBreadcrumb />, yearState);
 
     expect(screen.getByRole('navigation')).toBeInTheDocument();
   });
 
   it('container has aria-label="Time period"', () => {
-    renderWithProvider(<TemporalBreadcrumb />, yearState);
+    renderWithStore(<TemporalBreadcrumb />, yearState);
 
     expect(screen.getByRole('navigation', { name: 'Time period' })).toBeInTheDocument();
   });
 
   it('button has aria-expanded=false when collapsed', () => {
-    renderWithProvider(<TemporalBreadcrumb />, yearState);
+    renderWithStore(<TemporalBreadcrumb />, yearState);
 
     const button = screen.getByRole('button');
     expect(button).toHaveAttribute('aria-expanded', 'false');
@@ -576,7 +574,7 @@ describe('TemporalBreadcrumb - AC #11: ARIA attributes', () => {
 
   it('button has aria-expanded=true when open', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, yearState);
+    renderWithStore(<TemporalBreadcrumb />, yearState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -585,7 +583,7 @@ describe('TemporalBreadcrumb - AC #11: ARIA attributes', () => {
   });
 
   it('button has aria-haspopup="listbox"', () => {
-    renderWithProvider(<TemporalBreadcrumb />, yearState);
+    renderWithStore(<TemporalBreadcrumb />, yearState);
 
     const button = screen.getByRole('button');
     expect(button).toHaveAttribute('aria-haspopup', 'listbox');
@@ -593,7 +591,7 @@ describe('TemporalBreadcrumb - AC #11: ARIA attributes', () => {
 
   it('dropdown has role="listbox"', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, monthState);
+    renderWithStore(<TemporalBreadcrumb />, monthState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -603,7 +601,7 @@ describe('TemporalBreadcrumb - AC #11: ARIA attributes', () => {
 
   it('options have role="option"', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, monthState);
+    renderWithStore(<TemporalBreadcrumb />, monthState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -619,7 +617,7 @@ describe('TemporalBreadcrumb - AC #11: ARIA attributes', () => {
 
 describe('TemporalBreadcrumb - Theme Support', () => {
   it('applies light theme classes by default', () => {
-    renderWithProvider(<TemporalBreadcrumb />, yearState);
+    renderWithStore(<TemporalBreadcrumb />, yearState);
 
     const button = screen.getByRole('button');
     // Story 7.18: Transparent background with hover effect
@@ -628,7 +626,7 @@ describe('TemporalBreadcrumb - Theme Support', () => {
   });
 
   it('applies dark theme classes when theme="dark"', () => {
-    renderWithProvider(<TemporalBreadcrumb theme="dark" />, yearState);
+    renderWithStore(<TemporalBreadcrumb theme="dark" />, yearState);
 
     const button = screen.getByRole('button');
     // Story 7.18: Transparent background with hover effect
@@ -644,13 +642,13 @@ describe('TemporalBreadcrumb - Theme Support', () => {
 describe('TemporalBreadcrumb - Locale Support', () => {
   // Story 7.18: Icon-only buttons with aria-label for accessibility
   it('displays month in English by default', () => {
-    renderWithProvider(<TemporalBreadcrumb locale="en" />, monthState);
+    renderWithStore(<TemporalBreadcrumb locale="en" />, monthState);
 
     expect(screen.getByRole('button', { name: /Time period: October/i })).toBeInTheDocument();
   });
 
   it('displays month in Spanish when locale="es"', () => {
-    renderWithProvider(<TemporalBreadcrumb locale="es" />, monthState);
+    renderWithStore(<TemporalBreadcrumb locale="es" />, monthState);
 
     // Spanish for October is "octubre" (lowercase in most locales)
     expect(screen.getByRole('button', { name: /Time period:.*octubre/i })).toBeInTheDocument();
@@ -670,7 +668,7 @@ describe('TemporalBreadcrumb - Edge Cases', () => {
       chartMode: 'aggregation',
     };
 
-    renderWithProvider(<TemporalBreadcrumb locale="en" />, week1State);
+    renderWithStore(<TemporalBreadcrumb locale="en" />, week1State);
 
     expect(screen.getByRole('button', { name: /Time period: Oct 1-7/i })).toBeInTheDocument();
   });
@@ -682,7 +680,7 @@ describe('TemporalBreadcrumb - Edge Cases', () => {
       chartMode: 'aggregation',
     };
 
-    renderWithProvider(<TemporalBreadcrumb locale="en" />, week5State);
+    renderWithStore(<TemporalBreadcrumb locale="en" />, week5State);
 
     // October has 31 days, so week 5 is Oct 29-31
     expect(screen.getByRole('button', { name: /Time period: Oct 29-31/i })).toBeInTheDocument();
@@ -695,7 +693,7 @@ describe('TemporalBreadcrumb - Edge Cases', () => {
       chartMode: 'aggregation',
     };
 
-    renderWithProvider(<TemporalBreadcrumb locale="en" />, febState);
+    renderWithStore(<TemporalBreadcrumb locale="en" />, febState);
 
     // 2024 is leap year, February has 29 days, week 5 is Feb 29-29
     expect(screen.getByRole('button', { name: /Time period: Feb 29-29/i })).toBeInTheDocument();
@@ -705,7 +703,7 @@ describe('TemporalBreadcrumb - Edge Cases', () => {
   // This test is obsolete as there's no chevron to rotate
   it('dropdown opens on click (no chevron animation)', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<TemporalBreadcrumb />, yearState);
+    renderWithStore(<TemporalBreadcrumb />, yearState);
 
     const button = screen.getByRole('button');
     await user.click(button);

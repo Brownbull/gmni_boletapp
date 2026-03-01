@@ -18,6 +18,10 @@ import { AppLayout, AppOverlays, shouldShowTopHeader } from './components/App';
 import type { View } from '@app/types';
 // Story 15b-0b: Direct import from viewRenderers (not barrel) to break circular deps
 import {
+    renderDashboardView,
+    renderTrendsView,
+    renderHistoryView,
+    renderItemsView,
     renderStatementScanView,
     renderReportsView,
     renderRecentScansView,
@@ -69,10 +73,6 @@ import { getFirestore } from 'firebase/firestore';
 import { useBatchProcessing } from './hooks/useBatchProcessing';
 import { DIALOG_TYPES } from './types/scanStateMachine';
 import { LoginScreen } from './views/LoginScreen';
-import { DashboardView } from './views/DashboardView';
-import { TrendsView } from './views/TrendsView';
-import { HistoryView } from './views/HistoryView';
-import { ItemsView } from './views/ItemsView';
 import { BatchCaptureView } from './views/BatchCaptureView';
 import { SettingsView } from './views/SettingsView';
 import { TransactionEditorView } from './views/TransactionEditorView';
@@ -87,7 +87,7 @@ import { PROCESSING_TIMEOUT_MS } from './hooks/useScanState';
 import { BatchProcessingOverlay } from './components/scan';
 import { hasActiveTransactionConflict as hasActiveTransactionConflictUtil } from '@features/scan';
 import type { TrustPromptEligibility } from './types/trust';
-import { AnalyticsProvider } from './contexts/AnalyticsContext';
+import { analyticsActions } from '@features/analytics/stores/useAnalyticsStore';
 import {
     useScanStore,
     useScanActions,
@@ -107,7 +107,6 @@ import {
     useTransactionEditorActions,
 } from '@features/transaction-editor';
 import { getQuarterFromMonth } from '@features/analytics/utils/analyticsHelpers';
-import { HistoryFiltersProvider } from './contexts/HistoryFiltersContext';
 import type { HistoryFilterState, TemporalFilterState } from '@/types/historyFilters';
 import type { HistoryNavigationPayload } from '@features/analytics/utils/analyticsToHistoryFilters';
 import { analyzeReceipt, ReceiptType } from './services/gemini';
@@ -121,8 +120,8 @@ import {
     getLastWeekTotal,
     setLocalCache,
 } from '@features/insights/services/insightEngineService';
-import { Transaction } from './types/transaction';
-import { Insight } from './types/insight';
+import type { Transaction } from './types/transaction';
+import type { Insight } from './types/insight';
 import {
     loadPersistedScanState,
     savePersistedScanState,
@@ -210,7 +209,7 @@ function App() {
         deductSuperCredits: deductUserSuperCredits,
         addCredits: addUserCredits,
         addSuperCredits: addUserSuperCredits,
-    } = useUserCredits(user, services);
+    } = useUserCredits(user);
 
     // Insight profile for generating contextual insights after transactions
     const {
@@ -586,6 +585,13 @@ function App() {
             clearAnalyticsInitialState();
         }
     }, [view, analyticsInitialState, clearAnalyticsInitialState]);
+
+    // Story 15b-3f: Initialize analytics store when analyticsInitialState changes
+    useEffect(() => {
+        if (view === 'trends' && analyticsInitialState) {
+            analyticsActions.initialize(analyticsInitialState);
+        }
+    }, [view, analyticsInitialState]);
 
     // Story 14.13 Session 7: Clear pending distribution view when navigating AWAY from trends
     useEffect(() => {
@@ -1667,23 +1673,15 @@ function App() {
                   * Views can use useCategoriesContext() to access category state.
                   */}
                 <CategoriesFeature user={user} services={services}>
-                {/* Story 14e-22: AppProviders consolidates app-level providers.
-                  * Story 14e-25d: ViewHandlersProvider removed - views use direct hooks.
-                  * Story 14e-45: NavigationProvider removed - navigation via useNavigationStore.
-                  * Includes NotificationProvider (ThemeProvider/AppStateProvider removed in 15-7b/15-7c).
+                {/* Story 15b-3g: AppProviders now only syncs fontFamily to Zustand.
+                  * NotificationProvider removed (zero consumers).
                   */}
                 <AppProviders
                     fontFamily={userPreferences?.fontFamily}
-                    db={services?.db}
-                    userId={user?.uid}
-                    appId={services?.appId}
                 >
-                {view === 'dashboard' && (
-                    <HistoryFiltersProvider>
-                        {/* Story 14e-25b.2: DashboardView now owns its data via useDashboardViewData hook */}
-                        <DashboardView _testOverrides={dashboardCallbacks} />
-                    </HistoryFiltersProvider>
-                )}
+                {view === 'dashboard' && renderDashboardView({
+                    _testOverrides: dashboardCallbacks,
+                })}
 
                 {/* TransactionEditorView - Unified transaction editor */}
                 {/* Story 14e-28b: TransactionEditorView now owns data via internal hooks */}
@@ -1696,16 +1694,7 @@ function App() {
 
                 {/* TrendsView with filters and analytics providers */}
                 {/* Story 14e-25b.1: TrendsView now owns its data via useTrendsViewData hook */}
-                {view === 'trends' && (
-                    <HistoryFiltersProvider>
-                        <AnalyticsProvider
-                            key={analyticsInitialState ? JSON.stringify(analyticsInitialState.temporal) : 'default'}
-                            initialState={analyticsInitialState ?? undefined}
-                        >
-                            <TrendsView />
-                        </AnalyticsProvider>
-                    </HistoryFiltersProvider>
-                )}
+                {view === 'trends' && renderTrendsView({})}
 
                 {/* InsightsView - insight history with inline header */}
                 {/* Story 14e-25c.2: Minimal props - navigation via useNavigation() hook */}
@@ -1903,18 +1892,13 @@ function App() {
                 })}
 
                 {/* Transaction History View - Story 14e-25a.2b: HistoryView now owns its data */}
-                {view === 'history' && (
-                    <HistoryFiltersProvider
-                        initialState={pendingHistoryFilters || undefined}
-                        onStateChange={setPendingHistoryFilters}
-                    >
-                        <HistoryView
-                            _testOverrides={{
-                                onEditTransaction: (tx) => navigateToTransactionDetail(tx as Transaction),
-                            }}
-                        />
-                    </HistoryFiltersProvider>
-                )}
+                {view === 'history' && renderHistoryView({
+                    initialState: pendingHistoryFilters || undefined,
+                    onStateChange: setPendingHistoryFilters,
+                    _testOverrides: {
+                        onEditTransaction: (tx) => navigateToTransactionDetail(tx as Transaction),
+                    },
+                })}
 
                 {/* Recent Scans View - latest scans sorted by scan date */}
                 {view === 'recent-scans' && renderRecentScansView({
@@ -1935,18 +1919,13 @@ function App() {
 
                 {/* Items History View - filtered navigation from analytics */}
                 {/* Story 14e-31: ItemsView owns data via useItemsViewData, handler via _testOverrides */}
-                {view === 'items' && (
-                    <HistoryFiltersProvider
-                        initialState={pendingHistoryFilters || undefined}
-                        onStateChange={setPendingHistoryFilters}
-                    >
-                        <ItemsView
-                            _testOverrides={{
-                                onEditTransaction: handleItemsEditTransaction,
-                            }}
-                        />
-                    </HistoryFiltersProvider>
-                )}
+                {view === 'items' && renderItemsView({
+                    initialState: pendingHistoryFilters || undefined,
+                    onStateChange: setPendingHistoryFilters,
+                    _testOverrides: {
+                        onEditTransaction: handleItemsEditTransaction,
+                    },
+                })}
 
                 {/* Weekly Reports View */}
                 {/* Story 14e-25c.2: Minimal props - transactions via internal hooks, navigation via useNavigation() */}
@@ -2014,7 +1993,7 @@ function App() {
                     }
                 }}
                 onTrendsClick={() => {
-                    // Navigation state is now managed by AnalyticsContext
+                    // Navigation state is managed by useAnalyticsStore (Zustand)
                     // Context resets to year level when mounted
                 }}
                 // Statement scan placeholder navigation

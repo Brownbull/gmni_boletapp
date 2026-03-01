@@ -37,7 +37,7 @@
 
 import React, { useCallback, useState, useEffect } from 'react';
 import { Check, X, AlertTriangle, ArrowLeft, Trash2, Pencil, Save, MapPin, Calendar, Clock, DollarSign } from 'lucide-react';
-import { Transaction, StoreCategory } from '../../types/transaction';
+import type { Transaction, StoreCategory } from '../../types/transaction';
 import { getCategoryEmoji } from '../../utils/categoryEmoji';
 import { translateCategory } from '../../utils/categoryTranslations';
 import { getCategoryPillColors } from '../../config/categoryColors';

@@ -185,11 +185,11 @@ export function useHistoryViewData(): UseHistoryViewDataReturn {
     const clearPendingFilters = useNavigationStore((s) => s.clearPendingFilters);
 
     // Consume pending filters on mount/change
-    // Note: We don't apply filters here - that's HistoryFiltersProvider's job
+    // Note: We don't apply filters here - that's useHistoryFiltersInit's job
     // We expose them via pendingFilters return value and clear after consumption
     useEffect(() => {
         if (pendingHistoryFilters) {
-            // Clear filters after a microtask delay to allow HistoryFiltersProvider to read them
+            // Clear filters after a microtask delay to allow useHistoryFiltersInit to read them
             const timer = setTimeout(() => {
                 clearPendingFilters();
             }, 0);

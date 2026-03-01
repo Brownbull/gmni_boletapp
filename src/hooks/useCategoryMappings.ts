@@ -16,7 +16,7 @@ import { QUERY_KEYS } from '../lib/queryKeys';
 import { normalizeItemName, MAPPING_CONFIG } from '../services/categoryMappingService';
 import { createMappingRepository } from '@/repositories';
 import { CategoryMapping, MatchResult, NewCategoryMapping } from '../types/categoryMapping';
-import { StoreCategory } from '../types/transaction';
+import type { StoreCategory } from '../../shared/schema/categories';
 
 export interface UseCategoryMappingsReturn {
     /** List of all user's category mappings */

@@ -90,8 +90,8 @@ interface HistoryViewProps {
 // ============================================================================
 
 /**
- * Inner component that uses the filter context.
- * Must be rendered inside HistoryFiltersProvider.
+ * Inner component that uses the history filters store.
+ * Parent view must call useHistoryFiltersInit() before rendering.
  *
  * Story 14e-25a.2b: Now owns its data via useHistoryViewData hook.
  * Receives NO props from App.tsx except optional test overrides.
@@ -687,8 +687,8 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
 /**
  * HistoryView - Main export
  *
- * This component expects to be wrapped in a HistoryFiltersProvider.
- * The provider should be added in App.tsx or the parent component.
+ * Story 15b-3g: Requires useHistoryFiltersInit() to be called by the parent
+ * wrapper component (e.g., HistoryViewWithFilters in viewRenderers.tsx).
  */
 export const HistoryView: React.FC<HistoryViewProps> = (props) => {
     return <HistoryViewInner {...props} />;

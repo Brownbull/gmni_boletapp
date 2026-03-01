@@ -27,9 +27,8 @@ vi.mock('../../../../../src/hooks/useAuth', () => ({
   useAuth: vi.fn(),
 }));
 
-// Mock the insight service
+// Mock the insight engine service (no longer re-exports getUserInsightProfile)
 vi.mock('@features/insights/services/insightEngineService', () => ({
-  getUserInsightProfile: vi.fn(),
   getLocalCache: vi.fn(() => ({
     weekdayScanCount: 0,
     weekendScanCount: 0,
@@ -38,6 +37,13 @@ vi.mock('@features/insights/services/insightEngineService', () => ({
   })),
   setLocalCache: vi.fn(),
   incrementScanCounter: vi.fn((cache) => cache),
+}));
+
+// Mock the repository hook
+const mockGet = vi.fn();
+const mockRepoInstance = { get: mockGet };
+vi.mock('@/repositories', () => ({
+  useInsightProfileRepository: vi.fn(() => mockRepoInstance),
 }));
 
 // Mock the insight profile hook
@@ -71,7 +77,6 @@ vi.mock('../../../../../src/shared/stores/useNavigationStore', () => ({
 }));
 
 import { useAuth } from '../../../../../src/hooks/useAuth';
-import { getUserInsightProfile } from '@features/insights/services/insightEngineService';
 
 
 const mockUser = { uid: 'test-user-id' };
@@ -178,7 +183,7 @@ describe('InsightsView', () => {
   // AC#5: Empty state
   describe('Empty State', () => {
     it('shows empty state when no insights exist', async () => {
-      (getUserInsightProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockGet.mockResolvedValue({
         recentInsights: [],
       });
 
@@ -191,7 +196,7 @@ describe('InsightsView', () => {
     });
 
     it('shows empty state when profile is null', async () => {
-      (getUserInsightProfile as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+      mockGet.mockResolvedValue(null);
 
       render(<InsightsView {...defaultProps} />);
 
@@ -202,7 +207,7 @@ describe('InsightsView', () => {
 
     it('shows loading spinner while fetching', () => {
       // Never resolve the promise to keep loading
-      (getUserInsightProfile as ReturnType<typeof vi.fn>).mockReturnValue(
+      mockGet.mockReturnValue(
         new Promise(() => {})
       );
 
@@ -219,7 +224,7 @@ describe('InsightsView', () => {
   // AC#1: Insights list renders
   describe('Insights List Rendering', () => {
     it('renders insights with title, message, and date', async () => {
-      (getUserInsightProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockGet.mockResolvedValue({
         recentInsights: mockInsightsThisWeek,
       });
 
@@ -237,7 +242,7 @@ describe('InsightsView', () => {
   // AC#2: Grouped by week
   describe('Week Grouping', () => {
     it('groups insights into This Week, Last Week, Earlier', async () => {
-      (getUserInsightProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockGet.mockResolvedValue({
         recentInsights: [
           ...mockInsightsThisWeek,
           ...mockInsightsLastWeek,
@@ -256,7 +261,7 @@ describe('InsightsView', () => {
 
     it('only shows groups that have insights', async () => {
       // Only this week insights
-      (getUserInsightProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockGet.mockResolvedValue({
         recentInsights: mockInsightsThisWeek,
       });
 
@@ -270,7 +275,7 @@ describe('InsightsView', () => {
     });
 
     it('sorts insights by date descending (most recent first)', async () => {
-      (getUserInsightProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockGet.mockResolvedValue({
         recentInsights: [
           {
             insightId: 'older',
@@ -307,7 +312,7 @@ describe('InsightsView', () => {
   // AC#4: Navigate to transaction (via modal)
   describe('Navigation', () => {
     it('opens modal when clicking insight', async () => {
-      (getUserInsightProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockGet.mockResolvedValue({
         recentInsights: mockInsightsThisWeek,
       });
 
@@ -334,7 +339,7 @@ describe('InsightsView', () => {
 
     it('calls onEditTransaction when clicking View Transaction in modal', async () => {
       const onEditTransaction = vi.fn();
-      (getUserInsightProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockGet.mockResolvedValue({
         recentInsights: mockInsightsThisWeek,
       });
 
@@ -367,7 +372,7 @@ describe('InsightsView', () => {
     });
 
     it('does not show View Transaction button when insight has no transactionId', async () => {
-      (getUserInsightProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockGet.mockResolvedValue({
         recentInsights: [
           {
             insightId: 'no_tx',
@@ -400,7 +405,7 @@ describe('InsightsView', () => {
     });
 
     it('closes modal when clicking Close button', async () => {
-      (getUserInsightProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockGet.mockResolvedValue({
         recentInsights: mockInsightsThisWeek,
       });
 
@@ -435,7 +440,7 @@ describe('InsightsView', () => {
   // AC#6: Backward compatibility
   describe('Backward Compatibility', () => {
     it('displays old records without title/message using insightId as fallback', async () => {
-      (getUserInsightProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockGet.mockResolvedValue({
         recentInsights: mockInsightsOldFormat,
       });
 
@@ -449,7 +454,7 @@ describe('InsightsView', () => {
     });
 
     it('handles corrupted Timestamp without crashing', async () => {
-      (getUserInsightProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockGet.mockResolvedValue({
         recentInsights: [
           {
             insightId: 'corrupted',
@@ -477,7 +482,7 @@ describe('InsightsView', () => {
   describe('Back Button', () => {
     it('calls navigateBack when back button is clicked', async () => {
       mockNavigateBack.mockClear();
-      (getUserInsightProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockGet.mockResolvedValue({
         recentInsights: [],
       });
 
@@ -514,7 +519,7 @@ describe('InsightsView', () => {
   // Error handling
   describe('Error Handling', () => {
     it('handles service error gracefully', async () => {
-      (getUserInsightProfile as ReturnType<typeof vi.fn>).mockRejectedValue(
+      mockGet.mockRejectedValue(
         new Error('Network error')
       );
 
@@ -530,7 +535,7 @@ describe('InsightsView', () => {
   // Header
   describe('Header', () => {
     it('displays insights title', async () => {
-      (getUserInsightProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockGet.mockResolvedValue({
         recentInsights: [],
       });
 
@@ -546,7 +551,7 @@ describe('InsightsView', () => {
   // Story 10a.4 Enhancement: Temporal Filter
   describe('Temporal Filter', () => {
     it('shows temporal filter bar when insights exist', async () => {
-      (getUserInsightProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockGet.mockResolvedValue({
         recentInsights: mockInsightsThisWeek,
       });
 
@@ -558,7 +563,7 @@ describe('InsightsView', () => {
     });
 
     it('does not show temporal filter when no insights', async () => {
-      (getUserInsightProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockGet.mockResolvedValue({
         recentInsights: [],
       });
 
@@ -573,7 +578,7 @@ describe('InsightsView', () => {
 
     it('shows empty state for filtered period with no results', async () => {
       // Create insights only from 2023
-      (getUserInsightProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockGet.mockResolvedValue({
         recentInsights: [
           {
             insightId: 'old_insight',

@@ -7,7 +7,7 @@
  * - city/country: User's default location from Settings when not set
  */
 
-import { Transaction } from '../types/transaction';
+import type { Transaction } from '../types/transaction';
 
 /**
  * User default settings for transaction normalization

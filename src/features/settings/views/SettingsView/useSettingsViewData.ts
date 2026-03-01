@@ -36,8 +36,7 @@
  */
 
 import { useMemo, useCallback } from 'react';
-import { getFirestore } from 'firebase/firestore';
-import { signOut as firebaseSignOut } from 'firebase/auth';
+import type { Firestore } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 // Story 15-7c: Theme settings from Zustand store (ThemeContext removed)
 import { useThemeSettings } from '@/shared/stores';
@@ -60,7 +59,7 @@ import type { SubcategoryMapping } from '@/types/subcategoryMapping';
 import type { MerchantMapping } from '@/types/merchantMapping';
 import type { TrustedMerchant } from '@/types/trust';
 import type { ItemNameMapping } from '@/types/itemNameMapping';
-import type { StoreCategory } from '@/types/transaction';
+import type { StoreCategory } from '../../../../../shared/schema/categories';
 import type {
     Language,
     Theme,
@@ -200,7 +199,7 @@ export interface UseSettingsViewDataReturn {
     account: AccountActions;
 
     // === Firebase Context (for subviews that need it) ===
-    db: ReturnType<typeof getFirestore> | null;
+    db: Firestore | null;
     userId: string | null;
     appId: string | null;
 
@@ -272,7 +271,7 @@ export function useSettingsViewData(): UseSettingsViewDataReturn {
     } = useUserPreferences(user, services);
 
     // === Credits/Subscription ===
-    const { credits } = useUserCredits(user, services);
+    const { credits } = useUserCredits(user);
 
     // === Mappings ===
     // Merchant mappings
@@ -322,12 +321,8 @@ export function useSettingsViewData(): UseSettingsViewDataReturn {
 
     // === Account Actions ===
     const handleSignOut = useCallback(async () => {
-        if (authSignOut) {
-            await authSignOut();
-        } else if (services?.auth) {
-            await firebaseSignOut(services.auth);
-        }
-    }, [authSignOut, services?.auth]);
+        await authSignOut();
+    }, [authSignOut]);
 
     const handleWipeDB = useCallback(async () => {
         // Story 14e-25c.1: wipeDB requires App-level state coordination.

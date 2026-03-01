@@ -7,7 +7,7 @@
  * @see docs/sprint-artifacts/epic9/story-9.19-history-transaction-filters.md
  */
 
-import type { Transaction } from '@/types/transaction';
+import type { Transaction, StoreCategory } from '@/types/transaction';
 import type {
   HistoryFilterState,
   TemporalFilterState,
@@ -26,7 +26,6 @@ import {
   type StoreCategoryGroup,
   type ItemCategoryGroup,
 } from '@/config/categoryColors';
-import type { StoreCategory } from '@/types/transaction';
 
 // ============================================================================
 // Filter Data Extraction

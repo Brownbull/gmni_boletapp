@@ -4,7 +4,7 @@
  * Story 15b-2m: Extracted from TrendsView.tsx
  *
  * Encapsulates the complex bidirectional synchronization between
- * TrendsView's local period state and the HistoryFiltersContext.
+ * TrendsView's local period state and the useHistoryFiltersStore (Zustand).
  * Owns timePeriod, currentPeriod, and carouselSlide state plus
  * their persistence-aware wrapped setters.
  */
@@ -76,7 +76,7 @@ export function useTrendsViewSync({
     const isUpdatingFromContext = useRef(false);
 
     // =========================================================================
-    // Bidirectional Sync: TrendsView ↔ IconFilterBar (HistoryFiltersContext)
+    // Bidirectional Sync: TrendsView ↔ IconFilterBar (useHistoryFiltersStore)
     // =========================================================================
 
     // Sync FROM context TO local state (when IconFilterBar changes temporal filter)

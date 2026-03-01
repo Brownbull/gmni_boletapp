@@ -233,7 +233,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({ _testOverrides }) => {
         }
     }, [sankeyMode, tendenciaView]);
 
-    // Note: Filter dropdown states moved to IconFilterBar component via HistoryFiltersProvider
+    // Note: Filter dropdown states moved to IconFilterBar component via useHistoryFiltersStore
 
     // Story 14.14b/14e-25d: Handle profile navigation via direct store actions
     const handleProfileNavigate = useCallback((view: string) => {

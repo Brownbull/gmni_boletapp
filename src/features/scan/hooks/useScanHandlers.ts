@@ -273,6 +273,7 @@ export function useScanHandlers(
             const cacheOrDefault = insightCache || getDefaultCache();
             const silenced = isInsightsSilenced(cacheOrDefault);
 
+            // Transient repo: factory-from-context pattern — intentional for single async flow (TD-15b-27)
             const repo = createTransactionRepository({ db: services.db, userId: user.uid, appId: services.appId });
             const transactionId = await repo.add(tDoc);
             const txWithId = { ...tDoc, id: transactionId } as Transaction;

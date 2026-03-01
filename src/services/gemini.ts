@@ -1,6 +1,6 @@
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { app } from '../config/firebase';
-import { Transaction } from '../types/transaction';
+import type { Transaction } from '../types/transaction';
 
 // Initialize Firebase Functions
 const functions = getFunctions(app);

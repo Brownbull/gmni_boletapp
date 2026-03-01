@@ -183,6 +183,7 @@ export function useScanFlowRouter(props: UseScanFlowRouterProps): UseScanFlowRou
 
         if (isTrusted && services && user) {
             // Auto-save for trusted merchants
+            // Transient repo: factory-from-context pattern — intentional for single async flow (TD-15b-27)
             try {
                 const repo = createTransactionRepository({ db: services.db, userId: user.uid, appId: services.appId });
                 await repo.add(finalTransaction);
@@ -247,6 +248,7 @@ export function useScanFlowRouter(props: UseScanFlowRouterProps): UseScanFlowRou
 
         if (isTrusted && services && user) {
             // Auto-save for trusted merchants
+            // Transient repo: factory-from-context pattern — intentional for single async flow (TD-15b-27)
             try {
                 const repo = createTransactionRepository({ db: services.db, userId: user.uid, appId: services.appId });
                 await repo.add(transaction);

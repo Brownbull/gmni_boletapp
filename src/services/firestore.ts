@@ -16,7 +16,7 @@ import {
     increment,
     runTransaction,
 } from 'firebase/firestore';
-import { Transaction } from '../types/transaction';
+import type { Transaction } from '../types/transaction';
 import { toMillis } from '@/utils/timestamp';
 import { computePeriods } from '../utils/date';
 import { ensureTransactionsDefaults } from '../utils/transactionUtils';

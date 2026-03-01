@@ -12,7 +12,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '../../setup/test-utils'
-import { HistoryFiltersProvider } from '../../../src/contexts/HistoryFiltersContext';
+import { useHistoryFiltersStore } from '@/shared/stores/useHistoryFiltersStore';
 import type { HistoryFilterState } from '@/types/historyFilters'
 import type { UseHistoryViewDataReturn } from '../../../src/views/HistoryView/useHistoryViewData'
 
@@ -115,10 +115,11 @@ const renderHistoryView = (transactions: any[] = []) => {
     allTransactions: transactions,
   })
 
+  // Story 15b-3g: Initialize filters directly instead of using HistoryFiltersProvider
+  useHistoryFiltersStore.getState().initializeFilters(testFilterState);
+
   return render(
-    <HistoryFiltersProvider initialState={testFilterState}>
-      <HistoryView />
-    </HistoryFiltersProvider>
+    <HistoryView />
   )
 }
 
@@ -159,6 +160,8 @@ describe('HistoryView Thumbnail Display', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    // TD-15b-32: Reset Zustand store to prevent cross-file state leak in pool: 'threads'
+    useHistoryFiltersStore.setState({ ...testFilterState, initialized: true })
     // Reset mock to default state
     vi.mocked(useHistoryViewData).mockReturnValue(mockHistoryViewData)
   })
@@ -468,10 +471,11 @@ describe('HistoryView Thumbnail Display', () => {
         allTransactions: generateTransactions(10),
       })
 
+      // Story 15b-3g: Initialize filters directly
+      useHistoryFiltersStore.getState().initializeFilters(testFilterState);
+
       render(
-        <HistoryFiltersProvider initialState={testFilterState}>
-          <HistoryView />
-        </HistoryFiltersProvider>
+        <HistoryView />
       )
 
       expect(screen.getByText('Por página:')).toBeInTheDocument()

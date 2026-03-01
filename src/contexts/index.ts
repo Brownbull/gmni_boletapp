@@ -6,7 +6,7 @@
  *
  * @example
  * ```tsx
- * import { useAuthContext, HistoryFiltersProvider } from './contexts';
+ * import { useAuthContext } from './contexts';
  * ```
  */
 
@@ -37,30 +37,20 @@ export {
 // Story 15-7c: ThemeContext DELETED (15-TD-7) — theme settings use useSettingsStore (Zustand)
 // Use useThemeSettings() from '@/shared/stores'.
 
-// NotificationContext - In-app notifications
-export {
-    NotificationProvider,
-    useNotifications,
-    useNotificationsOptional,
-    type NotificationContextValue,
-} from './NotificationContext';
+// Story 15b-3g: NotificationContext DELETED — zero consumers. App.tsx calls useInAppNotifications directly.
 
 // Story 15-7b: AppStateContext DELETED (15-TD-7) — useToast() is the toast mechanism
 
 // Story 14e-11: ScanContext removed - scan state now managed by Zustand store
 // Use @features/scan/store for scan state and actions
 
-// AnalyticsContext - Analytics state
-export { AnalyticsProvider, AnalyticsContext } from './AnalyticsContext';
+// Story 15b-3f: AnalyticsContext DELETED — analytics state uses useAnalyticsStore (Zustand)
+// Use useAnalyticsNavigation() from @features/analytics/hooks for component access.
+// Use analyticsActions from @features/analytics/stores for imperative access.
 
-// Story 15-7a: HistoryFiltersContext migrated to Zustand (useHistoryFiltersStore).
-// Story 15-TD-7: Types extracted to src/types/historyFilters.ts.
-// HistoryFiltersProvider remains as thin initialization boundary.
-// State access via useHistoryFilters() hook or useHistoryFiltersStore.
-export {
-    HistoryFiltersProvider,
-    getDefaultFilterState,
-} from './HistoryFiltersContext';
+// Story 15b-3g: HistoryFiltersContext DELETED — replaced by useHistoryFiltersInit hook.
+// State access via useHistoryFilters() from @/shared/hooks or useHistoryFiltersStore.
+// getDefaultFilterState available from @/shared/stores/useHistoryFiltersStore.
 
 // =============================================================================
 // Story 14e-25d: ViewHandlersContext DELETED

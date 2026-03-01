@@ -18,7 +18,7 @@
  */
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { Transaction } from '@/types/transaction';
+import type { Transaction } from '@/types/transaction';
 // Story 14d.5c: Import BatchReceipt from types file to avoid circular dependency
 import type { BatchReceipt, BatchReceiptStatus } from '@/types/batchReceipt';
 // Re-export for backwards compatibility
@@ -319,7 +319,7 @@ export function useBatchReview(
           // Story 14.15: Store transaction with ID for batch complete modal
           savedTransactions.push({ ...receipt.transaction, id: transactionId });
         } catch (error) {
-          console.error(`Failed to save receipt ${receipt.id}:`, error);
+          console.error(`Failed to save receipt ${receipt.id}:`, error instanceof Error ? error.message : String(error));
           failed.push(receipt.id);
         }
 
@@ -360,7 +360,7 @@ export function useBatchReview(
           transaction: { ...receipt.transaction, id: transactionId },
         };
       } catch (error) {
-        console.error(`Failed to save receipt ${id}:`, error);
+        console.error(`Failed to save receipt ${id}:`, error instanceof Error ? error.message : String(error));
         return { transactionId: null, transaction: null };
       }
     },

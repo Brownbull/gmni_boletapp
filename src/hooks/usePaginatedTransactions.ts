@@ -39,7 +39,7 @@ import {
     PAGINATION_PAGE_SIZE,
     type TransactionPage,
 } from '@/repositories/transactionRepository';
-import { Transaction } from '../types/transaction';
+import type { Transaction } from '../types/transaction';
 import { getSafeDate, parseStrictNumber } from '../utils/validation';
 
 /**

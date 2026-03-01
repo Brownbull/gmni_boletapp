@@ -4,7 +4,7 @@
 **Phase:** 3 - Infrastructure
 **Points:** 2
 **Priority:** MEDIUM
-**Status:** ready-for-dev
+**Status:** done
 
 ## Overview
 
@@ -12,13 +12,13 @@ There are 7 non-repository source files that import directly from `userCreditsSe
 
 ## Functional Acceptance Criteria
 
-- [ ] **AC1:** All 7 direct `userCreditsService` consumers in non-repository source files are migrated away from direct service imports
-- [ ] **AC2:** Zero direct `userCreditsService` imports remain outside `src/repositories/` and `src/utils/` after migration
-- [ ] **AC3:** `useUserCredits.ts` uses `ICreditsRepository` (via `useCreditsRepository()`) for all Firestore operations
-- [ ] **AC4:** CreditsRepository methods `deduct`, `deductSuper`, `add`, `addSuper` all delegate to `runTransaction()`-based service functions
-- [ ] **AC5:** `formatCreditsDisplay` and `formatSuperCreditsDisplay` are importable from `@/utils/creditFormatters`
-- [ ] **AC6:** Each consumer migrated individually with tests passing between changes
-- [ ] **AC7:** `npm run test:quick` passes with 0 failures
+- [x] **AC1:** All 7 direct `userCreditsService` consumers in non-repository source files are migrated away from direct service imports
+- [x] **AC2:** Zero direct `userCreditsService` imports remain outside `src/repositories/` and `src/utils/` after migration
+- [x] **AC3:** `useUserCredits.ts` uses `ICreditsRepository` (via `useCreditsRepository()`) for all Firestore operations
+- [x] **AC4:** CreditsRepository methods `deduct`, `deductSuper`, `add`, `addSuper` all delegate to `runTransaction()`-based service functions
+- [x] **AC5:** `formatCreditsDisplay` and `formatSuperCreditsDisplay` are importable from `@/utils/creditFormatters`
+- [x] **AC6:** Each consumer migrated individually with tests passing between changes
+- [x] **AC7:** `npm run test:quick` passes with 0 failures
 
 ## Architectural Acceptance Criteria (MANDATORY)
 
@@ -26,25 +26,25 @@ There are 7 non-repository source files that import directly from `userCreditsSe
 
 ### File Location Requirements
 
-- [ ] **AC-ARCH-LOC-1:** CreditsRepository at `src/repositories/creditsRepository.ts` (exists, modified)
-- [ ] **AC-ARCH-LOC-2:** Credit formatting utilities at `src/utils/creditFormatters.ts` (new)
-- [ ] **AC-ARCH-LOC-3:** `src/hooks/useUserCredits.ts` imports from `@/repositories` not `@/services`
-- [ ] **AC-ARCH-LOC-4:** All 6 view/component files import formatters from `@/utils/creditFormatters` not `@/services`
+- [x] **AC-ARCH-LOC-1:** CreditsRepository at `src/repositories/creditsRepository.ts` (exists, modified)
+- [x] **AC-ARCH-LOC-2:** Credit formatting utilities at `src/utils/creditFormatters.ts` (new)
+- [x] **AC-ARCH-LOC-3:** `src/hooks/useUserCredits.ts` imports from `@/repositories` not `@/services`
+- [x] **AC-ARCH-LOC-4:** All 6 view/component files import formatters from `@/utils/creditFormatters` not `@/services`
 
 ### Pattern Requirements
 
-- [ ] **AC-ARCH-PATTERN-1:** `useUserCredits` receives `ICreditsRepository` from `useCreditsRepository()` hook -- does not construct its own Firestore references
-- [ ] **AC-ARCH-PATTERN-2:** Repository `add()` delegates to `addAndSaveCredits()` (which uses `runTransaction()`)
-- [ ] **AC-ARCH-PATTERN-3:** Repository `addSuper()` delegates to `addAndSaveSuperCredits()` (which uses `runTransaction()`)
-- [ ] **AC-ARCH-PATTERN-4:** Type-only imports (`import type { UserCredits }`) may still come from `@/types/scan` -- only runtime service imports are replaced
-- [ ] **AC-ARCH-PATTERN-5:** `formatCreditsDisplay` in new utility file is a copy of the pure function -- no behavioral changes
+- [x] **AC-ARCH-PATTERN-1:** `useUserCredits` receives `ICreditsRepository` from `useCreditsRepository()` hook -- does not construct its own Firestore references
+- [x] **AC-ARCH-PATTERN-2:** Repository `add()` delegates to `addAndSaveCredits()` (which uses `runTransaction()`)
+- [x] **AC-ARCH-PATTERN-3:** Repository `addSuper()` delegates to `addAndSaveSuperCredits()` (which uses `runTransaction()`)
+- [x] **AC-ARCH-PATTERN-4:** Type-only imports (`import type { UserCredits }`) may still come from `@/types/scan` -- only runtime service imports are replaced
+- [x] **AC-ARCH-PATTERN-5:** `formatCreditsDisplay` in new utility file is a copy of the pure function -- no behavioral changes
 
 ### Anti-Pattern Requirements (Must NOT Happen)
 
-- [ ] **AC-ARCH-NO-1:** No direct `firebase/firestore` runtime imports in `useUserCredits.ts` after migration
-- [ ] **AC-ARCH-NO-2:** CreditsRepository must NOT bypass `runTransaction()` for credit mutations (deduct, deductSuper, add, addSuper)
-- [ ] **AC-ARCH-NO-3:** View/component files must NOT import from `@/services/userCreditsService` after migration
-- [ ] **AC-ARCH-NO-4:** No new `@deprecated` `save()` usages introduced -- only transactional methods
+- [x] **AC-ARCH-NO-1:** No direct `firebase/firestore` runtime imports in `useUserCredits.ts` after migration
+- [x] **AC-ARCH-NO-2:** CreditsRepository must NOT bypass `runTransaction()` for credit mutations (deduct, deductSuper, add, addSuper)
+- [x] **AC-ARCH-NO-3:** View/component files must NOT import from `@/services/userCreditsService` after migration
+- [x] **AC-ARCH-NO-4:** No new `@deprecated` `save()` usages introduced -- only transactional methods
 
 ## File Specification
 
@@ -81,46 +81,46 @@ There are 7 non-repository source files that import directly from `userCreditsSe
 
 ### Task 1: Establish baseline and audit consumers
 
-- [ ] 1.1 Run `npm run test:quick` and record total pass count
-- [ ] 1.2 Run `grep -rn "from.*userCreditsService" src/ --include="*.ts" --include="*.tsx" | grep -v repositories/` -- confirm exactly 7 consumer files
-- [ ] 1.3 Verify CreditsRepository has transactional versions of `get`, `deduct`, `deductSuper` -- confirm `add` and `addSuper` are missing
-- [ ] 1.4 Verify `useUserCredits` calls `deductAndSaveCredits` / `deductAndSaveSuperCredits` / `addAndSaveCredits` / `addAndSaveSuperCredits` (all transactional) -- confirm TD-10 fix is in place
+- [x] 1.1 Run `npm run test:quick` and record total pass count
+- [x] 1.2 Run `grep -rn "from.*userCreditsService" src/ --include="*.ts" --include="*.tsx" | grep -v repositories/` -- confirm exactly 7 consumer files
+- [x] 1.3 Verify CreditsRepository has transactional versions of `get`, `deduct`, `deductSuper` -- confirm `add` and `addSuper` are missing
+- [x] 1.4 Verify `useUserCredits` calls `deductAndSaveCredits` / `deductAndSaveSuperCredits` / `addAndSaveCredits` / `addAndSaveSuperCredits` (all transactional) -- confirm TD-10 fix is in place
 
 ### Task 2: Extend CreditsRepository with add/addSuper methods
 
-- [ ] 2.1 Add `add(amount: number): Promise<UserCredits>` to `ICreditsRepository` interface in `creditsRepository.ts`
-- [ ] 2.2 Add `addSuper(amount: number): Promise<UserCredits>` to `ICreditsRepository` interface
-- [ ] 2.3 Implement both in `createCreditsRepository` factory, delegating to `addAndSaveCredits` and `addAndSaveSuperCredits` from `userCreditsService` (these already use `runTransaction()`)
-- [ ] 2.4 Run `npx tsc --noEmit` -- fix any type errors
-- [ ] 2.5 Run `npm run test:quick` -- confirm no regressions
+- [x] 2.1 Add `add(amount: number): Promise<UserCredits>` to `ICreditsRepository` interface in `creditsRepository.ts`
+- [x] 2.2 Add `addSuper(amount: number): Promise<UserCredits>` to `ICreditsRepository` interface
+- [x] 2.3 Implement both in `createCreditsRepository` factory, delegating to `addAndSaveCredits` and `addAndSaveSuperCredits` from `userCreditsService` (these already use `runTransaction()`)
+- [x] 2.4 Run `npx tsc --noEmit` -- fix any type errors
+- [x] 2.5 Run `npm run test:quick` -- confirm no regressions
 
 ### Task 3: Extract formatting utilities to creditFormatters.ts
 
-- [ ] 3.1 Create `src/utils/creditFormatters.ts` with `formatCreditsDisplay` and `formatSuperCreditsDisplay` (copy pure functions -- no Firestore dependency)
-- [ ] 3.2 Run `npx tsc --noEmit` -- fix any type errors
+- [x] 3.1 Create `src/utils/creditFormatters.ts` with `formatCreditsDisplay` and `formatSuperCreditsDisplay` (copy pure functions -- no Firestore dependency)
+- [x] 3.2 Run `npx tsc --noEmit` -- fix any type errors
 
 ### Task 4: Migrate 6 view/component files to use @/utils/creditFormatters
 
-- [ ] 4.1 Update `src/components/Nav.tsx`: change import to `@/utils/creditFormatters`
-- [ ] 4.2 Update 3 batch-review files (`BatchReviewFeature.tsx`, `BatchCaptureView.tsx`, `BatchReviewView.tsx`): change import to `@/utils/creditFormatters`
-- [ ] 4.3 Update 2 transaction-editor files (`TransactionEditorViewInternal.tsx`, `EditView.tsx`): change import to `@/utils/creditFormatters`
-- [ ] 4.4 Run `npm run test:quick` -- confirm no regressions
+- [x] 4.1 Update `src/components/Nav.tsx`: change import to `@/utils/creditFormatters`
+- [x] 4.2 Update 3 batch-review files (`BatchReviewFeature.tsx`, `BatchCaptureView.tsx`, `BatchReviewView.tsx`): change import to `@/utils/creditFormatters`
+- [x] 4.3 Update 2 transaction-editor files (`TransactionEditorViewInternal.tsx`, `EditView.tsx`): change import to `@/utils/creditFormatters`
+- [x] 4.4 Run `npm run test:quick` -- confirm no regressions
 
 ### Task 5: Migrate useUserCredits.ts to CreditsRepository
 
-- [ ] 5.1 Change `useUserCredits` to obtain repo via `useCreditsRepository()` -- does not take `services` param for Firestore operations
-- [ ] 5.2 Replace `getUserCredits(services.db, user.uid, services.appId)` calls with `repo.get()`
-- [ ] 5.3 Replace `deductAndSaveCredits(...)` / `deductAndSaveSuperCredits(...)` calls with `repo.deduct(amount)` / `repo.deductSuper(amount)`
-- [ ] 5.4 Replace `addAndSaveCredits(...)` / `addAndSaveSuperCredits(...)` calls with `repo.add(amount)` / `repo.addSuper(amount)`
-- [ ] 5.5 Preserve null-safety: `if (!repo) return false` (replaces `if (!user || !services) return false`)
-- [ ] 5.6 Update `tests/unit/hooks/useUserCredits.test.tsx`: mock `useCreditsRepository` from `@/repositories/hooks` instead of mocking `userCreditsService` functions
-- [ ] 5.7 Run `npm run test:quick` -- confirm no regressions
+- [x] 5.1 Change `useUserCredits` to obtain repo via `useCreditsRepository()` -- does not take `services` param for Firestore operations
+- [x] 5.2 Replace `getUserCredits(services.db, user.uid, services.appId)` calls with `repo.get()`
+- [x] 5.3 Replace `deductAndSaveCredits(...)` / `deductAndSaveSuperCredits(...)` calls with `repo.deduct(amount)` / `repo.deductSuper(amount)`
+- [x] 5.4 Replace `addAndSaveCredits(...)` / `addAndSaveSuperCredits(...)` calls with `repo.add(amount)` / `repo.addSuper(amount)`
+- [x] 5.5 Preserve null-safety: `if (!repo) return false` (replaces `if (!user || !services) return false`)
+- [x] 5.6 Update `tests/unit/hooks/useUserCredits.test.tsx`: mock `useCreditsRepository` from `@/repositories/hooks` instead of mocking `userCreditsService` functions
+- [x] 5.7 Run `npm run test:quick` -- confirm no regressions
 
 ### Task 6: Final verification
 
-- [ ] 6.1 Run `grep -rn "from.*userCreditsService" src/ --include="*.ts" --include="*.tsx" | grep -v repositories/ | grep -v "utils/creditFormatters"` -- confirm 0 matches
-- [ ] 6.2 Run `npx tsc --noEmit` -- zero type errors
-- [ ] 6.3 Run `npm run test:quick` -- pass count matches or exceeds baseline
+- [x] 6.1 Run `grep -rn "from.*userCreditsService" src/ --include="*.ts" --include="*.tsx" | grep -v repositories/ | grep -v "utils/creditFormatters"` -- confirm 0 matches
+- [x] 6.2 Run `npx tsc --noEmit` -- zero type errors
+- [x] 6.3 Run `npm run test:quick` -- pass count matches or exceeds baseline
 
 ## Dev Notes
 
@@ -182,6 +182,12 @@ import { formatCreditsDisplay } from '@/utils/creditFormatters';
 - **Agents consulted:** Architect
 - **Dependencies:** None (CreditsRepository and `useCreditsRepository()` hook already exist)
 
+## Deferred Items (from code review)
+
+| TD Story | Description | Priority | Action |
+|----------|-------------|----------|--------|
+| TD-15b-28 | Test file split (429→2×<300), dead FirebaseServices removal, repo input validation, error sanitization | LOW | CREATED |
+
 ## Change Log
 
 | Date | Change |
@@ -189,3 +195,4 @@ import { formatCreditsDisplay } from '@/utils/creditFormatters';
 | 2026-02-13 | Initial draft (placeholder with ~4 consumers estimated) |
 | 2026-02-23 | Full rewrite. Grep found 7 actual consumers (1 hook + 6 formatter imports). Discovered CreditsRepository missing `add()`/`addSuper()` methods. Added Task 2 for repository extension. Split formatters to `src/utils/creditFormatters.ts` (pure functions do not belong in repository). Detailed migration patterns and pitfalls documented. |
 | 2026-02-27 | ECC re-creation validation: Added `EditViewHeader.tsx` as 8th formatter consumer (from 15b-2l decomposition). Consumers 7→8, files 10→11. Status: ready-for-dev. |
+| 2026-02-28 | ECC Code Review: APPROVE 9.25/10. 2 quick fixes applied (dangling JSDoc, DEV guard on console.error). 1 TD story created (TD-15b-28). Status: done. |

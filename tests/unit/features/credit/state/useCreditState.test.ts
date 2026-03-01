@@ -57,28 +57,28 @@ describe('useCreditState', () => {
   });
 
   describe('delegation to useUserCredits', () => {
-    it('should pass user and services to useUserCredits', () => {
+    it('should pass user to useUserCredits (services no longer forwarded)', () => {
       renderHook(() => useCreditState(mockUser, mockServices));
 
-      expect(mockUseUserCredits).toHaveBeenCalledWith(mockUser, mockServices);
+      expect(mockUseUserCredits).toHaveBeenCalledWith(mockUser);
     });
 
     it('should handle null user', () => {
       renderHook(() => useCreditState(null, mockServices));
 
-      expect(mockUseUserCredits).toHaveBeenCalledWith(null, mockServices);
+      expect(mockUseUserCredits).toHaveBeenCalledWith(null);
     });
 
     it('should handle null services', () => {
       renderHook(() => useCreditState(mockUser, null));
 
-      expect(mockUseUserCredits).toHaveBeenCalledWith(mockUser, null);
+      expect(mockUseUserCredits).toHaveBeenCalledWith(mockUser);
     });
 
     it('should handle both null user and services', () => {
       renderHook(() => useCreditState(null, null));
 
-      expect(mockUseUserCredits).toHaveBeenCalledWith(null, null);
+      expect(mockUseUserCredits).toHaveBeenCalledWith(null);
     });
   });
 
