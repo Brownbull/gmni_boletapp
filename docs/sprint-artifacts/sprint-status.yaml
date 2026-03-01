@@ -172,7 +172,7 @@ development_status:
   # Dependency analysis: dependency-diagrams/ANALYSIS-REPORT.md
   # Predecessor: Epic 15 (DONE — 68 stories, ~158 pts)
   # ============================================================================
-  epic-15b: in-progress
+  epic-15b: done
 
   # Phase 0: Structural Cleanup (5 stories, ~7 pts)
   15b-0a-dead-module-audit: done                   # 1 pt  - Identify and remove orphan modules
