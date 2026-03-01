@@ -1,7 +1,8 @@
 /**
- * TD-15b-36: Security hardening tests for analyzeReceipt Cloud Function
- * Tests: SSRF prevention (AC1/AC2), response schema validation (AC3),
- *        error message sanitization (AC4), rate limiter docs (AC5 — no test needed)
+ * Security hardening tests for analyzeReceipt Cloud Function
+ * TD-15b-36: SSRF prevention (AC1/AC2), response schema validation (AC3),
+ *            error message sanitization (AC4), rate limiter docs (AC5 — no test needed)
+ * TD-15b-37: Mixed-array isRescan detection (AC1), receiptType runtime validation (AC2)
  */
 const functionsTest = require('firebase-functions-test')
 
@@ -46,8 +47,9 @@ jest.mock('../storageService', () => ({
   })
 }))
 
-// Mock prompts
+// Mock prompts — use real RECEIPT_TYPES to stay in sync with source of truth
 jest.mock('../prompts', () => ({
+  ...jest.requireActual('../prompts'),
   buildPrompt: jest.fn().mockReturnValue('Analyze this receipt'),
   getActivePrompt: jest.fn().mockReturnValue({ version: '3.0.0' })
 }))
@@ -244,6 +246,138 @@ describe('analyzeReceipt Security Hardening (TD-15b-36)', () => {
       expect(caughtError!.message).not.toContain('403')
       expect(caughtError!.message).not.toContain('Forbidden')
       expect(caughtError!.message).not.toContain('bucket policy')
+    })
+  })
+})
+
+describe('analyzeReceipt Input Validation Gaps (TD-15b-37)', () => {
+  let wrapped: any
+  // Use unique user IDs per test to avoid rate limit collisions
+  let testCounter = 0
+  const getAuthContext = () => ({
+    auth: { uid: `td37-user-${++testCounter}`, token: {} }
+  })
+
+  beforeAll(() => {
+    wrapped = test.wrap(analyzeReceipt)
+  })
+
+  afterAll(() => {
+    test.cleanup()
+  })
+
+  describe('AC1: Mixed-array isRescan detection', () => {
+    it('should reject mixed image array (base64 + URL)', async () => {
+      const data = {
+        images: [
+          'data:image/jpeg;base64,/9j/4AAQSkZJRg==',
+          'https://firebasestorage.googleapis.com/v0/b/bucket/o/image.jpg'
+        ]
+      }
+
+      await expect(wrapped(data, getAuthContext())).rejects.toThrow(
+        'Mixed image types are not supported'
+      )
+    })
+
+    it('should reject mixed image array (URL + base64)', async () => {
+      const data = {
+        images: [
+          'https://firebasestorage.googleapis.com/v0/b/bucket/o/image.jpg',
+          'data:image/jpeg;base64,/9j/4AAQSkZJRg=='
+        ]
+      }
+
+      await expect(wrapped(data, getAuthContext())).rejects.toThrow(
+        'Mixed image types are not supported'
+      )
+    })
+
+    it('should reject isRescan=true with base64 images via URL validation', async () => {
+      // When isRescan=true, code enters URL fetch path.
+      // data: URIs are valid URL format but fail HTTPS protocol check.
+      const data = {
+        images: ['data:image/jpeg;base64,/9j/4AAQSkZJRg=='],
+        isRescan: true
+      }
+
+      await expect(wrapped(data, getAuthContext())).rejects.toThrow(
+        'Image URL must use HTTPS'
+      )
+    })
+
+    it('should treat all-URL array as re-scan without explicit flag', async () => {
+      const originalFetch = global.fetch
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        arrayBuffer: () => Promise.resolve(new ArrayBuffer(8))
+      }) as unknown as typeof global.fetch
+
+      try {
+        const data = {
+          images: ['https://firebasestorage.googleapis.com/v0/b/bucket/o/image.jpg']
+        }
+
+        const result = await wrapped(data, getAuthContext())
+        // Re-scan path: images returned as-is (no storage upload)
+        expect(result.imageUrls).toEqual(data.images)
+      } finally {
+        global.fetch = originalFetch
+      }
+    })
+
+    it('should auto-detect URLs as re-scan even with isRescan=false', async () => {
+      const originalFetch = global.fetch
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        arrayBuffer: () => Promise.resolve(new ArrayBuffer(8))
+      }) as unknown as typeof global.fetch
+
+      try {
+        const data = {
+          images: ['https://firebasestorage.googleapis.com/v0/b/bucket/o/image.jpg'],
+          isRescan: false
+        }
+
+        // isRescan=false is not === true, so classifyImages runs and detects URLs
+        const result = await wrapped(data, getAuthContext())
+        expect(result.imageUrls).toEqual(data.images)
+      } finally {
+        global.fetch = originalFetch
+      }
+    })
+  })
+
+  describe('AC2: receiptType runtime validation', () => {
+    it('should reject invalid receiptType value', async () => {
+      const data = {
+        images: ['data:image/jpeg;base64,/9j/4AAQSkZJRg=='],
+        receiptType: 'sql_injection_attempt'
+      }
+
+      await expect(wrapped(data, getAuthContext())).rejects.toThrow(
+        'Invalid receipt type'
+      )
+    })
+
+    it('should accept valid receiptType value', async () => {
+      const data = {
+        images: ['data:image/jpeg;base64,/9j/4AAQSkZJRg=='],
+        receiptType: 'supermarket'
+      }
+
+      const result = await wrapped(data, getAuthContext())
+      expect(result).toBeDefined()
+      expect(result.merchant).toBe('Test Market')
+    })
+
+    it('should accept omitted receiptType (defaults to auto)', async () => {
+      const data = {
+        images: ['data:image/jpeg;base64,/9j/4AAQSkZJRg==']
+      }
+
+      const result = await wrapped(data, getAuthContext())
+      expect(result).toBeDefined()
     })
   })
 })

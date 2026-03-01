@@ -4,7 +4,7 @@ import * as admin from 'firebase-admin'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { base64ToBuffer, resizeAndCompress, generateThumbnail } from './imageProcessing'
 import { uploadReceiptImages } from './storageService'
-import { buildPrompt, getActivePrompt } from './prompts'
+import { buildPrompt, getActivePrompt, RECEIPT_TYPES } from './prompts'
 import type { ReceiptType } from './prompts'
 
 // Initialize Firebase Admin if not already initialized
@@ -210,9 +210,31 @@ async function fetchImageFromUrl(url: string): Promise<Buffer> {
 /**
  * Returns true only for HTTPS URLs.
  * HTTP URLs are rejected — re-scan images must always use HTTPS (TD-15b-36 AC2).
+ * Note: http:// and other schemes are intentionally classified as non-URL (base64 path),
+ * where they fail at extractMimeType. This is by design — only HTTPS is valid for re-scan.
  */
 function isUrl(str: string): boolean {
   return str.startsWith('https://')
+}
+
+/**
+ * Classify an image array as all-URL or all-base64 (TD-15b-37 AC1).
+ * Rejects mixed arrays (some URLs + some base64) to prevent misclassification.
+ * Precondition: images must be non-empty (caller validates at line 333).
+ * @throws HttpsError('invalid-argument') if images are a mix of URLs and base64
+ */
+function classifyImages(images: string[]): 'url' | 'base64' {
+  let urlCount = 0
+  for (const img of images) {
+    if (isUrl(img)) urlCount++
+  }
+  if (urlCount > 0 && urlCount < images.length) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Mixed image types are not supported. All images must be either base64 or URLs.'
+    )
+  }
+  return urlCount > 0 ? 'url' : 'base64'
 }
 
 /**
@@ -327,8 +349,27 @@ export const analyzeReceipt = functions.https.onCall(
       )
     }
 
-    // Story 14.15b: Detect if this is a re-scan (images are URLs, not base64)
-    const isRescan = data.isRescan || (data.images.length > 0 && isUrl(data.images[0]))
+    // TD-15b-37 AC2: Validate receiptType against known values before any processing
+    if (data.receiptType !== undefined &&
+        !(RECEIPT_TYPES as readonly string[]).includes(data.receiptType)) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Invalid receipt type'
+      )
+    }
+
+    // TD-15b-37 AC1: Determine scan mode with mixed-array protection
+    let isRescan: boolean
+    if (data.isRescan === true) {
+      // Explicit flag: trust user intent, individual URLs validated in fetchImageFromUrl.
+      // Note: if caller sends isRescan=true with mixed base64+URL array, base64 entries
+      // fail in fetchImageFromUrl with 'Image URL must use HTTPS' — safe but unintuitive.
+      isRescan = true
+    } else {
+      // Auto-detect: classify ALL images, reject mixed arrays (base64 + URL)
+      const imageType = classifyImages(data.images)
+      isRescan = imageType === 'url'
+    }
 
     // Only validate base64 images (not URLs)
     if (!isRescan) {
