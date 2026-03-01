@@ -45,8 +45,9 @@ import {
 import { addTransaction } from '../../src/services/firestore';
 import { Transaction } from '../../src/types/transaction';
 import { TrendsView } from '../../src/views/TrendsView';
-import { AnalyticsProvider } from '../../src/contexts/AnalyticsContext';
-import { HistoryFiltersProvider } from '../../src/contexts/HistoryFiltersContext';
+import { useAnalyticsStore } from '@features/analytics/stores/useAnalyticsStore';
+import { getDefaultNavigationState } from '@features/analytics/utils/analyticsHelpers';
+import { useHistoryFiltersStore, getDefaultFilterState } from '@/shared/stores/useHistoryFiltersStore';
 // Story 14e-25b.1: Import type for mock data
 import type { TrendsViewData } from '../../src/views/TrendsView/useTrendsViewData';
 
@@ -319,13 +320,14 @@ describe('Analytics & Export Workflows', () => {
       initialDistributionView: undefined,
     };
 
-    // Wrap with AnalyticsProvider and HistoryFiltersProvider (required since Story 7.7/14.x)
+    // Story 15b-3f: Initialize Zustand store instead of wrapping with AnalyticsProvider
+    useAnalyticsStore.setState(getDefaultNavigationState('2024'));
+
+    // Story 15b-3g: Initialize filters directly instead of using HistoryFiltersProvider
+    useHistoryFiltersStore.getState().initializeFilters(getDefaultFilterState());
+
     render(
-      <HistoryFiltersProvider>
-        <AnalyticsProvider>
-          <TrendsView />
-        </AnalyticsProvider>
-      </HistoryFiltersProvider>
+      <TrendsView />
     );
 
     // Verify "No Data" message is displayed

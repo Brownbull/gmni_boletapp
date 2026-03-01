@@ -7,7 +7,7 @@
  */
 
 import { Timestamp } from 'firebase/firestore';
-import { Transaction } from './transaction';
+import type { Transaction } from './transaction';
 
 // ============================================================================
 // Core Types

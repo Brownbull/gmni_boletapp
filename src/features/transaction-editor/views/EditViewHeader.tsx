@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { ChevronLeft, Zap, Camera, Info, Trash2, X } from 'lucide-react';
-import { formatCreditsDisplay } from '@/services/userCreditsService';
+import { formatCreditsDisplay } from '@/utils/creditFormatters';
 
 interface EditViewHeaderProps {
     onBack: () => void;

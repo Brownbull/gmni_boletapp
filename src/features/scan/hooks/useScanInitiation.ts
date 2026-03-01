@@ -13,7 +13,7 @@
 
 import { useCallback, type RefObject } from 'react';
 import type { Transaction } from '@/types/transaction';
-import type { SupportedCurrency } from '@/services/userPreferencesService';
+import type { SupportedCurrency } from '@/types/preferences';
 import type { ReceiptType } from '@/services/gemini';
 import type { ScanState } from '@/types/scanStateMachine';
 import { DIALOG_TYPES } from '@/types/scanStateMachine';

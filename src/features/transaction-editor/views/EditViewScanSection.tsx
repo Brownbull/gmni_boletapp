@@ -8,7 +8,7 @@ import { Camera, Plus, X } from 'lucide-react';
 import { StoreTypeSelector } from '@features/transaction-editor/components/StoreTypeSelector';
 import { AdvancedScanOptions } from '@features/transaction-editor/components/AdvancedScanOptions';
 import { ReceiptType } from '@/services/gemini';
-import { SupportedCurrency } from '@/services/userPreferencesService';
+import type { SupportedCurrency } from '@/types/preferences';
 
 interface EditViewScanSectionProps {
     currentTransaction: { id?: string; imageUrls?: string[] };

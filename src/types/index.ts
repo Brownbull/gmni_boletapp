@@ -17,9 +17,12 @@ export type {
     Transaction,
     TransactionItem,
     TransactionPeriods,
+} from './transaction';
+
+export type {
     CategorySource,
     MerchantSource,
-} from './transaction';
+} from '../../shared/schema/categories';
 
 export {
     hasTransactionImages,

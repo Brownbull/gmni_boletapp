@@ -16,7 +16,7 @@
  *
  * Dependencies:
  * - ScanContext (for dialog dismissal)
- * - HistoryFiltersContext (filter state management)
+ * - useHistoryFiltersStore (filter state management via Zustand)
  *
  * @example
  * ```tsx

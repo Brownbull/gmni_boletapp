@@ -4,6 +4,7 @@
  * Story 15-5e: Extracted from IconFilterBar.tsx
  * Story 14.15c: Hierarchical grouped display with multi-select
  * Story 14.36: Location filter with Country→City hierarchy
+ * Story 15b-2p: Further decomposition — GroupedCategoriesSection, LocationTabSection, filterAnimationStyles
  *
  * 3-State Behavior (same pattern as time filter):
  * State 1: Original — no pending changes, shows committed state
@@ -12,33 +13,20 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { ChevronDown, Check, Package, Receipt, MapPin, FunnelX } from 'lucide-react';
+import { Package, Receipt, MapPin, FunnelX } from 'lucide-react';
 import type { AvailableFilters } from '@shared/utils/historyFilterUtils';
 import {
-  getCategoryBackgroundAuto,
-  getStoreGroupColors,
-  getItemGroupColors,
-  ALL_STORE_CATEGORY_GROUPS,
-  ALL_ITEM_CATEGORY_GROUPS,
   expandStoreCategoryGroup,
   expandItemCategoryGroup,
-  getCurrentTheme,
-  getCurrentMode,
   type StoreCategoryGroup,
   type ItemCategoryGroup,
 } from '@/config/categoryColors';
-import { getCategoryEmoji } from '@/utils/categoryEmoji';
-import {
-  translateStoreCategory,
-  translateItemGroup,
-  translateStoreCategoryGroup,
-  translateItemCategoryGroup,
-  getStoreCategoryGroupEmoji,
-  getItemCategoryGroupEmoji,
-} from '@/utils/categoryTranslations';
+import type { HistoryFilterAction, CategoryFilterState } from '@/types/historyFilters';
 import type { Language } from '@/utils/translations';
 import { useLocationDisplay } from '@/hooks/useLocations';
-import { CountryFlag } from '@features/history/components/CountryFlag';
+import { GroupedCategoriesSection, storeGroupConfig, itemGroupConfig } from './GroupedCategoriesSection';
+import { LocationTabSection } from './LocationTabSection';
+import { ICON_SIZE_CSS, PENDING_ANIMATION_CSS } from './filterAnimationStyles';
 
 // ============================================================================
 // Types
@@ -46,6 +34,12 @@ import { CountryFlag } from '@features/history/components/CountryFlag';
 
 /** Story 14.14b Session 5: View mode for analytics synchronization */
 type ViewMode = 'store-groups' | 'store-categories' | 'item-groups' | 'item-categories';
+
+/** TD-15b-25: Subset of HistoryFilterAction used by this component */
+export type FilterAction = Extract<
+  HistoryFilterAction,
+  { type: 'CLEAR_CATEGORY' | 'CLEAR_LOCATION' | 'SET_CATEGORY_FILTER' | 'SET_LOCATION_FILTER' }
+>;
 
 export interface CategoryFilterDropdownMenuProps {
   state: {
@@ -67,285 +61,13 @@ export interface CategoryFilterDropdownMenuProps {
     city?: string;
     selectedCities?: string;
   };
-  dispatch: (action: any) => void;
+  dispatch: (action: FilterAction) => void;
   availableFilters: AvailableFilters;
   t: (key: string) => string;
   onClose: () => void;
   locale?: string;
   onViewModeChange?: (mode: ViewMode) => void;
   hasLocationFilter?: boolean;
-}
-
-// ============================================================================
-// StoreGroupedCategoriesSection
-// ============================================================================
-
-interface StoreGroupedCategoriesSectionProps {
-  selectedCategories: Set<string>;
-  onCategoryToggle: (category: string) => void;
-  onGroupToggle: (group: StoreCategoryGroup, categories: string[], isCurrentlySelected: boolean) => void;
-  lang: Language;
-  locale: string;
-}
-
-function StoreGroupedCategoriesSection({
-  selectedCategories,
-  onCategoryToggle,
-  onGroupToggle,
-  lang,
-}: StoreGroupedCategoriesSectionProps): React.ReactElement {
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
-    () => new Set(ALL_STORE_CATEGORY_GROUPS)
-  );
-
-  const toggleGroupExpansion = (group: string) => {
-    setExpandedGroups(prev => {
-      const next = new Set(prev);
-      if (next.has(group)) {
-        next.delete(group);
-      } else {
-        next.add(group);
-      }
-      return next;
-    });
-  };
-
-  const toSentenceCase = (str: string) => {
-    if (!str) return str;
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-  };
-
-  return (
-    <div className="space-y-2">
-      {ALL_STORE_CATEGORY_GROUPS.map((group) => {
-        const groupCategories = expandStoreCategoryGroup(group);
-        const groupColors = getStoreGroupColors(group, getCurrentTheme(), getCurrentMode());
-        const isExpanded = expandedGroups.has(group);
-
-        const selectedInGroup = groupCategories.filter(cat => selectedCategories.has(cat));
-        const allSelected = selectedInGroup.length === groupCategories.length;
-        const someSelected = selectedInGroup.length > 0 && !allSelected;
-
-        return (
-          <div
-            key={group}
-            className="rounded-lg overflow-hidden"
-            style={{ backgroundColor: groupColors.bg }}
-          >
-            {/* Group Header */}
-            <div
-              className="flex items-center gap-3 p-3 cursor-pointer"
-              style={{ borderLeft: `4px solid ${groupColors.border || groupColors.fg}` }}
-              onClick={() => toggleGroupExpansion(group)}
-            >
-              <span
-                className="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
-                style={{ backgroundColor: 'rgba(255,255,255,0.6)' }}
-              >
-                {getStoreCategoryGroupEmoji(group)}
-              </span>
-              <span
-                className="text-sm font-semibold flex-1"
-                style={{ color: groupColors.fg }}
-              >
-                {toSentenceCase(translateStoreCategoryGroup(group, lang))}
-              </span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onGroupToggle(group, groupCategories, allSelected);
-                }}
-                className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors"
-                style={{
-                  backgroundColor: allSelected
-                    ? 'var(--primary)'
-                    : someSelected
-                      ? 'var(--warning, #f59e0b)'
-                      : 'white',
-                  border: allSelected || someSelected ? 'none' : '2px solid var(--border-medium)',
-                }}
-              >
-                {(allSelected || someSelected) && (
-                  <Check size={14} strokeWidth={3} color="white" />
-                )}
-              </button>
-            </div>
-
-            {/* Category Items */}
-            {isExpanded && (
-              <div className="grid grid-cols-2 gap-1.5 px-3 pb-3">
-                {groupCategories.map((category) => {
-                  const isSelected = selectedCategories.has(category);
-                  const categoryColor = getCategoryBackgroundAuto(category);
-
-                  return (
-                    <button
-                      key={category}
-                      onClick={() => onCategoryToggle(category)}
-                      className="flex items-center gap-2 p-2 rounded-lg transition-colors text-left"
-                      style={{
-                        backgroundColor: isSelected ? categoryColor : 'rgba(255,255,255,0.5)',
-                        border: isSelected ? `2px solid ${groupColors.fg}` : '2px solid transparent',
-                      }}
-                    >
-                      <span
-                        className="w-6 h-6 rounded-md flex items-center justify-center text-sm flex-shrink-0"
-                        style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.5)' : categoryColor }}
-                      >
-                        {getCategoryEmoji(category)}
-                      </span>
-                      <span
-                        className="text-xs font-medium truncate"
-                        style={{ color: 'var(--text-primary)' }}
-                      >
-                        {translateStoreCategory(category, lang)}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ============================================================================
-// ItemGroupedCategoriesSection
-// ============================================================================
-
-interface ItemGroupedCategoriesSectionProps {
-  selectedCategories: Set<string>;
-  onCategoryToggle: (category: string) => void;
-  onGroupToggle: (group: ItemCategoryGroup, categories: string[], isCurrentlySelected: boolean) => void;
-  lang: Language;
-  locale: string;
-}
-
-function ItemGroupedCategoriesSection({
-  selectedCategories,
-  onCategoryToggle,
-  onGroupToggle,
-  lang,
-}: ItemGroupedCategoriesSectionProps): React.ReactElement {
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
-    () => new Set(ALL_ITEM_CATEGORY_GROUPS)
-  );
-
-  const toggleGroupExpansion = (group: string) => {
-    setExpandedGroups(prev => {
-      const next = new Set(prev);
-      if (next.has(group)) {
-        next.delete(group);
-      } else {
-        next.add(group);
-      }
-      return next;
-    });
-  };
-
-  const toSentenceCase = (str: string) => {
-    if (!str) return str;
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-  };
-
-  return (
-    <div className="space-y-2">
-      {ALL_ITEM_CATEGORY_GROUPS.map((group) => {
-        const groupCategories = expandItemCategoryGroup(group);
-        const groupColors = getItemGroupColors(group, getCurrentTheme(), getCurrentMode());
-        const isExpanded = expandedGroups.has(group);
-
-        const selectedInGroup = groupCategories.filter(cat => selectedCategories.has(cat));
-        const allSelected = selectedInGroup.length === groupCategories.length;
-        const someSelected = selectedInGroup.length > 0 && !allSelected;
-
-        return (
-          <div
-            key={group}
-            className="rounded-lg overflow-hidden"
-            style={{ backgroundColor: groupColors.bg }}
-          >
-            {/* Group Header */}
-            <div
-              className="flex items-center gap-3 p-3 cursor-pointer"
-              style={{ borderLeft: `4px solid ${groupColors.border || groupColors.fg}` }}
-              onClick={() => toggleGroupExpansion(group)}
-            >
-              <span
-                className="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
-                style={{ backgroundColor: 'rgba(255,255,255,0.6)' }}
-              >
-                {getItemCategoryGroupEmoji(group)}
-              </span>
-              <span
-                className="text-sm font-semibold flex-1"
-                style={{ color: groupColors.fg }}
-              >
-                {toSentenceCase(translateItemCategoryGroup(group, lang))}
-              </span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onGroupToggle(group, groupCategories, allSelected);
-                }}
-                className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors"
-                style={{
-                  backgroundColor: allSelected
-                    ? 'var(--primary)'
-                    : someSelected
-                      ? 'var(--warning, #f59e0b)'
-                      : 'white',
-                  border: allSelected || someSelected ? 'none' : '2px solid var(--border-medium)',
-                }}
-              >
-                {(allSelected || someSelected) && (
-                  <Check size={14} strokeWidth={3} color="white" />
-                )}
-              </button>
-            </div>
-
-            {/* Category Items */}
-            {isExpanded && (
-              <div className="grid grid-cols-2 gap-1.5 px-3 pb-3">
-                {groupCategories.map((category) => {
-                  const isSelected = selectedCategories.has(category);
-                  const categoryColor = getCategoryBackgroundAuto(category);
-
-                  return (
-                    <button
-                      key={category}
-                      onClick={() => onCategoryToggle(category)}
-                      className="flex items-center gap-2 p-2 rounded-lg transition-colors text-left"
-                      style={{
-                        backgroundColor: isSelected ? categoryColor : 'rgba(255,255,255,0.5)',
-                        border: isSelected ? `2px solid ${groupColors.fg}` : '2px solid transparent',
-                      }}
-                    >
-                      <span
-                        className="w-6 h-6 rounded-md flex items-center justify-center text-sm flex-shrink-0"
-                        style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.5)' : categoryColor }}
-                      >
-                        {getCategoryEmoji(category)}
-                      </span>
-                      <span
-                        className="text-xs font-medium truncate"
-                        style={{ color: 'var(--text-primary)' }}
-                      >
-                        {translateItemGroup(category, lang)}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
 }
 
 // ============================================================================
@@ -604,7 +326,7 @@ export function CategoryFilterDropdownMenu({
         ? Array.from(pendingTransactions)[0]
         : Array.from(pendingTransactions).join(',');
 
-      const newDrillDownPath: Record<string, string> = { storeCategory };
+      const newDrillDownPath: CategoryFilterState['drillDownPath'] = { storeCategory };
       if (existingItemGroup) {
         newDrillDownPath.itemCategory = existingItemGroup;
       }
@@ -650,7 +372,7 @@ export function CategoryFilterDropdownMenu({
         ? Array.from(pendingItems)[0]
         : Array.from(pendingItems).join(',');
 
-      const newDrillDownPath: Record<string, string> = { itemCategory };
+      const newDrillDownPath: CategoryFilterState['drillDownPath'] = { itemCategory };
       if (existingStoreCategory) {
         newDrillDownPath.storeCategory = existingStoreCategory;
       }
@@ -881,29 +603,13 @@ export function CategoryFilterDropdownMenu({
       </div>
 
       {/* Icon size styles */}
-      <style>{`
-        .filter-tab-icon {
-          width: 22px;
-          height: 22px;
-        }
-        .filter-tab-icon-clear {
-          width: 20px;
-          height: 20px;
-        }
-        [data-font-size="normal"] .filter-tab-icon {
-          width: 26px;
-          height: 26px;
-        }
-        [data-font-size="normal"] .filter-tab-icon-clear {
-          width: 24px;
-          height: 24px;
-        }
-      `}</style>
+      <style>{ICON_SIZE_CSS}</style>
 
       {/* Category/Item/Location List */}
       <div className="max-h-80 overflow-y-auto p-2 space-y-2">
         {activeTab === 0 && (
-          <StoreGroupedCategoriesSection
+          <GroupedCategoriesSection
+            config={storeGroupConfig}
             selectedCategories={pendingTransactions}
             onCategoryToggle={handleTransactionToggle}
             onGroupToggle={(_group, categories, isCurrentlySelected) => {
@@ -918,11 +624,11 @@ export function CategoryFilterDropdownMenu({
               });
             }}
             lang={lang}
-            locale={locale}
           />
         )}
         {activeTab === 1 && (
-          <ItemGroupedCategoriesSection
+          <GroupedCategoriesSection
+            config={itemGroupConfig}
             selectedCategories={pendingItems}
             onCategoryToggle={handleItemToggle}
             onGroupToggle={(_group, categories, isCurrentlySelected) => {
@@ -937,169 +643,29 @@ export function CategoryFilterDropdownMenu({
               });
             }}
             lang={lang}
-            locale={locale}
           />
         )}
         {activeTab === 2 && (
-          <div className="space-y-1">
-            {sortedCountries.length === 0 ? (
-              <div className="px-4 py-6 text-center text-sm" style={{ color: 'var(--text-tertiary)' }}>
-                {t('noLocationData') || (lang === 'es' ? 'Sin datos de ubicación' : 'No location data')}
-              </div>
-            ) : (
-              sortedCountries.map(country => {
-                const cities = availableFilters.citiesByCountry[country] || [];
-                const isExpanded = expandedCountries.has(country);
-                const selectionState = getCountrySelectionState(country);
-                const hasCities = cities.length > 0;
-
-                return (
-                  <div key={country} className="rounded-lg overflow-hidden">
-                    {/* Country Row */}
-                    <div
-                      className="flex items-center gap-2 p-2.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--bg-tertiary)]"
-                      onClick={() => hasCities ? toggleCountryExpansion(country) : handleCountryToggle(country)}
-                    >
-                      {hasCities ? (
-                        <ChevronDown
-                          size={16}
-                          className={`transition-transform ${isExpanded ? '' : '-rotate-90'}`}
-                          style={{ color: 'var(--text-tertiary)' }}
-                        />
-                      ) : (
-                        <span className="w-4" />
-                      )}
-
-                      <span
-                        className="flex-1 text-sm font-medium flex items-center gap-1.5"
-                        style={{ color: 'var(--text-primary)' }}
-                      >
-                        <CountryFlag country={country} size="small" />
-                        {getCountryName(country)}
-                      </span>
-
-                      {hasCities && (
-                        <span
-                          className="px-1.5 py-0.5 rounded text-xs font-medium"
-                          style={{
-                            backgroundColor: 'var(--bg-tertiary)',
-                            color: 'var(--text-tertiary)',
-                          }}
-                        >
-                          {cities.length}
-                        </span>
-                      )}
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCountryToggle(country);
-                        }}
-                        className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-colors"
-                        style={{
-                          backgroundColor: selectionState === 'all'
-                            ? 'var(--primary)'
-                            : selectionState === 'some'
-                              ? 'var(--warning, #f59e0b)'
-                              : 'transparent',
-                          border: selectionState !== 'none'
-                            ? 'none'
-                            : '2px solid var(--border-medium)',
-                        }}
-                        aria-label={lang === 'es'
-                          ? `Seleccionar todas las ciudades de ${getCountryName(country)}`
-                          : `Select all cities in ${getCountryName(country)}`
-                        }
-                      >
-                        {selectionState !== 'none' && (
-                          <Check size={12} strokeWidth={3} color="white" />
-                        )}
-                      </button>
-                    </div>
-
-                    {/* Cities (expanded) */}
-                    {isExpanded && hasCities && (
-                      <div className="ml-6 pl-2 border-l space-y-0.5" style={{ borderColor: 'var(--border-light)' }}>
-                        {cities
-                          .sort((a, b) => getCityName(a).localeCompare(getCityName(b), lang))
-                          .map(city => {
-                            const isSelected = pendingLocations.has(city);
-                            return (
-                              <button
-                                key={city}
-                                onClick={() => handleCityToggle(city)}
-                                className="w-full flex items-center gap-2 p-2 rounded-lg text-left transition-colors hover:bg-[var(--bg-tertiary)]"
-                              >
-                                <span
-                                  className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-colors"
-                                  style={{
-                                    backgroundColor: isSelected ? 'var(--primary)' : 'transparent',
-                                    border: isSelected ? 'none' : '2px solid var(--border-medium)',
-                                  }}
-                                >
-                                  {isSelected && (
-                                    <Check size={10} strokeWidth={3} color="white" />
-                                  )}
-                                </span>
-
-                                <span
-                                  className="text-sm"
-                                  style={{
-                                    color: isSelected ? 'var(--primary)' : 'var(--text-secondary)',
-                                    fontWeight: isSelected ? 500 : 400,
-                                  }}
-                                >
-                                  {getCityName(city)}
-                                </span>
-                              </button>
-                            );
-                          })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
+          <LocationTabSection
+            sortedCountries={sortedCountries}
+            availableFilters={availableFilters}
+            expandedCountries={expandedCountries}
+            pendingLocations={pendingLocations}
+            getCountryName={getCountryName}
+            getCityName={getCityName}
+            getCountrySelectionState={getCountrySelectionState}
+            toggleCountryExpansion={toggleCountryExpansion}
+            handleCountryToggle={handleCountryToggle}
+            handleCityToggle={handleCityToggle}
+            t={t}
+            lang={lang}
+          />
         )}
       </div>
 
-      {/* Pending animation styles */}
+      {/* Pending animation styles — conditional render preserved */}
       {(isTransactionsPending || isItemsPending || isLocationsPending) && (
-        <style>{`
-          @keyframes pendingShine {
-            0% {
-              background-position: -100% 0;
-            }
-            100% {
-              background-position: 200% 0;
-            }
-          }
-          .pending-pulse {
-            position: relative;
-            overflow: hidden;
-          }
-          .pending-pulse::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(
-              90deg,
-              transparent 0%,
-              rgba(255, 255, 255, 0.4) 25%,
-              rgba(255, 255, 255, 0.6) 50%,
-              rgba(255, 255, 255, 0.4) 75%,
-              transparent 100%
-            );
-            background-size: 200% 100%;
-            animation: pendingShine 2.5s ease-in-out infinite;
-            pointer-events: none;
-            border-radius: inherit;
-          }
-        `}</style>
+        <style>{PENDING_ANIMATION_CSS}</style>
       )}
     </div>
   );

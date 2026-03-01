@@ -13,14 +13,19 @@ import { usePersonalRecords } from '../../../src/hooks/usePersonalRecords';
 import type { Transaction } from '../../../src/types/transaction';
 import { RECORD_COOLDOWNS_KEY } from '../../../src/types/personalRecord';
 
-// Mock the recordsService
+// Mock the recordsService (pure functions only — storePersonalRecord now via repository)
 vi.mock('@features/insights/services/recordsService', async () => {
     const actual = await vi.importActual('@features/insights/services/recordsService');
-    return {
-        ...actual,
-        storePersonalRecord: vi.fn().mockResolvedValue('mock-record-id'),
-    };
+    return { ...actual };
 });
+
+// Mock the repository hook
+const mockStore = vi.fn().mockResolvedValue('mock-record-id');
+vi.mock('@/repositories', () => ({
+    useRecordsRepository: vi.fn(() => ({
+        store: mockStore,
+    })),
+}));
 
 describe('usePersonalRecords', () => {
     let mockStorage: Record<string, string>;

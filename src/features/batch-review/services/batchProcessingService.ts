@@ -9,7 +9,7 @@
  */
 
 import { analyzeReceipt, ReceiptType } from '@/services/gemini';
-import { Transaction } from '@/types/transaction';
+import type { Transaction } from '@/types/transaction';
 import { extractErrorMessage } from '@/utils/errorHandler';
 
 /**

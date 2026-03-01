@@ -12,13 +12,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { User } from 'firebase/auth';
 import { Firestore } from 'firebase/firestore';
 import { UserInsightProfile, LocalInsightCache, FullInsightContent } from '@/types/insight';
-import {
-  getOrCreateInsightProfile,
-  recordInsightShown,
-  trackTransactionForProfile,
-  deleteInsight,
-  deleteInsights,
-} from '../services/insightProfileService';
+import { useInsightProfileRepository } from '@/repositories';
 import {
   getLocalCache,
   setLocalCache,
@@ -45,20 +39,21 @@ export function useInsightProfile(
   user: User | null,
   services: { db: Firestore; appId: string } | null
 ): UseInsightProfileResult {
+  const insightRepo = useInsightProfileRepository();
   const [profile, setProfile] = useState<UserInsightProfile | null>(null);
   const [cache, setCache] = useState<LocalInsightCache>(() => getLocalCache());
   const [loading, setLoading] = useState(true);
 
   // Load profile on mount / user change
   useEffect(() => {
-    if (!user || !services) {
+    if (!user || !services || !insightRepo) {
       setProfile(null);
       setLoading(false);
       return;
     }
 
     setLoading(true);
-    getOrCreateInsightProfile(services.db, user.uid, services.appId)
+    insightRepo.getOrCreate()
       .then((p) => {
         setProfile(p);
       })
@@ -69,58 +64,38 @@ export function useInsightProfile(
       .finally(() => {
         setLoading(false);
       });
-  }, [user, services]);
+  }, [user, services, insightRepo]);
 
   // Record that an insight was shown with full content for history
   const recordShown = useCallback(
     async (insightId: string, transactionId?: string, fullInsight?: FullInsightContent) => {
-      if (!user || !services) return;
+      if (!user || !services || !insightRepo) return;
       try {
-        await recordInsightShown(
-          services.db,
-          user.uid,
-          services.appId,
-          insightId,
-          transactionId,
-          fullInsight
-        );
+        await insightRepo.recordInsightShown(insightId, transactionId, fullInsight);
         // Refresh profile to get updated recentInsights
-        const updated = await getOrCreateInsightProfile(
-          services.db,
-          user.uid,
-          services.appId
-        );
+        const updated = await insightRepo.getOrCreate();
         setProfile(updated);
       } catch (err) {
         console.error('Failed to record insight shown:', err);
       }
     },
-    [user, services]
+    [user, services, insightRepo]
   );
 
   // Track a transaction for profile stats
   const trackTransaction = useCallback(
     async (transactionDate: Date) => {
-      if (!user || !services) return;
+      if (!user || !services || !insightRepo) return;
       try {
-        await trackTransactionForProfile(
-          services.db,
-          user.uid,
-          services.appId,
-          transactionDate
-        );
+        await insightRepo.trackTransaction(transactionDate);
         // Refresh profile
-        const updated = await getOrCreateInsightProfile(
-          services.db,
-          user.uid,
-          services.appId
-        );
+        const updated = await insightRepo.getOrCreate();
         setProfile(updated);
       } catch (err) {
         console.error('Failed to track transaction:', err);
       }
     },
-    [user, services]
+    [user, services, insightRepo]
   );
 
   // Increment scan counter
@@ -133,52 +108,33 @@ export function useInsightProfile(
   // Delete a single insight
   const removeInsight = useCallback(
     async (insightId: string, shownAtSeconds: number) => {
-      if (!user || !services) return;
+      if (!user || !services || !insightRepo) return;
       try {
-        await deleteInsight(
-          services.db,
-          user.uid,
-          services.appId,
-          insightId,
-          shownAtSeconds
-        );
+        await insightRepo.deleteInsight(insightId, shownAtSeconds);
         // Refresh profile to get updated recentInsights
-        const updated = await getOrCreateInsightProfile(
-          services.db,
-          user.uid,
-          services.appId
-        );
+        const updated = await insightRepo.getOrCreate();
         setProfile(updated);
       } catch (err) {
         console.error('Failed to delete insight:', err);
       }
     },
-    [user, services]
+    [user, services, insightRepo]
   );
 
   // Delete multiple insights
   const removeInsights = useCallback(
     async (insights: Array<{ insightId: string; shownAtSeconds: number }>) => {
-      if (!user || !services) return;
+      if (!user || !services || !insightRepo) return;
       try {
-        await deleteInsights(
-          services.db,
-          user.uid,
-          services.appId,
-          insights
-        );
+        await insightRepo.deleteInsights(insights);
         // Refresh profile to get updated recentInsights
-        const updated = await getOrCreateInsightProfile(
-          services.db,
-          user.uid,
-          services.appId
-        );
+        const updated = await insightRepo.getOrCreate();
         setProfile(updated);
       } catch (err) {
         console.error('Failed to delete insights:', err);
       }
     },
-    [user, services]
+    [user, services, insightRepo]
   );
 
   return {

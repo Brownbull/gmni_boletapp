@@ -11,7 +11,7 @@
  * - ADR-017: Phase-Based Priority System
  */
 
-import { Transaction } from '@/types/transaction';
+import type { Transaction } from '@/types/transaction';
 import {
   Insight,
   InsightCategory,
@@ -26,8 +26,7 @@ import {
 } from '@/types/insight';
 import { generateAllCandidates } from '../utils/insightGenerators';
 import { getStorageJSON, setStorageJSON } from '@/utils/storage';
-// Story 10a.4: Re-export for convenience in InsightsView
-export { getInsightProfile as getUserInsightProfile } from './insightProfileService';
+// Story 15b-3c: getUserInsightProfile re-export removed — consumers now use useInsightProfileRepository from @/repositories
 
 // ============================================================================
 // Main Entry Point

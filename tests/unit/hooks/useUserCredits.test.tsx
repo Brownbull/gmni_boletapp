@@ -1,79 +1,75 @@
 /**
- * Tests for useUserCredits hook
+ * Tests for useUserCredits hook — initialization and reservation
+ *
+ * Covers: initialization, reserveCredits, confirmReservedCredits, refundReservedCredits
+ * Mutation tests (deduct/add) split to useUserCredits.mutations.test.tsx (TD-15b-28)
  *
  * Story 14.24: Persistent Transaction State
  * Story 15-TD-10: Credits Consumer Transaction Safety
- * Tests credit reserve/confirm/refund pattern and transactional deduction.
+ * Story 15b-3d: Migrated from userCreditsService mocks to ICreditsRepository mock.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useUserCredits } from '../../../src/hooks/useUserCredits';
 import { DEFAULT_CREDITS } from '../../../src/types/scan';
+import type { ICreditsRepository } from '../../../src/repositories/creditsRepository';
 
-// Mock Firebase services
-const mockGetUserCredits = vi.fn();
-const mockSaveUserCredits = vi.fn();
-const mockDeductAndSaveCredits = vi.fn();
-const mockDeductAndSaveSuperCredits = vi.fn();
-const mockAddAndSaveCredits = vi.fn();
-const mockAddAndSaveSuperCredits = vi.fn();
+// Mock the repository hook
+const mockRepo: ICreditsRepository = {
+  get: vi.fn(),
+  save: vi.fn(),
+  deduct: vi.fn(),
+  deductSuper: vi.fn(),
+  add: vi.fn(),
+  addSuper: vi.fn(),
+};
 
-vi.mock('../../../src/services/userCreditsService', () => ({
-  getUserCredits: (...args: unknown[]) => mockGetUserCredits(...args),
-  saveUserCredits: (...args: unknown[]) => mockSaveUserCredits(...args),
-  deductAndSaveCredits: (...args: unknown[]) => mockDeductAndSaveCredits(...args),
-  deductAndSaveSuperCredits: (...args: unknown[]) => mockDeductAndSaveSuperCredits(...args),
-  addAndSaveCredits: (...args: unknown[]) => mockAddAndSaveCredits(...args),
-  addAndSaveSuperCredits: (...args: unknown[]) => mockAddAndSaveSuperCredits(...args),
+vi.mock('../../../src/repositories/hooks', () => ({
+  useCreditsRepository: () => mockRepo,
 }));
 
 describe('useUserCredits', () => {
   const mockUser = { uid: 'test-user-123' } as any;
-  const mockServices = { db: {}, appId: 'test-app' };
   const initialCredits = { remaining: 100, used: 5, superRemaining: 10, superUsed: 0 };
 
   beforeEach(() => {
     vi.resetAllMocks();
-    mockGetUserCredits.mockResolvedValue(initialCredits);
-    mockSaveUserCredits.mockResolvedValue(undefined);
+    (mockRepo.get as ReturnType<typeof vi.fn>).mockResolvedValue(initialCredits);
+    (mockRepo.save as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
   });
 
   describe('initialization', () => {
     it('returns default credits when no user', () => {
-      const { result } = renderHook(() => useUserCredits(null, null));
+      const { result } = renderHook(() => useUserCredits(null));
 
       expect(result.current.credits).toEqual(DEFAULT_CREDITS);
       expect(result.current.loading).toBe(false);
       expect(result.current.error).toBeNull();
     });
 
-    it('loads credits from service when user is provided', async () => {
-      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
+    it('loads credits from repository when user is provided', async () => {
+      const { result } = renderHook(() => useUserCredits(mockUser));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(mockGetUserCredits).toHaveBeenCalledWith(
-        mockServices.db,
-        mockUser.uid,
-        mockServices.appId
-      );
+      expect(mockRepo.get).toHaveBeenCalled();
       expect(result.current.credits).toEqual(initialCredits);
       expect(result.current.error).toBeNull();
     });
 
-    it('sets error state when getUserCredits throws', async () => {
-      mockGetUserCredits.mockRejectedValueOnce(new Error('Network error'));
-      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
+    it('sets user-safe error when repo.get throws', async () => {
+      (mockRepo.get as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('permission-denied'));
+      const { result } = renderHook(() => useUserCredits(mockUser));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
       });
 
       expect(result.current.error).toBeInstanceOf(Error);
-      expect(result.current.error?.message).toBe('Network error');
+      expect(result.current.error?.message).toBe('Unable to load credits. Please try again later.');
       // Falls back to default credits
       expect(result.current.credits).toEqual(DEFAULT_CREDITS);
     });
@@ -81,7 +77,7 @@ describe('useUserCredits', () => {
 
   describe('reserveCredits', () => {
     it('reserves credits without persisting to Firestore', async () => {
-      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
+      const { result } = renderHook(() => useUserCredits(mockUser));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -98,13 +94,13 @@ describe('useUserCredits', () => {
       expect(result.current.credits.remaining).toBe(initialCredits.remaining - 1);
       expect(result.current.credits.used).toBe(initialCredits.used + 1);
       // Should NOT have called any persistence function
-      expect(mockSaveUserCredits).not.toHaveBeenCalled();
-      expect(mockDeductAndSaveCredits).not.toHaveBeenCalled();
+      expect(mockRepo.save).not.toHaveBeenCalled();
+      expect(mockRepo.deduct).not.toHaveBeenCalled();
     });
 
     it('returns false when insufficient credits', async () => {
-      mockGetUserCredits.mockResolvedValue({ ...initialCredits, remaining: 0 });
-      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
+      (mockRepo.get as ReturnType<typeof vi.fn>).mockResolvedValue({ ...initialCredits, remaining: 0 });
+      const { result } = renderHook(() => useUserCredits(mockUser));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -120,7 +116,7 @@ describe('useUserCredits', () => {
     });
 
     it('reserves super credits when type is super', async () => {
-      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
+      const { result } = renderHook(() => useUserCredits(mockUser));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -136,11 +132,11 @@ describe('useUserCredits', () => {
   });
 
   describe('confirmReservedCredits', () => {
-    it('uses transactional deductAndSaveCredits for normal credits (TD-10)', async () => {
+    it('uses transactional repo.deduct for normal credits (TD-10)', async () => {
       const deductedResult = { remaining: 99, used: 6, superRemaining: 10, superUsed: 0 };
-      mockDeductAndSaveCredits.mockResolvedValueOnce(deductedResult);
+      (mockRepo.deduct as ReturnType<typeof vi.fn>).mockResolvedValueOnce(deductedResult);
 
-      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
+      const { result } = renderHook(() => useUserCredits(mockUser));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -151,7 +147,7 @@ describe('useUserCredits', () => {
         result.current.reserveCredits(1, 'normal');
       });
 
-      // Confirm — should call deductAndSaveCredits, NOT saveUserCredits
+      // Confirm — should call repo.deduct, NOT repo.save
       let confirmResult: boolean;
       await act(async () => {
         confirmResult = await result.current.confirmReservedCredits();
@@ -159,19 +155,16 @@ describe('useUserCredits', () => {
 
       expect(confirmResult!).toBe(true);
       expect(result.current.hasReservedCredits).toBe(false);
-      expect(mockDeductAndSaveCredits).toHaveBeenCalledWith(
-        mockServices.db, mockUser.uid, mockServices.appId,
-        1 // amount
-      );
-      expect(mockSaveUserCredits).not.toHaveBeenCalled();
+      expect(mockRepo.deduct).toHaveBeenCalledWith(1);
+      expect(mockRepo.save).not.toHaveBeenCalled();
       expect(result.current.credits).toEqual(deductedResult);
     });
 
-    it('uses transactional deductAndSaveSuperCredits for super credits (TD-10)', async () => {
+    it('uses transactional repo.deductSuper for super credits (TD-10)', async () => {
       const deductedResult = { remaining: 100, used: 5, superRemaining: 9, superUsed: 1 };
-      mockDeductAndSaveSuperCredits.mockResolvedValueOnce(deductedResult);
+      (mockRepo.deductSuper as ReturnType<typeof vi.fn>).mockResolvedValueOnce(deductedResult);
 
-      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
+      const { result } = renderHook(() => useUserCredits(mockUser));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -187,18 +180,15 @@ describe('useUserCredits', () => {
         await result.current.confirmReservedCredits();
       });
 
-      expect(mockDeductAndSaveSuperCredits).toHaveBeenCalledWith(
-        mockServices.db, mockUser.uid, mockServices.appId,
-        1
-      );
-      expect(mockDeductAndSaveCredits).not.toHaveBeenCalled();
+      expect(mockRepo.deductSuper).toHaveBeenCalledWith(1);
+      expect(mockRepo.deduct).not.toHaveBeenCalled();
       expect(result.current.credits).toEqual(deductedResult);
     });
 
     it('refunds reservation on transaction failure', async () => {
-      mockDeductAndSaveCredits.mockRejectedValueOnce(new Error('Insufficient credits'));
+      (mockRepo.deduct as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Insufficient credits'));
 
-      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
+      const { result } = renderHook(() => useUserCredits(mockUser));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -222,7 +212,7 @@ describe('useUserCredits', () => {
     });
 
     it('returns false when no reservation exists', async () => {
-      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
+      const { result } = renderHook(() => useUserCredits(mockUser));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -239,7 +229,7 @@ describe('useUserCredits', () => {
 
   describe('refundReservedCredits', () => {
     it('restores credits to pre-reservation state', async () => {
-      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
+      const { result } = renderHook(() => useUserCredits(mockUser));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -263,189 +253,8 @@ describe('useUserCredits', () => {
       expect(result.current.credits.used).toBe(initialCredits.used);
       expect(result.current.hasReservedCredits).toBe(false);
       // Should NOT persist - just local state change
-      expect(mockSaveUserCredits).not.toHaveBeenCalled();
-      expect(mockDeductAndSaveCredits).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('deductCredits', () => {
-    it('calls deductAndSaveCredits (transactional) instead of saveUserCredits (TD-10)', async () => {
-      const deductedResult = { remaining: 99, used: 6, superRemaining: 10, superUsed: 0 };
-      mockDeductAndSaveCredits.mockResolvedValueOnce(deductedResult);
-
-      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false);
-      });
-
-      let deductResult: boolean;
-      await act(async () => {
-        deductResult = await result.current.deductCredits(1);
-      });
-
-      expect(deductResult!).toBe(true);
-      expect(mockDeductAndSaveCredits).toHaveBeenCalledWith(
-        mockServices.db, mockUser.uid, mockServices.appId,
-        1
-      );
-      expect(mockSaveUserCredits).not.toHaveBeenCalled();
-      expect(result.current.credits).toEqual(deductedResult);
-    });
-
-    it('returns false when insufficient credits (from transaction)', async () => {
-      mockDeductAndSaveCredits.mockRejectedValueOnce(new Error('Insufficient credits'));
-
-      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false);
-      });
-
-      let deductResult: boolean;
-      await act(async () => {
-        deductResult = await result.current.deductCredits(1);
-      });
-
-      expect(deductResult!).toBe(false);
-    });
-
-    it('returns false on network error without throwing', async () => {
-      mockDeductAndSaveCredits.mockRejectedValueOnce(new Error('Network unavailable'));
-
-      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false);
-      });
-
-      let deductResult: boolean;
-      await act(async () => {
-        deductResult = await result.current.deductCredits(1);
-      });
-
-      expect(deductResult!).toBe(false);
-    });
-  });
-
-  describe('deductSuperCredits', () => {
-    it('calls deductAndSaveSuperCredits (transactional) (TD-10)', async () => {
-      const deductedResult = { remaining: 100, used: 5, superRemaining: 9, superUsed: 1 };
-      mockDeductAndSaveSuperCredits.mockResolvedValueOnce(deductedResult);
-
-      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false);
-      });
-
-      let deductResult: boolean;
-      await act(async () => {
-        deductResult = await result.current.deductSuperCredits(1);
-      });
-
-      expect(deductResult!).toBe(true);
-      expect(mockDeductAndSaveSuperCredits).toHaveBeenCalledWith(
-        mockServices.db, mockUser.uid, mockServices.appId,
-        1
-      );
-      expect(mockSaveUserCredits).not.toHaveBeenCalled();
-      expect(result.current.credits).toEqual(deductedResult);
-    });
-
-    it('returns false when insufficient super credits', async () => {
-      mockDeductAndSaveSuperCredits.mockRejectedValueOnce(new Error('Insufficient super credits'));
-
-      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false);
-      });
-
-      let deductResult: boolean;
-      await act(async () => {
-        deductResult = await result.current.deductSuperCredits(1);
-      });
-
-      expect(deductResult!).toBe(false);
-    });
-  });
-
-  describe('addCredits', () => {
-    it('calls addAndSaveCredits (transactional) instead of saveUserCredits (TD-13)', async () => {
-      const addedResult = { remaining: 110, used: 5, superRemaining: 10, superUsed: 0 };
-      mockAddAndSaveCredits.mockResolvedValueOnce(addedResult);
-
-      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false);
-      });
-
-      await act(async () => {
-        await result.current.addCredits(10);
-      });
-
-      expect(mockAddAndSaveCredits).toHaveBeenCalledWith(
-        mockServices.db, mockUser.uid, mockServices.appId, 10
-      );
-      expect(mockSaveUserCredits).not.toHaveBeenCalled();
-      expect(result.current.credits).toEqual(addedResult);
-    });
-
-    it('throws error on failure (TD-13)', async () => {
-      mockAddAndSaveCredits.mockRejectedValueOnce(new Error('Amount must be a positive integer'));
-
-      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false);
-      });
-
-      await expect(
-        act(async () => {
-          await result.current.addCredits(-1);
-        })
-      ).rejects.toThrow('Amount must be a positive integer');
-    });
-  });
-
-  describe('addSuperCredits', () => {
-    it('calls addAndSaveSuperCredits (transactional) instead of saveUserCredits (TD-13)', async () => {
-      const addedResult = { remaining: 100, used: 5, superRemaining: 15, superUsed: 0 };
-      mockAddAndSaveSuperCredits.mockResolvedValueOnce(addedResult);
-
-      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false);
-      });
-
-      await act(async () => {
-        await result.current.addSuperCredits(5);
-      });
-
-      expect(mockAddAndSaveSuperCredits).toHaveBeenCalledWith(
-        mockServices.db, mockUser.uid, mockServices.appId, 5
-      );
-      expect(mockSaveUserCredits).not.toHaveBeenCalled();
-      expect(result.current.credits).toEqual(addedResult);
-    });
-
-    it('throws error on failure (TD-13)', async () => {
-      mockAddAndSaveSuperCredits.mockRejectedValueOnce(new Error('Amount must be a positive integer'));
-
-      const { result } = renderHook(() => useUserCredits(mockUser, mockServices));
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false);
-      });
-
-      await expect(
-        act(async () => {
-          await result.current.addSuperCredits(-1);
-        })
-      ).rejects.toThrow('Amount must be a positive integer');
+      expect(mockRepo.save).not.toHaveBeenCalled();
+      expect(mockRepo.deduct).not.toHaveBeenCalled();
     });
   });
 });

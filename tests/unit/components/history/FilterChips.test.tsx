@@ -9,7 +9,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { FilterChips } from '@features/history/components/FilterChips';
-import { HistoryFiltersProvider } from '../../../../src/contexts/HistoryFiltersContext';
+import { useHistoryFiltersStore } from '@/shared/stores/useHistoryFiltersStore';
 import type { HistoryFilterState } from '@/types/historyFilters';
 
 // ============================================================================
@@ -37,10 +37,11 @@ const defaultInitialState: HistoryFilterState = {
 const renderWithProvider = (
   initialState: HistoryFilterState = defaultInitialState
 ) => {
+  // Story 15b-3g: Initialize filters directly instead of using HistoryFiltersProvider
+  useHistoryFiltersStore.getState().initializeFilters(initialState);
+
   return render(
-    <HistoryFiltersProvider initialState={initialState}>
-      <FilterChips locale="es" t={mockT} />
-    </HistoryFiltersProvider>
+    <FilterChips locale="es" t={mockT} />
   );
 };
 
@@ -49,6 +50,11 @@ const renderWithProvider = (
 // ============================================================================
 
 describe('FilterChips', () => {
+  beforeEach(() => {
+    // TD-15b-32: Reset Zustand store to prevent cross-file state leak in pool: 'threads'
+    useHistoryFiltersStore.setState({ ...defaultInitialState, initialized: true });
+  });
+
   describe('Visibility', () => {
     it('renders nothing when no filters are active', () => {
       const { container } = renderWithProvider();

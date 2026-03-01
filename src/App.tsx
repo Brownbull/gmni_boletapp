@@ -11,107 +11,56 @@
  * View rendering is delegated to composition hooks (useXxxViewProps) and
  * render functions (viewRenderers.tsx). Handler logic is extracted to
  * app-level hooks (useTransactionHandlers, useScanHandlers, etc.).
+ *
+ * Story 15b-4f: Hook initialization composed into useAppDataHooks orchestrator.
  */
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 // App architecture components
 import { AppLayout, AppOverlays, shouldShowTopHeader } from './components/App';
 import type { View } from '@app/types';
 // Story 15b-0b: Direct import from viewRenderers (not barrel) to break circular deps
 import {
+    renderDashboardView,
+    renderTrendsView,
+    renderHistoryView,
+    renderItemsView,
     renderStatementScanView,
     renderReportsView,
     renderRecentScansView,
     renderInsightsView,
     renderAlertsView,
 } from './components/App/viewRenderers';
-import { useAuth } from './hooks/useAuth';
-import { useTransactions } from './hooks/useTransactions';
-import { migrateCreatedAt } from './utils/migrateCreatedAt';
-import { useRecentScans } from './hooks/useRecentScans';
-import { usePaginatedTransactions } from './hooks/usePaginatedTransactions';
+// Story 15b-4f: All hook initialization composed into single orchestrator
+import { useAppDataHooks } from './app/hooks';
 import { CategoriesFeature } from '@features/categories';
-import { useToast, type ToastMessage } from '@/shared/hooks';
 import { Toast } from '@/shared/ui';
-import {
-    useSettingsStore,
-    useLang,
-    useCurrency,
-    useDateFormat,
-    useCurrentView,
-    useSettingsSubview,
-    usePendingHistoryFilters,
-    usePendingDistributionView,
-    useAnalyticsInitialState,
-    useNavigationActions,
-    useCurrentInsight,
-    useShowInsightCard,
-    useShowSessionComplete,
-    useSessionContext,
-    useShowBatchSummary,
-    useInsightActions,
-} from '@/shared/stores';
-import { useCategoryMappings } from './hooks/useCategoryMappings';
-import { useMerchantMappings } from './hooks/useMerchantMappings';
-import { useSubcategoryMappings } from './hooks/useSubcategoryMappings';
-import { useItemNameMappings } from './hooks/useItemNameMappings';
-import { useTrustedMerchants } from './hooks/useTrustedMerchants';
-import { useUserPreferences } from './hooks/useUserPreferences';
-import { useUserCredits } from './hooks/useUserCredits';
-import { useReducedMotion } from './hooks/useReducedMotion';
-import { useInsightProfile } from '@features/insights/hooks/useInsightProfile';
-import { useBatchSession } from './hooks/useBatchSession';
-import { usePersonalRecords } from './hooks/usePersonalRecords';
-import { useInAppNotifications } from './hooks/useInAppNotifications';
 // App-level handler hooks
 import { useTransactionHandlers, useScanHandlers, useDialogHandlers } from './hooks/app';
 import { AppProviders } from '@app/AppProviders';
-import { getFirestore } from 'firebase/firestore';
-import { useBatchProcessing } from './hooks/useBatchProcessing';
 import { DIALOG_TYPES } from './types/scanStateMachine';
 import { LoginScreen } from './views/LoginScreen';
-import { DashboardView } from './views/DashboardView';
-import { TrendsView } from './views/TrendsView';
-import { HistoryView } from './views/HistoryView';
-import { ItemsView } from './views/ItemsView';
 import { BatchCaptureView } from './views/BatchCaptureView';
 import { SettingsView } from './views/SettingsView';
 import { TransactionEditorView } from './views/TransactionEditorView';
 import { Nav, ScanStatus } from './components/Nav';
 import { TopHeader } from './components/TopHeader';
-import { type SessionContext, type SessionAction } from './components/session';
-import { BatchUploadPreview } from './components/scan';
+import { type SessionAction } from './components/session';
+import { BatchUploadPreview, BatchProcessingOverlay } from './components/scan';
 import { NavigationBlocker } from './components/NavigationBlocker';
 import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
-import { useScanOverlayState } from './hooks/useScanOverlayState';
 import { PROCESSING_TIMEOUT_MS } from './hooks/useScanState';
-import { BatchProcessingOverlay } from './components/scan';
-import { hasActiveTransactionConflict as hasActiveTransactionConflictUtil } from '@features/scan';
+import {
+    hasActiveTransactionConflict as hasActiveTransactionConflictUtil,
+    processScan as processScanHandler,
+    useScanInitiation,
+} from '@features/scan';
+import type { ScanInitiationProps } from '@features/scan';
 import type { TrustPromptEligibility } from './types/trust';
-import { AnalyticsProvider } from './contexts/AnalyticsContext';
-import {
-    useScanStore,
-    useScanActions,
-    useIsProcessing,
-    useScanMode,
-    useSkipScanCompleteModal,
-    useIsRescanning,
-} from '@features/scan/store';
-import {
-    useCurrentTransaction,
-    useNavigationList,
-    useIsReadOnly,
-    useCreditUsedInSession,
-    useIsSaving,
-    useAnimateItems,
-    useEditorMode,
-    useTransactionEditorActions,
-} from '@features/transaction-editor';
+import { analyticsActions } from '@features/analytics/stores/useAnalyticsStore';
 import { getQuarterFromMonth } from '@features/analytics/utils/analyticsHelpers';
-import { HistoryFiltersProvider } from './contexts/HistoryFiltersContext';
 import type { HistoryFilterState, TemporalFilterState } from '@/types/historyFilters';
 import type { HistoryNavigationPayload } from '@features/analytics/utils/analyticsToHistoryFilters';
-import { analyzeReceipt, ReceiptType } from './services/gemini';
-import { SupportedCurrency } from './services/userPreferencesService';
+import { analyzeReceipt } from './services/gemini';
 import { addTransaction as firestoreAddTransaction } from './services/firestore';
 import {
     generateInsightForTransaction,
@@ -121,8 +70,7 @@ import {
     getLastWeekTotal,
     setLocalCache,
 } from '@features/insights/services/insightEngineService';
-import { Transaction } from './types/transaction';
-import { Insight } from './types/insight';
+import type { Transaction } from './types/transaction';
 import {
     loadPersistedScanState,
     savePersistedScanState,
@@ -131,8 +79,6 @@ import {
 } from './services/pendingScanStorage';
 import { formatCurrency, DEFAULT_CURRENCY } from './utils/currency';
 import { formatDate } from './utils/date';
-import { getSafeDate } from './utils/validation';
-import { TRANSLATIONS } from './utils/translations';
 import {
     expandStoreCategoryGroup,
     expandItemCategoryGroup,
@@ -145,9 +91,6 @@ import { incrementMappingUsage } from './services/categoryMappingService';
 import { incrementMerchantMappingUsage } from './services/merchantMappingService';
 import { incrementItemNameMappingUsage } from './services/itemNameMappingService';
 import { getCitiesForCountry } from './data/locations';
-import { useModalActions } from './managers/ModalManager';
-import { processScan as processScanHandler, useScanInitiation } from '@features/scan';
-import type { ScanInitiationProps } from '@features/scan';
 import {
     BatchReviewFeature,
     batchReviewActions,
@@ -161,355 +104,71 @@ import { FeatureOrchestrator } from '@app/FeatureOrchestrator';
 import { reconcileItemsTotal } from '@entities/transaction';
 
 function App() {
-    const { user, services, initError, signIn, signInWithTestCredentials, signOut } = useAuth();
-    const transactions = useTransactions(user, services);
-    // Recent scans sorted by createdAt (for "Últimos Escaneados" - ensures recently scanned
-    // receipts appear even if their transaction date is outside the top 100 by date)
-    const recentScans = useRecentScans(user, services);
+    // Story 15b-4f: All hook initialization composed into useAppDataHooks
+    const { userContext, txData, mappingSystem, scans, viewHandlers } = useAppDataHooks();
 
-    // DEV: Expose migration function to browser console for fixing createdAt
-    useEffect(() => {
-        if (import.meta.env.DEV && services?.db && user?.uid) {
-            (window as any).runCreatedAtMigration = async (dryRun = true) => {
-                return migrateCreatedAt(services.db, user.uid, services.appId, dryRun);
-            };
-        }
-    }, [services, user]);
-
-    // HistoryView gets pagination via useHistoryViewData hook internally
-    const { transactions: paginatedTransactions } = usePaginatedTransactions(user, services);
-
-    // Merge recentScans into paginatedTransactions for RecentScansView
-    const transactionsWithRecentScans = useMemo(() => {
-        const txMap = new Map<string, Transaction>();
-        for (const tx of paginatedTransactions) {
-            if (tx.id) txMap.set(tx.id, tx);
-        }
-        for (const tx of recentScans) {
-            if (tx.id && !txMap.has(tx.id)) {
-                txMap.set(tx.id, tx);
-            }
-        }
-        return Array.from(txMap.values());
-    }, [paginatedTransactions, recentScans]);
-
-    // Category, merchant, subcategory, and item name mappings for learning system
-    const { mappings } = useCategoryMappings(user, services);
-    const { findMatch: findMerchantMatch } = useMerchantMappings(user, services);
-    useSubcategoryMappings(user, services);
-    const { findMatch: findItemNameMatch } = useItemNameMappings(user, services);
-
-    // User preferences (currency, location, profile settings)
-    const { preferences: userPreferences } = useUserPreferences(user, services);
-
-    // Scan credits (deducted immediately on scan start to prevent exploits)
-    // Only restored via addCredits if API returns an error (server-side failure).
+    // Destructure userContext
     const {
-        credits: userCredits,
-        deductCredits: deductUserCredits,
-        deductSuperCredits: deductUserSuperCredits,
-        addCredits: addUserCredits,
-        addSuperCredits: addUserSuperCredits,
-    } = useUserCredits(user, services);
+        user, services, initError, signIn, signInWithTestCredentials, signOut,
+        userPreferences, userCredits, deductUserCredits, deductUserSuperCredits,
+        addUserCredits, addUserSuperCredits,
+        recordToCelebrate, showRecordBanner, checkForRecords, dismissRecord,
+        inAppNotifications, inAppNotificationsUnreadCount,
+        markNotificationAsRead, markAllNotificationsAsRead,
+        deleteInAppNotification, deleteAllInAppNotifications,
+        prefersReducedMotion, db,
+    } = userContext;
 
-    // Insight profile for generating contextual insights after transactions
+    // Destructure txData
+    const { transactions, transactionsWithRecentScans } = txData;
+
+    // Destructure mappingSystem
     const {
-        profile: insightProfile,
-        cache: insightCache,
-        recordShown: recordInsightShown,
-        trackTransaction: trackTransactionForInsight,
-        incrementCounter: incrementInsightCounter,
-    } = useInsightProfile(user, services);
+        mappings, findMerchantMatch, findItemNameMatch,
+        insightProfile, insightCache, recordInsightShown,
+        trackTransactionForInsight, incrementInsightCounter,
+    } = mappingSystem;
 
-    // Batch session tracking for multi-receipt scanning
+    // Destructure scans
     const {
-        session: batchSession,
-        addToBatch,
-        clearBatch,
-    } = useBatchSession();
+        scanState,
+        startBatchScanContext, startStatementScanContext,
+        dispatchBatchItemStart, dispatchBatchItemSuccess, dispatchBatchItemError, dispatchBatchComplete,
+        setBatchEditingIndexContext, showScanDialog, dismissScanDialog, setScanContextImages,
+        dispatchProcessStart, dispatchProcessSuccess,
+        resetScanContext, restoreScanState, setSkipScanCompleteModal, setIsRescanning,
+        isBatchModeFromContext, hasBatchReceipts, isAnalyzing,
+        scanImages, setScanImages, setScanError, scanStoreType, setScanStoreType,
+        scanCurrency, setScanCurrency, skipScanCompleteModal, isRescanning,
+        scanOverlay, batchProcessing,
+        batchSession, addToBatch, clearBatch,
+        recordMerchantScan, checkTrusted, acceptTrust, declinePrompt,
+    } = scans;
 
-    // Trusted merchants for auto-save functionality
+    // Destructure viewHandlers
     const {
-        recordMerchantScan,
-        checkTrusted,
-        acceptTrust,
-        declinePrompt,
-    } = useTrustedMerchants(user, services);
-
-    // Personal records detection and celebration
-    const {
-        recordToCelebrate,
-        showRecordBanner,
-        checkForRecords,
-        dismissRecord,
-    } = usePersonalRecords({
-        db: services?.db ?? null,
-        userId: user?.uid ?? null,
-        appId: services?.appId ?? null,
-    });
-
-    const db = getFirestore();
-
-    const {
-        notifications: inAppNotifications,
-        unreadCount: inAppNotificationsUnreadCount,
-        markAsRead: markNotificationAsRead,
-        markAllAsRead: markAllNotificationsAsRead,
-        deleteNotification: deleteInAppNotification,
-        deleteAllNotifications: deleteAllInAppNotifications,
-    } = useInAppNotifications(db, user?.uid || null, services?.appId || null);
-
-    // Scan state from Zustand store
-    const scanState = useScanStore();
-    const scanMode = useScanMode();
-    const isContextProcessing = useIsProcessing();
-
-    // Scan actions from Zustand store
-    const {
-        startSingle: startScanContext,
-        startBatch: startBatchScanContext,
-        startStatement: startStatementScanContext,
-        batchItemStart: dispatchBatchItemStart,
-        batchItemSuccess: dispatchBatchItemSuccess,
-        batchItemError: dispatchBatchItemError,
-        batchComplete: dispatchBatchComplete,
-        setBatchEditingIndex: setBatchEditingIndexContext,
-        showDialog: showScanDialogZustand,
-        dismissDialog: dismissScanDialog,
-        setImages: setScanContextImages,
-        processStart: dispatchProcessStart,
-        processSuccess: dispatchProcessSuccess,
-        processError: dispatchProcessError,
-        reset: resetScanContext,
-        restoreState: restoreScanState,
-        setSkipScanCompleteModal,
-        setIsRescanning,
-    } = useScanActions();
-
-    // Wrapper to maintain old showDialog(type, data) signature
-    const showScanDialog = useCallback((type: string, data?: unknown) => {
-        showScanDialogZustand({ type, data } as any);
-    }, [showScanDialogZustand]);
-
-    // Computed values derived from Zustand state
-    const isBatchModeFromContext = scanMode === 'batch';
-
-    // Wrapper functions for setStoreType and setCurrency (use restoreState)
-    const setScanContextStoreType = useCallback((storeType: ReceiptType) => {
-        restoreScanState({ storeType });
-    }, [restoreScanState]);
-
-    const setScanContextCurrency = useCallback((currency: string) => {
-        restoreScanState({ currency });
-    }, [restoreScanState]);
-
-    // Helper for batch receipts existence check
-    const hasBatchReceipts = (scanState.batchReceipts?.length ?? 0) > 0;
-
-    // ==========================================================================
-    // State Variable Migrations - ScanContext wrappers for backward compatibility
-    // ==========================================================================
-
-    // scanImages wrapper - auto-transitions to 'capturing' phase when setting images
-    const scanImages = scanState.images;
-    const setScanImages = useCallback((newImages: string[] | ((prev: string[]) => string[])) => {
-        const imagesToSet = typeof newImages === 'function'
-            ? newImages(scanState.images)
-            : newImages;
-
-        // Auto-transition to 'capturing' phase if needed
-        if (scanState.phase === 'idle' && imagesToSet.length > 0 && user?.uid) {
-            startScanContext(user.uid);
-            // setTimeout(0) defers to next tick to allow state transition
-            setTimeout(() => setScanContextImages(imagesToSet), 0);
-        } else if (imagesToSet.length === 0) {
-            // Clearing images resets to idle state
-            resetScanContext();
-        } else {
-            setScanContextImages(imagesToSet);
-        }
-    }, [scanState.images, scanState.phase, user?.uid, startScanContext, setScanContextImages, resetScanContext]);
-
-    // Story 14e-28b: scanError now accessed internally by TransactionEditorView via Zustand store
-    const setScanError = useCallback((error: string | null) => {
-        if (error) {
-            dispatchProcessError(error);
-        }
-    }, [dispatchProcessError]);
-
-    // isAnalyzing - derived from state machine phase (Story 14e-25d: setter removed - no-op)
-    const isAnalyzing = isContextProcessing;
-
-    // scanStoreType wrapper
-    const scanStoreType = (scanState.storeType || 'auto') as ReceiptType;
-    const setScanStoreType = useCallback((storeType: ReceiptType) => {
-        setScanContextStoreType(storeType);
-    }, [setScanContextStoreType]);
-
-    // scanCurrency wrapper
-    const scanCurrency = (scanState.currency || DEFAULT_CURRENCY) as SupportedCurrency;
-    const setScanCurrency = useCallback((currency: SupportedCurrency) => {
-        setScanContextCurrency(currency);
-    }, [setScanContextCurrency]);
-
-    // Story 14e-38: UI flag for scan complete modal suppression - from Zustand store
-    const skipScanCompleteModal = useSkipScanCompleteModal();
-
-    // ==========================================================================
-    // UI State
-    // ==========================================================================
-
-    // Navigation state from Zustand store
-    const view = useCurrentView();
-    const settingsSubview = useSettingsSubview();
-    const pendingHistoryFilters = usePendingHistoryFilters();
-    const pendingDistributionView = usePendingDistributionView();
-    const analyticsInitialState = useAnalyticsInitialState();
-    const {
-        setView,
-        setSettingsSubview,
-        saveScrollPosition,
-        setPendingHistoryFilters,
-        setPendingDistributionView,
-        setAnalyticsInitialState,
-        clearAnalyticsInitialState,
-    } = useNavigationActions();
-    const isRescanning = useIsRescanning();
-
-    // Transaction editor state from Zustand store
-    const currentTransaction = useCurrentTransaction();
-    const transactionNavigationList = useNavigationList();
-    const isViewingReadOnly = useIsReadOnly();
-    const creditUsedInSession = useCreditUsedInSession();
-    const isTransactionSaving = useIsSaving();
-    const animateEditViewItems = useAnimateItems();
-    const transactionEditorMode = useEditorMode();
-    const {
-        setTransaction: setCurrentTransaction,
-        setNavigationList: setTransactionNavigationList,
-        setReadOnly: setIsViewingReadOnly,
-        setCreditUsed: setCreditUsedInSession,
-        setAnimateItems: setAnimateEditViewItems,
-        setMode: setTransactionEditorMode,
-    } = useTransactionEditorActions();
-
-    // Insight and session UI state from Zustand store
-    const currentInsight = useCurrentInsight();
-    const showInsightCard = useShowInsightCard();
-    const showSessionComplete = useShowSessionComplete();
-    const sessionContext = useSessionContext();
-    const showBatchSummary = useShowBatchSummary();
-    const {
-        showInsight: storeShowInsight,
-        hideInsight,
-        showSessionCompleteOverlay,
-        hideSessionCompleteOverlay,
-        showBatchSummaryOverlay,
+        view, settingsSubview, pendingHistoryFilters, pendingDistributionView, analyticsInitialState,
+        setView, setSettingsSubview, saveScrollPosition,
+        setPendingHistoryFilters, setPendingDistributionView,
+        setAnalyticsInitialState, clearAnalyticsInitialState,
+        currentTransaction, transactionNavigationList, isViewingReadOnly, creditUsedInSession,
+        isTransactionSaving, animateEditViewItems, transactionEditorMode,
+        setCurrentTransaction, setTransactionNavigationList, setIsViewingReadOnly,
+        setCreditUsedInSession, setAnimateEditViewItems, setTransactionEditorMode,
+        currentInsight, showInsightCard, showSessionComplete, sessionContext, showBatchSummary,
+        hideInsight, showSessionCompleteOverlay, hideSessionCompleteOverlay,
         hideBatchSummaryOverlay,
-    } = useInsightActions();
+        setCurrentInsight, setShowInsightCard, setShowBatchSummary, setSessionContext,
+        showBatchPreview, setShowBatchPreview, isQuickSaving, setIsQuickSaving,
+        trustActionsRef, creditActionsRef,
+        lang, currency, dateFormat, theme, colorTheme, fontSize, fontFamily,
+        defaultCountry, defaultCity,
+        toastMessage, showToast, setToastMessage,
+        fileInputRef, handleFileInputReady,
+        t, openModalAction, closeModalAction, createDefaultTransaction,
+    } = viewHandlers;
 
-    // Wrapper functions to bridge old useState setters to store actions
-    const setCurrentInsight = useCallback((insight: Insight | null) => {
-        if (insight) {
-            storeShowInsight(insight);
-        }
-    }, [storeShowInsight]);
-
-    const setShowInsightCard = useCallback((show: boolean) => {
-        if (!show) {
-            hideInsight();
-        }
-    }, [hideInsight]);
-
-    const setShowBatchSummary = useCallback((show: boolean) => {
-        if (show) {
-            showBatchSummaryOverlay();
-        } else {
-            hideBatchSummaryOverlay();
-        }
-    }, [showBatchSummaryOverlay, hideBatchSummaryOverlay]);
-
-    const setSessionContext = useCallback((ctx: SessionContext | null) => {
-        if (ctx) {
-            showSessionCompleteOverlay(ctx);
-        } else {
-            hideSessionCompleteOverlay();
-        }
-    }, [showSessionCompleteOverlay, hideSessionCompleteOverlay]);
-
-    // Batch upload and processing state
-    const [showBatchPreview, setShowBatchPreview] = useState(false);
-    const [isQuickSaving, setIsQuickSaving] = useState(false);
-    const batchProcessing = useBatchProcessing(3);
-
-    // Refs for CreditFeature actions (enables cross-component communication)
-    const trustActionsRef = useRef<{
-        showTrustPromptAction: (data: TrustPromptEligibility) => void;
-        hideTrustPrompt: () => void;
-    } | null>(null);
-    const creditActionsRef = useRef<{
-        triggerCreditCheck: () => void;
-    } | null>(null);
-
-    const scanOverlay = useScanOverlayState();
-    const prefersReducedMotion = useReducedMotion();
-
-    // ==========================================================================
-    // Settings State (from Zustand store)
-    // ==========================================================================
-    const lang = useLang();
-    const currency = useCurrency();
-    const dateFormat = useDateFormat();
-    const theme = useSettingsStore((state) => state.theme);
-    const colorTheme = useSettingsStore((state) => state.colorTheme);
-    const fontSize = useSettingsStore((state) => state.fontSize);
-
-    // Font family from Firestore preferences
-    const fontFamily = userPreferences.fontFamily || 'outfit';
-
-    // Default location settings (from Firestore preferences)
-    const defaultCountry = userPreferences.defaultCountry || '';
-    const defaultCity = userPreferences.defaultCity || '';
-
-    /**
-     * When in shared group mode, automatically includes the active group ID.
-     * This ensures ALL new transactions (single scan, batch scan, manual creation)
-     * are initialized consistently with the shared group when applicable.
-     */
-    const createDefaultTransaction = useCallback((): Transaction => {
-        const baseTransaction: Transaction = {
-            merchant: '',
-            date: getSafeDate(null),
-            total: 0,
-            category: 'Supermarket',
-            items: [],
-            country: defaultCountry,
-            city: defaultCity,
-            currency: userPreferences.defaultCurrency || DEFAULT_CURRENCY,
-        };
-
-        return baseTransaction;
-    }, [defaultCountry, defaultCity, userPreferences.defaultCurrency]);
-
-    // UI loading states
-    const [wiping, _setWiping] = useState(false);
-    const [exporting, _setExporting] = useState(false);
-    const { toastMessage, showToast, dismissToast } = useToast();
-    const setToastMessage = useCallback((msg: ToastMessage | null) => {
-        if (msg) {
-            showToast(msg.text, msg.type);
-        } else {
-            dismissToast();
-        }
-    }, [showToast, dismissToast]);
-
-    // File input ref (owned by ScanFeature, received via callback)
-    const [fileInputRef, setFileInputRef] = useState<React.RefObject<HTMLInputElement>>({ current: null });
-    const handleFileInputReady = useCallback((ref: React.RefObject<HTMLInputElement>) => {
-        setFileInputRef(ref);
-    }, []);
     const mainRef = useRef<HTMLDivElement>(null);
-    const t = (k: string) => (TRANSLATIONS[lang] as any)[k] || k;
 
     // Batch delete wrapper: surfaces partial-failure via toast (Story 15-TD-12)
     const handleDeleteAllInAppNotifications = useCallback(async () => {
@@ -586,6 +245,13 @@ function App() {
             clearAnalyticsInitialState();
         }
     }, [view, analyticsInitialState, clearAnalyticsInitialState]);
+
+    // Story 15b-3f: Initialize analytics store when analyticsInitialState changes
+    useEffect(() => {
+        if (view === 'trends' && analyticsInitialState) {
+            analyticsActions.initialize(analyticsInitialState);
+        }
+    }, [view, analyticsInitialState]);
 
     // Story 14.13 Session 7: Clear pending distribution view when navigating AWAY from trends
     useEffect(() => {
@@ -707,8 +373,6 @@ function App() {
         formatCurrency,
     });
 
-    // Story 14e-4: Modal Manager actions for credit info modal
-    const { openModal: openModalAction, closeModal: closeModalAction } = useModalActions();
 
     // Scan handlers (overlay, quick save, currency/total mismatch)
     const {
@@ -1667,23 +1331,15 @@ function App() {
                   * Views can use useCategoriesContext() to access category state.
                   */}
                 <CategoriesFeature user={user} services={services}>
-                {/* Story 14e-22: AppProviders consolidates app-level providers.
-                  * Story 14e-25d: ViewHandlersProvider removed - views use direct hooks.
-                  * Story 14e-45: NavigationProvider removed - navigation via useNavigationStore.
-                  * Includes NotificationProvider (ThemeProvider/AppStateProvider removed in 15-7b/15-7c).
+                {/* Story 15b-3g: AppProviders now only syncs fontFamily to Zustand.
+                  * NotificationProvider removed (zero consumers).
                   */}
                 <AppProviders
                     fontFamily={userPreferences?.fontFamily}
-                    db={services?.db}
-                    userId={user?.uid}
-                    appId={services?.appId}
                 >
-                {view === 'dashboard' && (
-                    <HistoryFiltersProvider>
-                        {/* Story 14e-25b.2: DashboardView now owns its data via useDashboardViewData hook */}
-                        <DashboardView _testOverrides={dashboardCallbacks} />
-                    </HistoryFiltersProvider>
-                )}
+                {view === 'dashboard' && renderDashboardView({
+                    _testOverrides: dashboardCallbacks,
+                })}
 
                 {/* TransactionEditorView - Unified transaction editor */}
                 {/* Story 14e-28b: TransactionEditorView now owns data via internal hooks */}
@@ -1696,16 +1352,7 @@ function App() {
 
                 {/* TrendsView with filters and analytics providers */}
                 {/* Story 14e-25b.1: TrendsView now owns its data via useTrendsViewData hook */}
-                {view === 'trends' && (
-                    <HistoryFiltersProvider>
-                        <AnalyticsProvider
-                            key={analyticsInitialState ? JSON.stringify(analyticsInitialState.temporal) : 'default'}
-                            initialState={analyticsInitialState ?? undefined}
-                        >
-                            <TrendsView />
-                        </AnalyticsProvider>
-                    </HistoryFiltersProvider>
-                )}
+                {view === 'trends' && renderTrendsView({})}
 
                 {/* InsightsView - insight history with inline header */}
                 {/* Story 14e-25c.2: Minimal props - navigation via useNavigation() hook */}
@@ -1876,8 +1523,6 @@ function App() {
                             onWipeDB: wipeDB,
                             onExportAll: handleExportData,
                             onSignOut: signOut,
-                            wiping,
-                            exporting,
                         }}
                     />
                 )}
@@ -1903,18 +1548,13 @@ function App() {
                 })}
 
                 {/* Transaction History View - Story 14e-25a.2b: HistoryView now owns its data */}
-                {view === 'history' && (
-                    <HistoryFiltersProvider
-                        initialState={pendingHistoryFilters || undefined}
-                        onStateChange={setPendingHistoryFilters}
-                    >
-                        <HistoryView
-                            _testOverrides={{
-                                onEditTransaction: (tx) => navigateToTransactionDetail(tx as Transaction),
-                            }}
-                        />
-                    </HistoryFiltersProvider>
-                )}
+                {view === 'history' && renderHistoryView({
+                    initialState: pendingHistoryFilters || undefined,
+                    onStateChange: setPendingHistoryFilters,
+                    _testOverrides: {
+                        onEditTransaction: (tx) => navigateToTransactionDetail(tx as Transaction),
+                    },
+                })}
 
                 {/* Recent Scans View - latest scans sorted by scan date */}
                 {view === 'recent-scans' && renderRecentScansView({
@@ -1935,18 +1575,13 @@ function App() {
 
                 {/* Items History View - filtered navigation from analytics */}
                 {/* Story 14e-31: ItemsView owns data via useItemsViewData, handler via _testOverrides */}
-                {view === 'items' && (
-                    <HistoryFiltersProvider
-                        initialState={pendingHistoryFilters || undefined}
-                        onStateChange={setPendingHistoryFilters}
-                    >
-                        <ItemsView
-                            _testOverrides={{
-                                onEditTransaction: handleItemsEditTransaction,
-                            }}
-                        />
-                    </HistoryFiltersProvider>
-                )}
+                {view === 'items' && renderItemsView({
+                    initialState: pendingHistoryFilters || undefined,
+                    onStateChange: setPendingHistoryFilters,
+                    _testOverrides: {
+                        onEditTransaction: handleItemsEditTransaction,
+                    },
+                })}
 
                 {/* Weekly Reports View */}
                 {/* Story 14e-25c.2: Minimal props - transactions via internal hooks, navigation via useNavigation() */}
@@ -2014,7 +1649,7 @@ function App() {
                     }
                 }}
                 onTrendsClick={() => {
-                    // Navigation state is now managed by AnalyticsContext
+                    // Navigation state is managed by useAnalyticsStore (Zustand)
                     // Context resets to year level when mounted
                 }}
                 // Statement scan placeholder navigation

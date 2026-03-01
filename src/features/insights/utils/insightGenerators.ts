@@ -10,7 +10,7 @@
  * Pattern detection generators (Story 10.4) will be added later.
  */
 
-import { Transaction } from '@/types/transaction';
+import type { Transaction } from '@/types/transaction';
 import { Insight, InsightGenerator, InsightCategory } from '@/types/insight';
 import { DEFAULT_TIME } from '@/utils/transactionNormalizer';
 import { checkForDuplicates } from '@/services/duplicateDetectionService';

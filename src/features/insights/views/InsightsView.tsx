@@ -36,7 +36,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { ChevronLeft, Lightbulb, Trash2, X } from 'lucide-react';
-import { getUserInsightProfile } from '@features/insights/services/insightEngineService';
+import { useInsightProfileRepository } from '@/repositories';
 import { InsightHistoryCard } from '@features/insights/components/InsightHistoryCard';
 import { InsightDetailModal } from '@features/insights/components/InsightDetailModal';
 import {
@@ -204,6 +204,7 @@ export const InsightsView: React.FC<InsightsViewProps> = ({
   const { navigateBack, navigateToView } = useNavigation();
 
   const { user, services } = useAuth();
+  const insightProfileRepo = useInsightProfileRepository();
 
   // Story 14e-25c.2: User info from auth instead of props
   const userName = user?.displayName ?? '';
@@ -249,12 +250,12 @@ export const InsightsView: React.FC<InsightsViewProps> = ({
 
   useEffect(() => {
     async function loadInsights() {
-      if (!user || !services) {
+      if (!user || !services || !insightProfileRepo) {
         setLoading(false);
         return;
       }
       try {
-        const profile = await getUserInsightProfile(services.db, user.uid, services.appId);
+        const profile = await insightProfileRepo.get();
         if (profile?.recentInsights) {
           // Sort by date descending (most recent first)
           const sorted = [...profile.recentInsights].sort((a, b) => {
@@ -275,7 +276,7 @@ export const InsightsView: React.FC<InsightsViewProps> = ({
       }
     }
     loadInsights();
-  }, [user, services]);
+  }, [user, services, insightProfileRepo]);
 
   // Apply temporal filter
   const filteredInsights = useMemo(

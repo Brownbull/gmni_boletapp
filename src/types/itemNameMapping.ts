@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase/firestore'
-import type { ItemCategory } from './transaction'
+import type { ItemCategory } from '../../shared/schema/categories'
 
 /**
  * ItemNameMapping represents a user's learned item name preference per merchant.

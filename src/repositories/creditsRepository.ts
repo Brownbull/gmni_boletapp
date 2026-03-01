@@ -12,6 +12,8 @@ import {
   saveUserCredits,
   deductAndSaveCredits,
   deductAndSaveSuperCredits,
+  addAndSaveCredits,
+  addAndSaveSuperCredits,
 } from '@/services/userCreditsService';
 
 // =============================================================================
@@ -20,10 +22,22 @@ import {
 
 export interface ICreditsRepository {
   get(): Promise<UserCredits>;
-  /** @deprecated Use transactional methods (deduct, deductSuper) instead. Non-transactional setDoc bypasses TOCTOU safety. */
+  /** @deprecated Use transactional methods (deduct, deductSuper, add, addSuper) instead. Non-transactional setDoc bypasses TOCTOU safety. */
   save(credits: UserCredits): Promise<void>;
   deduct(amount: number): Promise<UserCredits>;
   deductSuper(amount: number): Promise<UserCredits>;
+  add(amount: number): Promise<UserCredits>;
+  addSuper(amount: number): Promise<UserCredits>;
+}
+
+// =============================================================================
+// Validation
+// =============================================================================
+
+function validateAmount(amount: number): void {
+  if (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount)) {
+    throw new Error('Amount must be a positive integer');
+  }
 }
 
 // =============================================================================
@@ -35,7 +49,21 @@ export function createCreditsRepository(ctx: RepositoryContext): ICreditsReposit
   return {
     get: () => getUserCredits(db, userId, appId),
     save: (credits) => saveUserCredits(db, userId, appId, credits),
-    deduct: (amount) => deductAndSaveCredits(db, userId, appId, amount),
-    deductSuper: (amount) => deductAndSaveSuperCredits(db, userId, appId, amount),
+    deduct: (amount) => {
+      validateAmount(amount);
+      return deductAndSaveCredits(db, userId, appId, amount);
+    },
+    deductSuper: (amount) => {
+      validateAmount(amount);
+      return deductAndSaveSuperCredits(db, userId, appId, amount);
+    },
+    add: (amount) => {
+      validateAmount(amount);
+      return addAndSaveCredits(db, userId, appId, amount);
+    },
+    addSuper: (amount) => {
+      validateAmount(amount);
+      return addAndSaveSuperCredits(db, userId, appId, amount);
+    },
   };
 }

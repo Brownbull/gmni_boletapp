@@ -125,3 +125,6 @@ docs/cost-tracking/session-costs.csv
 
 # Generated dependency diagrams
 dependency-diagrams/
+
+# Staging test user credentials (Story 15b-5a)
+staging-test-users.json

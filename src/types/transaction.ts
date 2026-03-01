@@ -7,11 +7,8 @@
  * DO NOT define StoreCategory or ItemCategory here - import from unified schema.
  */
 
-// Re-export types from unified schema for convenience
-export type { StoreCategory, ItemCategory } from '../../shared/schema/categories';
-
 // Import for use in this file
-import type { StoreCategory, ItemCategory } from '../../shared/schema/categories';
+import type { StoreCategory, ItemCategory, CategorySource, MerchantSource } from '../../shared/schema/categories';
 import type { Timestamp } from 'firebase/firestore';
 
 /**
@@ -46,21 +43,7 @@ export interface TransactionPeriods {
     year: string;
 }
 
-/**
- * Source of the category assignment for an item.
- * - 'scan': Category came from Gemini AI scan
- * - 'learned': Category was auto-applied from a learned mapping
- * - 'user': Category was manually set by the user
- */
-export type CategorySource = 'scan' | 'learned' | 'user';
-
-/**
- * Source of the merchant name assignment.
- * - 'scan': Merchant name came from Gemini AI scan
- * - 'learned': Merchant name was auto-corrected from a learned mapping
- * - 'user': Merchant name was manually set by the user
- */
-export type MerchantSource = 'scan' | 'learned' | 'user';
+// CategorySource and MerchantSource imported from unified schema above
 
 export interface TransactionItem {
     name: string;

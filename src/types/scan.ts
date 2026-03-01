@@ -9,7 +9,7 @@
  * The old PendingScan was replaced by the ScanContext state machine.
  */
 
-import { Transaction } from './transaction';
+import type { Transaction } from './transaction';
 
 /**
  * Status of a pending scan session.

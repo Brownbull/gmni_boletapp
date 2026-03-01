@@ -12,7 +12,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { Transaction } from '@/types/transaction';
+import type { Transaction } from '@/types/transaction';
 import { Insight } from '@/types/insight';
 
 /**

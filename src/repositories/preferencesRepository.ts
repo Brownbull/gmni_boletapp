@@ -7,7 +7,7 @@
 
 import type {
   UserPreferences,
-} from '@/services/userPreferencesService';
+} from '@/types/preferences';
 import type { RepositoryContext } from './types';
 import {
   getUserPreferences,

@@ -19,8 +19,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '../../setup/test-utils';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { AnalyticsProvider } from '../../../src/contexts/AnalyticsContext';
-import { HistoryFiltersProvider } from '../../../src/contexts/HistoryFiltersContext';
+import { useAnalyticsStore } from '@features/analytics/stores/useAnalyticsStore';
+import { getDefaultNavigationState } from '@features/analytics/utils/analyticsHelpers';
+import { useHistoryFiltersStore, getDefaultFilterState } from '@/shared/stores/useHistoryFiltersStore';
 import { TrendsView } from '../../../src/views/TrendsView';
 import type { Transaction } from '../../../src/types/transaction';
 // Story 14e-25b.1: Import type for _testOverrides prop
@@ -115,6 +116,7 @@ const mockT = (key: string) => {
     upgradeRequired: 'Upgrade required',
     totalSpent: 'Total Spent',
     transactions: 'Transactions',
+    analytics: 'Explora',
     // Story 14.14b: IconFilterBar translations
     temporalFilter: 'Time filter',
     categoryFilter: 'Category filter',
@@ -162,7 +164,13 @@ const initialState = {
   drillDownMode: 'temporal' as const,
 };
 
+beforeEach(() => {
+  useAnalyticsStore.setState(getDefaultNavigationState('2024'));
+});
+
 function renderTrendsView(transactions: Transaction[], testDataOverrides: Partial<TrendsViewData> = {}, state = initialState) {
+  // Story 15b-3f: Initialize Zustand store instead of wrapping with AnalyticsProvider
+  useAnalyticsStore.setState(state);
   // Story 14e-25b.1: Set mock hook return value before rendering
   // The hook is always called, so we need to provide the data via the mock
   mockHookReturnValue = {
@@ -170,12 +178,11 @@ function renderTrendsView(transactions: Transaction[], testDataOverrides: Partia
     ...testDataOverrides,
     transactions,
   };
+  // Story 15b-3g: Initialize filters directly instead of using HistoryFiltersProvider
+  useHistoryFiltersStore.getState().initializeFilters(getDefaultFilterState());
+
   return render(
-    <HistoryFiltersProvider>
-      <AnalyticsProvider initialState={state}>
-        <TrendsView />
-      </AnalyticsProvider>
-    </HistoryFiltersProvider>
+    <TrendsView />
   );
 }
 

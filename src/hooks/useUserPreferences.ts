@@ -21,7 +21,7 @@ import type {
   SupportedCurrency,
   SupportedFontFamily,
   ForeignLocationDisplayFormat,
-} from '../services/userPreferencesService';
+} from '@/types/preferences';
 import { DEFAULT_CURRENCY } from '@/utils/currency';
 
 interface UseUserPreferencesResult {

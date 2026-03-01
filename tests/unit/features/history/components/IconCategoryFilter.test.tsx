@@ -167,9 +167,9 @@ describe('CategoryFilterDropdownMenu', () => {
       const productsTab = screen.getByLabelText('Filtrar por productos');
       fireEvent.click(productsTab);
 
-      // After switching to products tab, item groups appear (toSentenceCase applied)
-      expect(screen.getByText('Fresh food')).toBeInTheDocument();
-      expect(screen.getByText('Packaged food')).toBeInTheDocument();
+      // After switching to products tab, item groups appear (toSentenceCase applied per word)
+      expect(screen.getByText('Fresh Food')).toBeInTheDocument();
+      expect(screen.getByText('Packaged Food')).toBeInTheDocument();
     });
 
     it('switches to location tab on click', () => {

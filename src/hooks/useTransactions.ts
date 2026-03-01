@@ -23,27 +23,9 @@ import { User } from 'firebase/auth';
 import { Services } from './useAuth';
 import { useFirestoreSubscription } from './useFirestoreSubscription';
 import { QUERY_KEYS } from '../lib/queryKeys';
-import { subscribeToTransactions } from '../services/firestore';
-import { Transaction } from '../types/transaction';
-import { getSafeDate, parseStrictNumber } from '../utils/validation';
-
-/**
- * Sanitizes raw Firestore transaction data.
- * Ensures dates are valid and numbers are properly parsed.
- */
-function sanitizeTransactions(docs: Transaction[]): Transaction[] {
-    return docs.map(d => ({
-        ...d,
-        date: getSafeDate(d.date),
-        total: parseStrictNumber(d.total),
-        items: Array.isArray(d.items)
-            ? d.items.map(i => ({
-                ...i,
-                price: parseStrictNumber(i.price)
-            }))
-            : []
-    }));
-}
+import { createTransactionRepository } from '@/repositories/transactionRepository';
+import { sanitizeTransactions } from '@/repositories/utils';
+import type { Transaction } from '../types/transaction';
 
 /**
  * Sorts transactions by date descending (newest first).
@@ -66,24 +48,25 @@ export function useTransactions(user: User | null, services: Services | null): T
 
     // Create the query key (stable reference when deps don't change)
     const queryKey = useMemo(
-        () => enabled ? QUERY_KEYS.transactions(user!.uid, services!.appId) : ['transactions', '', ''],
+        () => enabled ? QUERY_KEYS.transactions(user.uid, services.appId) : ['transactions', '', ''],
         [enabled, user?.uid, services?.appId]
     );
 
     // Subscribe to transactions with React Query caching
     const { data } = useFirestoreSubscription<Transaction[]>(
         queryKey,
-        (callback) => subscribeToTransactions(
-            services!.db,
-            user!.uid,
-            services!.appId,
-            (docs) => {
-                // Sanitize and sort before passing to cache
+        (callback) => {
+            if (!services || !user) return () => {};
+            const repo = createTransactionRepository({ db: services.db, userId: user.uid, appId: services.appId });
+            let cancelled = false;
+            const unsubscribe = repo.subscribe((docs) => {
+                if (cancelled) return;
                 const sanitized = sanitizeTransactions(docs);
                 const sorted = sortByDateDesc(sanitized);
                 callback(sorted);
-            }
-        ),
+            });
+            return () => { cancelled = true; unsubscribe(); };
+        },
         { enabled }
     );
 

@@ -4,7 +4,7 @@ import { BookMarked } from 'lucide-react';
 import { getCategoryPillColors, getItemCategoryColors } from '@/config/categoryColors';
 import { translateCategory, translateSubcategory, translateItemGroup, getItemCategoryEmoji } from '@/utils/categoryTranslations';
 import { getCategoryEmoji } from '@/utils/categoryEmoji';
-import type { CategorySource } from '@/types/transaction';
+import type { CategorySource } from '../../../../shared/schema/categories';
 import type { Language } from '@/utils/translations';
 
 interface CategoryBadgeProps {

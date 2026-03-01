@@ -23,7 +23,7 @@ import { useCategoryMappings, UseCategoryMappingsReturn } from '@/hooks/useCateg
 import { useSubcategoryMappings, UseSubcategoryMappingsReturn } from '@/hooks/useSubcategoryMappings';
 import { CategoryMapping, MatchResult } from '@/types/categoryMapping';
 import { SubcategoryMapping, SubcategoryMatchResult } from '@/types/subcategoryMapping';
-import { StoreCategory } from '@/types/transaction';
+import type { StoreCategory } from '../../../../shared/schema/categories';
 
 /**
  * Return type for the useCategoriesState hook.

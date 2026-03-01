@@ -40,7 +40,8 @@ import { useItemNameMappings } from '@/hooks/useItemNameMappings';
 import { formatCurrency as formatCurrencyUtil } from '@/utils/currency';
 import { TRANSLATIONS } from '@/utils/translations';
 import { STORE_CATEGORIES } from '@/config/constants';
-import type { Transaction, StoreCategory, ItemCategory } from '@/types/transaction';
+import type { Transaction } from '@/types/transaction';
+import type { StoreCategory, ItemCategory } from '../../../../../shared/schema/categories';
 import type { UserCredits } from '@/types/scan';
 import type { Language, Theme } from '@/types/settings';
 import type { ItemNameMapping } from '@/types/itemNameMapping';
@@ -161,7 +162,7 @@ export function useTransactionEditorData(
     const defaultCountry = preferences.defaultCountry || '';
 
     // === User Credits ===
-    const { credits: userCredits } = useUserCredits(user, services);
+    const { credits: userCredits } = useUserCredits(user);
 
     // === Transactions (for distinct aliases) ===
     const transactions = useTransactions(user, services);

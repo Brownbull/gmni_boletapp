@@ -14,7 +14,7 @@
  * Threshold: 85% (0.85) for Quick Save eligibility
  */
 
-import { Transaction } from '../types/transaction';
+import type { Transaction } from '../types/transaction';
 import { hasValidItems } from '@/utils/transactionValidation';
 
 /** Confidence threshold for showing Quick Save Card */

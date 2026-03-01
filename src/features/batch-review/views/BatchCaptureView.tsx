@@ -34,7 +34,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { MAX_BATCH_CAPTURE_IMAGES } from '../hooks/useBatchCapture';
-import { formatCreditsDisplay } from '@/services/userCreditsService';
+import { formatCreditsDisplay } from '@/utils/creditFormatters';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
 import { useScanStore, useIsProcessing, useScanActions } from '@features/scan/store';
 import { processFilesForCapture, type ProcessedImage } from '@features/batch-review/utils/imageUtils';

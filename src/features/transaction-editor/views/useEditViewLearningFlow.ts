@@ -4,7 +4,7 @@
  * category -> subcategory -> merchant -> save
  */
 import { useState } from 'react';
-import { StoreCategory } from '@/types/transaction';
+import type { StoreCategory } from '../../../../shared/schema/categories';
 import { celebrateSuccess } from '@/utils/confetti';
 import {
     Transaction,

@@ -17,7 +17,12 @@ import {
   getTransactionPage,
   deleteTransactionsBatch,
   updateTransactionsBatch,
+  LISTENER_LIMITS,
+  PAGINATION_PAGE_SIZE,
 } from '@/services/firestore';
+
+// Re-export constants for consumers migrating from direct service imports
+export { LISTENER_LIMITS, PAGINATION_PAGE_SIZE };
 
 // =============================================================================
 // Interface

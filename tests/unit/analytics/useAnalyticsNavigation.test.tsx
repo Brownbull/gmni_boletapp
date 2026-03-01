@@ -1,16 +1,16 @@
 /**
  * useAnalyticsNavigation Hook Unit Tests
  *
- * Tests for the custom hook that provides access to analytics context.
+ * Tests for the custom hook that provides access to analytics store state.
+ * Migrated from AnalyticsContext to Zustand store (Story 15b-3f).
  *
  * Story 7.1 - Analytics Navigation Context
  * AC #5: useAnalyticsNavigation() hook provides typed access to context state and dispatch
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import React from 'react';
-import { AnalyticsProvider } from '../../../src/contexts/AnalyticsContext';
+import { useAnalyticsStore } from '@features/analytics/stores/useAnalyticsStore';
 import {
   useAnalyticsNavigation,
   supportsComparisonMode,
@@ -19,24 +19,16 @@ import {
   getParentCategoryLevel,
   getChildCategoryLevel,
 } from '@features/analytics/hooks/useAnalyticsNavigation';
+import { getDefaultNavigationState } from '@features/analytics/utils/analyticsHelpers';
 import type { AnalyticsNavigationState } from '../../../src/types/analytics';
 
-// Helper to create a wrapper with AnalyticsProvider
-function createWrapper(initialState?: AnalyticsNavigationState) {
-  return function Wrapper({ children }: { children: React.ReactNode }) {
-    return (
-      <AnalyticsProvider initialState={initialState}>
-        {children}
-      </AnalyticsProvider>
-    );
-  };
-}
+beforeEach(() => {
+  useAnalyticsStore.setState(getDefaultNavigationState('2024'));
+});
 
 describe('useAnalyticsNavigation - Basic Functionality', () => {
   it('AC #5: provides typed access to state', () => {
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     // State should be accessible
     expect(result.current.state).toBeDefined();
@@ -46,110 +38,80 @@ describe('useAnalyticsNavigation - Basic Functionality', () => {
   });
 
   it('AC #5: provides dispatch function', () => {
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     expect(result.current.dispatch).toBeDefined();
     expect(typeof result.current.dispatch).toBe('function');
   });
 
-  it('AC #5: throws error when used outside AnalyticsProvider', () => {
-    // Suppress console.error for this test since React will log the error
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-    expect(() => {
-      renderHook(() => useAnalyticsNavigation());
-    }).toThrow(
-      'useAnalyticsNavigation must be used within an AnalyticsProvider'
-    );
-
-    consoleSpy.mockRestore();
-  });
-
-  it('error message includes guidance about AnalyticsProvider', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-    try {
-      renderHook(() => useAnalyticsNavigation());
-    } catch (error) {
-      expect((error as Error).message).toContain('AnalyticsProvider');
-      expect((error as Error).message).toContain(
-        'src/contexts/AnalyticsContext.tsx'
-      );
-    }
-
-    consoleSpy.mockRestore();
-  });
+  // Story 15b-3f: Zustand stores are always available - no Provider required
+  // "throws outside Provider" test removed (Zustand stores don't throw)
 });
 
 describe('useAnalyticsNavigation - Convenience Selectors', () => {
   it('provides temporal selector', () => {
-    const initialState: AnalyticsNavigationState = {
+    const customState: AnalyticsNavigationState = {
       temporal: { level: 'month', year: '2024', quarter: 'Q4', month: '2024-10' },
       category: { level: 'all' },
       chartMode: 'aggregation',
+      drillDownMode: 'temporal',
     };
 
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(initialState),
-    });
+    useAnalyticsStore.setState(customState);
 
-    expect(result.current.temporal).toEqual(initialState.temporal);
+    const { result } = renderHook(() => useAnalyticsNavigation());
+
+    expect(result.current.temporal).toEqual(customState.temporal);
   });
 
   it('provides category selector', () => {
-    const initialState: AnalyticsNavigationState = {
+    useAnalyticsStore.setState({
       temporal: { level: 'year', year: '2024' },
       category: { level: 'category', category: 'Food' },
       chartMode: 'aggregation',
-    };
-
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(initialState),
+      drillDownMode: 'temporal',
     });
 
-    expect(result.current.category).toEqual(initialState.category);
+    const { result } = renderHook(() => useAnalyticsNavigation());
+
+    expect(result.current.category).toEqual({ level: 'category', category: 'Food' });
   });
 
   it('provides chartMode selector', () => {
-    const initialState: AnalyticsNavigationState = {
+    useAnalyticsStore.setState({
       temporal: { level: 'year', year: '2024' },
       category: { level: 'all' },
       chartMode: 'comparison',
-    };
-
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(initialState),
+      drillDownMode: 'temporal',
     });
+
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     expect(result.current.chartMode).toBe('comparison');
   });
 
   it('provides temporalLevel selector', () => {
-    const initialState: AnalyticsNavigationState = {
+    useAnalyticsStore.setState({
       temporal: { level: 'week', year: '2024', quarter: 'Q4', month: '2024-10', week: 2 },
       category: { level: 'all' },
       chartMode: 'aggregation',
-    };
-
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(initialState),
+      drillDownMode: 'temporal',
     });
+
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     expect(result.current.temporalLevel).toBe('week');
   });
 
   it('provides categoryLevel selector', () => {
-    const initialState: AnalyticsNavigationState = {
+    useAnalyticsStore.setState({
       temporal: { level: 'year', year: '2024' },
       category: { level: 'group', category: 'Food', group: 'Groceries' },
       chartMode: 'aggregation',
-    };
-
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(initialState),
+      drillDownMode: 'temporal',
     });
+
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     expect(result.current.categoryLevel).toBe('group');
   });
@@ -157,67 +119,58 @@ describe('useAnalyticsNavigation - Convenience Selectors', () => {
 
 describe('useAnalyticsNavigation - Boolean Helpers', () => {
   it('isYearLevel is true when at year level', () => {
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     expect(result.current.isYearLevel).toBe(true);
   });
 
   it('isYearLevel is false when drilled down', () => {
-    const initialState: AnalyticsNavigationState = {
+    useAnalyticsStore.setState({
       temporal: { level: 'quarter', year: '2024', quarter: 'Q4' },
       category: { level: 'all' },
       chartMode: 'aggregation',
-    };
-
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(initialState),
+      drillDownMode: 'temporal',
     });
+
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     expect(result.current.isYearLevel).toBe(false);
   });
 
   it('hasCategoryFilter is false when at "all" level', () => {
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     expect(result.current.hasCategoryFilter).toBe(false);
   });
 
   it('hasCategoryFilter is true when filtered', () => {
-    const initialState: AnalyticsNavigationState = {
+    useAnalyticsStore.setState({
       temporal: { level: 'year', year: '2024' },
       category: { level: 'category', category: 'Food' },
       chartMode: 'aggregation',
-    };
-
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(initialState),
+      drillDownMode: 'temporal',
     });
+
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     expect(result.current.hasCategoryFilter).toBe(true);
   });
 
   it('isComparisonMode is false in aggregation mode', () => {
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     expect(result.current.isComparisonMode).toBe(false);
   });
 
   it('isComparisonMode is true in comparison mode', () => {
-    const initialState: AnalyticsNavigationState = {
+    useAnalyticsStore.setState({
       temporal: { level: 'year', year: '2024' },
       category: { level: 'all' },
       chartMode: 'comparison',
-    };
-
-    const { result } = renderHook(() => useAnalyticsNavigation(), {
-      wrapper: createWrapper(initialState),
+      drillDownMode: 'temporal',
     });
+
+    const { result } = renderHook(() => useAnalyticsNavigation());
 
     expect(result.current.isComparisonMode).toBe(true);
   });

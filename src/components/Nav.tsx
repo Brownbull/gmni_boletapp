@@ -35,7 +35,7 @@ import React, { useRef, useCallback, useState, useEffect, useMemo } from 'react'
 import { Camera, Home, Lightbulb, BarChart3, Bell, Layers, CreditCard, AlertTriangle } from 'lucide-react';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { DURATION, EASING } from './animation/constants';
-import { formatCreditsDisplay, formatSuperCreditsDisplay } from '../services/userCreditsService';
+import { formatCreditsDisplay, formatSuperCreditsDisplay } from '@/utils/creditFormatters';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store selectors
 import {
   useHasActiveRequest,

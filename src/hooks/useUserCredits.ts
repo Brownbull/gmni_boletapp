@@ -3,19 +3,15 @@
  *
  * React hook for managing user scan credits with Firestore persistence.
  * Credits persist across logins and are only modified by scanning receipts.
+ *
+ * Story 15b-3d: Migrated from direct userCreditsService imports to ICreditsRepository.
+ * All Firestore operations now go through useCreditsRepository().
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { User } from 'firebase/auth';
-import { Firestore } from 'firebase/firestore';
+import type { User } from 'firebase/auth';
 import { UserCredits, DEFAULT_CREDITS } from '../types/scan';
-import {
-  getUserCredits,
-  deductAndSaveCredits,
-  deductAndSaveSuperCredits,
-  addAndSaveCredits,
-  addAndSaveSuperCredits,
-} from '../services/userCreditsService';
+import { useCreditsRepository } from '@/repositories/hooks';
 
 interface UseUserCreditsResult {
   /** Current user credits (both normal and super) */
@@ -54,18 +50,6 @@ interface UseUserCreditsResult {
   refundReservedCredits: () => void;
 }
 
-interface FirebaseServices {
-  db: Firestore;
-  appId: string;
-}
-
-/**
- * Hook for managing user scan credits with Firestore persistence
- *
- * @param user - Firebase Auth user
- * @param services - Firebase services (db, appId)
- * @returns User credits and update functions
- */
 /**
  * State for tracking reserved credits during scan operations.
  * Story 14.24: Credits are reserved (UI deducted) but not persisted until scan succeeds.
@@ -80,9 +64,9 @@ interface ReservedCreditsState {
 }
 
 export function useUserCredits(
-  user: User | null,
-  services: FirebaseServices | null
+  user: User | null
 ): UseUserCreditsResult {
+  const repo = useCreditsRepository();
   const [credits, setCredits] = useState<UserCredits>(DEFAULT_CREDITS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -93,9 +77,9 @@ export function useUserCredits(
   // Story 14.24: Track reserved credits (pending confirmation)
   const [reservedCredits, setReservedCredits] = useState<ReservedCreditsState | null>(null);
 
-  // Load credits on mount or when user/services change
+  // Load credits on mount or when user/repo change
   useEffect(() => {
-    if (!user || !services) {
+    if (!user || !repo) {
       setLoading(false);
       return;
     }
@@ -109,53 +93,51 @@ export function useUserCredits(
       setLoading(true);
       setError(null);
       try {
-        const userCredits = await getUserCredits(services.db, user.uid, services.appId);
+        const userCredits = await repo.get();
         setCredits(userCredits);
         loadedForUserRef.current = user.uid;
       } catch (err) {
         console.error('Failed to load user credits:', err);
-        setError(err instanceof Error ? err : new Error('Failed to load credits'));
+        setError(new Error('Unable to load credits. Please try again later.'));
       } finally {
         setLoading(false);
       }
     };
 
     loadCredits();
-  }, [user, services]);
+  }, [user, repo]);
 
   // Refresh credits when app becomes visible (catches admin changes made while in background)
   useEffect(() => {
-    if (!user || !services) return;
+    if (!user || !repo) return;
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         // Refresh credits when user returns to app
-        getUserCredits(services.db, user.uid, services.appId)
+        repo.get()
           .then((refreshed) => {
             setCredits(refreshed);
             setError(null);
           })
           .catch((err) => {
             console.error('Failed to refresh credits on visibility change:', err);
-            setError(err instanceof Error ? err : new Error('Failed to refresh credits'));
+            setError(new Error('Unable to refresh credits. Please try again later.'));
           });
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [user, services]);
+  }, [user, repo]);
 
   // Deduct normal credits (for scanning receipts)
-  // Uses transactional deductAndSaveCredits to prevent TOCTOU overdrafts (TD-10)
+  // Uses transactional repo.deduct to prevent TOCTOU overdrafts (TD-10)
   const deductCredits = useCallback(
     async (amount: number): Promise<boolean> => {
-      if (!user || !services) return false;
+      if (!repo) return false;
 
       try {
-        const updatedCredits = await deductAndSaveCredits(
-          services.db, user.uid, services.appId, amount
-        );
+        const updatedCredits = await repo.deduct(amount);
         setCredits(updatedCredits);
         return true;
       } catch (error) {
@@ -167,19 +149,17 @@ export function useUserCredits(
         return false;
       }
     },
-    [user, services]
+    [repo]
   );
 
   // Deduct super credits (tier 2)
-  // Uses transactional deductAndSaveSuperCredits to prevent TOCTOU overdrafts (TD-10)
+  // Uses transactional repo.deductSuper to prevent TOCTOU overdrafts (TD-10)
   const deductSuperCredits = useCallback(
     async (amount: number): Promise<boolean> => {
-      if (!user || !services) return false;
+      if (!repo) return false;
 
       try {
-        const updatedCredits = await deductAndSaveSuperCredits(
-          services.db, user.uid, services.appId, amount
-        );
+        const updatedCredits = await repo.deductSuper(amount);
         setCredits(updatedCredits);
         return true;
       } catch (error) {
@@ -190,61 +170,57 @@ export function useUserCredits(
         return false;
       }
     },
-    [user, services]
+    [repo]
   );
 
   // Add normal credits (for purchases, promotions, etc.)
-  // Uses transactional addAndSaveCredits to prevent lost updates (TD-13)
+  // Uses transactional repo.add to prevent lost updates (TD-13)
   const addCredits = useCallback(
     async (amount: number): Promise<void> => {
-      if (!user || !services) return;
+      if (!repo) return;
 
       try {
-        const updatedCredits = await addAndSaveCredits(
-          services.db, user.uid, services.appId, amount
-        );
+        const updatedCredits = await repo.add(amount);
         setCredits(updatedCredits);
       } catch (error) {
         console.error('Failed to add credits:', error);
-        throw error;
+        throw new Error('Unable to add credits. Please try again later.');
       }
     },
-    [user, services]
+    [repo]
   );
 
   // Add super credits (for purchases, promotions, etc.)
-  // Uses transactional addAndSaveSuperCredits to prevent lost updates (TD-13)
+  // Uses transactional repo.addSuper to prevent lost updates (TD-13)
   const addSuperCredits = useCallback(
     async (amount: number): Promise<void> => {
-      if (!user || !services) return;
+      if (!repo) return;
 
       try {
-        const updatedCredits = await addAndSaveSuperCredits(
-          services.db, user.uid, services.appId, amount
-        );
+        const updatedCredits = await repo.addSuper(amount);
         setCredits(updatedCredits);
       } catch (error) {
         console.error('Failed to add super credits:', error);
-        throw error;
+        throw new Error('Unable to add credits. Please try again later.');
       }
     },
-    [user, services]
+    [repo]
   );
 
   // Force refresh credits from Firestore (e.g., after admin changes or app resume)
   const refreshCredits = useCallback(async (): Promise<void> => {
-    if (!user || !services) return;
+    if (!repo) return;
 
     setLoading(true);
     try {
-      const userCredits = await getUserCredits(services.db, user.uid, services.appId);
+      const userCredits = await repo.get();
       setCredits(userCredits);
     } catch (error) {
       console.error('Failed to refresh user credits:', error);
     } finally {
       setLoading(false);
     }
-  }, [user, services]);
+  }, [repo]);
 
   /**
    * Story 14.24: Reserve credits locally without persisting to Firestore.
@@ -298,8 +274,8 @@ export function useUserCredits(
    * TD-10: Uses transactional deduction to prevent TOCTOU overdrafts.
    */
   const confirmReservedCredits = useCallback(async (): Promise<boolean> => {
-    if (!user || !services) {
-      console.error('confirmReservedCredits: no user or services');
+    if (!repo) {
+      if (import.meta.env.DEV) console.error('confirmReservedCredits: no repository available');
       return false;
     }
 
@@ -310,12 +286,9 @@ export function useUserCredits(
 
     try {
       // Use transactional deduction — reads fresh balance inside transaction
-      const deductFn = reservedCredits.type === 'super'
-        ? deductAndSaveSuperCredits
-        : deductAndSaveCredits;
-      const updatedCredits = await deductFn(
-        services.db, user.uid, services.appId, reservedCredits.amount
-      );
+      const updatedCredits = reservedCredits.type === 'super'
+        ? await repo.deductSuper(reservedCredits.amount)
+        : await repo.deduct(reservedCredits.amount);
       setCredits(updatedCredits);
       setReservedCredits(null);
       return true;
@@ -326,7 +299,7 @@ export function useUserCredits(
       setReservedCredits(null);
       return false;
     }
-  }, [user, services, reservedCredits]);
+  }, [repo, reservedCredits]);
 
   /**
    * Story 14.24: Refund reserved credits (restore UI state).

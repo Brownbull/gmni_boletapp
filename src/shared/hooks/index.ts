@@ -3,6 +3,7 @@
 export { useToast, type ToastMessage, type ToastType } from './useToast';
 export { useHistoryNavigation } from './useHistoryNavigation';
 export * from './useHistoryFilters';
+export { useHistoryFiltersInit } from './useHistoryFiltersInit';
 
 // Dialog utility hooks
 export { useBodyScrollLock } from './useBodyScrollLock';

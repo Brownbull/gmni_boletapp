@@ -18,13 +18,12 @@
  */
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Receipt, Package } from 'lucide-react';
+import { Receipt } from 'lucide-react';
 import { ImageViewer } from '@/components/ImageViewer';
 import type { TransactionPreview } from '@features/history/components/DeleteTransactionsModal';
 import { useModalActions } from '@managers/ModalManager';
 import { useSelectionMode } from '@/hooks/useSelectionMode';
-import { deleteTransactionsBatch } from '@/services/firestore';
-import { getFirestore } from 'firebase/firestore';
+import { useTransactionRepository } from '@/repositories';
 import { translateCategory } from '@/utils/categoryTranslations';
 import { DashboardRadarSlide } from './DashboardRadarSlide';
 import { DashboardBumpSlide } from './DashboardBumpSlide';
@@ -39,8 +38,6 @@ import { TransitionChild } from '@/components/animation/TransitionChild';
 import { useCountUp } from '@/hooks/useCountUp';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import {
-    expandStoreCategoryGroup,
-    expandItemCategoryGroup,
     type StoreCategoryGroup,
     type ItemCategoryGroup,
 } from '@/config/categoryColors';
@@ -53,7 +50,6 @@ import {
     getItemCategoryEmoji,
 } from '@/utils/categoryTranslations';
 import { calculateTreemapLayout } from '@/utils/treemapLayout';
-import { HistoryNavigationPayload, DrillDownPath } from '@features/analytics/utils/analyticsToHistoryFilters';
 import { useHistoryNavigation } from '@/shared/hooks';
 import { useNavigationActions } from '@/shared/stores';
 import { useDashboardViewData, type UseDashboardViewDataReturn } from './useDashboardViewData';
@@ -67,13 +63,16 @@ import {
 } from './categoryDataHelpers';
 import type { SortType, CarouselSlide, TreemapViewMode, Transaction } from './types';
 import {
-    CAROUSEL_TITLE_KEYS, VIEW_MODE_CONFIG,
+    CAROUSEL_TITLE_KEYS,
     MONTH_SHORT_KEYS,
     RECENT_TRANSACTIONS_COLLAPSED, RECENT_TRANSACTIONS_EXPANDED,
 } from './types';
 import { AnimatedTreemapCard } from './AnimatedTreemapCard';
 import { DashboardFullListView } from './DashboardFullListView';
 import { DashboardRecientesSection } from './DashboardRecientesSection';
+import { useDashboardMonthNavigation } from './useDashboardMonthNavigation';
+import { DashboardCarouselHeader } from './DashboardCarouselHeader';
+import { buildTreemapCellNavigationPayload } from './dashboardNavigationHelpers';
 
 /** DashboardView props - minimal, only test overrides and App-level callbacks. */
 export interface DashboardViewProps {
@@ -121,15 +120,46 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
     const onViewHistory = () => setView('history');
 
     useReducedMotion();
+    // Story 15b-3a: DAL migration — repository replaces direct service imports
+    const txRepo = useTransactionRepository();
+
+    // Story 15b-2n: Month navigation extracted to useDashboardMonthNavigation hook
+    const [animationKey, setAnimationKey] = useState(0);
+    const [selectedRadarCategory, setSelectedRadarCategory] = useState<{
+        name: string;
+        emoji: string;
+        currAmount: number;
+        prevAmount: number;
+        color: string;
+    } | null>(null);
+    const [bumpTooltip, setBumpTooltip] = useState<{ category: string; month: string; amount: number; color: string } | null>(null);
+
+    const resetSlideState = useCallback(() => {
+        setAnimationKey(prev => prev + 1);
+        setSelectedRadarCategory(null);
+        setBumpTooltip(null);
+    }, []);
+
+    const {
+        selectedMonth,
+        selectedMonthString,
+        goToCurrentMonth,
+        isViewingCurrentMonth,
+        canGoToNextMonth,
+        formattedMonthName,
+        formatCompactAmount,
+        prevMonthName,
+        nextMonthName,
+        monthTouchStart,
+        monthSwipeOffset,
+        onMonthTouchStart,
+        onMonthTouchMove,
+        onMonthTouchEnd,
+    } = useDashboardMonthNavigation({ lang, formatCurrency, currency, resetSlideState });
 
     // ImageViewer modal state
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
-    // Selected month/year for viewing data
-    const [selectedMonth, setSelectedMonth] = useState(() => {
-        const now = new Date();
-        return { year: now.getFullYear(), month: now.getMonth() };
-    });
 
     // Recientes carousel state
     const [recientesExpanded, setRecientesExpanded] = useState(false);
@@ -176,21 +206,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
     const monthPickerRef = useRef<HTMLDivElement>(null);
     const monthPickerToggleRef = useRef<HTMLButtonElement>(null);
     const [showCountTooltip, setShowCountTooltip] = useState(false);
-    const [selectedRadarCategory, setSelectedRadarCategory] = useState<{
-        name: string;
-        emoji: string;
-        currAmount: number;
-        prevAmount: number;
-        color: string;
-    } | null>(null);
-    const [bumpTooltip, setBumpTooltip] = useState<{ category: string; month: string; amount: number; color: string } | null>(null);
     const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
     const [touchStart, setTouchStart] = useState<number | null>(null);
     const [touchEnd, setTouchEnd] = useState<number | null>(null);
     const [carouselSwipeOffset, setCarouselSwipeOffset] = useState(0);
-    const [monthTouchStart, setMonthTouchStart] = useState<number | null>(null);
-    const [monthSwipeOffset, setMonthSwipeOffset] = useState(0);
-    const [animationKey, setAnimationKey] = useState(0);
 
     // Pagination
     const [historyPage, setHistoryPage] = useState(1);
@@ -249,11 +268,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
     // Story 10a.1: Use allTransactions for display (AC #3)
     const allTx = allTransactions.length > 0 ? allTransactions : transactions;
 
-    // Story 14.12: Get selected month string (YYYY-MM format)
-    const selectedMonthString = useMemo(() => {
-        const month = String(selectedMonth.month + 1).padStart(2, '0');
-        return `${selectedMonth.year}-${month}`;
-    }, [selectedMonth]);
 
     // Story 14.12: Filter transactions for selected month
     const monthTransactions = useMemo(() => {
@@ -421,124 +435,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
         setCarouselSwipeOffset(0);
     };
 
-    // Story 14.13: Navigate to previous month
-    const goToPrevMonth = useCallback(() => {
-        setSelectedMonth(prev => {
-            const newMonth = prev.month === 0 ? 11 : prev.month - 1;
-            const newYear = prev.month === 0 ? prev.year - 1 : prev.year;
-            return { year: newYear, month: newMonth };
-        });
-        setAnimationKey(prev => prev + 1);
-        setSelectedRadarCategory(null);
-        setBumpTooltip(null);
-    }, []);
 
-    // Story 14.13: Navigate to next month
-    const goToNextMonth = useCallback(() => {
-        const now = new Date();
-        setSelectedMonth(prev => {
-            const newMonth = prev.month === 11 ? 0 : prev.month + 1;
-            const newYear = prev.month === 11 ? prev.year + 1 : prev.year;
-            // Don't go beyond current month
-            const isFuture = newYear > now.getFullYear() ||
-                (newYear === now.getFullYear() && newMonth > now.getMonth());
-            if (isFuture) return prev;
-            return { year: newYear, month: newMonth };
-        });
-        setAnimationKey(prev => prev + 1);
-        setSelectedRadarCategory(null);
-        setBumpTooltip(null);
-    }, []);
 
-    // Story 14.31: Return to current month when tapping on the month title (if not current)
-    const goToCurrentMonth = useCallback(() => {
-        const now = new Date();
-        setSelectedMonth({ year: now.getFullYear(), month: now.getMonth() });
-        setAnimationKey(prev => prev + 1);
-        setSelectedRadarCategory(null);
-        setBumpTooltip(null);
-    }, []);
 
-    // Story 14.31: Check if currently viewing current month
-    const isViewingCurrentMonth = useMemo(() => {
-        const now = new Date();
-        return selectedMonth.year === now.getFullYear() && selectedMonth.month === now.getMonth();
-    }, [selectedMonth]);
 
-    // Story 14.13: Check if we can navigate to next month
-    const canGoToNextMonth = useMemo(() => {
-        const now = new Date();
-        const nextMonth = selectedMonth.month === 11 ? 0 : selectedMonth.month + 1;
-        const nextYear = selectedMonth.month === 11 ? selectedMonth.year + 1 : selectedMonth.year;
-        return !(nextYear > now.getFullYear() ||
-            (nextYear === now.getFullYear() && nextMonth > now.getMonth()));
-    }, [selectedMonth]);
 
-    // Story 14.13: Format month for display (e.g., "Ene '26")
-    const formatMonth = useCallback((month: number, year: number) => {
-        const monthNames = lang === 'es'
-            ? ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sept', 'Oct', 'Nov', 'Dic']
-            : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
-        const shortYear = year.toString().slice(-2);
-        return `${monthNames[month]} '${shortYear}`;
-    }, [lang]);
 
-    const formattedMonthName = useMemo(() => {
-        return formatMonth(selectedMonth.month, selectedMonth.year);
-    }, [selectedMonth, formatMonth]);
 
-    // Story 15-TD-16: Shared compact amount formatter for chart slides
-    const formatCompactAmount = useCallback(
-        (amount: number) => `${formatCurrency(Math.round(amount / 1000), currency).replace(/\s/g, '')}k`,
-        [formatCurrency, currency]
-    );
 
-    // Story 14.13: Get prev/next month names for swipe animation
-    const prevMonthName = useMemo(() => {
-        const prevMonth = selectedMonth.month === 0 ? 11 : selectedMonth.month - 1;
-        const prevYear = selectedMonth.month === 0 ? selectedMonth.year - 1 : selectedMonth.year;
-        return formatMonth(prevMonth, prevYear);
-    }, [selectedMonth, formatMonth]);
 
-    const nextMonthName = useMemo(() => {
-        const nextMonth = selectedMonth.month === 11 ? 0 : selectedMonth.month + 1;
-        const nextYear = selectedMonth.month === 11 ? selectedMonth.year + 1 : selectedMonth.year;
-        return formatMonth(nextMonth, nextYear);
-    }, [selectedMonth, formatMonth]);
-
-    // Story 14.13: Month swipe gesture handlers
-    const onMonthTouchStart = (e: React.TouchEvent) => {
-        setMonthTouchStart(e.targetTouches[0].clientX);
-        setMonthSwipeOffset(0);
-    };
-
-    const onMonthTouchMove = (e: React.TouchEvent) => {
-        if (monthTouchStart === null) return;
-        const currentX = e.targetTouches[0].clientX;
-        const offset = currentX - monthTouchStart;
-        // Resistance effect when at current month
-        if (offset < 0 && !canGoToNextMonth) {
-            setMonthSwipeOffset(offset * 0.2);
-        } else {
-            setMonthSwipeOffset(offset);
-        }
-    };
-
-    const onMonthTouchEnd = () => {
-        if (monthTouchStart === null) return;
-        const distance = -monthSwipeOffset;
-        const isLeftSwipe = distance > minSwipeDistance;
-        const isRightSwipe = distance < -minSwipeDistance;
-
-        if (isLeftSwipe && canGoToNextMonth) {
-            goToNextMonth();
-        } else if (isRightSwipe) {
-            goToPrevMonth();
-        }
-
-        setMonthTouchStart(null);
-        setMonthSwipeOffset(0);
-    };
 
     // Story 14.12: Recientes carousel navigation with slide animation
     const goToRecientesSlide = (targetSlide: 0 | 1, direction: 'left' | 'right') => {
@@ -715,92 +620,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
     // Story 14.13 Session 13: Added "Más" expansion to constituent categories
     const handleTreemapCellClick = useCallback((categoryName: string) => {
         if (!onNavigateToHistory) return;
-
-        // Build payload based on current view mode
-        const payload: HistoryNavigationPayload = {
-            // Story 14.13 Session 10: Target view based on countMode toggle
-            targetView: countMode === 'items' ? 'items' : 'history',
-            // Include temporal filter for the selected month
-            temporal: {
-                level: 'month',
-                year: String(selectedMonth.year),
-                month: selectedMonthString,
-            },
-            // Story 14.13 Session 11: Add sourceDistributionView for back-navigation context
-            sourceDistributionView: 'treemap',
-        };
-
-        // Story 14.13 Session 13: Check if this is the "Más" aggregated group
-        const isAggregatedGroup = categoryName === 'Más' || categoryName === 'More';
-
-        // Add category filter based on view mode
-        // Story 14.13 Session 13: Expand "Más" to constituent categories
-        switch (treemapViewMode) {
-            case 'store-groups':
-                if (isAggregatedGroup && storeGroupsOtro.length > 0) {
-                    // "Más" contains multiple store groups - expand each group and combine
-                    const allCategories = storeGroupsOtro.flatMap(c =>
-                        expandStoreCategoryGroup(c.name as StoreCategoryGroup)
-                    );
-                    payload.category = allCategories.join(',');
-                } else {
-                    payload.storeGroup = categoryName;
-                }
-                break;
-            case 'store-categories':
-                if (isAggregatedGroup && storeCategoriesOtro.length > 0) {
-                    // "Más" contains multiple store categories - join them with comma
-                    payload.category = storeCategoriesOtro.map(c => c.name).join(',');
-                } else {
-                    payload.category = categoryName;
-                }
-                break;
-            case 'item-groups':
-                if (isAggregatedGroup && itemGroupsOtro.length > 0) {
-                    // "Más" contains multiple item groups - expand each group and combine
-                    const allItemCategories = itemGroupsOtro.flatMap(c =>
-                        expandItemCategoryGroup(c.name as ItemCategoryGroup)
-                    );
-                    payload.itemCategory = allItemCategories.join(',');
-                } else {
-                    payload.itemGroup = categoryName;
-                }
-                break;
-            case 'item-categories':
-                if (isAggregatedGroup && itemCategoriesOtro.length > 0) {
-                    // "Más" contains multiple item categories - join them with comma
-                    payload.itemCategory = itemCategoriesOtro.map(c => c.name).join(',');
-                } else {
-                    payload.itemCategory = categoryName;
-                }
-                break;
-        }
-
-        // Story 14.13 Session 11: Build semantic drill-down path for proper multi-level filtering
-        // Story 14.13 Session 13: Skip drillDownPath for aggregated "Más" - already expanded above
-        if (!isAggregatedGroup) {
-            const dashboardPath: DrillDownPath = {};
-            switch (treemapViewMode) {
-                case 'store-groups':
-                    dashboardPath.storeGroup = categoryName;
-                    break;
-                case 'store-categories':
-                    dashboardPath.storeCategory = categoryName;
-                    break;
-                case 'item-groups':
-                    dashboardPath.itemGroup = categoryName;
-                    break;
-                case 'item-categories':
-                    dashboardPath.itemCategory = categoryName;
-                    break;
-            }
-            if (Object.keys(dashboardPath).length > 0) {
-                payload.drillDownPath = dashboardPath;
-            }
-        }
-
-        onNavigateToHistory(payload);
-    }, [onNavigateToHistory, treemapViewMode, selectedMonth.year, selectedMonthString, countMode, storeCategoriesOtro, storeGroupsOtro, itemCategoriesOtro, itemGroupsOtro]);
+        onNavigateToHistory(buildTreemapCellNavigationPayload({
+            categoryName,
+            treemapViewMode,
+            selectedMonth,
+            selectedMonthString,
+            countMode,
+            storeCategoriesOtro,
+            storeGroupsOtro,
+            itemCategoriesOtro,
+            itemGroupsOtro,
+        }));
+    }, [onNavigateToHistory, treemapViewMode, selectedMonth, selectedMonthString, countMode, storeCategoriesOtro, storeGroupsOtro, itemCategoriesOtro, itemGroupsOtro]);
 
     // Story 14.31: Handle View All click - navigate based on current slide
     // Slide 0 (Últimos Escaneados): Navigate to RecentScansView (by scan date)
@@ -854,11 +685,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
             transactions: getSelectedTransactions(),
             onClose: closeModal,
             onDelete: async () => {
-                if (!userId || selectedIds.size === 0) return;
-                const db = getFirestore();
+                if (!userId || selectedIds.size === 0 || !txRepo) return;
                 const selectedTxIds = Array.from(selectedIds);
                 try {
-                    await deleteTransactionsBatch(db, userId, appId, selectedTxIds);
+                    await txRepo.deleteBatch(selectedTxIds);
                     onTransactionsDeleted?.(selectedTxIds);
                     closeModal();
                     exitSelectionMode();
@@ -974,194 +804,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
                         style={cardStyle}
                         data-testid="carousel-card"
                     >
-                        {/* Carousel Header with swipeable month and slide arrows */}
-                        {/* Story 14.13 Session 4: Restructured for true center alignment of view mode selector */}
-                        {/* Story 14.13.3: All elements aligned to 32px height (matching count toggle button) */}
-                        <div className="relative flex justify-between items-center p-3 pb-0">
-                            {/* Story 14.31: Left-aligned month with swipe navigation and chevron hints */}
-                            {/* Tap on text returns to current month when viewing past months */}
-                            <div
-                                className="relative flex items-center cursor-pointer select-none"
-                                style={{
-                                    touchAction: 'pan-y',
-                                    height: '24px',
-                                    marginLeft: '-4px',
-                                }}
-                                data-testid="carousel-title"
-                                onTouchStart={onMonthTouchStart}
-                                onTouchMove={onMonthTouchMove}
-                                onTouchEnd={onMonthTouchEnd}
-                                onClick={!isViewingCurrentMonth ? goToCurrentMonth : undefined}
-                            >
-                                {/* Left chevron hint */}
-                                <ChevronLeft
-                                    size={12}
-                                    strokeWidth={2}
-                                    style={{
-                                        color: 'var(--text-tertiary)',
-                                        opacity: 0.4,
-                                    }}
-                                />
-                                {/* Month text container with sliding animation */}
-                                <div
-                                    className="relative overflow-hidden flex items-center justify-center"
-                                    style={{ width: '54px', height: '100%' }}
-                                >
-                                    {/* Previous month (slides in from left when swiping right) */}
-                                    <span
-                                        className="absolute font-semibold whitespace-nowrap text-sm"
-                                        style={{
-                                            color: 'var(--text-primary)',
-                                            transform: `translateX(${monthSwipeOffset - 54}px)`,
-                                            transition: monthTouchStart === null ? 'transform 0.2s ease-out' : 'none',
-                                            opacity: monthSwipeOffset > 0 ? Math.min(monthSwipeOffset / 50, 1) : 0,
-                                        }}
-                                    >
-                                        {prevMonthName}
-                                    </span>
-                                    {/* Current month */}
-                                    <span
-                                        className="absolute font-semibold whitespace-nowrap text-sm"
-                                        style={{
-                                            color: 'var(--text-primary)',
-                                            transform: `translateX(${monthSwipeOffset}px)`,
-                                            transition: monthTouchStart === null ? 'transform 0.2s ease-out' : 'none',
-                                        }}
-                                    >
-                                        {formattedMonthName}
-                                        {/* Dot indicator when not on current month */}
-                                        {!isViewingCurrentMonth && (
-                                            <span style={{ marginLeft: '2px', color: 'var(--primary)' }}>·</span>
-                                        )}
-                                    </span>
-                                    {/* Next month (slides in from right when swiping left) */}
-                                    <span
-                                        className="absolute font-semibold whitespace-nowrap text-sm"
-                                        style={{
-                                            color: 'var(--text-primary)',
-                                            transform: `translateX(${monthSwipeOffset + 54}px)`,
-                                            transition: monthTouchStart === null ? 'transform 0.2s ease-out' : 'none',
-                                            opacity: monthSwipeOffset < 0 ? Math.min(-monthSwipeOffset / 50, 1) : 0,
-                                        }}
-                                    >
-                                        {nextMonthName}
-                                    </span>
-                                </div>
-                                {/* Right chevron hint */}
-                                <ChevronRight
-                                    size={12}
-                                    strokeWidth={2}
-                                    style={{
-                                        color: 'var(--text-tertiary)',
-                                        opacity: canGoToNextMonth ? 0.4 : 0.15,
-                                    }}
-                                />
-                            </div>
-
-                            {/* Story 14.13 Session 4: View mode selector - absolutely centered for all slides */}
-                            {/* Story 14.13.3: Height increased to 32px to match count toggle button */}
-                            <div
-                                className="absolute left-1/2 transform -translate-x-1/2 flex items-center"
-                                style={{ top: '12px' }}
-                            >
-                                <div
-                                    className="relative flex items-center rounded-full"
-                                    style={{
-                                        backgroundColor: 'var(--bg-tertiary, #f1f5f9)',
-                                        height: '32px',
-                                        padding: '2px 4px',
-                                        border: '1px solid var(--border-light, #e2e8f0)',
-                                        gap: '4px',
-                                    }}
-                                    role="tablist"
-                                    aria-label="View mode selection"
-                                    data-testid="viewmode-pills-container"
-                                >
-                                    {/* Animated selection indicator */}
-                                    <div
-                                        className="absolute rounded-full transition-all duration-300 ease-out"
-                                        style={{
-                                            width: '28px',
-                                            height: '28px',
-                                            top: '2px',
-                                            // 4px initial padding + (28px button + 4px gap) * index
-                                            left: treemapViewMode === 'store-groups' ? '4px' :
-                                                  treemapViewMode === 'store-categories' ? 'calc(4px + 32px)' :
-                                                  treemapViewMode === 'item-groups' ? 'calc(4px + 64px)' :
-                                                  'calc(4px + 96px)',
-                                            background: 'var(--primary, #2563eb)',
-                                        }}
-                                        aria-hidden="true"
-                                    />
-                                    {/* View mode pills with icons only */}
-                                    {VIEW_MODE_CONFIG.map((mode) => {
-                                        const isActive = treemapViewMode === mode.value;
-                                        return (
-                                            <button
-                                                key={mode.value}
-                                                onClick={() => {
-                                                    setTreemapViewMode(mode.value);
-                                                    setAnimationKey(prev => prev + 1);
-                                                }}
-                                                className="relative z-10 flex items-center justify-center rounded-full transition-colors"
-                                                style={{
-                                                    width: '28px',
-                                                    height: '28px',
-                                                    lineHeight: 1,
-                                                }}
-                                                aria-pressed={isActive}
-                                                aria-label={lang === 'es' ? mode.labelEs : mode.labelEn}
-                                                title={lang === 'es' ? mode.labelEs : mode.labelEn}
-                                                data-testid={`viewmode-pill-${mode.value}`}
-                                            >
-                                                <span
-                                                    className="text-base leading-none transition-all"
-                                                    style={{
-                                                        filter: isActive ? 'brightness(1.2)' : 'none',
-                                                    }}
-                                                >
-                                                    {mode.emoji}
-                                                </span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Story 14.13 Session 11: Count Mode Toggle (arrows removed - swipe navigation only) */}
-                            <div className="flex items-center gap-1 z-10">
-                                {/* Count Mode Toggle - Receipt (transactions) or Package (items) */}
-                                <button
-                                    onClick={toggleCountMode}
-                                    className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200"
-                                    aria-label={countMode === 'transactions'
-                                        ? (lang === 'es' ? 'Contando compras (clic para contar productos)' : 'Counting purchases (click to count products)')
-                                        : (lang === 'es' ? 'Contando productos (clic para contar compras)' : 'Counting products (click to count purchases)')
-                                    }
-                                    title={countMode === 'transactions'
-                                        ? (lang === 'es' ? 'Contando compras' : 'Counting purchases')
-                                        : (lang === 'es' ? 'Contando productos' : 'Counting products')
-                                    }
-                                    data-testid="count-mode-toggle"
-                                    style={{
-                                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                                        backgroundColor: countMode === 'items'
-                                            ? 'var(--primary)'
-                                            : 'var(--bg-tertiary)',
-                                        color: countMode === 'items'
-                                            ? 'white'
-                                            : 'var(--text-secondary)',
-                                    }}
-                                >
-                                    {countMode === 'transactions' ? (
-                                        <Receipt size={16} className="transition-opacity duration-150" />
-                                    ) : (
-                                        <Package size={16} className="transition-opacity duration-150" />
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-
+                        <DashboardCarouselHeader
+                            formattedMonthName={formattedMonthName}
+                            prevMonthName={prevMonthName}
+                            nextMonthName={nextMonthName}
+                            isViewingCurrentMonth={isViewingCurrentMonth}
+                            canGoToNextMonth={canGoToNextMonth}
+                            goToCurrentMonth={goToCurrentMonth}
+                            monthSwipeOffset={monthSwipeOffset}
+                            monthTouchStart={monthTouchStart}
+                            onMonthTouchStart={onMonthTouchStart}
+                            onMonthTouchMove={onMonthTouchMove}
+                            onMonthTouchEnd={onMonthTouchEnd}
+                            treemapViewMode={treemapViewMode}
+                            onViewModeChange={(mode) => {
+                                setTreemapViewMode(mode);
+                                setAnimationKey(prev => prev + 1);
+                            }}
+                            lang={lang}
+                            countMode={countMode}
+                            toggleCountMode={toggleCountMode}
+                        />
                         {/* Carousel Content (collapsible) - Fixed height for consistent carousel across all slides */}
                         {/* pt-3 matches the p-3 header padding for equal spacing above/below title */}
                         {/* Touch handlers for swipe gesture navigation */}

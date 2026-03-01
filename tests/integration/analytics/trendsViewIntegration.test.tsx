@@ -23,8 +23,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '../../setup/test-utils';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { AnalyticsProvider } from '../../../src/contexts/AnalyticsContext';
-import { HistoryFiltersProvider } from '../../../src/contexts/HistoryFiltersContext';
+import { useAnalyticsStore } from '@features/analytics/stores/useAnalyticsStore';
+import { getDefaultNavigationState } from '@features/analytics/utils/analyticsHelpers';
+import { useHistoryFiltersStore, getDefaultFilterState } from '@/shared/stores/useHistoryFiltersStore';
 import { TrendsView } from '../../../src/views/TrendsView';
 import type { Transaction } from '../../../src/types/transaction';
 // Story 14e-25b.1: Import type for mock data
@@ -175,6 +176,7 @@ const mockT = (key: string) => {
     allCategories: 'All categories',
     allLocations: 'All locations',
     allGroups: 'All groups',
+    analytics: 'Explore',
   };
   return translations[key] || key;
 };
@@ -214,18 +216,23 @@ const initialState = {
   drillDownMode: 'temporal' as const,
 };
 
+beforeEach(() => {
+  useAnalyticsStore.setState(getDefaultNavigationState('2024'));
+});
+
 function renderTrendsView(testDataOverrides: Partial<TrendsViewData> = {}, state = initialState) {
+  // Story 15b-3f: Initialize Zustand store instead of wrapping with AnalyticsProvider
+  useAnalyticsStore.setState(state);
   // Story 14e-25b.1: Set mock hook return value before rendering
   mockHookReturnValue = {
     ...defaultTestData,
     ...testDataOverrides,
   };
+  // Story 15b-3g: Initialize filters directly instead of using HistoryFiltersProvider
+  useHistoryFiltersStore.getState().initializeFilters(getDefaultFilterState());
+
   return render(
-    <HistoryFiltersProvider>
-      <AnalyticsProvider initialState={state}>
-        <TrendsView />
-      </AnalyticsProvider>
-    </HistoryFiltersProvider>
+    <TrendsView />
   );
 }
 
@@ -237,7 +244,7 @@ describe('TrendsView Integration - Initial Rendering', () => {
   it('renders Explora header', () => {
     renderTrendsView();
 
-    expect(screen.getByRole('heading', { name: 'Explora' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Explore' })).toBeInTheDocument();
   });
 
   it('renders time period pills with Month active', () => {
@@ -535,14 +542,14 @@ describe.skip('TrendsView Integration - Theme Support', () => {
   it('renders correctly with light theme', () => {
     renderTrendsView({ theme: 'light' });
 
-    expect(screen.getByRole('heading', { name: 'Explora' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Explore' })).toBeInTheDocument();
     expect(screen.getByTestId('analytics-card')).toBeInTheDocument();
   });
 
   it('renders correctly with dark theme', () => {
     renderTrendsView({ theme: 'dark' });
 
-    expect(screen.getByRole('heading', { name: 'Explora' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Explore' })).toBeInTheDocument();
     expect(screen.getByTestId('analytics-card')).toBeInTheDocument();
   });
 });
