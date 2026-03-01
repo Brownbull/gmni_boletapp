@@ -6,6 +6,9 @@
  */
 
 import { vi } from 'vitest';
+import { render } from '../../setup/test-utils';
+import { DashboardView } from '../../../src/views/DashboardView';
+import { useHistoryFiltersStore, getDefaultFilterState } from '@/shared/stores/useHistoryFiltersStore';
 import type { UseDashboardViewDataReturn } from '../../../src/views/DashboardView/useDashboardViewData';
 
 // Helper to format month in short format (e.g., "Jan '26")
@@ -14,6 +17,36 @@ export const formatShortMonth = (month: number, year: number) => {
   const shortYear = year.toString().slice(-2);
   return `${monthNames[month]} '${shortYear}`;
 };
+
+/** Sync allTransactions ↔ transactions when only one is provided */
+export const normalizeTransactionOverrides = (
+  overrides: Partial<UseDashboardViewDataReturn>
+): Partial<UseDashboardViewDataReturn> => {
+  const normalized = { ...overrides };
+  if (normalized.allTransactions && !normalized.transactions) {
+    normalized.transactions = normalized.allTransactions;
+  }
+  if (normalized.transactions && !normalized.allTransactions) {
+    normalized.allTransactions = normalized.transactions;
+  }
+  return normalized;
+};
+
+/**
+ * Factory that creates a renderDashboardView helper bound to a specific mockHookData instance.
+ * Each test file passes its own mockHookData to maintain vi.mock() hoisting isolation.
+ *
+ * NOTE: Object.assign mutates mockHookData intentionally — vi.mock() returns it by reference,
+ * so mutation is required for the mock to reflect overrides. beforeEach resets via
+ * Object.assign(mockHookData, createDefaultMockHookData()).
+ */
+export const createRenderDashboardView = (mockHookData: UseDashboardViewDataReturn) =>
+  (overrides: Partial<UseDashboardViewDataReturn> = {}) => {
+    const normalizedOverrides = normalizeTransactionOverrides(overrides);
+    Object.assign(mockHookData, normalizedOverrides);
+    useHistoryFiltersStore.getState().initializeFilters(getDefaultFilterState());
+    return render(<DashboardView _testOverrides={normalizedOverrides} />);
+  };
 
 /** Create fresh mock hook data with vi.fn() instances. Call per-file, not shared. */
 export const createDefaultMockHookData = (): UseDashboardViewDataReturn => ({

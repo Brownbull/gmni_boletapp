@@ -8,7 +8,7 @@
  * that display spending summaries in a Rosa-friendly format.
  */
 
-import type { StoreCategory, ItemCategory } from './transaction';
+import type { StoreCategory, ItemCategory } from '../../shared/schema/categories';
 import type { StoreCategoryGroup, ItemCategoryGroup } from '../config/categoryColors';
 import { formatCurrency as formatCurrencyFull, DEFAULT_CURRENCY } from '@/utils/currency';
 

@@ -15,11 +15,8 @@ import { useState, useRef, useEffect } from 'react';
 import { normalizeMerchantName } from '@/services/merchantMappingService';
 import { celebrateSuccess } from '@/utils/confetti';
 import type { LearnMerchantSelection, ItemNameChange } from '@/components/dialogs/LearnMerchantDialog';
-import type {
-  StoreCategory,
-  ItemCategory,
-  Transaction,
-} from '@/types/transaction';
+import type { Transaction } from '@/types/transaction';
+import type { StoreCategory, ItemCategory } from '../../../../../shared/schema/categories';
 import type { Language } from '@/utils/translations';
 import { translateStoreCategory } from '@/utils/categoryTranslations';
 import type { ToastType } from '@/shared/hooks/useToast';

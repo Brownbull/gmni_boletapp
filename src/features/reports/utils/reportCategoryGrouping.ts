@@ -5,7 +5,8 @@
  * Imports only from reportDateUtils (calculateTotal).
  */
 
-import type { Transaction, StoreCategory } from '@/types/transaction';
+import type { Transaction } from '@/types/transaction';
+import type { StoreCategory } from '../../../../shared/schema/categories';
 import type {
   CategoryBreakdown,
   TrendDirection,

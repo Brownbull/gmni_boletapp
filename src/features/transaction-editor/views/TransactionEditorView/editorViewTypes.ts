@@ -5,11 +5,8 @@
  * Pure type-only module — no runtime code, no React imports, no hooks.
  */
 
-import type {
-  StoreCategory,
-  ItemCategory,
-  Transaction,
-} from '@/types/transaction';
+import type { Transaction } from '@/types/transaction';
+import type { StoreCategory, ItemCategory } from '../../../../../shared/schema/categories';
 import type { UserCredits } from '@/types/scan';
 import type { Language } from '@/utils/translations';
 import type { ItemNameMapping } from '@/types/itemNameMapping';

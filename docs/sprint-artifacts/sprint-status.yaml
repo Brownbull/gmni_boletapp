@@ -266,13 +266,14 @@ development_status:
   TD-15b-31-batch-review-error-logging: done  # 1 pt - Sanitize console.error in useBatchReview.ts (from 15b-4d review, LOW) | done: 2026-02-28
   15b-4e-transaction-consumers-batch3: done  # 3 pts - Fix import type in views + components + cleanup | done: 2026-03-01
   TD-15b-32-dashboardview-test-parallel-flake: done  # 2 pts - Fix DashboardView 17-test parallel flake (from 15b-4e review, LOW) | done: 2026-03-01
-  TD-15b-33-transaction-import-type-completion: ready-for-dev  # 1 pt - Convert 5 remaining files + remove category shim from transaction.ts (from 15b-4e review, LOW)
-  TD-15b-34-dashboardview-test-shared-mocks: ready-for-dev  # 1 pt - DRY mock blocks + renderDashboardView helper across 3 split test files (from TD-15b-32 review, LOW)
-  15b-4f-app-tsx-fanout-reduction: ready-for-dev  # 5 pts - App.tsx fan-out reduction (5 domain orchestrators)
-  15b-4g-final-dependency-validation: ready-for-dev  # 1 pt  - Final dependency graph validation + epic metrics
+  TD-15b-33-transaction-import-type-completion: done  # 1 pt - Convert 5 remaining files + remove category shim from transaction.ts (from 15b-4e review, LOW) | done: 2026-03-01
+  TD-15b-34-dashboardview-test-shared-mocks: done  # 1 pt - DRY mock blocks + renderDashboardView helper across 3 split test files (from TD-15b-32 review, LOW) | done: 2026-03-01
+  15b-4f-app-tsx-fanout-reduction: done  # 5 pts - App.tsx fan-out reduction (5 domain orchestrators) | done: 2026-03-01
+  TD-15b-35-orchestrator-cleanup: done  # 1 pt - Remove dead state + orchestrator unit tests + db hook migration (from 15b-4f review, LOW) | done: 2026-03-01
+  15b-4g-final-dependency-validation: done  # 1 pt  - Final dependency graph validation + epic metrics | done: 2026-03-01
 
   # Phase 5: Infrastructure Hardening (1 story, 5 pts)
-  15b-5a-scan-infrastructure-hardening: ready-for-dev  # 5 pts - Fix scan error recovery + migrate functions.config() + upgrade Gemini + E2E smoke test
+  15b-5a-scan-infrastructure-hardening: review  # 5 pts - Fix scan error recovery + migrate functions.config() + upgrade Gemini + E2E smoke test
 
   epic-15b-retrospective: optional
 

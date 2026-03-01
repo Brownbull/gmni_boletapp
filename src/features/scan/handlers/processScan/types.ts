@@ -7,7 +7,8 @@
  * @module features/scan/handlers/processScan/types
  */
 
-import type { Transaction, TransactionItem, StoreCategory } from '@/types/transaction';
+import type { Transaction, TransactionItem } from '@/types/transaction';
+import type { StoreCategory } from '../../../../../shared/schema/categories';
 import type { FindItemNameMatchFn } from '@/features/categories';
 import type { ToastMessage } from '@/shared/hooks';
 

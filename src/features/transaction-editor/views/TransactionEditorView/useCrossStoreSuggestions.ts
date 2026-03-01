@@ -14,7 +14,8 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { normalizeMerchantName } from '@/services/merchantMappingService';
 import { normalizeItemName } from '@/services/itemNameMappingService';
 import type { ItemNameMapping } from '@/types/itemNameMapping';
-import type { ItemCategory, Transaction, TransactionItem } from '@/types/transaction';
+import type { Transaction, TransactionItem } from '@/types/transaction';
+import type { ItemCategory } from '../../../../../shared/schema/categories';
 import type { ToastType } from '@/shared/hooks/useToast';
 import type { ModalType, ModalPropsMap } from '@managers/ModalManager/types';
 

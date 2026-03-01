@@ -64,12 +64,8 @@ import {
   sanitizeLocation,
   sanitizeSubcategory,
 } from '@/utils/sanitize';
-import {
-  StoreCategory,
-  ItemCategory,
-  Transaction,
-  TransactionItem,
-} from '@/types/transaction';
+import type { Transaction, TransactionItem } from '@/types/transaction';
+import type { StoreCategory, ItemCategory } from '../../../../shared/schema/categories';
 // Story 15-5d: translateItemCategoryGroup, getItemCategoryGroupEmoji moved to EditorItemsSection
 // Story 15-5d: translateStoreCategory moved to useEditorLearningPrompts hook
 import { getItemCategoryGroup } from '@/config/categoryColors';

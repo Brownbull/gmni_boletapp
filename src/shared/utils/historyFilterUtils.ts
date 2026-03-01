@@ -7,7 +7,8 @@
  * @see docs/sprint-artifacts/epic9/story-9.19-history-transaction-filters.md
  */
 
-import type { Transaction, StoreCategory } from '@/types/transaction';
+import type { Transaction } from '@/types/transaction';
+import type { StoreCategory } from '../../../shared/schema/categories';
 import type {
   HistoryFilterState,
   TemporalFilterState,

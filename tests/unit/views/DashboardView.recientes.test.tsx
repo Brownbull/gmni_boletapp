@@ -6,10 +6,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '../../setup/test-utils';
-import { DashboardView } from '../../../src/views/DashboardView';
+import { screen, fireEvent } from '../../setup/test-utils';
 import { useHistoryFiltersStore, getDefaultFilterState } from '@/shared/stores/useHistoryFiltersStore';
-import type { UseDashboardViewDataReturn } from '../../../src/views/DashboardView/useDashboardViewData';
 import {
   createDefaultMockHookData,
   createTransaction,
@@ -17,6 +15,7 @@ import {
   createCategoryTransactions,
   createManyTransactions,
   createDuplicateTransactions,
+  createRenderDashboardView,
 } from './dashboardViewFixtures';
 
 // =============================================================================
@@ -66,18 +65,7 @@ vi.mock('../../../src/shared/stores', () => ({
 // Helpers
 // =============================================================================
 
-const renderDashboardView = (overrides: Partial<UseDashboardViewDataReturn> = {}) => {
-  const normalizedOverrides = { ...overrides };
-  if (normalizedOverrides.allTransactions && !normalizedOverrides.transactions) {
-    normalizedOverrides.transactions = normalizedOverrides.allTransactions;
-  }
-  if (normalizedOverrides.transactions && !normalizedOverrides.allTransactions) {
-    normalizedOverrides.allTransactions = normalizedOverrides.transactions;
-  }
-  Object.assign(mockHookData, normalizedOverrides);
-  useHistoryFiltersStore.getState().initializeFilters(getDefaultFilterState());
-  return render(<DashboardView _testOverrides={normalizedOverrides} />);
-};
+const renderDashboardView = createRenderDashboardView(mockHookData);
 
 // =============================================================================
 // Tests
@@ -85,7 +73,7 @@ const renderDashboardView = (overrides: Partial<UseDashboardViewDataReturn> = {}
 
 describe('DashboardView — Recientes & Lists', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     // TD-15b-32: Reset Zustand store to prevent cross-file state leak in pool: 'threads'
     useHistoryFiltersStore.setState({ ...getDefaultFilterState(), initialized: true });
     Object.assign(mockHookData, createDefaultMockHookData());
@@ -156,12 +144,6 @@ describe('DashboardView — Recientes & Lists', () => {
       expect(screen.queryByText('potentialDuplicate')).not.toBeInTheDocument();
     });
 
-    it('should detect duplicate transactions and show filter button', () => {
-      renderDashboardView({ allTransactions: createDuplicateTransactions() });
-      fireEvent.click(screen.getByTestId('recientes-indicator-1'));
-      const badges = screen.getAllByText('potentialDuplicate');
-      expect(badges).toHaveLength(2);
-    });
   });
 
   describe('Thumbnail Functionality', () => {

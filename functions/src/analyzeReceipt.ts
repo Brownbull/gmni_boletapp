@@ -11,18 +11,15 @@ if (!admin.apps.length) {
   admin.initializeApp()
 }
 
-// Initialize Gemini AI with API key
-// Priority: 1) Environment variable (.env for local, Secret Manager for prod)
-//           2) Firebase config (deprecated but still works in production)
-// Note: functions.config() is deprecated (March 2026) - migrate to .env files
+// Initialize Gemini AI with API key from environment variable
+// Story 15b-5a: Removed deprecated functions.config() fallback (shutdown March 2026)
+// Config source: functions/.env for deploy, Secret Manager for future
 const getGenAI = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const apiKey = process.env.GEMINI_API_KEY || (functions.config() as any).gemini?.api_key
+  const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) {
     throw new Error(
       'GEMINI_API_KEY not configured. ' +
-      'For local dev: add to functions/.env. ' +
-      'For production: use firebase functions:config:set or Secret Manager.'
+      'Add GEMINI_API_KEY to functions/.env (local) or set via Secret Manager (production).'
     )
   }
   return new GoogleGenerativeAI(apiKey)
@@ -310,11 +307,15 @@ export const analyzeReceipt = functions.https.onCall(
       // STEP 2: Call Gemini API with optimized images
       // =========================================================================
       const genAI = getGenAI()
-      // Using stable GA model - gemini-2.0-flash has better rate limits than experimental
-      // Pricing: $0.10/1M input tokens, $0.40/1M output tokens
+      // Story 15b-5a: Configurable model via env var, default to gemini-2.5-flash (stable GA)
+      const ALLOWED_GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']
+      const geminiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+      if (!ALLOWED_GEMINI_MODELS.includes(geminiModel)) {
+        throw new Error(`Invalid GEMINI_MODEL: "${geminiModel}". Allowed: ${ALLOWED_GEMINI_MODELS.join(', ')}`)
+      }
       const model = genAI.getGenerativeModel(
-        { model: 'gemini-2.0-flash' },
-        { apiVersion: 'v1beta' }
+        { model: geminiModel },
+        { apiVersion: 'v1' }
       )
 
       // Convert pre-processed buffers to Gemini format (all are JPEG now)

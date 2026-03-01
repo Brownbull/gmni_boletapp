@@ -3,7 +3,8 @@
  * Story 15b-2f: Extracted from sankeyDataBuilder.ts (pure decomposition)
  */
 
-import type { Transaction, StoreCategory, ItemCategory } from '@/types/transaction';
+import type { Transaction } from '@/types/transaction';
+import type { StoreCategory, ItemCategory } from '../../../../shared/schema/categories';
 import {
     STORE_CATEGORY_GROUPS,
     ITEM_CATEGORY_GROUPS,

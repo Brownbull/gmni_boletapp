@@ -59,6 +59,8 @@ import { reconcileItemsTotal as entityReconcileItemsTotal } from '@entities/tran
 // Story 14e-42: applyItemNameMappings moved to @features/categories (single source of truth)
 import { applyItemNameMappings as pureApplyItemNameMappings } from '@/features/categories';
 import { classifyError, getErrorInfo } from '@/utils/errorHandler';
+// Story 15b-5a: Direct store access for error recovery reset
+import { useScanStore } from '../store/useScanStore';
 
 // Story 15b-2l: Types extracted to scanHandlerTypes.ts
 import type { UseScanHandlersProps, UseScanHandlersResult } from './scanHandlerTypes';
@@ -211,12 +213,17 @@ export function useScanHandlers(
 
     /**
      * Handle retry from scan overlay error state.
-     * Re-runs processScan with existing images.
+     * Story 15b-5a: Reset both overlay AND scan store so user can
+     * retry with camera OR gallery (not locked into camera-only).
      */
     const handleScanOverlayRetry = useCallback(() => {
         scanOverlay.retry();
-        // processScan will be called again from EditView
-    }, [scanOverlay]);
+        // Reset scan store to idle so startSingle/_guardPhase allows new scan
+        useScanStore.getState().reset();
+        setScanImages([]);
+        setCurrentTransaction(null);
+        setView('dashboard');
+    }, [scanOverlay, setScanImages, setCurrentTransaction, setView]);
 
     /**
      * Handle dismiss from scan overlay ready state.

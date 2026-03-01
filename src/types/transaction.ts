@@ -7,9 +7,6 @@
  * DO NOT define StoreCategory or ItemCategory here - import from unified schema.
  */
 
-// Re-export types from unified schema for convenience
-export type { StoreCategory, ItemCategory, CategorySource, MerchantSource } from '../../shared/schema/categories';
-
 // Import for use in this file
 import type { StoreCategory, ItemCategory, CategorySource, MerchantSource } from '../../shared/schema/categories';
 import type { Timestamp } from 'firebase/firestore';
