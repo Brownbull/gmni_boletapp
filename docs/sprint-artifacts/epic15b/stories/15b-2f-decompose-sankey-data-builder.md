@@ -4,7 +4,7 @@
 **Phase:** 2 - Decomposition
 **Points:** 2
 **Priority:** MEDIUM
-**Status:** drafted
+**Status:** done
 
 ## Overview
 
@@ -12,11 +12,11 @@ Decompose `sankeyDataBuilder.ts` (1,038 lines) inside `src/features/analytics/ut
 
 ## Functional Acceptance Criteria
 
-- [ ] **AC1:** `sankeyDataBuilder.ts` reduced to <800 lines (from 1,038)
-- [ ] **AC2:** Extracted files are each <400 lines
-- [ ] **AC3:** All existing tests pass before AND after extraction (`tests/unit/utils/sankeyDataBuilder.test.ts`)
-- [ ] **AC4:** No new functionality added -- pure decomposition
-- [ ] **AC5:** `npm run test:quick` passes with 0 failures
+- [x] **AC1:** `sankeyDataBuilder.ts` reduced to <800 lines (from 1,038)
+- [x] **AC2:** Extracted files are each <400 lines
+- [x] **AC3:** All existing tests pass before AND after extraction (`tests/unit/utils/sankeyDataBuilder.test.ts`)
+- [x] **AC4:** No new functionality added -- pure decomposition
+- [x] **AC5:** `npm run test:quick` passes with 0 failures
 
 ## Architectural Acceptance Criteria (MANDATORY)
 
@@ -24,27 +24,27 @@ Decompose `sankeyDataBuilder.ts` (1,038 lines) inside `src/features/analytics/ut
 
 ### File Location Requirements
 
-- [ ] **AC-ARCH-LOC-1:** Aggregation module at `src/features/analytics/utils/sankeyAggregation.ts`
-- [ ] **AC-ARCH-LOC-2:** Threshold module at `src/features/analytics/utils/sankeyThreshold.ts`
-- [ ] **AC-ARCH-LOC-3:** Aggregation tests at `tests/unit/features/analytics/utils/sankeyAggregation.test.ts`
-- [ ] **AC-ARCH-LOC-4:** Threshold tests at `tests/unit/features/analytics/utils/sankeyThreshold.test.ts`
+- [x] **AC-ARCH-LOC-1:** Aggregation module at `src/features/analytics/utils/sankeyAggregation.ts`
+- [x] **AC-ARCH-LOC-2:** Threshold module at `src/features/analytics/utils/sankeyThreshold.ts`
+- [x] **AC-ARCH-LOC-3:** Aggregation tests at `tests/unit/features/analytics/utils/sankeyAggregation.test.ts`
+- [x] **AC-ARCH-LOC-4:** Threshold tests at `tests/unit/features/analytics/utils/sankeyThreshold.test.ts`
 
 ### Pattern Requirements
 
-- [ ] **AC-ARCH-PATTERN-1:** `sankeyAggregation.ts` contains ONLY the `FlowAggregates` interface and `aggregateTransactions()` function -- no React imports, no Sankey node/link logic
-- [ ] **AC-ARCH-PATTERN-2:** `sankeyThreshold.ts` contains ONLY the `CategoryAggregate` interface, `THRESHOLD_PERCENT` constant, `MIN_VISIBLE_CATEGORIES` constant, and `applyThreshold()` function -- no React imports, no transaction dependencies
-- [ ] **AC-ARCH-PATTERN-3:** Extracted files use `@/` path aliases for external imports (e.g., `@/types/transaction`, `@/utils/comparators`, `@/config/categoryColors`)
-- [ ] **AC-ARCH-PATTERN-4:** `sankeyDataBuilder.ts` imports from extracted files via relative `./` paths (`./sankeyAggregation`, `./sankeyThreshold`)
-- [ ] **AC-ARCH-PATTERN-5:** Test directory mirrors source: `tests/unit/features/analytics/utils/`
-- [ ] **AC-ARCH-PATTERN-6:** All types/interfaces that were private in the original file and become exported in the new files are documented with JSDoc `@internal` tags
+- [x] **AC-ARCH-PATTERN-1:** `sankeyAggregation.ts` contains ONLY the `FlowAggregates` interface and `aggregateTransactions()` function -- no React imports, no Sankey node/link logic
+- [x] **AC-ARCH-PATTERN-2:** `sankeyThreshold.ts` contains ONLY the `CategoryAggregate` interface, `THRESHOLD_PERCENT` constant, `MIN_VISIBLE_CATEGORIES` constant, and `applyThreshold()` function -- no React imports, no transaction dependencies
+- [x] **AC-ARCH-PATTERN-3:** Extracted files use `@/` path aliases for external imports (e.g., `@/types/transaction`, `@/utils/comparators`, `@/config/categoryColors`)
+- [x] **AC-ARCH-PATTERN-4:** `sankeyDataBuilder.ts` imports from extracted files via relative `./` paths (`./sankeyAggregation`, `./sankeyThreshold`)
+- [x] **AC-ARCH-PATTERN-5:** Test directory mirrors source: `tests/unit/features/analytics/utils/`
+- [x] **AC-ARCH-PATTERN-6:** All types/interfaces that were private in the original file and become exported in the new files are documented with JSDoc `@internal` tags
 
 ### Anti-Pattern Requirements (Must NOT Happen)
 
-- [ ] **AC-ARCH-NO-1:** No circular dependency -- extracted files must NOT import from `sankeyDataBuilder.ts` or from each other
-- [ ] **AC-ARCH-NO-2:** No barrel modification -- `src/features/analytics/utils/index.ts` must NOT add exports for `sankeyAggregation` or `sankeyThreshold` (they are internal implementation details)
-- [ ] **AC-ARCH-NO-3:** No new `console.log` statements in extracted files
-- [ ] **AC-ARCH-NO-4:** No `: any` types in extracted files
-- [ ] **AC-ARCH-NO-5:** No public API change -- all currently exported types and functions from `sankeyDataBuilder.ts` remain exported from `sankeyDataBuilder.ts` with identical signatures
+- [x] **AC-ARCH-NO-1:** No circular dependency -- extracted files must NOT import from `sankeyDataBuilder.ts` or from each other
+- [x] **AC-ARCH-NO-2:** No barrel modification -- `src/features/analytics/utils/index.ts` must NOT add exports for `sankeyAggregation` or `sankeyThreshold` (they are internal implementation details)
+- [x] **AC-ARCH-NO-3:** No new `console.log` statements in extracted files
+- [x] **AC-ARCH-NO-4:** No `: any` types in extracted files
+- [x] **AC-ARCH-NO-5:** No public API change -- all currently exported types and functions from `sankeyDataBuilder.ts` remain exported from `sankeyDataBuilder.ts` with identical signatures
 
 ## File Specification
 
@@ -77,58 +77,58 @@ Decompose `sankeyDataBuilder.ts` (1,038 lines) inside `src/features/analytics/ut
 
 ### Task 1: Establish baseline
 
-- [ ] 1.1 Run `npm run test:quick` and record total pass count
-- [ ] 1.2 Run `npx vitest run tests/unit/utils/sankeyDataBuilder.test.ts` and confirm all tests pass
-- [ ] 1.3 Count current lines: `wc -l src/features/analytics/utils/sankeyDataBuilder.ts` (expect 1,038)
-- [ ] 1.4 Verify no existing circular deps: `npx madge --circular src/features/analytics/utils/`
+- [x]1.1 Run `npm run test:quick` and record total pass count
+- [x]1.2 Run `npx vitest run tests/unit/utils/sankeyDataBuilder.test.ts` and confirm all tests pass
+- [x]1.3 Count current lines: `wc -l src/features/analytics/utils/sankeyDataBuilder.ts` (expect 1,038)
+- [x]1.4 Verify no existing circular deps: `npx madge --circular src/features/analytics/utils/`
 
 ### Task 2: Extract sankeyAggregation.ts
 
-- [ ] 2.1 Create `src/features/analytics/utils/sankeyAggregation.ts`
-- [ ] 2.2 Move `FlowAggregates` interface (lines ~210-220) to new file; export it; add `@internal` JSDoc tag
-- [ ] 2.3 Move `aggregateTransactions()` function (lines ~225-316) to new file; export it
-- [ ] 2.4 Add required imports to sankeyAggregation.ts: `Transaction` from `@/types/transaction`, `STORE_CATEGORY_GROUPS`, `ITEM_CATEGORY_GROUPS`, `ITEM_CATEGORY_TO_KEY` from `@/config/categoryColors`, `StoreCategory`, `ItemCategory` from `@/types/transaction`, and group type imports
-- [ ] 2.5 In `sankeyDataBuilder.ts`: replace removed code with `import { aggregateTransactions, type FlowAggregates } from './sankeyAggregation'`
-- [ ] 2.6 Remove now-unused imports from `sankeyDataBuilder.ts` (verify each is unused first -- `StoreCategory`/`ItemCategory` may still be needed by builder type annotations)
-- [ ] 2.7 Run `npx tsc --noEmit` -- fix any type errors
-- [ ] 2.8 Run `npx vitest run tests/unit/utils/sankeyDataBuilder.test.ts` -- all existing tests still pass
+- [x]2.1 Create `src/features/analytics/utils/sankeyAggregation.ts`
+- [x]2.2 Move `FlowAggregates` interface (lines ~210-220) to new file; export it; add `@internal` JSDoc tag
+- [x]2.3 Move `aggregateTransactions()` function (lines ~225-316) to new file; export it
+- [x]2.4 Add required imports to sankeyAggregation.ts: `Transaction` from `@/types/transaction`, `STORE_CATEGORY_GROUPS`, `ITEM_CATEGORY_GROUPS`, `ITEM_CATEGORY_TO_KEY` from `@/config/categoryColors`, `StoreCategory`, `ItemCategory` from `@/types/transaction`, and group type imports
+- [x]2.5 In `sankeyDataBuilder.ts`: replace removed code with `import { aggregateTransactions, type FlowAggregates } from './sankeyAggregation'`
+- [x]2.6 Remove now-unused imports from `sankeyDataBuilder.ts` (verify each is unused first -- `StoreCategory`/`ItemCategory` may still be needed by builder type annotations)
+- [x]2.7 Run `npx tsc --noEmit` -- fix any type errors
+- [x]2.8 Run `npx vitest run tests/unit/utils/sankeyDataBuilder.test.ts` -- all existing tests still pass
 
 ### Task 3: Extract sankeyThreshold.ts
 
-- [ ] 3.1 Create `src/features/analytics/utils/sankeyThreshold.ts`
-- [ ] 3.2 Move `CategoryAggregate` interface (lines ~85-91) to new file; export it; add `@internal` JSDoc tag
-- [ ] 3.3 Move `THRESHOLD_PERCENT` and `MIN_VISIBLE_CATEGORIES` constants to new file; export them
-- [ ] 3.4 Move `applyThreshold()` function (lines ~151-204) to new file; export it
-- [ ] 3.5 Add required imports to sankeyThreshold.ts: `byNumberDesc` from `@/utils/comparators`
-- [ ] 3.6 In `sankeyDataBuilder.ts`: replace removed code with `import { applyThreshold, type CategoryAggregate } from './sankeyThreshold'`
-- [ ] 3.7 Remove now-unused `byNumberDesc` import from `sankeyDataBuilder.ts`
-- [ ] 3.8 Run `npx tsc --noEmit` -- fix any type errors
-- [ ] 3.9 Run `npx vitest run tests/unit/utils/sankeyDataBuilder.test.ts` -- all existing tests still pass
+- [x]3.1 Create `src/features/analytics/utils/sankeyThreshold.ts`
+- [x]3.2 Move `CategoryAggregate` interface (lines ~85-91) to new file; export it; add `@internal` JSDoc tag
+- [x]3.3 Move `THRESHOLD_PERCENT` and `MIN_VISIBLE_CATEGORIES` constants to new file; export them
+- [x]3.4 Move `applyThreshold()` function (lines ~151-204) to new file; export it
+- [x]3.5 Add required imports to sankeyThreshold.ts: `byNumberDesc` from `@/utils/comparators`
+- [x]3.6 In `sankeyDataBuilder.ts`: replace removed code with `import { applyThreshold, type CategoryAggregate } from './sankeyThreshold'`
+- [x]3.7 Remove now-unused `byNumberDesc` import from `sankeyDataBuilder.ts`
+- [x]3.8 Run `npx tsc --noEmit` -- fix any type errors
+- [x]3.9 Run `npx vitest run tests/unit/utils/sankeyDataBuilder.test.ts` -- all existing tests still pass
 
 ### Task 4: Write unit tests for extracted modules
 
-- [ ] 4.1 Create directory: `mkdir -p tests/unit/features/analytics/utils/`
-- [ ] 4.2 Create `tests/unit/features/analytics/utils/sankeyAggregation.test.ts`
-- [ ] 4.3 Test `aggregateTransactions` with empty array (returns all empty maps)
-- [ ] 4.4 Test `aggregateTransactions` with single transaction containing 1 item (verify all 8 maps populated correctly)
-- [ ] 4.5 Test `aggregateTransactions` skips transactions without items, without category, and items with zero/negative price
-- [ ] 4.6 Create `tests/unit/features/analytics/utils/sankeyThreshold.test.ts`
-- [ ] 4.7 Test `applyThreshold` with empty array (returns empty visible, hidden, null masNode)
-- [ ] 4.8 Test `applyThreshold` with all categories above 10% threshold (all visible, no masNode)
-- [ ] 4.9 Test `applyThreshold` with categories below threshold (verify "Mas" aggregation values and counts)
-- [ ] 4.10 Test `applyThreshold` expansion parameter reveals hidden categories
-- [ ] 4.11 Test `MIN_VISIBLE_CATEGORIES` guarantees at least 2 categories shown even when all are below threshold
-- [ ] 4.12 Run `npx vitest run tests/unit/features/analytics/utils/` -- all new tests pass
+- [x]4.1 Create directory: `mkdir -p tests/unit/features/analytics/utils/`
+- [x]4.2 Create `tests/unit/features/analytics/utils/sankeyAggregation.test.ts`
+- [x]4.3 Test `aggregateTransactions` with empty array (returns all empty maps)
+- [x]4.4 Test `aggregateTransactions` with single transaction containing 1 item (verify all 8 maps populated correctly)
+- [x]4.5 Test `aggregateTransactions` skips transactions without items, without category, and items with zero/negative price
+- [x]4.6 Create `tests/unit/features/analytics/utils/sankeyThreshold.test.ts`
+- [x]4.7 Test `applyThreshold` with empty array (returns empty visible, hidden, null masNode)
+- [x]4.8 Test `applyThreshold` with all categories above 10% threshold (all visible, no masNode)
+- [x]4.9 Test `applyThreshold` with categories below threshold (verify "Mas" aggregation values and counts)
+- [x]4.10 Test `applyThreshold` expansion parameter reveals hidden categories
+- [x]4.11 Test `MIN_VISIBLE_CATEGORIES` guarantees at least 2 categories shown even when all are below threshold
+- [x]4.12 Run `npx vitest run tests/unit/features/analytics/utils/` -- all new tests pass
 
 ### Task 5: Verify extraction and final validation
 
-- [ ] 5.1 Count final `sankeyDataBuilder.ts` lines: `wc -l src/features/analytics/utils/sankeyDataBuilder.ts` (target: <800)
-- [ ] 5.2 Verify `sankeyAggregation.ts` is <400 lines: `wc -l src/features/analytics/utils/sankeyAggregation.ts`
-- [ ] 5.3 Verify `sankeyThreshold.ts` is <400 lines: `wc -l src/features/analytics/utils/sankeyThreshold.ts`
-- [ ] 5.4 Verify no circular deps: `npx madge --circular src/features/analytics/utils/`
-- [ ] 5.5 Verify barrel unchanged: `git diff src/features/analytics/utils/index.ts` (expect no changes)
-- [ ] 5.6 Verify consumer imports unchanged: `grep -r "from.*sankeyDataBuilder" src/ --include="*.ts" --include="*.tsx"` (same files as before)
-- [ ] 5.7 Run `npm run test:quick` -- all tests pass, pass count matches or exceeds baseline from Task 1.1
+- [x]5.1 Count final `sankeyDataBuilder.ts` lines: `wc -l src/features/analytics/utils/sankeyDataBuilder.ts` (target: <800)
+- [x]5.2 Verify `sankeyAggregation.ts` is <400 lines: `wc -l src/features/analytics/utils/sankeyAggregation.ts`
+- [x]5.3 Verify `sankeyThreshold.ts` is <400 lines: `wc -l src/features/analytics/utils/sankeyThreshold.ts`
+- [x]5.4 Verify no circular deps: `npx madge --circular src/features/analytics/utils/`
+- [x]5.5 Verify barrel unchanged: `git diff src/features/analytics/utils/index.ts` (expect no changes)
+- [x]5.6 Verify consumer imports unchanged: `grep -r "from.*sankeyDataBuilder" src/ --include="*.ts" --include="*.tsx"` (same files as before)
+- [x]5.7 Run `npm run test:quick` -- all tests pass, pass count matches or exceeds baseline from Task 1.1
 
 ## Dev Notes
 
@@ -168,3 +168,4 @@ Decompose `sankeyDataBuilder.ts` (1,038 lines) inside `src/features/analytics/ut
 |------|--------|
 | 2026-02-13 | Initial draft |
 | 2026-02-23 | Full rewrite from architecture discovery. Source analysis of sankeyDataBuilder.ts (1,038 lines). Identified 2 extraction targets: sankeyAggregation.ts (~120L, FlowAggregates + aggregateTransactions) and sankeyThreshold.ts (~125L, CategoryAggregate + applyThreshold + constants). Rejected mode-builder extraction due to tight coupling. Target residual: ~800 lines. 14 architectural ACs, 5 tasks, 22 subtasks, 7 files. |
+| 2026-02-25 | ECC Code Review: APPROVE 8.5/10. Agents: code-reviewer (8/10), security-reviewer (9/10). 1 quick fix applied (DEFAULT_EXPANSION as const). 6 pre-existing items deferred to TD-15b-15. All 14 architectural ACs pass. 6888 tests green. |

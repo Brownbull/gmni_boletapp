@@ -16,7 +16,7 @@
 
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { ChevronLeft } from 'lucide-react';
-import { Transaction } from '@/types/transaction';
+import type { Transaction } from '@/types/transaction';
 import { toMillis, toDateSafe } from '@/utils/timestamp';
 import { TransactionCard } from '@/components/transactions';
 import { SelectionBar } from '@features/history/components/SelectionBar';

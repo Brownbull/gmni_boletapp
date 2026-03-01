@@ -41,8 +41,7 @@ import { useHistoryFilters } from '@shared/hooks/useHistoryFilters';
 import { useSwipeNavigation } from '@/hooks/useSwipeNavigation';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useSelectionMode } from '@/hooks/useSelectionMode';
-import { getFirestore } from 'firebase/firestore';
-import { deleteTransactionsBatch } from '@/services/firestore';
+import { useTransactionRepository } from '@/repositories';
 // Story 14.15c: CSV Export utilities
 import { downloadMonthlyTransactions, downloadYearlyStatistics } from '@/utils/csvExport';
 // Story 14e-25d: Direct navigation from store (ViewHandlersContext deleted)
@@ -91,8 +90,8 @@ interface HistoryViewProps {
 // ============================================================================
 
 /**
- * Inner component that uses the filter context.
- * Must be rendered inside HistoryFiltersProvider.
+ * Inner component that uses the history filters store.
+ * Parent view must call useHistoryFiltersInit() before rendering.
  *
  * Story 14e-25a.2b: Now owns its data via useHistoryViewData hook.
  * Receives NO props from App.tsx except optional test overrides.
@@ -125,6 +124,9 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
         formatDate,
         onEditTransaction,
     } = { ...hookData, ..._testOverrides };
+
+    // Story 15b-3a: DAL migration — repository replaces direct service imports
+    const txRepo = useTransactionRepository();
 
     // Derive additional values from hook data
     const userId = user.uid;
@@ -422,10 +424,10 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
         }
 
         const transactionIds = Array.from(selectedIds);
+        if (!txRepo) throw new Error('Not authenticated');
 
         try {
-            const db = getFirestore();
-            await deleteTransactionsBatch(db, userId, appId, transactionIds);
+            await txRepo.deleteBatch(transactionIds);
             closeModal(); // Story 14e-5: Use Modal Manager to close
             exitSelectionMode();
         } catch (err) {
@@ -685,8 +687,8 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
 /**
  * HistoryView - Main export
  *
- * This component expects to be wrapped in a HistoryFiltersProvider.
- * The provider should be added in App.tsx or the parent component.
+ * Story 15b-3g: Requires useHistoryFiltersInit() to be called by the parent
+ * wrapper component (e.g., HistoryViewWithFilters in viewRenderers.tsx).
  */
 export const HistoryView: React.FC<HistoryViewProps> = (props) => {
     return <HistoryViewInner {...props} />;

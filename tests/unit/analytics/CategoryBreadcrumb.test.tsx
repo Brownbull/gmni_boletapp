@@ -11,7 +11,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { AnalyticsProvider } from '../../../src/contexts/AnalyticsContext';
+import { useAnalyticsStore } from '@features/analytics/stores/useAnalyticsStore';
+import { getDefaultNavigationState } from '@features/analytics/utils/analyticsHelpers';
 import { CategoryBreadcrumb } from '@features/analytics/components/CategoryBreadcrumb';
 import { useAnalyticsNavigation } from '@features/analytics/hooks/useAnalyticsNavigation';
 import type { AnalyticsNavigationState } from '../../../src/types/analytics';
@@ -20,22 +21,19 @@ import type { AnalyticsNavigationState } from '../../../src/types/analytics';
 // Test Helpers
 // ============================================================================
 
-function createWrapper(initialState?: AnalyticsNavigationState) {
-  return function Wrapper({ children }: { children: React.ReactNode }) {
-    return (
-      <AnalyticsProvider initialState={initialState}>
-        {children}
-      </AnalyticsProvider>
-    );
-  };
-}
-
-function renderWithProvider(
+function renderWithStore(
   ui: React.ReactElement,
   initialState?: AnalyticsNavigationState
 ) {
-  return render(ui, { wrapper: createWrapper(initialState) });
+  if (initialState) {
+    useAnalyticsStore.setState(initialState);
+  }
+  return render(ui);
 }
+
+beforeEach(() => {
+  useAnalyticsStore.setState(getDefaultNavigationState('2024'));
+});
 
 // Default states for testing
 const allCategoriesState: AnalyticsNavigationState = {
@@ -75,7 +73,7 @@ const withTemporalFilter: AnalyticsNavigationState = {
 describe('CategoryBreadcrumb - AC #1: No filter shows "All"', () => {
   // Story 7.18 extension: Icon-only buttons with aria-label for accessibility
   it('shows "All" in aria-label when no filter is active', () => {
-    renderWithProvider(<CategoryBreadcrumb locale="en" />, allCategoriesState);
+    renderWithStore(<CategoryBreadcrumb locale="en" />, allCategoriesState);
 
     expect(screen.getByRole('navigation', { name: 'Category filter' })).toBeInTheDocument();
     // Story 7.18: Icon-only button, label is in aria-label
@@ -83,14 +81,14 @@ describe('CategoryBreadcrumb - AC #1: No filter shows "All"', () => {
   });
 
   it('shows "Todo" in aria-label for Spanish locale', () => {
-    renderWithProvider(<CategoryBreadcrumb locale="es" />, allCategoriesState);
+    renderWithStore(<CategoryBreadcrumb locale="es" />, allCategoriesState);
 
     // Story 7.18: Icon-only button, label is in aria-label
     expect(screen.getByRole('button', { name: /Category filter: Todo/i })).toBeInTheDocument();
   });
 
   it('displays Tag icon', () => {
-    const { container } = renderWithProvider(<CategoryBreadcrumb />, allCategoriesState);
+    const { container } = renderWithStore(<CategoryBreadcrumb />, allCategoriesState);
 
     // Lucide icons render as SVG - Story 7.18: icon-only button
     const svg = container.querySelector('svg');
@@ -99,7 +97,7 @@ describe('CategoryBreadcrumb - AC #1: No filter shows "All"', () => {
 
   // Story 7.18 extension: ChevronDown removed - icon-only buttons
   it('displays only Tag icon (no chevron)', () => {
-    const { container } = renderWithProvider(<CategoryBreadcrumb />, allCategoriesState);
+    const { container } = renderWithStore(<CategoryBreadcrumb />, allCategoriesState);
 
     // Should have only one SVG: Tag (ChevronDown removed)
     const svgs = container.querySelectorAll('svg');
@@ -114,19 +112,19 @@ describe('CategoryBreadcrumb - AC #1: No filter shows "All"', () => {
 describe('CategoryBreadcrumb - AC #2: Filtered state shows deepest level', () => {
   // Story 7.18 extension: Icon-only buttons with aria-label for accessibility
   it('shows category name in aria-label when at category level', () => {
-    renderWithProvider(<CategoryBreadcrumb />, categoryState);
+    renderWithStore(<CategoryBreadcrumb />, categoryState);
 
     expect(screen.getByRole('button', { name: /Category filter: Food/i })).toBeInTheDocument();
   });
 
   it('shows group name in aria-label when at group level', () => {
-    renderWithProvider(<CategoryBreadcrumb />, groupState);
+    renderWithStore(<CategoryBreadcrumb />, groupState);
 
     expect(screen.getByRole('button', { name: /Category filter: Groceries/i })).toBeInTheDocument();
   });
 
   it('shows subcategory name in aria-label when at subcategory level', () => {
-    renderWithProvider(<CategoryBreadcrumb />, subcategoryState);
+    renderWithStore(<CategoryBreadcrumb />, subcategoryState);
 
     expect(screen.getByRole('button', { name: /Category filter: Meats/i })).toBeInTheDocument();
   });
@@ -139,7 +137,7 @@ describe('CategoryBreadcrumb - AC #2: Filtered state shows deepest level', () =>
 describe('CategoryBreadcrumb - AC #3: Dropdown shows full filter path', () => {
   it('shows dropdown when button is clicked', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb />, categoryState);
+    renderWithStore(<CategoryBreadcrumb />, categoryState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -149,7 +147,7 @@ describe('CategoryBreadcrumb - AC #3: Dropdown shows full filter path', () => {
 
   it('shows full path in dropdown: All > Food > Groceries > Meats', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb locale="en" />, subcategoryState);
+    renderWithStore(<CategoryBreadcrumb locale="en" />, subcategoryState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -160,7 +158,7 @@ describe('CategoryBreadcrumb - AC #3: Dropdown shows full filter path', () => {
 
   it('shows only All Categories when no filter active', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb locale="en" />, allCategoriesState);
+    renderWithStore(<CategoryBreadcrumb locale="en" />, allCategoriesState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -177,7 +175,7 @@ describe('CategoryBreadcrumb - AC #3: Dropdown shows full filter path', () => {
 describe('CategoryBreadcrumb - AC #4: "All Categories" always at top', () => {
   it('first dropdown option is "All Categories"', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb locale="en" />, subcategoryState);
+    renderWithStore(<CategoryBreadcrumb locale="en" />, subcategoryState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -188,7 +186,7 @@ describe('CategoryBreadcrumb - AC #4: "All Categories" always at top', () => {
 
   it('first dropdown option is "Todas las Categorías" in Spanish', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb locale="es" />, categoryState);
+    renderWithStore(<CategoryBreadcrumb locale="es" />, categoryState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -205,7 +203,7 @@ describe('CategoryBreadcrumb - AC #4: "All Categories" always at top', () => {
 describe('CategoryBreadcrumb - AC #5: Each level is tappable', () => {
   it('all dropdown items are buttons', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb />, subcategoryState);
+    renderWithStore(<CategoryBreadcrumb />, subcategoryState);
 
     const toggleButton = screen.getByRole('button');
     await user.click(toggleButton);
@@ -224,7 +222,7 @@ describe('CategoryBreadcrumb - AC #5: Each level is tappable', () => {
 describe('CategoryBreadcrumb - AC #6: Current level is highlighted', () => {
   it('current level has distinct styling (bold)', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb />, groupState);
+    renderWithStore(<CategoryBreadcrumb />, groupState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -237,7 +235,7 @@ describe('CategoryBreadcrumb - AC #6: Current level is highlighted', () => {
 
   it('current level has aria-selected=true', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb />, groupState);
+    renderWithStore(<CategoryBreadcrumb />, groupState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -250,7 +248,7 @@ describe('CategoryBreadcrumb - AC #6: Current level is highlighted', () => {
 
   it('ancestor levels have aria-selected=false', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb />, subcategoryState);
+    renderWithStore(<CategoryBreadcrumb />, subcategoryState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -270,7 +268,7 @@ describe('CategoryBreadcrumb - AC #6: Current level is highlighted', () => {
 describe('CategoryBreadcrumb - AC #7: "All Categories" clears filter', () => {
   it('dispatches CLEAR_CATEGORY_FILTER when tapping All Categories', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb locale="en" />, categoryState);
+    renderWithStore(<CategoryBreadcrumb locale="en" />, categoryState);
 
     // Open dropdown
     const button = screen.getByRole('button');
@@ -295,7 +293,7 @@ describe('CategoryBreadcrumb - AC #7: "All Categories" clears filter', () => {
 describe('CategoryBreadcrumb - AC #8: Ancestor tap preserves temporal position', () => {
   it('navigating to ancestor updates category filter', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb />, subcategoryState);
+    renderWithStore(<CategoryBreadcrumb />, subcategoryState);
 
     // Open dropdown
     const button = screen.getByRole('button');
@@ -328,7 +326,7 @@ describe('CategoryBreadcrumb - AC #8: Ancestor tap preserves temporal position',
       );
     }
 
-    renderWithProvider(<TestComponentWithTemporal />, withTemporalFilter);
+    renderWithStore(<TestComponentWithTemporal />, withTemporalFilter);
 
     // Initially, temporal is at month level
     expect(screen.getByTestId('temporal-level')).toHaveTextContent('month');
@@ -354,7 +352,7 @@ describe('CategoryBreadcrumb - AC #8: Ancestor tap preserves temporal position',
 describe('CategoryBreadcrumb - AC #9: Outside click closes dropdown', () => {
   it('closes dropdown when clicking outside', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb />, categoryState);
+    renderWithStore(<CategoryBreadcrumb />, categoryState);
 
     // Open dropdown
     const button = screen.getByRole('button');
@@ -371,7 +369,7 @@ describe('CategoryBreadcrumb - AC #9: Outside click closes dropdown', () => {
 
   it('does not close when clicking inside dropdown', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb />, categoryState);
+    renderWithStore(<CategoryBreadcrumb />, categoryState);
 
     // Open dropdown
     const button = screen.getByRole('button');
@@ -393,7 +391,7 @@ describe('CategoryBreadcrumb - AC #9: Outside click closes dropdown', () => {
 describe('CategoryBreadcrumb - AC #10: Escape closes dropdown', () => {
   it('closes dropdown when pressing Escape', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb />, categoryState);
+    renderWithStore(<CategoryBreadcrumb />, categoryState);
 
     // Open dropdown
     const button = screen.getByRole('button');
@@ -410,7 +408,7 @@ describe('CategoryBreadcrumb - AC #10: Escape closes dropdown', () => {
 
   it('returns focus to button after Escape', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb />, categoryState);
+    renderWithStore(<CategoryBreadcrumb />, categoryState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -430,7 +428,7 @@ describe('CategoryBreadcrumb - AC #10: Escape closes dropdown', () => {
 describe('CategoryBreadcrumb - AC #11: Immediate state updates', () => {
   it('breadcrumb updates immediately after navigation', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb locale="en" />, subcategoryState);
+    renderWithStore(<CategoryBreadcrumb locale="en" />, subcategoryState);
 
     // Initially shows "Meats" in aria-label - Story 7.18: icon-only buttons
     expect(screen.getByRole('button', { name: /Category filter: Meats/i })).toBeInTheDocument();
@@ -456,7 +454,7 @@ describe('CategoryBreadcrumb - AC #11: Immediate state updates', () => {
 describe('CategoryBreadcrumb - AC #12: Keyboard accessibility', () => {
   it('button receives focus on Tab', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb />, allCategoriesState);
+    renderWithStore(<CategoryBreadcrumb />, allCategoriesState);
 
     // Tab into the component
     await user.tab();
@@ -467,7 +465,7 @@ describe('CategoryBreadcrumb - AC #12: Keyboard accessibility', () => {
 
   it('Enter opens dropdown', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb />, categoryState);
+    renderWithStore(<CategoryBreadcrumb />, categoryState);
 
     const button = screen.getByRole('button');
     button.focus();
@@ -479,7 +477,7 @@ describe('CategoryBreadcrumb - AC #12: Keyboard accessibility', () => {
 
   it('Space opens dropdown', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb />, categoryState);
+    renderWithStore(<CategoryBreadcrumb />, categoryState);
 
     const button = screen.getByRole('button');
     button.focus();
@@ -491,7 +489,7 @@ describe('CategoryBreadcrumb - AC #12: Keyboard accessibility', () => {
 
   it('ArrowUp navigates to previous option', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb locale="en" />, subcategoryState);
+    renderWithStore(<CategoryBreadcrumb locale="en" />, subcategoryState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -510,7 +508,7 @@ describe('CategoryBreadcrumb - AC #12: Keyboard accessibility', () => {
 
   it('ArrowDown navigates to next option (capped at last)', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb locale="en" />, subcategoryState);
+    renderWithStore(<CategoryBreadcrumb locale="en" />, subcategoryState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -530,7 +528,7 @@ describe('CategoryBreadcrumb - AC #12: Keyboard accessibility', () => {
 
   it('Home key goes to first option', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb locale="en" />, subcategoryState);
+    renderWithStore(<CategoryBreadcrumb locale="en" />, subcategoryState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -547,7 +545,7 @@ describe('CategoryBreadcrumb - AC #12: Keyboard accessibility', () => {
 
   it('End key goes to last option', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb locale="en" />, subcategoryState);
+    renderWithStore(<CategoryBreadcrumb locale="en" />, subcategoryState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -574,7 +572,7 @@ describe('CategoryBreadcrumb - AC #12: Keyboard accessibility', () => {
 
 describe('CategoryBreadcrumb - AC #13: Touch targets', () => {
   it('button has 40px dimensions (w-10 h-10) for compact layout', () => {
-    renderWithProvider(<CategoryBreadcrumb />, allCategoriesState);
+    renderWithStore(<CategoryBreadcrumb />, allCategoriesState);
 
     const button = screen.getByRole('button');
     // Story 7.18: Icon-only button with transparent background for compact layout
@@ -584,7 +582,7 @@ describe('CategoryBreadcrumb - AC #13: Touch targets', () => {
 
   it('dropdown options have min-h-11 class', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb />, subcategoryState);
+    renderWithStore(<CategoryBreadcrumb />, subcategoryState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -602,19 +600,19 @@ describe('CategoryBreadcrumb - AC #13: Touch targets', () => {
 
 describe('CategoryBreadcrumb - AC #14: ARIA attributes', () => {
   it('container has role="navigation"', () => {
-    renderWithProvider(<CategoryBreadcrumb />, allCategoriesState);
+    renderWithStore(<CategoryBreadcrumb />, allCategoriesState);
 
     expect(screen.getByRole('navigation')).toBeInTheDocument();
   });
 
   it('container has aria-label="Category filter"', () => {
-    renderWithProvider(<CategoryBreadcrumb />, allCategoriesState);
+    renderWithStore(<CategoryBreadcrumb />, allCategoriesState);
 
     expect(screen.getByRole('navigation', { name: 'Category filter' })).toBeInTheDocument();
   });
 
   it('button has aria-expanded=false when collapsed', () => {
-    renderWithProvider(<CategoryBreadcrumb />, allCategoriesState);
+    renderWithStore(<CategoryBreadcrumb />, allCategoriesState);
 
     const button = screen.getByRole('button');
     expect(button).toHaveAttribute('aria-expanded', 'false');
@@ -622,7 +620,7 @@ describe('CategoryBreadcrumb - AC #14: ARIA attributes', () => {
 
   it('button has aria-expanded=true when open', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb />, allCategoriesState);
+    renderWithStore(<CategoryBreadcrumb />, allCategoriesState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -631,7 +629,7 @@ describe('CategoryBreadcrumb - AC #14: ARIA attributes', () => {
   });
 
   it('button has aria-haspopup="listbox"', () => {
-    renderWithProvider(<CategoryBreadcrumb />, allCategoriesState);
+    renderWithStore(<CategoryBreadcrumb />, allCategoriesState);
 
     const button = screen.getByRole('button');
     expect(button).toHaveAttribute('aria-haspopup', 'listbox');
@@ -639,7 +637,7 @@ describe('CategoryBreadcrumb - AC #14: ARIA attributes', () => {
 
   it('dropdown has role="listbox"', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb />, categoryState);
+    renderWithStore(<CategoryBreadcrumb />, categoryState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -649,7 +647,7 @@ describe('CategoryBreadcrumb - AC #14: ARIA attributes', () => {
 
   it('options have role="option"', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb />, subcategoryState);
+    renderWithStore(<CategoryBreadcrumb />, subcategoryState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -665,7 +663,7 @@ describe('CategoryBreadcrumb - AC #14: ARIA attributes', () => {
 
 describe('CategoryBreadcrumb - Theme Support', () => {
   it('applies light theme classes by default', () => {
-    renderWithProvider(<CategoryBreadcrumb />, allCategoriesState);
+    renderWithStore(<CategoryBreadcrumb />, allCategoriesState);
 
     const button = screen.getByRole('button');
     // Story 7.18: Transparent background with hover effect
@@ -674,7 +672,7 @@ describe('CategoryBreadcrumb - Theme Support', () => {
   });
 
   it('applies dark theme classes when theme="dark"', () => {
-    renderWithProvider(<CategoryBreadcrumb theme="dark" />, allCategoriesState);
+    renderWithStore(<CategoryBreadcrumb theme="dark" />, allCategoriesState);
 
     const button = screen.getByRole('button');
     // Story 7.18: Transparent background with hover effect
@@ -692,7 +690,7 @@ describe('CategoryBreadcrumb - Edge Cases', () => {
   // This test is obsolete as there's no chevron to rotate
   it('dropdown opens on click (no chevron animation)', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<CategoryBreadcrumb />, allCategoriesState);
+    renderWithStore(<CategoryBreadcrumb />, allCategoriesState);
 
     const button = screen.getByRole('button');
     await user.click(button);
@@ -705,7 +703,7 @@ describe('CategoryBreadcrumb - Edge Cases', () => {
     const user = userEvent.setup();
 
     // Test subcategory state (deepest level) - Story 7.18: check aria-label
-    const { rerender } = renderWithProvider(<CategoryBreadcrumb locale="en" />, subcategoryState);
+    const { rerender } = renderWithStore(<CategoryBreadcrumb locale="en" />, subcategoryState);
     expect(screen.getByRole('button', { name: /Category filter: Meats/i })).toBeInTheDocument();
 
     // Open and verify all 4 levels shown
@@ -735,7 +733,7 @@ describe('CategoryBreadcrumb - Edge Cases', () => {
       );
     }
 
-    renderWithProvider(<TestComponent />, subcategoryState);
+    renderWithStore(<TestComponent />, subcategoryState);
 
     // Start at subcategory
     expect(screen.getByTestId('level')).toHaveTextContent('subcategory');

@@ -150,6 +150,46 @@ describe('Date Utilities', () => {
       expect(date.getMonth()).toBe(0); // January
       expect(date.getDate()).toBe(15);
     });
+
+    it('should return Invalid Date and warn for malformed input', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const date = parseDate('not-a-date');
+      expect(isNaN(date.getTime())).toBe(true);
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('not-a-date'));
+      warnSpy.mockRestore();
+    });
+
+    it('should return Invalid Date and warn for empty string', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const date = parseDate('');
+      expect(isNaN(date.getTime())).toBe(true);
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+
+    it('should return Invalid Date and warn for partial date', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const date = parseDate('2025-01');
+      expect(isNaN(date.getTime())).toBe(true);
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+
+    it('should return Invalid Date for date with extra characters', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const date = parseDate('2025-01-15T10:00:00');
+      expect(isNaN(date.getTime())).toBe(true);
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+
+    it('should not warn for valid dates', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      parseDate('2025-01-01');
+      parseDate('2025-12-31');
+      expect(warnSpy).not.toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
   });
 
   describe('isDateInWeek', () => {

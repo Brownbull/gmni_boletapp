@@ -9,16 +9,19 @@
  */
 
 // Re-export all types and type guards from the canonical source
-// Note: StoreCategory and ItemCategory are already re-exported by src/types/transaction.ts
 export {
     // Types
-    type CategorySource,
-    type MerchantSource,
     type Transaction,
     type TransactionItem,
-    type StoreCategory,
-    type ItemCategory,
     // Type guards
     hasTransactionImages,
     hasTransactionThumbnail,
 } from '../../types/transaction';
+
+// Category types from unified schema (single source of truth)
+export type {
+    CategorySource,
+    MerchantSource,
+    StoreCategory,
+    ItemCategory,
+} from '../../../shared/schema/categories';

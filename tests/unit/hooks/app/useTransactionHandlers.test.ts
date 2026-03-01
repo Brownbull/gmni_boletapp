@@ -19,12 +19,22 @@ import type { Transaction } from '../../../../src/types/transaction';
 import type { UserPreferences } from '../../../../src/services/userPreferencesService';
 import type { UseTransactionHandlersProps } from '../../../../src/hooks/app/useTransactionHandlers';
 
-// Mock the firestore service module
-vi.mock('../../../../src/services/firestore', () => ({
-    addTransaction: vi.fn(() => Promise.resolve('new-tx-id')),
-    updateTransaction: vi.fn(() => Promise.resolve()),
-    deleteTransaction: vi.fn(() => Promise.resolve()),
-    wipeAllTransactions: vi.fn(() => Promise.resolve()),
+// Story TD-15b-26: Mock at repository level (DAL boundary), not service level
+const { mockRepo } = vi.hoisted(() => ({
+    mockRepo: {
+        add: vi.fn(() => Promise.resolve('new-tx-id')),
+        update: vi.fn(() => Promise.resolve()),
+        delete: vi.fn(() => Promise.resolve()),
+        wipeAll: vi.fn(() => Promise.resolve()),
+        subscribe: vi.fn(),
+        subscribeRecentScans: vi.fn(),
+        getPage: vi.fn(),
+        deleteBatch: vi.fn(),
+        updateBatch: vi.fn(),
+    },
+}));
+vi.mock('@/repositories/transactionRepository', () => ({
+    createTransactionRepository: vi.fn(() => mockRepo),
 }));
 
 // Mock the insight engine service
@@ -70,7 +80,6 @@ vi.mock('@features/batch-review', () => ({
 
 // Import after mocking
 import { useTransactionHandlers } from '../../../../src/hooks/app/useTransactionHandlers';
-import * as firestoreService from '../../../../src/services/firestore';
 import * as insightService from '@features/insights/services/insightEngineService';
 import * as csvExport from '../../../../src/utils/csvExport';
 
@@ -226,8 +235,8 @@ describe('useTransactionHandlers', () => {
                 await result.current.saveTransaction(mockTransaction);
             });
 
-            expect(firestoreService.addTransaction).not.toHaveBeenCalled();
-            expect(firestoreService.updateTransaction).not.toHaveBeenCalled();
+            expect(mockRepo.add).not.toHaveBeenCalled();
+            expect(mockRepo.update).not.toHaveBeenCalled();
         });
 
         it('should return early when services is null', async () => {
@@ -238,7 +247,7 @@ describe('useTransactionHandlers', () => {
                 await result.current.saveTransaction(mockTransaction);
             });
 
-            expect(firestoreService.addTransaction).not.toHaveBeenCalled();
+            expect(mockRepo.add).not.toHaveBeenCalled();
         });
 
         it('should return early when no transaction is provided', async () => {
@@ -249,10 +258,10 @@ describe('useTransactionHandlers', () => {
                 await result.current.saveTransaction(undefined);
             });
 
-            expect(firestoreService.addTransaction).not.toHaveBeenCalled();
+            expect(mockRepo.add).not.toHaveBeenCalled();
         });
 
-        it('should call firestoreAddTransaction for new transactions', async () => {
+        it('should call repo.add for new transactions', async () => {
             const props = createDefaultProps();
             const { result } = renderHook(() => useTransactionHandlers(props));
 
@@ -262,10 +271,7 @@ describe('useTransactionHandlers', () => {
 
             // Wait for async operations
             await waitFor(() => {
-                expect(firestoreService.addTransaction).toHaveBeenCalledWith(
-                    mockDb,
-                    'test-user-123',
-                    'test-app-id',
+                expect(mockRepo.add).toHaveBeenCalledWith(
                     expect.objectContaining({
                         merchant: 'Test Store',
                         total: 1500,
@@ -274,7 +280,7 @@ describe('useTransactionHandlers', () => {
             });
         });
 
-        it('should call firestoreUpdateTransaction for existing transactions', async () => {
+        it('should call repo.update for existing transactions', async () => {
             const existingTransaction = { ...mockTransaction, id: 'existing-tx-id' };
             const props = createDefaultProps();
             const { result } = renderHook(() => useTransactionHandlers(props));
@@ -283,10 +289,7 @@ describe('useTransactionHandlers', () => {
                 await result.current.saveTransaction(existingTransaction);
             });
 
-            expect(firestoreService.updateTransaction).toHaveBeenCalledWith(
-                mockDb,
-                'test-user-123',
-                'test-app-id',
+            expect(mockRepo.update).toHaveBeenCalledWith(
                 'existing-tx-id',
                 expect.objectContaining({
                     merchant: 'Test Store',
@@ -461,8 +464,8 @@ describe('useTransactionHandlers', () => {
 
             // incrementInsightCounter is called synchronously before the fire-and-forget chain
             expect(incrementInsightCounter).toHaveBeenCalled();
-            // firestoreAddTransaction was called (this we know works from other tests)
-            expect(firestoreService.addTransaction).toHaveBeenCalled();
+            // repo.add was called (this we know works from other tests)
+            expect(mockRepo.add).toHaveBeenCalled();
         });
 
         it('should navigate to batch-review when in batch editing mode', async () => {
@@ -553,7 +556,7 @@ describe('useTransactionHandlers', () => {
                 await result.current.deleteTransaction('tx-123');
             });
 
-            expect(firestoreService.deleteTransaction).not.toHaveBeenCalled();
+            expect(mockRepo.delete).not.toHaveBeenCalled();
         });
 
         it('should return early when services is null', async () => {
@@ -564,10 +567,10 @@ describe('useTransactionHandlers', () => {
                 await result.current.deleteTransaction('tx-123');
             });
 
-            expect(firestoreService.deleteTransaction).not.toHaveBeenCalled();
+            expect(mockRepo.delete).not.toHaveBeenCalled();
         });
 
-        it('should call firestoreDeleteTransaction with correct args', async () => {
+        it('should call repo.delete with correct args', async () => {
             const props = createDefaultProps();
             const { result } = renderHook(() => useTransactionHandlers(props));
 
@@ -575,12 +578,7 @@ describe('useTransactionHandlers', () => {
                 await result.current.deleteTransaction('tx-123');
             });
 
-            expect(firestoreService.deleteTransaction).toHaveBeenCalledWith(
-                mockDb,
-                'test-user-123',
-                'test-app-id',
-                'tx-123'
-            );
+            expect(mockRepo.delete).toHaveBeenCalledWith('tx-123');
         });
 
         it('should navigate to dashboard after delete', async () => {
@@ -621,10 +619,10 @@ describe('useTransactionHandlers', () => {
                 await result.current.wipeDB();
             });
 
-            expect(firestoreService.wipeAllTransactions).not.toHaveBeenCalled();
+            expect(mockRepo.wipeAll).not.toHaveBeenCalled();
         });
 
-        it('should call wipeAllTransactions on confirmation', async () => {
+        it('should call repo.wipeAll on confirmation', async () => {
             const props = createDefaultProps();
             const { result } = renderHook(() => useTransactionHandlers(props));
 
@@ -632,11 +630,7 @@ describe('useTransactionHandlers', () => {
                 await result.current.wipeDB();
             });
 
-            expect(firestoreService.wipeAllTransactions).toHaveBeenCalledWith(
-                mockDb,
-                'test-user-123',
-                'test-app-id'
-            );
+            expect(mockRepo.wipeAll).toHaveBeenCalled();
         });
 
         it('should show success alert after wipe', async () => {
@@ -658,11 +652,11 @@ describe('useTransactionHandlers', () => {
                 await result.current.wipeDB();
             });
 
-            expect(firestoreService.wipeAllTransactions).not.toHaveBeenCalled();
+            expect(mockRepo.wipeAll).not.toHaveBeenCalled();
         });
 
         it('should show error alert on failure', async () => {
-            vi.mocked(firestoreService.wipeAllTransactions).mockRejectedValue(new Error('Wipe failed'));
+            mockRepo.wipeAll.mockRejectedValue(new Error('Wipe failed'));
             const props = createDefaultProps();
             const { result } = renderHook(() => useTransactionHandlers(props));
 

@@ -8,14 +8,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useInsightProfile } from '@features/insights/hooks/useInsightProfile';
-import * as insightProfileService from '@features/insights/services/insightProfileService';
 import * as insightEngineService from '@features/insights/services/insightEngineService';
 
-// Mock the services
-vi.mock('@features/insights/services/insightProfileService', () => ({
-  getOrCreateInsightProfile: vi.fn(),
-  recordInsightShown: vi.fn(),
-  trackTransactionForProfile: vi.fn(),
+// Mock the repository hook — stable reference to avoid infinite re-renders
+const mockGetOrCreate = vi.fn();
+const mockRecordInsightShown = vi.fn();
+const mockTrackTransaction = vi.fn();
+const mockDeleteInsight = vi.fn();
+const mockDeleteInsights = vi.fn();
+const mockRepoInstance = {
+  getOrCreate: mockGetOrCreate,
+  recordInsightShown: mockRecordInsightShown,
+  trackTransaction: mockTrackTransaction,
+  deleteInsight: mockDeleteInsight,
+  deleteInsights: mockDeleteInsights,
+};
+vi.mock('@/repositories', () => ({
+  useInsightProfileRepository: vi.fn(() => mockRepoInstance),
 }));
 
 vi.mock('@features/insights/services/insightEngineService', () => ({
@@ -62,9 +71,11 @@ describe('useInsightProfile', () => {
     (insightEngineService.incrementScanCounter as any).mockImplementation(
       (cache: any) => ({ ...cache, weekdayScanCount: cache.weekdayScanCount + 1 })
     );
-    (insightProfileService.getOrCreateInsightProfile as any).mockResolvedValue(mockProfile);
-    (insightProfileService.recordInsightShown as any).mockResolvedValue(undefined);
-    (insightProfileService.trackTransactionForProfile as any).mockResolvedValue(undefined);
+    mockGetOrCreate.mockResolvedValue(mockProfile);
+    mockRecordInsightShown.mockResolvedValue(undefined);
+    mockTrackTransaction.mockResolvedValue(undefined);
+    mockDeleteInsight.mockResolvedValue(undefined);
+    mockDeleteInsights.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -94,11 +105,7 @@ describe('useInsightProfile', () => {
       });
 
       expect(result.current.profile).toEqual(mockProfile);
-      expect(insightProfileService.getOrCreateInsightProfile).toHaveBeenCalledWith(
-        mockServices.db,
-        mockUser.uid,
-        mockServices.appId
-      );
+      expect(mockGetOrCreate).toHaveBeenCalled();
     });
 
     it('loads local cache on initialization', () => {
@@ -111,7 +118,7 @@ describe('useInsightProfile', () => {
   describe('recordShown', () => {
     it('records insight shown and refreshes profile', async () => {
       const updatedProfile = { ...mockProfile, recentInsights: [{ insightId: 'test', shownAt: {} as any }] };
-      (insightProfileService.getOrCreateInsightProfile as any)
+      mockGetOrCreate
         .mockResolvedValueOnce(mockProfile)
         .mockResolvedValueOnce(updatedProfile);
 
@@ -125,18 +132,15 @@ describe('useInsightProfile', () => {
         await result.current.recordShown('test_insight', 'tx_123');
       });
 
-      expect(insightProfileService.recordInsightShown).toHaveBeenCalledWith(
-        mockServices.db,
-        mockUser.uid,
-        mockServices.appId,
+      expect(mockRecordInsightShown).toHaveBeenCalledWith(
         'test_insight',
         'tx_123',
         undefined  // fullInsight parameter is optional
       );
     });
 
-    // Story 10a.5: Verify full insight content is passed through to service
-    it('passes full insight content to service for history storage', async () => {
+    // Story 10a.5: Verify full insight content is passed through to repository
+    it('passes full insight content to repository for history storage', async () => {
       const updatedProfile = {
         ...mockProfile,
         recentInsights: [{
@@ -148,7 +152,7 @@ describe('useInsightProfile', () => {
           category: 'ACTIONABLE',
         }],
       };
-      (insightProfileService.getOrCreateInsightProfile as any)
+      mockGetOrCreate
         .mockResolvedValueOnce(mockProfile)
         .mockResolvedValueOnce(updatedProfile);
 
@@ -169,10 +173,7 @@ describe('useInsightProfile', () => {
         await result.current.recordShown('merchant_frequency', 'tx_456', fullInsight);
       });
 
-      expect(insightProfileService.recordInsightShown).toHaveBeenCalledWith(
-        mockServices.db,
-        mockUser.uid,
-        mockServices.appId,
+      expect(mockRecordInsightShown).toHaveBeenCalledWith(
         'merchant_frequency',
         'tx_456',
         fullInsight
@@ -186,7 +187,7 @@ describe('useInsightProfile', () => {
         await result.current.recordShown('test_insight');
       });
 
-      expect(insightProfileService.recordInsightShown).not.toHaveBeenCalled();
+      expect(mockRecordInsightShown).not.toHaveBeenCalled();
     });
   });
 
@@ -203,12 +204,7 @@ describe('useInsightProfile', () => {
         await result.current.trackTransaction(txDate);
       });
 
-      expect(insightProfileService.trackTransactionForProfile).toHaveBeenCalledWith(
-        mockServices.db,
-        mockUser.uid,
-        mockServices.appId,
-        txDate
-      );
+      expect(mockTrackTransaction).toHaveBeenCalledWith(txDate);
     });
 
     it('does nothing when user or services are null', async () => {
@@ -218,7 +214,7 @@ describe('useInsightProfile', () => {
         await result.current.trackTransaction(new Date());
       });
 
-      expect(insightProfileService.trackTransactionForProfile).not.toHaveBeenCalled();
+      expect(mockTrackTransaction).not.toHaveBeenCalled();
     });
   });
 
@@ -243,9 +239,7 @@ describe('useInsightProfile', () => {
 
   describe('error handling', () => {
     it('handles profile load error gracefully', async () => {
-      (insightProfileService.getOrCreateInsightProfile as any).mockRejectedValue(
-        new Error('Load failed')
-      );
+      mockGetOrCreate.mockRejectedValue(new Error('Load failed'));
 
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -265,9 +259,7 @@ describe('useInsightProfile', () => {
     });
 
     it('handles recordShown error gracefully', async () => {
-      (insightProfileService.recordInsightShown as any).mockRejectedValue(
-        new Error('Record failed')
-      );
+      mockRecordInsightShown.mockRejectedValue(new Error('Record failed'));
 
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 

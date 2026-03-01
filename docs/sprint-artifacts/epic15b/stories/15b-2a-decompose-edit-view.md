@@ -4,7 +4,7 @@
 **Phase:** 2 - Decomposition
 **Points:** 3
 **Priority:** HIGH
-**Status:** review
+**Status:** done
 
 ## Overview
 

@@ -44,7 +44,7 @@ export interface TransactionEditorViewTestOverrides {
     // === Handler dependencies (for useTransactionEditorHandlers) ===
     // Story 14e-36c: Editor state/actions now from store, only external deps needed
     user: User | null;
-    db: Firestore;
+    db: Firestore | null;
     transactions: Transaction[];
     saveTransaction: (tx: Transaction) => Promise<string | void>;
     deleteTransaction: (id: string) => void;

@@ -4,7 +4,7 @@
 **Phase:** 2 - Decomposition
 **Points:** 3
 **Priority:** MEDIUM
-**Status:** drafted
+**Status:** done
 
 ## Overview
 
@@ -12,12 +12,12 @@ TransactionEditorViewInternal.tsx is currently 1,423 lines with 33 import depend
 
 ## Functional Acceptance Criteria
 
-- [ ] **AC1:** TransactionEditorViewInternal.tsx reduced to <1,200 lines (from 1,423)
-- [ ] **AC2:** Each extracted file is <400 lines
-- [ ] **AC3:** All existing tests pass before AND after extraction (including `tests/unit/components/App/viewRenderers.test.tsx` and `tests/unit/features/transaction-editor/store/useTransactionEditorStore.test.ts`)
-- [ ] **AC4:** No new functionality added -- pure decomposition
-- [ ] **AC5:** Fan-out of TransactionEditorViewInternal.tsx decreased from 33
-- [ ] **AC6:** `npm run test:quick` passes with 0 failures
+- [x] **AC1:** TransactionEditorViewInternal.tsx reduced to 1,133 lines (from 1,422) — PASS
+- [x] **AC2:** Each extracted file is <400 lines (162, 101, 133) — PASS
+- [x] **AC3:** All existing tests pass before AND after extraction — PASS (7089 tests)
+- [x] **AC4:** No new functionality added -- pure decomposition — PASS
+- [x] **AC5:** Fan-out decreased from 33 to 31 — PASS
+- [x] **AC6:** `npm run test:quick` passes with 0 failures — PASS (294 files)
 
 ## Architectural Acceptance Criteria (MANDATORY)
 
@@ -25,27 +25,27 @@ TransactionEditorViewInternal.tsx is currently 1,423 lines with 33 import depend
 
 ### File Location Requirements
 
-- [ ] **AC-ARCH-LOC-1:** Props/types file at `src/features/transaction-editor/views/TransactionEditorView/editorViewTypes.ts`
-- [ ] **AC-ARCH-LOC-2:** Swipe gesture hook at `src/features/transaction-editor/views/TransactionEditorView/useEditorSwipeGestures.ts`
-- [ ] **AC-ARCH-LOC-3:** Header bar component at `src/features/transaction-editor/views/TransactionEditorView/EditorHeaderBar.tsx`
-- [ ] **AC-ARCH-LOC-4:** Swipe gesture hook tests at `tests/unit/features/transaction-editor/views/TransactionEditorView/useEditorSwipeGestures.test.ts`
+- [x] **AC-ARCH-LOC-1:** Props/types file at `src/features/transaction-editor/views/TransactionEditorView/editorViewTypes.ts`
+- [x] **AC-ARCH-LOC-2:** Swipe gesture hook at `src/features/transaction-editor/views/TransactionEditorView/useEditorSwipeGestures.ts`
+- [x] **AC-ARCH-LOC-3:** Header bar component at `src/features/transaction-editor/views/TransactionEditorView/EditorHeaderBar.tsx`
+- [x] **AC-ARCH-LOC-4:** Swipe gesture hook tests at `tests/unit/features/transaction-editor/views/TransactionEditorView/useEditorSwipeGestures.test.ts`
 
 ### Pattern Requirements
 
-- [ ] **AC-ARCH-PATTERN-1:** All extracted files use `@/` or `@features/` path aliases for external imports -- zero `../../` relative imports
-- [ ] **AC-ARCH-PATTERN-2:** TransactionEditorViewInternal.tsx imports extracted modules via relative `./TransactionEditorView/` paths (same as existing sub-files)
-- [ ] **AC-ARCH-PATTERN-3:** `editorViewTypes.ts` contains ONLY `interface`, `type`, and re-export statements -- no runtime code, no React imports, no hooks
-- [ ] **AC-ARCH-PATTERN-4:** `useEditorSwipeGestures.ts` follows React custom hook pattern (function name starts with `use`, returns object with state values and handlers)
-- [ ] **AC-ARCH-PATTERN-5:** `EditorHeaderBar` accepts all data and callbacks as props -- no direct store access or context consumption
-- [ ] **AC-ARCH-PATTERN-6:** Test directory mirrors source: `tests/unit/features/transaction-editor/views/TransactionEditorView/`
+- [x] **AC-ARCH-PATTERN-1:** All extracted files use `@/` or `@features/` path aliases — zero `../../` imports
+- [x] **AC-ARCH-PATTERN-2:** Parent imports via relative `./TransactionEditorView/` paths
+- [x] **AC-ARCH-PATTERN-3:** `editorViewTypes.ts` is type-only — no runtime code, no React imports
+- [x] **AC-ARCH-PATTERN-4:** `useEditorSwipeGestures.ts` follows hook pattern — `use` prefix, returns state+handlers
+- [x] **AC-ARCH-PATTERN-5:** `EditorHeaderBar` is props-only — no store/context access
+- [x] **AC-ARCH-PATTERN-6:** Test directory mirrors source structure
 
 ### Anti-Pattern Requirements (Must NOT Happen)
 
-- [ ] **AC-ARCH-NO-1:** No circular dependency -- extracted files must NOT import from `@features/transaction-editor` barrel or `@features/transaction-editor/views` barrel (index.ts)
-- [ ] **AC-ARCH-NO-2:** No new `console.log` statements in extracted files
-- [ ] **AC-ARCH-NO-3:** No `: any` types in extracted files -- use proper TypeScript types (note: `handleUpdateItem` in TransactionEditorViewInternal.tsx already has `value: any` -- do NOT copy that pattern into extracted files)
-- [ ] **AC-ARCH-NO-4:** No state lifting -- only swipe-specific state moves to the hook; dialog visibility state, editing state, and category overlay state stay in TransactionEditorViewInternal
-- [ ] **AC-ARCH-NO-5:** No feature barrel modification -- `src/features/transaction-editor/views/TransactionEditorView/index.ts` continues to export only TransactionEditorView, useTransactionEditorData, and useTransactionEditorHandlers
+- [x] **AC-ARCH-NO-1:** No circular deps — madge confirms zero cycles
+- [x] **AC-ARCH-NO-2:** No console.log in extracted files
+- [x] **AC-ARCH-NO-3:** No `: any` in extracted files — proper TypeScript types throughout
+- [x] **AC-ARCH-NO-4:** No state lifting — only swipe state moved; dialog/editing/overlay state stays in parent
+- [x] **AC-ARCH-NO-5:** No barrel modification — index.ts unchanged
 
 ## File Specification
 
@@ -82,58 +82,58 @@ TransactionEditorViewInternal.tsx is currently 1,423 lines with 33 import depend
 
 ### Task 1: Establish baseline
 
-- [ ] 1.1 Run `npm run test:quick` and record total pass count
-- [ ] 1.2 Run `npx vitest run tests/unit/components/App/viewRenderers.test.tsx` and confirm all pass
-- [ ] 1.3 Run `npx vitest run tests/unit/features/transaction-editor/store/useTransactionEditorStore.test.ts` and confirm all pass
-- [ ] 1.4 Count current TransactionEditorViewInternal.tsx lines: `wc -l src/features/transaction-editor/views/TransactionEditorViewInternal.tsx` (expect 1,423)
-- [ ] 1.5 Record current fan-out: count import statements in TransactionEditorViewInternal.tsx (expect ~33)
+- [x] 1.1 Run `npm run test:quick` and record total pass count — 293 files, 7077 tests passed
+- [x] 1.2 Run `npx vitest run tests/unit/components/App/viewRenderers.test.tsx` and confirm all pass — 49 passed
+- [x] 1.3 Run `npx vitest run tests/unit/features/transaction-editor/store/useTransactionEditorStore.test.ts` and confirm all pass — 79 passed
+- [x] 1.4 Count current TransactionEditorViewInternal.tsx lines: 1,422
+- [x] 1.5 Record current fan-out: 33 import statements
 
 ### Task 2: Extract props interface and types into editorViewTypes.ts
 
-- [ ] 2.1 Create `src/features/transaction-editor/views/TransactionEditorView/editorViewTypes.ts`
-- [ ] 2.2 Move the `ScanButtonState` import/re-export (lines 109-110): `import type { ScanButtonState } from '@/shared/utils/scanHelpers'; export type { ScanButtonState };`
-- [ ] 2.3 Move `TransactionEditorViewProps` interface (~140 lines) into the new file, adding necessary type-only imports: `Transaction`, `TransactionItem`, `StoreCategory`, `ItemCategory` from `@/types/transaction`; `UserCredits` from `@/types/scan`; `Language` from `@/utils/translations`; `ItemNameMapping` from `@/types/itemNameMapping`; `ScanButtonState` from `@/shared/utils/scanHelpers`
-- [ ] 2.4 Update TransactionEditorViewInternal.tsx: replace the inline interface with `import type { TransactionEditorViewProps, ScanButtonState } from './TransactionEditorView/editorViewTypes'` and `export type { TransactionEditorViewProps, ScanButtonState } from './TransactionEditorView/editorViewTypes'`
-- [ ] 2.5 Remove type-only imports from TransactionEditorViewInternal.tsx that are no longer needed after the move -- verify `Language`, `UserCredits`, `ItemNameMapping` are not used in the component body before removing them
-- [ ] 2.6 Run `npx tsc --noEmit` -- fix any type errors
-- [ ] 2.7 Verify `src/views/TransactionEditorViewInternal.tsx` shim still compiles (re-exports `TransactionEditorViewProps` and `ScanButtonState`)
+- [x] 2.1 Create `src/features/transaction-editor/views/TransactionEditorView/editorViewTypes.ts`
+- [x] 2.2 Move the `ScanButtonState` import/re-export
+- [x] 2.3 Move `TransactionEditorViewProps` interface (140 lines) with type-only imports (TransactionItem excluded — not used in interface)
+- [x] 2.4 Update TransactionEditorViewInternal.tsx with import/re-export from editorViewTypes
+- [x] 2.5 Remove type-only imports: Language, UserCredits, ItemNameMapping (verified not used in component body)
+- [x] 2.6 Run `npx tsc --noEmit` — passed
+- [x] 2.7 Verify shim still compiles — passed
 
 ### Task 3: Extract swipe gesture hook into useEditorSwipeGestures.ts
 
-- [ ] 3.1 Create `src/features/transaction-editor/views/TransactionEditorView/useEditorSwipeGestures.ts`
-- [ ] 3.2 Define `UseEditorSwipeGesturesProps` interface: `batchContext: { index: number; total: number } | null`, `onBatchPrevious?: () => void`, `onBatchNext?: () => void`, `transactionId?: string`
-- [ ] 3.3 Define `UseEditorSwipeGesturesReturn` interface: `swipeOffset: number`, `swipeTouchStart: number | null`, `fadeInKey: number`, `handleSwipeTouchStart: (e: React.TouchEvent) => void`, `handleSwipeTouchMove: (e: React.TouchEvent) => void`, `handleSwipeTouchEnd: () => void`
-- [ ] 3.4 Move `swipeTouchStart` + `setSwipeTouchStart` useState to the hook
-- [ ] 3.5 Move `swipeOffset` + `setSwipeOffset` useState to the hook
-- [ ] 3.6 Move `fadeInKey` + `setFadeInKey` useState to the hook
-- [ ] 3.7 Move `prevTransactionIdRef` useRef to the hook
-- [ ] 3.8 Move transaction-change fade-in useEffect to the hook
-- [ ] 3.9 Move computed swipe flags: `canSwipePrevious`, `canSwipeNext`, `canSwipe`, `minSwipeDistance` to the hook
-- [ ] 3.10 Move `handleSwipeTouchStart`, `handleSwipeTouchMove`, `handleSwipeTouchEnd` useCallbacks to the hook
-- [ ] 3.11 Return all state values and handlers; export the hook and its types
-- [ ] 3.12 Update TransactionEditorViewInternal.tsx: import and call `useEditorSwipeGestures({ batchContext, onBatchPrevious, onBatchNext, transactionId: transaction?.id })` and destructure returned values
-- [ ] 3.13 Run `npx tsc --noEmit` -- fix any type errors
-- [ ] 3.14 Create `tests/unit/features/transaction-editor/views/TransactionEditorView/useEditorSwipeGestures.test.ts` with renderHook tests for: initial state (offset=0, fadeInKey=0), touchStart/move/end gesture simulation, swipe-left triggers onBatchNext, swipe-right triggers onBatchPrevious, resistance when swiping past boundaries, no-op when batchContext is null, fadeInKey increments on transactionId change
+- [x] 3.1 Create `src/features/transaction-editor/views/TransactionEditorView/useEditorSwipeGestures.ts`
+- [x] 3.2 Define `UseEditorSwipeGesturesProps` interface
+- [x] 3.3 Define `UseEditorSwipeGesturesReturn` interface
+- [x] 3.4 Move `swipeTouchStart` + `setSwipeTouchStart` useState to the hook
+- [x] 3.5 Move `swipeOffset` + `setSwipeOffset` useState to the hook
+- [x] 3.6 Move `fadeInKey` + `setFadeInKey` useState to the hook
+- [x] 3.7 Move `prevTransactionIdRef` useRef to the hook
+- [x] 3.8 Move transaction-change fade-in useEffect to the hook
+- [x] 3.9 Move computed swipe flags to the hook
+- [x] 3.10 Move touch handlers to the hook
+- [x] 3.11 Return all state values and handlers; export the hook and its types
+- [x] 3.12 Update TransactionEditorViewInternal.tsx to use the hook
+- [x] 3.13 Run `npx tsc --noEmit` — passed
+- [x] 3.14 Create tests with 12 test cases — all passing
 
 ### Task 4: Extract EditorHeaderBar component
 
-- [ ] 4.1 Create `src/features/transaction-editor/views/TransactionEditorView/EditorHeaderBar.tsx`
-- [ ] 4.2 Define `EditorHeaderBarProps` interface: `mode: 'new' | 'existing'`, `readOnly: boolean`, `transactionId?: string`, `credits: UserCredits`, `onCancelClick: () => void`, `onDeleteClick: () => void`, `onCreditInfoClick: () => void`, `t: (key: string) => string`
-- [ ] 4.3 Extract the sticky header JSX block (the `<div className="sticky px-4">` containing the back button, title `<h1>`, credit badges section, and close/delete button) into the new component
-- [ ] 4.4 Audit lucide-react icon imports: only move icons that are exclusively used in the header; leave shared icons (`ChevronLeft` is also used in batch counter -- keep in parent too) in TransactionEditorViewInternal.tsx
-- [ ] 4.5 Move `formatCreditsDisplay` import to EditorHeaderBar if only used in the header
-- [ ] 4.6 Update TransactionEditorViewInternal.tsx: replace the sticky header `<div>` with `<EditorHeaderBar mode={mode} readOnly={readOnly} credits={credits} onCancelClick={handleCancelClick} onDeleteClick={() => setShowDeleteConfirm(true)} onCreditInfoClick={openCreditInfoModal} t={t} />`
-- [ ] 4.7 Run `npx tsc --noEmit` -- fix any type errors
+- [x] 4.1 Create `src/features/transaction-editor/views/TransactionEditorView/EditorHeaderBar.tsx`
+- [x] 4.2 Define `EditorHeaderBarProps` interface
+- [x] 4.3 Extract sticky header JSX block into EditorHeaderBar
+- [x] 4.4 Audit icons: moved Trash2, X, Camera, Zap, Info (header-only); kept ChevronLeft in both files
+- [x] 4.5 Move `formatCreditsDisplay` to EditorHeaderBar (header-only usage)
+- [x] 4.6 Update TransactionEditorViewInternal.tsx with `<EditorHeaderBar>` component usage
+- [x] 4.7 Run `npx tsc --noEmit` — passed
 
 ### Task 5: Verify extraction and run full test suite
 
-- [ ] 5.1 Count final TransactionEditorViewInternal.tsx lines: `wc -l src/features/transaction-editor/views/TransactionEditorViewInternal.tsx` (target: <1,200)
-- [ ] 5.2 Verify all extracted files are <400 lines each
-- [ ] 5.3 Verify no `../../` imports in extracted files: `grep -rE "from '\.\./\.\." src/features/transaction-editor/views/TransactionEditorView/editorViewTypes.ts src/features/transaction-editor/views/TransactionEditorView/useEditorSwipeGestures.ts src/features/transaction-editor/views/TransactionEditorView/EditorHeaderBar.tsx` returns 0
-- [ ] 5.4 Verify no circular deps: `npx madge --circular src/features/transaction-editor/views/TransactionEditorView/`
-- [ ] 5.5 Run `npm run test:quick` -- all tests pass
-- [ ] 5.6 Run `npx vitest run tests/unit/components/App/viewRenderers.test.tsx` -- all pass
-- [ ] 5.7 Record final import count in TransactionEditorViewInternal.tsx -- must be lower than 33
+- [x] 5.1 Final line count: 1,133 (target: <1,200) — PASS
+- [x] 5.2 All extracted files <400 lines: editorViewTypes.ts=162, useEditorSwipeGestures.ts=101, EditorHeaderBar.tsx=133 — PASS
+- [x] 5.3 No `../../` imports in extracted files — PASS
+- [x] 5.4 No circular deps — PASS
+- [x] 5.5 test:quick: 294 files passed, 7089 tests passed — PASS
+- [x] 5.6 viewRenderers.test.tsx: 49 passed — PASS
+- [x] 5.7 Final import count: 31 (was 33) — PASS
 
 ## Dev Notes
 
@@ -173,3 +173,15 @@ TransactionEditorViewInternal.tsx is currently 1,423 lines with 33 import depend
 |------|--------|
 | 2026-02-13 | Initial draft |
 | 2026-02-23 | Full rewrite. Source analysis of TransactionEditorViewInternal.tsx (1,423 lines, 33 imports, 5 existing sub-files from Epic 15 Story 15-5d). 3 extraction targets: editorViewTypes.ts (~160L types), useEditorSwipeGestures.ts (~100L hook), EditorHeaderBar.tsx (~120L sub-component). Target residual: ~1,130 lines. 10 architectural ACs, 5 tasks, 22 subtasks, 5 files. |
+| 2026-02-27 | ECC re-creation validation: All extraction targets confirmed. Import count 33 confirmed. No corrections needed. Status: ready-for-dev. |
+| 2026-02-27 | ECC Code Review: APPROVE 9.25/10. Agents: code-reviewer + security-reviewer. 1 quick fix (removed unused readOnly prop from EditorHeaderBar). 0 TD stories created. All 11 architectural ACs validated. 294 files / 7089 tests green. |
+
+## Senior Developer Review (ECC)
+
+- **Date:** 2026-02-27
+- **Agents:** code-reviewer, security-reviewer (STANDARD classification)
+- **Outcome:** APPROVE 9.25/10
+- **Quick Fixes:** 1 (removed unused `readOnly` prop from `EditorHeaderBarProps`)
+- **TD Stories:** 0 (pre-existing `value: any` debt already partially tracked by TD-15b-5)
+- **Architectural ACs:** 11/11 PASS (4 location, 6 pattern, 5 anti-pattern)
+- **Tests:** 294 files, 7089 tests passed

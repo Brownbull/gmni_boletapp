@@ -25,27 +25,9 @@ import { User } from 'firebase/auth';
 import { Services } from './useAuth';
 import { useFirestoreSubscription } from './useFirestoreSubscription';
 import { QUERY_KEYS } from '../lib/queryKeys';
-import { subscribeToRecentScans } from '../services/firestore';
-import { Transaction } from '../types/transaction';
-import { getSafeDate, parseStrictNumber } from '../utils/validation';
-
-/**
- * Sanitizes raw Firestore transaction data.
- * Ensures dates are valid and numbers are properly parsed.
- */
-function sanitizeTransactions(docs: Transaction[]): Transaction[] {
-    return docs.map(d => ({
-        ...d,
-        date: getSafeDate(d.date),
-        total: parseStrictNumber(d.total),
-        items: Array.isArray(d.items)
-            ? d.items.map(i => ({
-                ...i,
-                price: parseStrictNumber(i.price)
-            }))
-            : []
-    }));
-}
+import { createTransactionRepository } from '@/repositories/transactionRepository';
+import { sanitizeTransactions } from '@/repositories/utils';
+import type { Transaction } from '../types/transaction';
 
 /**
  * Hook for subscribing to user's most recently scanned transactions.
@@ -59,24 +41,24 @@ export function useRecentScans(user: User | null, services: Services | null): Tr
 
     // Create the query key (stable reference when deps don't change)
     const queryKey = useMemo(
-        () => enabled ? QUERY_KEYS.recentScans(user!.uid, services!.appId) : ['transactions', 'recentScans', '', ''],
+        () => enabled ? QUERY_KEYS.recentScans(user.uid, services.appId) : ['transactions', 'recentScans', '', ''],
         [enabled, user?.uid, services?.appId]
     );
 
     // Subscribe to recent scans with React Query caching
     const { data } = useFirestoreSubscription<Transaction[]>(
         queryKey,
-        (callback) => subscribeToRecentScans(
-            services!.db,
-            user!.uid,
-            services!.appId,
-            (docs) => {
-                // Sanitize before passing to cache
-                // Note: Already ordered by createdAt desc from Firestore query
+        (callback) => {
+            if (!services || !user) return () => {};
+            const repo = createTransactionRepository({ db: services.db, userId: user.uid, appId: services.appId });
+            let cancelled = false;
+            const unsubscribe = repo.subscribeRecentScans((docs) => {
+                if (cancelled) return;
                 const sanitized = sanitizeTransactions(docs);
                 callback(sanitized);
-            }
-        ),
+            });
+            return () => { cancelled = true; unsubscribe(); };
+        },
         { enabled }
     );
 

@@ -111,7 +111,7 @@ export const ItemsView: React.FC<ItemsViewProps> = ({
     // Animation preference
     const prefersReducedMotion = useReducedMotion();
 
-    // Story 14.31 Session 2: Use HistoryFiltersContext for temporal navigation
+    // Story 14.31 Session 2: Use useHistoryFilters (Zustand) for temporal navigation
     const {
         state: filterState,
         dispatch: filterDispatch,

@@ -5,7 +5,7 @@
  * Maps store categories to representative emojis for visual display.
  */
 
-import { StoreCategory } from '../types/transaction';
+import type { StoreCategory } from '../../shared/schema/categories';
 
 /**
  * Emoji mapping for store categories.

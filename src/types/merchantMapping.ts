@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase/firestore'
-import type { StoreCategory } from './transaction'
+import type { StoreCategory } from '../../shared/schema/categories'
 
 /**
  * MerchantMapping represents a user's learned merchant→alias preference.

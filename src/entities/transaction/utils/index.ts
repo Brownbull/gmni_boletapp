@@ -10,9 +10,9 @@
  * - normalizeTransactions: Batch normalization
  * - DEFAULT_TIME: Sentinel value for missing time
  *
- * Internal utilities (kept in src/utils/, not exported here):
- * - sanitizeTransactions (internal to useTransactions hook)
- * - sortByDateDescending (internal to useTransactions hook)
+ * Internal utilities (not exported here):
+ * - sanitizeTransactions (src/repositories/utils.ts — shared by subscription hooks)
+ * - sortByDateDesc (internal to useTransactions hook)
  */
 
 export {

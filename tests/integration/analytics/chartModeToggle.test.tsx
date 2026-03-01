@@ -12,7 +12,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useState } from 'react';
-import { AnalyticsProvider } from '../../../src/contexts/AnalyticsContext';
+import { useAnalyticsStore } from '@features/analytics/stores/useAnalyticsStore';
+import { getDefaultNavigationState } from '@features/analytics/utils/analyticsHelpers';
 import { ChartModeToggle } from '@features/analytics/components/ChartModeToggle';
 import { useAnalyticsNavigation } from '@features/analytics/hooks/useAnalyticsNavigation';
 import type { AnalyticsNavigationState, TemporalPosition } from '../../../src/types/analytics';
@@ -21,16 +22,19 @@ import type { AnalyticsNavigationState, TemporalPosition } from '../../../src/ty
 // Test Helpers
 // ============================================================================
 
-function renderWithProvider(
+function renderWithStore(
   ui: React.ReactElement,
   initialState?: AnalyticsNavigationState
 ) {
-  return render(
-    <AnalyticsProvider initialState={initialState}>
-      {ui}
-    </AnalyticsProvider>
-  );
+  if (initialState) {
+    useAnalyticsStore.setState(initialState);
+  }
+  return render(ui);
 }
+
+beforeEach(() => {
+  useAnalyticsStore.setState(getDefaultNavigationState('2024'));
+});
 
 // State display component for testing
 function StateDisplay() {
@@ -109,7 +113,7 @@ describe('ChartModeToggle + Context Integration - AC #10', () => {
   it('clicking Comparison dispatches TOGGLE_CHART_MODE and updates context', async () => {
     const user = userEvent.setup();
 
-    renderWithProvider(
+    renderWithStore(
       <>
         <ChartModeToggle />
         <StateDisplay />
@@ -133,7 +137,7 @@ describe('ChartModeToggle + Context Integration - AC #10', () => {
   it('clicking Aggregation when in comparison mode updates context', async () => {
     const user = userEvent.setup();
 
-    renderWithProvider(
+    renderWithStore(
       <>
         <ChartModeToggle />
         <StateDisplay />
@@ -163,7 +167,7 @@ describe('ChartModeToggle + Context Integration - AC #11: Persistence', () => {
   it('mode persists when navigating temporal levels', async () => {
     const user = userEvent.setup();
 
-    renderWithProvider(
+    renderWithStore(
       <>
         <ChartModeToggle />
         <TemporalNavigator />
@@ -200,7 +204,7 @@ describe('ChartModeToggle + Context Integration - Day level behavior', () => {
   it('toggle disappears when navigating to Day level', async () => {
     const user = userEvent.setup();
 
-    renderWithProvider(
+    renderWithStore(
       <>
         <ChartModeToggle />
         <TemporalNavigator />
@@ -224,7 +228,7 @@ describe('ChartModeToggle + Context Integration - Day level behavior', () => {
   it('toggle reappears when navigating away from Day level', async () => {
     const user = userEvent.setup();
 
-    renderWithProvider(
+    renderWithStore(
       <>
         <ChartModeToggle />
         <TemporalNavigator />
@@ -248,7 +252,7 @@ describe('ChartModeToggle + Context Integration - Day level behavior', () => {
   it('auto-switches to aggregation when navigating to Day while in comparison mode', async () => {
     const user = userEvent.setup();
 
-    renderWithProvider(
+    renderWithStore(
       <>
         <ChartModeToggle />
         <TemporalNavigator />
@@ -278,7 +282,7 @@ describe('ChartModeToggle + Context Integration - Multiple interactions', () => 
   it('handles rapid toggle clicks correctly', async () => {
     const user = userEvent.setup();
 
-    renderWithProvider(
+    renderWithStore(
       <>
         <ChartModeToggle />
         <StateDisplay />
@@ -303,7 +307,7 @@ describe('ChartModeToggle + Context Integration - Multiple interactions', () => 
   it('clicking same mode multiple times does not cause issues', async () => {
     const user = userEvent.setup();
 
-    renderWithProvider(
+    renderWithStore(
       <>
         <ChartModeToggle />
         <StateDisplay />
@@ -331,7 +335,7 @@ describe('ChartModeToggle + Context Integration - Keyboard', () => {
   it('Enter key toggle updates context', async () => {
     const user = userEvent.setup();
 
-    renderWithProvider(
+    renderWithStore(
       <>
         <ChartModeToggle />
         <StateDisplay />
@@ -355,7 +359,7 @@ describe('ChartModeToggle + Context Integration - Keyboard', () => {
   it('Arrow key toggle updates context', async () => {
     const user = userEvent.setup();
 
-    renderWithProvider(
+    renderWithStore(
       <>
         <ChartModeToggle />
         <StateDisplay />

@@ -87,8 +87,8 @@ export interface UseHistoryFiltersReturn {
  * Hook for accessing history filters.
  *
  * Story 15-7a: Now reads from Zustand store (useHistoryFiltersStore)
- * instead of React Context. HistoryFiltersProvider still wraps views
- * to initialize the store on mount.
+ * instead of React Context.
+ * Story 15b-3g: HistoryFiltersProvider deleted — store initialized by useHistoryFiltersInit hook.
  *
  * @example
  * function MyComponent() {

@@ -20,11 +20,11 @@
 
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { ChevronLeft, Save, Loader2, AlertCircle, Check, X, Trash2, RotateCcw, Zap, Camera, Info, Layers } from 'lucide-react';
-import { formatCreditsDisplay } from '@/services/userCreditsService';
+import { formatCreditsDisplay } from '@/utils/creditFormatters';
 import { useBatchReview, BatchReceipt } from '../hooks/useBatchReview';
 import { BatchReviewCard } from '@features/batch-review/components/BatchReviewCard';
 import { ProcessingResult, ImageProcessingState } from '@features/batch-review/services/batchProcessingService';
-import { Transaction } from '@/types/transaction';
+import type { Transaction } from '@/types/transaction';
 import { formatCurrency } from '@/utils/currency';
 import type { Currency } from '@/types/settings';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store

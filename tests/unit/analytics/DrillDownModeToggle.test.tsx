@@ -8,11 +8,12 @@
  * AC #1-3, #6-8: DrillDownModeToggle acceptance criteria
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { AnalyticsProvider } from '../../../src/contexts/AnalyticsContext';
+import { useAnalyticsStore } from '@features/analytics/stores/useAnalyticsStore';
+import { getDefaultNavigationState } from '@features/analytics/utils/analyticsHelpers';
 import { DrillDownModeToggle } from '@features/analytics/components/DrillDownModeToggle';
 import type { AnalyticsNavigationState } from '../../../src/types/analytics';
 
@@ -20,22 +21,19 @@ import type { AnalyticsNavigationState } from '../../../src/types/analytics';
 // Test Helpers
 // ============================================================================
 
-function createWrapper(initialState?: AnalyticsNavigationState) {
-  return function Wrapper({ children }: { children: React.ReactNode }) {
-    return (
-      <AnalyticsProvider initialState={initialState}>
-        {children}
-      </AnalyticsProvider>
-    );
-  };
-}
-
-function renderWithProvider(
+function renderWithStore(
   ui: React.ReactElement,
   initialState?: AnalyticsNavigationState
 ) {
-  return render(ui, { wrapper: createWrapper(initialState) });
+  if (initialState) {
+    useAnalyticsStore.setState(initialState);
+  }
+  return render(ui);
 }
+
+beforeEach(() => {
+  useAnalyticsStore.setState(getDefaultNavigationState('2024'));
+});
 
 // Default states for testing
 const temporalModeState: AnalyticsNavigationState = {
@@ -59,21 +57,21 @@ const categoryModeState: AnalyticsNavigationState = {
 
 describe('DrillDownModeToggle - AC #2: Toggle options', () => {
   it('renders two toggle options', () => {
-    renderWithProvider(<DrillDownModeToggle />, temporalModeState);
+    renderWithStore(<DrillDownModeToggle />, temporalModeState);
 
     expect(screen.getByTestId('drilldown-mode-temporal')).toBeInTheDocument();
     expect(screen.getByTestId('drilldown-mode-category')).toBeInTheDocument();
   });
 
   it('displays Temporal and Category labels in English', () => {
-    renderWithProvider(<DrillDownModeToggle locale="en" />, temporalModeState);
+    renderWithStore(<DrillDownModeToggle locale="en" />, temporalModeState);
 
     expect(screen.getByText('Temporal')).toBeInTheDocument();
     expect(screen.getByText('Category')).toBeInTheDocument();
   });
 
   it('displays Temporal and Categoría labels in Spanish', () => {
-    renderWithProvider(<DrillDownModeToggle locale="es" />, temporalModeState);
+    renderWithStore(<DrillDownModeToggle locale="es" />, temporalModeState);
 
     expect(screen.getByText('Temporal')).toBeInTheDocument();
     expect(screen.getByText('Categoría')).toBeInTheDocument();
@@ -86,21 +84,21 @@ describe('DrillDownModeToggle - AC #2: Toggle options', () => {
 
 describe('DrillDownModeToggle - AC #3: Styling', () => {
   it('has tablist role for accessibility', () => {
-    renderWithProvider(<DrillDownModeToggle />, temporalModeState);
+    renderWithStore(<DrillDownModeToggle />, temporalModeState);
 
     const tablist = screen.getByRole('tablist');
     expect(tablist).toBeInTheDocument();
   });
 
   it('buttons have tab role', () => {
-    renderWithProvider(<DrillDownModeToggle />, temporalModeState);
+    renderWithStore(<DrillDownModeToggle />, temporalModeState);
 
     const tabs = screen.getAllByRole('tab');
     expect(tabs).toHaveLength(2);
   });
 
   it('active button has aria-selected=true', () => {
-    renderWithProvider(<DrillDownModeToggle />, temporalModeState);
+    renderWithStore(<DrillDownModeToggle />, temporalModeState);
 
     const temporalTab = screen.getByTestId('drilldown-mode-temporal');
     const categoryTab = screen.getByTestId('drilldown-mode-category');
@@ -110,14 +108,14 @@ describe('DrillDownModeToggle - AC #3: Styling', () => {
   });
 
   it('applies dark theme styles', () => {
-    renderWithProvider(<DrillDownModeToggle theme="dark" />, temporalModeState);
+    renderWithStore(<DrillDownModeToggle theme="dark" />, temporalModeState);
 
     const tablist = screen.getByRole('tablist');
     expect(tablist).toHaveClass('bg-slate-800');
   });
 
   it('applies light theme styles by default', () => {
-    renderWithProvider(<DrillDownModeToggle />, temporalModeState);
+    renderWithStore(<DrillDownModeToggle />, temporalModeState);
 
     const tablist = screen.getByRole('tablist');
     expect(tablist).toHaveClass('bg-white');
@@ -130,14 +128,14 @@ describe('DrillDownModeToggle - AC #3: Styling', () => {
 
 describe('DrillDownModeToggle - AC #6: Default state', () => {
   it('shows Temporal as selected when drillDownMode is temporal', () => {
-    renderWithProvider(<DrillDownModeToggle />, temporalModeState);
+    renderWithStore(<DrillDownModeToggle />, temporalModeState);
 
     const temporalTab = screen.getByTestId('drilldown-mode-temporal');
     expect(temporalTab).toHaveAttribute('aria-selected', 'true');
   });
 
   it('shows Category as selected when drillDownMode is category', () => {
-    renderWithProvider(<DrillDownModeToggle />, categoryModeState);
+    renderWithStore(<DrillDownModeToggle />, categoryModeState);
 
     const categoryTab = screen.getByTestId('drilldown-mode-category');
     expect(categoryTab).toHaveAttribute('aria-selected', 'true');
@@ -153,7 +151,7 @@ describe('DrillDownModeToggle - Toggle behavior', () => {
   it('clicking inactive option toggles the mode', async () => {
     const user = userEvent.setup();
 
-    renderWithProvider(<DrillDownModeToggle />, temporalModeState);
+    renderWithStore(<DrillDownModeToggle />, temporalModeState);
 
     const categoryTab = screen.getByTestId('drilldown-mode-category');
     await user.click(categoryTab);
@@ -165,7 +163,7 @@ describe('DrillDownModeToggle - Toggle behavior', () => {
   it('clicking active option does nothing', async () => {
     const user = userEvent.setup();
 
-    renderWithProvider(<DrillDownModeToggle />, temporalModeState);
+    renderWithStore(<DrillDownModeToggle />, temporalModeState);
 
     const temporalTab = screen.getByTestId('drilldown-mode-temporal');
     await user.click(temporalTab);
@@ -177,7 +175,7 @@ describe('DrillDownModeToggle - Toggle behavior', () => {
   it('supports keyboard navigation with Enter', async () => {
     const user = userEvent.setup();
 
-    renderWithProvider(<DrillDownModeToggle />, temporalModeState);
+    renderWithStore(<DrillDownModeToggle />, temporalModeState);
 
     const categoryTab = screen.getByTestId('drilldown-mode-category');
     categoryTab.focus();
@@ -190,7 +188,7 @@ describe('DrillDownModeToggle - Toggle behavior', () => {
   it('supports keyboard navigation with Space', async () => {
     const user = userEvent.setup();
 
-    renderWithProvider(<DrillDownModeToggle />, temporalModeState);
+    renderWithStore(<DrillDownModeToggle />, temporalModeState);
 
     const categoryTab = screen.getByTestId('drilldown-mode-category');
     categoryTab.focus();
@@ -203,7 +201,7 @@ describe('DrillDownModeToggle - Toggle behavior', () => {
   it('supports keyboard navigation with arrow keys', async () => {
     const user = userEvent.setup();
 
-    renderWithProvider(<DrillDownModeToggle />, temporalModeState);
+    renderWithStore(<DrillDownModeToggle />, temporalModeState);
 
     const temporalTab = screen.getByTestId('drilldown-mode-temporal');
     temporalTab.focus();

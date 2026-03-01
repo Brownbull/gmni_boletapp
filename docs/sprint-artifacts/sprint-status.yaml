@@ -172,7 +172,7 @@ development_status:
   # Dependency analysis: dependency-diagrams/ANALYSIS-REPORT.md
   # Predecessor: Epic 15 (DONE — 68 stories, ~158 pts)
   # ============================================================================
-  epic-15b: in-progress
+  epic-15b: done
 
   # Phase 0: Structural Cleanup (5 stories, ~7 pts)
   15b-0a-dead-module-audit: done                   # 1 pt  - Identify and remove orphan modules
@@ -215,40 +215,67 @@ development_status:
   TD-15b-12-transaction-schema-bounds: deployed  # 1 pt - Add merchant non-empty + total >= 0 bounds to isValidTransactionWrite (from TD-15b-11 review, LOW) | deployed: 2026-02-24
   TD-15b-13-firestore-rules-improvements: deployed  # 1 pt - total upper bound + rename isValidTransactionWrite → hasValidFieldBounds (from TD-15b-12 review, LOW) | deployed: 2026-02-24
   # 15b-2b: DROPPED (2026-02-23) file merged into TEVInternal in prior story
-  15b-2c-decompose-history-view: done             # 2 pts - HistoryView 1,169→693 lines
-  15b-2d-decompose-items-view: done             # 2 pts - ItemsView 1003→449 lines
+  15b-2c-decompose-history-view: deployed         # 2 pts - HistoryView 1,169→693 lines | deployed: 2026-02-24
+  15b-2d-decompose-items-view: deployed          # 2 pts - ItemsView 1003→449 lines | deployed: 2026-02-24
   # Feature-internal large files (target <800)
-  15b-2e-decompose-report-utils: drafted       # 3 pts - reportUtils.ts 2,093 lines
-  15b-2f-decompose-sankey-data-builder: drafted  # 2 pts - sankeyDataBuilder.ts 906 lines
+  15b-2e-decompose-report-utils: done            # 3 pts - reportUtils.ts 2,401→5 modules (max 602L) | done: 2026-02-24
+  TD-15b-14-report-utils-data-robustness: done    # 2 pts - parseDate validation + trendPercent overflow guard (from 15b-2e review, LOW) | done: 2026-02-24
+  15b-2f-decompose-sankey-data-builder: done    # 2 pts - sankeyDataBuilder.ts 1,038→584 lines | done: 2026-02-25
+  TD-15b-15-sankey-builder-quality: done  # 2 pts - applyThreshold mutation fix + link dedup optimization + explicit price guard (from 15b-2f review, LOW) | done: 2026-02-25
+  TD-15b-16-sankey-builder-polish: done  # 2 pts - Extract addLink/splitFlowKey helpers + 3-level mode test coverage (from TD-15b-15 review, LOW) | done: 2026-02-25
   # 15b-2g: DROPPED (2026-02-23) 803 lines, essentially at target
   # 15b-2h: DROPPED (2026-02-23) 804 lines, essentially at target
   # 15b-2i: DROPPED (2026-02-23) 723 lines, below 800-line threshold
   # 15b-2j: DROPPED (2026-02-23) 682 lines, below 800-line threshold
-  15b-2k-decompose-history-filter-utils: drafted   # 2 pts - historyFilterUtils.ts 949 lines
-  15b-2l-decompose-scan-handlers: drafted      # 2 pts - useScanHandlers.ts 861 lines
+  15b-2k-decompose-history-filter-utils: done     # 2 pts - historyFilterUtils.ts 1,075→676 lines | done: 2026-02-25
+  TD-15b-17-history-filter-utils-polish: done  # 1 pt - Break madge circular dep + hoist inner helpers (from 15b-2k review, LOW) | done: 2026-02-25
+  TD-15b-18-temporal-utils-test-coverage: done  # 2 pts - Unit tests for temporalFormatters + temporalFilterBuilders (from TD-15b-17 review, LOW) | done: 2026-02-25
+  15b-2l-decompose-scan-handlers: done  # 2 pts - useScanHandlers.ts 957→552 lines | done: 2026-02-25
+  TD-15b-19-scan-flow-router-test-split: done  # 1 pt - Split 391-line test file into 2 files under 300 lines (from 15b-2l review, LOW) | done: 2026-02-25
+  TD-15b-20-scan-flow-router-coverage-gaps: done  # 2 pts - Harden useScanFlowRouter test coverage: boundary tests, usage assertions, null guards (from TD-15b-19 review, LOW) | done: 2026-02-25
   # Plateaued views round 2 (target <1,200)
-  15b-2m-trends-view-extraction: drafted       # 3 pts - TrendsView 1,803 lines
-  15b-2n-dashboard-view-extraction: drafted    # 3 pts - DashboardView 1,358 lines
-  15b-2o-editor-view-extraction: drafted       # 3 pts - TransactionEditorViewInternal 1,317 lines
-  15b-2p-icon-filter-extraction: drafted       # 2 pts - IconCategoryFilter 1,030 lines
+  15b-2m-trends-view-extraction: done      # 3 pts - TrendsView 1,981→1,226 lines | done: 2026-02-25
+  TD-15b-21-trends-view-polish: done  # 1 pt - Runtime guards, i18n, line trim (from 15b-2m review, LOW) | done: 2026-02-27
+  TD-15b-22-trends-view-minor-hardening: done  # 1 pt - CSS color validation + shared locale guard + sync pattern (from TD-15b-21 review, LOW) | done: 2026-02-27
+  TD-15b-23-safecsscolor-hex-normalization: done  # 1 pt - Normalize 3-digit hex to 6-digit in safeCSSColor (from TD-15b-22 review, LOW) | done: 2026-02-27
+  TD-15b-24-safecsscolor-fallback-validation: done  # 1 pt - Validate fallback parameter in safeCSSColor (from TD-15b-23 review, LOW) | done: 2026-02-27
+  15b-2n-dashboard-view-extraction: done  # 3 pts - DashboardView 1,485→1,147 lines (3 extractions) | done: 2026-02-27
+  15b-2o-editor-view-extraction: done       # 3 pts - TransactionEditorViewInternal 1,422→1,133 lines (3 extractions) | done: 2026-02-27
+  15b-2p-icon-filter-extraction: done       # 2 pts - IconCategoryFilter 1,106→665 lines (3 extractions) | done: 2026-02-27
+  TD-15b-25-icon-filter-quality: done    # 2 pts - DRY consolidation + dispatch typing + LocationTabSection tests (from 15b-2p review, LOW) | done: 2026-02-27
 
   # Phase 3: Infrastructure Hardening (7 stories, ~15 pts)
-  15b-3a-dal-transaction-hooks: drafted        # 2 pts - Migrate transaction hooks to TransactionRepository
-  15b-3b-dal-trust-preferences: drafted        # 2 pts - Migrate trust + preferences hooks to repositories
-  15b-3c-dal-records-airlock-insight: drafted   # 3 pts - Migrate records + airlock + insight profile hooks
-  15b-3d-dal-credits-hooks: drafted            # 2 pts - Migrate credits hooks to CreditsRepository
-  15b-3e-dal-remaining-firebase: drafted       # 2 pts - Migrate remaining view/component Firebase imports
-  15b-3f-analytics-context-zustand: drafted    # 2 pts - AnalyticsContext -> Zustand
-  15b-3g-notification-context-zustand: drafted # 2 pts - NotificationContext -> Zustand + HistoryFiltersContext removal
+  15b-3a-dal-transaction-hooks: done  # 3 pts - Migrate 10 transaction hooks to TransactionRepository | done: 2026-02-28
+  TD-15b-26-transaction-hook-test-coverage: done  # 2 pts - Mock layer upgrade + useTransactions/useRecentScans tests (from 15b-3a review, LOW) | done: 2026-02-28
+  TD-15b-27-dal-migration-cleanup: done  # 2 pts - Subscription guards + sanitize dedup + transient repo docs (from 15b-3a review, LOW) | done: 2026-02-28
+  15b-3b-dal-trust-preferences: done  # 2 pts - Migrate trust + preferences type/constant imports | done: 2026-02-28
+  15b-3c-dal-records-airlock-insight: done  # 3 pts - Migrate records + airlock + insight profile hooks | done: 2026-02-28
+  15b-3d-dal-credits-hooks: done      # 2 pts - Migrate credits hooks to CreditsRepository | done: 2026-02-28
+  TD-15b-28-credits-hook-cleanup: done  # 1 pt - Test split + dead imports + repo validation + error sanitization (from 15b-3d review, LOW) | done: 2026-02-28
+  15b-3e-dal-remaining-firebase: done   # 2 pts - Migrate remaining view/component Firebase imports | done: 2026-02-28
+  15b-3f-analytics-context-zustand: done  # 3 pts - AnalyticsContext -> Zustand store | done: 2026-02-28
+  TD-15b-29-drilldowngrid-stale-comments: done  # 1 pt - Stale AnalyticsContext comments in DrillDownGrid.tsx (808L, blocked by hook) (from 15b-3f review, LOW) | done: 2026-02-28
+  15b-3g-notification-context-zustand: done  # 2 pts - NotificationContext deletion + HistoryFiltersContext -> hook | done: 2026-02-28
+  TD-15b-30-stale-historyfilters-comments: done  # 1 pt - Stale HistoryFiltersProvider/Context comments in 5 files (from 15b-3g review, LOW) | done: 2026-02-28
 
-  # Phase 4: High-Coupling Architecture (7 stories, ~14 pts)
-  15b-4a-transaction-type-design: drafted      # 2 pts - Design transaction.ts sub-type schema (analysis only)
-  15b-4b-transaction-type-split: drafted       # 2 pts - Split transaction.ts into domain sub-types + re-export shim
-  15b-4c-transaction-consumers-batch1: drafted # 2 pts - Update type consumers (services + repos)
-  15b-4d-transaction-consumers-batch2: drafted # 2 pts - Update type consumers (hooks + features)
-  15b-4e-transaction-consumers-batch3: drafted # 2 pts - Update type consumers (views + components + cleanup)
-  15b-4f-app-tsx-fanout-reduction: drafted     # 3 pts - App.tsx fan-out reduction (extract feature orchestrators)
-  15b-4g-final-dependency-validation: drafted  # 1 pt  - Final dependency graph validation + epic metrics
+  # Phase 4: High-Coupling Architecture (7 stories, ~20 pts)
+  15b-4a-transaction-type-design: done  # 2 pts - Design transaction type refactoring strategy (analysis only) | done: 2026-02-28
+  15b-4b-transaction-type-split: done   # 3 pts - Redirect ~12 category-only consumers to shared/schema/categories | done: 2026-02-28
+  15b-4c-transaction-consumers-batch1: done  # 3 pts - Fix import type in services + batch handlers | done: 2026-02-28
+  15b-4d-transaction-consumers-batch2: done  # 3 pts - Fix import type in hooks + feature utils | done: 2026-02-28
+  TD-15b-31-batch-review-error-logging: done  # 1 pt - Sanitize console.error in useBatchReview.ts (from 15b-4d review, LOW) | done: 2026-02-28
+  15b-4e-transaction-consumers-batch3: done  # 3 pts - Fix import type in views + components + cleanup | done: 2026-03-01
+  TD-15b-32-dashboardview-test-parallel-flake: done  # 2 pts - Fix DashboardView 17-test parallel flake (from 15b-4e review, LOW) | done: 2026-03-01
+  TD-15b-33-transaction-import-type-completion: done  # 1 pt - Convert 5 remaining files + remove category shim from transaction.ts (from 15b-4e review, LOW) | done: 2026-03-01
+  TD-15b-34-dashboardview-test-shared-mocks: done  # 1 pt - DRY mock blocks + renderDashboardView helper across 3 split test files (from TD-15b-32 review, LOW) | done: 2026-03-01
+  15b-4f-app-tsx-fanout-reduction: done  # 5 pts - App.tsx fan-out reduction (5 domain orchestrators) | done: 2026-03-01
+  TD-15b-35-orchestrator-cleanup: done  # 1 pt - Remove dead state + orchestrator unit tests + db hook migration (from 15b-4f review, LOW) | done: 2026-03-01
+  15b-4g-final-dependency-validation: done  # 1 pt  - Final dependency graph validation + epic metrics | done: 2026-03-01
+
+  # Phase 5: Infrastructure Hardening (1 story, 5 pts)
+  15b-5a-scan-infrastructure-hardening: done  # 5 pts - Fix scan error recovery + migrate functions.config() + upgrade Gemini + E2E smoke test | done: 2026-03-01
+  TD-15b-36-analyzereceipt-security-hardening: done  # 3 pts - SSRF prevention + response schema validation + rate limiter docs (from 15b-5a review, HIGH) | done: 2026-03-01
+  TD-15b-37-analyzereceipt-input-validation-gaps: done  # 2 pts - isRescan heuristic + receiptType runtime validation (from TD-15b-36 review, LOW) | done: 2026-03-01
 
   epic-15b-retrospective: optional
 

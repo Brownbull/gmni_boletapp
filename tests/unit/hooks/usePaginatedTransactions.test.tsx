@@ -14,24 +14,24 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { User } from 'firebase/auth';
 import type { ReactNode } from 'react';
 import { usePaginatedTransactions } from '../../../src/hooks/usePaginatedTransactions';
-import { LISTENER_LIMITS } from '../../../src/services/firestore';
 
 // Mock dependencies
 vi.mock('../../../src/hooks/useTransactions', () => ({
     useTransactions: vi.fn(),
 }));
 
-vi.mock('../../../src/services/firestore', () => ({
-    getTransactionPage: vi.fn(),
+vi.mock('../../../src/repositories/transactionRepository', () => ({
+    createTransactionRepository: vi.fn(),
     LISTENER_LIMITS: { TRANSACTIONS: 100 },
     PAGINATION_PAGE_SIZE: 50,
 }));
 
 import { useTransactions } from '../../../src/hooks/useTransactions';
-import { getTransactionPage } from '../../../src/services/firestore';
+import { createTransactionRepository } from '../../../src/repositories/transactionRepository';
 
 const mockUseTransactions = vi.mocked(useTransactions);
-const mockGetTransactionPage = vi.mocked(getTransactionPage);
+const mockCreateRepo = vi.mocked(createTransactionRepository);
+const mockGetPage = vi.fn();
 
 // Helper to create test transactions
 function createTransaction(id: string, daysAgo: number) {
@@ -74,11 +74,14 @@ describe('usePaginatedTransactions', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockUseTransactions.mockReturnValue([]);
-        mockGetTransactionPage.mockResolvedValue({
+        mockGetPage.mockResolvedValue({
             transactions: [],
-            lastDoc: null,
+            cursor: undefined,
             hasMore: false,
         });
+        mockCreateRepo.mockReturnValue({
+            getPage: mockGetPage,
+        } as any);
     });
 
     afterEach(() => {
@@ -149,10 +152,10 @@ describe('usePaginatedTransactions', () => {
             );
             mockUseTransactions.mockReturnValue(mockTransactions as any);
 
-            // Mock getTransactionPage to return hasMore: true
-            mockGetTransactionPage.mockResolvedValue({
+            // Mock getPage to return hasMore: true
+            mockGetPage.mockResolvedValue({
                 transactions: [createTransaction('101', 101)],
-                lastDoc: { id: '101' } as any,
+                cursor: { id: '101' },
                 hasMore: true,
             });
 
@@ -169,7 +172,7 @@ describe('usePaginatedTransactions', () => {
             await waitFor(() => {
                 // After query resolves, hasMore should reflect the actual hasMore from the query
                 // The hook returns hasMore: true when pagination data indicates more pages exist
-                expect(result.current.hasMore).toBeDefined();
+                expect(result.current.hasMore).toBe(true);
             });
         });
 
@@ -252,9 +255,9 @@ describe('usePaginatedTransactions', () => {
             );
             mockUseTransactions.mockReturnValue(mockTransactions as any);
 
-            mockGetTransactionPage.mockResolvedValue({
+            mockGetPage.mockResolvedValue({
                 transactions: [createTransaction('101', 101)],
-                lastDoc: { id: '101' } as any,
+                cursor: { id: '101' },
                 hasMore: true,
             });
 

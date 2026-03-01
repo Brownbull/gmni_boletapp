@@ -18,6 +18,8 @@ export default [
       'src/contexts/HistoryFiltersContext.tsx',
       'src/features/history/components/IconCategoryFilter.tsx',
       'src/features/items/views/ItemsView/ItemsView.tsx',
+      'src/features/analytics/views/TrendsView/useTrendsViewSync.ts',
+      'src/shared/hooks/useHistoryFiltersInit.ts',
     ]
   },
   {

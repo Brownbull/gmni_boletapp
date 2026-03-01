@@ -29,7 +29,7 @@
 // =============================================================================
 
 // Story 14e-25d: ViewHandlerBundles removed - views use direct hooks
-export type { AppProvidersProps } from './types';
+// Story 15b-3g: AppProvidersProps removed — defined inline in AppProviders.tsx
 
 // Story 14e-25a.1: View type and utilities for navigation
 export {

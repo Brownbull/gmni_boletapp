@@ -18,7 +18,7 @@
  * - Alias (user can update it over time)
  */
 
-import { Transaction } from '../types/transaction';
+import type { Transaction } from '../types/transaction';
 import { filterAndGroupDuplicates } from '@/utils/duplicateGrouping';
 
 /**

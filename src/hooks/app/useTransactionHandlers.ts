@@ -39,15 +39,10 @@ import { useCallback, useMemo } from 'react';
 import type { User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import type { Transaction } from '../../types/transaction';
-import type { UserPreferences } from '../../services/userPreferencesService';
+import type { UserPreferences } from '@/types/preferences';
 import type { Insight, UserInsightProfile, LocalInsightCache } from '../../types/insight';
 import type { View } from '@app/types';
-import {
-    addTransaction as firestoreAddTransaction,
-    updateTransaction as firestoreUpdateTransaction,
-    deleteTransaction as firestoreDeleteTransaction,
-    wipeAllTransactions,
-} from '../../services/firestore';
+import { createTransactionRepository } from '@/repositories/transactionRepository';
 import {
     generateInsightForTransaction,
     isInsightsSilenced,
@@ -246,6 +241,11 @@ export function useTransactionHandlers(
         t,
     } = props;
 
+    // Story 15b-3a: DAL migration — repository replaces direct service imports
+    const txRepo = useMemo(
+        () => services && user ? createTransactionRepository({ db: services.db, userId: user.uid, appId: services.appId }) : null,
+        [services, user]
+    );
 
     /**
      * Create a default transaction with user preferences.
@@ -286,9 +286,7 @@ export function useTransactionHandlers(
      */
     const saveTransaction = useCallback(async (transactionOverride?: Transaction) => {
         const transactionToSave = transactionOverride;
-        if (!services || !user || !transactionToSave) return;
-        const { db, appId } = services;
-
+        if (!services || !user || !transactionToSave || !txRepo) return;
         const tDoc = {
             ...transactionToSave,
             total: parseStrictNumber(transactionToSave.total),
@@ -327,7 +325,7 @@ export function useTransactionHandlers(
         // Fire the Firestore operation and chain insight generation for new transactions
         if (transactionToSave.id) {
             // Update existing transaction - no insight generation
-            firestoreUpdateTransaction(db, user.uid, appId, transactionToSave.id, tDoc)
+            txRepo.update(transactionToSave.id, tDoc)
                 .catch(e => console.error('Update failed:', e));
         } else {
             // Increment scan counter for sprinkle distribution
@@ -345,7 +343,7 @@ export function useTransactionHandlers(
             const silenced = isInsightsSilenced(insightCache || getDefaultCache());
 
             // Fire and forget chain: add transaction → generate insight → record with real ID
-            firestoreAddTransaction(db, user.uid, appId, tDoc)
+            txRepo.add(tDoc)
                 .then(async (transactionId) => {
                     // Generate insight with real transaction ID
                     const txWithId = { ...tDoc, id: transactionId } as Transaction;
@@ -460,6 +458,7 @@ export function useTransactionHandlers(
         setShowInsightCard,
         setShowBatchSummary,
         setSessionContext,
+        txRepo,
     ]);
 
     /**
@@ -467,19 +466,19 @@ export function useTransactionHandlers(
      * Updates shared group member timestamps for cache invalidation.
      */
     const deleteTransaction = useCallback(async (id: string) => {
-        if (!services || !user) return;
+        if (!services || !user || !txRepo) return;
 
         // Get transaction for shared group handling
         // Note: currentTransaction may be stale, so we pass it from caller
         // This deletion will be caught by other members on next sync
 
         // Fire the delete (don't await)
-        firestoreDeleteTransaction(services.db, user.uid, services.appId, id)
+        txRepo.delete(id)
             .catch(e => console.error('Delete failed:', e));
 
         // Navigate immediately
         setView('dashboard');
-    }, [services, user, setView]);
+    }, [services, user, txRepo, setView]);
 
     /**
      * Wipe all transactions for the current user.
@@ -487,18 +486,18 @@ export function useTransactionHandlers(
      */
     const wipeDB = useCallback(async () => {
         if (!window.confirm(t('wipeConfirm'))) return;
-        if (!services || !user) return;
+        if (!services || !user || !txRepo) return;
 
         // Note: wiping state would be set here if we had state management
         // For now, caller should manage the state
         try {
-            await wipeAllTransactions(services.db, user.uid, services.appId);
+            await txRepo.wipeAll();
             alert(t('cleaned'));
         } catch (e) {
             const info = getErrorInfo(classifyError(e));
             alert(t(info.titleKey));
         }
-    }, [services, user, t]);
+    }, [services, user, txRepo, t]);
 
     /**
      * Export all transactions to CSV file.

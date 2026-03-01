@@ -1,7 +1,7 @@
 /**
  * DrillDownGrid Component
  *
- * Container component that consumes AnalyticsContext and renders drill-down cards
+ * Container component that consumes useAnalyticsNavigation and renders drill-down cards
  * for both temporal (time-based) and category navigation.
  *
  * @see docs/architecture-epic7.md - Pattern 4: Drill-Down Card Pattern
@@ -481,7 +481,7 @@ function getCategoryChildren(
  * (time-based) and category navigation.
  *
  * Features:
- * - Consumes AnalyticsContext via useAnalyticsNavigation hook
+ * - Consumes analytics state via useAnalyticsNavigation hook
  * - Computes temporal children (quarters, months, weeks, days)
  * - Computes category children when category filter is active
  * - Responsive grid layout (full-width mobile, 2-column larger)

@@ -15,7 +15,8 @@
 
 import type { User } from 'firebase/auth';
 import type { ScanState, ScanDialogType, BatchCompleteDialogData } from '@/types/scanStateMachine';
-import type { Transaction, StoreCategory } from '@/types/transaction';
+import type { Transaction } from '@/types/transaction';
+import type { StoreCategory } from '../../../../shared/schema/categories';
 import type { CategoryMapping } from '@/types/categoryMapping';
 import type { View } from '@app/types';
 import type { Services } from '@/contexts/AuthContext';

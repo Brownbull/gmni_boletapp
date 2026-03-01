@@ -4,7 +4,7 @@
 **Phase:** 3 - Infrastructure
 **Points:** 2
 **Priority:** MEDIUM
-**Status:** drafted
+**Status:** done
 
 ## Overview
 
@@ -12,11 +12,11 @@ After DAL stories 15b-3a through 15b-3d migrate hooks to use repositories, 5 vie
 
 ## Functional Acceptance Criteria
 
-- [ ] **AC1:** 0 view files with direct Firebase runtime SDK imports (type-only excluded)
-- [ ] **AC2:** 0 component files with direct Firebase runtime SDK imports (type-only excluded)
-- [ ] **AC3:** Service-layer Firebase imports ≤8 files total (down from current ~12)
-- [ ] **AC4:** `npm run test:quick` passes with 0 failures
-- [ ] **AC5:** All existing delete-transaction flows in HistoryView and DashboardView continue to work identically
+- [x] **AC1:** 0 view files with direct Firebase runtime SDK imports (type-only excluded)
+- [x] **AC2:** 0 component files with direct Firebase runtime SDK imports (type-only excluded)
+- [ ] **AC3:** Service-layer Firebase imports ≤8 files total (down from current ~12) — N/A: services are DAL boundary, not migrated per AC-ARCH-NO-3
+- [x] **AC4:** `npm run test:quick` passes with 0 failures
+- [x] **AC5:** All existing delete-transaction flows in HistoryView and DashboardView continue to work identically
 
 ## Architectural Acceptance Criteria (MANDATORY)
 
@@ -24,26 +24,26 @@ After DAL stories 15b-3a through 15b-3d migrate hooks to use repositories, 5 vie
 
 ### File Location Requirements
 
-- [ ] **AC-ARCH-LOC-1:** Each migrated file stays at its existing path (no file moves)
-- [ ] **AC-ARCH-LOC-2:** No new files created -- only existing files modified
+- [x] **AC-ARCH-LOC-1:** Each migrated file stays at its existing path (no file moves)
+- [x] **AC-ARCH-LOC-2:** No new files created -- only existing files modified
 
 ### Pattern Requirements
 
-- [ ] **AC-ARCH-PATTERN-1:** Views replace `getFirestore()` + service calls with `useTransactionRepository()` from `@/repositories`
-- [ ] **AC-ARCH-PATTERN-2:** `useSettingsViewData` uses `authSignOut` from existing `useAuth()` call instead of importing `signOut` from `firebase/auth`
-- [ ] **AC-ARCH-PATTERN-3:** `useSettingsViewData` uses `services.db` from `useAuth()` instead of `getFirestore()`
-- [ ] **AC-ARCH-PATTERN-4:** AirlockHistoryCard replaces `Timestamp` import with `import type { TimestampLike } from '@/utils/timestamp'`
-- [ ] **AC-ARCH-PATTERN-5:** NotificationSettings and AppView change `import { Firestore }` to `import type { Firestore }`
-- [ ] **AC-ARCH-PATTERN-6:** Type-only imports (`import type { ... }`) remain unchanged and are acceptable
+- [x] **AC-ARCH-PATTERN-1:** Views replace `getFirestore()` + service calls with `useTransactionRepository()` from `@/repositories` — done by 15b-3a
+- [x] **AC-ARCH-PATTERN-2:** `useSettingsViewData` uses `authSignOut` from existing `useAuth()` call instead of importing `signOut` from `firebase/auth`
+- [x] **AC-ARCH-PATTERN-3:** `useSettingsViewData` uses `services.db` from `useAuth()` instead of `getFirestore()`
+- [x] **AC-ARCH-PATTERN-4:** AirlockHistoryCard replaces `Timestamp` import with `import type { TimestampLike } from '@/utils/timestamp'`
+- [x] **AC-ARCH-PATTERN-5:** NotificationSettings and AppView change `import { Firestore }` to `import type { Firestore }`
+- [x] **AC-ARCH-PATTERN-6:** Type-only imports (`import type { ... }`) remain unchanged and are acceptable
 
 ### Anti-Pattern Requirements (Must NOT Happen)
 
-- [ ] **AC-ARCH-NO-1:** Do NOT migrate type-only imports -- only runtime imports need attention
-- [ ] **AC-ARCH-NO-2:** Do NOT migrate repository implementation files (`src/repositories/**`)
-- [ ] **AC-ARCH-NO-3:** Do NOT migrate service layer files (`src/services/**`) -- they are the DAL boundary
-- [ ] **AC-ARCH-NO-4:** Do NOT migrate infrastructure files (`src/config/**`, `src/contexts/AuthContext.tsx`)
-- [ ] **AC-ARCH-NO-5:** Do NOT change `AirlockRecord` type definition in `src/types/airlock.ts`
-- [ ] **AC-ARCH-NO-6:** Do NOT add `getFirestore()` calls anywhere -- always use `services.db` from auth context
+- [x] **AC-ARCH-NO-1:** Do NOT migrate type-only imports -- only runtime imports need attention
+- [x] **AC-ARCH-NO-2:** Do NOT migrate repository implementation files (`src/repositories/**`)
+- [x] **AC-ARCH-NO-3:** Do NOT migrate service layer files (`src/services/**`) -- they are the DAL boundary
+- [x] **AC-ARCH-NO-4:** Do NOT migrate infrastructure files (`src/config/**`, `src/contexts/AuthContext.tsx`)
+- [x] **AC-ARCH-NO-5:** Do NOT change `AirlockRecord` type definition in `src/types/airlock.ts`
+- [x] **AC-ARCH-NO-6:** Do NOT add `getFirestore()` calls anywhere -- always use `services.db` from auth context
 
 ## File Specification
 
@@ -62,43 +62,38 @@ After DAL stories 15b-3a through 15b-3d migrate hooks to use repositories, 5 vie
 
 ### Task 1: Baseline audit
 
-- [ ] 1.1 Run `npm run test:quick` and record pass count as baseline
-- [ ] 1.2 `grep -rn "from 'firebase/" src/features/*/views/ src/views/ src/features/*/components/ src/components/ --include="*.ts" --include="*.tsx" | grep -v "import type"` -- confirm 6 files
-- [ ] 1.3 Count service-layer baseline: `grep -rn "from 'firebase/" src/ --include="*.ts" --include="*.tsx" | grep -v "import type" | grep -v "repositories/" | grep -v "config/" | grep -v "types/" | grep -v "contexts/" | wc -l` -- record for comparison
+- [x] 1.1 Run `npm run test:quick` and record pass count as baseline — 301 files, 7162 tests
+- [x] 1.2 `grep` confirm view/component Firebase imports — 5 files (not 6; HistoryView + DashboardView already migrated by 15b-3a)
+- [x] 1.3 Service-layer baseline: 39 lines / 32 files
 
 ### Task 2: Migrate HistoryView and DashboardView batch delete
 
-- [ ] 2.1 In `src/features/history/views/HistoryView.tsx`: add `import { useTransactionRepository } from '@/repositories'`; call `const txRepo = useTransactionRepository()` at component top level
-- [ ] 2.2 Replace `const db = getFirestore(); await deleteTransactionsBatch(db, userId, appId, transactionIds)` with `await txRepo?.deleteBatch(transactionIds)` -- preserve null guard
-- [ ] 2.3 Remove `import { getFirestore } from 'firebase/firestore'` and `deleteTransactionsBatch` service import from HistoryView
-- [ ] 2.4 In `src/features/dashboard/views/DashboardView/DashboardView.tsx`: same pattern -- add `useTransactionRepository`, replace `getFirestore()` + `deleteTransactionsBatch` call with `txRepo?.deleteBatch(selectedTxIds)`
-- [ ] 2.5 Remove `import { getFirestore } from 'firebase/firestore'` and `deleteTransactionsBatch` service import from DashboardView
-- [ ] 2.6 Run `npx tsc --noEmit` -- fix any type errors
+- [x] 2.1-2.6 **SKIP** — Already done by 15b-3a (verified: grep found 0 matches for getFirestore/deleteTransactionsBatch in both files)
 
 ### Task 3: Migrate useSettingsViewData
 
-- [ ] 3.1 In `src/features/settings/views/SettingsView/useSettingsViewData.ts`: remove `import { getFirestore } from 'firebase/firestore'`
-- [ ] 3.2 Remove `import { signOut as firebaseSignOut } from 'firebase/auth'`
-- [ ] 3.3 Update `handleSignOut` callback: use `authSignOut()` (already destructured from `useAuth()`) instead of `firebaseSignOut(services.auth)`; remove the fallback branch
-- [ ] 3.4 Update any `db: ReturnType<typeof getFirestore>` type annotations to `db: Firestore | null` with `import type { Firestore } from 'firebase/firestore'`
-- [ ] 3.5 Run `npx tsc --noEmit` -- fix any type errors
+- [x] 3.1 Removed `import { getFirestore } from 'firebase/firestore'` + `import { signOut as firebaseSignOut } from 'firebase/auth'`; replaced with `import type { Firestore } from 'firebase/firestore'`
+- [x] 3.2 (combined with 3.1)
+- [x] 3.3 Simplified `handleSignOut` to use only `authSignOut()` — removed `firebaseSignOut(services.auth)` fallback
+- [x] 3.4 Changed `db: ReturnType<typeof getFirestore> | null` to `db: Firestore | null`
+- [x] 3.5 `npx tsc --noEmit` — clean
 
 ### Task 4: Migrate AirlockHistoryCard Timestamp import
 
-- [ ] 4.1 In `src/features/insights/components/AirlockHistoryCard.tsx`: replace `import { Timestamp } from 'firebase/firestore'` with `import type { TimestampLike } from '@/utils/timestamp'`
-- [ ] 4.2 Update `formatDate` function signature: `timestamp: Timestamp | Date | undefined` → `timestamp: TimestampLike | Date | undefined` (compatible -- `toDateSafe` already accepts `TimestampLike`)
-- [ ] 4.3 Run `npx tsc --noEmit` -- fix any type errors
+- [x] 4.1 Replaced `import { Timestamp } from 'firebase/firestore'` with `import type { TimestampLike } from '@/utils/timestamp'`
+- [x] 4.2 Updated `formatDate` signature to `timestamp: TimestampLike | undefined` (TimestampLike already includes Date)
+- [x] 4.3 `npx tsc --noEmit` — clean
 
 ### Task 5: Fix type-only imports in NotificationSettings and AppView
 
-- [ ] 5.1 In `src/features/settings/components/NotificationSettings.tsx`: change `import { Firestore }` to `import type { Firestore } from 'firebase/firestore'`
-- [ ] 5.2 In `src/features/settings/components/subviews/AppView.tsx`: change `import { Firestore }` to `import type { Firestore } from 'firebase/firestore'`
+- [x] 5.1 Changed NotificationSettings.tsx to `import type { Firestore } from 'firebase/firestore'`
+- [x] 5.2 Changed AppView.tsx to `import type { Firestore } from 'firebase/firestore'`
 
 ### Task 6: Final verification
 
-- [ ] 6.1 `grep -rn "from 'firebase/" src/features/*/views/ src/views/ src/features/*/components/ src/components/ --include="*.ts" --include="*.tsx" | grep -v "import type"` -- must return 0 hits
-- [ ] 6.2 Count service-layer total: same command as 1.3 -- must be ≤8
-- [ ] 6.3 Run `npm run test:quick` -- all pass, no regressions
+- [x] 6.1 View/component runtime Firebase grep — **0 hits** (AC1+AC2 PASS)
+- [x] 6.2 Service-layer total: 34 lines / 32 files (services are DAL boundary per AC-ARCH-NO-3)
+- [x] 6.3 `npm run test:quick` — 301 files, 7162 tests passed, 0 regressions
 
 ## Dev Notes
 
@@ -148,9 +143,23 @@ After DAL stories 15b-3a through 15b-3d migrate hooks to use repositories, 5 vie
 - **Agents consulted:** Architect
 - **Dependencies:** Complete after 15b-3a through 15b-3d (this catches stragglers in views/components)
 
+## Senior Developer Review (ECC)
+
+| Field | Value |
+|-------|-------|
+| Date | 2026-02-28 |
+| Classification | STANDARD |
+| Agents | code-reviewer, security-reviewer |
+| Overall Score | 9.5/10 |
+| Outcome | APPROVE |
+| Findings | 1 (LOW — informational, no fix needed) |
+| TD Stories Created | 0 |
+| Tests | 301 files, 7162 tests passed, 0 failures |
+
 ## Change Log
 
 | Date | Change |
 |------|--------|
 | 2026-02-13 | Initial draft -- placeholder with high-level tasks |
 | 2026-02-23 | Full rewrite with codebase research. Identified 6 files: 3 views with runtime `getFirestore`/`signOut` imports, 1 component with runtime `Timestamp` import used as type, 2 components with missing `type` keyword on `Firestore` import. Defined specific replacement strategies. Note: 15b-3a may cover HistoryView + DashboardView; verify before executing Task 2. |
+| 2026-02-27 | ECC re-creation validation: Validated accurate. Elevated 15b-3a overlap to prerequisite check subtask. Status: ready-for-dev. |

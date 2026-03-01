@@ -39,7 +39,8 @@ import {
   hasActiveTransactionContent,
   generateScanSessionId,
 } from '@/types/scan';
-import { Transaction, StoreCategory } from '@/types/transaction';
+import type { Transaction } from '@/types/transaction';
+import type { StoreCategory } from '../../../../shared/schema/categories';
 
 /**
  * Result type for credit operations

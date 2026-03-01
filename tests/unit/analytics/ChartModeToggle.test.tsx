@@ -12,7 +12,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { AnalyticsProvider } from '../../../src/contexts/AnalyticsContext';
+import { useAnalyticsStore } from '@features/analytics/stores/useAnalyticsStore';
+import { getDefaultNavigationState } from '@features/analytics/utils/analyticsHelpers';
 import { ChartModeToggle } from '@features/analytics/components/ChartModeToggle';
 import type { AnalyticsNavigationState } from '../../../src/types/analytics';
 
@@ -20,22 +21,19 @@ import type { AnalyticsNavigationState } from '../../../src/types/analytics';
 // Test Helpers
 // ============================================================================
 
-function createWrapper(initialState?: AnalyticsNavigationState) {
-  return function Wrapper({ children }: { children: React.ReactNode }) {
-    return (
-      <AnalyticsProvider initialState={initialState}>
-        {children}
-      </AnalyticsProvider>
-    );
-  };
-}
-
-function renderWithProvider(
+function renderWithStore(
   ui: React.ReactElement,
   initialState?: AnalyticsNavigationState
 ) {
-  return render(ui, { wrapper: createWrapper(initialState) });
+  if (initialState) {
+    useAnalyticsStore.setState(initialState);
+  }
+  return render(ui);
 }
+
+beforeEach(() => {
+  useAnalyticsStore.setState(getDefaultNavigationState('2024'));
+});
 
 // Default states for testing
 const yearState: AnalyticsNavigationState = {
@@ -86,7 +84,7 @@ const dayComparisonState: AnalyticsNavigationState = {
 
 describe('ChartModeToggle - AC #1: Toggle visible on Year/Quarter/Month/Week', () => {
   it('renders toggle at year level', () => {
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     expect(screen.getByRole('tablist', { name: 'Chart display mode' })).toBeInTheDocument();
     expect(screen.getByTestId('chart-mode-aggregation')).toBeInTheDocument();
@@ -94,19 +92,19 @@ describe('ChartModeToggle - AC #1: Toggle visible on Year/Quarter/Month/Week', (
   });
 
   it('renders toggle at quarter level', () => {
-    renderWithProvider(<ChartModeToggle />, quarterState);
+    renderWithStore(<ChartModeToggle />, quarterState);
 
     expect(screen.getByRole('tablist', { name: 'Chart display mode' })).toBeInTheDocument();
   });
 
   it('renders toggle at month level', () => {
-    renderWithProvider(<ChartModeToggle />, monthState);
+    renderWithStore(<ChartModeToggle />, monthState);
 
     expect(screen.getByRole('tablist', { name: 'Chart display mode' })).toBeInTheDocument();
   });
 
   it('renders toggle at week level', () => {
-    renderWithProvider(<ChartModeToggle />, weekState);
+    renderWithStore(<ChartModeToggle />, weekState);
 
     expect(screen.getByRole('tablist', { name: 'Chart display mode' })).toBeInTheDocument();
   });
@@ -118,7 +116,7 @@ describe('ChartModeToggle - AC #1: Toggle visible on Year/Quarter/Month/Week', (
 
 describe('ChartModeToggle - AC #8: Hidden at Day level', () => {
   it('does not render toggle at day level', () => {
-    renderWithProvider(<ChartModeToggle />, dayState);
+    renderWithStore(<ChartModeToggle />, dayState);
 
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
     expect(screen.queryByTestId('chart-mode-aggregation')).not.toBeInTheDocument();
@@ -126,7 +124,7 @@ describe('ChartModeToggle - AC #8: Hidden at Day level', () => {
   });
 
   it('returns null component at day level', () => {
-    const { container } = renderWithProvider(<ChartModeToggle />, dayState);
+    const { container } = renderWithStore(<ChartModeToggle />, dayState);
 
     expect(container.firstChild).toBeNull();
   });
@@ -138,14 +136,14 @@ describe('ChartModeToggle - AC #8: Hidden at Day level', () => {
 
 describe('ChartModeToggle - AC #2, #3: Mode toggle functionality', () => {
   it('shows Aggregation mode options', () => {
-    renderWithProvider(<ChartModeToggle locale="en" />, yearState);
+    renderWithStore(<ChartModeToggle locale="en" />, yearState);
 
     expect(screen.getByText('Aggregation')).toBeInTheDocument();
     expect(screen.getByText('Comparison')).toBeInTheDocument();
   });
 
   it('highlights active mode (aggregation)', () => {
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     const aggregationButton = screen.getByTestId('chart-mode-aggregation');
     const comparisonButton = screen.getByTestId('chart-mode-comparison');
@@ -155,7 +153,7 @@ describe('ChartModeToggle - AC #2, #3: Mode toggle functionality', () => {
   });
 
   it('highlights active mode (comparison)', () => {
-    renderWithProvider(<ChartModeToggle />, comparisonModeState);
+    renderWithStore(<ChartModeToggle />, comparisonModeState);
 
     const aggregationButton = screen.getByTestId('chart-mode-aggregation');
     const comparisonButton = screen.getByTestId('chart-mode-comparison');
@@ -172,7 +170,7 @@ describe('ChartModeToggle - AC #2, #3: Mode toggle functionality', () => {
 describe('ChartModeToggle - AC #10: Dispatches TOGGLE_CHART_MODE', () => {
   it('toggles to comparison mode when clicking Comparison', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     const comparisonButton = screen.getByTestId('chart-mode-comparison');
     await user.click(comparisonButton);
@@ -185,7 +183,7 @@ describe('ChartModeToggle - AC #10: Dispatches TOGGLE_CHART_MODE', () => {
 
   it('toggles to aggregation mode when clicking Aggregation', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<ChartModeToggle />, comparisonModeState);
+    renderWithStore(<ChartModeToggle />, comparisonModeState);
 
     const aggregationButton = screen.getByTestId('chart-mode-aggregation');
     await user.click(aggregationButton);
@@ -197,7 +195,7 @@ describe('ChartModeToggle - AC #10: Dispatches TOGGLE_CHART_MODE', () => {
 
   it('does not toggle when clicking already active mode', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     const aggregationButton = screen.getByTestId('chart-mode-aggregation');
 
@@ -215,17 +213,13 @@ describe('ChartModeToggle - AC #10: Dispatches TOGGLE_CHART_MODE', () => {
 
 describe('ChartModeToggle - AC #11: Mode persists in session', () => {
   it('maintains comparison mode after re-render', () => {
-    const { rerender } = renderWithProvider(<ChartModeToggle />, comparisonModeState);
+    const { rerender } = renderWithStore(<ChartModeToggle />, comparisonModeState);
 
     const comparisonButton = screen.getByTestId('chart-mode-comparison');
     expect(comparisonButton).toHaveAttribute('aria-selected', 'true');
 
-    // Re-render with same state
-    rerender(
-      <AnalyticsProvider initialState={comparisonModeState}>
-        <ChartModeToggle />
-      </AnalyticsProvider>
-    );
+    // Re-render (Zustand store state persists across re-renders)
+    rerender(<ChartModeToggle />);
 
     expect(screen.getByTestId('chart-mode-comparison')).toHaveAttribute('aria-selected', 'true');
   });
@@ -237,7 +231,7 @@ describe('ChartModeToggle - AC #11: Mode persists in session', () => {
 
 describe('ChartModeToggle - AC #12: Outlined segmented control (Story 7.9)', () => {
   it('renders as an outlined container', () => {
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     const tablist = screen.getByRole('tablist');
     // Story 7.9: Changed from pill-style (rounded-full) to outlined (rounded-lg)
@@ -245,7 +239,7 @@ describe('ChartModeToggle - AC #12: Outlined segmented control (Story 7.9)', () 
   });
 
   it('buttons have rounded-md class for segmented style', () => {
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     const aggregationButton = screen.getByTestId('chart-mode-aggregation');
     // Story 7.9: Changed from rounded-full to rounded-md for outlined style
@@ -259,7 +253,7 @@ describe('ChartModeToggle - AC #12: Outlined segmented control (Story 7.9)', () 
 
 describe('ChartModeToggle - AC #13: Touch targets', () => {
   it('buttons have min-h-11 for 44px height', () => {
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     const aggregationButton = screen.getByTestId('chart-mode-aggregation');
     expect(aggregationButton).toHaveClass('min-h-11');
@@ -273,7 +267,7 @@ describe('ChartModeToggle - AC #13: Touch targets', () => {
 describe('ChartModeToggle - AC #14: Keyboard accessibility', () => {
   it('toggles receives focus on Tab', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     // Tab into the toggle
     await user.tab();
@@ -285,7 +279,7 @@ describe('ChartModeToggle - AC #14: Keyboard accessibility', () => {
 
   it('Enter key toggles mode', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     // Focus comparison button
     const comparisonButton = screen.getByTestId('chart-mode-comparison');
@@ -301,7 +295,7 @@ describe('ChartModeToggle - AC #14: Keyboard accessibility', () => {
 
   it('Space key toggles mode', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     // Focus comparison button
     const comparisonButton = screen.getByTestId('chart-mode-comparison');
@@ -317,7 +311,7 @@ describe('ChartModeToggle - AC #14: Keyboard accessibility', () => {
 
   it('Arrow keys toggle mode', async () => {
     const user = userEvent.setup();
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     const aggregationButton = screen.getByTestId('chart-mode-aggregation');
     aggregationButton.focus();
@@ -332,7 +326,7 @@ describe('ChartModeToggle - AC #14: Keyboard accessibility', () => {
   });
 
   it('focus ring visible on keyboard focus', () => {
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     const aggregationButton = screen.getByTestId('chart-mode-aggregation');
     expect(aggregationButton).toHaveClass('focus-visible:ring-2');
@@ -347,41 +341,41 @@ describe('ChartModeToggle - AC #14: Keyboard accessibility', () => {
 
 describe('ChartModeToggle - AC #15: ARIA attributes', () => {
   it('container has role="tablist"', () => {
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     expect(screen.getByRole('tablist')).toBeInTheDocument();
   });
 
   it('container has aria-label', () => {
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     const tablist = screen.getByRole('tablist');
     expect(tablist).toHaveAttribute('aria-label', 'Chart display mode');
   });
 
   it('buttons have role="tab"', () => {
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     const tabs = screen.getAllByRole('tab');
     expect(tabs).toHaveLength(2);
   });
 
   it('active button has aria-selected=true', () => {
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     const aggregationButton = screen.getByTestId('chart-mode-aggregation');
     expect(aggregationButton).toHaveAttribute('aria-selected', 'true');
   });
 
   it('inactive button has aria-selected=false', () => {
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     const comparisonButton = screen.getByTestId('chart-mode-comparison');
     expect(comparisonButton).toHaveAttribute('aria-selected', 'false');
   });
 
   it('active tab has tabindex=0, inactive has tabindex=-1', () => {
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     const aggregationButton = screen.getByTestId('chart-mode-aggregation');
     const comparisonButton = screen.getByTestId('chart-mode-comparison');
@@ -397,7 +391,7 @@ describe('ChartModeToggle - AC #15: ARIA attributes', () => {
 
 describe('ChartModeToggle - Theme support', () => {
   it('renders in light theme by default', () => {
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     const tablist = screen.getByRole('tablist');
     // Story 7.9: Outlined style - light mode uses isDark conditional
@@ -406,7 +400,7 @@ describe('ChartModeToggle - Theme support', () => {
   });
 
   it('renders in dark theme when specified', () => {
-    renderWithProvider(<ChartModeToggle theme="dark" />, yearState);
+    renderWithStore(<ChartModeToggle theme="dark" />, yearState);
 
     const tablist = screen.getByRole('tablist');
     // Story 7.9: Outlined style - dark mode uses isDark conditional
@@ -421,14 +415,14 @@ describe('ChartModeToggle - Theme support', () => {
 
 describe('ChartModeToggle - i18n support', () => {
   it('renders English labels by default', () => {
-    renderWithProvider(<ChartModeToggle locale="en" />, yearState);
+    renderWithStore(<ChartModeToggle locale="en" />, yearState);
 
     expect(screen.getByText('Aggregation')).toBeInTheDocument();
     expect(screen.getByText('Comparison')).toBeInTheDocument();
   });
 
   it('renders Spanish labels when locale is es', () => {
-    renderWithProvider(<ChartModeToggle locale="es" />, yearState);
+    renderWithStore(<ChartModeToggle locale="es" />, yearState);
 
     expect(screen.getByText('Agregado')).toBeInTheDocument();
     expect(screen.getByText('Comparar')).toBeInTheDocument();
@@ -441,7 +435,7 @@ describe('ChartModeToggle - i18n support', () => {
 
 describe('ChartModeToggle - Icons', () => {
   it('renders icons in buttons', () => {
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     const aggregationButton = screen.getByTestId('chart-mode-aggregation');
     const comparisonButton = screen.getByTestId('chart-mode-comparison');
@@ -452,7 +446,7 @@ describe('ChartModeToggle - Icons', () => {
   });
 
   it('icons have aria-hidden=true', () => {
-    renderWithProvider(<ChartModeToggle />, yearState);
+    renderWithStore(<ChartModeToggle />, yearState);
 
     const aggregationButton = screen.getByTestId('chart-mode-aggregation');
     const icon = aggregationButton.querySelector('svg');

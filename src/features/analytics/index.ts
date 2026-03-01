@@ -8,4 +8,5 @@
 export * from './components';
 export * from './utils';
 export * from './hooks';
+export * from './stores';
 export * from './views';

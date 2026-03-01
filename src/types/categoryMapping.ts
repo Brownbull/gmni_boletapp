@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase/firestore';
-import { StoreCategory } from './transaction';
+import type { StoreCategory } from '../../shared/schema/categories';
 
 /**
  * CategoryMapping represents a user's learned category preference.

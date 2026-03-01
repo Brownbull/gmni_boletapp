@@ -15,7 +15,7 @@
  * @see docs/sprint-artifacts/epic14/category-color-consolidation.md - Design doc
  */
 
-import type { StoreCategory, ItemCategory } from '../types/transaction';
+import type { StoreCategory, ItemCategory } from '../../shared/schema/categories';
 import { getStorageString } from '@/utils/storage';
 
 // ============================================================================

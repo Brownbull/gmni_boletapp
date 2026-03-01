@@ -7,11 +7,12 @@
  * AC #7, #8, #11: Navigation preserves temporal, state updates immediately
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { AnalyticsProvider } from '../../../src/contexts/AnalyticsContext';
+import { useAnalyticsStore } from '@features/analytics/stores/useAnalyticsStore';
+import { getDefaultNavigationState } from '@features/analytics/utils/analyticsHelpers';
 import { CategoryBreadcrumb } from '@features/analytics/components/CategoryBreadcrumb';
 import { useAnalyticsNavigation } from '@features/analytics/hooks/useAnalyticsNavigation';
 import type { AnalyticsNavigationState } from '../../../src/types/analytics';
@@ -64,18 +65,23 @@ interface TestSetupProps {
   locale?: string;
 }
 
+beforeEach(() => {
+  useAnalyticsStore.setState(getDefaultNavigationState('2024'));
+});
+
 function renderWithStateDisplay({
   initialState,
   theme = 'light',
   locale = 'en',
 }: TestSetupProps = {}) {
+  if (initialState) {
+    useAnalyticsStore.setState(initialState);
+  }
   return render(
-    <AnalyticsProvider initialState={initialState}>
-      <div>
-        <CategoryBreadcrumb theme={theme} locale={locale} />
-        <AnalyticsStateDisplay />
-      </div>
-    </AnalyticsProvider>
+    <div>
+      <CategoryBreadcrumb theme={theme} locale={locale} />
+      <AnalyticsStateDisplay />
+    </div>
   );
 }
 

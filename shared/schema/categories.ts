@@ -158,6 +158,26 @@ export const ITEM_CATEGORIES = [
 export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
 
 // ============================================================================
+// SOURCE TRACKING TYPES
+// ============================================================================
+
+/**
+ * Source of the category assignment for an item.
+ * - 'scan': Category came from Gemini AI scan
+ * - 'learned': Category was auto-applied from a learned mapping
+ * - 'user': Category was manually set by the user
+ */
+export type CategorySource = 'scan' | 'learned' | 'user';
+
+/**
+ * Source of the merchant name assignment.
+ * - 'scan': Merchant name came from Gemini AI scan
+ * - 'learned': Merchant name was auto-corrected from a learned mapping
+ * - 'user': Merchant name was manually set by the user
+ */
+export type MerchantSource = 'scan' | 'learned' | 'user';
+
+// ============================================================================
 // FORMATTED LISTS FOR PROMPTS
 // ============================================================================
 

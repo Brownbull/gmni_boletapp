@@ -35,7 +35,7 @@ import {
   Info,
   Save,
 } from 'lucide-react';
-import { formatCreditsDisplay } from '@/services/userCreditsService';
+import { formatCreditsDisplay } from '@/utils/creditFormatters';
 
 // ModalManager integration (AC6)
 import { useModalActions } from '@managers/ModalManager';

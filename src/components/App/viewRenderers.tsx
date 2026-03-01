@@ -45,10 +45,10 @@ import { TransactionEditorView } from '../../views/TransactionEditorView';
 import { BatchCaptureView } from '../../views/BatchCaptureView';
 import { BatchReviewView } from '../../views/BatchReviewView';
 
-// Providers (view-scoped - NOT moved to AppProviders to prevent unnecessary re-renders)
-import { AnalyticsProvider } from '../../contexts/AnalyticsContext';
-import { HistoryFiltersProvider } from '../../contexts/HistoryFiltersContext';
+// Story 15b-3g: HistoryFiltersProvider replaced by useHistoryFiltersInit hook
+import { useHistoryFiltersInit } from '@/shared/hooks/useHistoryFiltersInit';
 import type { HistoryFilterState } from '@/types/historyFilters';
+
 
 // View type for switch
 import type { View } from './types';
@@ -74,10 +74,6 @@ type TransactionEditorViewProps = ComponentProps<typeof TransactionEditorView>;
 type BatchCaptureViewProps = ComponentProps<typeof BatchCaptureView>;
 type BatchReviewViewProps = ComponentProps<typeof BatchReviewView>;
 
-// AnalyticsProvider props (for initialState)
-type AnalyticsProviderProps = ComponentProps<typeof AnalyticsProvider>;
-type AnalyticsInitialState = AnalyticsProviderProps['initialState'];
-
 // =============================================================================
 // Dashboard View
 // =============================================================================
@@ -86,35 +82,28 @@ type AnalyticsInitialState = AnalyticsProviderProps['initialState'];
 export type RenderDashboardViewProps = DashboardViewProps;
 
 export function renderDashboardView(props: RenderDashboardViewProps) {
-    return (
-        <HistoryFiltersProvider>
-            <DashboardView {...props} />
-        </HistoryFiltersProvider>
-    );
+    return <DashboardViewWithFilters {...props} />;
+}
+
+function DashboardViewWithFilters(props: RenderDashboardViewProps) {
+    useHistoryFiltersInit();
+    return <DashboardView {...props} />;
 }
 
 // =============================================================================
 // Trends View
 // =============================================================================
 
-/** Props for renderTrendsView - extends TrendsViewProps with analytics state */
-export interface RenderTrendsViewProps extends TrendsViewProps {
-    /** Initial state for AnalyticsProvider (used for navigation restoration) */
-    analyticsInitialState?: AnalyticsInitialState;
-}
+/** Props for renderTrendsView - extends TrendsViewProps */
+export type RenderTrendsViewProps = TrendsViewProps;
 
 export function renderTrendsView(props: RenderTrendsViewProps) {
-    const { analyticsInitialState, ...trendsProps } = props;
-    return (
-        <HistoryFiltersProvider>
-            <AnalyticsProvider
-                key={analyticsInitialState ? JSON.stringify(analyticsInitialState.temporal) : 'default'}
-                initialState={analyticsInitialState ?? undefined}
-            >
-                <TrendsView {...trendsProps} />
-            </AnalyticsProvider>
-        </HistoryFiltersProvider>
-    );
+    return <TrendsViewWithFilters {...props} />;
+}
+
+function TrendsViewWithFilters(props: TrendsViewProps) {
+    useHistoryFiltersInit();
+    return <TrendsView {...props} />;
 }
 
 // =============================================================================
@@ -141,22 +130,20 @@ export function renderInsightsView(props: RenderInsightsViewProps) {
  * HistoryView now gets its data via useHistoryViewData hook internally.
  */
 export interface RenderHistoryViewProps extends HistoryViewProps {
-    /** Initial filter state for HistoryFiltersProvider */
+    /** Initial filter state for useHistoryFiltersInit */
     initialState?: HistoryFilterState;
     /** Callback when filter state changes */
     onStateChange?: (state: HistoryFilterState) => void;
 }
 
 export function renderHistoryView(props: RenderHistoryViewProps) {
+    return <HistoryViewWithFilters {...props} />;
+}
+
+function HistoryViewWithFilters(props: RenderHistoryViewProps) {
     const { initialState, onStateChange, _testOverrides } = props;
-    return (
-        <HistoryFiltersProvider
-            initialState={initialState}
-            onStateChange={onStateChange}
-        >
-            <HistoryView _testOverrides={_testOverrides} />
-        </HistoryFiltersProvider>
-    );
+    useHistoryFiltersInit({ initialState, onStateChange });
+    return <HistoryView _testOverrides={_testOverrides} />;
 }
 
 // =============================================================================
@@ -170,22 +157,20 @@ export function renderHistoryView(props: RenderHistoryViewProps) {
  * Theme settings obtained via useTheme().
  */
 export interface RenderItemsViewProps extends ItemsViewProps {
-    /** Initial filter state for HistoryFiltersProvider */
+    /** Initial filter state for useHistoryFiltersInit */
     initialState?: HistoryFilterState;
     /** Callback when filter state changes */
     onStateChange?: (state: HistoryFilterState) => void;
 }
 
 export function renderItemsView(props: RenderItemsViewProps) {
+    return <ItemsViewWithFilters {...props} />;
+}
+
+function ItemsViewWithFilters(props: RenderItemsViewProps) {
     const { initialState, onStateChange, ...itemsProps } = props;
-    return (
-        <HistoryFiltersProvider
-            initialState={initialState}
-            onStateChange={onStateChange}
-        >
-            <ItemsView {...itemsProps} />
-        </HistoryFiltersProvider>
-    );
+    useHistoryFiltersInit({ initialState, onStateChange });
+    return <ItemsView {...itemsProps} />;
 }
 
 // =============================================================================

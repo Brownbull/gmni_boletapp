@@ -13,7 +13,7 @@
 
 import React, { useEffect, useRef, useCallback, useState } from 'react'
 import { X, BookMarked, Trash2 } from 'lucide-react'
-import type { ItemCategory } from '../../types/transaction'
+import type { ItemCategory } from '../../../shared/schema/categories'
 
 /**
  * Story 14.30.8: Stable empty array to prevent infinite render loops.

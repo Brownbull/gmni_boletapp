@@ -17,7 +17,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import React from 'react';
 import { TrendsView } from '../../src/views/TrendsView';
-import { AnalyticsProvider } from '../../src/contexts/AnalyticsContext';
+import { useAnalyticsStore } from '@features/analytics/stores/useAnalyticsStore';
+import { getDefaultNavigationState } from '@features/analytics/utils/analyticsHelpers';
 import * as csvExport from '../../src/utils/csvExport';
 import type { Transaction } from '../../src/types/transaction';
 import type { AnalyticsNavigationState } from '../../src/types/analytics';
@@ -79,7 +80,7 @@ const defaultProps = {
   onUpgradeRequired: vi.fn(),
 };
 
-// Helper to render with AnalyticsProvider
+// Story 15b-3f: Initialize Zustand store instead of wrapping with AnalyticsProvider
 function renderWithProvider(
   props = {},
   initialState?: AnalyticsNavigationState
@@ -90,10 +91,10 @@ function renderWithProvider(
     chartMode: 'aggregation' as const,
   };
 
+  useAnalyticsStore.setState(state);
+
   return render(
-    <AnalyticsProvider initialState={state}>
-      <TrendsView {...defaultProps} {...props} />
-    </AnalyticsProvider>
+    <TrendsView {...defaultProps} {...props} />
   );
 }
 

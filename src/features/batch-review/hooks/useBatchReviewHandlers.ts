@@ -42,7 +42,7 @@ import { createBatchReceiptsFromResults } from './useBatchReview';
 import { buildTransactionWithThumbnail } from '../handlers/utils';
 
 // Firestore and mapping services (used by save handler)
-import { addTransaction as firestoreAddTransaction } from '@/services/firestore';
+import { createTransactionRepository } from '@/repositories/transactionRepository';
 import { incrementMappingUsage } from '@/services/categoryMappingService';
 import { incrementMerchantMappingUsage } from '@/services/merchantMappingService';
 import { incrementItemNameMappingUsage } from '@/services/itemNameMappingService';
@@ -497,7 +497,8 @@ export function useBatchReviewHandlers(props: BatchReviewHandlersProps): BatchRe
       }
 
       // Save transaction to Firestore
-      const transactionId = await firestoreAddTransaction(db, user.uid, appId, finalTx);
+      const repo = createTransactionRepository({ db, userId: user.uid, appId });
+      const transactionId = await repo.add(finalTx);
 
       return transactionId;
     },

@@ -14,7 +14,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { AnalyticsProvider } from '../../../src/contexts/AnalyticsContext';
+import { useAnalyticsStore } from '@features/analytics/stores/useAnalyticsStore';
+import { getDefaultNavigationState } from '@features/analytics/utils/analyticsHelpers';
 import { DrillDownGrid } from '@features/analytics/components/DrillDownGrid';
 import type { AnalyticsNavigationState } from '../../../src/types/analytics';
 import type { Transaction } from '../../../src/types/transaction';
@@ -108,14 +109,17 @@ const testTransactions: Transaction[] = [
   },
 ];
 
-function renderWithProvider(
+beforeEach(() => {
+  useAnalyticsStore.setState(getDefaultNavigationState('2024'));
+});
+
+function renderWithStore(
   initialState: AnalyticsNavigationState,
   transactions: Transaction[] = testTransactions
 ) {
+  useAnalyticsStore.setState(initialState);
   return render(
-    <AnalyticsProvider initialState={initialState}>
-      <DrillDownGrid transactions={transactions} locale="en" />
-    </AnalyticsProvider>
+    <DrillDownGrid transactions={transactions} locale="en" />
   );
 }
 
@@ -135,7 +139,7 @@ describe('Drill-Down Integration - Temporal Navigation Flow', () => {
       drillDownMode: 'temporal', // Show temporal section
     };
 
-    renderWithProvider(initialState);
+    renderWithStore(initialState);
 
     // Step 1: Year level - should see quarters (Story 7.18: full quarter names)
     expect(screen.getByText('Quarter 1')).toBeInTheDocument();
@@ -187,7 +191,7 @@ describe('Drill-Down Integration - Temporal Navigation Flow', () => {
       drillDownMode: 'temporal',
     };
 
-    renderWithProvider(initialState);
+    renderWithStore(initialState);
 
     // Navigate to Quarter 4 (Story 7.18: full quarter names)
     await user.click(screen.getByText('Quarter 4').closest('button')!);
@@ -223,7 +227,7 @@ describe('Drill-Down Integration - Category Navigation Flow', () => {
       drillDownMode: 'category', // Show category section
     };
 
-    renderWithProvider(initialState);
+    renderWithStore(initialState);
 
     // Step 1: All level - should see store categories
     expect(screen.getByText('Supermarket')).toBeInTheDocument();
@@ -292,7 +296,7 @@ describe('Drill-Down Integration - Dual-Axis Independence', () => {
       drillDownMode: 'temporal', // View temporal section
     };
 
-    renderWithProvider(initialState);
+    renderWithStore(initialState);
 
     // In temporal mode, should see quarters (Story 7.18: full names)
     expect(screen.getByText('Quarter 4')).toBeInTheDocument();
@@ -320,7 +324,7 @@ describe('Drill-Down Integration - Dual-Axis Independence', () => {
       drillDownMode: 'category', // View category section
     };
 
-    renderWithProvider(initialState);
+    renderWithStore(initialState);
 
     // In category mode, should see store categories
     expect(screen.getByText('Supermarket')).toBeInTheDocument();
@@ -347,7 +351,7 @@ describe('Drill-Down Integration - Dual-Axis Independence', () => {
       drillDownMode: 'temporal',
     };
 
-    renderWithProvider(initialState);
+    renderWithStore(initialState);
 
     // Navigate temporal: Year → Q4 (Story 7.18: full quarter names)
     await user.click(screen.getByText('Quarter 4').closest('button')!);
@@ -389,10 +393,9 @@ describe('Drill-Down Integration - Empty State Navigation', () => {
       drillDownMode: 'temporal',
     };
 
+    useAnalyticsStore.setState(initialState);
     render(
-      <AnalyticsProvider initialState={initialState}>
-        <DrillDownGrid transactions={q4Only} locale="en" />
-      </AnalyticsProvider>
+      <DrillDownGrid transactions={q4Only} locale="en" />
     );
 
     // Q4 should be visible with data (Story 7.18: full quarter names)
@@ -436,10 +439,9 @@ describe('Drill-Down Integration - State Persistence', () => {
       drillDownMode: 'temporal',
     };
 
+    useAnalyticsStore.setState(initialState);
     const { rerender } = render(
-      <AnalyticsProvider initialState={initialState}>
-        <DrillDownGrid transactions={testTransactions} locale="en" />
-      </AnalyticsProvider>
+      <DrillDownGrid transactions={testTransactions} locale="en" />
     );
 
     // Navigate to Quarter 4 (Story 7.18: full quarter names)
@@ -449,11 +451,10 @@ describe('Drill-Down Integration - State Persistence', () => {
       expect(screen.getByText('October')).toBeInTheDocument();
     });
 
-    // Re-render with same provider at quarter level
+    // Re-render (Zustand store state persists across re-renders)
+    useAnalyticsStore.setState({ ...initialState, temporal: { level: 'quarter', year: '2024', quarter: 'Q4' } });
     rerender(
-      <AnalyticsProvider initialState={{ ...initialState, temporal: { level: 'quarter', year: '2024', quarter: 'Q4' } }}>
-        <DrillDownGrid transactions={testTransactions} locale="en" />
-      </AnalyticsProvider>
+      <DrillDownGrid transactions={testTransactions} locale="en" />
     );
 
     // State should persist
@@ -477,7 +478,7 @@ describe('Drill-Down Integration - Transaction Filtering', () => {
       drillDownMode: 'temporal',
     };
 
-    renderWithProvider(initialState);
+    renderWithStore(initialState);
 
     // Q4 total should be: t4(20000) + t5(60000) + t6(35000) + t7(55000) = 170000
     // But t7 is in November, so Q4 October transactions = 20000 + 60000 + 35000 = 115000
@@ -503,7 +504,7 @@ describe('Drill-Down Integration - Transaction Filtering', () => {
       drillDownMode: 'category', // Need category mode to see store categories
     };
 
-    renderWithProvider(initialState);
+    renderWithStore(initialState);
 
     // October has: Pharmacy (t4), Supermarket (t5), Restaurant (t6)
     // Category section should show these

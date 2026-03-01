@@ -9,7 +9,7 @@
 import React from 'react';
 import { PWASettingsSection } from '../PWASettingsSection';
 import { NotificationSettings } from '../NotificationSettings';
-import { Firestore } from 'firebase/firestore';
+import type { Firestore } from 'firebase/firestore';
 
 interface AppViewProps {
     t: (key: string) => string;

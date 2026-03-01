@@ -4,7 +4,7 @@
 **Phase:** 3 - Infrastructure
 **Points:** 3
 **Priority:** MEDIUM
-**Status:** drafted
+**Status:** done
 
 ## Overview
 
@@ -12,13 +12,13 @@ AnalyticsContext manages dual-axis navigation state (temporal position, category
 
 ## Functional Acceptance Criteria
 
-- [ ] **AC1:** `useAnalyticsStore` Zustand store created with state shape matching `AnalyticsNavigationState` (temporal, category, chartMode, drillDownMode)
-- [ ] **AC2:** All 5 `useAnalyticsNavigation` consumers continue to work without changes to their call sites (hook API preserved)
-- [ ] **AC3:** `AnalyticsProvider` removed from `viewRenderers.tsx` (`renderTrendsView`) and `App.tsx` (inline trends rendering)
-- [ ] **AC4:** `AnalyticsContext.tsx` deleted, 0 remaining references in `src/` after deletion
-- [ ] **AC5:** `useAnalyticsStore.getState()` initial values match old Context defaults: `{ temporal: { level: 'year', year: getCurrentYear() }, category: { level: 'all' }, chartMode: 'aggregation', drillDownMode: 'temporal' }` (verified by test)
-- [ ] **AC6:** Navigation restoration works: `analyticsInitialState` from `useNavigationStore` can initialize the analytics store before TrendsView mounts
-- [ ] **AC7:** `npm run test:quick` passes with 0 failures
+- [x] **AC1:** `useAnalyticsStore` Zustand store created with state shape matching `AnalyticsNavigationState` (temporal, category, chartMode, drillDownMode)
+- [x] **AC2:** All 5 `useAnalyticsNavigation` consumers continue to work without changes to their call sites (hook API preserved)
+- [x] **AC3:** `AnalyticsProvider` removed from `viewRenderers.tsx` (`renderTrendsView`) and `App.tsx` (inline trends rendering)
+- [x] **AC4:** `AnalyticsContext.tsx` deleted, 0 remaining references in `src/` after deletion
+- [x] **AC5:** `useAnalyticsStore.getState()` initial values match old Context defaults: `{ temporal: { level: 'year', year: getCurrentYear() }, category: { level: 'all' }, chartMode: 'aggregation', drillDownMode: 'temporal' }` (verified by test)
+- [x] **AC6:** Navigation restoration works: `analyticsInitialState` from `useNavigationStore` can initialize the analytics store before TrendsView mounts
+- [x] **AC7:** `npm run test:quick` passes with 0 failures
 
 ## Architectural Acceptance Criteria (MANDATORY)
 
@@ -26,29 +26,29 @@ AnalyticsContext manages dual-axis navigation state (temporal position, category
 
 ### File Location Requirements
 
-- [ ] **AC-ARCH-LOC-1:** Zustand store at `src/features/analytics/stores/useAnalyticsStore.ts`
-- [ ] **AC-ARCH-LOC-2:** Store barrel at `src/features/analytics/stores/index.ts`
-- [ ] **AC-ARCH-LOC-3:** Store tests at `tests/unit/features/analytics/stores/useAnalyticsStore.test.ts`
-- [ ] **AC-ARCH-LOC-4:** Modified hook at `src/features/analytics/hooks/useAnalyticsNavigation.ts`
-- [ ] **AC-ARCH-LOC-5:** Provider removal at `src/components/App/viewRenderers.tsx`
-- [ ] **AC-ARCH-LOC-6:** Provider removal at `src/App.tsx`
+- [x] **AC-ARCH-LOC-1:** Zustand store at `src/features/analytics/stores/useAnalyticsStore.ts`
+- [x] **AC-ARCH-LOC-2:** Store barrel at `src/features/analytics/stores/index.ts`
+- [x] **AC-ARCH-LOC-3:** Store tests at `tests/unit/features/analytics/stores/useAnalyticsStore.test.ts`
+- [x] **AC-ARCH-LOC-4:** Modified hook at `src/features/analytics/hooks/useAnalyticsNavigation.ts`
+- [x] **AC-ARCH-LOC-5:** Provider removal at `src/components/App/viewRenderers.tsx`
+- [x] **AC-ARCH-LOC-6:** Provider removal at `src/App.tsx`
 
 ### Pattern Requirements
 
-- [ ] **AC-ARCH-PATTERN-1:** `useAnalyticsStore` follows `create<State & Actions>()(devtools(...))` pattern matching `useHistoryFiltersStore`
-- [ ] **AC-ARCH-PATTERN-2:** State slices map 1:1 to `AnalyticsNavigationState` fields: `temporal`, `category`, `chartMode`, `drillDownMode`
-- [ ] **AC-ARCH-PATTERN-3:** Actions replace reducer cases: `setTemporalLevel()`, `setCategoryFilter()`, `toggleChartMode()`, `toggleDrillDownMode()`, `resetToYear()`, `clearCategoryFilter()`, `initialize()`
-- [ ] **AC-ARCH-PATTERN-4:** `useAnalyticsNavigation` hook preserved as the consumer API -- internally delegates to `useAnalyticsStore` instead of `useContext`
-- [ ] **AC-ARCH-PATTERN-5:** `validateNavigationState()` called in every action (matching current reducer behavior)
-- [ ] **AC-ARCH-PATTERN-6:** `analyticsActions` object exported from store for imperative use outside React (replaces Provider prop pattern)
+- [x] **AC-ARCH-PATTERN-1:** `useAnalyticsStore` follows `create<State & Actions>()(devtools(...))` pattern matching `useHistoryFiltersStore`
+- [x] **AC-ARCH-PATTERN-2:** State slices map 1:1 to `AnalyticsNavigationState` fields: `temporal`, `category`, `chartMode`, `drillDownMode`
+- [x] **AC-ARCH-PATTERN-3:** Actions replace reducer cases: `setTemporalLevel()`, `setCategoryFilter()`, `toggleChartMode()`, `toggleDrillDownMode()`, `resetToYear()`, `clearCategoryFilter()`, `initialize()`
+- [x] **AC-ARCH-PATTERN-4:** `useAnalyticsNavigation` hook preserved as the consumer API -- internally delegates to `useAnalyticsStore` instead of `useContext`
+- [x] **AC-ARCH-PATTERN-5:** `validateNavigationState()` called in every action (matching current reducer behavior)
+- [x] **AC-ARCH-PATTERN-6:** `analyticsActions` object exported from store for imperative use outside React (replaces Provider prop pattern)
 
 ### Anti-Pattern Requirements (Must NOT Happen)
 
-- [ ] **AC-ARCH-NO-1:** No `Context.Provider` wrapper in the new implementation
-- [ ] **AC-ARCH-NO-2:** No `useReducer` pattern -- use Zustand `set()` actions directly
-- [ ] **AC-ARCH-NO-3:** No global store reset on route change -- state persists until explicit `initialize()` or `resetToYear()` call
-- [ ] **AC-ARCH-NO-4:** No breaking changes to `useAnalyticsNavigation` return type -- `UseAnalyticsNavigationReturn` interface preserved
-- [ ] **AC-ARCH-NO-5:** No direct `useAnalyticsStore` usage in component files during this story -- all access through `useAnalyticsNavigation`
+- [x] **AC-ARCH-NO-1:** No `Context.Provider` wrapper in the new implementation
+- [x] **AC-ARCH-NO-2:** No `useReducer` pattern -- use Zustand `set()` actions directly
+- [x] **AC-ARCH-NO-3:** No global store reset on route change -- state persists until explicit `initialize()` or `resetToYear()` call
+- [x] **AC-ARCH-NO-4:** No breaking changes to `useAnalyticsNavigation` return type -- `UseAnalyticsNavigationReturn` interface preserved
+- [x] **AC-ARCH-NO-5:** No direct `useAnalyticsStore` usage in component files during this story -- all access through `useAnalyticsNavigation`
 
 ## File Specification
 
@@ -101,59 +101,59 @@ AnalyticsContext manages dual-axis navigation state (temporal position, category
 
 ### Task 1: Establish baseline and analyze state shape
 
-- [ ] 1.1 Run `npm run test:quick` and record pass count
-- [ ] 1.2 Read `src/contexts/AnalyticsContext.tsx` -- confirm state shape: `{ temporal: TemporalPosition, category: CategoryPosition, chartMode: ChartMode, drillDownMode: DrillDownMode }`
-- [ ] 1.3 Read `src/features/analytics/utils/analyticsHelpers.ts` -- confirm `getDefaultNavigationState()` and `validateNavigationState()` behavior
-- [ ] 1.4 `grep -rn "useAnalyticsNavigation" src/ --include="*.ts" --include="*.tsx"` -- confirm 5 component files + 1 hook file
-- [ ] 1.5 `grep -rn "AnalyticsProvider|AnalyticsContext" tests/ --include="*.ts" --include="*.tsx"` -- confirm 16 test files
+- [x]1.1 Run `npm run test:quick` and record pass count
+- [x]1.2 Read `src/contexts/AnalyticsContext.tsx` -- confirm state shape: `{ temporal: TemporalPosition, category: CategoryPosition, chartMode: ChartMode, drillDownMode: DrillDownMode }`
+- [x]1.3 Read `src/features/analytics/utils/analyticsHelpers.ts` -- confirm `getDefaultNavigationState()` and `validateNavigationState()` behavior
+- [x]1.4 `grep -rn "useAnalyticsNavigation" src/ --include="*.ts" --include="*.tsx"` -- confirm 5 component files + 1 hook file
+- [x]1.5 `grep -rn "AnalyticsProvider|AnalyticsContext" tests/ --include="*.ts" --include="*.tsx"` -- confirm 16 test files
 
 ### Task 2: Create useAnalyticsStore Zustand store
 
-- [ ] 2.1 Create `src/features/analytics/stores/useAnalyticsStore.ts`
-- [ ] 2.2 Define state interface: `AnalyticsNavigationState & { setTemporalLevel, setCategoryFilter, toggleChartMode, toggleDrillDownMode, resetToYear, clearCategoryFilter, initialize }`
-- [ ] 2.3 Implement initial state via `getDefaultNavigationState(getCurrentYear())`
-- [ ] 2.4 Implement all 6 actions wrapping `validateNavigationState()` after each state change (mirrors reducer logic exactly)
-- [ ] 2.5 Implement `initialize(state?: AnalyticsNavigationState)` action for navigation restoration (replaces Provider `initialState` prop)
-- [ ] 2.6 Export `analyticsActions` object for imperative use outside React (matches `historyFiltersActions` pattern)
-- [ ] 2.7 Create `src/features/analytics/stores/index.ts` barrel
-- [ ] 2.8 Run `npx tsc --noEmit` -- fix any type errors
-- [ ] 2.9 Create `tests/unit/features/analytics/stores/useAnalyticsStore.test.ts` -- verify: initial state defaults, all 6 actions, `initialize()` overrides state, `validateNavigationState` enforced
+- [x]2.1 Create `src/features/analytics/stores/useAnalyticsStore.ts`
+- [x]2.2 Define state interface: `AnalyticsNavigationState & { setTemporalLevel, setCategoryFilter, toggleChartMode, toggleDrillDownMode, resetToYear, clearCategoryFilter, initialize }`
+- [x]2.3 Implement initial state via `getDefaultNavigationState(getCurrentYear())`
+- [x]2.4 Implement all 6 actions wrapping `validateNavigationState()` after each state change (mirrors reducer logic exactly)
+- [x]2.5 Implement `initialize(state?: AnalyticsNavigationState)` action for navigation restoration (replaces Provider `initialState` prop)
+- [x]2.6 Export `analyticsActions` object for imperative use outside React (matches `historyFiltersActions` pattern)
+- [x]2.7 Create `src/features/analytics/stores/index.ts` barrel
+- [x]2.8 Run `npx tsc --noEmit` -- fix any type errors
+- [x]2.9 Create `tests/unit/features/analytics/stores/useAnalyticsStore.test.ts` -- verify: initial state defaults, all 6 actions, `initialize()` overrides state, `validateNavigationState` enforced
 
 ### Task 3: Rewire useAnalyticsNavigation to use store
 
-- [ ] 3.1 In `src/features/analytics/hooks/useAnalyticsNavigation.ts`: replace `useContext(AnalyticsContext)` with `useAnalyticsStore` selectors
-- [ ] 3.2 Remove `AnalyticsContext` import
-- [ ] 3.3 Preserve `UseAnalyticsNavigationReturn` interface exactly
-- [ ] 3.4 Add dispatch adapter routing `NavigationAction` objects to corresponding store actions (see Dev Notes)
-- [ ] 3.5 Remove the "must be within AnalyticsProvider" error throw (Zustand stores are always available)
-- [ ] 3.6 Run `npx tsc --noEmit` -- fix any type errors
+- [x]3.1 In `src/features/analytics/hooks/useAnalyticsNavigation.ts`: replace `useContext(AnalyticsContext)` with `useAnalyticsStore` selectors
+- [x]3.2 Remove `AnalyticsContext` import
+- [x]3.3 Preserve `UseAnalyticsNavigationReturn` interface exactly
+- [x]3.4 Add dispatch adapter routing `NavigationAction` objects to corresponding store actions (see Dev Notes)
+- [x]3.5 Remove the "must be within AnalyticsProvider" error throw (Zustand stores are always available)
+- [x]3.6 Run `npx tsc --noEmit` -- fix any type errors
 
 ### Task 4: Remove AnalyticsProvider from component tree and delete Context
 
-- [ ] 4.1 In `src/components/App/viewRenderers.tsx`: remove `AnalyticsProvider` import and wrapper; call `analyticsActions.initialize(analyticsInitialState)` before rendering TrendsView; remove `AnalyticsProviderProps`/`AnalyticsInitialState` types
-- [ ] 4.2 In `src/App.tsx`: remove `AnalyticsProvider` import; remove `<AnalyticsProvider>` wrapper; add `useEffect` calling `analyticsActions.initialize(analyticsInitialState)` when `analyticsInitialState` changes
-- [ ] 4.3 In `src/contexts/index.ts`: remove `AnalyticsProvider` and `AnalyticsContext` exports
-- [ ] 4.4 Delete `src/contexts/AnalyticsContext.tsx`
-- [ ] 4.5 `grep -rn "AnalyticsContext|AnalyticsProvider" src/ --include="*.ts" --include="*.tsx"` -- must return 0
-- [ ] 4.6 Run `npx tsc --noEmit` -- fix any type errors
+- [x]4.1 In `src/components/App/viewRenderers.tsx`: remove `AnalyticsProvider` import and wrapper; call `analyticsActions.initialize(analyticsInitialState)` before rendering TrendsView; remove `AnalyticsProviderProps`/`AnalyticsInitialState` types
+- [x]4.2 In `src/App.tsx`: remove `AnalyticsProvider` import; remove `<AnalyticsProvider>` wrapper; add `useEffect` calling `analyticsActions.initialize(analyticsInitialState)` when `analyticsInitialState` changes
+- [x]4.3 In `src/contexts/index.ts`: remove `AnalyticsProvider` and `AnalyticsContext` exports
+- [x]4.4 Delete `src/contexts/AnalyticsContext.tsx`
+- [x]4.5 `grep -rn "AnalyticsContext|AnalyticsProvider" src/ --include="*.ts" --include="*.tsx"` -- must return 0
+- [x]4.6 Run `npx tsc --noEmit` -- fix any type errors
 
 ### Task 5: Update all 16 test files
 
-- [ ] 5.1 Define shared test helper pattern: `beforeEach(() => useAnalyticsStore.setState({ ...getDefaultNavigationState(year) }, true))`
-- [ ] 5.2 Update 7 unit test files in `tests/unit/analytics/`: remove `AnalyticsProvider` wrapper; use `useAnalyticsStore.setState()` for initial state setup
-- [ ] 5.3 Update 6 integration test files in `tests/integration/analytics/`: same pattern
-- [ ] 5.4 Update `tests/integration/trends-export.test.tsx` and `tests/integration/analytics-workflows.test.tsx`
-- [ ] 5.5 Update `tests/unit/views/TrendsView.polygon.test.tsx` and `tests/unit/components/App/viewRenderers.test.tsx`
-- [ ] 5.6 Update `tests/unit/analytics/useAnalyticsNavigation.test.tsx`: remove "throws outside Provider" test; add test verifying store defaults always available
-- [ ] 5.7 Run `npm run test:quick` -- all pass
-- [ ] 5.8 `grep -rn "AnalyticsProvider|from.*AnalyticsContext" tests/ --include="*.ts" --include="*.tsx"` -- must return 0
+- [x]5.1 Define shared test helper pattern: `beforeEach(() => useAnalyticsStore.setState({ ...getDefaultNavigationState(year) }, true))`
+- [x]5.2 Update 7 unit test files in `tests/unit/analytics/`: remove `AnalyticsProvider` wrapper; use `useAnalyticsStore.setState()` for initial state setup
+- [x]5.3 Update 6 integration test files in `tests/integration/analytics/`: same pattern
+- [x]5.4 Update `tests/integration/trends-export.test.tsx` and `tests/integration/analytics-workflows.test.tsx`
+- [x]5.5 Update `tests/unit/views/TrendsView.polygon.test.tsx` and `tests/unit/components/App/viewRenderers.test.tsx`
+- [x]5.6 Update `tests/unit/analytics/useAnalyticsNavigation.test.tsx`: remove "throws outside Provider" test; add test verifying store defaults always available
+- [x]5.7 Run `npm run test:quick` -- all pass
+- [x]5.8 `grep -rn "AnalyticsProvider|from.*AnalyticsContext" tests/ --include="*.ts" --include="*.tsx"` -- must return 0
 
 ### Task 6: Final verification and cleanup
 
-- [ ] 6.1 Run `npx tsc --noEmit` -- clean
-- [ ] 6.2 Run `npm run test:quick` -- all pass, record pass count
-- [ ] 6.3 `grep -rn "AnalyticsContext" src/ tests/` -- 0 results (excluding docs/)
-- [ ] 6.4 Update `src/types/analytics.ts` JSDoc comments referencing `AnalyticsContext` to reference `useAnalyticsStore`
+- [x]6.1 Run `npx tsc --noEmit` -- clean
+- [x]6.2 Run `npm run test:quick` -- all pass, record pass count
+- [x]6.3 `grep -rn "AnalyticsContext" src/ tests/` -- 0 results (excluding docs/)
+- [x]6.4 Update `src/types/analytics.ts` JSDoc comments referencing `AnalyticsContext` to reference `useAnalyticsStore`
 
 ## Dev Notes
 
@@ -235,9 +235,19 @@ Follow `src/shared/stores/useHistoryFiltersStore.ts`:
 - **Agents consulted:** Architect
 - **Dependencies:** None -- AnalyticsContext is independent of DAL stories
 
+## Deferred Items (from ECC Code Review 2026-02-28)
+
+| TD Story | Description | Priority | Action |
+|----------|-------------|----------|--------|
+| TD-15b-29 | Stale "AnalyticsContext" comments in DrillDownGrid.tsx (808L, blocked by 800-line hook) | LOW | CREATED |
+| -- | state object recreation in useAnalyticsNavigation (minor perf) | LOW | NON-BLOCKING |
+| -- | console.warn in analyticsHelpers validation path | LOW | NON-BLOCKING |
+| -- | Year string format unvalidated in resetToYear (display-only) | INFO | NON-BLOCKING |
+
 ## Change Log
 
 | Date | Change |
 |------|--------|
 | 2026-02-13 | Initial draft |
 | 2026-02-23 | Full rewrite. State shape: 4 fields (temporal, category, chartMode, drillDownMode). 6 reducer actions. 5 component consumers via useAnalyticsNavigation hook. 2 Provider locations. 16 test files to update. Key insight: useAnalyticsNavigation preserved as API facade with dispatch adapter for zero consumer changes. Points raised from 2 to 3. |
+| 2026-02-27 | ECC re-creation validation: Validated accurate. 16 test files confirmed. Action creator re-export from store noted. Status: ready-for-dev. |

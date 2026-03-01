@@ -1,14 +1,18 @@
 /**
- * Story 14c-refactor.22c: viewRenderers Unit Tests
+ * Story 15b-3g: viewRenderers Unit Tests
  *
  * Tests for the view renderer functions including:
  * - renderViewSwitch unified switch function
- * - Individual render functions (renderAlertsView, renderSettingsView, etc.)
- * - ViewRenderProps and ViewRenderPropsMap type exports
+ * - Individual render functions with useHistoryFiltersInit integration
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import type { View } from '@app/types';
+
+// Mock useHistoryFiltersInit (replaces HistoryFiltersProvider)
+vi.mock('@/shared/hooks/useHistoryFiltersInit', () => ({
+    useHistoryFiltersInit: vi.fn(),
+}));
 
 // Mock all view components to avoid their complex dependencies
 vi.mock('../../../../src/views/DashboardView', () => ({
@@ -115,19 +119,6 @@ vi.mock('../../../../src/views/BatchReviewView', () => ({
     ),
 }));
 
-// Mock providers
-vi.mock('../../../../src/contexts/AnalyticsContext', () => ({
-    AnalyticsProvider: ({ children }: { children: React.ReactNode }) => (
-        <div data-testid="analytics-provider">{children}</div>
-    ),
-}));
-
-vi.mock('../../../../src/contexts/HistoryFiltersContext', () => ({
-    HistoryFiltersProvider: ({ children }: { children: React.ReactNode }) => (
-        <div data-testid="history-filters-provider">{children}</div>
-    ),
-}));
-
 // Import after mocks
 import {
     renderDashboardView,
@@ -147,12 +138,12 @@ import {
     type ViewRenderProps,
     type ViewRenderPropsMap,
 } from '../../../../src/components/App/viewRenderers';
+import { useHistoryFiltersInit } from '@/shared/hooks/useHistoryFiltersInit';
 
 // =============================================================================
 // Test Utilities
 // =============================================================================
 
-// Minimal props for testing - actual prop validation is done by TypeScript
 const createMinimalProps = () => ({
     theme: 'light' as const,
     t: (key: string) => key,
@@ -168,64 +159,70 @@ describe('viewRenderers', () => {
     });
 
     describe('renderDashboardView', () => {
-        it('should render DashboardView wrapped in HistoryFiltersProvider', () => {
+        it('should render DashboardView with useHistoryFiltersInit', () => {
             const props = createMinimalProps() as Parameters<typeof renderDashboardView>[0];
-            const { container } = render(<>{renderDashboardView(props)}</>);
+            render(<>{renderDashboardView(props)}</>);
 
-            expect(screen.getByTestId('history-filters-provider')).toBeInTheDocument();
             expect(screen.getByTestId('dashboard-view')).toBeInTheDocument();
+            expect(useHistoryFiltersInit).toHaveBeenCalledWith();
         });
     });
 
     describe('renderTrendsView', () => {
-        it('should render TrendsView wrapped in HistoryFiltersProvider and AnalyticsProvider', () => {
+        it('should render TrendsView with useHistoryFiltersInit', () => {
             const props = createMinimalProps() as Parameters<typeof renderTrendsView>[0];
-            const { container } = render(<>{renderTrendsView(props)}</>);
-
-            expect(screen.getByTestId('history-filters-provider')).toBeInTheDocument();
-            expect(screen.getByTestId('analytics-provider')).toBeInTheDocument();
-            expect(screen.getByTestId('trends-view')).toBeInTheDocument();
-        });
-
-        it('should pass analyticsInitialState to AnalyticsProvider when provided', () => {
-            const props = {
-                ...createMinimalProps(),
-                analyticsInitialState: { temporal: { level: 'month' } },
-            } as Parameters<typeof renderTrendsView>[0];
-
             render(<>{renderTrendsView(props)}</>);
 
             expect(screen.getByTestId('trends-view')).toBeInTheDocument();
+            expect(useHistoryFiltersInit).toHaveBeenCalledWith();
         });
     });
 
     describe('renderInsightsView', () => {
-        it('should render InsightsView directly without provider wrapping', () => {
+        it('should render InsightsView directly without filter init', () => {
             const props = createMinimalProps() as Parameters<typeof renderInsightsView>[0];
             render(<>{renderInsightsView(props)}</>);
 
             expect(screen.getByTestId('insights-view')).toBeInTheDocument();
-            expect(screen.queryByTestId('history-filters-provider')).not.toBeInTheDocument();
+            expect(useHistoryFiltersInit).not.toHaveBeenCalled();
         });
     });
 
     describe('renderHistoryView', () => {
-        it('should render HistoryView wrapped in HistoryFiltersProvider', () => {
+        it('should render HistoryView with useHistoryFiltersInit', () => {
             const props = createMinimalProps() as Parameters<typeof renderHistoryView>[0];
             render(<>{renderHistoryView(props)}</>);
 
-            expect(screen.getByTestId('history-filters-provider')).toBeInTheDocument();
             expect(screen.getByTestId('history-view')).toBeInTheDocument();
+            expect(useHistoryFiltersInit).toHaveBeenCalledWith({ initialState: undefined, onStateChange: undefined });
+        });
+
+        it('should pass initialState and onStateChange to useHistoryFiltersInit', () => {
+            const onStateChange = vi.fn();
+            const initialState = { temporal: { level: 'month' as const, year: '2026', month: '2026-01' }, category: { level: 'all' as const }, location: {} };
+            const props = { ...createMinimalProps(), initialState, onStateChange } as Parameters<typeof renderHistoryView>[0];
+            render(<>{renderHistoryView(props)}</>);
+
+            expect(useHistoryFiltersInit).toHaveBeenCalledWith({ initialState, onStateChange });
         });
     });
 
     describe('renderItemsView', () => {
-        it('should render ItemsView wrapped in HistoryFiltersProvider', () => {
+        it('should render ItemsView with useHistoryFiltersInit', () => {
             const props = createMinimalProps() as Parameters<typeof renderItemsView>[0];
             render(<>{renderItemsView(props)}</>);
 
-            expect(screen.getByTestId('history-filters-provider')).toBeInTheDocument();
             expect(screen.getByTestId('items-view')).toBeInTheDocument();
+            expect(useHistoryFiltersInit).toHaveBeenCalledWith({ initialState: undefined, onStateChange: undefined });
+        });
+
+        it('should pass initialState and onStateChange to useHistoryFiltersInit', () => {
+            const onStateChange = vi.fn();
+            const initialState = { temporal: { level: 'month' as const, year: '2026', month: '2026-01' }, category: { level: 'all' as const }, location: {} };
+            const props = { ...createMinimalProps(), initialState, onStateChange } as Parameters<typeof renderItemsView>[0];
+            render(<>{renderItemsView(props)}</>);
+
+            expect(useHistoryFiltersInit).toHaveBeenCalledWith({ initialState, onStateChange });
         });
     });
 
@@ -256,9 +253,8 @@ describe('viewRenderers', () => {
         });
     });
 
-    // Story 14c-refactor.22c: New render function tests
     describe('renderAlertsView', () => {
-        it('should render NotificationsView (alerts uses NotificationsView component)', () => {
+        it('should render NotificationsView', () => {
             const props = createMinimalProps() as Parameters<typeof renderAlertsView>[0];
             render(<>{renderAlertsView(props)}</>);
 
@@ -309,6 +305,10 @@ describe('viewRenderers', () => {
 
 describe('renderViewSwitch', () => {
     const minimalProps = createMinimalProps();
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
 
     describe('Active views', () => {
         const activeViewTestCases: Array<{ view: View; expectedTestId: string; propsKey: keyof ViewRenderProps }> = [
@@ -363,34 +363,33 @@ describe('renderViewSwitch', () => {
         });
     });
 
-    describe('Provider wrapping', () => {
-        it('should wrap dashboard in HistoryFiltersProvider', () => {
+    describe('Filter initialization', () => {
+        it('should call useHistoryFiltersInit for dashboard view', () => {
             const props: ViewRenderProps = { dashboard: minimalProps as ViewRenderPropsMap['dashboard'] };
             render(<>{renderViewSwitch('dashboard', props)}</>);
 
-            expect(screen.getByTestId('history-filters-provider')).toBeInTheDocument();
+            expect(useHistoryFiltersInit).toHaveBeenCalledWith();
         });
 
-        it('should wrap trends in HistoryFiltersProvider and AnalyticsProvider', () => {
+        it('should call useHistoryFiltersInit for trends view', () => {
             const props: ViewRenderProps = { trends: minimalProps as ViewRenderPropsMap['trends'] };
             render(<>{renderViewSwitch('trends', props)}</>);
 
-            expect(screen.getByTestId('history-filters-provider')).toBeInTheDocument();
-            expect(screen.getByTestId('analytics-provider')).toBeInTheDocument();
+            expect(useHistoryFiltersInit).toHaveBeenCalledWith();
         });
 
-        it('should wrap history in HistoryFiltersProvider', () => {
+        it('should call useHistoryFiltersInit for history view', () => {
             const props: ViewRenderProps = { history: minimalProps as ViewRenderPropsMap['history'] };
             render(<>{renderViewSwitch('history', props)}</>);
 
-            expect(screen.getByTestId('history-filters-provider')).toBeInTheDocument();
+            expect(useHistoryFiltersInit).toHaveBeenCalledWith({ initialState: undefined, onStateChange: undefined });
         });
 
-        it('should wrap items in HistoryFiltersProvider', () => {
+        it('should call useHistoryFiltersInit for items view', () => {
             const props: ViewRenderProps = { items: minimalProps as ViewRenderPropsMap['items'] };
             render(<>{renderViewSwitch('items', props)}</>);
 
-            expect(screen.getByTestId('history-filters-provider')).toBeInTheDocument();
+            expect(useHistoryFiltersInit).toHaveBeenCalledWith({ initialState: undefined, onStateChange: undefined });
         });
     });
 });
@@ -401,13 +400,11 @@ describe('renderViewSwitch', () => {
 
 describe('Type exports', () => {
     it('should export ViewRenderProps type', () => {
-        // Type-level test - if this compiles, the type is exported correctly
         const props: ViewRenderProps = {};
         expect(props).toBeDefined();
     });
 
     it('should export ViewRenderPropsMap type with all view keys', () => {
-        // Type-level test - if this compiles, the type has all expected keys
         const _map: ViewRenderPropsMap = {
             dashboard: {} as ViewRenderPropsMap['dashboard'],
             trends: {} as ViewRenderPropsMap['trends'],
