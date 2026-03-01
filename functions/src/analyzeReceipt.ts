@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto'
 import * as functions from 'firebase-functions'
 import * as admin from 'firebase-admin'
 import { GoogleGenerativeAI } from '@google/generative-ai'
@@ -45,6 +46,11 @@ function checkRateLimit(userId: string): boolean {
     timestamp => now - timestamp < RATE_LIMIT_WINDOW_MS
   )
 
+  // Cleanup stale entry if no recent requests
+  if (recentRequests.length === 0) {
+    requestTimestamps.delete(userId)
+  }
+
   // Check if user has exceeded the limit
   if (recentRequests.length >= RATE_LIMIT_MAX_REQUESTS) {
     return true // Rate limit exceeded
@@ -56,6 +62,9 @@ function checkRateLimit(userId: string): boolean {
 
   return false // Within rate limit
 }
+
+// Gemini model allowlist (Story 15b-5a: configurable via GEMINI_MODEL env var)
+const ALLOWED_GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']
 
 // Image validation constants
 const MAX_IMAGE_SIZE_MB = 10
@@ -98,7 +107,7 @@ function validateImages(images: string[]): void {
  * @throws HttpsError if MIME type is invalid
  */
 function extractMimeType(b64: string): string {
-  const match = b64.match(/^data:(.+);base64,(.+)$/)
+  const match = b64.match(/^data:([^;]+);base64,/)
 
   if (!match || !match[1]) {
     throw new functions.https.HttpsError(
@@ -199,12 +208,7 @@ interface AnalyzeReceiptResponse extends GeminiAnalysisResult {
  * Generate a unique transaction ID (Firestore-style)
  */
 function generateTransactionId(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  let id = ''
-  for (let i = 0; i < 20; i++) {
-    id += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return id
+  return randomBytes(15).toString('base64url')
 }
 
 /**
@@ -308,10 +312,9 @@ export const analyzeReceipt = functions.https.onCall(
       // =========================================================================
       const genAI = getGenAI()
       // Story 15b-5a: Configurable model via env var, default to gemini-2.5-flash (stable GA)
-      const ALLOWED_GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']
       const geminiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
       if (!ALLOWED_GEMINI_MODELS.includes(geminiModel)) {
-        throw new Error(`Invalid GEMINI_MODEL: "${geminiModel}". Allowed: ${ALLOWED_GEMINI_MODELS.join(', ')}`)
+        throw new functions.https.HttpsError('internal', 'Invalid GEMINI_MODEL configuration. Contact administrator.')
       }
       const model = genAI.getGenerativeModel(
         { model: geminiModel },
@@ -356,7 +359,7 @@ export const analyzeReceipt = functions.https.onCall(
       const parsed: GeminiAnalysisResult = JSON.parse(cleanedText)
 
       // Log successful analysis (helpful for monitoring)
-      console.log(`Receipt analyzed for user ${userId}: ${parsed.merchant}`)
+      console.log(`Receipt analyzed: transaction ${transactionId}`)
 
       // =========================================================================
       // STEP 3: Store pre-processed images (reuse buffers - no double processing)
@@ -417,8 +420,7 @@ export const analyzeReceipt = functions.https.onCall(
       if (error instanceof Error) {
         throw new functions.https.HttpsError(
           'internal',
-          'Failed to analyze receipt. Please try again or enter manually.',
-          error.message
+          'Failed to analyze receipt. Please try again or enter manually.'
         )
       }
 

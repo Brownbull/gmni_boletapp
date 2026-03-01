@@ -88,32 +88,32 @@ test.describe('Scan Smoke Test', () => {
 
         // =====================================================================
         // Step 5: Verify transaction fields are populated
+        // Note: No Firestore cleanup needed — test verifies AI analysis
+        // populates fields but does not save the transaction.
         // =====================================================================
+
         // Verify merchant name is populated (any non-empty value)
         const merchantField = page.locator(
             '[data-testid="merchant-field"], [data-testid="merchant-input"], input[name="merchant"]'
+        ).first();
+        await merchantField.waitFor({ state: 'visible', timeout: 5000 });
+        const merchantValue = await merchantField.inputValue().catch(() =>
+            merchantField.textContent().then(t => t || '')
         );
-
-        if (await merchantField.isVisible({ timeout: 5000 }).catch(() => false)) {
-            const merchantValue = await merchantField.inputValue().catch(() =>
-                merchantField.textContent().then(t => t || '')
-            );
-            expect(merchantValue.length).toBeGreaterThan(0);
-        }
+        expect(merchantValue.length).toBeGreaterThan(0);
 
         // Verify total is populated and reasonable for charcuteria receipt (~17,928 CLP)
         const totalField = page.locator(
             '[data-testid="total-field"], [data-testid="total-input"], input[name="total"]'
+        ).first();
+        await totalField.waitFor({ state: 'visible', timeout: 5000 });
+        const totalValue = await totalField.inputValue().catch(() =>
+            totalField.textContent().then(t => t || '0')
         );
-        if (await totalField.isVisible({ timeout: 3000 }).catch(() => false)) {
-            const totalValue = await totalField.inputValue().catch(() =>
-                totalField.textContent().then(t => t || '0')
-            );
-            const numericTotal = parseFloat(totalValue.replace(/[^0-9.]/g, ''));
-            // Expect total between 10,000 and 25,000 CLP (reasonable range for this receipt)
-            expect(numericTotal).toBeGreaterThan(10000);
-            expect(numericTotal).toBeLessThan(25000);
-        }
+        const numericTotal = parseFloat(totalValue.replace(/[^0-9.]/g, ''));
+        // Expect total between 10,000 and 25,000 CLP (reasonable range for this receipt)
+        expect(numericTotal).toBeGreaterThan(10000);
+        expect(numericTotal).toBeLessThan(25000);
 
         // Verify items exist (prefer data-testid selectors)
         const itemRows = page.locator(

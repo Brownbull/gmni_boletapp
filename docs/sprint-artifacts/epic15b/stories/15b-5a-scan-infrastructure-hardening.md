@@ -160,8 +160,8 @@ npx playwright test tests/e2e/on-demand/scan-smoke.spec.ts --project=staging --h
 | Date | 2026-03-01 |
 | Classification | STANDARD |
 | Agents | code-reviewer, security-reviewer |
-| Score | 6.5/10 → 8.5/10 (post-fix) |
-| Outcome | APPROVE (9 quick fixes applied, 5 pre-existing deferred) |
+| Score | 6.75/10 → 8.5/10 (post-fix, round 2) |
+| Outcome | APPROVE (9 quick fixes applied round 2, 4 pre-existing deferred to TD-15b-36) |
 | TD Stories | TD-15b-36 (analyzeReceipt security hardening) |
 
 ## Deferred Items (Code Review 2026-03-01)
@@ -174,5 +174,6 @@ npx playwright test tests/e2e/on-demand/scan-smoke.spec.ts --project=staging --h
 
 | Date | Change |
 |------|--------|
-| 2026-03-01 | Code review: 9 quick fixes applied, 5 pre-existing items deferred to TD-15b-36 |
+| 2026-03-01 | Code review round 2: 9 quick fixes (crypto ID, regex, PII log, error detail, model allowlist, rate-limit cleanup, E2E assertions) |
+| 2026-03-01 | Code review round 1: 9 quick fixes applied, 5 pre-existing items deferred to TD-15b-36 |
 | 2026-02-28 | Story created from scan incident investigation + deprecation audit |
