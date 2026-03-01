@@ -16,7 +16,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, User, Users } from 'lucide-react';
-import stagingTestUsers from '../../../staging-test-users.json';
 
 interface TestUser {
   id: string;
@@ -31,11 +30,11 @@ interface TestUserMenuProps {
   onSelectUser: (email: string, password: string) => Promise<void>;
 }
 
+// Multi-user password - configurable for staging vs emulator
+const MULTI_USER_PASSWORD = import.meta.env.VITE_MULTI_USER_PASSWORD || 'test-password-123';
+
 // Check if staging mode (boletapp-staging project)
 const isStaging = import.meta.env.VITE_FIREBASE_PROJECT_ID === 'boletapp-staging';
-
-// Multi-user password - staging uses shared JSON, emulator uses hardcoded fallback
-const MULTI_USER_PASSWORD = isStaging ? stagingTestUsers.password : 'test-password-123';
 
 // Multi-user email domain - staging uses @boletapp.test, emulator uses @test.local
 const MULTI_USER_DOMAIN = isStaging ? 'boletapp.test' : 'test.local';
