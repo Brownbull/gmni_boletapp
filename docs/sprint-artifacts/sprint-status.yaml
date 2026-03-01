@@ -273,7 +273,9 @@ development_status:
   15b-4g-final-dependency-validation: done  # 1 pt  - Final dependency graph validation + epic metrics | done: 2026-03-01
 
   # Phase 5: Infrastructure Hardening (1 story, 5 pts)
-  15b-5a-scan-infrastructure-hardening: review  # 5 pts - Fix scan error recovery + migrate functions.config() + upgrade Gemini + E2E smoke test
+  15b-5a-scan-infrastructure-hardening: done  # 5 pts - Fix scan error recovery + migrate functions.config() + upgrade Gemini + E2E smoke test | done: 2026-03-01
+  TD-15b-36-analyzereceipt-security-hardening: done  # 3 pts - SSRF prevention + response schema validation + rate limiter docs (from 15b-5a review, HIGH) | done: 2026-03-01
+  TD-15b-37-analyzereceipt-input-validation-gaps: ready-for-dev  # 2 pts - isRescan heuristic + receiptType runtime validation (from TD-15b-36 review, LOW) | DEPENDS: TD-15b-36
 
   epic-15b-retrospective: optional
 

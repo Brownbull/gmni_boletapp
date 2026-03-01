@@ -26,8 +26,27 @@ const getGenAI = () => {
   return new GoogleGenerativeAI(apiKey)
 }
 
-// Rate limiting: Store user request timestamps in memory
-// In production, consider using Cloud Firestore or Redis for distributed rate limiting
+// SSRF prevention: only fetch images from trusted Firebase Storage origins (TD-15b-36)
+const ALLOWED_URL_ORIGINS: readonly string[] = [
+  'firebasestorage.googleapis.com',
+  'storage.googleapis.com',
+]
+
+// Rate limiting: Store user request timestamps in memory.
+//
+// ACCEPTED RISK (TD-15b-36): This Map resets on every Cloud Function cold start.
+// Because Cloud Functions can run on multiple instances simultaneously, each instance
+// maintains its own counter — a user can exceed the stated limit by issuing requests
+// across instances. This provides best-effort rate limiting, not guaranteed enforcement.
+//
+// Firestore counter approach considered and deferred:
+//   - Pro: Distributed, survives cold starts, accurate across instances
+//   - Con: Adds 1 Firestore read + 1 write per scan call; at current traffic levels
+//     (< 100 scans/day) the cost and latency overhead is not justified
+//   - Revisit when: sustained traffic > 500 scans/day or abuse detected in logs
+//
+// For now, this in-memory limiter blocks accidental hammering and is sufficient
+// for current usage patterns.
 const requestTimestamps = new Map<string, number[]>()
 const RATE_LIMIT_WINDOW_MS = 60 * 1000 // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = 10 // 10 requests per minute per user
@@ -139,17 +158,49 @@ interface AnalyzeReceiptRequest {
 }
 
 /**
+ * Validates that a URL is safe to fetch as a receipt image (TD-15b-36).
+ * Prevents SSRF by enforcing HTTPS protocol and hostname allowlist.
+ * @throws HttpsError('invalid-argument') for any disallowed URL
+ */
+function validateImageUrl(url: string): void {
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Invalid image URL format'
+    )
+  }
+  if (parsed.protocol !== 'https:') {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Image URL must use HTTPS'
+    )
+  }
+  if (!ALLOWED_URL_ORIGINS.includes(parsed.hostname)) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Image URL origin is not permitted'
+    )
+  }
+}
+
+/**
  * Story 14.15b: Fetch image from URL and return as Buffer
  * Used for re-scanning transactions with stored images
  * @param url Image URL (Firebase Storage download URL)
  * @returns Buffer containing image data
  */
 async function fetchImageFromUrl(url: string): Promise<Buffer> {
+  validateImageUrl(url)
   const response = await fetch(url)
   if (!response.ok) {
+    // Log upstream details server-side only — do NOT expose to caller (TD-15b-36 AC4)
+    console.error(`fetchImageFromUrl: upstream error ${response.status} for URL hostname ${new URL(url).hostname}`)
     throw new functions.https.HttpsError(
       'invalid-argument',
-      `Failed to fetch image from URL: ${response.status} ${response.statusText}`
+      'Failed to fetch image. Please try re-scanning.'
     )
   }
   const arrayBuffer = await response.arrayBuffer()
@@ -157,10 +208,11 @@ async function fetchImageFromUrl(url: string): Promise<Buffer> {
 }
 
 /**
- * Story 14.15b: Check if a string is a URL (for re-scan detection)
+ * Returns true only for HTTPS URLs.
+ * HTTP URLs are rejected — re-scan images must always use HTTPS (TD-15b-36 AC2).
  */
 function isUrl(str: string): boolean {
-  return str.startsWith('http://') || str.startsWith('https://')
+  return str.startsWith('https://')
 }
 
 /**
@@ -188,6 +240,27 @@ interface GeminiAnalysisResult {
     receiptType?: string  // Detected receipt type (e.g., "receipt", "invoice")
     confidence?: number   // Confidence score 0.0-1.0
   }
+}
+
+/**
+ * Type guard: validates parsed JSON conforms to GeminiAnalysisResult (TD-15b-36 AC3).
+ * Checks required fields and types. Optional fields are not validated — safe if absent.
+ */
+function isValidGeminiAnalysisResult(value: unknown): value is GeminiAnalysisResult {
+  if (typeof value !== 'object' || value === null) return false
+  const v = value as Record<string, unknown>
+  if (typeof v['merchant'] !== 'string') return false
+  if (typeof v['date'] !== 'string') return false
+  if (typeof v['total'] !== 'number' || !Number.isFinite(v['total'])) return false
+  if (typeof v['category'] !== 'string') return false
+  if (!Array.isArray(v['items'])) return false
+  for (const item of v['items'] as unknown[]) {
+    if (typeof item !== 'object' || item === null) return false
+    const i = item as Record<string, unknown>
+    if (typeof i['name'] !== 'string') return false
+    if (typeof i['price'] !== 'number' || !Number.isFinite(i['price'])) return false
+  }
+  return true
 }
 
 /**
@@ -356,7 +429,16 @@ export const analyzeReceipt = functions.https.onCall(
         .replace(/^```\s*/i, '')
         .trim()
 
-      const parsed: GeminiAnalysisResult = JSON.parse(cleanedText)
+      const rawParsed: unknown = JSON.parse(cleanedText)
+      if (!isValidGeminiAnalysisResult(rawParsed)) {
+        const fields = typeof rawParsed === 'object' && rawParsed !== null ? Object.keys(rawParsed) : []
+        console.error('Gemini response failed schema validation. Fields present:', fields.join(', '))
+        throw new functions.https.HttpsError(
+          'internal',
+          'Receipt analysis returned unexpected format. Please try again.'
+        )
+      }
+      const parsed: GeminiAnalysisResult = rawParsed
 
       // Log successful analysis (helpful for monitoring)
       console.log(`Receipt analyzed: transaction ${transactionId}`)
