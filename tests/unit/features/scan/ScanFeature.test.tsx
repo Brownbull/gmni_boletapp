@@ -1,29 +1,10 @@
-/**
- * Story 14e-10: ScanFeature Orchestrator Tests
- * Story 14e-11: Updated for Partial Integration Behavior
- * Story 14e-23a: Added overlay rendering tests (ScanOverlay, QuickSaveCard,
- *                BatchCompleteModal, CurrencyMismatchDialog, TotalMismatchDialog)
- *
- * Tests the phase-based rendering logic of ScanFeature component.
- *
- * Story 14e-23a migrated scan overlays from AppOverlays to ScanFeature.
- * ScanFeature now renders all scan-related overlays based on:
- * - Phase state (scanning/error → ScanOverlay visibility)
- * - Props presence (handlers must be provided for dialogs to render)
- * - Zustand activeDialog state (for BatchCompleteModal)
- *
- * @see src/features/scan/ScanFeature.tsx
- * @see docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-23a-scan-overlay-migration.md
- */
+/** ScanFeature tests — phase rendering, overlay rendering, dialog rendering */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { ScanFeature } from '@features/scan';
 import type { ScanPhase, ScanMode } from '@/types/scanStateMachine';
-
-// =============================================================================
 // Mocks
-// =============================================================================
 
 // Mock Zustand store selectors and actions
 const mockUseScanPhase = vi.fn<[], ScanPhase>(() => 'idle');
@@ -31,9 +12,14 @@ const mockUseScanMode = vi.fn<[], ScanMode>(() => 'single');
 const mockReset = vi.fn();
 const mockUseScanActions = vi.fn(() => ({ reset: mockReset }));
 
-// Story 14e-23a: Mock activeDialog state for useScanStore
-// Use a getter function to avoid closure issues with vi.mock hoisting
-const mockActiveDialogState = { current: null as { type: string; data: unknown } | null };
+// Mock store state: activeDialog + overlay fields (Story 16-2)
+const mockStoreState: Record<string, unknown> = {
+  activeDialog: null,
+  overlayState: 'idle',
+  overlayProgress: 0,
+  overlayEta: null,
+  overlayError: null,
+};
 
 vi.mock('@features/scan/store', () => ({
   useScanPhase: () => mockUseScanPhase(),
@@ -41,10 +27,8 @@ vi.mock('@features/scan/store', () => ({
   useScanActions: () => mockUseScanActions(),
 }));
 
-// Story 14e-23a: Mock useScanStore for activeDialog (direct file import in ScanFeature.tsx)
 vi.mock('@features/scan/store/useScanStore', () => ({
-  useScanStore: (selector: (state: { activeDialog: { type: string; data: unknown } | null }) => unknown) =>
-    selector({ activeDialog: mockActiveDialogState.current }),
+  useScanStore: (selector: (state: Record<string, unknown>) => unknown) => selector(mockStoreState),
 }));
 
 // Story 14e-23a: Mock overlay components to verify rendering
@@ -133,10 +117,7 @@ vi.mock('@features/scan/components/states', () => ({
     </div>
   ),
 }));
-
-// =============================================================================
 // Test Utilities
-// =============================================================================
 
 const defaultProps = {
   t: (key: string) => key,
@@ -151,15 +132,15 @@ function setMode(mode: ScanMode) {
   mockUseScanMode.mockReturnValue(mode);
 }
 
-// Story 14e-23a: Helper to set activeDialog state
 function setActiveDialog(dialog: { type: string; data: unknown } | null) {
-  mockActiveDialogState.current = dialog;
+  mockStoreState.activeDialog = dialog;
 }
 
-/**
- * Story 14e-30: Helper to verify only hidden file input is rendered.
- * ScanFeature now always renders a hidden file input for image selection.
- */
+function setOverlay(state: string, error?: { type: string; message: string } | null) {
+  mockStoreState.overlayState = state;
+  if (error !== undefined) mockStoreState.overlayError = error;
+}
+
 function expectOnlyHiddenFileInput(container: HTMLElement) {
   const children = container.querySelectorAll('*');
   expect(children.length).toBe(1);
@@ -167,26 +148,20 @@ function expectOnlyHiddenFileInput(container: HTMLElement) {
   expect(children[0]).toHaveAttribute('type', 'file');
   expect(children[0]).toHaveClass('hidden');
 }
-
-// =============================================================================
 // Tests
-// =============================================================================
 
 describe('ScanFeature', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setPhase('idle');
     setMode('single');
-    setActiveDialog(null); // Story 14e-23a: Reset dialog state
+    setActiveDialog(null);
+    setOverlay('idle');
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
-
-  // ===========================================================================
-  // Phase: idle
-  // ===========================================================================
 
   describe('when phase is idle', () => {
     beforeEach(() => {
@@ -194,7 +169,6 @@ describe('ScanFeature', () => {
     });
 
     it('renders only hidden file input by default (showIdleState=false)', () => {
-      // Story 14e-30: ScanFeature now always renders hidden file input
       const { container } = render(<ScanFeature {...defaultProps} />);
       expectOnlyHiddenFileInput(container);
     });
@@ -219,10 +193,6 @@ describe('ScanFeature', () => {
     });
   });
 
-  // ===========================================================================
-  // Phase: capturing
-  // ===========================================================================
-
   describe('when phase is capturing', () => {
     beforeEach(() => {
       setPhase('capturing');
@@ -243,8 +213,6 @@ describe('ScanFeature', () => {
         expect(screen.getByTestId('batch-capture')).toBeInTheDocument();
       });
 
-      // Story 14e-11: Now returns null when batchCaptureView not provided
-      // Story 14e-30: ScanFeature now renders file input, existing views handle batch capture
       it('renders only file input when batchCaptureView not provided (partial integration)', () => {
         const { container } = render(<ScanFeature {...defaultProps} />);
         expectOnlyHiddenFileInput(container);
@@ -267,7 +235,6 @@ describe('ScanFeature', () => {
       });
 
       it('renders only file input when singleCaptureView not provided', () => {
-        // Story 14e-30: ScanFeature now renders file input
         const { container } = render(<ScanFeature {...defaultProps} />);
         expectOnlyHiddenFileInput(container);
       });
@@ -288,26 +255,19 @@ describe('ScanFeature', () => {
         expect(screen.getByTestId('statement-view')).toBeInTheDocument();
       });
 
-      // Story 14e-11: Now returns null when statementView not provided
-      // Story 14e-30: ScanFeature now renders file input, existing views handle statement capture
       it('renders only file input when statementView not provided (partial integration)', () => {
         const { container } = render(<ScanFeature {...defaultProps} />);
         expectOnlyHiddenFileInput(container);
       });
     });
   });
-
-  // ===========================================================================
   // Phase: scanning
-  // Story 14e-23a: ScanFeature now renders ScanOverlay for processing state
-  // ===========================================================================
 
   describe('when phase is scanning', () => {
     beforeEach(() => {
       setPhase('scanning');
     });
 
-    // Story 14e-30: Without scanOverlay prop, renders only file input
     it('renders only file input when scanOverlay prop not provided', () => {
       const { container } = render(<ScanFeature {...defaultProps} />);
       expectOnlyHiddenFileInput(container);
@@ -319,16 +279,11 @@ describe('ScanFeature', () => {
     });
   });
 
-  // ===========================================================================
-  // Phase: reviewing
-  // ===========================================================================
-
   describe('when phase is reviewing', () => {
     beforeEach(() => {
       setPhase('reviewing');
     });
 
-    // Story 14e-30: Only renders file input when reviewView not provided
     it('renders only file input when reviewView not provided (partial integration)', () => {
       const { container } = render(<ScanFeature {...defaultProps} />);
       expectOnlyHiddenFileInput(container);
@@ -346,19 +301,11 @@ describe('ScanFeature', () => {
       expect(screen.getByTestId('review-content')).toBeInTheDocument();
     });
   });
-
-  // ===========================================================================
-  // Phase: saving
-  // Story 14e-11: Save operation shows QuickSaveCard or navigates away
-  // ===========================================================================
-
   describe('when phase is saving', () => {
     beforeEach(() => {
       setPhase('saving');
     });
 
-    // Story 14e-11: ScanFeature returns null for saving phase
-    // Story 14e-30: QuickSaveCard handles saving UI, file input always rendered
     it('renders only file input (QuickSaveCard handles saving state)', () => {
       const { container } = render(<ScanFeature {...defaultProps} />);
       expectOnlyHiddenFileInput(container);
@@ -369,18 +316,13 @@ describe('ScanFeature', () => {
       expect(screen.queryByTestId('saving-state')).not.toBeInTheDocument();
     });
   });
-
-  // ===========================================================================
   // Phase: error
-  // Story 14e-23a: ScanFeature now renders ScanOverlay for error state
-  // ===========================================================================
 
   describe('when phase is error', () => {
     beforeEach(() => {
       setPhase('error');
     });
 
-    // Story 14e-30: Without scanOverlay prop, renders only file input
     it('renders only file input when scanOverlay prop not provided', () => {
       const { container } = render(<ScanFeature {...defaultProps} />);
       expectOnlyHiddenFileInput(container);
@@ -391,10 +333,6 @@ describe('ScanFeature', () => {
       expect(screen.queryByTestId('error-state')).not.toBeInTheDocument();
     });
   });
-
-  // ===========================================================================
-  // Props passing
-  // ===========================================================================
 
   describe('prop forwarding', () => {
     it('forwards t and theme to IdleState when showIdleState is true', () => {
@@ -422,10 +360,6 @@ describe('ScanFeature', () => {
       expect(screen.getByTestId('reviewing-state')).toBeInTheDocument();
     });
   });
-
-  // ===========================================================================
-  // Mode-aware rendering
-  // ===========================================================================
 
   describe('mode-aware rendering', () => {
     it('renders different content for batch vs single in capturing phase', () => {
@@ -457,7 +391,6 @@ describe('ScanFeature', () => {
     });
 
     it('renders only file input for batch mode without batchCaptureView prop', () => {
-      // Story 14e-30: ScanFeature now renders file input
       setPhase('capturing');
       setMode('batch');
 
@@ -466,13 +399,8 @@ describe('ScanFeature', () => {
     });
   });
 
-  // ===========================================================================
-  // Edge cases
-  // ===========================================================================
-
   describe('edge cases', () => {
     it('handles unknown phase gracefully (renders only file input)', () => {
-      // Story 14e-30: ScanFeature now renders file input even for unknown phase
       // Force an unknown phase value
       mockUseScanPhase.mockReturnValue('unknown' as ScanPhase);
 
@@ -480,7 +408,6 @@ describe('ScanFeature', () => {
       expectOnlyHiddenFileInput(container);
     });
 
-    // Story 14e-11: Updated for partial integration behavior
     it('handles phase transitions correctly (partial integration)', () => {
       // Start idle with showIdleState
       setPhase('idle');
@@ -512,7 +439,6 @@ describe('ScanFeature', () => {
     });
 
     it('renders only file input for all phases without view props (partial integration)', () => {
-      // Story 14e-30: ScanFeature now renders file input for all phases
       const phases: ScanPhase[] = ['capturing', 'scanning', 'reviewing', 'saving', 'error'];
 
       phases.forEach((phase) => {
@@ -522,100 +448,58 @@ describe('ScanFeature', () => {
       });
     });
   });
-
-  // ===========================================================================
   // Story 14e-23a: Overlay Rendering Tests
-  // Migrated scan overlays from AppOverlays to ScanFeature
-  // ===========================================================================
 
   describe('overlay rendering (Story 14e-23a)', () => {
-    // -------------------------------------------------------------------------
-    // ScanOverlay Tests
-    // -------------------------------------------------------------------------
 
     describe('ScanOverlay', () => {
-      const scanOverlayProps = {
-        scanOverlay: {
-          state: 'processing' as const,
-          progress: 50,
-          eta: 10,
-          error: null,
-        },
-        isAnalyzing: true,
+      const overlayHandlers = {
         scanImages: ['data:image/png;base64,test'],
         onScanOverlayCancel: vi.fn(),
         onScanOverlayRetry: vi.fn(),
         onScanOverlayDismiss: vi.fn(),
       };
 
-      it('renders ScanOverlay when phase is scanning and isAnalyzing is true', () => {
+      it('renders ScanOverlay when phase is scanning and overlay is processing', () => {
         setPhase('scanning');
-
-        render(<ScanFeature {...defaultProps} {...scanOverlayProps} />);
-
+        setOverlay('processing');
+        render(<ScanFeature {...defaultProps} {...overlayHandlers} />);
         expect(screen.getByTestId('scan-overlay')).toBeInTheDocument();
       });
 
-      it('renders ScanOverlay when phase is error and scanOverlay.state is error', () => {
+      it('renders ScanOverlay when phase is error and overlay state is error', () => {
         setPhase('error');
-
-        render(
-          <ScanFeature
-            {...defaultProps}
-            {...scanOverlayProps}
-            scanOverlay={{ ...scanOverlayProps.scanOverlay, state: 'error' }}
-          />
-        );
-
+        setOverlay('error', { type: 'api', message: 'fail' });
+        render(<ScanFeature {...defaultProps} {...overlayHandlers} />);
         expect(screen.getByTestId('scan-overlay')).toBeInTheDocument();
         expect(screen.getByTestId('scan-overlay')).toHaveAttribute('data-state', 'error');
       });
 
       it('does not render ScanOverlay when phase is idle', () => {
         setPhase('idle');
-
-        render(<ScanFeature {...defaultProps} {...scanOverlayProps} showIdleState />);
-
+        setOverlay('processing');
+        render(<ScanFeature {...defaultProps} {...overlayHandlers} showIdleState />);
         expect(screen.queryByTestId('scan-overlay')).not.toBeInTheDocument();
       });
 
       it('calls onScanOverlayCancel when Cancel button is clicked', () => {
         setPhase('scanning');
+        setOverlay('processing');
         const onCancel = vi.fn();
-
-        render(
-          <ScanFeature
-            {...defaultProps}
-            {...scanOverlayProps}
-            onScanOverlayCancel={onCancel}
-          />
-        );
-
+        render(<ScanFeature {...defaultProps} {...overlayHandlers} onScanOverlayCancel={onCancel} />);
         fireEvent.click(screen.getByText('Cancel'));
         expect(onCancel).toHaveBeenCalled();
       });
 
       it('calls onScanOverlayRetry when Retry button is clicked', () => {
         setPhase('error');
+        setOverlay('error', { type: 'api', message: 'fail' });
         const onRetry = vi.fn();
-
-        render(
-          <ScanFeature
-            {...defaultProps}
-            {...scanOverlayProps}
-            scanOverlay={{ ...scanOverlayProps.scanOverlay, state: 'error' }}
-            onScanOverlayRetry={onRetry}
-          />
-        );
-
+        render(<ScanFeature {...defaultProps} {...overlayHandlers} onScanOverlayRetry={onRetry} />);
         fireEvent.click(screen.getByText('Retry'));
         expect(onRetry).toHaveBeenCalled();
       });
     });
-
-    // -------------------------------------------------------------------------
-    // QuickSaveCard Tests
-    // -------------------------------------------------------------------------
 
     describe('QuickSaveCard', () => {
       const quickSaveProps = {
@@ -677,10 +561,6 @@ describe('ScanFeature', () => {
         expect(screen.getByTestId('quick-save-card')).toHaveAttribute('data-saving', 'true');
       });
     });
-
-    // -------------------------------------------------------------------------
-    // BatchCompleteModal Tests
-    // -------------------------------------------------------------------------
 
     describe('BatchCompleteModal', () => {
       const batchCompleteProps = {
@@ -771,10 +651,6 @@ describe('ScanFeature', () => {
       });
     });
 
-    // -------------------------------------------------------------------------
-    // CurrencyMismatchDialog Tests
-    // -------------------------------------------------------------------------
-
     describe('CurrencyMismatchDialog', () => {
       const currencyMismatchProps = {
         userCurrency: 'CLP' as const,
@@ -831,10 +707,6 @@ describe('ScanFeature', () => {
         expect(onUseDefault).toHaveBeenCalled();
       });
     });
-
-    // -------------------------------------------------------------------------
-    // TotalMismatchDialog Tests
-    // -------------------------------------------------------------------------
 
     describe('TotalMismatchDialog', () => {
       const totalMismatchProps = {

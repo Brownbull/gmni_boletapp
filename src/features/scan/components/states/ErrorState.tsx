@@ -9,7 +9,7 @@
 import React from 'react';
 import { useScanPhase, useScanError, useScanActions } from '../../store';
 import { ScanError } from '../ScanError';
-import type { ScanErrorType } from '@/hooks/useScanState';
+import type { ScanErrorType } from '@features/scan/store';
 
 export interface ErrorStateProps {
   /** Translation function */

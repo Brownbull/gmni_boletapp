@@ -28,6 +28,7 @@ import type {
 import type { Transaction } from '@/types/transaction';
 import type { BatchReceipt } from '@/types/batchReceipt';
 import type { ScanState } from '@/types/scanStateMachine';
+import type { ScanDialogResultMap, ScanErrorType } from './slices/types';
 
 // =============================================================================
 // Phase & Mode Selectors (AC1)
@@ -108,6 +109,15 @@ export const useSkipScanCompleteModal = () => useScanStore((s) => s.skipScanComp
  * Story 14e-38: Added for App.tsx migration.
  */
 export const useIsRescanning = () => useScanStore((s) => s.isRescanning);
+
+// =============================================================================
+// Overlay Selectors (Story 16-2)
+// =============================================================================
+
+export const useOverlayState = () => useScanStore((s) => s.overlayState);
+export const useOverlayProgress = () => useScanStore((s) => s.overlayProgress);
+export const useOverlayEta = () => useScanStore((s) => s.overlayEta);
+export const useOverlayError = () => useScanStore((s) => s.overlayError);
 
 /**
  * Get all scan results (transactions).
@@ -310,6 +320,16 @@ export const useScanActions = () =>
       // UI flag actions (Story 14e-38)
       setSkipScanCompleteModal: s.setSkipScanCompleteModal,
       setIsRescanning: s.setIsRescanning,
+
+      // Overlay actions (Story 16-2)
+      startOverlayUpload: s.startOverlayUpload,
+      setOverlayProgress: s.setOverlayProgress,
+      startOverlayProcessing: s.startOverlayProcessing,
+      setOverlayReady: s.setOverlayReady,
+      setOverlayError: s.setOverlayError,
+      resetOverlay: s.resetOverlay,
+      retryOverlay: s.retryOverlay,
+      pushProcessingTime: s.pushProcessingTime,
     }))
   );
 
@@ -361,7 +381,7 @@ export const scanActions = {
 
   // DIALOG actions
   showDialog: (dialog: DialogState) => useScanStore.getState().showDialog(dialog),
-  resolveDialog: (type: ScanDialogType, result: unknown) =>
+  resolveDialog: <T extends ScanDialogType>(type: T, result: ScanDialogResultMap[T]) =>
     useScanStore.getState().resolveDialog(type, result),
   dismissDialog: () => useScanStore.getState().dismissDialog(),
 
@@ -402,6 +422,17 @@ export const scanActions = {
   setSkipScanCompleteModal: (value: boolean) =>
     useScanStore.getState().setSkipScanCompleteModal(value),
   setIsRescanning: (value: boolean) => useScanStore.getState().setIsRescanning(value),
+
+  // Overlay actions (Story 16-2)
+  startOverlayUpload: () => useScanStore.getState().startOverlayUpload(),
+  setOverlayProgress: (pct: number) => useScanStore.getState().setOverlayProgress(pct),
+  startOverlayProcessing: () => useScanStore.getState().startOverlayProcessing(),
+  setOverlayReady: () => useScanStore.getState().setOverlayReady(),
+  setOverlayError: (type: ScanErrorType, message: string) =>
+    useScanStore.getState().setOverlayError(type, message),
+  resetOverlay: () => useScanStore.getState().resetOverlay(),
+  retryOverlay: () => useScanStore.getState().retryOverlay(),
+  pushProcessingTime: (seconds: number) => useScanStore.getState().pushProcessingTime(seconds),
 } as const;
 
 // Export the type for scanActions

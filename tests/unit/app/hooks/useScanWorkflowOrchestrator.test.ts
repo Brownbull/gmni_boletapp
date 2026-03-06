@@ -10,6 +10,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useScanWorkflowOrchestrator } from '../../../../src/app/hooks/useScanWorkflowOrchestrator';
 
+// Mock overlay actions (Story 16-2: overlay state in Zustand store)
+const mockOverlayActions = {
+    startOverlayUpload: vi.fn(),
+    setOverlayProgress: vi.fn(),
+    startOverlayProcessing: vi.fn(),
+    setOverlayReady: vi.fn(),
+    setOverlayError: vi.fn(),
+    resetOverlay: vi.fn(),
+    retryOverlay: vi.fn(),
+};
+
 // Mock scan store
 const mockScanState = {
     phase: 'idle' as const,
@@ -23,6 +34,11 @@ const mockScanState = {
     savedInBatch: [],
     storeType: 'auto',
     currency: 'CLP',
+    // Story 16-2: overlay state fields
+    overlayState: 'idle' as const,
+    overlayProgress: 0,
+    overlayEta: null,
+    overlayError: null,
 };
 
 const mockScanActions = {
@@ -46,22 +62,19 @@ const mockScanActions = {
     setIsRescanning: vi.fn(),
 };
 
-vi.mock('../../../../src/features/scan/store', () => ({
-    useScanStore: vi.fn(() => mockScanState),
-    useScanActions: vi.fn(() => mockScanActions),
-    useIsProcessing: vi.fn(() => false),
-    useScanMode: vi.fn(() => null),
-    useSkipScanCompleteModal: vi.fn(() => false),
-    useIsRescanning: vi.fn(() => false),
-}));
-
-vi.mock('../../../../src/hooks/useScanOverlayState', () => ({
-    useScanOverlayState: vi.fn(() => ({
-        isVisible: false,
-        show: vi.fn(),
-        hide: vi.fn(),
-    })),
-}));
+vi.mock('../../../../src/features/scan/store', () => {
+    const store = Object.assign(vi.fn(() => mockScanState), {
+        getState: vi.fn(() => ({ ...mockScanState, ...mockOverlayActions })),
+    });
+    return {
+        useScanStore: store,
+        useScanActions: vi.fn(() => mockScanActions),
+        useIsProcessing: vi.fn(() => false),
+        useScanMode: vi.fn(() => null),
+        useSkipScanCompleteModal: vi.fn(() => false),
+        useIsRescanning: vi.fn(() => false),
+    };
+});
 
 vi.mock('../../../../src/hooks/useBatchProcessing', () => ({
     useBatchProcessing: vi.fn(() => ({

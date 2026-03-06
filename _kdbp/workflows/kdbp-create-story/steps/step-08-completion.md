@@ -8,7 +8,7 @@ Cost tracking is MANDATORY and NEVER skippable. Then update sprint status and fi
   <critical>MANDATORY STEP — You MUST execute this bash command and capture its output.
     Do NOT skip it. Do NOT proceed without running this command first.</critical>
 
-  <action>Run cost analyzer: `workflow-cost --csv --stats --workflow "kdbp-create-story" --story "{{story_key}}"`</action>
+  <action>Execute this shell command using the Bash tool NOW (do NOT skip): `workflow-cost --csv --stats --workflow "kdbp-create-story" --story "{{story_key}}"`</action>
   <action>Store the FULL terminal output as {{cost_report_output}} — include the COST NOTICE box</action>
   <output>**Cost Tracking Complete** — {{cost_report_output}}</output>
 
@@ -46,12 +46,9 @@ Cost tracking is MANDATORY and NEVER skippable. Then update sprint status and fi
       | Date | Story | PM-Ref | Behavior | Outcome | Signals |
       | {{date}} | {{story_key}} | create | {{behavior_names}} | ✓ done | {{story_drift_signals}} |
     </action>
-    <output>**[GL] Ledger Entry Draft:**
+    <action>Append row to behaviors/trajectory/ledger.md (auto-write, no confirmation needed)</action>
+    <output>**[GL] Ledger Entry Written:**
       | {{date}} | {{story_key}} | create | {{behavior_names}} | ✓ done | {{signals}} |
     </output>
-    <ask>[Y] Write to ledger | [E] Edit first | [S] Skip</ask>
-    <check if="user approves (Y)">
-      <action>Append row to behaviors/trajectory/ledger.md</action>
-    </check>
   </check>
 </step>

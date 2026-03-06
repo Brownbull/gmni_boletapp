@@ -1,6 +1,6 @@
 # Story 16-3: Fix Gallery Selection Bug
 
-## Status: ready-for-dev
+## Status: review
 
 ## Intent
 **Epic Handle:** "Untangle the wires, open the test door"
@@ -32,20 +32,20 @@ As a user, I want to select a photo from my gallery after dismissing a scan erro
 ## Tasks
 
 ### Task 1: Verify and Harden Dismiss Handler (2 subtasks)
-- [ ] 1.1: Verify `handleScanOverlayDismiss` in `useScanHandlers.ts` calls store `reset()` (should be automatic after 16-2's unified state — confirm)
-- [ ] 1.2: If not already calling `reset()`, add the call (fallback — should not be needed if 16-2 is complete)
+- [x] 1.1: Verify `handleScanOverlayDismiss` in `useScanHandlers.ts` calls store `reset()` — confirmed NOT calling reset(), only scanOverlay.reset() (overlay-only)
+- [x] 1.2: Added full reset matching retry pattern: useScanStore.getState().reset() + setScanImages([]) + setCurrentTransaction(null) + setView('dashboard')
 
 ### Task 2: Hardening — Error State Tests (3 subtasks)
-- [ ] 2.1: Add unit test: `scan fail -> dismiss -> store is idle` (phase, overlay, images all reset)
-- [ ] 2.2: Add unit test: `scan fail -> dismiss -> gallery select -> image accepted` (setImages succeeds in idle phase)
-- [ ] 2.3: Add unit test: `scan fail -> retry -> store is idle -> scan succeeds` (verify retry path still works)
+- [x] 2.1: Add unit test: `scan fail -> dismiss -> store is idle` (phase, overlay, images all reset)
+- [x] 2.2: Add unit test: `scan fail -> dismiss -> gallery select -> image accepted` (setImages succeeds in idle phase)
+- [x] 2.3: Add unit test: `scan fail -> retry -> store is idle -> scan succeeds` (verify retry path still works)
 
 ### Task 3: Hardening — E2E Bug Reproduction (2 subtasks)
-- [ ] 3.1: Write E2E test reproducing the original bug: scan → force error → dismiss → gallery select → verify image loads
-- [ ] 3.2: Verify E2E test passes on staging (after 16-9 deploys)
+- [x] 3.1: Write E2E test reproducing the original bug: scan → force error → dismiss → gallery select → verify image loads
+- [ ] 3.2: Verify E2E test passes on staging (BLOCKED: depends on 16-9 staging deployment)
 
 ### Task 4: Integration Verification (1 subtask)
-- [ ] 4.1: Run `npm run test:quick` — all tests pass
+- [x] 4.1: Run `npm run test:quick` — all tests pass
 
 ## Sizing
 - **Points:** 1 (SMALL)

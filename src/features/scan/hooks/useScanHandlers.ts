@@ -226,11 +226,17 @@ export function useScanHandlers(
     }, [scanOverlay, setScanImages, setCurrentTransaction, setView]);
 
     /**
-     * Handle dismiss from scan overlay ready state.
+     * Handle dismiss from scan overlay error state.
+     * Story 16-3: Full reset (matching retry pattern) so gallery path works after errors.
      */
     const handleScanOverlayDismiss = useCallback(() => {
         scanOverlay.reset();
-    }, [scanOverlay]);
+        // Reset scan store to idle so startSingle/_guardPhase allows new scan
+        useScanStore.getState().reset();
+        setScanImages([]);
+        setCurrentTransaction(null);
+        setView('dashboard');
+    }, [scanOverlay, setScanImages, setCurrentTransaction, setView]);
 
     // =========================================================================
     // Quick Save Handlers

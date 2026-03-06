@@ -17,15 +17,10 @@ DBP behavioral close for brainstorming session. Record in ledger.
     | {{date}} | brainstorm:{{session_topic}} | brainstorm | {{behavior_names}} | ✓ done | {{session_drift_signals}} |
   </action>
 
-  <output>**[GL] Ledger Entry Draft:**
+  <action>Append row to behaviors/trajectory/ledger.md (auto-write, no confirmation needed)</action>
+  <output>**[GL] Ledger Entry Written:**
     | {{date}} | brainstorm:{{session_topic}} | brainstorm | {{behavior_names}} | ✓ done | {{signals}} |
   </output>
-
-  <ask>[Y] Write to ledger | [E] Edit first | [S] Skip</ask>
-
-  <check if="user approves (Y)">
-    <action>Append row to behaviors/trajectory/ledger.md</action>
-  </check>
 
   <!-- Carry-forward: note if brainstorming revealed behavioral insights -->
   <check if="ideas touched on behavior-relevant themes">
