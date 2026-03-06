@@ -14,6 +14,12 @@
 
 export { useScanStore, initialScanState } from './useScanStore';
 
+// Scan constants (Story 16-2: migrated from hooks/useScanState)
+/** Processing timeout in milliseconds (30 seconds) */
+export const PROCESSING_TIMEOUT_MS = 30000;
+/** Ready state display duration in milliseconds (500ms checkmark) */
+export const READY_DISPLAY_MS = 500;
+
 // =============================================================================
 // Selectors (Story 14e-6c)
 // =============================================================================
@@ -37,6 +43,14 @@ export { useScanActiveDialog, useScanError, useScanResults } from './selectors';
 
 // UI flag selectors (Story 14e-38)
 export { useSkipScanCompleteModal, useIsRescanning } from './selectors';
+
+// Overlay selectors (Story 16-2)
+export {
+  useOverlayState,
+  useOverlayProgress,
+  useOverlayEta,
+  useOverlayError,
+} from './selectors';
 
 // Complex computed selectors
 export { useCanNavigateFreely, useCanSave, useCurrentView } from './selectors';
@@ -79,3 +93,5 @@ export type {
   DialogState,
   ScanDialogType,
 } from '@/types/scanStateMachine';
+
+export type { ScanDialogResultMap, ScanOverlayState, ScanErrorType } from './slices/types';

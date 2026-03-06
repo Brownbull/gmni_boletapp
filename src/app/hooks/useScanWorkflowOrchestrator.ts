@@ -15,7 +15,7 @@ import {
     useSkipScanCompleteModal,
     useIsRescanning,
 } from '@features/scan/store';
-import { useScanOverlayState } from '../../hooks/useScanOverlayState';
+// Story 16-2: useScanOverlayState removed — overlay state now in Zustand store
 import { useBatchProcessing } from '../../hooks/useBatchProcessing';
 import { useBatchSession } from '../../hooks/useBatchSession';
 import { useTrustedMerchants } from '../../hooks/useTrustedMerchants';
@@ -126,7 +126,21 @@ export function useScanWorkflowOrchestrator(
     const skipScanCompleteModal = useSkipScanCompleteModal();
     const isRescanning = useIsRescanning();
 
-    const scanOverlay = useScanOverlayState();
+    // Story 16-2: overlay state now read from Zustand store via selectors
+    const scanOverlay = {
+        state: scanState.overlayState,
+        progress: scanState.overlayProgress,
+        eta: scanState.overlayEta,
+        error: scanState.overlayError,
+        // Actions from store
+        startUpload: useScanStore.getState().startOverlayUpload,
+        setProgress: useScanStore.getState().setOverlayProgress,
+        startProcessing: useScanStore.getState().startOverlayProcessing,
+        setReady: useScanStore.getState().setOverlayReady,
+        setError: useScanStore.getState().setOverlayError,
+        reset: useScanStore.getState().resetOverlay,
+        retry: useScanStore.getState().retryOverlay,
+    };
     const batchProcessing = useBatchProcessing(3);
 
     // Batch session tracking for multi-receipt scanning

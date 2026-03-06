@@ -56,7 +56,7 @@ import type {
   CurrencyMismatchDialogData,
   TotalMismatchDialogData,
 } from '@/types/scanStateMachine';
-import type { ScanOverlayStateHook } from '@/hooks/useScanOverlayState';
+// Story 16-2: overlay types from store (ScanOverlayState unused - reads via store selectors)
 import type { SupportedCurrency } from '@/types/preferences';
 import { DEFAULT_CURRENCY } from '@/utils/currency';
 import type { HistoryNavigationPayload } from '@/views/TrendsView';
@@ -215,14 +215,8 @@ export interface ScanFeatureProps {
   savingMessage?: string;
 
   // =========================================================================
-  // ScanOverlay Props (Story 14e-23a)
+  // ScanOverlay Props (Story 16-2: overlay state from Zustand store)
   // =========================================================================
-
-  /** Scan overlay state machine (from useScanOverlayState hook) */
-  scanOverlay?: ScanOverlayStateHook;
-
-  /** Whether scan is analyzing (for overlay visibility) */
-  isAnalyzing?: boolean;
 
   /** Current captured images (for thumbnail in overlay) */
   scanImages?: string[];
@@ -384,11 +378,7 @@ export function ScanFeature({
   statementView,
   reviewView,
   savingMessage: _savingMessage,
-  // Story 14e-23a: ScanOverlay props
-  scanOverlay,
-  // Story 14e-23a fix: isAnalyzing replaced by scanOverlay.state !== 'idle' check
-  // Kept for backward compat but unused (view-based visibility now uses state directly)
-  isAnalyzing: _isAnalyzing = false,
+  // Story 16-2: scanOverlay removed — reads from Zustand store directly
   scanImages = [],
   onScanOverlayCancel,
   onScanOverlayRetry,
@@ -439,26 +429,22 @@ export function ScanFeature({
   // Story 14e-23a: Read activeDialog from Zustand store for dialog rendering
   const activeDialog = useScanStore((state) => state.activeDialog);
 
-  // =========================================================================
-  // Story 14e-23a: Overlay visibility logic (phase + view-based)
-  // Story 14e-23a fix: Added view-based check to match batch mode behavior.
-  // Batch mode uses BatchProcessingOverlay with view-based visibility:
-  //   visible={batchProcessing.isProcessing && (view === 'batch-capture' || view === 'batch-review')}
-  // Single scan should behave the same - only show overlay on scan-related views.
-  // =========================================================================
+  // Story 16-2: Read overlay state from Zustand store (AC-3)
+  const overlayState = useScanStore((state) => state.overlayState);
+  const overlayProgress = useScanStore((state) => state.overlayProgress);
+  const overlayEta = useScanStore((state) => state.overlayEta);
+  const overlayError = useScanStore((state) => state.overlayError);
 
   // Scan-related views where overlay should be visible
   const isScanRelatedView =
-    !currentView || // If no view provided, show overlay (backward compat)
+    !currentView ||
     currentView === 'scan' ||
     currentView === 'scan-result' ||
     currentView === 'transaction-editor';
 
   // ScanOverlay visibility - shows during scanning or error phases AND on scan-related views
-  // Note: scanOverlay.state !== 'idle' ensures batch mode never shows this (uses BatchProcessingOverlay)
   const isScanOverlayVisible =
-    scanOverlay &&
-    scanOverlay.state !== 'idle' &&
+    overlayState !== 'idle' &&
     (phase === 'scanning' || phase === 'error') &&
     isScanRelatedView;
 
@@ -479,22 +465,20 @@ export function ScanFeature({
 
     return (
       <>
-        {/* ScanOverlay for processing/error states */}
-        {scanOverlay && (
-          <ScanOverlay
-            state={scanOverlay.state}
-            progress={scanOverlay.progress}
-            eta={scanOverlay.eta}
-            error={scanOverlay.error}
-            onCancel={onScanOverlayCancel || onCancelProcessing || (() => {})}
-            onRetry={onScanOverlayRetry || onRetry || (() => {})}
-            onDismiss={onScanOverlayDismiss || onErrorDismiss || (() => {})}
-            theme={theme}
-            t={t}
-            visible={isScanOverlayVisible ?? false}
-            capturedImageUrl={scanImages[0]}
-          />
-        )}
+        {/* ScanOverlay for processing/error states — Story 16-2: reads from Zustand store */}
+        <ScanOverlay
+          state={overlayState}
+          progress={overlayProgress}
+          eta={overlayEta}
+          error={overlayError}
+          onCancel={onScanOverlayCancel || onCancelProcessing || (() => {})}
+          onRetry={onScanOverlayRetry || onRetry || (() => {})}
+          onDismiss={onScanOverlayDismiss || onErrorDismiss || (() => {})}
+          theme={theme}
+          t={t}
+          visible={isScanOverlayVisible ?? false}
+          capturedImageUrl={scanImages[0]}
+        />
 
         {/* QuickSaveCard - rendered unconditionally, component reads from ScanContext */}
         {onQuickSave && onQuickSaveEdit && onQuickSaveCancel && (

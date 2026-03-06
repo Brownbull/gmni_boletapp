@@ -12,7 +12,7 @@ Cost tracking, E2E coverage check, backend analysis, commit commands, and final 
   <critical>This is the FINAL step. Cost tracking is NEVER skippable.</critical>
 
   <!-- Cost Tracking (mandatory) -->
-  <action>Run: `workflow-cost --csv --stats --workflow "kdbp-code-review" --story "{{story_key}}"`</action>
+  <action>Execute this shell command using the Bash tool NOW (do NOT skip): `workflow-cost --csv --stats --workflow "kdbp-code-review" --story "{{story_key}}"`</action>
   <action>Store FULL terminal output as {{cost_report_output}} including COST NOTICE box</action>
   <output>**Cost Tracking Complete** — {{cost_report_output}}</output>
 
@@ -106,12 +106,9 @@ Cost tracking, E2E coverage check, backend analysis, commit commands, and final 
       | Date | Story | PM-Ref | Behavior | Outcome | Signals |
       | {{date}} | {{story_key}} | review | {{behavior_names}} | {{#if new_status == "done"}}✓ done{{else}}~ partial{{/if}} | {{workflow_signals}} |
     </action>
-    <output>**[GL] Ledger Entry Draft:**
+    <action>Append row to behaviors/trajectory/ledger.md (auto-write, no confirmation needed)</action>
+    <output>**[GL] Ledger Entry Written:**
       | {{date}} | {{story_key}} | review | {{behavior_names}} | {{outcome}} | {{signals}} |
     </output>
-    <ask>[Y] Write to ledger | [E] Edit first | [S] Skip</ask>
-    <check if="user approves (Y)">
-      <action>Append row to behaviors/trajectory/ledger.md</action>
-    </check>
   </check>
 </step>

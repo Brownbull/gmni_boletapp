@@ -48,7 +48,7 @@ import { type SessionAction } from './components/session';
 import { BatchUploadPreview, BatchProcessingOverlay } from './components/scan';
 import { NavigationBlocker } from './components/NavigationBlocker';
 import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
-import { PROCESSING_TIMEOUT_MS } from './hooks/useScanState';
+import { PROCESSING_TIMEOUT_MS } from '@features/scan/store';
 import {
     hasActiveTransactionConflict as hasActiveTransactionConflictUtil,
     processScan as processScanHandler,
@@ -137,7 +137,7 @@ function App() {
         setBatchEditingIndexContext, showScanDialog, dismissScanDialog, setScanContextImages,
         dispatchProcessStart, dispatchProcessSuccess,
         resetScanContext, restoreScanState, setSkipScanCompleteModal, setIsRescanning,
-        isBatchModeFromContext, hasBatchReceipts, isAnalyzing,
+        isBatchModeFromContext, hasBatchReceipts,
         scanImages, setScanImages, setScanError, scanStoreType, setScanStoreType,
         scanCurrency, setScanCurrency, skipScanCompleteModal, isRescanning,
         scanOverlay, batchProcessing,
@@ -1206,9 +1206,7 @@ function App() {
                     onCancelProcessing: handleScanOverlayCancel,
                     onErrorDismiss: handleScanOverlayDismiss,
                     onRetry: handleScanOverlayRetry,
-                    // Story 14e-23a: ScanOverlay props (migrated from AppOverlays)
-                    scanOverlay,
-                    isAnalyzing,
+                    // Story 16-2: scanOverlay removed — reads from Zustand store
                     scanImages,
                     onScanOverlayCancel: handleScanOverlayCancel,
                     onScanOverlayRetry: handleScanOverlayRetry,

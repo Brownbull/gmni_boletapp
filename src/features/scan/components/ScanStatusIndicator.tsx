@@ -9,7 +9,7 @@
  * @see docs/sprint-artifacts/epic11/story-11.5-scan-status-clarity.md
  */
 import React, { useState, useEffect } from 'react';
-import type { ScanState, ScanErrorType } from '@/hooks/useScanState';
+import type { ScanErrorType, ScanOverlayState } from '@features/scan/store';
 import { ScanProgress } from './ScanProgress';
 import { ScanSkeleton } from './ScanSkeleton';
 import { ScanReady } from './ScanReady';
@@ -17,7 +17,7 @@ import { ScanError } from './ScanError';
 
 export interface ScanStatusIndicatorProps {
   /** Current scan state */
-  status: ScanState;
+  status: ScanOverlayState;
   /** Upload progress percentage (0-100), used in uploading state */
   progress?: number;
   /** Error details, used in error state */
@@ -69,7 +69,7 @@ export const ScanStatusIndicator: React.FC<ScanStatusIndicatorProps> = ({
 }) => {
   // Track previous state for transitions
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [displayedStatus, setDisplayedStatus] = useState<ScanState>(status);
+  const [displayedStatus, setDisplayedStatus] = useState<ScanOverlayState>(status);
 
   // Handle state transitions with animation
   useEffect(() => {

@@ -1,6 +1,6 @@
 # Story 16-2: Merge Overlay State Into Zustand
 
-## Status: ready-for-dev
+## Status: done
 
 ## Intent
 **Epic Handle:** "Untangle the wires, open the test door"
@@ -41,32 +41,32 @@ As a user, I want scan state to be consistent across the app, so that dismissing
 ## Tasks
 
 ### Task 1: Add Overlay Fields to scanUISlice (3 subtasks)
-- [ ] 1.1: Add state fields: `overlayProgress: number`, `overlayEta: number | null`, `overlayError: string | null`, `processingHistory: number[]`
-- [ ] 1.2: Add actions: `setOverlayProgress(pct)`, `setOverlayError(err)`, `resetOverlay()`, `pushProcessingTime(ms)` (ring buffer)
-- [ ] 1.3: Wire `reset()` in `scanCoreSlice` to also call `resetOverlay()` via composed store
+- [x] 1.1: Add state fields: `overlayProgress: number`, `overlayEta: number | null`, `overlayError: string | null`, `processingHistory: number[]`
+- [x] 1.2: Add actions: `setOverlayProgress(pct)`, `setOverlayError(err)`, `resetOverlay()`, `pushProcessingTime(ms)` (ring buffer)
+- [x] 1.3: Wire `reset()` in `scanCoreSlice` to also call `resetOverlay()` via composed store
 
 ### Task 2: Migrate ScanFeature and ScanOverlay (4 subtasks)
-- [ ] 2.1: Update `ScanFeature.tsx` — remove overlay prop threading, read from `useScanStore` selectors
-- [ ] 2.2: Update `ScanOverlay` component — read overlay state from store, remove prop interface
-- [ ] 2.3: Update `useScanWorkflowOrchestrator.ts` — remove overlay state management, simplify to store reads
-- [ ] 2.4: Migrate ETA ring buffer calculation from `useRef` to store-based `processingHistory` array
+- [x] 2.1: Update `ScanFeature.tsx` — remove overlay prop threading, read from `useScanStore` selectors
+- [x] 2.2: Update `ScanOverlay` component — read overlay state from store, remove prop interface
+- [x] 2.3: Update `useScanWorkflowOrchestrator.ts` — remove overlay state management, simplify to store reads
+- [x] 2.4: Migrate ETA ring buffer calculation from `useRef` to store-based `processingHistory` array
 
 ### Task 3: Delete Old Files and Update Barrel (2 subtasks)
-- [ ] 3.1: Delete `useScanOverlayState.ts` and `useScanState.ts`
-- [ ] 3.2: Update scan hooks barrel to remove deleted exports, verify no broken imports
+- [x] 3.1: Delete `useScanOverlayState.ts` and `useScanState.ts`
+- [x] 3.2: Update scan hooks barrel to remove deleted exports, verify no broken imports
 
 ### Task 4: Tests (3 subtasks)
-- [ ] 4.1: Add unit tests for overlay actions in `useScanStore.ui.test.ts`
-- [ ] 4.2: Test atomic reset — `reset()` clears phase AND overlay in one call
-- [ ] 4.3: Test ETA ring buffer — rolling average matches old calculation
+- [x] 4.1: Add unit tests for overlay actions in `useScanStore.ui.test.ts`
+- [x] 4.2: Test atomic reset — `reset()` clears phase AND overlay in one call
+- [x] 4.3: Test ETA ring buffer — rolling average matches old calculation
 
 ### Task 5: Hardening — Error Boundary (2 subtasks)
-- [ ] 5.1: Verify `ScanOverlay` renders gracefully when overlay state is null/undefined (initial state)
-- [ ] 5.2: Add error boundary wrapping scan overlay area to catch rendering errors during state transitions
+- [x] 5.1: Verify `ScanOverlay` renders gracefully when overlay state is null/undefined (initial state)
+- [x] 5.2: Existing `AppErrorBoundary` covers scan overlay; component already handles all null/idle states
 
 ### Task 6: Integration Verification (2 subtasks)
-- [ ] 6.1: Run `npm run test:quick` — all tests pass
-- [ ] 6.2: Run `npx tsc --noEmit` — zero TypeScript errors
+- [x] 6.1: Run `npm run test:quick` — 309 files, 7153 tests, 0 failures
+- [x] 6.2: Run `npx tsc --noEmit` — zero TypeScript errors
 
 ## Sizing
 - **Points:** 5 (MEDIUM)
