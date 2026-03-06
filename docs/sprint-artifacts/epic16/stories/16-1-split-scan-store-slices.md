@@ -1,6 +1,6 @@
 # Story 16-1: Split useScanStore Into Zustand Slices
 
-## Status: ready-for-dev
+## Status: done
 
 ## Intent
 **Epic Handle:** "Untangle the wires, open the test door"
@@ -48,45 +48,59 @@ As a developer, I want the scan store decomposed into focused Zustand slices, so
 ## Tasks
 
 ### Task 1: Analyze Store State Shape and Slice Boundaries (1 subtask)
-- [ ] 1.1: Read `useScanStore.ts` fully, document the state interface grouped by concern (core ~300L, batch ~200L, credit ~100L, dialog ~80L, UI ~100L), confirm slice boundaries
+- [x] 1.1: Read `useScanStore.ts` fully, document the state interface grouped by concern (core ~300L, batch ~200L, credit ~100L, dialog ~80L, UI ~100L), confirm slice boundaries
 
 ### Task 2: Extract scanCoreSlice (5 subtasks)
-- [ ] 2.1: Create `scanCoreSlice.ts` with phase machine state (phase, mode, requestId, error)
-- [ ] 2.2: Move phase transition actions (startScan, cancelScan, finishScan, reset, setPhase)
-- [ ] 2.3: Move image state and actions (images, setImages, clearImages)
-- [ ] 2.4: Ensure phase guards are preserved in actions
-- [ ] 2.5: Export slice type (`ScanCoreSlice`) and creator
+- [x] 2.1: Create `scanCoreSlice.ts` with phase machine state (phase, mode, requestId, error)
+- [x] 2.2: Move phase transition actions (startScan, cancelScan, finishScan, reset, setPhase)
+- [x] 2.3: Move image state and actions (images, setImages, clearImages)
+- [x] 2.4: Ensure phase guards are preserved in actions
+- [x] 2.5: Export slice type (`ScanCoreSlice`) and creator
 
 ### Task 3: Extract scanBatchSlice (4 subtasks)
-- [ ] 3.1: Create `scanBatchSlice.ts` with batch state (batchReceipts, batchProgress, batchEditingIndex)
-- [ ] 3.2: Move batch actions (addBatchReceipt, updateBatchReceipt, setBatchEditingIndex, etc.)
-- [ ] 3.3: Handle cross-slice references (batch actions that check core phase — use `get()` on composed store)
-- [ ] 3.4: Export slice type and creator
+- [x] 3.1: Create `scanBatchSlice.ts` with batch state (batchReceipts, batchProgress, batchEditingIndex)
+- [x] 3.2: Move batch actions (addBatchReceipt, updateBatchReceipt, setBatchEditingIndex, etc.)
+- [x] 3.3: Handle cross-slice references (batch actions that check core phase — use `get()` on composed store)
+- [x] 3.4: Export slice type and creator
 
 ### Task 4: Extract scanCreditSlice, scanDialogSlice, scanUISlice (4 subtasks)
-- [ ] 4.1: Create `scanCreditSlice.ts` with credit state and actions
-- [ ] 4.2: Create `scanDialogSlice.ts` with dialog state and actions
-- [ ] 4.3: Create `scanUISlice.ts` with UI state (overlay progress, ETA, skip modal, isRescanning)
-- [ ] 4.4: Export slice types and creators for all three
+- [x] 4.1: Create `scanCreditSlice.ts` with credit state and actions
+- [x] 4.2: Create `scanDialogSlice.ts` with dialog state and actions
+- [x] 4.3: Create `scanUISlice.ts` with UI state (overlay progress, ETA, skip modal, isRescanning)
+- [x] 4.4: Export slice types and creators for all three
 
 ### Task 5: Compose Store and Verify API (4 subtasks)
-- [ ] 5.1: Rewrite `useScanStore.ts` as slice composer (< 150 lines)
-- [ ] 5.2: Verify `scanActions` non-React accessor works with composed store
-- [ ] 5.3: Verify `selectors.ts` works against composed store (no selector changes)
-- [ ] 5.4: Update barrel `index.ts` — identical public API
-- [ ] 5.5: **HARDENING:** Run full store API comparison — every exported function/selector from old API must exist in new API with same signature
+- [x] 5.1: Rewrite `useScanStore.ts` as slice composer (< 150 lines)
+- [x] 5.2: Verify `scanActions` non-React accessor works with composed store
+- [x] 5.3: Verify `selectors.ts` works against composed store (no selector changes)
+- [x] 5.4: Update barrel `index.ts` — identical public API
+- [x] 5.5: **HARDENING:** Run full store API comparison — every exported function/selector from old API must exist in new API with same signature
 
 ### Task 6: Split Test File (5 subtasks)
-- [ ] 6.1: Create `useScanStore.core.test.ts` — phase transitions, reset, cancel
-- [ ] 6.2: Create `useScanStore.batch.test.ts` — batch actions, receipts
-- [ ] 6.3: Create `useScanStore.credit.test.ts` — credit lifecycle
-- [ ] 6.4: Create `useScanStore.dialog.test.ts` — dialog state
-- [ ] 6.5: Delete old monolith test file, verify all tests pass with `npx vitest run features/scan/store`
+- [x] 6.1: Create `useScanStore.core.test.ts` — phase transitions, reset, cancel
+- [x] 6.2: Create `useScanStore.batch.test.ts` — batch actions, receipts
+- [x] 6.3: Create `useScanStore.credit.test.ts` — credit lifecycle
+- [x] 6.4: Create `useScanStore.dialog.test.ts` — dialog state
+- [x] 6.5: Delete old monolith test file, verify all tests pass with `npx vitest run features/scan/store`
 
 ### Task 7: Integration Verification (3 subtasks)
-- [ ] 7.1: Run `npm run test:quick` — all tests pass
-- [ ] 7.2: Run `npx tsc --noEmit` — zero TypeScript errors
-- [ ] 7.3: Verify no consumer files changed (git diff should show zero changes outside `features/scan/store/`)
+- [x] 7.1: Run `npm run test:quick` — all tests pass
+- [x] 7.2: Run `npx tsc --noEmit` — zero TypeScript errors
+- [x] 7.3: Verify no consumer files changed (git diff should show zero changes outside `features/scan/store/`)
+
+## Senior Developer Review (ECC)
+- **Date:** 2026-03-06
+- **Classification:** COMPLEX
+- **Agents:** code-reviewer (8/10), security-reviewer (9/10), architect (9/10), tdd-guide (8/10)
+- **Overall:** 8.5/10 APPROVE
+- **Quick fixes applied:** 4 (test helper extraction, cross-slice comments, type assertion, images guard test)
+- **TD stories created:** 1 (TD-16-1-scan-store-quality, 3 pts)
+
+## Deferred Items (Code Review 2026-03-06)
+
+| TD Story | Description | Priority | Action |
+|----------|-------------|----------|--------|
+| TD-16-1 | Production guard logging, hide _guardPhase, restoreState validation, cross-slice tests, selectors split | LOW | CREATED |
 
 ## Sizing
 - **Points:** 8 (LARGE)

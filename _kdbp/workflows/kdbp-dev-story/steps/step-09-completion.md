@@ -137,14 +137,8 @@ Cost tracking, E2E/backend analysis, behavioral ledger, final story status updat
     Outcome: ✓ done | ~ partial | ✗ blocked (infer from story status)
     Signals: {{drift_signals_from_session}} (or "none")</action>
 
-  <output>**[GL] Ledger Entry Draft:**
-    `| {{date}} | {{story_key}} | {{pm_ref}} | {{behavior_names}} | {{outcome}} | {{signals}} |`
-    **This is a draft. Confirm to write to ledger.md.**</output>
-
-  <ask>[Y] Write to ledger | [E] Edit first | [S] Skip</ask>
-
-  <check if="user approves">
-    <action>Append row to `behaviors/trajectory/ledger.md`</action>
-    <action>If story tracking file exists in trajectory: update Session Log + increment sessions count</action>
-  </check>
+  <action>Append row to `behaviors/trajectory/ledger.md` (auto-write, no confirmation needed)</action>
+  <action>If story tracking file exists in trajectory: update Session Log + increment sessions count</action>
+  <output>**[GL] Ledger Entry Written:**
+    `| {{date}} | {{story_key}} | {{pm_ref}} | {{behavior_names}} | {{outcome}} | {{signals}} |`</output>
 </check>

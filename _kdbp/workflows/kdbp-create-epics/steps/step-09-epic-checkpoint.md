@@ -18,13 +18,10 @@ DBP behavioral close for epic creation. Ledger entry + Epic Completion Checkpoin
     | Date | Story | PM-Ref | Behavior | Outcome | Signals |
     | {{date}} | {{epic_names}} | epic-create | {{behavior_names}} | ✓ done | {{epic_drift_signals}} |
   </action>
-  <output>**[GL] Ledger Entry Draft:**
+  <action>Append row to behaviors/trajectory/ledger.md (auto-write, no confirmation needed)</action>
+  <output>**[GL] Ledger Entry Written:**
     | {{date}} | {{epic_names}} | epic-create | {{behavior_names}} | ✓ done | {{signals}} |
   </output>
-  <ask>[Y] Write to ledger | [E] Edit first | [S] Skip</ask>
-  <check if="user approves (Y)">
-    <action>Append row to behaviors/trajectory/ledger.md</action>
-  </check>
 
   ## [EC] Epic Completion Checkpoint
 

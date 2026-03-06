@@ -46,12 +46,9 @@ Cost tracking is MANDATORY and NEVER skippable. Then update sprint status and fi
       | Date | Story | PM-Ref | Behavior | Outcome | Signals |
       | {{date}} | {{story_key}} | create | {{behavior_names}} | ✓ done | {{story_drift_signals}} |
     </action>
-    <output>**[GL] Ledger Entry Draft:**
+    <action>Append row to behaviors/trajectory/ledger.md (auto-write, no confirmation needed)</action>
+    <output>**[GL] Ledger Entry Written:**
       | {{date}} | {{story_key}} | create | {{behavior_names}} | ✓ done | {{signals}} |
     </output>
-    <ask>[Y] Write to ledger | [E] Edit first | [S] Skip</ask>
-    <check if="user approves (Y)">
-      <action>Append row to behaviors/trajectory/ledger.md</action>
-    </check>
   </check>
 </step>

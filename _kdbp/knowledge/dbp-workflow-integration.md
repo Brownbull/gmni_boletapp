@@ -24,7 +24,7 @@ on what's registered in `behaviors/`.
    If no behaviors registered, all downstream DBP checks become no-ops.
 
 2. **Ledger Recording [GL]:** In completion steps, gated on `{{dbp_active}}`.
-   Drafts a one-line ledger entry. Human confirms (Y/E/S). ~500 tokens.
+   Auto-writes a one-line ledger entry (no confirmation needed). ~500 tokens.
 
 3. **Cost Tracking:** Mandatory `workflow-cost` call at completion. Automatic.
 
@@ -71,7 +71,7 @@ Examples of injection-ready steps (already in workflows):
 
 - **Outcome:** `✓ done` | `~ partial` | `✗ blocked`
 - **Signals:** `⚑ drift-signal-name` (one per line) or `none`
-- Always presented as DRAFT — human confirms before write
+- Auto-written to ledger (no confirmation needed)
 - Recording only — no alignment evaluation happens at this point
 
 ---
