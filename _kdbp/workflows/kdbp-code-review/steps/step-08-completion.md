@@ -12,7 +12,7 @@ Cost tracking, E2E coverage check, backend analysis, commit commands, and final 
   <critical>This is the FINAL step. Cost tracking is NEVER skippable.</critical>
 
   <!-- Cost Tracking (mandatory) -->
-  <action>Run: `workflow-cost --csv --stats --workflow "kdbp-code-review" --story "{{story_key}}"`</action>
+  <action>Execute this shell command using the Bash tool NOW (do NOT skip): `workflow-cost --csv --stats --workflow "kdbp-code-review" --story "{{story_key}}"`</action>
   <action>Store FULL terminal output as {{cost_report_output}} including COST NOTICE box</action>
   <output>**Cost Tracking Complete** — {{cost_report_output}}</output>
 

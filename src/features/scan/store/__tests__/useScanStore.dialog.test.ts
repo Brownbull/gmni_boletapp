@@ -39,6 +39,24 @@ describe('useScanStore — Dialog & UI Flags', () => {
       consoleSpy.mockRestore();
     });
 
+    it('resolveDialog works with quicksave result type', () => {
+      scanActions.showDialog({ type: 'quicksave', data: {} });
+      scanActions.resolveDialog('quicksave', { choice: 'save' });
+      expect(getScanState().activeDialog).toBeNull();
+    });
+
+    it('resolveDialog works with cancel_warning result type', () => {
+      scanActions.showDialog({ type: 'cancel_warning', data: {} });
+      scanActions.resolveDialog('cancel_warning', { confirmed: true });
+      expect(getScanState().activeDialog).toBeNull();
+    });
+
+    it('resolveDialog works with batch_complete result type', () => {
+      scanActions.showDialog({ type: 'batch_complete', data: {} });
+      scanActions.resolveDialog('batch_complete', { acknowledged: true });
+      expect(getScanState().activeDialog).toBeNull();
+    });
+
     it('dismissDialog clears any active dialog', () => {
       scanActions.showDialog({ type: 'quicksave', data: {} });
       expect(getScanState().activeDialog).not.toBeNull();

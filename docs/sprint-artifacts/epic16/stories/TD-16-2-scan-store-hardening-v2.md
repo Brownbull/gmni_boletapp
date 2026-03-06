@@ -1,6 +1,6 @@
 # Tech Debt Story TD-16-2: Scan Store Deep Hardening
 
-Status: review
+Status: done
 
 > **Source:** ECC Code Review (2026-03-06) on story TD-16-1
 > **Priority:** LOW | **Estimated Effort:** 3 pts
@@ -33,3 +33,10 @@ As a **developer**, I want **restoreState to validate value types at runtime, gu
 - Source story: [TD-16-1](./TD-16-1-scan-store-quality.md)
 - Review findings: #2, #3, #5, #8
 - Files affected: `scanCoreSlice.ts`, `guardLog.ts`, `types.ts`, `scanDialogSlice.ts`, `initialState.ts`
+
+## Review Deferred Items (2026-03-06)
+| # | Finding | Priority | Action |
+|---|---------|----------|--------|
+| 2 | `_result` unused in resolveDialog — intentional scaffolding | LOW | Fold into 16-2 (overlay merge wires up result consumption) |
+| 3 | VALID_PHASES/VALID_CREDIT_STATUSES manually listed vs auto-derived | LOW | Fold into 16-2 (overlay merge touches restoreState) |
+| 4 | Hardcoded Spanish string in restoreState (pre-existing, 3 files) | LOW | Fold into 16-4 (move-scan-types i18n pass) |

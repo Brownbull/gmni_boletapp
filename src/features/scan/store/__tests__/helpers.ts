@@ -54,5 +54,12 @@ export function getStateOnly(): typeof initialScanState {
     currency: fullState.currency,
     skipScanCompleteModal: fullState.skipScanCompleteModal,
     isRescanning: fullState.isRescanning,
+    // Overlay state (Story 16-2)
+    overlayState: fullState.overlayState,
+    overlayProgress: fullState.overlayProgress,
+    overlayEta: fullState.overlayEta,
+    overlayError: fullState.overlayError,
+    processingHistory: fullState.processingHistory,
+    processingStartedAt: fullState.processingStartedAt,
   };
 }

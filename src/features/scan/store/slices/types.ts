@@ -130,9 +130,22 @@ export interface ScanDialogSlice {
 
   // Actions
   showDialog: (dialog: DialogState) => void;
-  resolveDialog: (type: ScanDialogType, result: ScanDialogResultMap[ScanDialogType]) => void;
+  resolveDialog: <T extends ScanDialogType>(type: T, result: ScanDialogResultMap[T]) => void;
   dismissDialog: () => void;
 }
+
+// =============================================================================
+// Overlay Types (Story 16-2: migrated from useScanOverlayState/useScanState)
+// =============================================================================
+
+export type ScanOverlayState = 'idle' | 'uploading' | 'processing' | 'ready' | 'error';
+
+export type ScanErrorType =
+  | 'network'
+  | 'timeout'
+  | 'api'
+  | 'invalid'
+  | 'unknown';
 
 // =============================================================================
 // UI Slice
@@ -143,9 +156,27 @@ export interface ScanUISlice {
   skipScanCompleteModal: boolean;
   isRescanning: boolean;
 
+  // Overlay state (Story 16-2: merged from useScanOverlayState)
+  overlayState: ScanOverlayState;
+  overlayProgress: number;
+  overlayEta: number | null;
+  overlayError: { type: ScanErrorType; message: string } | null;
+  processingHistory: number[];
+  processingStartedAt: number | null;
+
   // Actions
   setSkipScanCompleteModal: (value: boolean) => void;
   setIsRescanning: (value: boolean) => void;
+
+  // Overlay actions (Story 16-2)
+  startOverlayUpload: () => void;
+  setOverlayProgress: (pct: number) => void;
+  startOverlayProcessing: () => void;
+  setOverlayReady: () => void;
+  setOverlayError: (type: ScanErrorType, message: string) => void;
+  resetOverlay: () => void;
+  retryOverlay: () => void;
+  pushProcessingTime: (seconds: number) => void;
 }
 
 // =============================================================================

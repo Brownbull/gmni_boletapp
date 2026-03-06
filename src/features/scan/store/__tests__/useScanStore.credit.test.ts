@@ -110,7 +110,7 @@ describe('useScanStore — Credit & Control', () => {
       expect(guardCalls).toHaveLength(0);
     });
 
-    it('rejects invalid phase value and falls back to initial', () => {
+    it('rejects invalid phase value (number) and falls back to initial', () => {
       const malformedValues = {
         phase: 123,
         images: ['valid-image'],
@@ -126,7 +126,21 @@ describe('useScanStore — Credit & Control', () => {
       );
     });
 
-    it('rejects non-array images value and falls back to initial', () => {
+    it('rejects invalid phase value (string not in enum) and falls back to initial', () => {
+      const malformedValues = {
+        phase: 'notAPhase',
+        images: ['valid-image'],
+      } as unknown as Record<string, unknown>;
+      scanActions.restoreState(malformedValues);
+      expect(getScanState().phase).toBe('idle');
+      expect(getScanState().images).toEqual(['valid-image']);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[ScanStore:guard]',
+        expect.stringContaining('invalid phase')
+      );
+    });
+
+    it('rejects non-array images value (string) and falls back to initial', () => {
       const malformedValues = {
         phase: 'capturing' as const,
         images: 'not-an-array',
@@ -134,6 +148,20 @@ describe('useScanStore — Credit & Control', () => {
       scanActions.restoreState(malformedValues);
       expect(getScanState().phase).toBe('capturing');
       // Invalid images replaced with initialScanState default
+      expect(getScanState().images).toEqual([]);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[ScanStore:guard]',
+        expect.stringContaining('invalid images')
+      );
+    });
+
+    it('rejects null images value and falls back to initial', () => {
+      const malformedValues = {
+        phase: 'capturing' as const,
+        images: null,
+      } as unknown as Record<string, unknown>;
+      scanActions.restoreState(malformedValues);
+      expect(getScanState().phase).toBe('capturing');
       expect(getScanState().images).toEqual([]);
       expect(consoleSpy).toHaveBeenCalledWith(
         '[ScanStore:guard]',

@@ -6,11 +6,18 @@
  */
 
 import type { ScanState } from '@/types/scanStateMachine';
-import type { ScanFullStore } from './types';
+import type { ScanFullStore, ScanOverlayState, ScanErrorType } from './types';
 
 interface ScanUIState {
   skipScanCompleteModal: boolean;
   isRescanning: boolean;
+  // Overlay state (Story 16-2)
+  overlayState: ScanOverlayState;
+  overlayProgress: number;
+  overlayEta: number | null;
+  overlayError: { type: ScanErrorType; message: string } | null;
+  processingHistory: number[];
+  processingStartedAt: number | null;
 }
 
 export const initialScanState: ScanState & ScanUIState = {
@@ -53,6 +60,14 @@ export const initialScanState: ScanState & ScanUIState = {
   // UI flags
   skipScanCompleteModal: false,
   isRescanning: false,
+
+  // Overlay state (Story 16-2)
+  overlayState: 'idle',
+  overlayProgress: 0,
+  overlayEta: null,
+  overlayError: null,
+  processingHistory: [],
+  processingStartedAt: null,
 };
 
 // Compile-time check: ensure initialScanState covers all state keys.

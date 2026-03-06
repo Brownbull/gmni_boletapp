@@ -14,7 +14,7 @@ Cost tracking, E2E/backend analysis, behavioral ledger, final story status updat
   If [N]: load and execute step-08-review.md, then return to this step.</ask>
 
 <!-- Cost Tracking (mandatory) -->
-<action>Run cost analyzer: `workflow-cost --csv --stats --workflow "kdbp-dev-story" --story "{{story_key}}"`</action>
+<action>Execute this shell command using the Bash tool NOW (do NOT skip): `workflow-cost --csv --stats --workflow "kdbp-dev-story" --story "{{story_key}}"`</action>
 <action>Store the FULL terminal output as {{cost_report_output}} — include the COST NOTICE box</action>
 <output>**Cost Tracking Complete** — {{cost_report_output}}</output>
 
