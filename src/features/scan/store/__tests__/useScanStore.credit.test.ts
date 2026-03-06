@@ -110,15 +110,69 @@ describe('useScanStore — Credit & Control', () => {
       expect(guardCalls).toHaveLength(0);
     });
 
-    it('applies malformed value types without crashing (no runtime type validation)', () => {
+    it('rejects invalid phase value and falls back to initial', () => {
       const malformedValues = {
         phase: 123,
+        images: ['valid-image'],
+      } as unknown as Record<string, unknown>;
+      scanActions.restoreState(malformedValues);
+      // Invalid phase replaced with initialScanState default
+      expect(getScanState().phase).toBe('idle');
+      // Valid images still applied
+      expect(getScanState().images).toEqual(['valid-image']);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[ScanStore:guard]',
+        expect.stringContaining('invalid phase')
+      );
+    });
+
+    it('rejects non-array images value and falls back to initial', () => {
+      const malformedValues = {
+        phase: 'capturing' as const,
         images: 'not-an-array',
       } as unknown as Record<string, unknown>;
       scanActions.restoreState(malformedValues);
-      // Known keys are applied even with wrong types (no runtime type check yet)
-      expect(getScanState().phase).toBe(123);
-      expect(getScanState().images).toBe('not-an-array');
+      expect(getScanState().phase).toBe('capturing');
+      // Invalid images replaced with initialScanState default
+      expect(getScanState().images).toEqual([]);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[ScanStore:guard]',
+        expect.stringContaining('invalid images')
+      );
+    });
+
+    it('rejects invalid creditStatus value and falls back to initial', () => {
+      const malformedValues = {
+        phase: 'reviewing' as const,
+        creditStatus: 'bogus-status',
+      } as unknown as Record<string, unknown>;
+      scanActions.restoreState(malformedValues);
+      expect(getScanState().phase).toBe('reviewing');
+      // Invalid creditStatus replaced with initialScanState default
+      expect(getScanState().creditStatus).toBe('none');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[ScanStore:guard]',
+        expect.stringContaining('invalid creditStatus')
+      );
+    });
+
+    it('accepts valid enum values without warnings', () => {
+      const validState = {
+        phase: 'reviewing' as const,
+        images: ['img-1', 'img-2'],
+        creditStatus: 'confirmed' as const,
+      };
+      scanActions.restoreState(validState);
+      expect(getScanState().phase).toBe('reviewing');
+      expect(getScanState().images).toEqual(['img-1', 'img-2']);
+      expect(getScanState().creditStatus).toBe('confirmed');
+      // No type validation warnings
+      const typeCalls = consoleSpy.mock.calls.filter(
+        (c: unknown[]) => typeof c[1] === 'string' && (
+          c[1].includes('invalid phase') || c[1].includes('invalid images') || c[1].includes('invalid creditStatus')
+        )
+      );
+      expect(typeCalls).toHaveLength(0);
     });
   });
 });

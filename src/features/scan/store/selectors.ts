@@ -28,6 +28,7 @@ import type {
 import type { Transaction } from '@/types/transaction';
 import type { BatchReceipt } from '@/types/batchReceipt';
 import type { ScanState } from '@/types/scanStateMachine';
+import type { ScanDialogResultMap } from './slices/types';
 
 // =============================================================================
 // Phase & Mode Selectors (AC1)
@@ -361,7 +362,7 @@ export const scanActions = {
 
   // DIALOG actions
   showDialog: (dialog: DialogState) => useScanStore.getState().showDialog(dialog),
-  resolveDialog: (type: ScanDialogType, result: unknown) =>
+  resolveDialog: (type: ScanDialogType, result: ScanDialogResultMap[ScanDialogType]) =>
     useScanStore.getState().resolveDialog(type, result),
   dismissDialog: () => useScanStore.getState().dismissDialog(),
 

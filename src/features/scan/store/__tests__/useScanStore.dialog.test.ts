@@ -27,14 +27,14 @@ describe('useScanStore — Dialog & UI Flags', () => {
     it('resolveDialog clears dialog when type matches', () => {
       scanActions.showDialog({ type: 'currency_mismatch', data: {} });
       expect(getScanState().activeDialog).not.toBeNull();
-      scanActions.resolveDialog('currency_mismatch', { accepted: true });
+      scanActions.resolveDialog('currency_mismatch', { choice: 'detected' });
       expect(getScanState().activeDialog).toBeNull();
     });
 
     it('resolveDialog does NOT clear dialog when type mismatches', () => {
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       scanActions.showDialog({ type: 'currency_mismatch', data: {} });
-      scanActions.resolveDialog('total_mismatch', {});
+      scanActions.resolveDialog('total_mismatch', { choice: 'items_sum' });
       expect(getScanState().activeDialog?.type).toBe('currency_mismatch');
       consoleSpy.mockRestore();
     });

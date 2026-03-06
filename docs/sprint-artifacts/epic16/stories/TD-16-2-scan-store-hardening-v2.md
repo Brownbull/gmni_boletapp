@@ -1,6 +1,6 @@
 # Tech Debt Story TD-16-2: Scan Store Deep Hardening
 
-Status: ready-for-dev
+Status: review
 
 > **Source:** ECC Code Review (2026-03-06) on story TD-16-1
 > **Priority:** LOW | **Estimated Effort:** 3 pts
@@ -16,18 +16,18 @@ As a **developer**, I want **restoreState to validate value types at runtime, gu
 
 ## Tasks / Subtasks
 ### Task 1: restoreState value-type validation (2 subtasks)
-- [ ] 1.1: Add runtime checks for critical fields (phase enum, images Array.isArray, creditStatus enum)
-- [ ] 1.2: Add tests for each invalid value type (number phase, string images, etc.)
+- [x] 1.1: Add runtime checks for critical fields (phase enum, images Array.isArray, creditStatus enum)
+- [x] 1.2: Add tests for each invalid value type (number phase, string images, etc.)
 
 ### Task 2: Pluggable guard logging sink (2 subtasks)
-- [ ] 2.1: Add optional sink parameter to `logGuardViolation` (default: console.warn)
-- [ ] 2.2: Add test verifying custom sink receives events
+- [x] 2.1: Add optional sink parameter to `logGuardViolation` (default: console.warn)
+- [x] 2.2: Add test verifying custom sink receives events
 
 ### Task 3: Dialog result typing (1 subtask)
-- [ ] 3.1: Replace `result: unknown` with discriminated union per ScanDialogType
+- [x] 3.1: Replace `result: unknown` with discriminated union per ScanDialogType
 
 ### Task 4: Auto-derive _StateKeys (1 subtask)
-- [ ] 4.1: Replace manual `_StateKeys` extraction with `keyof ScanFullStore` mapped type
+- [x] 4.1: Replace manual `_StateKeys` extraction with `keyof ScanFullStore` mapped type
 
 ## Dev Notes
 - Source story: [TD-16-1](./TD-16-1-scan-store-quality.md)

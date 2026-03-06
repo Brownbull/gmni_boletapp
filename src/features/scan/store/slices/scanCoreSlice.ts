@@ -6,13 +6,17 @@
  */
 
 import type { StateCreator } from 'zustand';
-import type { ScanPhase, CreditType } from '@/types/scanStateMachine';
+import type { ScanPhase, CreditType, CreditStatus } from '@/types/scanStateMachine';
 import { generateRequestId } from '@/types/scanStateMachine';
 import type { Transaction } from '@/types/transaction';
 import type { ScanState } from '@/types/scanStateMachine';
 import type { ScanFullStoreInternal, ScanCoreSliceInternal } from './types';
 import { initialScanState } from './initialState';
 import { logGuardViolation } from './guardLog';
+
+// Runtime validation sets for restoreState (AC-1)
+const VALID_PHASES: ReadonlySet<string> = new Set<ScanPhase>(['idle', 'capturing', 'scanning', 'reviewing', 'saving', 'error']);
+const VALID_CREDIT_STATUSES: ReadonlySet<string> = new Set<CreditStatus>(['none', 'reserved', 'confirmed', 'refunded']);
 
 export const createScanCoreSlice: StateCreator<
   ScanFullStoreInternal,
@@ -234,6 +238,37 @@ export const createScanCoreSlice: StateCreator<
       if (knownKeys.has(key)) {
         filtered[key] = (restoredState as Record<string, unknown>)[key];
       }
+    }
+
+    // AC-1: Runtime value-type validation for critical fields
+    if ('phase' in filtered && (typeof filtered.phase !== 'string' || !VALID_PHASES.has(filtered.phase))) {
+      logGuardViolation({
+        action: 'restoreState',
+        currentPhase: get().phase,
+        expectedPhase: 'any',
+        detail: `invalid phase: ${String(filtered.phase)}`,
+      });
+      filtered.phase = initialScanState.phase;
+    }
+
+    if ('images' in filtered && !Array.isArray(filtered.images)) {
+      logGuardViolation({
+        action: 'restoreState',
+        currentPhase: get().phase,
+        expectedPhase: 'any',
+        detail: `invalid images: expected array, got ${typeof filtered.images}`,
+      });
+      filtered.images = initialScanState.images;
+    }
+
+    if ('creditStatus' in filtered && (typeof filtered.creditStatus !== 'string' || !VALID_CREDIT_STATUSES.has(filtered.creditStatus))) {
+      logGuardViolation({
+        action: 'restoreState',
+        currentPhase: get().phase,
+        expectedPhase: 'any',
+        detail: `invalid creditStatus: ${String(filtered.creditStatus)}`,
+      });
+      filtered.creditStatus = initialScanState.creditStatus;
     }
 
     if ((filtered as Partial<ScanState>).phase === 'scanning') {

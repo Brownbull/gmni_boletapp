@@ -57,7 +57,8 @@ export const initialScanState: ScanState & ScanUIState = {
 
 // Compile-time check: ensure initialScanState covers all state keys.
 // If a new slice adds state without updating initialState, this will error.
-// _StateKeys extracts non-function keys from ScanFullStore; the `satisfies`
-// assertion forces a type error when a key is missing from initialScanState.
-type _StateKeys = Exclude<{ [K in keyof ScanFullStore]: ScanFullStore[K] extends (...args: never[]) => unknown ? never : K }[keyof ScanFullStore], never>;
-void (initialScanState satisfies Record<_StateKeys, unknown>);
+// Auto-derived: extracts non-function keys from ScanFullStore via mapped type.
+type _StateKeys = {
+  [K in keyof ScanFullStore]: ScanFullStore[K] extends (...args: never[]) => unknown ? never : K;
+}[keyof ScanFullStore];
+void (initialScanState satisfies Record<NonNullable<_StateKeys>, unknown>);

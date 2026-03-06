@@ -6,7 +6,7 @@
  */
 
 import type { StateCreator } from 'zustand';
-import type { DialogState, ScanDialogType } from '@/types/scanStateMachine';
+import type { DialogState } from '@/types/scanStateMachine';
 import type { ScanFullStoreInternal, ScanDialogSlice } from './types';
 import { initialScanState } from './initialState';
 import { logGuardViolation } from './guardLog';
@@ -25,7 +25,7 @@ export const createScanDialogSlice: StateCreator<
     set({ activeDialog: dialog }, undefined, 'scan/showDialog');
   },
 
-  resolveDialog: (type: ScanDialogType, _result: unknown) => {
+  resolveDialog: (type, _result) => {
     const state = get();
     if (!state.activeDialog || state.activeDialog.type !== type) {
       logGuardViolation({

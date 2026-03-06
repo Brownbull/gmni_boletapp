@@ -6,6 +6,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useScanStore, initialScanState, getScanState, scanActions } from '../index';
+import { logGuardViolation } from '../slices/guardLog';
 import { createMockTransaction, getStateOnly } from './helpers';
 
 describe('useScanStore — Guards & Edge Cases', () => {
@@ -268,6 +269,36 @@ describe('useScanStore — Guards & Edge Cases', () => {
       scanActions.addImage('image-2');
       scanActions.removeImage(1);
       expect(getScanState().images).toEqual(['image-0', 'image-2']);
+    });
+  });
+
+  describe('AC-2: Pluggable guard logging sink', () => {
+    it('uses custom sink when provided instead of console.warn', () => {
+      const customSink = vi.fn();
+      logGuardViolation(
+        { action: 'testAction', currentPhase: 'idle', expectedPhase: 'capturing' },
+        customSink,
+      );
+      expect(customSink).toHaveBeenCalledTimes(1);
+      expect(customSink).toHaveBeenCalledWith(
+        expect.objectContaining({
+          store: 'scan',
+          action: 'testAction',
+          currentPhase: 'idle',
+          expectedPhase: 'capturing',
+        }),
+      );
+      expect(customSink.mock.calls[0][0].timestamp).toBeGreaterThan(0);
+    });
+
+    it('falls back to console.warn when no sink provided', () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      logGuardViolation({ action: 'fallbackTest', currentPhase: 'idle', expectedPhase: 'capturing' });
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[ScanStore:guard]',
+        expect.stringContaining('"action":"fallbackTest"'),
+      );
+      consoleSpy.mockRestore();
     });
   });
 });

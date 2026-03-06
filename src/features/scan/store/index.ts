@@ -79,3 +79,5 @@ export type {
   DialogState,
   ScanDialogType,
 } from '@/types/scanStateMachine';
+
+export type { ScanDialogResultMap } from './slices/types';

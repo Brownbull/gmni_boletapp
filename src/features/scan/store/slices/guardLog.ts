@@ -16,17 +16,27 @@ export interface GuardViolationEvent {
   timestamp: number;
 }
 
+export type GuardViolationSink = (event: GuardViolationEvent) => void;
+
 /**
  * Log a phase guard violation as a structured event.
  * Runs in all environments (not gated on import.meta.env.DEV).
+ * Accepts an optional sink callback; defaults to console.warn.
  */
-export function logGuardViolation(event: Omit<GuardViolationEvent, 'store' | 'timestamp'>): void {
+export function logGuardViolation(
+  event: Omit<GuardViolationEvent, 'store' | 'timestamp'>,
+  sink?: GuardViolationSink,
+): void {
   const fullEvent: GuardViolationEvent = {
     store: 'scan',
     timestamp: Date.now(),
     ...event,
   };
 
-  // Structured warn — parseable by log aggregators
-  console.warn('[ScanStore:guard]', JSON.stringify(fullEvent));
+  if (sink) {
+    sink(fullEvent);
+  } else {
+    // Structured warn — parseable by log aggregators
+    console.warn('[ScanStore:guard]', JSON.stringify(fullEvent));
+  }
 }

@@ -98,13 +98,39 @@ export interface ScanCreditSlice {
 // Dialog Slice
 // =============================================================================
 
+// =============================================================================
+// Dialog Result Types (discriminated by ScanDialogType)
+// =============================================================================
+
+export interface CurrencyMismatchResult { choice: 'detected' | 'default' }
+export interface TotalMismatchResult { choice: 'items_sum' | 'original' }
+export interface QuickSaveResult { choice: 'edit' | 'save' }
+export interface ScanCompleteResult { choice: 'save' | 'edit' }
+export interface CancelWarningResult { confirmed: boolean }
+export interface BatchCancelWarningResult { confirmed: boolean }
+export interface DiscardWarningResult { confirmed: boolean }
+export interface BatchDiscardResult { confirmed: boolean }
+export interface BatchCompleteResult { acknowledged: boolean }
+
+export type ScanDialogResultMap = {
+  currency_mismatch: CurrencyMismatchResult;
+  total_mismatch: TotalMismatchResult;
+  quicksave: QuickSaveResult;
+  scan_complete: ScanCompleteResult;
+  cancel_warning: CancelWarningResult;
+  batch_cancel_warning: BatchCancelWarningResult;
+  discard_warning: DiscardWarningResult;
+  batch_discard: BatchDiscardResult;
+  batch_complete: BatchCompleteResult;
+};
+
 export interface ScanDialogSlice {
   // State
   activeDialog: ScanState['activeDialog'];
 
   // Actions
   showDialog: (dialog: DialogState) => void;
-  resolveDialog: (type: ScanDialogType, result: unknown) => void;
+  resolveDialog: (type: ScanDialogType, result: ScanDialogResultMap[ScanDialogType]) => void;
   dismissDialog: () => void;
 }
 
