@@ -192,6 +192,62 @@ describe('useScanStore — Core', () => {
     });
   });
 
+  describe('Error recovery flows (Story 16-3)', () => {
+    it('scan fail -> reset -> store is idle (phase, overlay, images all reset)', () => {
+      scanActions.startSingle('test-user');
+      scanActions.addImage('base64-image-data');
+      scanActions.processStart('normal', 1);
+      scanActions.processError('Network error');
+      expect(getScanState().phase).toBe('error');
+      expect(getScanState().error).toBe('Network error');
+
+      scanActions.reset();
+
+      expect(getScanState().phase).toBe('idle');
+      expect(getScanState().error).toBeNull();
+      expect(getScanState().images).toHaveLength(0);
+      expect(getScanState().overlayState).toBe('idle');
+      expect(getScanState().overlayError).toBeNull();
+    });
+
+    it('scan fail -> reset -> gallery select -> image accepted', () => {
+      scanActions.startSingle('test-user');
+      scanActions.addImage('base64-image-data');
+      scanActions.processStart('normal', 1);
+      scanActions.processError('Network error');
+      expect(getScanState().phase).toBe('error');
+
+      scanActions.reset();
+      expect(getScanState().phase).toBe('idle');
+
+      scanActions.startSingle('test-user');
+      expect(getScanState().phase).toBe('capturing');
+      scanActions.addImage('gallery-image-data');
+      expect(getScanState().images).toHaveLength(1);
+      expect(getScanState().images[0]).toBe('gallery-image-data');
+    });
+
+    it('scan fail -> reset -> retry scan succeeds', () => {
+      scanActions.startSingle('test-user');
+      scanActions.addImage('base64-image-data');
+      scanActions.processStart('normal', 1);
+      scanActions.processError('Network error');
+      expect(getScanState().phase).toBe('error');
+
+      scanActions.reset();
+      expect(getScanState().phase).toBe('idle');
+
+      scanActions.startSingle('test-user');
+      scanActions.addImage('retry-image');
+      scanActions.processStart('normal', 1);
+      const mockTx = createMockTransaction({ id: 'retry-tx' });
+      scanActions.processSuccess([mockTx]);
+      expect(getScanState().phase).toBe('reviewing');
+      expect(getScanState().results).toHaveLength(1);
+      expect(getScanState().results[0].id).toBe('retry-tx');
+    });
+  });
+
   describe('Result actions', () => {
     beforeEach(() => {
       scanActions.startSingle('test-user');
