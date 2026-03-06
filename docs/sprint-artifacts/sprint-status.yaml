@@ -279,52 +279,135 @@ development_status:
 
   epic-15b-retrospective: optional
 
-# .mcp.json "disabled": true
+  # ============================================================================
+  # GROWTH PHASE EPICS (2026-03-06)
+  # Source: _kdbp-output/epics.md
+  # Generated from: PRD + Architecture doc via kdbp-create-epics workflow
+  # Build order: 16 -> 17 (parallel with 18) -> 18 -> 19 -> 20
+  # Total: 5 epics, 37 stories, ~153 points
+  # ============================================================================
 
   # ============================================================================
-  # Deferred Epics (renumbered after Epic 15 replacement)
+  # Epic 16: Scan Workflow & Staging Deployment (~43 points, 9 stories)
+  # "Untangle the wires, open the test door"
+  # Scan store split + gallery bug fix + staging web deployment
+  # Source: docs/architecture/proposals/SCAN-WORKFLOW-RESTRUCTURING-PROPOSAL.md
+  # FRs: FR-1.5, FR-8.8 | NFRs: NFR-4.2
   # ============================================================================
-
-  # Epic 16: Onboarding & Progressive Disclosure (~15 points)
-  # Time-to-value <60 seconds, demo walkthrough, feature unlocking
-  # (Formerly Epic 14, renumbered after brainstorming expansion)
   epic-16: backlog
+
+  # Chain A: store split -> overlay merge -> bug fix
+  16-1-split-scan-store-slices: ready-for-dev          # 8 pts - Split useScanStore (946L) into 5-6 Zustand slices
+  16-2-merge-overlay-state: ready-for-dev              # 5 pts - Merge dual state machine into Zustand (DEPENDS: 16-1)
+  16-3-fix-gallery-bug: ready-for-dev                  # 1 pt  - Verify + E2E gallery selection after scan failure (DEPENDS: 16-2)
+
+  # Chain B: types + view split -> shared store -> events
+  16-4-move-scan-types: ready-for-dev                  # 3 pts - Move scanStateMachine.ts + extract shared types
+  16-5-split-transaction-editor-view: ready-for-dev    # 5 pts - Split TransactionEditorViewInternal.tsx (1,128L BLOCKED)
+  16-6-extract-shared-workflow-store: ready-for-dev    # 8 pts - Create shared scan workflow store (DEPENDS: 16-4, 16-5)
+  16-7-event-bus: ready-for-dev                        # 5 pts - Install mitt, create typed event bus (DEPENDS: 16-6)
+
+  # Independent
+  16-8-move-legacy-scan-components: ready-for-dev      # 3 pts - Move ~17 files from src/components/scan/ to features/
+  16-9-staging-deployment: ready-for-dev               # 5 pts - Firebase Hosting staging + registration blocking + CI
+
   epic-16-retrospective: optional
 
-  # Epic 17: Tags & Grouping (~18 points)
-  # User-defined tags for trip tracking, project expenses
-  # (Formerly Epic 15, renumbered after brainstorming expansion)
+  # ============================================================================
+  # Epic 17: Category Taxonomy Rework (~17 points, 5 stories)
+  # "Name everything in the language the user thinks in"
+  # 4-level Spanish taxonomy + batch migration + AI prompt update
+  # FRs: FR-4.3, FR-4.4 | NFRs: NFR-6.4
+  # ============================================================================
   epic-17: backlog
+
+  17-1-design-taxonomy: ready-for-dev                  # 2 pts - Design 4-level Spanish taxonomy spec
+  17-2-update-constants-types: ready-for-dev           # 3 pts - Update constants, types, translations, normalizer (DEPENDS: 17-1)
+  17-3-update-ai-prompt: ready-for-dev                 # 2 pts - Update Gemini Cloud Function prompt (DEPENDS: 17-1)
+  17-4-update-ui-labels: ready-for-dev                 # 5 pts - Update all UI components showing categories (DEPENDS: 17-2)
+  17-5-batch-migration: ready-for-dev                  # 5 pts - Idempotent Cloud Function batch migration (DEPENDS: 17-2)
+
   epic-17-retrospective: optional
 
-  # Epic 18: Achievements & Milestones (~12 points)
-  # Ethical gamification - celebrate progress without shame
-  # (Formerly Epic 16, renumbered after brainstorming expansion)
+  # ============================================================================
+  # Epic 18: Credit Card Statement Scanning (~23 points, 6 stories)
+  # "One statement in, many transactions out"
+  # Statement mode (image + PDF), multi-txn extraction, batch review
+  # FRs: FR-1.6, FR-1.7 | NFRs: NFR-1.2, NFR-5.1
+  # ============================================================================
   epic-18: backlog
+
+  18-1-statement-scan-spike: ready-for-dev             # 2 pts - Gemini PDF feasibility validation
+  18-2-statement-scan-mode-store: ready-for-dev        # 3 pts - useStatementScanStore + ScanMode 'statement'
+  18-3-statement-cloud-function: ready-for-dev         # 5 pts - analyzeStatement Cloud Function (DEPENDS: 18-1)
+  18-4-statement-capture-ui: ready-for-dev             # 5 pts - Camera/gallery/PDF upload UI (DEPENDS: 18-2, 18-3)
+  18-5-statement-batch-review: ready-for-dev           # 5 pts - Statement batch review adapter (DEPENDS: 18-4)
+  18-6-statement-e2e: ready-for-dev                    # 3 pts - E2E test for full statement flow (DEPENDS: 18-5)
+
   epic-18-retrospective: optional
 
-  # Epic 19: Advanced Features (~38 points)
-  # Goals system, learned thresholds, out-of-character detection, treemap, themeable skins
-  # (Formerly Epic 15, deferred 2026-02-09 — replaced by Codebase Refactoring)
-  # Full definition preserved in: docs/sprint-artifacts/epic15/epic-15-advanced-features.md
+  # ============================================================================
+  # Epic 19: Shared Groups (~42 points, 10 stories)
+  # "Pin your receipts to the shared board"
+  # Copy & bucket groups, 50 members, 5 admins, 30-day deletion window
+  # FRs: FR-7.1-FR-7.8 | NFRs: NFR-2.4
+  # ============================================================================
   epic-19: backlog
+
+  # Chain A: model -> CRUD -> UI -> feed -> analytics
+  19-1-group-data-model: ready-for-dev                 # 5 pts - Firestore collection + security rules + types
+  19-2-group-crud-cloud-functions: ready-for-dev       # 5 pts - createGroup, manageGroupMember, transferGroupAdmin, deleteGroup (DEPENDS: 19-1)
+  19-5-group-list-ui: ready-for-dev                    # 5 pts - Group feature scaffold + list + detail + store (DEPENDS: 19-2)
+  19-6-group-transaction-feed: ready-for-dev           # 5 pts - Transaction feed + post-to-group UI (DEPENDS: 19-3, 19-5)
+  19-8-group-analytics: ready-for-dev                  # 5 pts - Client-side group analytics (DEPENDS: 19-6)
+
+  # Chain B: model -> post -> delete
+  19-3-post-to-group: ready-for-dev                    # 3 pts - postToGroup Cloud Function — copy & bucket (DEPENDS: 19-1)
+  19-4-group-admin-deletion: ready-for-dev             # 3 pts - deleteGroupTransaction with 30-day window (DEPENDS: 19-3)
+
+  # Chain C: CRUD -> invites
+  19-7-group-invite-links: ready-for-dev               # 5 pts - createInvite + redeemInvite + UI (DEPENDS: 19-2)
+
+  # Chain D: CRUD -> admin panel
+  19-9-group-admin-panel: ready-for-dev                # 3 pts - Admin management UI (DEPENDS: 19-2)
+
+  # E2E
+  19-10-group-e2e: ready-for-dev                       # 3 pts - Multi-user E2E test (DEPENDS: 19-6)
+
   epic-19-retrospective: optional
 
   # ============================================================================
-  # FUTURE BACKLOG (Post-Launch)
-  # These epics are deferred until after MVP launch
+  # Epic 20: Subscription & Monetization (~28 points, 7 stories)
+  # "Tickets at the door, wristbands inside"
+  # Free/Pro/Max tiers, Mercado Pago, invite-link registration, feature gating
+  # FRs: FR-8.3, FR-8.4, FR-8.5 | NFRs: NFR-2.9, NFR-5.3
   # ============================================================================
+  epic-20: backlog
 
-  # Epic F1: Subscription & Monetization
-  # 3-tier model (Free/Pro/Max), Mercado Pago integration
-  epic-f1-subscription: future-backlog
+  # Chain A: model -> store/gating -> checkout UI
+  20-1-subscription-data-model: ready-for-dev          # 2 pts - Subscription collection + tier config + security rules
+  20-2-subscription-store-gating: ready-for-dev        # 5 pts - Subscription store + useSubscriptionGating hook (DEPENDS: 20-1)
+  20-4-subscription-checkout-ui: ready-for-dev         # 5 pts - Plan selection + checkout Cloud Function (DEPENDS: 20-2, 20-3)
 
-  # Epic F2: Household Sharing - MOVED to Epic 14c (see above)
-  # epic-f2-household-sharing: moved-to-14c
+  # Chain B: model -> webhook -> checkout UI
+  20-3-mercadopago-webhook: ready-for-dev              # 5 pts - paymentWebhook Cloud Function — HTTP trigger (DEPENDS: 20-1)
 
-  # Epic F3: Card Statement Scanning
-  # Upload card statement → extract multiple transactions
-  epic-f3-card-statement: future-backlog
+  # Chain C: model -> server verification
+  20-6-server-tier-verification: ready-for-dev         # 3 pts - verifyTier utility for Cloud Functions (DEPENDS: 20-1)
+
+  # Independent
+  20-5-invite-link-registration: ready-for-dev         # 5 pts - createInvite + redeemInvite + InviteGate
+
+  # E2E
+  20-7-subscription-e2e: ready-for-dev                 # 3 pts - Subscription + invite flow E2E test (DEPENDS: 20-4, 20-5, 20-6)
+
+  epic-20-retrospective: optional
+
+  # ============================================================================
+  # LEGACY DEFERRED EPICS (superseded by Growth Phase)
+  # These were placeholder epics from the original brainstorm.
+  # Replaced by the numbered Growth Phase epics above.
+  # ============================================================================
 
   # Epic F4: Mobile Native App
   # iOS + Android native apps
@@ -336,7 +419,4 @@ development_status:
 
   # Epic F6: Analytics Dashboard & Scheduled Insights
   # Deferred features from Epic 10 architecture session (2025-12-17)
-  # Includes: Weekly/Monthly Summary Views, Scheduled Push Notifications, Reports Section
-  # Requires Cloud Functions for scheduling (beyond ADR-015 client-side scope)
-  # Archived references: docs/sprint-artifacts/epic10/_archive/
   epic-f6-analytics-dashboard-scheduled-insights: future-backlog

@@ -1,0 +1,50 @@
+# KDBP Brainstorming Workflow
+name: kdbp-brainstorm
+description: "Interactive brainstorming facilitation with 62 creative techniques and DBP behavioral tracking"
+author: "BMad + Khujta"
+
+# Persona
+persona:
+  role: "Brainstorming Facilitator + Innovation Catalyst"
+  style: "Enthusiastic improv coach, high energy, YES AND approach"
+  principles:
+    - "Psychological safety — no bad ideas"
+    - "Quantity unlocks quality — aim for 100+ ideas"
+    - "Anti-bias: domain pivot every 10 ideas"
+    - "Facilitate, don't generate — build on user's ideas"
+
+# Deep Behavior Protocol Integration
+dbp_integration:
+  enabled: true
+  bookend_pattern: true
+  start_step: "step-00-behavior-load"
+  end_step: "step-05-session-ledger"
+  behaviors_path: "{project-root}/_kdbp/behaviors"
+  registry: "{behaviors_path}/REGISTRY.md"
+  ledger: "{behaviors_path}/trajectory/ledger.md"
+  graceful_degradation: true
+
+# Critical variables from config
+config_source: "{project-root}/_kdbp/core/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+user_skill_level: "{config_source}:user_skill_level"
+document_output_language: "{config_source}:document_output_language"
+date: system-generated
+
+# Data files
+brain_techniques_path: "{installed_path}/data/brain-methods.csv"
+session_template_path: "{installed_path}/data/session-template.md"
+default_output_file: "{output_folder}/brainstorming/brainstorming-session-{{date}}.md"
+context_file: ""  # Optional: project-specific guidance
+
+# Workflow components
+installed_path: "{project-root}/_kdbp/workflows/kdbp-brainstorm"
+instructions: "{installed_path}/instructions.xml"
+
+# Auto-proceed — only pause at ask tags in step files
+auto_proceed:
+  enabled: true
+
+standalone: true

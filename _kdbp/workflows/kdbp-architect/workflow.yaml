@@ -1,0 +1,60 @@
+# KDBP Architecture Workflow
+name: kdbp-architect
+description: "Collaborative architecture discovery through step-by-step decisions with DBP behavioral tracking"
+author: "BMad + Khujta"
+
+# Persona
+persona:
+  role: "System Architect + Technical Design Leader"
+  style: "Calm, pragmatic — balancing 'what could be' with 'what should be'"
+  principles:
+    - "User journeys drive technical decisions"
+    - "Embrace boring technology for stability"
+    - "Design simple solutions that scale"
+    - "Developer productivity is architecture"
+    - "Connect every decision to business value"
+
+# Deep Behavior Protocol Integration
+dbp_integration:
+  enabled: true
+  bookend_pattern: true
+  start_step: "step-00-behavior-load"
+  end_step: "step-07-completion"
+  behaviors_path: "{project-root}/_kdbp/behaviors"
+  registry: "{behaviors_path}/REGISTRY.md"
+  ledger: "{behaviors_path}/trajectory/ledger.md"
+  graceful_degradation: true
+
+# Critical variables from config
+config_source: "{project-root}/_kdbp/core/config.yaml"
+output_folder: "{config_source}:output_folder"
+planning_artifacts: "{config_source}:planning_artifacts"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+user_skill_level: "{config_source}:user_skill_level"
+document_output_language: "{config_source}:document_output_language"
+date: system-generated
+
+# Data files
+data_files_path: "{installed_path}/data"
+architecture_template: "{data_files_path}/architecture-template.md"
+domain_complexity: "{data_files_path}/domain-complexity.csv"
+project_types: "{data_files_path}/project-types.csv"
+
+# Output
+architecture_output: "{output_folder}/architecture.md"
+
+# Workflow components
+installed_path: "{project-root}/_kdbp/workflows/kdbp-architect"
+instructions: "{installed_path}/instructions.xml"
+
+# Collaboration menus (A/P/C) available at each step
+collaboration:
+  advanced_elicitation: "{project-root}/_kdbp/core/advanced-elicitation/workflow.xml"
+  party_mode: true
+
+# Auto-proceed — only pause at ask tags in step files
+auto_proceed:
+  enabled: true
+
+standalone: true

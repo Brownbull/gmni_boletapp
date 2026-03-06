@@ -1,6 +1,6 @@
-# Step 08: Story Completion
+# Step 08: Story Completion + Cost Tracking
 
-Cost tracking, E2E/Firebase analysis, final story status update, and summary.
+Cost tracking, E2E/backend analysis, final story status update, and summary.
 
 <critical>Story completion is the FINAL step. This is NEVER skippable.</critical>
 
@@ -11,7 +11,7 @@ Cost tracking, E2E/Firebase analysis, final story status update, and summary.
 
 <!-- E2E Coverage Check -->
 <action>Check if any files in {{progress_tracker}}.files_changed match UI component patterns:
-  - "src/components/**/*.tsx" (excluding ui/ — those are shadcn primitives)
+  - "src/components/**/*.tsx" (excluding shared primitives)
   - "src/hooks/*.ts" (hooks that drive UI behavior)
   - "src/stores/*.ts" (state that drives UI)
 </action>
@@ -22,16 +22,14 @@ Cost tracking, E2E/Firebase analysis, final story status update, and summary.
   <action>Search tests/e2e/*.spec.ts for those testids</action>
   <action>Set {{uncovered_testids}} = testids NOT found in any E2E spec</action>
   <action>Set {{ui_missing_e2e}} = true if {{uncovered_testids}} is non-empty</action>
-  <action>Evaluate if UI changes are on a critical user path (auth, main canvas, toolbox, component placement, YAML import/export)</action>
+  <action>Evaluate if UI changes are on a critical user path (auth, primary views, data import/export)</action>
   <action>Set {{is_critical_path}} = true/false | Set {{critical_path_reason}} = brief explanation</action>
 </check>
 
-<!-- Firebase Backend Check -->
-<action>Check if any files in {{progress_tracker}}.files_changed match Firebase backend patterns:
-  - "firestore.rules" → firestore:rules | "firestore.indexes.json" → firestore:indexes
-  - "storage.rules" → storage | "functions/src/**" → functions
-</action>
-<action>Set {{has_firebase_backend_changes}} = true/false | Set {{firebase_deploy_targets}} = list</action>
+<!-- Backend Change Detection -->
+<action>Check if any files in {{progress_tracker}}.files_changed match backend patterns
+  (e.g., security rules, DB indexes, cloud functions, API routes)</action>
+<action>Set {{has_backend_changes}} = true/false | Set {{backend_deploy_targets}} = list</action>
 
 <!-- Git Staging Verification (MUST CHECK #1) -->
 <critical>CODE REVIEW PATTERN #1: Untracked files WILL NOT be committed — verify before commit</critical>
@@ -40,6 +38,22 @@ Cost tracking, E2E/Firebase analysis, final story status update, and summary.
   <output>**GIT STAGING WARNING** — Untracked files will NOT be in the commit: {{untracked_files}}</output>
   <action>Stage all created files: `git add {{created_files_list}}`</action>
   <action>Confirm: `git status --porcelain | grep "^A "` — all story files show as staged</action>
+</check>
+
+<!-- P3 Usage Tracking: tag which L2 patterns were relevant this story (CX-03) -->
+<action>Append to story completion output a CITED tag listing any L2 patterns that were
+  detected, warned about, or actively guided decisions during this story.
+  Format: `<!-- CITED: L2-004, L2-006 -->` (or CITED: none if no patterns applied).
+  This is a passive tag — no extra analysis. Just record what was already encountered.
+  Harvestable by: `grep -r "CITED:" docs/sprint-artifacts/`</action>
+
+<!-- Intent alignment tag — only if story has ## Intent section -->
+<check if="story file has ## Intent section">
+  <action>Compare what was built (tasks completed, files changed, ACs satisfied) against
+    the story's Intent Handle. Rate: aligned | drifted.
+    If drifted, note WHY in <=10 words.
+    Append: `<!-- INTENT: aligned -->` or `<!-- INTENT: drifted — [brief reason] -->`
+    Passive tag. Harvestable by: `grep -r "INTENT:" docs/sprint-artifacts/`</action>
 </check>
 
 <!-- Story Completion -->
@@ -67,14 +81,27 @@ Cost tracking, E2E/Firebase analysis, final story status update, and summary.
 
   ---
 
+  **Commit Commands:**
+  ```bash
+  git add {{staged_files_list}}
+  git commit -m "$(cat <<'EOF'
+  {{story_key}}: {{one_line_summary}}
+
+  {{what_changed_and_why}}
+
+  Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+  EOF
+  )"
+  ```
+
   **Next Steps:**
   - Run `/ecc-code-review` for external review
   {{#if has_ui_changes and ui_missing_e2e}}
   **E2E Gap:** {{uncovered_testids}} missing coverage
   {{#if is_critical_path}}**CRITICAL PATH** — run `/ecc-e2e` recommended.{{/if}}
   {{/if}}
-  {{#if has_firebase_backend_changes}}
-  - **Firebase changes** ({{firebase_deploy_targets}}) — use `/deploy-story` to deploy backend.
+  {{#if has_backend_changes}}
+  - **Backend changes** ({{backend_deploy_targets}}) — use `/deploy-story` to deploy backend.
   {{/if}}
 </output>
 

@@ -1,0 +1,56 @@
+<workflow id="kdbp-brainstorm" name="KDBP Brainstorming">
+  <critical>The workflow execution engine is governed by: {project-root}/_kdbp/core/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+  <critical>BRAINSTORMING FACILITATOR — high-energy, collaborative, "YES AND" style</critical>
+  <critical>TARGET: 100+ ideas before organization. Anti-bias domain pivot every 10 ideas.</critical>
+  <critical>DBP BOOKEND PATTERN: Step 0 loads behaviors. Step 5 records session ledger.</critical>
+
+  <!--
+  STEP PROCESSING RULES (read before executing any step):
+  1. Load ONE step file at a time — read entirely before executing
+  2. Execute steps in checklist order — no skipping or reordering
+  3. HALT at every <ask> tag — wait for user response before continuing
+  4. Mark each step [x] in the checklist BEFORE loading the next step
+  5. After compaction: re-read THIS file to find your current position
+
+  DATA: brain-methods.csv (62 techniques, 10 categories) loaded on-demand in Step 02
+
+  DBP: Step 0 loads behavior values. Step 5 records session ledger.
+  If no behaviors registered: dbp_active=false, all DBP checks become no-ops.
+
+  PROGRESS CHECKLIST — update [x] as each step completes:
+  - [ ] Step 0:  Behavior Load          → steps/step-00-behavior-load.md
+  - [ ] Step 1:  Session Setup          → steps/step-01-session-setup.md
+  - [ ] Step 2:  Technique Selection    → steps/step-02-technique-selection.md
+  - [ ] Step 3:  Technique Execution    → steps/step-03-technique-execution.md
+  - [ ] Step 4:  Organization + Action  → steps/step-04-organization.md
+  - [ ] Step 5:  Session Ledger [GL]    → steps/step-05-session-ledger.md
+  -->
+
+  <step n="0" goal="Load behavior values into hot tier" tag="behavior-load">
+    <action>Load, read completely, and execute steps/step-00-behavior-load.md</action>
+  </step>
+
+  <step n="1" goal="Initialize session — detect continuation or start fresh" tag="session-setup">
+    <action>Load, read completely, and execute steps/step-01-session-setup.md</action>
+  </step>
+
+  <step n="2" goal="Select brainstorming techniques from library" tag="technique-selection">
+    <action>Load, read completely, and execute steps/step-02-technique-selection.md</action>
+  </step>
+
+  <step n="3" goal="Interactive brainstorming facilitation" tag="technique-execution">
+    <action>Load, read completely, and execute steps/step-03-technique-execution.md</action>
+  </step>
+
+  <step n="4" goal="Organize ideas and create action plans" tag="organization">
+    <action>Load, read completely, and execute steps/step-04-organization.md</action>
+  </step>
+
+  <step n="5" goal="Session ledger [GL]" tag="session-ledger">
+    <action>Load, read completely, and execute steps/step-05-session-ledger.md</action>
+  </step>
+
+</workflow>

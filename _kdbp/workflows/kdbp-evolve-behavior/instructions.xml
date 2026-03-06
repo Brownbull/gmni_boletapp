@@ -1,0 +1,59 @@
+<workflow id="kdbp-evolve-behavior" name="KDBP Evolve Behavior">
+  <critical>The workflow execution engine is governed by: {project-root}/_kdbp/core/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+  <critical>EVOLUTION ENGINE — classify root cause BEFORE proposing any fix</critical>
+  <critical>Type F pre-screen: if output was correct but wrong problem solved, STOP and load cold tier</critical>
+  <critical>The Roast (Step 05): use DIFFERENT agent if possible. Human reviews for pulled punches.</critical>
+
+  <!--
+  STEP PROCESSING RULES (read before executing any step):
+  1. Load ONE step file at a time — read entirely before executing
+  2. Execute steps in checklist order — no skipping or reordering
+  3. HALT at every <ask> tag — wait for user response before continuing
+  4. Mark each step [x] in the checklist BEFORE loading the next step
+  5. After compaction: re-read THIS file to find your current position
+
+  PROTOCOL: §10 Evolution Engine (Causation Analysis + The Roast + Versioning)
+  This workflow requires an active behavior. Will STOP if no behavior is registered.
+
+  PROGRESS CHECKLIST — update [x] as each step completes:
+  - [ ] Step 0:  Behavior Load (cold tier)  → steps/step-00-behavior-load.md
+  - [ ] Step 1:  Identify Symptom           → steps/step-01-symptom.md
+  - [ ] Step 2:  Locate in Workflow         → steps/step-02-locate.md
+  - [ ] Step 3:  Classify Root Cause (A-F)  → steps/step-03-classify.md
+  - [ ] Step 4:  Apply Fix                  → steps/step-04-fix.md
+  - [ ] Step 5:  Adversarial Review (Roast) → steps/step-05-roast.md
+  - [ ] Step 6:  Version and Log            → steps/step-06-version.md
+  -->
+
+  <step n="0" goal="Load behavior into cold tier for evolution" tag="behavior-load">
+    <action>Load, read completely, and execute steps/step-00-behavior-load.md</action>
+  </step>
+
+  <step n="1" goal="Identify the symptom — expected vs actual" tag="symptom">
+    <action>Load, read completely, and execute steps/step-01-symptom.md</action>
+  </step>
+
+  <step n="2" goal="Locate failure in workflow via linkage map" tag="locate">
+    <action>Load, read completely, and execute steps/step-02-locate.md</action>
+  </step>
+
+  <step n="3" goal="Classify root cause A through F" tag="classify">
+    <action>Load, read completely, and execute steps/step-03-classify.md</action>
+  </step>
+
+  <step n="4" goal="Apply fix per classification" tag="fix">
+    <action>Load, read completely, and execute steps/step-04-fix.md</action>
+  </step>
+
+  <step n="5" goal="Adversarial review — The Roast (5 rounds)" tag="roast">
+    <action>Load, read completely, and execute steps/step-05-roast.md</action>
+  </step>
+
+  <step n="6" goal="Version bump, changelog, ledger entry" tag="version">
+    <action>Load, read completely, and execute steps/step-06-version.md</action>
+  </step>
+
+</workflow>

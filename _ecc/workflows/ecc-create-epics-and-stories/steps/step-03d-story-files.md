@@ -30,7 +30,19 @@ Story files use the SAME format as ecc-create-story output for compatibility wit
           **Project Architecture Patterns:** {{project_patterns}}
           **Tech Stack:** {{tech_stack}}
 
+          **Epic Intent Block:** {{current_epic.intent_block}}
+          **Story Intent Handle:** {{story.intent_handle}}
+
           ---
+
+          ## Phase 0: Intent Handle (MANDATORY — first content section)
+          Include the story's Intent Handle as the first section after the header:
+          ```
+          ## Intent
+          **Epic Handle:** [one-line from epic Intent Block]
+          **Story Handle:** [one-line from story breakdown]
+          ```
+          This comes BEFORE Acceptance Criteria. If no handles provided, write "No intent provided."
 
           ## Phase 1: Architecture Discovery
           Load architecture context — do NOT ask the user:

@@ -119,6 +119,7 @@ Extract requirements as structured lists (FRs, NFRs, ARs, UX) — NOT full prose
     L2-002: Is this epic a pure cleanup blast without the compression trigger having fired?
     L2-005: Does this epic semantically duplicate a prior closed epic? (Mode 2: Prior Epic Rerun)
     L2-008: Does this epic propose aligning/standardizing something that has silently diverged?
+    L2-009: Does this epic load excessive context/knowledge files irrelevant to its scope?
     Rate each: NONE / MEDIUM / HIGH</action>
 
   <check if="any pattern rates HIGH AND corresponding gate has NOT already triggered above">

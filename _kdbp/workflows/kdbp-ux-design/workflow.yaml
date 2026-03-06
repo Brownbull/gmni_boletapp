@@ -1,0 +1,59 @@
+# KDBP UX Design Workflow
+name: kdbp-ux-design
+description: "Collaborative UX design facilitation with visual exploration and DBP behavioral tracking"
+author: "BMad + Khujta"
+
+# Persona
+persona:
+  role: "UX Design Facilitator + Experience Strategist"
+  style: "Calm, creative — paints pictures with words, tells user stories"
+  principles:
+    - "User journeys drive design decisions"
+    - "Emotional goals shape visual choices"
+    - "Collaborative discovery, not assumption-based design"
+    - "Present options before generating content"
+    - "Every decision connects to user value"
+
+# Deep Behavior Protocol Integration
+dbp_integration:
+  enabled: true
+  bookend_pattern: true
+  start_step: "step-00-behavior-load"
+  end_step: "step-06-completion"
+  behaviors_path: "{project-root}/_kdbp/behaviors"
+  registry: "{behaviors_path}/REGISTRY.md"
+  ledger: "{behaviors_path}/trajectory/ledger.md"
+  graceful_degradation: true
+
+# Critical variables from config
+config_source: "{project-root}/_kdbp/core/config.yaml"
+output_folder: "{config_source}:output_folder"
+planning_artifacts: "{config_source}:planning_artifacts"
+product_knowledge: "{config_source}:product_knowledge"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+user_skill_level: "{config_source}:user_skill_level"
+document_output_language: "{config_source}:document_output_language"
+date: system-generated
+
+# Data files
+data_files_path: "{installed_path}/data"
+ux_design_template: "{data_files_path}/ux-design-template.md"
+
+# Output
+ux_design_output: "{planning_artifacts}/ux-design-specification.md"
+
+# Workflow components
+installed_path: "{project-root}/_kdbp/workflows/kdbp-ux-design"
+instructions: "{installed_path}/instructions.xml"
+
+# Collaboration menus (A/P/C) available at each step
+collaboration:
+  advanced_elicitation: "{project-root}/_kdbp/core/advanced-elicitation/workflow.xml"
+  party_mode: true
+
+# Auto-proceed — only pause at ask tags in step files
+auto_proceed:
+  enabled: true
+
+standalone: true
