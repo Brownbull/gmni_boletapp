@@ -1,0 +1,76 @@
+<workflow id="kdbp-code-review" name="KDBP Adaptive Code Review">
+  <critical>The workflow execution engine is governed by: {project-root}/_kdbp/core/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} tailored to {user_skill_level}</critical>
+  <critical>ECC ADAPTIVE CODE REVIEW — Orchestrator selects and spawns agents based on story complexity</critical>
+  <critical>AUTO-PROCEED MODE: Skip generic "Continue?" confirmations. Only pause at Step 5 triage and Step 7 test health decisions.</critical>
+  <critical>DBP BOOKEND PATTERN: Step 0 loads behaviors (or sets dbp_active=false). Step 9 is review checkpoint.</critical>
+
+  <!--
+  STEP PROCESSING RULES (read before executing any step):
+  1. Load ONE step file at a time — read entirely before executing
+  2. Execute steps in checklist order — no skipping or reordering
+  3. HALT at every <ask> tag — wait for user response before continuing
+  4. Mark each step [x] in the checklist BEFORE loading the next step
+  5. After compaction: re-read THIS file to find your current position
+
+  AGENTS: code-reviewer | security-reviewer | architect(opus) | tdd-guide — selected adaptively
+  TRIVIAL: code-reviewer only | SIMPLE: +tdd-guide | STANDARD: +security-reviewer | COMPLEX: all 4
+
+  DBP: Step 0 loads behavior values for session orientation. Step 9 records ledger.
+  If no behaviors registered: dbp_active=false, all DBP checks become no-ops.
+
+  PROGRESS CHECKLIST — update [x] as each step completes:
+  - [ ] Step 0:  Behavior Load      → steps/step-00-behavior-load.md
+  - [ ] Step 1:  Knowledge Init     → steps/step-01-knowledge.md
+  - [ ] Step 2:  Story Discovery    → steps/step-02-story-discovery.md
+  - [ ] Step 3:  Parallel Spawn     → steps/step-03-parallel-spawn.md
+  - [ ] Step 4:  Synthesis          → steps/step-04-synthesis.md
+  - [ ] Step 5:  Smart Triage       → steps/step-05-triage.md
+  - [ ] Step 6:  Debt Tracking      → steps/step-06-debt-tracking.md
+  - [ ] Step 7:  Test Health        → steps/step-07-test-health.md
+  - [ ] Step 8:  Completion + [GL]  → steps/step-08-completion.md
+  - [ ] Step 9:  Review Checkpoint  → steps/step-09-review-checkpoint.md
+  -->
+
+  <step n="0" goal="Load behavior values into hot tier" tag="behavior-load">
+    <action>Load, read completely, and execute steps/step-00-behavior-load.md</action>
+  </step>
+
+  <step n="1" goal="Load project knowledge" tag="knowledge-init">
+    <action>Load, read completely, and execute steps/step-01-knowledge.md</action>
+  </step>
+
+  <step n="2" goal="Load story and classify complexity" tag="story-discovery">
+    <action>Load, read completely, and execute steps/step-02-story-discovery.md</action>
+  </step>
+
+  <step n="3" goal="Spawn selected ECC review agents in parallel" tag="parallel-spawn">
+    <action>Load, read completely, and execute steps/step-03-parallel-spawn.md</action>
+  </step>
+
+  <step n="4" goal="Synthesize parallel review outputs" tag="synthesis">
+    <action>Load, read completely, and execute steps/step-04-synthesis.md</action>
+  </step>
+
+  <step n="5" goal="Smart triage" tag="triage">
+    <action>Load, read completely, and execute steps/step-05-triage.md</action>
+  </step>
+
+  <step n="6" goal="Deferred item audit + tech debt story creation" tag="debt-tracking">
+    <action>Load, read completely, and execute steps/step-06-debt-tracking.md</action>
+  </step>
+
+  <step n="7" goal="Test health interpretation" tag="test-health">
+    <action>Load, read completely, and execute steps/step-07-test-health.md</action>
+  </step>
+
+  <step n="8" goal="Cost tracking, completion, and ledger entry" tag="completion">
+    <action>Load, read completely, and execute steps/step-08-completion.md</action>
+  </step>
+
+  <step n="9" goal="Review checkpoint [GL]" tag="review-checkpoint">
+    <action>Load, read completely, and execute steps/step-09-review-checkpoint.md</action>
+  </step>
+
+</workflow>

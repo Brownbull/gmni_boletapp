@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""ECC PreToolUse Guard for Edit — Anti-pattern detection + file size enforcement.
+"""PreToolUse:Edit guard — Anti-pattern detection + file size enforcement.
 
 Reads tool input JSON from stdin. Checks for known anti-patterns.
 Exit 0 = allow (no issues).
 Exit 1 = non-blocking warning.
-Exit 2 = BLOCK (edit rejected — file exceeds 800-line hard limit).
+Exit 2 = BLOCK (edit rejected).
 
 Checks:
   1. console.log in code → warn
-  2. Explicit "any" type → warn
+  2. Explicit ": any" type → warn
   3. File size >500 lines → warn
-  4. File size >800 lines → BLOCK
+  4. File size >800 lines → BLOCK (hard limit)
   5. Test file size limits → warn (unit >300, integration >500, e2e >400)
   6. Churn count >20 → warn, >40 → BLOCK (A4 / L2-004 gravity well)
   7. E2E anti-patterns → warn (bare text selectors, long timeouts, networkidle)
@@ -34,19 +34,21 @@ def main():
 
     warnings = []
 
-    # 1. console.log detection
     if "console.log" in new_string:
         warnings.append(
-            "\u26a0\ufe0f  console.log detected. Use proper logging or remove before commit."
+            "console.log detected. Use proper logging or remove before commit."
         )
 
-    # 2. Explicit "any" type
     if ": any" in new_string or ": any;" in new_string or ": any)" in new_string:
         warnings.append(
-            '\u26a0\ufe0f  Explicit "any" type detected. Please use proper typing.'
+            'Explicit "any" type detected. Use proper typing.'
         )
 
-    # 3-6. File size checks (only if file exists)
+    # --- File size checks ---
+    # ECC_SIZE_EXCLUDE: comma-separated basenames to skip 800-line BLOCK + churn BLOCK.
+    # Use for known large files that can't be split yet (e.g. App.tsx during migration).
+    size_exclude = {s.strip() for s in os.environ.get("ECC_SIZE_EXCLUDE", "").split(",") if s.strip()}
+
     if file_path and os.path.isfile(file_path):
         try:
             with open(file_path) as f:
@@ -54,52 +56,67 @@ def main():
         except OSError:
             line_count = 0
 
-        # 3a. BLOCK at 800 lines — hard limit, edit rejected
-        if line_count > 800:
+        # BLOCK at 800 lines — hard limit, edit rejected (unless excluded)
+        if line_count > 800 and os.path.basename(file_path) not in size_exclude:
             print(
-                f"\u26a0\ufe0f  BLOCKED: {os.path.basename(file_path)} is {line_count} lines "
+                f"BLOCKED: {os.path.basename(file_path)} is {line_count} lines "
                 f"(max 800). Split this file before adding more code.",
                 file=sys.stderr,
             )
-            sys.exit(2)  # BLOCK — edit rejected
+            sys.exit(2)
 
-        # 3b. Warn at 500 lines
+        # Warn at 500 lines
         if line_count > 500:
             warnings.append(
-                f"\u26a0\ufe0f  Editing large file ({line_count} lines >500). Consider refactoring first."
+                f"Editing large file ({line_count} lines >500). Consider refactoring."
             )
 
-        # 4. Unit test >300 lines (not integration/e2e)
-        if file_path.endswith((".test.ts", ".test.tsx")):
-            if "integration" not in file_path and "e2e" not in file_path:
-                if line_count > 300:
-                    warnings.append(
-                        f"\u26a0\ufe0f  Unit test file exceeds 300 lines ({line_count}). "
-                        "Per .claude/rules/testing.md, consider splitting."
-                    )
+        # Test file size limits
+        is_test = file_path.endswith((".test.ts", ".test.tsx"))
+        is_e2e = "e2e" in file_path and file_path.endswith(".spec.ts")
+        is_integration = "integration" in file_path and is_test
 
-        # 5. Integration test >500 lines
-        if "integration" in file_path and file_path.endswith(
-            (".test.ts", ".test.tsx")
-        ):
-            if line_count > 500:
-                warnings.append(
-                    f"\u26a0\ufe0f  Integration test file exceeds 500 lines ({line_count}). "
-                    "Per .claude/rules/testing.md, consider splitting."
-                )
+        if is_e2e and line_count > 400:
+            warnings.append(
+                f"E2E test file exceeds 400 lines ({line_count}). Split the journey."
+            )
+        elif is_integration and line_count > 500:
+            warnings.append(
+                f"Integration test exceeds 500 lines ({line_count}). Split the file."
+            )
+        elif is_test and not is_integration and not is_e2e and line_count > 300:
+            warnings.append(
+                f"Unit test exceeds 300 lines ({line_count}). Split the file."
+            )
 
-        # 6. E2E test >400 lines
-        if "e2e" in file_path and file_path.endswith(".spec.ts"):
-            if line_count > 400:
-                warnings.append(
-                    f"\u26a0\ufe0f  E2E test file exceeds 400 lines ({line_count}). "
-                    "Per E2E-TEST-CONVENTIONS.md, consider splitting journey."
-                )
+    # --- Churn count check (A4 / L2-004) ---
+    # Gravity-well files: warn at 20 touches, BLOCK at 40.
+    # Exclusions: tracking/artifact files + ECC_SIZE_EXCLUDE files (known large/churny files).
+    CHURN_EXCLUSIONS = {
+        "sprint-status.yaml",
+    } | size_exclude
 
-    # Churn count check (A4 / L2-004) — gravity-well detection
-    # Exempt: sprint-status files are expected to have many commits (one per story completion)
-    _churn_exempt = {"sprint-status.yaml", "sprint-status_epics1to13.yaml"}
-    if file_path and os.path.isfile(file_path) and os.path.basename(file_path) not in _churn_exempt:
+    # Known gravity wells: project-specific files that ALWAYS block with decomposition hint.
+    # Maintained per-project in CLAUDE.md or .claude/rules/. Override via env var.
+    # Format: {"filename": "decomposition hint"}
+    GRAVITY_WELLS = {}
+    gw_env = os.environ.get("ECC_GRAVITY_WELLS", "")
+    if gw_env:
+        for entry in gw_env.split(";"):
+            if "=" in entry:
+                fname, hint = entry.split("=", 1)
+                GRAVITY_WELLS[fname.strip()] = hint.strip()
+
+    basename = os.path.basename(file_path) if file_path else ""
+    if basename in GRAVITY_WELLS:
+        print(
+            f"BLOCKED: {basename} is a known gravity well (L2-004). "
+            f"Decomposition required: {GRAVITY_WELLS[basename]}",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
+    if file_path and os.path.isfile(file_path) and os.path.basename(file_path) not in CHURN_EXCLUSIONS:
         try:
             repo_result = subprocess.run(
                 ["git", "rev-parse", "--show-toplevel"],
@@ -120,42 +137,34 @@ def main():
                 )
                 if touch_count >= 40:
                     print(
-                        f"\u26d4 BLOCKED: {os.path.basename(file_path)} modified {touch_count} times. "
+                        f"BLOCKED: {os.path.basename(file_path)} modified {touch_count} times. "
                         "Gravity well. Create a refactor story before modifying further.",
                         file=sys.stderr,
                     )
                     sys.exit(2)
                 elif touch_count >= 20:
                     warnings.append(
-                        f"\u26a0\ufe0f  CHURN: {os.path.basename(file_path)} modified {touch_count} times. "
+                        f"CHURN: {os.path.basename(file_path)} modified {touch_count} times. "
                         "Consider a refactor story before this change."
                     )
         except Exception:
             pass  # git unavailable or not a repo — skip
 
-    # 7-9. E2E anti-pattern detection (only for e2e spec files)
+    # E2E anti-pattern checks — add project-specific selector issues here
     if "e2e" in file_path and file_path.endswith(".spec.ts"):
-        # 7. Bare text=Ajustes selector (matches 2 elements in strict mode)
-        if "text=Ajustes" in new_string:
-            warnings.append(
-                "\u26a0\ufe0f  E2E: 'text=Ajustes' matches 2 elements. "
-                "Use getByRole('menuitem', { name: 'Ajustes' }) instead."
-            )
 
-        # 8. Long fixed timeouts for async operations
         long_timeouts = re.findall(r"waitForTimeout\((\d+)\)", new_string)
         for timeout_ms in long_timeouts:
             if int(timeout_ms) >= 3000:
                 warnings.append(
-                    f"\u26a0\ufe0f  E2E: waitForTimeout({timeout_ms}) is too long. "
-                    "Use element.waitFor({ state: 'hidden/visible' }) for async ops."
+                    f"E2E: waitForTimeout({timeout_ms}) is too long. "
+                    "Use element.waitFor() for async ops."
                 )
 
-        # 9. networkidle (never resolves with Firebase WebSocket)
         if "networkidle" in new_string:
             warnings.append(
-                "\u26a0\ufe0f  E2E: 'networkidle' never resolves with Firebase WebSocket. "
-                "Use waitForSelector for specific elements instead."
+                "E2E: 'networkidle' never resolves with Firebase WebSocket. "
+                "Use waitForSelector instead."
             )
 
     # Playwright config parallelism check (D-003 / L2-007)
@@ -169,10 +178,9 @@ def main():
             )
 
     if warnings:
-        # Print warnings to stderr (shown as hook feedback)
         for w in warnings:
             print(w, file=sys.stderr)
-        sys.exit(1)  # Non-blocking warning
+        sys.exit(1)
 
     sys.exit(0)
 

@@ -9,6 +9,7 @@ Write all final files and prepare for development.
     - Requirements Inventory (all FRs, NFRs, ARs, UX)
     - FR Coverage Map (FR -> Epic -> Story)
     - Epic List (summary)
+    - Intent Block per epic (Gabe Lens format from Step 02)
     - Per-Epic sections with story details</action>
 
   <action>Create or update {{sprint_status}} with all stories as "drafted":

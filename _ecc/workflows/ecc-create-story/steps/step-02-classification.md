@@ -11,7 +11,7 @@ Classify story complexity for adaptive agent selection. Not every story needs pl
     - {{is_known_pattern}}: Does the story reference prior stories as pattern
     - {{is_structural_move}}: Is this a file move/rename/consolidation with no logic changes
     - {{involves_new_feature}}: Does this create a new feature module from scratch
-    - {{involves_database}}: Search for: Firestore, database, schema, collection, index, query, writeBatch
+    - {{involves_database}}: Search for: database, schema, collection, index, query, batch operations
     - {{involves_auth}}: Search for: auth, authentication, authorization, token, password, secret</action>
 
   <!-- Classification logic (cascade - first match wins) -->
@@ -75,5 +75,30 @@ Classify story complexity for adaptive agent selection. Not every story needs pl
         Cause: full implementation without validating the approach first.</output>
       <ask>Create a spike story first? [Y] or acknowledge risk and continue? [N + reason]</ask>
     </check>
+  </check>
+
+  <!-- SEMANTIC DRIFT CHECK (FF-B / L2 Pattern Library) -->
+  <!-- Catches patterns the keyword gates above miss — same problem, different surface words. -->
+  <!-- Reference: docs/layer2/l2-baseline.json (regenerate: python3 scripts/build-l2-baseline.py) -->
+  <action>Assess semantic similarity between this story and the 9 L2 patterns:
+    L2-001 Wrong-Path Spiral — "build new distributed layer, new sync approach, real-time infra"
+    L2-002 Blast-Radius Cleanup — "consolidate all tech debt, full codebase audit, extract shared pattern"
+    L2-003 Context Thrashing — "fix multiple concerns at once, re-align everything, update all knowledge"
+    L2-004 Churn File Indicator — "modify shared/central file, change core type, update global state"
+    L2-005 Parallel Epic Collision — "new epic while another active, pivot, concurrent track"
+    L2-006 Sprint Overhead Spiral — "add process, more ceremony, improve workflow tooling"
+    L2-007 E2E Sinkhole — "build e2e test suite, playwright infra, integration test framework"
+    L2-008 Consensus Drift — "standardize patterns across all modules, align per-component conventions"
+    L2-009 Context Pollution — "load all knowledge, context loaded but unused, too much context, irrelevant for task"
+    Rate each: NONE / MEDIUM / HIGH (HIGH = strongly resembles, even without exact keywords)</action>
+
+  <check if="any pattern rates HIGH AND its FF-A gate has NOT already triggered above">
+    <output>**⚠️ SEMANTIC DRIFT (FF-B): Resembles [L2-00X] [pattern name]**
+
+      The keyword gate did not fire, but the semantic pattern is the same.
+      Evidence: [specific reason this story resembles the pattern]
+      Gate to invoke: [ff_a_gate from l2-baseline.json]
+      Note: L2-008 (Consensus Drift) has no keyword gate — FF-B is its only detector.</output>
+    <ask>Acknowledge pattern risk? [Y] proceed / [N + explanation why this is different]</ask>
   </check>
 </step>

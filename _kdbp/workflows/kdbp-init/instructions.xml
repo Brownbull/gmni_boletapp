@@ -1,0 +1,70 @@
+<workflow id="kdbp-init" name="KDBP Init — Behavioral Onboarding">
+  <critical>The workflow execution engine is governed by: {project-root}/_kdbp/core/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+  <critical>BEHAVIORAL ARCHAEOLOGIST — curious, Socratic, challenges assumptions respectfully</critical>
+  <critical>Values are about PEOPLE served by this software, NOT about code conventions or technical rules</critical>
+  <critical>HUMAN AUTHORITY: Agent proposes values, human decides. Every value goes through challenge before acceptance.</critical>
+  <critical>This workflow CREATES the behavior system — it does NOT load from behaviors/ (which may not exist yet)</critical>
+
+  <!--
+  STEP PROCESSING RULES (read before executing any step):
+  1. Load ONE step file at a time — read entirely before executing
+  2. Execute steps in checklist order — no skipping or reordering
+  3. HALT at every <ask> tag — wait for user response before continuing
+  4. Mark each step [x] in the checklist BEFORE loading the next step
+  5. After compaction: re-read THIS file to find your current position
+
+  NO DBP BOOKENDS — this workflow creates the behavior system itself.
+  Advanced elicitation available in Steps 02 (human context) and 05 (value challenge).
+
+  PROGRESS CHECKLIST — update [x] as each step completes:
+  - [ ] Step 0:  Pre-flight Check         → steps/step-00-preflight.md
+  - [ ] Step 1:  Project Scan             → steps/step-01-project-scan.md
+  - [ ] Step 2:  Human Context Discovery  → steps/step-02-human-context.md
+  - [ ] Step 3:  Behavior Identity        → steps/step-03-behavior-identity.md
+  - [ ] Step 4:  Value Proposal           → steps/step-04-value-proposal.md
+  - [ ] Step 5:  Value Challenge          → steps/step-05-value-challenge.md
+  - [ ] Step 6:  Curation                 → steps/step-06-curation.md
+  - [ ] Step 7:  Scaffold                 → steps/step-07-scaffold.md
+  - [ ] Step 8:  Wire + Verify            → steps/step-08-wire-verify.md
+  -->
+
+  <step n="0" goal="Detect existing artifacts, check for conflicts" tag="preflight">
+    <action>Load, read completely, and execute steps/step-00-preflight.md</action>
+  </step>
+
+  <step n="1" goal="Scan project to understand what is being built" tag="project-scan">
+    <action>Load, read completely, and execute steps/step-01-project-scan.md</action>
+  </step>
+
+  <step n="2" goal="Discover human context — who builds, who uses, what matters" tag="human-context">
+    <action>Load, read completely, and execute steps/step-02-human-context.md</action>
+  </step>
+
+  <step n="3" goal="Name the behavior, define domain and target user" tag="behavior-identity">
+    <action>Load, read completely, and execute steps/step-03-behavior-identity.md</action>
+  </step>
+
+  <step n="4" goal="Propose 3-5 candidate values as Gabe Lens Value Blocks" tag="value-proposal">
+    <action>Load, read completely, and execute steps/step-04-value-proposal.md</action>
+  </step>
+
+  <step n="5" goal="Stress-test every proposed value — convention or conviction?" tag="value-challenge">
+    <action>Load, read completely, and execute steps/step-05-value-challenge.md</action>
+  </step>
+
+  <step n="6" goal="Human approves, modifies, adds, or removes values" tag="curation">
+    <action>Load, read completely, and execute steps/step-06-curation.md</action>
+  </step>
+
+  <step n="7" goal="Create behaviors/ directory, BEHAVIOR.md, VALUES.md, trajectory stubs" tag="scaffold">
+    <action>Load, read completely, and execute steps/step-07-scaffold.md</action>
+  </step>
+
+  <step n="8" goal="Populate config, wire hooks if needed, dry-run step-00" tag="wire-verify">
+    <action>Load, read completely, and execute steps/step-08-wire-verify.md</action>
+  </step>
+
+</workflow>

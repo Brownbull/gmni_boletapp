@@ -54,6 +54,12 @@ Spawn ECC Planner agent for epic design. Epics must be USER-VALUE focused, not t
         3. **NFR Coverage Map** — table mapping EVERY NFR to relevant epics
         4. **Dependency Flow** — the order epics should be built and why
         5. **Risk Assessment** — which epics have the most complexity or unknowns
+        6. **Intent Block (per epic)** — Gabe Lens format, ~200 tokens each:
+           - WHAT WE'RE DELIVERING: What does the user get when this epic ships? (not what we build — what they RECEIVE)
+           - THE ANALOGY: Physical system mapping that captures the epic's value (survives architecture changes)
+           - CONSTRAINT BOX: IS (what this delivers) / IS NOT (scope bound) / DECIDES (trade-off resolved)
+           - ONE-LINE HANDLE: 5-10 words — the epic's compressed identity
+           - DONE WHEN: 2-3 observable outcomes (user-visible, not implementation checkboxes)
 
         **IMPORTANT:** Consider that each user-facing story will likely need 1-2 hardening tasks
         built in, and complex stories may generate separate hardening stories. Factor this into
@@ -65,9 +71,10 @@ Spawn ECC Planner agent for epic design. Epics must be USER-VALUE focused, not t
   <action>Extract {{epic_list}} — array of epics with titles, FRs, NFRs, ARs</action>
   <action>Extract {{fr_coverage_map}} — FR -> Epic mapping</action>
   <action>Extract {{epic_count}} — total number of epics</action>
+  <action>Extract {{epic_intent_blocks}} — Intent Block per epic (Gabe Lens format)</action>
 
   <output>**Epic Design Complete**
-    **Epics: {{epic_count}}**
+    **Epics: {{epic_count}}** | **Intent Blocks:** {{epic_count}} epics with Gabe Lens intent
     {{epic_list_summary}}
     **FR Coverage:** {{fr_coverage_count}}/{{fr_count}} FRs mapped (must be 100%)
     **Dependency Flow:**

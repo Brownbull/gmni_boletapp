@@ -28,7 +28,7 @@ Spawn e2e-runner agent with full pre-flight context.
         **Available Helpers (import from staging-helpers.ts):** {{staging_helpers_api}}
         **Cooldown Helpers (if needed):** {{cooldown_helpers}}
 
-        **Selector Priority (from TEA):**
+        **Selector Priority:**
         1. data-testid (always preferred)
         2. getByRole with name
         3. Scoped locator within known container
@@ -38,7 +38,7 @@ Spawn e2e-runner agent with full pre-flight context.
         - Observable state: element.waitFor({ state: 'hidden/visible' })
         - Settling only: waitForTimeout(<1000ms)
         - NEVER: waitForTimeout(2000+) for async operations
-        - NEVER: waitForLoadState('networkidle') with Firebase
+        - AVOID: waitForLoadState('networkidle') with live WebSocket connections (prevents resolution)
 
         **Screenshot Convention:**
         - Persistent: test-results/{spec-name}/ (not cleaned by Playwright)
@@ -51,6 +51,18 @@ Spawn e2e-runner agent with full pre-flight context.
         Auth: [data-testid="test-login-button"] → [data-testid="test-user-{name}"]
 
         **Story ACs relevant to E2E:** {{story_acs_relevant_to_e2e}}
+
+        **Intent Context:** {{intent_context}}
+
+        **Intent-Aware Testing (when intent available):**
+        The intent describes WHAT THE USER IS TRYING TO ACCOMPLISH, not just what the UI does.
+        - Mechanical test: "button click opens modal" — tests the door
+        - Intent-aware test: "user can complete the full import flow" — tests the exit
+        Use the intent to:
+        1. Prioritize ACs: intent-critical outcomes > nice-to-have interactions
+        2. Name test cases using intent language (e.g., "user sees proof sheet at a glance")
+        3. Test USER OUTCOMES described in the intent, not just individual UI interactions
+        4. When intent is missing, fall back to mechanical AC-based testing (no degradation)
 
         **Requirements:**
         1. Follow ALL conventions from E2E-TEST-CONVENTIONS.md

@@ -1,0 +1,44 @@
+# KDBP Evolve Behavior Workflow
+name: kdbp-evolve-behavior
+description: "Evolution Engine — Causation Analysis, Adversarial Review (The Roast), and Versioning"
+author: "Khujta"
+
+# Persona
+persona:
+  role: "Evolution Engine Specialist"
+  style: "Analytical diagnostician — traces symptoms to root causes, challenges fixes adversarially"
+  principles:
+    - "Classify before fixing — state the type and loop before proposing any change"
+    - "Type F is the most expensive miss — pre-screen for alignment failures"
+    - "Hit at full speed or don't call it a crash test (V5)"
+    - "Human authority required for triple loop (Type F)"
+
+# Deep Behavior Protocol Integration
+dbp_integration:
+  enabled: true
+  bookend_pattern: true
+  start_step: "step-00-behavior-load"
+  end_step: "step-06-version"
+  behaviors_path: "{project-root}/_kdbp/behaviors"
+  registry: "{behaviors_path}/REGISTRY.md"
+  ledger: "{behaviors_path}/trajectory/ledger.md"
+  graceful_degradation: false  # This workflow REQUIRES a behavior
+
+# Critical variables from config
+config_source: "{project-root}/_kdbp/core/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+user_skill_level: "{config_source}:user_skill_level"
+document_output_language: "{config_source}:document_output_language"
+date: system-generated
+
+# Workflow components
+installed_path: "{project-root}/_kdbp/workflows/kdbp-evolve-behavior"
+instructions: "{installed_path}/instructions.xml"
+
+# Auto-proceed — only pause at ask tags in step files
+auto_proceed:
+  enabled: true
+
+standalone: true

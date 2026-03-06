@@ -1,0 +1,63 @@
+<workflow id="kdbp-ux-design" name="KDBP UX Design">
+  <critical>The workflow execution engine is governed by: {project-root}/_kdbp/core/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+  <critical>COLLABORATIVE UX DISCOVERY — peer partnership, not content generator</critical>
+  <critical>Output: Single ux-design-specification.md built progressively through all steps</critical>
+  <critical>A/P/C MENUS: After each major content section, offer [A]dvanced Elicitation, [P]arty Mode, [C]ontinue</critical>
+  <critical>DBP BOOKEND PATTERN: Step 0 loads behaviors. Step 6 records session ledger.</critical>
+
+  <!--
+  STEP PROCESSING RULES (read before executing any step):
+  1. Load ONE step file at a time — read entirely before executing
+  2. Execute steps in checklist order — no skipping or reordering
+  3. HALT at every <ask> tag — wait for user response before continuing
+  4. Mark each step [x] in the checklist BEFORE loading the next step
+  5. After compaction: re-read THIS file to find your current position
+
+  OUTPUT: Single ux-design-specification.md built progressively (append-only)
+  ARTIFACTS: May generate HTML visualizers (color themes, design directions)
+
+  DBP: Step 0 loads behavior values. Step 6 records session ledger.
+  If no behaviors registered: dbp_active=false, all DBP checks become no-ops.
+
+  PROGRESS CHECKLIST — update [x] as each step completes:
+  - [ ] Step 0:  Behavior Load                    → steps/step-00-behavior-load.md
+  - [ ] Step 1:  Init + Project Understanding     → steps/step-01-init.md
+  - [ ] Step 2:  Core Experience + Emotional      → steps/step-02-discovery.md
+  - [ ] Step 3:  Design System + Visual           → steps/step-03-design-system.md
+  - [ ] Step 4:  Directions + User Journeys       → steps/step-04-design-directions.md
+  - [ ] Step 5:  Components + Patterns + A11y     → steps/step-05-components.md
+  - [ ] Step 6:  Completion + Ledger [GL]         → steps/step-06-completion.md
+  -->
+
+  <step n="0" goal="Load behavior values into hot tier" tag="behavior-load">
+    <action>Load, read completely, and execute steps/step-00-behavior-load.md</action>
+  </step>
+
+  <step n="1" goal="Initialize workflow — detect continuation, discover input docs, understand project" tag="init">
+    <action>Load, read completely, and execute steps/step-01-init.md</action>
+  </step>
+
+  <step n="2" goal="Core experience, emotional response, and UX inspiration analysis" tag="discovery">
+    <action>Load, read completely, and execute steps/step-02-discovery.md</action>
+  </step>
+
+  <step n="3" goal="Design system choice, defining interaction, and visual foundation" tag="design-system">
+    <action>Load, read completely, and execute steps/step-03-design-system.md</action>
+  </step>
+
+  <step n="4" goal="Design direction mockups and user journey flows" tag="design-directions">
+    <action>Load, read completely, and execute steps/step-04-design-directions.md</action>
+  </step>
+
+  <step n="5" goal="Component strategy, UX patterns, responsive design, accessibility" tag="components">
+    <action>Load, read completely, and execute steps/step-05-components.md</action>
+  </step>
+
+  <step n="6" goal="UX design completion + session ledger [GL]" tag="completion">
+    <action>Load, read completely, and execute steps/step-06-completion.md</action>
+  </step>
+
+</workflow>
