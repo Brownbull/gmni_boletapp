@@ -109,5 +109,16 @@ describe('useScanStore — Credit & Control', () => {
       );
       expect(guardCalls).toHaveLength(0);
     });
+
+    it('applies malformed value types without crashing (no runtime type validation)', () => {
+      const malformedValues = {
+        phase: 123,
+        images: 'not-an-array',
+      } as unknown as Record<string, unknown>;
+      scanActions.restoreState(malformedValues);
+      // Known keys are applied even with wrong types (no runtime type check yet)
+      expect(getScanState().phase).toBe(123);
+      expect(getScanState().images).toBe('not-an-array');
+    });
   });
 });

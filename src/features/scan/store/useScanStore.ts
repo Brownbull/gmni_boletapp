@@ -15,7 +15,8 @@
 
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import type { ScanFullStoreInternal } from './slices/types';
+import type { UseBoundStore, StoreApi } from 'zustand';
+import type { ScanFullStoreInternal, ScanFullStore } from './slices/types';
 import { createScanCoreSlice } from './slices/scanCoreSlice';
 import { createScanBatchSlice } from './slices/scanBatchSlice';
 import { createScanCreditSlice } from './slices/scanCreditSlice';
@@ -25,8 +26,8 @@ import { createScanUISlice } from './slices/scanUISlice';
 export { initialScanState } from './slices/initialState';
 
 // Store uses ScanFullStoreInternal internally (_guardPhase needed by core slice).
-// Consumers access via ScanFullStore (re-exported from types.ts) which hides _guardPhase.
-export const useScanStore = create<ScanFullStoreInternal>()(
+// Cast to ScanFullStore so consumers cannot access _guardPhase via getState().
+const _useScanStore = create<ScanFullStoreInternal>()(
   devtools(
     (...args) => ({
       ...createScanCoreSlice(...args),
@@ -41,3 +42,5 @@ export const useScanStore = create<ScanFullStoreInternal>()(
     }
   )
 );
+
+export const useScanStore = _useScanStore as unknown as UseBoundStore<StoreApi<ScanFullStore>>;

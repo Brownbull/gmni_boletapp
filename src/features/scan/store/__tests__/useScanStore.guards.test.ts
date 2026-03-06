@@ -181,6 +181,19 @@ describe('useScanStore — Guards & Edge Cases', () => {
         '[ScanStore:guard]',
         expect.stringContaining('"action":"startSingle"')
       );
+      // Verify full structured payload includes current and expected phase
+      const guardCall = consoleSpy.mock.calls.find(
+        (c: unknown[]) => typeof c[1] === 'string' && c[1].includes('"action":"startSingle"')
+      );
+      expect(guardCall).toBeDefined();
+      const payload = JSON.parse(guardCall![1] as string);
+      expect(payload).toMatchObject({
+        store: 'scan',
+        action: 'startSingle',
+        currentPhase: 'capturing',
+        expectedPhase: 'idle',
+      });
+      expect(payload.timestamp).toBeGreaterThan(0);
     });
   });
 
