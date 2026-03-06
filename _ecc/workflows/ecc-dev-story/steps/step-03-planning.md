@@ -2,6 +2,39 @@
 
 Spawn ECC Planner, validate post-planning scope, mark story in-progress.
 
+## Phase 0: Conditional Architecture Intent Gate
+
+<!-- Only fires for architecture/decomposition/integration stories — FEATURE and BUGFIX skip entirely -->
+<action>Classify {{story_context}} story type from ACs and title:
+  - ARCHITECTURE: creates new modules, services, or infrastructure patterns
+  - DECOMPOSITION: splits existing code into new structure
+  - INTEGRATION: connects two or more existing systems
+  - FEATURE: adds user-visible functionality to existing patterns
+  - BUGFIX: fixes a defect
+  Set {{story_type}}</action>
+
+<check if="{{story_type}} in [ARCHITECTURE, DECOMPOSITION, INTEGRATION]">
+  <action>Extract ## Intent section from story file → {{epic_handle}}, {{story_handle}}</action>
+  <check if="## Intent section exists">
+    <action>Assess: Does the planned architecture serve the epic intent ({{epic_handle}})?
+      Check for:
+      - Gold-plating: more infrastructure than the intent requires
+      - Scope creep: decisions that serve future epics, not this one
+      - Pattern over-engineering: elegant pattern not demanded by intent
+      Rate: ALIGNED (proceed silently) | DRIFTED (explain)</action>
+    <check if="DRIFTED">
+      <output>**INTENT DRIFT DETECTED (Architecture Gate)**
+        **Epic Handle:** {{epic_handle}} | **Story Handle:** {{story_handle}}
+        **Drift:** {{drift_explanation}}
+        Architecture may not serve the stated intent — judgment call.</output>
+      <ask>[Y] Override with justification / [N] Revise approach</ask>
+    </check>
+  </check>
+  <check if="## Intent section NOT found">
+    <output>Architecture gate skipped — no Intent section in story file.</output>
+  </check>
+</check>
+
 ## Phase A: ECC Planner
 
 <critical>ECC ORCHESTRATOR: Spawning ECC Planner agent</critical>

@@ -1,0 +1,79 @@
+<workflow id="kdbp-prd" name="KDBP Product Requirements Document">
+  <critical>The workflow execution engine is governed by: {project-root}/_kdbp/core/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+  <critical>COLLABORATIVE PM PEER — facilitator, not content generator</critical>
+  <critical>Output: Single prd.md built progressively through all steps</critical>
+  <critical>A/P/C MENUS: After each major content section, offer [A]dvanced Elicitation, [P]arty Mode, [C]ontinue</critical>
+  <critical>CAPABILITY CONTRACT: Functional Requirements (Step 7) bind ALL downstream work</critical>
+  <critical>DBP BOOKEND PATTERN: Step 0 loads behaviors. Step 9 records session ledger.</critical>
+
+  <!--
+  STEP PROCESSING RULES (read before executing any step):
+  1. Load ONE step file at a time — read entirely before executing
+  2. Execute steps in checklist order — no skipping or reordering
+  3. HALT at every <ask> tag — wait for user response before continuing
+  4. Mark each step [x] in the checklist BEFORE loading the next step
+  5. After compaction: re-read THIS file to find your current position
+
+  DATA: project-types.csv + domain-complexity.csv loaded on-demand in Step 02
+  OUTPUT: Single prd.md built progressively (append-only)
+
+  DBP: Step 0 loads behavior values. Step 9 records session ledger.
+  If no behaviors registered: dbp_active=false, all DBP checks become no-ops.
+
+  PROGRESS CHECKLIST — update [x] as each step completes:
+  - [ ] Step 0:  Behavior Load              → steps/step-00-behavior-load.md
+  - [ ] Step 1:  Init + Continuation        → steps/step-01-init.md
+  - [ ] Step 2:  Discovery + Vision + Exec  → steps/step-02-discovery.md
+  - [ ] Step 3:  Success Criteria + Scope   → steps/step-03-success.md
+  - [ ] Step 4:  User Journey Mapping       → steps/step-04-journeys.md
+  - [ ] Step 5:  Domain + Innovation        → steps/step-05-advanced.md
+  - [ ] Step 6:  Project-Type + Scoping     → steps/step-06-strategy.md
+  - [ ] Step 7:  Functional Requirements    → steps/step-07-functional.md
+  - [ ] Step 8:  Non-Functional Reqs        → steps/step-08-nonfunctional.md
+  - [ ] Step 9:  Polish + Completion [GL]   → steps/step-09-completion.md
+  -->
+
+  <step n="0" goal="Load behavior values into hot tier" tag="behavior-load">
+    <action>Load, read completely, and execute steps/step-00-behavior-load.md</action>
+  </step>
+
+  <step n="1" goal="Initialize workflow — detect continuation, discover input docs" tag="init">
+    <action>Load, read completely, and execute steps/step-01-init.md</action>
+  </step>
+
+  <step n="2" goal="Project discovery, product vision, and executive summary" tag="discovery">
+    <action>Load, read completely, and execute steps/step-02-discovery.md</action>
+  </step>
+
+  <step n="3" goal="Success criteria and product scope negotiation" tag="success">
+    <action>Load, read completely, and execute steps/step-03-success.md</action>
+  </step>
+
+  <step n="4" goal="Narrative user journey mapping for all user types" tag="journeys">
+    <action>Load, read completely, and execute steps/step-04-journeys.md</action>
+  </step>
+
+  <step n="5" goal="Domain requirements and innovation analysis (conditional)" tag="advanced">
+    <action>Load, read completely, and execute steps/step-05-advanced.md</action>
+  </step>
+
+  <step n="6" goal="Project-type deep dive and scoping exercise" tag="strategy">
+    <action>Load, read completely, and execute steps/step-06-strategy.md</action>
+  </step>
+
+  <step n="7" goal="Functional requirements — THE capability contract" tag="functional">
+    <action>Load, read completely, and execute steps/step-07-functional.md</action>
+  </step>
+
+  <step n="8" goal="Non-functional requirements — quality attributes" tag="nonfunctional">
+    <action>Load, read completely, and execute steps/step-08-nonfunctional.md</action>
+  </step>
+
+  <step n="9" goal="Polish, completion, and session ledger [GL]" tag="completion">
+    <action>Load, read completely, and execute steps/step-09-completion.md</action>
+  </step>
+
+</workflow>

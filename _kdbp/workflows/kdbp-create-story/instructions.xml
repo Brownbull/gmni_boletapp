@@ -1,0 +1,79 @@
+<workflow id="kdbp-create-story" name="KDBP Story Creation">
+  <critical>The workflow execution engine is governed by: {project-root}/_kdbp/core/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+  <critical>ECC-ORCHESTRATED STORY CREATION — Adaptive pipeline based on story complexity</critical>
+  <critical>Sequence: classify -> [planner] -> [architect] -> [parallel reviewers] -> generate story</critical>
+  <critical>AUTO-PROCEED MODE: Skip all generic "Continue?" confirmations.
+    Only pause at Step 2 (no epics). All other steps auto-proceed.</critical>
+  <critical>DBP BOOKEND PATTERN: Step 0 loads behaviors. Step 7 adds [WI] intent block. Step 9 records ledger.</critical>
+
+  <!--
+  STEP PROCESSING RULES (read before executing any step):
+  1. Load ONE step file at a time — read entirely before executing
+  2. Execute steps in checklist order — no skipping or reordering
+  3. HALT at every <ask> tag — wait for user response before continuing
+  4. Mark each step [x] in the checklist BEFORE loading the next step
+  5. After compaction: re-read THIS file to find your current position
+
+  AGENTS: planner(sonnet) | architect(sonnet/opus) | database-reviewer(sonnet) | security-reviewer(sonnet)
+  COMPLEX stories: architect escalates to opus, database/security reviewers added
+
+  DBP: Step 0 loads behavior values. Step 7 generates [WI] intent block. Step 9 records ledger.
+  If no behaviors registered: dbp_active=false, all DBP checks become no-ops.
+
+  PROGRESS CHECKLIST — update [x] as each step completes:
+  - [ ] Step 0:  Behavior Load      → steps/step-00-behavior-load.md
+  - [ ] Step 1:  Knowledge Init     → steps/step-01-knowledge.md
+  - [ ] Step 2:  Story Discovery    → steps/step-02-story-discovery.md
+  - [ ] Step 3:  Classification     → steps/step-03-classification.md
+  - [ ] Step 4:  Planner            → steps/step-04-planner.md
+  - [ ] Step 5:  Architect          → steps/step-05-architect.md
+  - [ ] Step 6:  Parallel Review    → steps/step-06-parallel-review.md
+  - [ ] Step 7:  Story Gen + [WI]   → steps/step-07-story-generation.md
+  - [ ] Step 8:  Completion + [GL]  → steps/step-08-completion.md
+  - [ ] Step 9:  Story Ledger       → steps/step-09-story-ledger.md
+  -->
+
+  <step n="0" goal="Load behavior values into hot tier" tag="behavior-load">
+    <action>Load, read completely, and execute steps/step-00-behavior-load.md</action>
+  </step>
+
+  <step n="1" goal="Load project knowledge" tag="knowledge-init">
+    <action>Load, read completely, and execute steps/step-01-knowledge.md</action>
+  </step>
+
+  <step n="2" goal="Find and load story" tag="story-discovery">
+    <action>Load, read completely, and execute steps/step-02-story-discovery.md</action>
+  </step>
+
+  <step n="3" goal="Classify story complexity" tag="classification">
+    <action>Load, read completely, and execute steps/step-03-classification.md</action>
+  </step>
+
+  <step n="4" goal="Requirements analysis (planner)" tag="ecc-planner">
+    <action>Load, read completely, and execute steps/step-04-planner.md</action>
+  </step>
+
+  <step n="5" goal="Technical design (architect)" tag="ecc-architect">
+    <action>Load, read completely, and execute steps/step-05-architect.md</action>
+  </step>
+
+  <step n="6" goal="Parallel technical review (COMPLEX only)" tag="parallel-review">
+    <action>Load, read completely, and execute steps/step-06-parallel-review.md</action>
+  </step>
+
+  <step n="7" goal="Generate story file + [WI] intent block" tag="story-generation">
+    <action>Load, read completely, and execute steps/step-07-story-generation.md</action>
+  </step>
+
+  <step n="8" goal="Cost tracking + completion + [GL] ledger" tag="completion">
+    <action>Load, read completely, and execute steps/step-08-completion.md</action>
+  </step>
+
+  <step n="9" goal="Story creation ledger [GL]" tag="story-ledger">
+    <action>Load, read completely, and execute steps/step-09-story-ledger.md</action>
+  </step>
+
+</workflow>

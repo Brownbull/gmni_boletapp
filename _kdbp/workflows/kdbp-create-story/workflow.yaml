@@ -1,0 +1,143 @@
+# KDBP-Enhanced Story Creation Workflow
+name: kdbp-create-story
+description: "Adaptive story creation with complexity classification, ECC agents, and DBP behavioral tracking"
+author: "BMad + Khujta"
+
+# ECC Integration - Orchestrator Configuration
+ecc_orchestration:
+  enabled: true
+  orchestrator: "ECC Orchestrator"
+
+  # Adaptive classification tiers (cascade — first match wins)
+  classification:
+    trivial:
+      criteria: "structural move/rename + known pattern + ≤4 tasks + ≤5 files"
+      agents: []
+      description: "No subagents — orchestrator handles analysis and story generation"
+    simple:
+      criteria: "≤4 tasks + ≤8 files + (known pattern OR structural move)"
+      agents: ["planner"]
+      description: "Planner only — architect skipped"
+    standard:
+      criteria: "default tier when no other tier matches"
+      agents: ["planner", "architect"]
+      description: "Full analysis — planner + architect"
+    complex:
+      criteria: "new feature OR >6 tasks OR >10 files OR (database + auth)"
+      agents: ["planner", "architect"]
+      optional_agents: ["database-reviewer", "security-reviewer"]
+      description: "Full analysis + optional parallel specialized reviewers"
+
+  agents:
+    planner:
+      subagent_type: "everything-claude-code:planner"
+      model: "sonnet"
+      max_turns: 5
+      purpose: "Analyze requirements, identify risks, plan implementation approach"
+    architect:
+      subagent_type: "everything-claude-code:architect"
+      model_standard: "sonnet"
+      model_complex: "opus"
+      max_turns: 5
+      purpose: "Technical design, pattern recommendations, dependency analysis"
+    database-reviewer:
+      subagent_type: "everything-claude-code:database-reviewer"
+      model: "sonnet"
+      max_turns: 3
+      purpose: "Schema/query analysis for stories involving database changes"
+    security-reviewer:
+      subagent_type: "everything-claude-code:security-reviewer"
+      model: "sonnet"
+      max_turns: 3
+      purpose: "Security considerations for stories involving auth or sensitive data"
+
+  output_constraints:
+    planner: "max 80 lines, structured tables, no code snippets"
+    architect: "max 80 lines, structured tables, no code snippets"
+    database-reviewer: "max 40 lines"
+    security-reviewer: "max 40 lines"
+
+  context_preload:
+    enabled: true
+    description: "Read relevant source files ONCE in Step 2, pass to all agents"
+
+  auto_proceed:
+    enabled: true
+    pause_points: ["Step 2 (no epics found)"]
+
+# Deep Behavior Protocol Integration
+dbp_integration:
+  enabled: true
+  bookend_pattern: true
+  start_step: "step-00-behavior-load"
+  end_step: "step-09-story-ledger"
+  intent_block_step: "step-07-story-generation"
+  behaviors_path: "{project-root}/_kdbp/behaviors"
+  registry: "{behaviors_path}/REGISTRY.md"
+  ledger: "{behaviors_path}/trajectory/ledger.md"
+  context_tiers:
+    hot: "Value handles + last 3 ledger entries (<1,500 tokens)"
+    warm: "Never during dev workflows"
+    cold: "Never during story creation"
+  graceful_degradation: true
+
+# Project Knowledge Integration
+project_knowledge:
+  enabled: true
+  load_at_session_start: true
+  files:
+    required:
+      - "{project-root}/_kdbp/knowledge/code-review-patterns.md"
+      - "{project-root}/_kdbp/knowledge/dbp-workflow-integration.md"
+      - "{project-root}/.claude/rules/testing.md"
+      - "{project-root}/docs/architecture/<db-patterns>.md  # optional"
+    optional:
+      - "{project-root}/docs/architecture/state-management.md"
+      - "{project-root}/docs/architecture/component-patterns.md"
+
+# Story Sizing Guidelines (Opus 4.6)
+sizing_guidelines:
+  model: "Opus 4.6"
+  updated: "2026-02-05"
+  small: { tasks: "1-3", subtasks: "≤10", files: "≤4", points: "1-2" }
+  medium: { tasks: "3-6", subtasks: "≤25", files: "≤8", points: "3-5" }
+  large: { tasks: "6-8", subtasks: "≤40", files: "≤12", points: "5-8" }
+  too_large: { tasks: ">8", subtasks: ">40", files: ">12", action: "split" }
+  principles:
+    - "Prefer fewer larger stories over many micro-stories"
+    - "Group related layers (types→service→UI→tests) into single stories"
+    - "Foundation + integration can be ONE story if within limits"
+
+# Critical variables from config
+config_source: "{project-root}/_kdbp/core/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+user_skill_level: "{config_source}:user_skill_level"
+document_output_language: "{config_source}:document_output_language"
+date: system-generated
+
+sprint_artifacts: "{project-root}/docs/sprint-artifacts"
+story_dir: "{sprint_artifacts}/stories"
+sprint_status: "{sprint_artifacts}/sprint-status.yaml"
+epics_dir: "{output_folder}"
+
+project_knowledge_path: "{project-root}/_kdbp/knowledge"
+project_architecture_path: "{project-root}/docs/architecture"
+
+knowledge_cache_files:
+  - "_kdbp/knowledge/code-review-patterns.md"
+  - "_kdbp/knowledge/dbp-workflow-integration.md"
+  - ".claude/rules/testing.md"
+  - "docs/architecture/<db-patterns>.md  # optional"
+
+cost_tracking:
+  enabled: true
+  command: 'workflow-cost --csv --stats --workflow "kdbp-create-story" --story "{{story_key}}"'
+  step: "8"
+  mandatory: true
+
+installed_path: "{project-root}/_kdbp/workflows/kdbp-create-story"
+instructions: "{installed_path}/instructions.xml"
+
+standalone: true

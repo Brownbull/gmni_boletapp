@@ -1,0 +1,10 @@
+# KDBP Configuration — populated by kdbp-init
+project_name: "BoletApp"
+user_name: "Gabe"
+user_skill_level: "intermediate"
+communication_language: "English"
+document_output_language: "English"
+output_folder: "{project-root}/_kdbp-output"
+planning_artifacts: "{project-root}/_kdbp-output/planning-artifacts"
+implementation_artifacts: "{project-root}/_kdbp-output/implementation-artifacts"
+project_knowledge: "{project-root}/docs"

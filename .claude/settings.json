@@ -12,7 +12,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/_ecc/hooks/ecc-pre-edit-guard.py\"",
+            "command": "ECC_GRAVITY_WELLS=\"translations.ts=split by feature module\" ECC_SIZE_EXCLUDE=\"App.tsx,PROTOCOL-v2.md\" python3 \"$CLAUDE_PROJECT_DIR/_kdbp/hooks/pre-edit-guard.py\"",
             "timeout": 5
           }
         ]
@@ -22,7 +22,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/_ecc/hooks/ecc-pre-write-guard.py\"",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/_kdbp/hooks/pre-write-guard.py\"",
             "timeout": 5
           }
         ]
@@ -30,11 +30,21 @@
     ],
     "PostToolUse": [
       {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/_kdbp/hooks/post-read-tracker.py\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
         "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/_ecc/hooks/post-bash-script-guard.sh\"",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/_kdbp/hooks/post-bash-script-guard.sh\"",
             "timeout": 10
           }
         ]
@@ -44,7 +54,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/_ecc/hooks/ecc-post-edit-warn.py\"",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/_kdbp/hooks/post-edit-warn.py\"",
             "timeout": 5
           }
         ]
@@ -54,7 +64,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/_ecc/hooks/ecc-post-edit-typecheck.sh\"",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/_kdbp/hooks/post-edit-typecheck.sh\"",
             "timeout": 30
           }
         ]
@@ -64,7 +74,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/_ecc/hooks/ecc-post-memory-notify.sh\"",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/_kdbp/hooks/post-memory-notify.sh\"",
             "timeout": 5
           }
         ]
@@ -75,7 +85,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/_ecc/hooks/ecc-session-start.sh\"",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/_kdbp/hooks/session-start.sh\"",
             "timeout": 5
           }
         ]
@@ -104,7 +114,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/_ecc/hooks/ecc-session-budget.py\"",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/_kdbp/hooks/session-budget.py\"",
             "timeout": 10
           }
         ]
@@ -115,7 +125,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/_ecc/hooks/ecc-session-stop.sh\"",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/_kdbp/hooks/session-stop.sh\"",
             "timeout": 10
           }
         ]

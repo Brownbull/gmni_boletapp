@@ -1,0 +1,54 @@
+<workflow id="kdbp-alignment-check" name="KDBP Alignment Check">
+  <critical>The workflow execution engine is governed by: {project-root}/_kdbp/core/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+  <critical>ALIGNMENT EVALUATOR — ask "did this serve the person?" not "did this follow the protocol?"</critical>
+  <critical>COLD TIER REQUIRED — full Value Blocks + PROJECT.md loaded at Step 00</critical>
+  <critical>Results above Session altitude are DRAFTS — present to human, do not commit autonomously</critical>
+
+  <!--
+  STEP PROCESSING RULES (read before executing any step):
+  1. Load ONE step file at a time — read entirely before executing
+  2. Execute steps in checklist order — no skipping or reordering
+  3. HALT at every <ask> tag — wait for user response before continuing
+  4. Mark each step [x] in the checklist BEFORE loading the next step
+  5. After compaction: re-read THIS file to find your current position
+
+  PROTOCOL: §10d Alignment Check Protocol (6 steps)
+  Can be invoked standalone or called from kdbp-evolve-behavior (Type F).
+
+  PROGRESS CHECKLIST — update [x] as each step completes:
+  - [ ] Step 0:  Behavior Load (cold tier)      → steps/step-00-behavior-load.md
+  - [ ] Step 1:  Capture Output                  → steps/step-01-capture.md
+  - [ ] Step 2:  State the Intent (V8 check)     → steps/step-02-intent.md
+  - [ ] Step 3:  Run Value Tests                 → steps/step-03-value-tests.md
+  - [ ] Step 4:  Trace Failures                  → steps/step-04-trace.md
+  - [ ] Step 5:  Act and Verify                  → steps/step-05-act.md
+  -->
+
+  <step n="0" goal="Load cold tier — full values + PROJECT.md" tag="behavior-load">
+    <action>Load, read completely, and execute steps/step-00-behavior-load.md</action>
+  </step>
+
+  <step n="1" goal="Capture what the behavior produced" tag="capture">
+    <action>Load, read completely, and execute steps/step-01-capture.md</action>
+  </step>
+
+  <step n="2" goal="State what the person needs — V8 human-grounding" tag="intent">
+    <action>Load, read completely, and execute steps/step-02-intent.md</action>
+  </step>
+
+  <step n="3" goal="Run value alignment tests at correct altitude" tag="value-tests">
+    <action>Load, read completely, and execute steps/step-03-value-tests.md</action>
+  </step>
+
+  <step n="4" goal="Trace failures to gap type" tag="trace">
+    <action>Load, read completely, and execute steps/step-04-trace.md</action>
+  </step>
+
+  <step n="5" goal="Act per classification + verify fix" tag="act">
+    <action>Load, read completely, and execute steps/step-05-act.md</action>
+  </step>
+
+</workflow>

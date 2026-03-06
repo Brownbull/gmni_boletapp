@@ -1,0 +1,106 @@
+<workflow id="kdbp-create-epics" name="KDBP Epic and Story Creation">
+  <critical>The workflow execution engine is governed by: {project-root}/_kdbp/core/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+  <critical>ECC-ORCHESTRATED EPIC AND STORY CREATION
+    Sequence: prerequisites -> epic design (planner) -> per-epic story generation (planner + architect + security) -> cross-epic analysis -> validation -> finalization
+    This workflow produces: epics.md + individual story files with File Specs, Architectural ACs, Tasks/Subtasks, and Dev Notes</critical>
+  <critical>HARDENING ANALYSIS: Every story is checked against 6 hardening patterns to proactively detect
+    technical debt. Findings are classified as BUILT-IN or SEPARATE. Target: reduce 2.3x story multiplier to under 1.3x.</critical>
+  <critical>AUTO-PROCEED MODE: Skip all generic "Continue?" confirmations.
+    Only pause at Steps 2, 3, 4c, and 6 user gates. All other steps auto-proceed.</critical>
+  <critical>DBP BOOKEND PATTERN: Step 0 loads behaviors. Step 4d adds [WI] intent blocks to stories. Step 9 records ledger + [EC] epic checkpoint.</critical>
+
+  <!--
+  STEP PROCESSING RULES (read before executing any step):
+  1. Load ONE step file at a time — read entirely before executing
+  2. Execute steps in checklist order — no skipping or reordering
+  3. HALT at every <ask> tag — wait for user response before continuing
+  4. Mark each step [x] in the checklist BEFORE loading the next step
+  5. After compaction: re-read THIS file to find your current position
+  6. Step 4 is a LOOP over epics — load sub-steps (4a-4d) per epic iteration
+
+  AGENTS: planner(opus) | architect(opus) | security-reviewer(sonnet)
+
+  DBP: Step 0 loads behavior values. Step 4d includes [WI] intent blocks. Step 9 records ledger + [EC].
+  If no behaviors registered: dbp_active=false, all DBP checks become no-ops.
+
+  PROGRESS CHECKLIST — update [x] as each step completes:
+  - [ ] Step 0:  Behavior Load            → steps/step-00-behavior-load.md
+  - [ ] Step 1:  Knowledge Init           → steps/step-01-knowledge.md
+  - [ ] Step 2:  Prerequisites            → steps/step-02-prerequisites.md
+  - [ ] Step 3:  Epic Design              → steps/step-03-epic-design.md
+  - [ ] Step 4:  Per-Epic Story Gen       → LOOP (steps 4a-4d per epic)
+  - [ ] Step 5:  Cross-Epic Analysis      → steps/step-05-cross-epic.md
+  - [ ] Step 6:  Final Validation         → steps/step-06-validation.md
+  - [ ] Step 7:  Output Finalization      → steps/step-07-finalization.md
+  - [ ] Step 8:  Compound Health Check    → steps/step-08-compound-health.md
+  - [ ] Step 9:  Epic Checkpoint [GL][EC] → steps/step-09-epic-checkpoint.md
+  -->
+
+  <step n="0" goal="Load behavior values into hot tier" tag="behavior-load">
+    <action>Load, read completely, and execute steps/step-00-behavior-load.md</action>
+  </step>
+
+  <step n="1" goal="Load project knowledge" tag="knowledge-init">
+    <action>Load, read completely, and execute steps/step-01-knowledge.md</action>
+  </step>
+
+  <step n="2" goal="Validate planning artifacts and extract requirements" tag="prerequisites">
+    <action>Load, read completely, and execute steps/step-02-prerequisites.md</action>
+  </step>
+
+  <step n="3" goal="Design user-value-focused epics" tag="epic-design">
+    <action>Load, read completely, and execute steps/step-03-epic-design.md</action>
+  </step>
+
+  <step n="4" goal="Generate stories for each epic with hardening analysis" tag="story-generation">
+    <critical>Process epics SEQUENTIALLY. Within each epic, use parallel agents where possible.</critical>
+    <critical>Each epic goes through: story breakdown -> hardening analysis -> consolidation -> file generation</critical>
+
+    <loop for="each epic in {{epic_list}}">
+      <action>Set {{current_epic}} = current epic being processed</action>
+      <action>Set {{current_epic_frs}} = FRs assigned to this epic</action>
+      <action>Set {{current_epic_nfrs}} = NFRs relevant to this epic</action>
+      <action>Set {{current_epic_ars}} = ARs relevant to this epic</action>
+
+      <output>**Processing Epic {{current_epic.number}}: {{current_epic.title}}**
+        FRs: {{current_epic_frs}} | Estimated stories: {{current_epic.estimated_story_count}}</output>
+
+      <action>Load, read completely, and execute steps/step-04a-story-breakdown.md</action>
+      <action>Load, read completely, and execute steps/step-04b-hardening-analysis.md</action>
+      <action>Load, read completely, and execute steps/step-04c-consolidation.md</action>
+
+      <check if="user chose [S] Skip in step 4c">
+        <action>Append story summaries to {{epics_file}} without generating individual files</action>
+      </check>
+      <check if="user did NOT choose [S] Skip">
+        <action>Load, read completely, and execute steps/step-04d-story-files.md</action>
+      </check>
+
+      <action>Append Epic {{current_epic.number}} section with all stories to {{epics_file}}</action>
+    </loop>
+  </step>
+
+  <step n="5" goal="Cross-epic hardening analysis" tag="cross-epic-analysis">
+    <action>Load, read completely, and execute steps/step-05-cross-epic.md</action>
+  </step>
+
+  <step n="6" goal="Final validation" tag="final-validation">
+    <action>Load, read completely, and execute steps/step-06-validation.md</action>
+  </step>
+
+  <step n="7" goal="Output finalization" tag="finalization">
+    <action>Load, read completely, and execute steps/step-07-finalization.md</action>
+  </step>
+
+  <step n="8" goal="Behavioral health snapshot and correction story injection" tag="compound-health">
+    <action>Load, read completely, and execute steps/step-08-compound-health.md</action>
+  </step>
+
+  <step n="9" goal="Epic checkpoint — ledger [GL] + epic completion [EC]" tag="epic-checkpoint">
+    <action>Load, read completely, and execute steps/step-09-epic-checkpoint.md</action>
+  </step>
+
+</workflow>

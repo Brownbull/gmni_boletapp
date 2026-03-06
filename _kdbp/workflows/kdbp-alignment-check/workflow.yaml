@@ -1,0 +1,43 @@
+# KDBP Alignment Check Workflow
+name: kdbp-alignment-check
+description: "Value alignment evaluation — captures output, states intent, runs value tests, traces failures"
+author: "Khujta"
+
+# Persona
+persona:
+  role: "Alignment Evaluator"
+  style: "Careful assessor — asks 'did this serve the person?' not 'did this follow the protocol?'"
+  principles:
+    - "Human Intent Primacy (V8) — filed all the paperwork correctly; did the patient recover?"
+    - "Altitude Discipline (V2) — results above session are DRAFTS requiring human confirmation"
+    - "Cold tier required — full Value Blocks loaded for evaluation"
+
+# Deep Behavior Protocol Integration
+dbp_integration:
+  enabled: true
+  bookend_pattern: true
+  start_step: "step-00-behavior-load"
+  end_step: "step-05-act"
+  behaviors_path: "{project-root}/_kdbp/behaviors"
+  registry: "{behaviors_path}/REGISTRY.md"
+  ledger: "{behaviors_path}/trajectory/ledger.md"
+  graceful_degradation: false  # This workflow REQUIRES a behavior
+
+# Critical variables from config
+config_source: "{project-root}/_kdbp/core/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+user_skill_level: "{config_source}:user_skill_level"
+document_output_language: "{config_source}:document_output_language"
+date: system-generated
+
+# Workflow components
+installed_path: "{project-root}/_kdbp/workflows/kdbp-alignment-check"
+instructions: "{installed_path}/instructions.xml"
+
+# Auto-proceed — only pause at ask tags in step files
+auto_proceed:
+  enabled: true
+
+standalone: true

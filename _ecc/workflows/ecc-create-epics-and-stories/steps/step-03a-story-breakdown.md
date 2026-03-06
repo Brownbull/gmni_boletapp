@@ -52,6 +52,10 @@ Per-epic: spawn planner for story breakdown with risk flags for hardening analys
         6. **Risk Flags** — DATA_PIPELINE, ERROR_RESILIENCE, INPUT_SANITIZATION,
            E2E_TESTING, PURE_COMPONENT, CROSS_STORE
         7. **Key Files** — major files this story will create or modify
+        8. **Intent Handle** — one-line linking story to epic intent.
+           Format: "This story [verb] the [epic analogy] by [specific contribution]"
+           Example: "This story builds the loading dock for the warehouse by enabling CSV import"
+           Must reference the epic's ONE-LINE HANDLE from the Intent Block.
     </task-call>
   </ecc-spawn>
 

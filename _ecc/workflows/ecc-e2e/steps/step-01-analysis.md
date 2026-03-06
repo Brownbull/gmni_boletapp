@@ -14,6 +14,18 @@ Determine E2E action: SKIP, VERIFY, EXTEND, or CREATE.
   <action>Filter changed files to UI components (.tsx in components/views, not types/utils) → {{changed_ui_files}}</action>
   <action>Extract {{story_acs_relevant_to_e2e}} — ACs describing user-visible behavior</action>
 
+  <!-- Intent loading — provides "why" context for test generation -->
+  <action>If story file found, extract ## Intent section:
+    - {{epic_handle}} = Epic Handle (one-line epic identity)
+    - {{story_handle}} = Story Handle (how this story serves the epic)
+    - Set {{has_intent}} = true/false</action>
+  <check if="{{has_intent}}">
+    <action>Set {{intent_context}} = "Epic: {{epic_handle}} | Story: {{story_handle}}"</action>
+  </check>
+  <check if="NOT {{has_intent}}">
+    <action>Set {{intent_context}} = "No intent available — test mechanical behavior only"</action>
+  </check>
+
   <!-- Auto-classification -->
   <action>Classify E2E action:
     1. If no UI files in {{changed_ui_files}} and no user-flow ACs → SKIP
@@ -29,6 +41,7 @@ Determine E2E action: SKIP, VERIFY, EXTEND, or CREATE.
   <ask>**E2E Analysis: {{e2e_action}}**
 
     Story: {{story_key}}
+    {{#if has_intent}}Intent: {{intent_context}}{{/if}}
     Changed UI: {{changed_ui_files}}
     {{#if target_spec}}Existing spec: {{target_spec}}{{/if}}
     {{#if e2e_gap}}Gap: {{e2e_gap}}{{/if}}

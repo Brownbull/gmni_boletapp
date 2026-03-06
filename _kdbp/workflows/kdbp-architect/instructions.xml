@@ -1,0 +1,68 @@
+<workflow id="kdbp-architect" name="KDBP Architecture">
+  <critical>The workflow execution engine is governed by: {project-root}/_kdbp/core/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+  <critical>COLLABORATIVE ARCHITECTURE DISCOVERY — peer partnership, not client-vendor</critical>
+  <critical>Output: Single architecture.md document built progressively through all steps</critical>
+  <critical>A/P/C MENUS: After each major content section, offer [A]dvanced Elicitation, [P]arty Mode, [C]ontinue</critical>
+  <critical>DBP BOOKEND PATTERN: Step 0 loads behaviors. Step 7 records session ledger.</critical>
+
+  <!--
+  STEP PROCESSING RULES (read before executing any step):
+  1. Load ONE step file at a time — read entirely before executing
+  2. Execute steps in checklist order — no skipping or reordering
+  3. HALT at every <ask> tag — wait for user response before continuing
+  4. Mark each step [x] in the checklist BEFORE loading the next step
+  5. After compaction: re-read THIS file to find your current position
+
+  DATA: domain-complexity.csv + project-types.csv loaded on-demand
+  OUTPUT: Single architecture.md built progressively (append-only)
+
+  DBP: Step 0 loads behavior values. Step 7 records session ledger.
+  If no behaviors registered: dbp_active=false, all DBP checks become no-ops.
+
+  PROGRESS CHECKLIST — update [x] as each step completes:
+  - [ ] Step 0:  Behavior Load              → steps/step-00-behavior-load.md
+  - [ ] Step 1:  Init + Doc Discovery       → steps/step-01-init.md
+  - [ ] Step 2:  Context Analysis           → steps/step-02-context.md
+  - [ ] Step 3:  Starter Evaluation         → steps/step-03-starter.md
+  - [ ] Step 4:  Core Decisions             → steps/step-04-decisions.md
+  - [ ] Step 5:  Patterns & Rules           → steps/step-05-patterns.md
+  - [ ] Step 6:  Structure + Validation     → steps/step-06-structure-validation.md
+  - [ ] Step 7:  Completion + Ledger [GL]   → steps/step-07-completion.md
+  -->
+
+  <step n="0" goal="Load behavior values into hot tier" tag="behavior-load">
+    <action>Load, read completely, and execute steps/step-00-behavior-load.md</action>
+  </step>
+
+  <step n="1" goal="Initialize workflow — detect continuation, discover input docs" tag="init">
+    <action>Load, read completely, and execute steps/step-01-init.md</action>
+  </step>
+
+  <step n="2" goal="Analyze project context — requirements, constraints, scale" tag="context">
+    <action>Load, read completely, and execute steps/step-02-context.md</action>
+  </step>
+
+  <step n="3" goal="Evaluate starter templates and technology selection" tag="starter">
+    <action>Load, read completely, and execute steps/step-03-starter.md</action>
+  </step>
+
+  <step n="4" goal="Core architectural decisions across 5 categories" tag="decisions">
+    <action>Load, read completely, and execute steps/step-04-decisions.md</action>
+  </step>
+
+  <step n="5" goal="Implementation patterns and consistency rules" tag="patterns">
+    <action>Load, read completely, and execute steps/step-05-patterns.md</action>
+  </step>
+
+  <step n="6" goal="Project structure, boundaries, and validation" tag="structure-validation">
+    <action>Load, read completely, and execute steps/step-06-structure-validation.md</action>
+  </step>
+
+  <step n="7" goal="Architecture completion + session ledger [GL]" tag="completion">
+    <action>Load, read completely, and execute steps/step-07-completion.md</action>
+  </step>
+
+</workflow>

@@ -98,6 +98,15 @@ PATTERN_META = {
         "ff_a_gate": "No FF-A gate — FF-B only (Consensus Drift has no keyword trigger)",
         "mode": "Mode 1: L2 Pattern Match (FF-B unique coverage)",
     },
+    "L2-009": {
+        "signals": [
+            "load all knowledge", "context loaded but unused", "pattern not found",
+            "irrelevant for this task", "knowledge gap", "missing context",
+            "too much context", "context window full",
+        ],
+        "ff_a_gate": "None — requires P3 usage tracking data before FF-A gate is viable",
+        "mode": "Mode 1: L2 Pattern Match",
+    },
 }
 
 

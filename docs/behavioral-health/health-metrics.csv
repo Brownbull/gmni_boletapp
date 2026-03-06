@@ -1,2 +1,4 @@
 date,epic,fix_count,feat_count,ratio
 2026-02-23,epic-15b,5,8,0.62
+2026-03-01,backprop-snapshot,8,3,2.67
+2026-03-06,growth-phase,8,2,4.00
