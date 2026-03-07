@@ -12,3 +12,4 @@
 | 2026-03-06 | 16-2 | review | boletapp-dev | ✓ done (self-review APPROVE, 0 critical, 2 warnings fixed) | none |
 | 2026-03-06 | 16-3 | none | boletapp-dev | Fix gallery bug: handleScanOverlayDismiss now calls full reset() matching retry pattern. 3 error recovery tests. E2E written (staging blocked by 16-9). | none |
 | 2026-03-06 | 16-4 | none | boletapp-dev | ✓ done | none |
+| 2026-03-06 | 16-4 | review | boletapp-dev | ✓ done (APPROVE 9.0/10, 3 quick fixes, 0 TD) | none |

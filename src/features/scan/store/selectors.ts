@@ -24,10 +24,10 @@ import type {
   ScanDialogType,
   DialogState,
   CreditType,
+  ScanState,
 } from '../types/scanStateMachine';
 import type { Transaction } from '@/types/transaction';
 import type { BatchReceipt } from '@/types/batchReceipt';
-import type { ScanState } from '../types/scanStateMachine';
 import type { ScanDialogResultMap, ScanErrorType } from './slices/types';
 
 // =============================================================================

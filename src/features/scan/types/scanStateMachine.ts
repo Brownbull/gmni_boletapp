@@ -18,7 +18,7 @@ import type {
   BatchCompleteDialogData,
 } from '@shared/types/scanWorkflow';
 
-// Re-export shared types so existing scan-internal imports still resolve
+// Re-export shared types for backward compat — canonical source is @shared/types/scanWorkflow
 export type {
   ScanPhase,
   ScanMode,
@@ -237,10 +237,7 @@ export function getCreditTypeForMode(mode: ScanMode): CreditType {
     case 'single':
       return 'normal';
     case 'batch':
-      return 'super';
     case 'statement':
       return 'super';
-    default:
-      return 'normal';
   }
 }

@@ -1,6 +1,6 @@
 # Story 16-4: Move scanStateMachine.ts Into Feature & Extract Shared Types
 
-## Status: review
+## Status: done
 
 ## Intent
 **Epic Handle:** "Untangle the wires, open the test door"
@@ -78,6 +78,14 @@ As a developer, I want scan types co-located with the scan feature and shared ty
 - Some types may need to stay in both places (re-exported from feature barrel for backward compatibility). Prefer a clean break — update all consumers.
 - Complexity Growth Accepted 2026-03-06: story estimated ~8 files, actual ~48 (28 src + 18 test + 2 new). All growth is mechanical import path changes. Low risk.
 - Scan-internal types file re-exports shared types for backward compatibility. Feature barrel does NOT `export * from './types'` to avoid TS2308 duplicate export conflicts with store re-exports.
+
+## Senior Developer Review (ECC)
+
+- **Date:** 2026-03-06
+- **Agents:** code-reviewer, security-reviewer, architect, tdd-guide (COMPLEX)
+- **Score:** 9.0/10
+- **Outcome:** APPROVE — 3 quick fixes applied (import consolidation, exhaustive switch, canonical-source comment), 5 INFO items noted (all pre-existing)
+- **TD Stories:** 0 (all deferred items are pre-existing, not warranting individual stories)
 
 <!-- CITED: none -->
 <!-- INTENT: aligned -->
