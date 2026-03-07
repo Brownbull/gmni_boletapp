@@ -315,7 +315,8 @@ development_status:
 
   # Independent
   16-8-move-legacy-scan-components: done                 # 3 pts - Move ~17 files from src/components/scan/ to features/ | done: 2026-03-07
-  16-9-staging-deployment: ready-for-dev               # 5 pts - Firebase Hosting staging + registration blocking + CI
+  16-9-staging-deployment: done                          # 5 pts - Firebase Hosting staging + registration blocking + CI | done: 2026-03-07
+  TD-16-7-staging-deployment-hardening: done    # 2 pts - CI auth migration + smoke test version + rules scoping (from 16-9 review) | DEPENDS: 16-9 | done: 2026-03-07
 
   epic-16-retrospective: optional
 

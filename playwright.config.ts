@@ -69,8 +69,8 @@ export default defineConfig({
 
   /* Shared settings for all the projects below */
   use: {
-    /* Base URL to use in actions like `await page.goto('/')` */
-    baseURL: 'http://localhost:5174',
+    /* Base URL — override with STAGING_URL env var for deployed staging */
+    baseURL: process.env.STAGING_URL || 'http://localhost:5174',
 
     /* Collect trace when retrying the failed test */
     trace: 'on-first-retry',
@@ -182,11 +182,14 @@ export default defineConfig({
     // },
   ],
 
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5174',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000, // 2 minutes
-  },
+  /* Run your local dev server before starting the tests.
+   * Skip when STAGING_URL is set (targeting deployed staging). */
+  ...(!process.env.STAGING_URL && {
+    webServer: {
+      command: 'npm run dev',
+      url: 'http://localhost:5174',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120000, // 2 minutes
+    },
+  }),
 });
