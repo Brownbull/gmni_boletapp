@@ -5,6 +5,22 @@
  * Phase machine, image management, process lifecycle, save/result actions, control actions.
  * Cross-slice writes: sets credit state (processStart/Success/Error), batch state (image actions).
  * Cross-store writes: images/batchProgress to shared workflow store, phase/mode mirrored.
+ *
+ * INVARIANT: Dual-State Mirroring Contract (TD-16-4)
+ * ──────────────────────────────────────────────────
+ * This slice is the SINGLE WRITER to useScanWorkflowStore for mirrored fields.
+ * No other code should call wf().setPhase(), wf().setMode(), or wf().setActiveDialog() directly.
+ *
+ * Mirrored fields (scan store is source of truth, shared store is transport):
+ *   - phase:        Written on every phase transition (start*, process*, save*, cancel, reset, restoreState)
+ *   - mode:         Written on start actions (startSingle, startBatch, startStatement, restoreState)
+ *   - activeDialog: Written by dialogSlice (separate file, same single-writer contract)
+ *
+ * Owned by shared store (scan writes, consumers read):
+ *   - images, batchReceipts, batchProgress, batchEditingIndex
+ *
+ * If a mirror call is missed, batch-review/transaction-editor will read stale phase from shared store.
+ * Integration test: tests/integration/scan-workflow-store.test.ts verifies the full flow.
  */
 
 import type { StateCreator } from 'zustand';
@@ -18,7 +34,7 @@ import { initialScanState } from './initialState';
 import { logGuardViolation } from './guardLog';
 import { useScanWorkflowStore } from '@shared/stores/useScanWorkflowStore';
 
-// Shorthand for shared workflow store access
+// Shorthand for shared workflow store access (single-writer: only this slice calls wf() mutators)
 const wf = () => useScanWorkflowStore.getState();
 
 // Runtime validation sets for restoreState (AC-1)
@@ -68,7 +84,7 @@ export const createScanCoreSlice: StateCreator<
       { ...initialScanState, phase: 'capturing', mode: 'single', requestId: generateRequestId(), userId, startedAt: Date.now() },
       undefined, 'scan/startSingle'
     );
-    // Mirror to shared workflow store
+    // MIRROR: phase + mode → shared store (scan is source of truth)
     wf().reset();
     wf().setPhase('capturing');
     wf().setMode('single');
@@ -80,7 +96,7 @@ export const createScanCoreSlice: StateCreator<
       { ...initialScanState, phase: 'capturing', mode: 'batch', requestId: generateRequestId(), userId, startedAt: Date.now() },
       undefined, 'scan/startBatch'
     );
-    // Mirror to shared workflow store
+    // MIRROR: phase + mode + batchProgress → shared store (scan is source of truth)
     wf().reset();
     wf().setPhase('capturing');
     wf().setMode('batch');
@@ -93,7 +109,7 @@ export const createScanCoreSlice: StateCreator<
       { ...initialScanState, phase: 'capturing', mode: 'statement', requestId: generateRequestId(), userId, startedAt: Date.now() },
       undefined, 'scan/startStatement'
     );
-    // Mirror to shared workflow store
+    // MIRROR: phase + mode → shared store (scan is source of truth)
     wf().reset();
     wf().setPhase('capturing');
     wf().setMode('statement');
@@ -153,7 +169,7 @@ export const createScanCoreSlice: StateCreator<
       { phase: 'scanning', creditStatus: 'reserved', creditType, creditsCount, error: null },
       undefined, 'scan/processStart'
     );
-    wf().setPhase('scanning');
+    wf().setPhase('scanning'); // MIRROR: phase → shared store
   },
 
   processSuccess: (results: Transaction[]) => {
@@ -163,14 +179,14 @@ export const createScanCoreSlice: StateCreator<
       { phase: 'reviewing', creditStatus: 'confirmed', results, activeResultIndex: 0, error: null },
       undefined, 'scan/processSuccess'
     );
-    wf().setPhase('reviewing');
+    wf().setPhase('reviewing'); // MIRROR: phase → shared store
   },
 
   processError: (error: string) => {
     if (!get()._guardPhase('scanning', 'processError')) return;
     // Cross-slice write: sets creditSlice state (creditStatus)
     set({ phase: 'error', creditStatus: 'refunded', error }, undefined, 'scan/processError');
-    wf().setPhase('error');
+    wf().setPhase('error'); // MIRROR: phase → shared store
   },
 
   // RESULT Actions
@@ -204,19 +220,19 @@ export const createScanCoreSlice: StateCreator<
   saveStart: () => {
     if (!get()._guardPhase('reviewing', 'saveStart')) return;
     set({ phase: 'saving' }, undefined, 'scan/saveStart');
-    wf().setPhase('saving');
+    wf().setPhase('saving'); // MIRROR: phase → shared store
   },
 
   saveSuccess: () => {
     if (!get()._guardPhase('saving', 'saveSuccess')) return;
     set({ ...initialScanState }, undefined, 'scan/saveSuccess');
-    wf().reset();
+    wf().reset(); // MIRROR: full reset → shared store (clears phase, mode, images, etc.)
   },
 
   saveError: (error: string) => {
     if (!get()._guardPhase('saving', 'saveError')) return;
     set({ phase: 'reviewing', error }, undefined, 'scan/saveError');
-    wf().setPhase('reviewing');
+    wf().setPhase('reviewing'); // MIRROR: phase → shared store
   },
 
   // CONTROL Actions
@@ -232,12 +248,12 @@ export const createScanCoreSlice: StateCreator<
       return;
     }
     set({ ...initialScanState }, undefined, 'scan/cancel');
-    wf().reset();
+    wf().reset(); // MIRROR: full reset → shared store
   },
 
   reset: () => {
     set({ ...initialScanState }, undefined, 'scan/reset');
-    wf().reset();
+    wf().reset(); // MIRROR: full reset → shared store
   },
 
   restoreState: (restoredState: Partial<ScanState>) => {
@@ -318,7 +334,7 @@ export const createScanCoreSlice: StateCreator<
       scanFiltered.creditStatus = initialScanState.creditStatus;
     }
 
-    // Forward workflow fields to shared store
+    // MIRROR: forward workflow fields to shared store (images, batchProgress, batchReceipts, batchEditingIndex)
     const workflow = wf();
     if ('images' in workflowFiltered) workflow.setImages(workflowFiltered.images as string[]);
     if ('batchProgress' in workflowFiltered) workflow.setBatchProgress(workflowFiltered.batchProgress as Parameters<typeof workflow.setBatchProgress>[0]);
@@ -335,7 +351,7 @@ export const createScanCoreSlice: StateCreator<
       return;
     }
     set({ ...initialScanState, ...scanFiltered }, undefined, 'scan/restoreState');
-    // Mirror phase/mode to shared store
+    // MIRROR: phase + mode → shared store (restoring persisted state)
     const restoredPhase = (scanFiltered.phase as ScanPhase) ?? initialScanState.phase;
     const restoredMode = (scanFiltered.mode as typeof initialScanState.mode) ?? initialScanState.mode;
     wf().setPhase(restoredPhase);

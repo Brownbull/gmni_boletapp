@@ -38,6 +38,12 @@ export function createMockBatchReceipts(count: number = 3): BatchReceipt[] {
 /**
  * Reset both scan store and workflow store between tests.
  * Story 16-6: Must reset both stores since state is split.
+ *
+ * INTENTIONAL TEST COUPLING (TD-16-4 AC-3):
+ * This function directly resets both stores because they form a tightly-coupled
+ * writer/reader pair (scan writes, shared store transports). A store registry
+ * pattern would add indirection for minimal gain — these are the only two stores
+ * that need coordinated reset, and this is test-only code.
  */
 export function resetAllStores(): void {
   useScanStore.setState(initialScanState);

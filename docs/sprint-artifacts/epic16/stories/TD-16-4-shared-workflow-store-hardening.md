@@ -1,6 +1,6 @@
 # Tech Debt Story TD-16-4: Shared Workflow Store Hardening
 
-Status: ready-for-dev
+Status: done
 
 > **Source:** KDBP Code Review (2026-03-07) on story 16-6
 > **Priority:** LOW | **Estimated Effort:** 3 pts
@@ -15,13 +15,26 @@ As a **developer**, I want **the shared workflow store's dual-state mirroring au
 - AC-4: workflowActions facade evaluated — either justify or remove in favor of direct getState() calls
 
 ## Tasks / Subtasks
-- [ ] 1. Write integration test: scan start → addImage → processStart → batchComplete → verify batch-review reads correct data from shared store
-- [ ] 2. Add invariant comments to scanCoreSlice.ts documenting mirror writes (phase, mode, activeDialog) and that scan store is the single writer
-- [ ] 3. Evaluate resetAllStores() pattern — consider store registry or document as intentional test coupling
-- [ ] 4. Evaluate workflowActions facade — measure if it prevents tree-shaking or adds maintenance burden
+- [x] 1. Write integration test: scan start → addImage → processStart → batchComplete → verify batch-review reads correct data from shared store
+- [x] 2. Add invariant comments to scanCoreSlice.ts documenting mirror writes (phase, mode, activeDialog) and that scan store is the single writer
+- [x] 3. Evaluate resetAllStores() pattern — consider store registry or document as intentional test coupling
+- [x] 4. Evaluate workflowActions facade — measure if it prevents tree-shaking or adds maintenance burden
 
 ## Dev Notes
 - Source story: [16-6](./16-6-extract-shared-workflow-store.md)
 - Review findings: #4, #6, #11, #12
 - Files affected: `src/shared/stores/useScanWorkflowStore.ts`, `src/features/scan/store/slices/scanCoreSlice.ts`, `src/features/scan/store/__tests__/helpers.ts`, `tests/integration/`
 - The dual state (phase in both stores) is deliberate: scan owns decisions, shared store transports data. But if a mirror call is missed, consumers read stale phase.
+- AC-3 decision: resetAllStores() documented as intentional — store registry adds indirection for minimal gain in test-only 2-store reset
+- AC-4 decision: workflowActions facade REMOVED — zero production consumers, duplicated 13 methods, blocked tree-shaking. Tests migrated to getState() pattern.
+- Integration test: `tests/integration/scan-workflow-store.test.ts` — 37 tests, full lifecycle coverage
+
+## Senior Developer Review (KDBP)
+- **Date:** 2026-03-07
+- **Classification:** SIMPLE
+- **Agents:** code-reviewer, tdd-guide
+- **Score:** 8.75/10 — APPROVE
+- **Quick fixes applied:** 2 (mode ownership clarification in shared store header, trailing blank line in processStart)
+- **TD stories created:** 0
+- **Action items:** 0
+<!-- CITED: none -->

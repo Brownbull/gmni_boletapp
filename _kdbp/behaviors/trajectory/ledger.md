@@ -21,3 +21,5 @@
 | 2026-03-07 | 16-7 | review | boletapp-dev | ✓ done | none |
 | 2026-03-07 | TD-16-3 | none | boletapp-dev | ✓ done | Decompose useBatchReviewHandlers (773→552L) + BatchCaptureView (800→632L). Extracted 3 new files: batchReviewHandlerTypes.ts, BatchCaptureImageGallery.tsx, BatchCaptureCreditSection.tsx. Consolidated duplicate DisplayImage + BatchProcessingCallbacks. Self-review APPROVE 8.5/10. | none |
 | 2026-03-07 | TD-16-3 | review | boletapp-dev | ✓ done | none |
+| 2026-03-07 | TD-16-4 | none | boletapp-dev | ✓ done | Integration test (37 tests) verifying scan→shared→batch-review flow. Invariant comments on 13 mirror write sites. resetAllStores() documented as intentional. workflowActions facade removed (0 production consumers, 13 duplicated methods). 7165 tests pass. | none |
+| 2026-03-07 | TD-16-4 | review | boletapp-dev | ✓ done | none |

@@ -61,10 +61,8 @@ export {
   useWorkflowImageCount,
   useWorkflowState,
   getWorkflowState,
-  workflowActions,
   type ScanWorkflowState,
   type ScanWorkflowActions,
-  type WorkflowActionsType,
 } from './useScanWorkflowStore';
 
 // Story 14e-37: Insight store

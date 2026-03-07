@@ -7,11 +7,11 @@
  *
  * Coupling: scan (writer), batch-review (reader), transaction-editor (reader)
  *
- * State owned:
- * - images, batchReceipts, batchProgress, batchEditingIndex, mode
+ * State owned (lives only in shared store):
+ * - images, batchReceipts, batchProgress, batchEditingIndex
  *
- * State mirrored (scan writes, consumers read):
- * - phase, activeDialog
+ * State mirrored (scan store is source of truth, shared store is transport):
+ * - phase, mode, activeDialog
  */
 
 import { create } from 'zustand';
@@ -187,30 +187,3 @@ export const useWorkflowState = () =>
 
 export const getWorkflowState = () => useScanWorkflowStore.getState();
 
-/**
- * @internal Direct-access actions for non-React code (e.g., scan feature slices).
- * Consumers should use React selectors (useWorkflow*) instead.
- */
-export const workflowActions = {
-  setImages: (images: string[]) => useScanWorkflowStore.getState().setImages(images),
-  addImage: (image: string) => useScanWorkflowStore.getState().addImage(image),
-  removeImage: (index: number) => useScanWorkflowStore.getState().removeImage(index),
-  setBatchReceipts: (receipts: BatchReceipt[]) =>
-    useScanWorkflowStore.getState().setBatchReceipts(receipts),
-  updateBatchReceipt: (id: string, updates: Partial<BatchReceipt>) =>
-    useScanWorkflowStore.getState().updateBatchReceipt(id, updates),
-  discardBatchReceipt: (id: string) =>
-    useScanWorkflowStore.getState().discardBatchReceipt(id),
-  clearBatchReceipts: () => useScanWorkflowStore.getState().clearBatchReceipts(),
-  setBatchProgress: (progress: BatchProgress | null) =>
-    useScanWorkflowStore.getState().setBatchProgress(progress),
-  setBatchEditingIndex: (index: number | null) =>
-    useScanWorkflowStore.getState().setBatchEditingIndex(index),
-  setMode: (mode: ScanMode) => useScanWorkflowStore.getState().setMode(mode),
-  setPhase: (phase: ScanPhase) => useScanWorkflowStore.getState().setPhase(phase),
-  setActiveDialog: (dialog: DialogState | null) =>
-    useScanWorkflowStore.getState().setActiveDialog(dialog),
-  reset: () => useScanWorkflowStore.getState().reset(),
-} as const;
-
-export type WorkflowActionsType = typeof workflowActions;

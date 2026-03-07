@@ -15,8 +15,10 @@ import type { BatchProgress } from '@shared/types/scanWorkflow';
 import {
   useScanWorkflowStore,
   getWorkflowState,
-  workflowActions,
 } from '../useScanWorkflowStore';
+
+/** Helper: get store actions via getState() (replaces removed workflowActions facade). */
+const wf = () => useScanWorkflowStore.getState();
 
 // =============================================================================
 // Test Helpers
@@ -104,31 +106,31 @@ describe('useScanWorkflowStore', () => {
   describe('image actions', () => {
     it('setImages replaces all images', () => {
       act(() => {
-        workflowActions.setImages(['img1', 'img2']);
+        wf().setImages(['img1', 'img2']);
       });
       expect(getWorkflowState().images).toEqual(['img1', 'img2']);
     });
 
     it('addImage appends to images array', () => {
       act(() => {
-        workflowActions.setImages(['img1']);
-        workflowActions.addImage('img2');
+        wf().setImages(['img1']);
+        wf().addImage('img2');
       });
       expect(getWorkflowState().images).toEqual(['img1', 'img2']);
     });
 
     it('removeImage removes by index', () => {
       act(() => {
-        workflowActions.setImages(['a', 'b', 'c']);
-        workflowActions.removeImage(1);
+        wf().setImages(['a', 'b', 'c']);
+        wf().removeImage(1);
       });
       expect(getWorkflowState().images).toEqual(['a', 'c']);
     });
 
     it('removeImage with out-of-range index is safe', () => {
       act(() => {
-        workflowActions.setImages(['a', 'b']);
-        workflowActions.removeImage(5);
+        wf().setImages(['a', 'b']);
+        wf().removeImage(5);
       });
       expect(getWorkflowState().images).toEqual(['a', 'b']);
     });
@@ -142,7 +144,7 @@ describe('useScanWorkflowStore', () => {
     it('setBatchReceipts sets receipts array', () => {
       const receipts = [createMockBatchReceipt()];
       act(() => {
-        workflowActions.setBatchReceipts(receipts);
+        wf().setBatchReceipts(receipts);
       });
       expect(getWorkflowState().batchReceipts).toEqual(receipts);
     });
@@ -150,8 +152,8 @@ describe('useScanWorkflowStore', () => {
     it('updateBatchReceipt updates by id', () => {
       const receipt = createMockBatchReceipt({ id: 'r1' });
       act(() => {
-        workflowActions.setBatchReceipts([receipt]);
-        workflowActions.updateBatchReceipt('r1', { confidence: 0.5 });
+        wf().setBatchReceipts([receipt]);
+        wf().updateBatchReceipt('r1', { confidence: 0.5 });
       });
       expect(getWorkflowState().batchReceipts![0].confidence).toBe(0.5);
     });
@@ -159,8 +161,8 @@ describe('useScanWorkflowStore', () => {
     it('updateBatchReceipt ignores unknown id', () => {
       const receipt = createMockBatchReceipt({ id: 'r1' });
       act(() => {
-        workflowActions.setBatchReceipts([receipt]);
-        workflowActions.updateBatchReceipt('unknown', { confidence: 0.5 });
+        wf().setBatchReceipts([receipt]);
+        wf().updateBatchReceipt('unknown', { confidence: 0.5 });
       });
       expect(getWorkflowState().batchReceipts![0].confidence).toBe(0.95);
     });
@@ -169,8 +171,8 @@ describe('useScanWorkflowStore', () => {
       const r1 = createMockBatchReceipt({ id: 'r1' });
       const r2 = createMockBatchReceipt({ id: 'r2', index: 1 });
       act(() => {
-        workflowActions.setBatchReceipts([r1, r2]);
-        workflowActions.discardBatchReceipt('r1');
+        wf().setBatchReceipts([r1, r2]);
+        wf().discardBatchReceipt('r1');
       });
       expect(getWorkflowState().batchReceipts).toHaveLength(1);
       expect(getWorkflowState().batchReceipts![0].id).toBe('r2');
@@ -178,8 +180,8 @@ describe('useScanWorkflowStore', () => {
 
     it('clearBatchReceipts sets to null', () => {
       act(() => {
-        workflowActions.setBatchReceipts([createMockBatchReceipt()]);
-        workflowActions.clearBatchReceipts();
+        wf().setBatchReceipts([createMockBatchReceipt()]);
+        wf().clearBatchReceipts();
       });
       expect(getWorkflowState().batchReceipts).toBeNull();
     });
@@ -193,15 +195,15 @@ describe('useScanWorkflowStore', () => {
     it('setBatchProgress sets progress object', () => {
       const progress = createMockBatchProgress();
       act(() => {
-        workflowActions.setBatchProgress(progress);
+        wf().setBatchProgress(progress);
       });
       expect(getWorkflowState().batchProgress).toEqual(progress);
     });
 
     it('setBatchProgress(null) clears progress', () => {
       act(() => {
-        workflowActions.setBatchProgress(createMockBatchProgress());
-        workflowActions.setBatchProgress(null);
+        wf().setBatchProgress(createMockBatchProgress());
+        wf().setBatchProgress(null);
       });
       expect(getWorkflowState().batchProgress).toBeNull();
     });
@@ -214,15 +216,15 @@ describe('useScanWorkflowStore', () => {
   describe('batch editing index actions', () => {
     it('setBatchEditingIndex sets index', () => {
       act(() => {
-        workflowActions.setBatchEditingIndex(2);
+        wf().setBatchEditingIndex(2);
       });
       expect(getWorkflowState().batchEditingIndex).toBe(2);
     });
 
     it('setBatchEditingIndex(null) clears index', () => {
       act(() => {
-        workflowActions.setBatchEditingIndex(2);
-        workflowActions.setBatchEditingIndex(null);
+        wf().setBatchEditingIndex(2);
+        wf().setBatchEditingIndex(null);
       });
       expect(getWorkflowState().batchEditingIndex).toBeNull();
     });
@@ -235,14 +237,14 @@ describe('useScanWorkflowStore', () => {
   describe('mode actions', () => {
     it('setMode changes mode', () => {
       act(() => {
-        workflowActions.setMode('batch');
+        wf().setMode('batch');
       });
       expect(getWorkflowState().mode).toBe('batch');
     });
 
     it('setMode to statement', () => {
       act(() => {
-        workflowActions.setMode('statement');
+        wf().setMode('statement');
       });
       expect(getWorkflowState().mode).toBe('statement');
     });
@@ -255,7 +257,7 @@ describe('useScanWorkflowStore', () => {
   describe('mirrored state actions', () => {
     it('setPhase changes phase', () => {
       act(() => {
-        workflowActions.setPhase('scanning');
+        wf().setPhase('scanning');
       });
       expect(getWorkflowState().phase).toBe('scanning');
     });
@@ -263,15 +265,15 @@ describe('useScanWorkflowStore', () => {
     it('setActiveDialog sets dialog state', () => {
       const dialog = { type: 'cancel_warning' as const, data: null };
       act(() => {
-        workflowActions.setActiveDialog(dialog);
+        wf().setActiveDialog(dialog);
       });
       expect(getWorkflowState().activeDialog).toEqual(dialog);
     });
 
     it('setActiveDialog(null) clears dialog', () => {
       act(() => {
-        workflowActions.setActiveDialog({ type: 'cancel_warning' as const, data: null });
-        workflowActions.setActiveDialog(null);
+        wf().setActiveDialog({ type: 'cancel_warning' as const, data: null });
+        wf().setActiveDialog(null);
       });
       expect(getWorkflowState().activeDialog).toBeNull();
     });
@@ -284,13 +286,13 @@ describe('useScanWorkflowStore', () => {
   describe('reset', () => {
     it('restores all state to initial values', () => {
       act(() => {
-        workflowActions.setImages(['img1']);
-        workflowActions.setMode('batch');
-        workflowActions.setPhase('scanning');
-        workflowActions.setBatchProgress(createMockBatchProgress());
-        workflowActions.setBatchReceipts([createMockBatchReceipt()]);
-        workflowActions.setBatchEditingIndex(1);
-        workflowActions.setActiveDialog({ type: 'cancel_warning' as const, data: null });
+        wf().setImages(['img1']);
+        wf().setMode('batch');
+        wf().setPhase('scanning');
+        wf().setBatchProgress(createMockBatchProgress());
+        wf().setBatchReceipts([createMockBatchReceipt()]);
+        wf().setBatchEditingIndex(1);
+        wf().setActiveDialog({ type: 'cancel_warning' as const, data: null });
       });
 
       act(() => {
@@ -309,19 +311,19 @@ describe('useScanWorkflowStore', () => {
   });
 
   // =========================================================================
-  // Direct Access (getWorkflowState, workflowActions)
+  // Direct Access (getWorkflowState, getState())
   // =========================================================================
 
   describe('direct access', () => {
     it('getWorkflowState returns current state snapshot', () => {
       act(() => {
-        workflowActions.setImages(['snapshot']);
+        wf().setImages(['snapshot']);
       });
       expect(getWorkflowState().images).toEqual(['snapshot']);
     });
 
-    it('workflowActions.setImages works outside React', () => {
-      workflowActions.setImages(['direct']);
+    it('getState().setImages works outside React', () => {
+      wf().setImages(['direct']);
       expect(getWorkflowState().images).toEqual(['direct']);
     });
   });
@@ -338,7 +340,7 @@ describe('useScanWorkflowStore', () => {
 
     it('isProcessing is true when scanning', () => {
       act(() => {
-        workflowActions.setPhase('scanning');
+        wf().setPhase('scanning');
       });
       const state = getWorkflowState();
       expect(state.phase === 'scanning' || state.phase === 'saving').toBe(true);
@@ -346,7 +348,7 @@ describe('useScanWorkflowStore', () => {
 
     it('isProcessing is true when saving', () => {
       act(() => {
-        workflowActions.setPhase('saving');
+        wf().setPhase('saving');
       });
       const state = getWorkflowState();
       expect(state.phase === 'scanning' || state.phase === 'saving').toBe(true);
