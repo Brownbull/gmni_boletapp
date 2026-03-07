@@ -16,6 +16,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, User, Users } from 'lucide-react';
+import stagingTestUsers from '../../../staging-test-users.json';
 
 interface TestUser {
   id: string;
@@ -30,8 +31,8 @@ interface TestUserMenuProps {
   onSelectUser: (email: string, password: string) => Promise<void>;
 }
 
-// Multi-user password - configurable for staging vs emulator
-const MULTI_USER_PASSWORD = import.meta.env.VITE_MULTI_USER_PASSWORD || 'test-password-123';
+// Multi-user password — single source of truth from staging-test-users.json (shared with Gustify)
+const MULTI_USER_PASSWORD = stagingTestUsers.password;
 
 // Check if staging mode (boletapp-staging project)
 const isStaging = import.meta.env.VITE_FIREBASE_PROJECT_ID === 'boletapp-staging';
