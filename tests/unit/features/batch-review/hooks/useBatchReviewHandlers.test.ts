@@ -14,8 +14,8 @@ import type { BatchReviewHandlersProps } from '../../../../../src/features/batch
 import type { User } from 'firebase/auth';
 import type { Transaction } from '../../../../../src/types/transaction';
 import type { BatchReceipt } from '../../../../../src/types/batchReceipt';
-import type { ScanState, ScanDialogType } from '../../../../../src/types/scanStateMachine';
-import { DIALOG_TYPES } from '../../../../../src/types/scanStateMachine';
+import type { ScanState, ScanDialogType } from '@shared/types/scanWorkflow';
+import { DIALOG_TYPES } from '@shared/types/scanWorkflow';
 
 // =============================================================================
 // Mocks

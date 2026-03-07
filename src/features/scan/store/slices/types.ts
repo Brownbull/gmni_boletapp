@@ -11,7 +11,7 @@ import type {
   CreditType,
   DialogState,
   ScanDialogType,
-} from '@/types/scanStateMachine';
+} from '../../types/scanStateMachine';
 import type { Transaction } from '@/types/transaction';
 import type { BatchReceipt } from '@/types/batchReceipt';
 

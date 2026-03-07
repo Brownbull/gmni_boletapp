@@ -13,7 +13,7 @@ import { createTransactionRepository } from '@/repositories/transactionRepositor
 import { incrementMappingUsage } from '@/services/categoryMappingService';
 import { incrementMerchantMappingUsage } from '@/services/merchantMappingService';
 import { incrementItemNameMappingUsage } from '@/services/itemNameMappingService';
-import { DIALOG_TYPES, type BatchCompleteDialogData } from '@/types/scanStateMachine';
+import { DIALOG_TYPES, type BatchCompleteDialogData } from '@shared/types/scanWorkflow';
 import type { Transaction } from '@/types/transaction';
 import type { SaveContext, SaveCompleteContext } from './types';
 // Story 14e-42: Import pure utility from @features/categories

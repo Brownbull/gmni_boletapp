@@ -36,7 +36,7 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { DURATION, EASING } from '@/components/animation/constants';
 import type { Language } from '@/utils/translations';
 import { useScanActiveDialog, useScanActions } from '@features/scan/store';
-import { DIALOG_TYPES } from '@/types/scanStateMachine';
+import { DIALOG_TYPES } from '../types/scanStateMachine';
 
 /**
  * Story 14d.4b: Data structure for scan_complete dialog.

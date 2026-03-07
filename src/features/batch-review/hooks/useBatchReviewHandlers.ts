@@ -24,8 +24,8 @@ import type { BatchReceipt } from '@/types/batchReceipt';
 import type { View } from '@app/types';
 import type { CategoryMapping } from '@/types/categoryMapping';
 import type { UserCredits } from '@/types/scan';
-import type { ScanDialogType, BatchCompleteDialogData, ScanState } from '@/types/scanStateMachine';
-import { DIALOG_TYPES } from '@/types/scanStateMachine';
+import type { ScanDialogType, BatchCompleteDialogData, ScanState } from '@shared/types/scanWorkflow';
+import { DIALOG_TYPES } from '@shared/types/scanWorkflow';
 
 // Store imports
 import { batchReviewActions, useBatchReviewStore } from '../store';

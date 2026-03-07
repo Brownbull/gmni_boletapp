@@ -304,7 +304,7 @@ development_status:
   16-3-fix-gallery-bug: done                            # 1 pt  - Verify + E2E gallery selection after scan failure (DEPENDS: 16-2)
 
   # Chain B: types + view split -> shared store -> events
-  16-4-move-scan-types: ready-for-dev                  # 3 pts - Move scanStateMachine.ts + extract shared types
+  16-4-move-scan-types: review                         # 3 pts - Move scanStateMachine.ts + extract shared types
   16-5-split-transaction-editor-view: ready-for-dev    # 5 pts - Split TransactionEditorViewInternal.tsx (1,128L BLOCKED)
   16-6-extract-shared-workflow-store: ready-for-dev    # 8 pts - Create shared scan workflow store (DEPENDS: 16-4, 16-5)
   16-7-event-bus: ready-for-dev                        # 5 pts - Install mitt, create typed event bus (DEPENDS: 16-6)

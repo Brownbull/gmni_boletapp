@@ -7,7 +7,7 @@
  * Source: src/App.tsx:1904-1926 (handleBatchReviewBack, handleBatchDiscardConfirm, handleBatchDiscardCancel)
  */
 
-import { DIALOG_TYPES } from '@/types/scanStateMachine';
+import { DIALOG_TYPES } from '@shared/types/scanWorkflow';
 import type { DiscardContext } from './types';
 import { batchReviewActions } from '../store';
 

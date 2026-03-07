@@ -12,7 +12,7 @@ import {
     hasActiveTransactionConflict,
     type ConflictResult,
 } from '@features/scan/utils/conflictDetection';
-import type { ScanState } from '@/types/scanStateMachine';
+import type { ScanState } from '@/features/scan/types/scanStateMachine';
 import type { View } from '@app/types';
 
 // =============================================================================

@@ -6,7 +6,7 @@
  */
 
 import type { StateCreator } from 'zustand';
-import type { DialogState } from '@/types/scanStateMachine';
+import type { DialogState } from '../../types/scanStateMachine';
 import type { ScanFullStoreInternal, ScanDialogSlice } from './types';
 import { initialScanState } from './initialState';
 import { logGuardViolation } from './guardLog';

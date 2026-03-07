@@ -61,3 +61,7 @@ export * from './utils';
 
 // Re-export views (Story 15b-3)
 export * from './views';
+
+// Types: scan-internal types available via @features/scan/types/scanStateMachine
+// Shared types available via @shared/types/scanWorkflow
+// Store re-exports commonly-used types (ScanState, ScanPhase, ScanMode, etc.)

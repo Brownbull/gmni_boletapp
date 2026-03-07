@@ -19,8 +19,8 @@ import {
   clearLegacyBatchStorage,
   hasLegacyBatchStorage,
 } from '../../../src/services/pendingScanStorage';
-import type { ScanState } from '../../../src/types/scanStateMachine';
-import { SCAN_STATE_VERSION } from '../../../src/types/scanStateMachine';
+import type { ScanState } from '@shared/types/scanWorkflow';
+import { SCAN_STATE_VERSION } from '@shared/types/scanWorkflow';
 
 describe('pendingScanStorage', () => {
   let mockStorage: Record<string, string>;

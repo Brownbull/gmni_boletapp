@@ -49,11 +49,11 @@ import { DURATION, EASING } from '../animation/constants';
 import type { Language } from '../../utils/translations';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
 import { useScanActiveDialog, useScanActions } from '@features/scan/store';
-import { DIALOG_TYPES } from '../../types/scanStateMachine';
+import { DIALOG_TYPES } from '@shared/types/scanWorkflow';
 import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';
 import { useLocationDisplay } from '../../hooks/useLocations';
 // Story 14d.6: Import centralized type from scanStateMachine
-import type { QuickSaveDialogData } from '../../types/scanStateMachine';
+import type { QuickSaveDialogData } from '@features/scan/types/scanStateMachine';
 // Re-export for backward compatibility
 export type { QuickSaveDialogData };
 

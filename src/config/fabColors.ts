@@ -13,7 +13,7 @@
  * @see docs/sprint-artifacts/epic14d/stories/story-14d.8-fab-visual-states.md
  */
 
-import type { ScanMode, ScanPhase } from '../types/scanStateMachine';
+import type { ScanMode, ScanPhase } from '@shared/types/scanWorkflow';
 
 // =============================================================================
 // Color Definitions

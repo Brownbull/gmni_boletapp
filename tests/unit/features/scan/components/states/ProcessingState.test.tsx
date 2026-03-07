@@ -15,7 +15,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ProcessingState } from '@features/scan/components/states';
-import type { ScanPhase, ScanMode, BatchProgress } from '@/types/scanStateMachine';
+import type { ScanPhase, ScanMode, BatchProgress } from '@/features/scan/types/scanStateMachine';
 
 // Mock state to be modified per test
 let mockPhase: ScanPhase = 'scanning';

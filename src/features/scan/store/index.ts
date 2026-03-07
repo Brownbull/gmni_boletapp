@@ -92,6 +92,6 @@ export type {
   ScanComputedValues,
   DialogState,
   ScanDialogType,
-} from '@/types/scanStateMachine';
+} from '../types/scanStateMachine';
 
 export type { ScanDialogResultMap, ScanOverlayState, ScanErrorType } from './slices/types';

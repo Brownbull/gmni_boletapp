@@ -73,7 +73,7 @@ import { getItemCategoryGroup } from '@/config/categoryColors';
 import { normalizeItemCategory } from '@/utils/categoryNormalizer';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
 import { useIsProcessing as useScanIsProcessing, useScanActiveDialog } from '@features/scan/store';
-import { DIALOG_TYPES } from '@/types/scanStateMachine';
+import { DIALOG_TYPES } from '@shared/types/scanWorkflow';
 // Story 14e-25d: Direct hooks (ViewHandlersContext deleted)
 import { useToast } from '@/shared/hooks';
 import { hasItemWithPrice } from '@/utils/transactionValidation';

@@ -9,7 +9,7 @@
  * @see docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-40-extract-conflict-detection.md
  */
 
-import type { ScanState } from '@/types/scanStateMachine';
+import type { ScanState } from '../types/scanStateMachine';
 import type { View } from '@app/types';
 import type {
     ConflictingTransaction,

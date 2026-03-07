@@ -13,7 +13,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import type { Transaction } from '../../../../src/types/transaction';
-import type { ScanState } from '../../../../src/types/scanStateMachine';
+import type { ScanState } from '@shared/types/scanWorkflow';
 import type { UseDialogHandlersProps } from '../../../../src/hooks/app/useDialogHandlers';
 import { useDialogHandlers } from '../../../../src/hooks/app/useDialogHandlers';
 

@@ -37,7 +37,7 @@ import { Toast } from '@/shared/ui';
 // App-level handler hooks
 import { useTransactionHandlers, useScanHandlers, useDialogHandlers } from './hooks/app';
 import { AppProviders } from '@app/AppProviders';
-import { DIALOG_TYPES } from './types/scanStateMachine';
+import { DIALOG_TYPES } from '@shared/types/scanWorkflow';
 import { LoginScreen } from './views/LoginScreen';
 import { BatchCaptureView } from './views/BatchCaptureView';
 import { SettingsView } from './views/SettingsView';

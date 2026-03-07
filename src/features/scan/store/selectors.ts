@@ -18,16 +18,16 @@
 
 import { useShallow } from 'zustand/react/shallow';
 import { useScanStore } from './useScanStore';
-import { canSaveTransaction } from '@/types/scanStateMachine';
+import { canSaveTransaction } from '../types/scanStateMachine';
 import type {
   ScanCurrentView,
   ScanDialogType,
   DialogState,
   CreditType,
-} from '@/types/scanStateMachine';
+} from '../types/scanStateMachine';
 import type { Transaction } from '@/types/transaction';
 import type { BatchReceipt } from '@/types/batchReceipt';
-import type { ScanState } from '@/types/scanStateMachine';
+import type { ScanState } from '../types/scanStateMachine';
 import type { ScanDialogResultMap, ScanErrorType } from './slices/types';
 
 // =============================================================================

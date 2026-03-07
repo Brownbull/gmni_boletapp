@@ -17,7 +17,7 @@ import type {
     CurrencyMismatchDialogData,
     TotalMismatchDialogData,
     QuickSaveDialogData,
-} from '@/types/scanStateMachine';
+} from '../types/scanStateMachine';
 import type { ToastMessage } from '@/shared/hooks';
 
 /**

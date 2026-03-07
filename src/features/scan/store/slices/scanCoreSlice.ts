@@ -6,10 +6,10 @@
  */
 
 import type { StateCreator } from 'zustand';
-import type { ScanPhase, CreditType, CreditStatus } from '@/types/scanStateMachine';
-import { generateRequestId } from '@/types/scanStateMachine';
+import type { ScanPhase, CreditType, CreditStatus } from '../../types/scanStateMachine';
+import { generateRequestId } from '../../types/scanStateMachine';
 import type { Transaction } from '@/types/transaction';
-import type { ScanState } from '@/types/scanStateMachine';
+import type { ScanState } from '../../types/scanStateMachine';
 import type { ScanFullStoreInternal, ScanCoreSliceInternal } from './types';
 import { initialScanState } from './initialState';
 import { logGuardViolation } from './guardLog';

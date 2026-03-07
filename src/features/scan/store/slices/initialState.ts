@@ -5,7 +5,7 @@
  * Used by each slice for default values and by reset/cancel actions.
  */
 
-import type { ScanState } from '@/types/scanStateMachine';
+import type { ScanState } from '../../types/scanStateMachine';
 import type { ScanFullStore, ScanOverlayState, ScanErrorType } from './types';
 
 interface ScanUIState {

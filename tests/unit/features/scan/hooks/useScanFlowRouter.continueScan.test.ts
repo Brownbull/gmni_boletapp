@@ -7,7 +7,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { DIALOG_TYPES } from '@/types/scanStateMachine';
+import { DIALOG_TYPES } from '@/features/scan/types/scanStateMachine';
 import {
     mockDb,
     createDefaultFlowRouterProps,

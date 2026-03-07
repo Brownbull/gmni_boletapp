@@ -14,7 +14,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BatchDiscardDialog } from '@features/scan/components/BatchDiscardDialog';
-import { DIALOG_TYPES } from '@/types/scanStateMachine';
+import { DIALOG_TYPES } from '@/features/scan/types/scanStateMachine';
 
 // Mock the scan store
 vi.mock('@features/scan/store/useScanStore', () => ({
