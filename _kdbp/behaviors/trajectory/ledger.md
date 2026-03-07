@@ -27,3 +27,5 @@
 | 2026-03-07 | TD-16-5 | review | boletapp-dev | ✓ done | APPROVE 8.7/10, 1 quick fix (setPendingTransaction test), 0 TD stories | none |
 | 2026-03-07 | TD-16-6 | none | boletapp-dev | ✓ done | DRY cleanup: CreditCheckResult named type extracted, MERCHANT_CONFIDENCE_THRESHOLD consolidated to single source. 2 files changed, 540 batch-review tests pass. | none |
 | 2026-03-07 | TD-16-6 | review | boletapp-dev | ✓ done | APPROVE 9.0/10, 1 quick fix (duplicate CreditCheckResult → re-export from creditService), 0 TD stories | none |
+| 2026-03-07 | 16-8 | none | boletapp-dev | ✓ done | Move 8 legacy scan components to features/scan/components/. 4 source + 5 test consumers updated. Legacy src/components/scan/ deleted. Self-review APPROVE 9.2/10. | none |
+| 2026-03-07 | 16-8 | review | boletapp-dev | ✓ done | APPROVE 9.4/10, 1 quick fix (stale comment), 0 TD stories | none |

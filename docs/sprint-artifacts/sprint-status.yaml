@@ -314,7 +314,7 @@ development_status:
   TD-16-6-batch-handler-type-cleanup: done                 # 1 pt  - DRY: CreditCheckResult type + MERCHANT_CONFIDENCE_THRESHOLD consolidation (DEPENDS: TD-16-3)
 
   # Independent
-  16-8-move-legacy-scan-components: ready-for-dev      # 3 pts - Move ~17 files from src/components/scan/ to features/
+  16-8-move-legacy-scan-components: done                 # 3 pts - Move ~17 files from src/components/scan/ to features/ | done: 2026-03-07
   16-9-staging-deployment: ready-for-dev               # 5 pts - Firebase Hosting staging + registration blocking + CI
 
   epic-16-retrospective: optional
