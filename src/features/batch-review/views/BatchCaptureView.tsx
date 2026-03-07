@@ -36,7 +36,9 @@ import {
 import { MAX_BATCH_CAPTURE_IMAGES } from '../hooks/useBatchCapture';
 import { formatCreditsDisplay } from '@/utils/creditFormatters';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
-import { useScanStore, useIsProcessing, useScanActions } from '@features/scan/store';
+import { useScanActions } from '@features/scan/store';
+// Story 16-6: images + isProcessing from shared workflow store
+import { useWorkflowImages, useWorkflowIsProcessing } from '@shared/stores';
 import { processFilesForCapture, type ProcessedImage } from '@features/batch-review/utils/imageUtils';
 // Story 14e-25c.2: Navigation via Zustand store
 import { useNavigation } from '@/shared/stores/useNavigationStore';
@@ -103,9 +105,9 @@ export const BatchCaptureView: React.FC<BatchCaptureViewProps> = ({
   // Story 14e-25c.2: Get navigation from Zustand store
   const { navigateBack } = useNavigation();
 
-  // Story 14e-11: Use Zustand store for batch state (migrated from ScanContext)
-  const scanStoreImages = useScanStore((s) => s.images);
-  const scanStoreIsProcessing = useIsProcessing();
+  // Story 16-6: Read images from shared workflow store (source of truth)
+  const scanStoreImages = useWorkflowImages();
+  const scanStoreIsProcessing = useWorkflowIsProcessing();
   const { setImages: scanStoreSetImages, reset: scanStoreReset } = useScanActions();
 
   // Story 14e-25c.2: Derive processing state from store only
@@ -133,7 +135,7 @@ export const BatchCaptureView: React.FC<BatchCaptureViewProps> = ({
 
   // Story 14e-11: Convert store images to display format with thumbnails
   const displayImages: DisplayImage[] = useMemo(() => {
-    return imageDataUrlsFromStore.map((dataUrl, index) => ({
+    return imageDataUrlsFromStore.map((dataUrl: string, index: number) => ({
       id: `img_${index}_${dataUrl.substring(0, 20)}`,
       dataUrl,
       thumbnailUrl: thumbnailMap.get(dataUrl) ?? dataUrl, // Fallback to full image if no thumbnail
@@ -203,7 +205,7 @@ export const BatchCaptureView: React.FC<BatchCaptureViewProps> = ({
       if (index < 0 || index >= currentImages.length) return;
 
       const imageToRemove = currentImages[index];
-      const newImages = currentImages.filter((_, i) => i !== index);
+      const newImages = currentImages.filter((_: string, i: number) => i !== index);
 
       // Update Zustand store (source of truth)
       scanStoreSetImages(newImages);

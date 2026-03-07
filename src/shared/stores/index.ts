@@ -47,6 +47,26 @@ export {
     historyFiltersActions,
 } from './useHistoryFiltersStore';
 
+// Story 16-6: Shared scan workflow store (data transport for scan/batch-review/transaction-editor)
+export {
+  useScanWorkflowStore,
+  useWorkflowImages,
+  useWorkflowBatchReceipts,
+  useWorkflowBatchProgress,
+  useWorkflowBatchEditingIndex,
+  useWorkflowMode,
+  useWorkflowPhase,
+  useWorkflowIsProcessing,
+  useWorkflowActiveDialog,
+  useWorkflowImageCount,
+  useWorkflowState,
+  getWorkflowState,
+  workflowActions,
+  type ScanWorkflowState,
+  type ScanWorkflowActions,
+  type WorkflowActionsType,
+} from './useScanWorkflowStore';
+
 // Story 14e-37: Insight store
 export {
   useInsightStore,

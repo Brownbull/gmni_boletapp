@@ -1,0 +1,216 @@
+/**
+ * Story 16-6: Shared Scan Workflow Store
+ *
+ * Holds scan workflow DATA that batch-review and transaction-editor features
+ * need. The scan feature WRITES to this store (via phase-guarded actions).
+ * Consumers READ from this store. No phase guards here — scan mediates access.
+ *
+ * Coupling: scan (writer), batch-review (reader), transaction-editor (reader)
+ *
+ * State owned:
+ * - images, batchReceipts, batchProgress, batchEditingIndex, mode
+ *
+ * State mirrored (scan writes, consumers read):
+ * - phase, activeDialog
+ */
+
+import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
+import { useShallow } from 'zustand/react/shallow';
+import type { ScanPhase, ScanMode, BatchProgress, DialogState } from '@shared/types/scanWorkflow';
+import type { BatchReceipt } from '@/types/batchReceipt';
+
+// =============================================================================
+// State Interface
+// =============================================================================
+
+export interface ScanWorkflowState {
+  // Owned data — shared across features
+  images: string[];
+  batchReceipts: BatchReceipt[] | null;
+  batchProgress: BatchProgress | null;
+  batchEditingIndex: number | null;
+  mode: ScanMode;
+
+  // Mirrored state — scan writes, consumers read
+  phase: ScanPhase;
+  activeDialog: DialogState | null;
+}
+
+export interface ScanWorkflowActions {
+  // Image actions
+  setImages: (images: string[]) => void;
+  addImage: (image: string) => void;
+  removeImage: (index: number) => void;
+
+  // Batch receipt actions
+  setBatchReceipts: (receipts: BatchReceipt[]) => void;
+  updateBatchReceipt: (id: string, updates: Partial<BatchReceipt>) => void;
+  discardBatchReceipt: (id: string) => void;
+  clearBatchReceipts: () => void;
+
+  // Batch progress actions
+  setBatchProgress: (progress: BatchProgress | null) => void;
+
+  // Batch editing index actions
+  setBatchEditingIndex: (index: number | null) => void;
+
+  // Mode actions
+  setMode: (mode: ScanMode) => void;
+
+  // Mirrored state actions
+  setPhase: (phase: ScanPhase) => void;
+  setActiveDialog: (dialog: DialogState | null) => void;
+
+  // Control
+  reset: () => void;
+}
+
+type ScanWorkflowStore = ScanWorkflowState & ScanWorkflowActions;
+
+// =============================================================================
+// Initial State
+// =============================================================================
+
+const initialWorkflowState: ScanWorkflowState = {
+  images: [],
+  batchReceipts: null,
+  batchProgress: null,
+  batchEditingIndex: null,
+  mode: 'single',
+  phase: 'idle',
+  activeDialog: null,
+};
+
+// =============================================================================
+// Store
+// =============================================================================
+
+export const useScanWorkflowStore = create<ScanWorkflowStore>()(
+  devtools(
+    (set, get) => ({
+      ...initialWorkflowState,
+
+      // Image actions
+      setImages: (images) => set({ images }, undefined, 'workflow/setImages'),
+      addImage: (image) =>
+        set(
+          (state) => ({ images: [...state.images, image] }),
+          undefined,
+          'workflow/addImage',
+        ),
+      removeImage: (index) =>
+        set(
+          (state) => ({ images: state.images.filter((_, i) => i !== index) }),
+          undefined,
+          'workflow/removeImage',
+        ),
+
+      // Batch receipt actions
+      setBatchReceipts: (receipts) =>
+        set({ batchReceipts: receipts }, undefined, 'workflow/setBatchReceipts'),
+      updateBatchReceipt: (id, updates) => {
+        const { batchReceipts } = get();
+        if (!batchReceipts) return;
+        const idx = batchReceipts.findIndex((r) => r.id === id);
+        if (idx === -1) return;
+        const updated = [...batchReceipts];
+        updated[idx] = { ...updated[idx], ...updates };
+        set({ batchReceipts: updated }, undefined, 'workflow/updateBatchReceipt');
+      },
+      discardBatchReceipt: (id) =>
+        set(
+          (state) => ({
+            batchReceipts: state.batchReceipts?.filter((r) => r.id !== id) ?? null,
+          }),
+          undefined,
+          'workflow/discardBatchReceipt',
+        ),
+      clearBatchReceipts: () =>
+        set({ batchReceipts: null }, undefined, 'workflow/clearBatchReceipts'),
+
+      // Batch progress actions
+      setBatchProgress: (progress) =>
+        set({ batchProgress: progress }, undefined, 'workflow/setBatchProgress'),
+
+      // Batch editing index actions
+      setBatchEditingIndex: (index) =>
+        set({ batchEditingIndex: index }, undefined, 'workflow/setBatchEditingIndex'),
+
+      // Mode actions
+      setMode: (mode) => set({ mode }, undefined, 'workflow/setMode'),
+
+      // Mirrored state actions
+      setPhase: (phase) => set({ phase }, undefined, 'workflow/setPhase'),
+      setActiveDialog: (dialog) =>
+        set({ activeDialog: dialog }, undefined, 'workflow/setActiveDialog'),
+
+      // Control
+      reset: () => set({ ...initialWorkflowState }, undefined, 'workflow/reset'),
+    }),
+    { enabled: import.meta.env.DEV, name: 'ScanWorkflowStore' },
+  ),
+);
+
+// =============================================================================
+// Selectors
+// =============================================================================
+
+export const useWorkflowImages = () => useScanWorkflowStore((s) => s.images);
+export const useWorkflowBatchReceipts = () => useScanWorkflowStore((s) => s.batchReceipts);
+export const useWorkflowBatchProgress = () => useScanWorkflowStore((s) => s.batchProgress);
+export const useWorkflowBatchEditingIndex = () => useScanWorkflowStore((s) => s.batchEditingIndex);
+export const useWorkflowMode = () => useScanWorkflowStore((s) => s.mode);
+export const useWorkflowPhase = () => useScanWorkflowStore((s) => s.phase);
+export const useWorkflowIsProcessing = () =>
+  useScanWorkflowStore((s) => s.phase === 'scanning' || s.phase === 'saving');
+export const useWorkflowActiveDialog = () => useScanWorkflowStore((s) => s.activeDialog);
+export const useWorkflowImageCount = () => useScanWorkflowStore((s) => s.images.length);
+
+/** Combined selector for multiple workflow values (uses useShallow). */
+export const useWorkflowState = () =>
+  useScanWorkflowStore(
+    useShallow((s) => ({
+      images: s.images,
+      batchReceipts: s.batchReceipts,
+      batchProgress: s.batchProgress,
+      batchEditingIndex: s.batchEditingIndex,
+      mode: s.mode,
+      phase: s.phase,
+      activeDialog: s.activeDialog,
+    })),
+  );
+
+// =============================================================================
+// Direct Access (non-React code)
+// =============================================================================
+
+export const getWorkflowState = () => useScanWorkflowStore.getState();
+
+/**
+ * @internal Direct-access actions for non-React code (e.g., scan feature slices).
+ * Consumers should use React selectors (useWorkflow*) instead.
+ */
+export const workflowActions = {
+  setImages: (images: string[]) => useScanWorkflowStore.getState().setImages(images),
+  addImage: (image: string) => useScanWorkflowStore.getState().addImage(image),
+  removeImage: (index: number) => useScanWorkflowStore.getState().removeImage(index),
+  setBatchReceipts: (receipts: BatchReceipt[]) =>
+    useScanWorkflowStore.getState().setBatchReceipts(receipts),
+  updateBatchReceipt: (id: string, updates: Partial<BatchReceipt>) =>
+    useScanWorkflowStore.getState().updateBatchReceipt(id, updates),
+  discardBatchReceipt: (id: string) =>
+    useScanWorkflowStore.getState().discardBatchReceipt(id),
+  clearBatchReceipts: () => useScanWorkflowStore.getState().clearBatchReceipts(),
+  setBatchProgress: (progress: BatchProgress | null) =>
+    useScanWorkflowStore.getState().setBatchProgress(progress),
+  setBatchEditingIndex: (index: number | null) =>
+    useScanWorkflowStore.getState().setBatchEditingIndex(index),
+  setMode: (mode: ScanMode) => useScanWorkflowStore.getState().setMode(mode),
+  setPhase: (phase: ScanPhase) => useScanWorkflowStore.getState().setPhase(phase),
+  setActiveDialog: (dialog: DialogState | null) =>
+    useScanWorkflowStore.getState().setActiveDialog(dialog),
+  reset: () => useScanWorkflowStore.getState().reset(),
+} as const;
+
+export type WorkflowActionsType = typeof workflowActions;

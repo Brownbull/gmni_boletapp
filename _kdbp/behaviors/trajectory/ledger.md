@@ -13,3 +13,7 @@
 | 2026-03-06 | 16-3 | none | boletapp-dev | Fix gallery bug: handleScanOverlayDismiss now calls full reset() matching retry pattern. 3 error recovery tests. E2E written (staging blocked by 16-9). | none |
 | 2026-03-06 | 16-4 | none | boletapp-dev | ✓ done | none |
 | 2026-03-06 | 16-4 | review | boletapp-dev | ✓ done (APPROVE 9.0/10, 3 quick fixes, 0 TD) | none |
+| 2026-03-07 | 16-5 | none | boletapp-dev | ✓ done | none |
+| 2026-03-07 | 16-5 | review | boletapp-dev | ✓ done (APPROVE 8.75/10) | none |
+| 2026-03-07 | 16-6 | none | boletapp-dev | Extract shared workflow store: created useScanWorkflowStore.ts (212L), moved images/batchReceipts/batchProgress/batchEditingIndex from scan store, scan actions proxy writes via wf(), phase/mode/activeDialog mirrored. Migrated batch-review (4 files), transaction-editor (3 files), App.tsx. useAtomicBatchActions redesigned for AC-4. 7153 tests pass. Self-review 8.5/10. | Option B (full state removal) chosen over sync subscription — cleaner, no dual-state drift risk. Null batchReceipts type gap found in self-review (#4) and fixed. Remaining scan store imports are action dispatchers (legitimate brain-to-nervous-system coordination). |
+| 2026-03-07 | 16-6 | review | boletapp-dev | ✓ done (APPROVE 7.9/10, 4 quick fixes, 2 TD stories) | ⚑ AC-ARCH-NO partially met (phase-guarded actions need DI/event bus — tracked in 16-7) |

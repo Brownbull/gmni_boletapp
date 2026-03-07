@@ -1,17 +1,22 @@
 /**
  * Story 16-1: Batch scan slice
+ * Story 16-6: batchProgress, batchReceipts, batchEditingIndex moved to useScanWorkflowStore.
  *
  * Batch progress, receipts, and editing index.
  * Cross-slice reads: checks phase/mode from core slice via get().
  * Cross-slice writes: batchComplete sets phase, creditStatus, results, error.
+ * Cross-store writes: all batch state writes go to shared workflow store.
  */
 
 import type { StateCreator } from 'zustand';
 import type { Transaction } from '@/types/transaction';
 import type { BatchReceipt } from '@/types/batchReceipt';
 import type { ScanFullStoreInternal, ScanBatchSlice } from './types';
-import { initialScanState } from './initialState';
 import { logGuardViolation } from './guardLog';
+import { useScanWorkflowStore } from '@shared/stores/useScanWorkflowStore';
+
+// Shorthand for shared workflow store access
+const wf = () => useScanWorkflowStore.getState();
 
 export const createScanBatchSlice: StateCreator<
   ScanFullStoreInternal,
@@ -19,59 +24,44 @@ export const createScanBatchSlice: StateCreator<
   [],
   ScanBatchSlice
 > = (set, get) => ({
-  // State
-  batchProgress: initialScanState.batchProgress,
-  batchReceipts: initialScanState.batchReceipts,
-  batchEditingIndex: initialScanState.batchEditingIndex,
+  // State moved to useScanWorkflowStore (Story 16-6):
+  // - batchProgress, batchReceipts, batchEditingIndex
 
   // =========================================================================
-  // BATCH Actions
+  // BATCH Actions (read/write shared workflow store, phase guards from scan store)
   // =========================================================================
 
   batchItemStart: (index: number) => {
     const state = get();
     if (state.phase !== 'scanning' || state.mode !== 'batch') return;
-    if (!state.batchProgress) return;
+    const bp = wf().batchProgress;
+    if (!bp) return;
 
-    set(
-      { batchProgress: { ...state.batchProgress, current: index } },
-      undefined,
-      'scan/batchItemStart'
-    );
+    wf().setBatchProgress({ ...bp, current: index });
   },
 
-  batchItemSuccess: (index: number, result: Transaction) => {
+  batchItemSuccess: (_index: number, result: Transaction) => {
     const state = get();
     if (state.phase !== 'scanning' || state.mode !== 'batch') return;
-    if (!state.batchProgress) return;
+    const bp = wf().batchProgress;
+    if (!bp) return;
 
-    set(
-      {
-        batchProgress: {
-          ...state.batchProgress,
-          completed: [...state.batchProgress.completed, result],
-        },
-      },
-      undefined,
-      `scan/batchItemSuccess/${index}`
-    );
+    wf().setBatchProgress({
+      ...bp,
+      completed: [...bp.completed, result],
+    });
   },
 
   batchItemError: (index: number, error: string) => {
     const state = get();
     if (state.phase !== 'scanning' || state.mode !== 'batch') return;
-    if (!state.batchProgress) return;
+    const bp = wf().batchProgress;
+    if (!bp) return;
 
-    set(
-      {
-        batchProgress: {
-          ...state.batchProgress,
-          failed: [...state.batchProgress.failed, { index, error }],
-        },
-      },
-      undefined,
-      `scan/batchItemError/${index}`
-    );
+    wf().setBatchProgress({
+      ...bp,
+      failed: [...bp.failed, { index, error }],
+    });
   },
 
   batchComplete: (batchReceipts?: BatchReceipt[]) => {
@@ -86,7 +76,8 @@ export const createScanBatchSlice: StateCreator<
       });
       return;
     }
-    if (!state.batchProgress) {
+    const bp = wf().batchProgress;
+    if (!bp) {
       logGuardViolation({
         action: 'batchComplete',
         currentPhase: state.phase,
@@ -101,13 +92,17 @@ export const createScanBatchSlice: StateCreator<
       {
         phase: 'reviewing',
         creditStatus: 'confirmed',
-        results: state.batchProgress.completed,
+        results: bp.completed,
         error: null,
-        batchReceipts: batchReceipts ?? state.batchReceipts,
       },
       undefined,
       'scan/batchComplete'
     );
+    // Update shared workflow store
+    wf().setPhase('reviewing');
+    if (batchReceipts !== undefined) {
+      wf().setBatchReceipts(batchReceipts);
+    }
   },
 
   setBatchReceipts: (receipts: BatchReceipt[]) => {
@@ -123,7 +118,7 @@ export const createScanBatchSlice: StateCreator<
       return;
     }
 
-    set({ batchReceipts: receipts }, undefined, 'scan/setBatchReceipts');
+    wf().setBatchReceipts(receipts);
   },
 
   updateBatchReceipt: (id: string, updates: Partial<BatchReceipt>) => {
@@ -138,9 +133,10 @@ export const createScanBatchSlice: StateCreator<
       });
       return;
     }
-    if (!state.batchReceipts) return;
+    const batchReceipts = wf().batchReceipts;
+    if (!batchReceipts) return;
 
-    const receiptIndex = state.batchReceipts.findIndex((r) => r.id === id);
+    const receiptIndex = batchReceipts.findIndex((r) => r.id === id);
     if (receiptIndex === -1) {
       logGuardViolation({
         action: 'updateBatchReceipt',
@@ -151,32 +147,28 @@ export const createScanBatchSlice: StateCreator<
       return;
     }
 
-    const newReceipts = [...state.batchReceipts];
-    newReceipts[receiptIndex] = { ...newReceipts[receiptIndex], ...updates };
-    set({ batchReceipts: newReceipts }, undefined, 'scan/updateBatchReceipt');
+    wf().updateBatchReceipt(id, updates);
   },
 
   discardBatchReceipt: (id: string) => {
     const state = get();
     if (state.phase !== 'reviewing' || state.mode !== 'batch') return;
-    if (!state.batchReceipts) return;
+    if (!wf().batchReceipts) return;
 
-    const newReceipts = state.batchReceipts.filter((r) => r.id !== id);
-    set({ batchReceipts: newReceipts }, undefined, 'scan/discardBatchReceipt');
+    wf().discardBatchReceipt(id);
   },
 
   clearBatchReceipts: () => {
-    set({ batchReceipts: null }, undefined, 'scan/clearBatchReceipts');
+    wf().clearBatchReceipts();
   },
 
   setBatchEditingIndex: (index: number | null) => {
-    const state = get();
-
     if (index === null) {
-      set({ batchEditingIndex: null }, undefined, 'scan/setBatchEditingIndex');
+      wf().setBatchEditingIndex(null);
       return;
     }
 
+    const state = get();
     if (state.phase !== 'reviewing' || state.mode !== 'batch') {
       logGuardViolation({
         action: 'setBatchEditingIndex',
@@ -188,7 +180,8 @@ export const createScanBatchSlice: StateCreator<
       return;
     }
 
-    if (!state.batchReceipts || index < 0 || index >= state.batchReceipts.length) {
+    const batchReceipts = wf().batchReceipts;
+    if (!batchReceipts || index < 0 || index >= batchReceipts.length) {
       logGuardViolation({
         action: 'setBatchEditingIndex',
         currentPhase: state.phase,
@@ -198,6 +191,6 @@ export const createScanBatchSlice: StateCreator<
       return;
     }
 
-    set({ batchEditingIndex: index }, undefined, 'scan/setBatchEditingIndex');
+    wf().setBatchEditingIndex(index);
   },
 });

@@ -16,11 +16,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ProcessingState } from '@features/scan/components/states';
 import type { ScanPhase, ScanMode, BatchProgress } from '@/features/scan/types/scanStateMachine';
+import { useScanWorkflowStore } from '@shared/stores/useScanWorkflowStore';
 
 // Mock state to be modified per test
 let mockPhase: ScanPhase = 'scanning';
 let mockMode: ScanMode = 'single';
-let mockBatchProgress: BatchProgress | null = null;
 
 // Mock the scan store - useShallow passes a selector function
 vi.mock('@features/scan/store', () => ({
@@ -28,7 +28,6 @@ vi.mock('@features/scan/store', () => ({
     const mockState = {
       phase: mockPhase,
       mode: mockMode,
-      batchProgress: mockBatchProgress,
     };
     return selector(mockState);
   },
@@ -80,7 +79,8 @@ const setMockState = (
 ) => {
   mockPhase = phase;
   mockMode = mode;
-  mockBatchProgress = batchProgress;
+  // Story 16-6: batchProgress now lives in the shared workflow store
+  useScanWorkflowStore.setState({ batchProgress });
 };
 
 describe('ProcessingState', () => {
@@ -92,6 +92,8 @@ describe('ProcessingState', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset workflow store to clean state
+    useScanWorkflowStore.getState().reset();
     // Reset to default state
     setMockState('scanning', 'single', null);
   });

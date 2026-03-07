@@ -11,7 +11,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { ProcessingOverlay } from '@/components/scan/ProcessingOverlay';
 import { ScanCompleteModal } from '@features/scan/components';
-import { useIsProcessing as useScanIsProcessing, useScanActiveDialog } from '@features/scan/store';
+import { useWorkflowIsProcessing as useScanIsProcessing, useWorkflowActiveDialog as useScanActiveDialog } from '@shared/stores';
 import { DIALOG_TYPES } from '@shared/types/scanWorkflow';
 import type { Transaction } from '@/types/transaction';
 import type { ScanButtonState } from './TransactionEditorView/editorViewTypes';

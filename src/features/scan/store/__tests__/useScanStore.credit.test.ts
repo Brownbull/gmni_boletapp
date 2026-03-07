@@ -5,12 +5,12 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { useScanStore, initialScanState, getScanState, scanActions } from '../index';
-import { createMockTransaction } from './helpers';
+import { getScanState, scanActions } from '../index';
+import { createMockTransaction, resetAllStores, getWorkflowState } from './helpers';
 
 describe('useScanStore — Credit & Control', () => {
   beforeEach(() => {
-    useScanStore.setState(initialScanState);
+    resetAllStores();
   });
 
   describe('Control actions', () => {
@@ -24,7 +24,7 @@ describe('useScanStore — Credit & Control', () => {
       };
       scanActions.restoreState(savedState);
       expect(getScanState().phase).toBe('capturing');
-      expect(getScanState().images).toContain('saved-image');
+      expect(getWorkflowState().images).toContain('saved-image');
       expect(getScanState().requestId).toBe('saved-req');
     });
 
@@ -119,7 +119,7 @@ describe('useScanStore — Credit & Control', () => {
       // Invalid phase replaced with initialScanState default
       expect(getScanState().phase).toBe('idle');
       // Valid images still applied
-      expect(getScanState().images).toEqual(['valid-image']);
+      expect(getWorkflowState().images).toEqual(['valid-image']);
       expect(consoleSpy).toHaveBeenCalledWith(
         '[ScanStore:guard]',
         expect.stringContaining('invalid phase')
@@ -133,7 +133,7 @@ describe('useScanStore — Credit & Control', () => {
       } as unknown as Record<string, unknown>;
       scanActions.restoreState(malformedValues);
       expect(getScanState().phase).toBe('idle');
-      expect(getScanState().images).toEqual(['valid-image']);
+      expect(getWorkflowState().images).toEqual(['valid-image']);
       expect(consoleSpy).toHaveBeenCalledWith(
         '[ScanStore:guard]',
         expect.stringContaining('invalid phase')
@@ -148,7 +148,7 @@ describe('useScanStore — Credit & Control', () => {
       scanActions.restoreState(malformedValues);
       expect(getScanState().phase).toBe('capturing');
       // Invalid images replaced with initialScanState default
-      expect(getScanState().images).toEqual([]);
+      expect(getWorkflowState().images).toEqual([]);
       expect(consoleSpy).toHaveBeenCalledWith(
         '[ScanStore:guard]',
         expect.stringContaining('invalid images')
@@ -162,7 +162,7 @@ describe('useScanStore — Credit & Control', () => {
       } as unknown as Record<string, unknown>;
       scanActions.restoreState(malformedValues);
       expect(getScanState().phase).toBe('capturing');
-      expect(getScanState().images).toEqual([]);
+      expect(getWorkflowState().images).toEqual([]);
       expect(consoleSpy).toHaveBeenCalledWith(
         '[ScanStore:guard]',
         expect.stringContaining('invalid images')
@@ -192,7 +192,7 @@ describe('useScanStore — Credit & Control', () => {
       };
       scanActions.restoreState(validState);
       expect(getScanState().phase).toBe('reviewing');
-      expect(getScanState().images).toEqual(['img-1', 'img-2']);
+      expect(getWorkflowState().images).toEqual(['img-1', 'img-2']);
       expect(getScanState().creditStatus).toBe('confirmed');
       // No type validation warnings
       const typeCalls = consoleSpy.mock.calls.filter(

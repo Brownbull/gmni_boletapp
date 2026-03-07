@@ -1,8 +1,10 @@
 /**
  * Story 16-1: Dialog scan slice
+ * Story 16-6: activeDialog mirrored to useScanWorkflowStore.
  *
  * Active dialog state management.
  * Dialogs can be shown from any phase.
+ * Cross-store writes: mirrors activeDialog to shared workflow store.
  */
 
 import type { StateCreator } from 'zustand';
@@ -10,6 +12,10 @@ import type { DialogState } from '../../types/scanStateMachine';
 import type { ScanFullStoreInternal, ScanDialogSlice } from './types';
 import { initialScanState } from './initialState';
 import { logGuardViolation } from './guardLog';
+import { useScanWorkflowStore } from '@shared/stores/useScanWorkflowStore';
+
+// Shorthand for shared workflow store access
+const wf = () => useScanWorkflowStore.getState();
 
 export const createScanDialogSlice: StateCreator<
   ScanFullStoreInternal,
@@ -23,6 +29,7 @@ export const createScanDialogSlice: StateCreator<
   // Actions
   showDialog: (dialog: DialogState) => {
     set({ activeDialog: dialog }, undefined, 'scan/showDialog');
+    wf().setActiveDialog(dialog);
   },
 
   resolveDialog: (type, _result) => {
@@ -38,9 +45,11 @@ export const createScanDialogSlice: StateCreator<
     }
 
     set({ activeDialog: null }, undefined, 'scan/resolveDialog');
+    wf().setActiveDialog(null);
   },
 
   dismissDialog: () => {
     set({ activeDialog: null }, undefined, 'scan/dismissDialog');
+    wf().setActiveDialog(null);
   },
 });

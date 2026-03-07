@@ -18,6 +18,7 @@
 
 import { useShallow } from 'zustand/react/shallow';
 import { useScanStore } from './useScanStore';
+import { useScanWorkflowStore } from '@shared/stores/useScanWorkflowStore';
 import { canSaveTransaction } from '../types/scanStateMachine';
 import type {
   ScanCurrentView,
@@ -42,9 +43,9 @@ export const useScanPhase = () => useScanStore((s) => s.phase);
 
 /**
  * Select current scan mode (single/batch/statement).
- * Re-renders only when mode changes.
+ * Story 16-6: Reads from shared workflow store (canonical source for consumers).
  */
-export const useScanMode = () => useScanStore((s) => s.mode);
+export const useScanMode = () => useScanWorkflowStore((s) => s.mode);
 
 // =============================================================================
 // Boolean Computed Selectors (AC2)
@@ -209,17 +210,18 @@ export const useCurrentView = (): ScanCurrentView =>
 
 /**
  * Get batch progress state (for batch mode processing).
- * Returns null if not in batch mode.
+ * Story 16-6: Reads from shared workflow store.
  */
-export const useBatchProgress = () => useScanStore((s) => s.batchProgress);
+export const useBatchProgress = () => useScanWorkflowStore((s) => s.batchProgress);
 
 /**
  * Get processing progress as percentage (0-100).
  * For batch mode: calculates from batchProgress.
  * For single mode: returns -1 (indeterminate).
+ * Story 16-6: Reads from shared workflow store.
  */
 export const useProcessingProgress = () =>
-  useScanStore((s) => {
+  useScanWorkflowStore((s) => {
     if (s.mode === 'batch' && s.batchProgress && s.batchProgress.total > 0) {
       const completed = s.batchProgress.completed.length + s.batchProgress.failed.length;
       return Math.round((completed / s.batchProgress.total) * 100);
@@ -234,14 +236,15 @@ export const useProcessingProgress = () =>
 
 /**
  * Get all captured images (base64 strings).
- * Story 14e-34a: Added for BatchUploadPreview migration from props to store.
+ * Story 16-6: Reads from shared workflow store.
  */
-export const useScanImages = () => useScanStore((s) => s.images);
+export const useScanImages = () => useScanWorkflowStore((s) => s.images);
 
 /**
  * Number of images currently captured.
+ * Story 16-6: Reads from shared workflow store.
  */
-export const useImageCount = () => useScanStore((s) => s.images.length);
+export const useImageCount = () => useScanWorkflowStore((s) => s.images.length);
 
 /**
  * Number of successfully processed results.

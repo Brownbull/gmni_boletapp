@@ -102,6 +102,9 @@ import { createBatchReceiptsFromResults } from './hooks/useBatchReview';
 import { FeatureOrchestrator } from '@app/FeatureOrchestrator';
 // Story 14e-41: reconcileItemsTotal moved to entity (single source of truth)
 import { reconcileItemsTotal } from '@entities/transaction';
+// Story 16-6: Workflow store for fields moved out of scan store
+import { useWorkflowState, getWorkflowState } from '@shared/stores';
+import type { ScanState } from '@shared/types/scanWorkflow';
 
 function App() {
     // Story 15b-4f: All hook initialization composed into useAppDataHooks
@@ -144,6 +147,18 @@ function App() {
         batchSession, addToBatch, clearBatch,
         recordMerchantScan, checkTrusted, acceptTrust, declinePrompt,
     } = scans;
+
+    // Story 16-6: Read workflow fields (images, batchReceipts, batchProgress, batchEditingIndex)
+    // from the shared workflow store. Merge with scanState to create ScanState-compatible object
+    // for consumers that still expect the full ScanState type.
+    const workflowState = useWorkflowState();
+    const scanStateComplete: ScanState = useMemo(() => ({
+        ...scanState,
+        images: workflowState.images,
+        batchReceipts: workflowState.batchReceipts,
+        batchProgress: workflowState.batchProgress,
+        batchEditingIndex: workflowState.batchEditingIndex,
+    }), [scanState, workflowState]);
 
     // Destructure viewHandlers
     const {
@@ -211,10 +226,10 @@ function App() {
         // ScanContext integration
         setScanImages,
         // Batch editing context (for returning to batch-review after save)
-        batchEditingIndex: scanState.batchEditingIndex,
+        batchEditingIndex: workflowState.batchEditingIndex,
         clearBatchEditingIndex: () => setBatchEditingIndexContext(null),
         // Batch receipts (for discarding after save)
-        batchReceipts: scanState.batchReceipts,
+        batchReceipts: workflowState.batchReceipts,
         // Story 14e-34b: discardBatchReceipt removed - now using atomicBatchActions internally
         // Translation
         t,
@@ -361,7 +376,7 @@ function App() {
 
     // Dialog handlers (conflict dialog uses Modal Manager)
     useDialogHandlers({
-        scanState,
+        scanState: scanStateComplete,
         setCurrentTransaction,
         resetScanState: resetScanContext,
         clearBatchImages: useCallback(() => setScanContextImages([]), [setScanContextImages]),
@@ -538,25 +553,26 @@ function App() {
         }
 
         const hasContent = scanState.phase !== 'idle' &&
-            (scanState.images.length > 0 || scanState.results.length > 0 || scanState.batchReceipts !== null);
+            (workflowState.images.length > 0 || scanState.results.length > 0 || workflowState.batchReceipts !== null);
 
         if (hasContent) {
-            savePersistedScanState(user.uid, scanState);
+            savePersistedScanState(user.uid, scanStateComplete);
             clearLegacyBatchStorage(user.uid);
         } else if (scanState.phase === 'idle') {
             clearPersistedScanState(user.uid);
             clearLegacyBatchStorage(user.uid);
         }
-    }, [user?.uid, scanState]);
+    }, [user?.uid, scanState, scanStateComplete, workflowState]);
 
     // Navigation guard - warn before closing with active transaction
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            const wfState = getWorkflowState();
             const hasActiveContent = scanState.phase !== 'idle' && (
                 scanState.phase === 'scanning' ||
                 scanState.results.length > 0 ||
-                scanState.images.length > 0 ||
-                scanState.batchReceipts !== null
+                wfState.images.length > 0 ||
+                wfState.batchReceipts !== null
             );
 
             if (hasActiveContent) {
@@ -585,8 +601,8 @@ function App() {
     // Story 14e-40: Wrapper for extracted conflict detection utility
     // Check if there's an active transaction that would conflict with a new action
     const hasActiveTransactionConflict = useCallback(() => {
-        return hasActiveTransactionConflictUtil(scanState, view);
-    }, [scanState, view]);
+        return hasActiveTransactionConflictUtil(scanStateComplete, view);
+    }, [scanStateComplete, view]);
 
     // Navigate to transaction editor with conflict detection
     // If scan is active, auto-navigate to scan view instead of showing dialog
@@ -791,7 +807,7 @@ function App() {
         // Core dependencies
         user,
         services,
-        scanState,
+        scanState: scanStateComplete,
         // State setters
         setBatchEditingIndexContext,
         setCurrentTransaction,
@@ -828,7 +844,7 @@ function App() {
     }), [
         user,
         services,
-        scanState,
+        scanStateComplete,
         setBatchEditingIndexContext,
         setCurrentTransaction,
         setTransactionEditorMode,
@@ -867,7 +883,7 @@ function App() {
     // ==========================================================================
     const scanInitiationConfig: ScanInitiationProps = useMemo(() => ({
         // Core state
-        scanState,
+        scanState: scanStateComplete,
         hasBatchReceipts,
         scanImages,
         // Transaction state
@@ -898,7 +914,7 @@ function App() {
         // Refs
         fileInputRef,
     }), [
-        scanState,
+        scanStateComplete,
         hasBatchReceipts,
         scanImages,
         currentTransaction,
@@ -1256,8 +1272,8 @@ function App() {
                     onCreditCheckComplete: batchHandlers.handleCreditCheckComplete,
                     onBatchConfirmed: batchHandlers.handleProcessingStart,
                     onReduceBatch: batchHandlers.handleReduceBatch,
-                    // Story 14e-34a: Use scan store (single source of truth)
-                    batchImageCount: scanState.images.length,
+                    // Story 14e-34a / 16-6: Use workflow store (single source of truth)
+                    batchImageCount: workflowState.images.length,
                     theme: theme as 'light' | 'dark',
                     t,
                     // Story 14e-39: Trust prompt callbacks
@@ -1343,7 +1359,7 @@ function App() {
                 {/* Story 14e-28b: TransactionEditorView now owns data via internal hooks */}
                 {view === 'transaction-editor' && (
                     <TransactionEditorView
-                        key={scanState.batchEditingIndex !== null ? `batch-${scanState.batchEditingIndex}` : 'single'}
+                        key={workflowState.batchEditingIndex !== null ? `batch-${workflowState.batchEditingIndex}` : 'single'}
                         _testOverrides={transactionEditorOverrides}
                     />
                 )}
@@ -1439,8 +1455,8 @@ function App() {
                         superCreditsAvailable={userCredits.superRemaining}
                         normalCreditsAvailable={userCredits.remaining}
                         // Story 14e-4: onCreditInfoClick removed - Nav uses Modal Manager directly
-                        // Story 14e-34a: Use scan store (single source of truth)
-                        imageDataUrls={scanState.images}
+                        // Story 14e-34a / 16-6: Use workflow store (single source of truth)
+                        imageDataUrls={workflowState.images}
                         onImagesChange={(dataUrls) => setScanContextImages(dataUrls)}
                     />
                 )}
@@ -1470,7 +1486,7 @@ function App() {
                             // Core dependencies
                             user,
                             services,
-                            scanState,
+                            scanState: scanStateComplete,
                             // State setters
                             setBatchEditingIndexContext,
                             setCurrentTransaction,
@@ -1606,8 +1622,8 @@ function App() {
                         navigateToView('batch-review');
                     }
                     // 2. Batch images captured but not yet processed - return to capture
-                    // Story 14e-34a: Use scan store (single source of truth)
-                    else if (scanState.images.length > 0) {
+                    // Story 14e-34a / 16-6: Use workflow store (single source of truth)
+                    else if (workflowState.images.length > 0) {
                         if (!isBatchModeFromContext && user?.uid) {
                             startBatchScanContext(user.uid);
                         }
@@ -1627,8 +1643,8 @@ function App() {
                     if (batchProcessing.isProcessing || hasBatchReceipts) {
                         // Batch processing or results pending - go to review
                         navigateToView('batch-review');
-                    // Story 14e-34a: Use scan store (single source of truth)
-                    } else if (scanState.images.length > 0) {
+                    // Story 14e-34a / 16-6: Use workflow store (single source of truth)
+                    } else if (workflowState.images.length > 0) {
                         // Batch images captured but not processed - return to capture
                         if (!isBatchModeFromContext && user?.uid) {
                             startBatchScanContext(user.uid);

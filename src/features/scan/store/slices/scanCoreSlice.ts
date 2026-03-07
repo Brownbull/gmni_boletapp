@@ -1,22 +1,32 @@
 /**
  * Story 16-1: Core scan slice
+ * Story 16-6: images moved to useScanWorkflowStore. Phase/mode/activeDialog mirrored.
  *
  * Phase machine, image management, process lifecycle, save/result actions, control actions.
  * Cross-slice writes: sets credit state (processStart/Success/Error), batch state (image actions).
+ * Cross-store writes: images/batchProgress to shared workflow store, phase/mode mirrored.
  */
 
 import type { StateCreator } from 'zustand';
 import type { ScanPhase, CreditType, CreditStatus } from '../../types/scanStateMachine';
 import { generateRequestId } from '../../types/scanStateMachine';
 import type { Transaction } from '@/types/transaction';
+import type { BatchReceipt } from '@/types/batchReceipt';
 import type { ScanState } from '../../types/scanStateMachine';
 import type { ScanFullStoreInternal, ScanCoreSliceInternal } from './types';
 import { initialScanState } from './initialState';
 import { logGuardViolation } from './guardLog';
+import { useScanWorkflowStore } from '@shared/stores/useScanWorkflowStore';
+
+// Shorthand for shared workflow store access
+const wf = () => useScanWorkflowStore.getState();
 
 // Runtime validation sets for restoreState (AC-1)
 const VALID_PHASES: ReadonlySet<string> = new Set<ScanPhase>(['idle', 'capturing', 'scanning', 'reviewing', 'saving', 'error']);
 const VALID_CREDIT_STATUSES: ReadonlySet<string> = new Set<CreditStatus>(['none', 'reserved', 'confirmed', 'refunded']);
+
+// Workflow fields that restoreState should forward to shared store
+const WORKFLOW_KEYS = new Set(['images', 'batchProgress', 'batchReceipts', 'batchEditingIndex']);
 
 export const createScanCoreSlice: StateCreator<
   ScanFullStoreInternal,
@@ -24,13 +34,12 @@ export const createScanCoreSlice: StateCreator<
   [],
   ScanCoreSliceInternal
 > = (set, get) => ({
-  // State
+  // State (images removed — now in useScanWorkflowStore)
   phase: initialScanState.phase,
   mode: initialScanState.mode,
   requestId: initialScanState.requestId,
   userId: initialScanState.userId,
   startedAt: initialScanState.startedAt,
-  images: initialScanState.images,
   results: initialScanState.results,
   activeResultIndex: initialScanState.activeResultIndex,
   error: initialScanState.error,
@@ -59,15 +68,23 @@ export const createScanCoreSlice: StateCreator<
       { ...initialScanState, phase: 'capturing', mode: 'single', requestId: generateRequestId(), userId, startedAt: Date.now() },
       undefined, 'scan/startSingle'
     );
+    // Mirror to shared workflow store
+    wf().reset();
+    wf().setPhase('capturing');
+    wf().setMode('single');
   },
 
   startBatch: (userId: string) => {
     if (!get()._guardPhase('idle', 'startBatch')) return;
     set(
-      { ...initialScanState, phase: 'capturing', mode: 'batch', requestId: generateRequestId(), userId, startedAt: Date.now(),
-        batchProgress: { current: 0, total: 0, completed: [], failed: [] } },
+      { ...initialScanState, phase: 'capturing', mode: 'batch', requestId: generateRequestId(), userId, startedAt: Date.now() },
       undefined, 'scan/startBatch'
     );
+    // Mirror to shared workflow store
+    wf().reset();
+    wf().setPhase('capturing');
+    wf().setMode('batch');
+    wf().setBatchProgress({ current: 0, total: 0, completed: [], failed: [] });
   },
 
   startStatement: (userId: string) => {
@@ -76,47 +93,53 @@ export const createScanCoreSlice: StateCreator<
       { ...initialScanState, phase: 'capturing', mode: 'statement', requestId: generateRequestId(), userId, startedAt: Date.now() },
       undefined, 'scan/startStatement'
     );
+    // Mirror to shared workflow store
+    wf().reset();
+    wf().setPhase('capturing');
+    wf().setMode('statement');
   },
 
-  // IMAGE Actions
+  // IMAGE Actions (write to shared workflow store)
 
   addImage: (image: string) => {
     if (!get()._guardPhase('capturing', 'addImage')) return;
-    const state = get();
-    const newImages = [...state.images, image];
-    let batchProgress = state.batchProgress;
-    if (state.mode === 'batch' && batchProgress) {
-      batchProgress = { ...batchProgress, total: newImages.length };
+    const workflow = wf();
+    const newImages = [...workflow.images, image];
+    workflow.setImages(newImages);
+    // Update batch progress total on shared store
+    if (get().mode === 'batch') {
+      const bp = workflow.batchProgress;
+      if (bp) workflow.setBatchProgress({ ...bp, total: newImages.length });
     }
-    set({ images: newImages, batchProgress }, undefined, 'scan/addImage');
   },
 
   removeImage: (index: number) => {
     if (!get()._guardPhase('capturing', 'removeImage')) return;
-    const state = get();
-    const filteredImages = state.images.filter((_, i) => i !== index);
-    let batchProgress = state.batchProgress;
-    if (state.mode === 'batch' && batchProgress) {
-      batchProgress = { ...batchProgress, total: filteredImages.length };
+    const workflow = wf();
+    const filteredImages = workflow.images.filter((_, i) => i !== index);
+    workflow.setImages(filteredImages);
+    if (get().mode === 'batch') {
+      const bp = workflow.batchProgress;
+      if (bp) workflow.setBatchProgress({ ...bp, total: filteredImages.length });
     }
-    set({ images: filteredImages, batchProgress }, undefined, 'scan/removeImage');
   },
 
   setImages: (images: string[]) => {
     if (!get()._guardPhase('capturing', 'setImages')) return;
-    const state = get();
-    let batchProgress = state.batchProgress;
-    if (state.mode === 'batch' && batchProgress) {
-      batchProgress = { ...batchProgress, total: images.length };
+    const workflow = wf();
+    workflow.setImages(images);
+    if (get().mode === 'batch') {
+      const bp = workflow.batchProgress;
+      if (bp) workflow.setBatchProgress({ ...bp, total: images.length });
     }
-    set({ images, batchProgress }, undefined, 'scan/setImages');
   },
 
   // PROCESS Actions
 
   processStart: (creditType: CreditType, creditsCount: number) => {
     if (!get()._guardPhase('capturing', 'processStart')) return;
-    if (get().images.length === 0) {
+    // Read images from shared workflow store
+    if (wf().images.length === 0) {
       logGuardViolation({
         action: 'processStart',
         currentPhase: get().phase,
@@ -130,6 +153,7 @@ export const createScanCoreSlice: StateCreator<
       { phase: 'scanning', creditStatus: 'reserved', creditType, creditsCount, error: null },
       undefined, 'scan/processStart'
     );
+    wf().setPhase('scanning');
   },
 
   processSuccess: (results: Transaction[]) => {
@@ -139,12 +163,14 @@ export const createScanCoreSlice: StateCreator<
       { phase: 'reviewing', creditStatus: 'confirmed', results, activeResultIndex: 0, error: null },
       undefined, 'scan/processSuccess'
     );
+    wf().setPhase('reviewing');
   },
 
   processError: (error: string) => {
     if (!get()._guardPhase('scanning', 'processError')) return;
     // Cross-slice write: sets creditSlice state (creditStatus)
     set({ phase: 'error', creditStatus: 'refunded', error }, undefined, 'scan/processError');
+    wf().setPhase('error');
   },
 
   // RESULT Actions
@@ -178,16 +204,19 @@ export const createScanCoreSlice: StateCreator<
   saveStart: () => {
     if (!get()._guardPhase('reviewing', 'saveStart')) return;
     set({ phase: 'saving' }, undefined, 'scan/saveStart');
+    wf().setPhase('saving');
   },
 
   saveSuccess: () => {
     if (!get()._guardPhase('saving', 'saveSuccess')) return;
     set({ ...initialScanState }, undefined, 'scan/saveSuccess');
+    wf().reset();
   },
 
   saveError: (error: string) => {
     if (!get()._guardPhase('saving', 'saveError')) return;
     set({ phase: 'reviewing', error }, undefined, 'scan/saveError');
+    wf().setPhase('reviewing');
   },
 
   // CONTROL Actions
@@ -203,10 +232,12 @@ export const createScanCoreSlice: StateCreator<
       return;
     }
     set({ ...initialScanState }, undefined, 'scan/cancel');
+    wf().reset();
   },
 
   reset: () => {
     set({ ...initialScanState }, undefined, 'scan/reset');
+    wf().reset();
   },
 
   restoreState: (restoredState: Partial<ScanState>) => {
@@ -221,8 +252,10 @@ export const createScanCoreSlice: StateCreator<
       return;
     }
 
-    const knownKeys = new Set(Object.keys(initialScanState));
-    const unknownKeys = Object.keys(restoredState).filter((k) => !knownKeys.has(k));
+    // Include both scan-local and workflow keys for validation
+    const scanKeys = new Set(Object.keys(initialScanState));
+    const allKnownKeys = new Set([...scanKeys, ...WORKFLOW_KEYS]);
+    const unknownKeys = Object.keys(restoredState).filter((k) => !allKnownKeys.has(k));
     if (unknownKeys.length > 0) {
       logGuardViolation({
         action: 'restoreState',
@@ -232,53 +265,80 @@ export const createScanCoreSlice: StateCreator<
       });
     }
 
-    // Filter to only known keys before applying
-    const filtered: Record<string, unknown> = {};
+    // Separate scan-local fields from workflow fields
+    const scanFiltered: Record<string, unknown> = {};
+    const workflowFiltered: Record<string, unknown> = {};
     for (const key of Object.keys(restoredState)) {
-      if (knownKeys.has(key)) {
-        filtered[key] = (restoredState as Record<string, unknown>)[key];
+      if (WORKFLOW_KEYS.has(key)) {
+        workflowFiltered[key] = (restoredState as Record<string, unknown>)[key];
+      } else if (scanKeys.has(key)) {
+        scanFiltered[key] = (restoredState as Record<string, unknown>)[key];
       }
     }
 
     // AC-1: Runtime value-type validation for critical fields
-    if ('phase' in filtered && (typeof filtered.phase !== 'string' || !VALID_PHASES.has(filtered.phase))) {
+    if ('phase' in scanFiltered && (typeof scanFiltered.phase !== 'string' || !VALID_PHASES.has(scanFiltered.phase))) {
       logGuardViolation({
         action: 'restoreState',
         currentPhase: get().phase,
         expectedPhase: 'any',
-        detail: `invalid phase: ${String(filtered.phase)}`,
+        detail: `invalid phase: ${String(scanFiltered.phase)}`,
       });
-      filtered.phase = initialScanState.phase;
+      scanFiltered.phase = initialScanState.phase;
     }
 
-    if ('images' in filtered && !Array.isArray(filtered.images)) {
+    if ('images' in workflowFiltered && !Array.isArray(workflowFiltered.images)) {
       logGuardViolation({
         action: 'restoreState',
         currentPhase: get().phase,
         expectedPhase: 'any',
-        detail: `invalid images: expected array, got ${typeof filtered.images}`,
+        detail: `invalid images: expected array, got ${typeof workflowFiltered.images}`,
       });
-      filtered.images = initialScanState.images;
+      workflowFiltered.images = [];
     }
 
-    if ('creditStatus' in filtered && (typeof filtered.creditStatus !== 'string' || !VALID_CREDIT_STATUSES.has(filtered.creditStatus))) {
+    // Size bound: reject unreasonably large images arrays (corruption guard)
+    if (Array.isArray(workflowFiltered.images) && (workflowFiltered.images as string[]).length > 100) {
       logGuardViolation({
         action: 'restoreState',
         currentPhase: get().phase,
         expectedPhase: 'any',
-        detail: `invalid creditStatus: ${String(filtered.creditStatus)}`,
+        detail: `images array too large: ${(workflowFiltered.images as string[]).length} (max 100)`,
       });
-      filtered.creditStatus = initialScanState.creditStatus;
+      workflowFiltered.images = [];
     }
 
-    if ((filtered as Partial<ScanState>).phase === 'scanning') {
+    if ('creditStatus' in scanFiltered && (typeof scanFiltered.creditStatus !== 'string' || !VALID_CREDIT_STATUSES.has(scanFiltered.creditStatus))) {
+      logGuardViolation({
+        action: 'restoreState',
+        currentPhase: get().phase,
+        expectedPhase: 'any',
+        detail: `invalid creditStatus: ${String(scanFiltered.creditStatus)}`,
+      });
+      scanFiltered.creditStatus = initialScanState.creditStatus;
+    }
+
+    // Forward workflow fields to shared store
+    const workflow = wf();
+    if ('images' in workflowFiltered) workflow.setImages(workflowFiltered.images as string[]);
+    if ('batchProgress' in workflowFiltered) workflow.setBatchProgress(workflowFiltered.batchProgress as Parameters<typeof workflow.setBatchProgress>[0]);
+    if ('batchReceipts' in workflowFiltered && workflowFiltered.batchReceipts != null) workflow.setBatchReceipts(workflowFiltered.batchReceipts as BatchReceipt[]);
+    if ('batchEditingIndex' in workflowFiltered) workflow.setBatchEditingIndex(workflowFiltered.batchEditingIndex as number | null);
+
+    if ((scanFiltered as Partial<ScanState>).phase === 'scanning') {
       set(
-        { ...initialScanState, ...filtered, phase: 'error', creditStatus: 'refunded',
-          error: 'Escaneo interrumpido. Intenta de nuevo.' } as Partial<ScanState>,
+        { ...initialScanState, ...scanFiltered, phase: 'error', creditStatus: 'refunded',
+          error: 'Escaneo interrumpido. Intenta de nuevo.' },
         undefined, 'scan/restoreState'
       );
+      wf().setPhase('error');
       return;
     }
-    set({ ...initialScanState, ...filtered } as Partial<ScanState>, undefined, 'scan/restoreState');
+    set({ ...initialScanState, ...scanFiltered }, undefined, 'scan/restoreState');
+    // Mirror phase/mode to shared store
+    const restoredPhase = (scanFiltered.phase as ScanPhase) ?? initialScanState.phase;
+    const restoredMode = (scanFiltered.mode as typeof initialScanState.mode) ?? initialScanState.mode;
+    wf().setPhase(restoredPhase);
+    wf().setMode(restoredMode);
   },
 });

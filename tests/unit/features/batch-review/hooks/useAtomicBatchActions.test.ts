@@ -51,9 +51,9 @@ const mockBatchReviewStoreState = {
   }),
 };
 
-// Mock scan store
-vi.mock('../../../../../src/features/scan/store', () => ({
-  useScanStore: Object.assign(
+// Story 16-6: Mock shared workflow store (replaces scan store for batch receipt ops)
+vi.mock('../../../../../src/shared/stores/useScanWorkflowStore', () => ({
+  useScanWorkflowStore: Object.assign(
     () => mockScanStoreState,
     {
       getState: () => mockScanStoreState,

@@ -11,11 +11,11 @@ import {
   getScanState,
   scanActions,
 } from '../index';
-import { createMockTransaction, createMockBatchReceipts, getStateOnly } from './helpers';
+import { createMockTransaction, createMockBatchReceipts, getStateOnly, resetAllStores, getWorkflowState } from './helpers';
 
 describe('useScanStore — Core', () => {
   beforeEach(() => {
-    useScanStore.setState(initialScanState);
+    resetAllStores();
   });
 
   describe('AC1: Test file structure', () => {
@@ -37,7 +37,7 @@ describe('useScanStore — Core', () => {
       expect(getStateOnly()).toEqual(initialScanState);
       expect(getScanState().phase).toBe('idle');
       expect(getScanState().mode).toBe('single');
-      expect(getScanState().images).toHaveLength(0);
+      expect(getWorkflowState().images).toHaveLength(0);
       expect(getScanState().results).toHaveLength(0);
       expect(getScanState().creditStatus).toBe('none');
     });
@@ -61,7 +61,7 @@ describe('useScanStore — Core', () => {
         expect(getScanState().phase).toBe('capturing');
         expect(getScanState().mode).toBe('batch');
         expect(getScanState().userId).toBe('test-user');
-        expect(getScanState().batchProgress).toEqual({
+        expect(getWorkflowState().batchProgress).toEqual({
           current: 0, total: 0, completed: [], failed: [],
         });
       });
@@ -117,7 +117,7 @@ describe('useScanStore — Core', () => {
         scanActions.batchComplete(mockReceipts);
         expect(getScanState().phase).toBe('reviewing');
         expect(getScanState().creditStatus).toBe('confirmed');
-        expect(getScanState().batchReceipts).toEqual(mockReceipts);
+        expect(getWorkflowState().batchReceipts).toEqual(mockReceipts);
       });
     });
 
@@ -173,12 +173,158 @@ describe('useScanStore — Core', () => {
     });
   });
 
+  describe('Cross-store write mirroring (Story 16-6)', () => {
+    it('startSingle mirrors phase and mode to workflow store', () => {
+      scanActions.startSingle('test-user');
+      expect(getWorkflowState().phase).toBe('capturing');
+      expect(getWorkflowState().mode).toBe('single');
+    });
+
+    it('startBatch mirrors phase, mode, and batchProgress to workflow store', () => {
+      scanActions.startBatch('test-user');
+      expect(getWorkflowState().phase).toBe('capturing');
+      expect(getWorkflowState().mode).toBe('batch');
+      expect(getWorkflowState().batchProgress).toEqual({
+        current: 0, total: 0, completed: [], failed: [],
+      });
+    });
+
+    it('startStatement mirrors phase and mode to workflow store', () => {
+      scanActions.startStatement('test-user');
+      expect(getWorkflowState().phase).toBe('capturing');
+      expect(getWorkflowState().mode).toBe('statement');
+    });
+
+    it('processStart mirrors phase to workflow store', () => {
+      scanActions.startSingle('test-user');
+      scanActions.addImage('img');
+      scanActions.processStart('normal', 1);
+      expect(getWorkflowState().phase).toBe('scanning');
+    });
+
+    it('processSuccess mirrors phase to workflow store', () => {
+      scanActions.startSingle('test-user');
+      scanActions.addImage('img');
+      scanActions.processStart('normal', 1);
+      scanActions.processSuccess([createMockTransaction()]);
+      expect(getWorkflowState().phase).toBe('reviewing');
+    });
+
+    it('processError mirrors phase to workflow store', () => {
+      scanActions.startSingle('test-user');
+      scanActions.addImage('img');
+      scanActions.processStart('normal', 1);
+      scanActions.processError('fail');
+      expect(getWorkflowState().phase).toBe('error');
+    });
+
+    it('saveStart mirrors phase to workflow store', () => {
+      scanActions.startSingle('test-user');
+      scanActions.addImage('img');
+      scanActions.processStart('normal', 1);
+      scanActions.processSuccess([createMockTransaction()]);
+      scanActions.saveStart();
+      expect(getWorkflowState().phase).toBe('saving');
+    });
+
+    it('saveSuccess resets workflow store', () => {
+      scanActions.startSingle('test-user');
+      scanActions.addImage('img');
+      scanActions.processStart('normal', 1);
+      scanActions.processSuccess([createMockTransaction()]);
+      scanActions.saveStart();
+      scanActions.saveSuccess();
+      expect(getWorkflowState().phase).toBe('idle');
+      expect(getWorkflowState().mode).toBe('single');
+      expect(getWorkflowState().images).toHaveLength(0);
+    });
+
+    it('saveError mirrors phase to workflow store', () => {
+      scanActions.startSingle('test-user');
+      scanActions.addImage('img');
+      scanActions.processStart('normal', 1);
+      scanActions.processSuccess([createMockTransaction()]);
+      scanActions.saveStart();
+      scanActions.saveError('Save failed');
+      expect(getWorkflowState().phase).toBe('reviewing');
+    });
+
+    it('cancel resets workflow store', () => {
+      scanActions.startSingle('test-user');
+      scanActions.addImage('img');
+      scanActions.cancel();
+      expect(getWorkflowState().phase).toBe('idle');
+      expect(getWorkflowState().images).toHaveLength(0);
+    });
+
+    it('reset resets workflow store', () => {
+      scanActions.startSingle('test-user');
+      scanActions.addImage('img');
+      scanActions.reset();
+      expect(getWorkflowState().phase).toBe('idle');
+      expect(getWorkflowState().images).toHaveLength(0);
+    });
+
+    it('addImage writes to workflow store', () => {
+      scanActions.startSingle('test-user');
+      scanActions.addImage('img-1');
+      scanActions.addImage('img-2');
+      expect(getWorkflowState().images).toEqual(['img-1', 'img-2']);
+    });
+
+    it('removeImage writes to workflow store', () => {
+      scanActions.startSingle('test-user');
+      scanActions.addImage('img-1');
+      scanActions.addImage('img-2');
+      scanActions.removeImage(0);
+      expect(getWorkflowState().images).toEqual(['img-2']);
+    });
+  });
+
+  describe('restoreState workflow forwarding (Story 16-6)', () => {
+    it('forwards images to workflow store', () => {
+      scanActions.restoreState({ phase: 'capturing', images: ['restored-img'] });
+      expect(getWorkflowState().images).toEqual(['restored-img']);
+    });
+
+    it('forwards batchProgress to workflow store', () => {
+      const bp = { current: 1, total: 3, completed: [createMockTransaction()], failed: [] };
+      scanActions.restoreState({ phase: 'reviewing', batchProgress: bp });
+      expect(getWorkflowState().batchProgress).toEqual(bp);
+    });
+
+    it('forwards batchReceipts to workflow store', () => {
+      const receipts = createMockBatchReceipts(2);
+      scanActions.restoreState({ phase: 'reviewing', batchReceipts: receipts });
+      expect(getWorkflowState().batchReceipts).toEqual(receipts);
+    });
+
+    it('forwards batchEditingIndex to workflow store', () => {
+      scanActions.restoreState({ phase: 'reviewing', batchEditingIndex: 2 });
+      expect(getWorkflowState().batchEditingIndex).toBe(2);
+    });
+
+    it('mirrors phase and mode to workflow store', () => {
+      scanActions.restoreState({ phase: 'capturing', mode: 'batch' });
+      expect(getWorkflowState().phase).toBe('capturing');
+      expect(getWorkflowState().mode).toBe('batch');
+    });
+
+    it('rejects oversized images array (corruption guard)', () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const hugeImages = Array.from({ length: 101 }, (_, i) => `img-${i}`);
+      scanActions.restoreState({ phase: 'capturing', images: hugeImages });
+      expect(getWorkflowState().images).toEqual([]);
+      consoleSpy.mockRestore();
+    });
+  });
+
   describe('AC6: DevTools action names', () => {
     it('actions produce correct action names', () => {
       scanActions.startSingle('test-user');
       expect(getScanState().phase).toBe('capturing');
       scanActions.addImage('image');
-      expect(getScanState().images).toHaveLength(1);
+      expect(getWorkflowState().images).toHaveLength(1);
       scanActions.processStart('normal', 1);
       expect(getScanState().phase).toBe('scanning');
       scanActions.processSuccess([createMockTransaction()]);
@@ -205,7 +351,7 @@ describe('useScanStore — Core', () => {
 
       expect(getScanState().phase).toBe('idle');
       expect(getScanState().error).toBeNull();
-      expect(getScanState().images).toHaveLength(0);
+      expect(getWorkflowState().images).toHaveLength(0);
       expect(getScanState().overlayState).toBe('idle');
       expect(getScanState().overlayError).toBeNull();
     });
@@ -223,8 +369,8 @@ describe('useScanStore — Core', () => {
       scanActions.startSingle('test-user');
       expect(getScanState().phase).toBe('capturing');
       scanActions.addImage('gallery-image-data');
-      expect(getScanState().images).toHaveLength(1);
-      expect(getScanState().images[0]).toBe('gallery-image-data');
+      expect(getWorkflowState().images).toHaveLength(1);
+      expect(getWorkflowState().images[0]).toBe('gallery-image-data');
     });
 
     it('scan fail -> reset -> retry scan succeeds', () => {

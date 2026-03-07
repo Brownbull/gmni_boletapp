@@ -34,6 +34,8 @@ import { batchReviewActions, useBatchReviewStore } from '../store';
 // with useScanStore.images as the single source of truth for batch image data.
 // The alternative would be duplicating state, which causes race conditions.
 import { useScanStore } from '@/features/scan/store';
+// Story 16-6: images state moved to shared workflow store
+import { useWorkflowImages } from '@shared/stores';
 
 // Batch processing utilities
 import { createBatchReceiptsFromResults } from './useBatchReview';
@@ -339,10 +341,11 @@ export function useBatchReviewHandlers(props: BatchReviewHandlersProps): BatchRe
     batchItemSuccess: dispatchBatchItemSuccess,
     batchItemError: dispatchBatchItemError,
     batchComplete: dispatchBatchComplete,
-    // Story 14e-34a: Single source of truth for batch images
-    images: batchImages,
+    // Story 16-6: images state moved to useScanWorkflowStore; setImages action remains on scan store
     setImages: setBatchImages,
   } = scanStoreState;
+  // Story 16-6: Read images from shared workflow store (source of truth)
+  const batchImages = useWorkflowImages();
 
   // ==========================================================================
   // Navigation handlers (consolidated from handlers/navigation.ts)
@@ -704,7 +707,7 @@ export function useBatchReviewHandlers(props: BatchReviewHandlersProps): BatchRe
    * If only one image remains after removal, switches to single scan mode.
    */
   const handleRemoveImage = useCallback((index: number) => {
-    const updated = batchImages.filter((_, i) => i !== index);
+    const updated = batchImages.filter((_: string, i: number) => i !== index);
     setBatchImages(updated);
 
     // If only one image left, switch to single scan mode
