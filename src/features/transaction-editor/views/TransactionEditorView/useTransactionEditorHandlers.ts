@@ -357,7 +357,8 @@ export function useTransactionEditorHandlers(
         if (workflowBatchEditingIndex !== null) {
             setBatchEditingIndexContext(null);
             // Story 16-7: Emit event instead of cross-feature store call (AC-2)
-            appEvents.emit('review:saved', { transactionIds: [] });
+            // TD-16-5: Renamed to match cancel-path semantics (AC-3)
+            appEvents.emit('batch:editing-finished', {});
             setView('batch-review');
         } else {
             navigateBack();

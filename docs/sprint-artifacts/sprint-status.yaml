@@ -310,7 +310,7 @@ development_status:
   TD-16-3-batch-review-file-decomposition: done     # 3 pts - Decompose useBatchReviewHandlers (773L) + BatchCaptureView (800L) (DEPENDS: 16-6)
   TD-16-4-shared-workflow-store-hardening: done  # 3 pts - Integration test + dual-state audit + test coupling + facade review (DEPENDS: 16-6)
   16-7-event-bus: done                                   # 5 pts - Install mitt, create typed event bus (DEPENDS: 16-6)
-  TD-16-5-event-bus-payload-polish: ready-for-dev        # 2 pts - Populate event payloads + rename review:saved + remove getScanState coupling (DEPENDS: 16-7)
+  TD-16-5-event-bus-payload-polish: done                   # 2 pts - Populate event payloads + rename review:saved + remove getScanState coupling (DEPENDS: 16-7)
   TD-16-6-batch-handler-type-cleanup: ready-for-dev     # 1 pt  - DRY: CreditCheckResult type + MERCHANT_CONFIDENCE_THRESHOLD consolidation (DEPENDS: TD-16-3)
 
   # Independent

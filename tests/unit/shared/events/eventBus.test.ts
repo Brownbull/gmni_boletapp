@@ -1,5 +1,6 @@
 /**
  * Story 16-7: Event Bus Tests
+ * Story TD-16-5: Updated payloads (resultIndex) and renamed batch:editing-finished.
  *
  * Tests for typed event bus infrastructure using mitt.
  * Validates: type safety, emit/subscribe, cleanup, AppEvents contract.
@@ -16,13 +17,13 @@ describe('appEvents (typed mitt event bus)', () => {
   });
 
   describe('scan:completed event', () => {
-    it('should emit and receive scan:completed with transactionIds', () => {
+    it('should emit and receive scan:completed with resultIndex', () => {
       const handler = vi.fn();
       appEvents.on('scan:completed', handler);
 
-      appEvents.emit('scan:completed', { transactionIds: ['tx-1', 'tx-2'] });
+      appEvents.emit('scan:completed', { resultIndex: 0 });
 
-      expect(handler).toHaveBeenCalledWith({ transactionIds: ['tx-1', 'tx-2'] });
+      expect(handler).toHaveBeenCalledWith({ resultIndex: 0 });
       expect(handler).toHaveBeenCalledTimes(1);
     });
 
@@ -31,7 +32,7 @@ describe('appEvents (typed mitt event bus)', () => {
       appEvents.on('scan:completed', handler);
 
       appEvents.off('scan:completed', handler);
-      appEvents.emit('scan:completed', { transactionIds: ['tx-1'] });
+      appEvents.emit('scan:completed', { resultIndex: 0 });
 
       expect(handler).not.toHaveBeenCalled();
     });
@@ -48,14 +49,14 @@ describe('appEvents (typed mitt event bus)', () => {
     });
   });
 
-  describe('review:saved event', () => {
-    it('should emit and receive review:saved with transactionIds', () => {
+  describe('batch:editing-finished event', () => {
+    it('should emit and receive batch:editing-finished with empty payload', () => {
       const handler = vi.fn();
-      appEvents.on('review:saved', handler);
+      appEvents.on('batch:editing-finished', handler);
 
-      appEvents.emit('review:saved', { transactionIds: ['tx-3'] });
+      appEvents.emit('batch:editing-finished', {});
 
-      expect(handler).toHaveBeenCalledWith({ transactionIds: ['tx-3'] });
+      expect(handler).toHaveBeenCalledWith({});
     });
   });
 
@@ -66,7 +67,7 @@ describe('appEvents (typed mitt event bus)', () => {
       appEvents.on('scan:completed', handler1);
       appEvents.on('scan:completed', handler2);
 
-      appEvents.emit('scan:completed', { transactionIds: ['tx-1'] });
+      appEvents.emit('scan:completed', { resultIndex: 0 });
 
       expect(handler1).toHaveBeenCalledTimes(1);
       expect(handler2).toHaveBeenCalledTimes(1);
@@ -79,7 +80,7 @@ describe('appEvents (typed mitt event bus)', () => {
       appEvents.on('scan:completed', handler2);
 
       appEvents.off('scan:completed', handler1);
-      appEvents.emit('scan:completed', { transactionIds: ['tx-1'] });
+      appEvents.emit('scan:completed', { resultIndex: 0 });
 
       expect(handler1).not.toHaveBeenCalled();
       expect(handler2).toHaveBeenCalledTimes(1);
@@ -90,13 +91,13 @@ describe('appEvents (typed mitt event bus)', () => {
     it('should enforce AppEvents type contract at compile time', () => {
       // This test validates the type contract exists and is usable
       const events: AppEvents = {
-        'scan:completed': { transactionIds: ['id'] },
+        'scan:completed': { resultIndex: 0 },
         'scan:cancelled': { mode: 'batch' },
-        'review:saved': { transactionIds: ['id'] },
+        'batch:editing-finished': {},
       };
-      expect(events['scan:completed'].transactionIds).toEqual(['id']);
+      expect(events['scan:completed'].resultIndex).toBe(0);
       expect(events['scan:cancelled'].mode).toBe('batch');
-      expect(events['review:saved'].transactionIds).toEqual(['id']);
+      expect(events['batch:editing-finished']).toEqual({});
     });
   });
 });

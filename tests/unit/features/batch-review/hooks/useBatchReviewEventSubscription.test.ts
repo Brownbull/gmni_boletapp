@@ -1,7 +1,8 @@
 /**
  * Story 16-7: useBatchReviewEventSubscription Tests
+ * Story TD-16-5: Renamed from review:saved to batch:editing-finished (AC-3).
  *
- * Verifies that batch-review subscribes to review:saved events
+ * Verifies that batch-review subscribes to batch:editing-finished events
  * and calls local finishEditing action.
  */
 
@@ -33,11 +34,11 @@ describe('useBatchReviewEventSubscription', () => {
     appEvents.all.clear();
   });
 
-  it('should call finishEditing when review:saved fires', () => {
+  it('should call finishEditing when batch:editing-finished fires', () => {
     renderHook(() => useBatchReviewEventSubscription());
 
     act(() => {
-      appEvents.emit('review:saved', { transactionIds: ['tx-1'] });
+      appEvents.emit('batch:editing-finished', {});
     });
 
     expect(mockFinishEditing).toHaveBeenCalledTimes(1);
@@ -49,7 +50,7 @@ describe('useBatchReviewEventSubscription', () => {
     unmount();
 
     act(() => {
-      appEvents.emit('review:saved', { transactionIds: ['tx-1'] });
+      appEvents.emit('batch:editing-finished', {});
     });
 
     expect(mockFinishEditing).not.toHaveBeenCalled();

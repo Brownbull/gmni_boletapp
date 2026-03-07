@@ -23,3 +23,5 @@
 | 2026-03-07 | TD-16-3 | review | boletapp-dev | ✓ done | none |
 | 2026-03-07 | TD-16-4 | none | boletapp-dev | ✓ done | Integration test (37 tests) verifying scan→shared→batch-review flow. Invariant comments on 13 mirror write sites. resetAllStores() documented as intentional. workflowActions facade removed (0 production consumers, 13 duplicated methods). 7165 tests pass. | none |
 | 2026-03-07 | TD-16-4 | review | boletapp-dev | ✓ done | none |
+| 2026-03-07 | TD-16-5 | none | boletapp-dev | ✓ done | Event bus payload polish: scan:completed emits {resultIndex:0} instead of empty transactionIds. review:saved renamed to batch:editing-finished. pendingTransaction handoff slot added to shared workflow store. getScanState cross-feature import eliminated from useScanEventSubscription. 13 files changed, 7165 tests pass. Self-review APPROVE 8.5/10. | none |
+| 2026-03-07 | TD-16-5 | review | boletapp-dev | ✓ done | APPROVE 8.7/10, 1 quick fix (setPendingTransaction test), 0 TD stories | none |

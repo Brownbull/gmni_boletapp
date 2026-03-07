@@ -428,7 +428,8 @@ describe('processScan', () => {
       expect(result.success).toBe(true);
       expect(result.route).toBe('edit-view');
       // Story 16-7: scan:completed event emitted (subscriber handles animation)
-      expect(mockAppEvents.emit).toHaveBeenCalledWith('scan:completed', { transactionIds: [] });
+      // TD-16-5: resultIndex replaces empty transactionIds
+      expect(mockAppEvents.emit).toHaveBeenCalledWith('scan:completed', { resultIndex: 0 });
     });
 
     it('should store transaction in scan results and emit event on success', async () => {
@@ -443,7 +444,7 @@ describe('processScan', () => {
           total: 10000,
         })
       ]);
-      expect(mockAppEvents.emit).toHaveBeenCalledWith('scan:completed', { transactionIds: [] });
+      expect(mockAppEvents.emit).toHaveBeenCalledWith('scan:completed', { resultIndex: 0 });
     });
 
     it('should dispatch success with transaction', async () => {

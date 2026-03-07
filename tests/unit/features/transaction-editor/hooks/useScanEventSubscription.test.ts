@@ -1,8 +1,9 @@
 /**
  * Story 16-7: useScanEventSubscription Tests
+ * Story TD-16-5: Updated to read from shared workflow store (AC-2).
  *
  * Verifies that transaction-editor subscribes to scan:completed events
- * and sets up editor state from scan store results.
+ * and sets up editor state from shared workflow store's pendingTransaction.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -22,7 +23,7 @@ vi.mock('@features/transaction-editor/store', () => ({
   }),
 }));
 
-// Mock scan store getScanState for synchronous reads
+// Mock shared workflow store (TD-16-5: replaces @features/scan/store mock)
 const makeTx = (merchant = 'Test Store') => ({
   merchant,
   total: 1000,
@@ -30,13 +31,12 @@ const makeTx = (merchant = 'Test Store') => ({
   category: 'Other' as const,
 });
 
-let mockScanState = {
-  results: [makeTx()],
-  activeResultIndex: 0,
-};
+let mockPendingTransaction: ReturnType<typeof makeTx> | null = makeTx();
 
-vi.mock('@features/scan/store', () => ({
-  getScanState: () => mockScanState,
+vi.mock('@shared/stores', () => ({
+  getWorkflowState: () => ({
+    pendingTransaction: mockPendingTransaction,
+  }),
 }));
 
 // Import after mocks
@@ -46,10 +46,7 @@ describe('useScanEventSubscription', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     appEvents.all.clear();
-    mockScanState = {
-      results: [makeTx()],
-      activeResultIndex: 0,
-    };
+    mockPendingTransaction = makeTx();
   });
 
   afterEach(() => {
@@ -60,7 +57,7 @@ describe('useScanEventSubscription', () => {
     renderHook(() => useScanEventSubscription());
 
     act(() => {
-      appEvents.emit('scan:completed', { transactionIds: [] });
+      appEvents.emit('scan:completed', { resultIndex: 0 });
     });
 
     expect(mockSetTransaction).toHaveBeenCalledWith(makeTx());
@@ -74,18 +71,18 @@ describe('useScanEventSubscription', () => {
     unmount();
 
     act(() => {
-      appEvents.emit('scan:completed', { transactionIds: [] });
+      appEvents.emit('scan:completed', { resultIndex: 0 });
     });
 
     expect(mockSetTransaction).not.toHaveBeenCalled();
   });
 
-  it('should not set transaction if scan results are empty', () => {
-    mockScanState = { results: [], activeResultIndex: 0 };
+  it('should not set transaction if pendingTransaction is null', () => {
+    mockPendingTransaction = null;
     renderHook(() => useScanEventSubscription());
 
     act(() => {
-      appEvents.emit('scan:completed', { transactionIds: [] });
+      appEvents.emit('scan:completed', { resultIndex: 0 });
     });
 
     expect(mockSetTransaction).not.toHaveBeenCalled();

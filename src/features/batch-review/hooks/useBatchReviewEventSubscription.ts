@@ -1,7 +1,8 @@
 /**
  * Story 16-7: Batch Review Event Subscription Hook
+ * Story TD-16-5: Renamed from review:saved to batch:editing-finished (AC-3).
  *
- * Subscribes to review:saved events and transitions batch-review state.
+ * Subscribes to batch:editing-finished events and transitions batch-review state.
  * Replaces direct cross-feature import of batchReviewActions in
  * useTransactionEditorHandlers.
  *
@@ -13,9 +14,9 @@ import { appEvents } from '@shared/events';
 import { batchReviewActions } from '@features/batch-review';
 
 /**
- * Subscribe to review:saved events and transition batch review state.
+ * Subscribe to batch:editing-finished events and transition batch review state.
  *
- * When a transaction is saved from the editor during batch editing,
+ * When batch editing is finished (cancel or save path) from the editor,
  * this hook receives the event and calls finishEditing() to transition
  * batch-review from editing → reviewing phase.
  *
@@ -23,13 +24,13 @@ import { batchReviewActions } from '@features/batch-review';
  */
 export function useBatchReviewEventSubscription(): void {
   useEffect(() => {
-    const handleReviewSaved = () => {
+    const handleEditingFinished = () => {
       batchReviewActions.finishEditing();
     };
 
-    appEvents.on('review:saved', handleReviewSaved);
+    appEvents.on('batch:editing-finished', handleEditingFinished);
     return () => {
-      appEvents.off('review:saved', handleReviewSaved);
+      appEvents.off('batch:editing-finished', handleEditingFinished);
     };
   }, []);
 }

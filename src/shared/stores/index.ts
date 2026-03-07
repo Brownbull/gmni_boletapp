@@ -59,6 +59,7 @@ export {
   useWorkflowIsProcessing,
   useWorkflowActiveDialog,
   useWorkflowImageCount,
+  useWorkflowPendingTransaction,
   useWorkflowState,
   getWorkflowState,
   type ScanWorkflowState,

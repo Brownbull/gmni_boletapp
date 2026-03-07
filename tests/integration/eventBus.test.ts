@@ -1,9 +1,10 @@
 /**
  * Story 16-7: Event Bus Integration Tests
+ * Story TD-16-5: Updated payloads and event names.
  *
  * Tests the end-to-end event flow:
  * - scan:completed -> transaction-editor receives -> state update
- * - review:saved -> batch-review receives -> finishEditing called
+ * - batch:editing-finished -> batch-review receives -> finishEditing called
  *
  * AC-4: All subscriptions clean up on unmount.
  */
@@ -24,17 +25,22 @@ const mockEditorActions = vi.hoisted(() => ({
 
 const mockBatchFinishEditing = vi.hoisted(() => vi.fn());
 
-const mockScanState = vi.hoisted(() => ({
-  results: [{ merchant: 'Integration Test Store', total: 5000, date: '2026-03-07', category: 'Other' }],
-  activeResultIndex: 0,
+const mockPendingTransaction = vi.hoisted(() => ({
+  merchant: 'Integration Test Store',
+  total: 5000,
+  date: '2026-03-07',
+  category: 'Other',
 }));
 
 vi.mock('@features/transaction-editor/store', () => ({
   useTransactionEditorActions: () => mockEditorActions,
 }));
 
-vi.mock('@features/scan/store', () => ({
-  getScanState: () => mockScanState,
+// TD-16-5: Mock shared workflow store instead of scan feature store
+vi.mock('@shared/stores', () => ({
+  getWorkflowState: () => ({
+    pendingTransaction: mockPendingTransaction,
+  }),
 }));
 
 vi.mock('@features/batch-review', () => ({
@@ -66,7 +72,7 @@ describe('Event Bus Integration', () => {
       renderHook(() => useScanEventSubscription());
 
       act(() => {
-        appEvents.emit('scan:completed', { transactionIds: [] });
+        appEvents.emit('scan:completed', { resultIndex: 0 });
       });
 
       expect(mockEditorActions.setTransaction).toHaveBeenCalledWith(
@@ -77,12 +83,12 @@ describe('Event Bus Integration', () => {
     });
   });
 
-  describe('review:saved -> batch-review', () => {
-    it('should call finishEditing when editor saves during batch (AC-2)', () => {
+  describe('batch:editing-finished -> batch-review', () => {
+    it('should call finishEditing when editor signals editing finished (AC-2)', () => {
       renderHook(() => useBatchReviewEventSubscription());
 
       act(() => {
-        appEvents.emit('review:saved', { transactionIds: ['tx-1'] });
+        appEvents.emit('batch:editing-finished', {});
       });
 
       expect(mockBatchFinishEditing).toHaveBeenCalledTimes(1);
@@ -95,7 +101,7 @@ describe('Event Bus Integration', () => {
       renderHook(() => useBatchReviewEventSubscription());
 
       act(() => {
-        appEvents.emit('scan:completed', { transactionIds: [] });
+        appEvents.emit('scan:completed', { resultIndex: 0 });
       });
 
       // scan:completed should NOT trigger batch-review
@@ -104,19 +110,19 @@ describe('Event Bus Integration', () => {
       expect(mockEditorActions.setTransaction).toHaveBeenCalled();
     });
 
-    it('should not cross-contaminate review:saved to editor', () => {
+    it('should not cross-contaminate batch:editing-finished to editor', () => {
       renderHook(() => useScanEventSubscription());
       renderHook(() => useBatchReviewEventSubscription());
 
       vi.resetAllMocks();
 
       act(() => {
-        appEvents.emit('review:saved', { transactionIds: ['tx-1'] });
+        appEvents.emit('batch:editing-finished', {});
       });
 
-      // review:saved should NOT trigger editor setup
+      // batch:editing-finished should NOT trigger editor setup
       expect(mockEditorActions.setTransaction).not.toHaveBeenCalled();
-      // review:saved SHOULD trigger batch finishEditing
+      // batch:editing-finished SHOULD trigger batch finishEditing
       expect(mockBatchFinishEditing).toHaveBeenCalledTimes(1);
     });
   });
@@ -130,8 +136,8 @@ describe('Event Bus Integration', () => {
       unmountBatch();
 
       act(() => {
-        appEvents.emit('scan:completed', { transactionIds: [] });
-        appEvents.emit('review:saved', { transactionIds: [] });
+        appEvents.emit('scan:completed', { resultIndex: 0 });
+        appEvents.emit('batch:editing-finished', {});
       });
 
       expect(mockEditorActions.setTransaction).not.toHaveBeenCalled();

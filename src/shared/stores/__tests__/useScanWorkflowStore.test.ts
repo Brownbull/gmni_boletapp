@@ -97,6 +97,10 @@ describe('useScanWorkflowStore', () => {
     it('has null activeDialog', () => {
       expect(getWorkflowState().activeDialog).toBeNull();
     });
+
+    it('has null pendingTransaction', () => {
+      expect(getWorkflowState().pendingTransaction).toBeNull();
+    });
   });
 
   // =========================================================================
@@ -280,6 +284,28 @@ describe('useScanWorkflowStore', () => {
   });
 
   // =========================================================================
+  // Pending Transaction Actions (TD-16-5)
+  // =========================================================================
+
+  describe('pending transaction actions', () => {
+    it('setPendingTransaction stores transaction', () => {
+      const tx = { merchant: 'Test', total: 500, date: '2026-03-07', category: 'Other' } as never;
+      act(() => {
+        wf().setPendingTransaction(tx);
+      });
+      expect(getWorkflowState().pendingTransaction).toEqual(tx);
+    });
+
+    it('setPendingTransaction(null) clears transaction', () => {
+      act(() => {
+        wf().setPendingTransaction({ merchant: 'Test', total: 500 } as never);
+        wf().setPendingTransaction(null);
+      });
+      expect(getWorkflowState().pendingTransaction).toBeNull();
+    });
+  });
+
+  // =========================================================================
   // Reset
   // =========================================================================
 
@@ -293,6 +319,7 @@ describe('useScanWorkflowStore', () => {
         wf().setBatchReceipts([createMockBatchReceipt()]);
         wf().setBatchEditingIndex(1);
         wf().setActiveDialog({ type: 'cancel_warning' as const, data: null });
+        wf().setPendingTransaction({ merchant: 'Store', total: 100, date: '2026-01-01', category: 'Other' } as never);
       });
 
       act(() => {
@@ -307,6 +334,7 @@ describe('useScanWorkflowStore', () => {
       expect(state.batchReceipts).toBeNull();
       expect(state.batchEditingIndex).toBeNull();
       expect(state.activeDialog).toBeNull();
+      expect(state.pendingTransaction).toBeNull();
     });
   });
 

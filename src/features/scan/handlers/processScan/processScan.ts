@@ -333,8 +333,8 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
     scanOverlay.setReady();
 
     // Story 16-7: Emit event for cross-feature subscribers (AC-1, AC-5)
-    // Subscribers read transaction from scan store results (AC-ARCH-PATTERN-2: IDs only)
-    appEvents.emit('scan:completed', { transactionIds: [] });
+    // TD-16-5: resultIndex 0 = active result; subscriber reads from shared workflow store
+    appEvents.emit('scan:completed', { resultIndex: 0 });
 
     // Haptic feedback on scan success (only when motion enabled)
     if (!prefersReducedMotion && typeof navigator !== 'undefined' && navigator.vibrate) {

@@ -180,6 +180,7 @@ export const createScanCoreSlice: StateCreator<
       undefined, 'scan/processSuccess'
     );
     wf().setPhase('reviewing'); // MIRROR: phase → shared store
+    wf().setPendingTransaction(results[0] ?? null); // MIRROR: active result → shared store (TD-16-5)
   },
 
   processError: (error: string) => {

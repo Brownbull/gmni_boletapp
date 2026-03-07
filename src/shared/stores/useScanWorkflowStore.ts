@@ -19,6 +19,7 @@ import { devtools } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 import type { ScanPhase, ScanMode, BatchProgress, DialogState } from '@shared/types/scanWorkflow';
 import type { BatchReceipt } from '@/types/batchReceipt';
+import type { Transaction } from '@/types/transaction';
 
 // =============================================================================
 // State Interface
@@ -35,6 +36,9 @@ export interface ScanWorkflowState {
   // Mirrored state — scan writes, consumers read
   phase: ScanPhase;
   activeDialog: DialogState | null;
+
+  // Handoff slot — scan writes active result, transaction-editor reads (TD-16-5)
+  pendingTransaction: Transaction | null;
 }
 
 export interface ScanWorkflowActions {
@@ -62,6 +66,9 @@ export interface ScanWorkflowActions {
   setPhase: (phase: ScanPhase) => void;
   setActiveDialog: (dialog: DialogState | null) => void;
 
+  // Handoff slot actions (TD-16-5)
+  setPendingTransaction: (tx: Transaction | null) => void;
+
   // Control
   reset: () => void;
 }
@@ -80,6 +87,7 @@ const initialWorkflowState: ScanWorkflowState = {
   mode: 'single',
   phase: 'idle',
   activeDialog: null,
+  pendingTransaction: null,
 };
 
 // =============================================================================
@@ -145,6 +153,10 @@ export const useScanWorkflowStore = create<ScanWorkflowStore>()(
       setActiveDialog: (dialog) =>
         set({ activeDialog: dialog }, undefined, 'workflow/setActiveDialog'),
 
+      // Handoff slot actions (TD-16-5)
+      setPendingTransaction: (tx) =>
+        set({ pendingTransaction: tx }, undefined, 'workflow/setPendingTransaction'),
+
       // Control
       reset: () => set({ ...initialWorkflowState }, undefined, 'workflow/reset'),
     }),
@@ -166,8 +178,13 @@ export const useWorkflowIsProcessing = () =>
   useScanWorkflowStore((s) => s.phase === 'scanning' || s.phase === 'saving');
 export const useWorkflowActiveDialog = () => useScanWorkflowStore((s) => s.activeDialog);
 export const useWorkflowImageCount = () => useScanWorkflowStore((s) => s.images.length);
+export const useWorkflowPendingTransaction = () => useScanWorkflowStore((s) => s.pendingTransaction);
 
-/** Combined selector for multiple workflow values (uses useShallow). */
+/**
+ * Combined selector for multiple workflow values (uses useShallow).
+ * pendingTransaction intentionally excluded — use useWorkflowPendingTransaction()
+ * to avoid unnecessary re-renders in consumers that don't need the handoff slot.
+ */
 export const useWorkflowState = () =>
   useScanWorkflowStore(
     useShallow((s) => ({
