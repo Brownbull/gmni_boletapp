@@ -48,7 +48,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   const openCreditInfoModal = () => openModal('creditInfo', {
     normalCredits: credits.remaining, superCredits: credits.superRemaining ?? 0, onClose: closeModal,
   });
-  const effectiveIsProcessing = isProcessing;
   const displayCurrency = transaction?.currency || currency;
 
   const [showImageViewer, setShowImageViewer] = useState(false);
@@ -188,11 +187,11 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   const hasImages = !!displayImageUrl || !!(transaction?.imageUrls && transaction.imageUrls.length > 0);
   const inputStyle: React.CSSProperties = { backgroundColor: isDark ? '#1e293b' : '#f8fafc', borderColor: isDark ? '#475569' : '#e2e8f0', color: 'var(--primary)' };
   const canSave = calculatedTotal > 0 && hasItemWithPrice(transaction?.items);
-  const displayTransaction = transaction || {
+  const displayTransaction = useMemo(() => transaction || {
     id: undefined, merchant: '', alias: '', date: new Date().toISOString().split('T')[0],
     time: new Date().toTimeString().slice(0, 5), total: 0, category: 'Other' as StoreCategory,
     items: [] as TransactionItem[], country: defaultCountry, city: defaultCity, currency,
-  };
+  } as Transaction, [transaction, defaultCountry, defaultCity, currency]);
 
   const { handleSaveWithLearning } = useEditorLearningPrompts({
     transaction, originalItemGroupsRef, originalAliasRef, originalStoreCategoryRef,
@@ -250,7 +249,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
         <TransactionEditorForm transaction={transaction} displayTransaction={displayTransaction} mode={mode}
           readOnly={readOnly} isOtherUserTransaction={isOtherUserTransaction} ownerProfile={ownerProfile}
           calculatedTotal={calculatedTotal} canSave={canSave} displayCurrency={displayCurrency}
-          effectiveIsProcessing={effectiveIsProcessing} displayImageUrl={displayImageUrl} pendingImageUrl={pendingImageUrl}
+          effectiveIsProcessing={isProcessing} displayImageUrl={displayImageUrl} pendingImageUrl={pendingImageUrl}
           hasImages={hasImages} scanButtonState={scanButtonState} hasCredits={hasCredits} isRescanning={isRescanning}
           prefersReducedMotion={prefersReducedMotion} editingItemIndex={editingItemIndex} onEditingItemIndexChange={setEditingItemIndex}
           itemViewMode={itemViewMode} onItemViewModeChange={setItemViewMode} collapsedGroups={collapsedGroups}
@@ -267,13 +266,13 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
 
       <datalist id="alias-list">{distinctAliases.map((a, i) => <option key={i} value={a} />)}</datalist>
       {showImageViewer && (transaction?.imageUrls?.length ?? 0) > 0 && (
-        <ImageViewer images={transaction!.imageUrls!} merchantName={displayTransaction.merchant} onClose={() => setShowImageViewer(false)} />
+        <ImageViewer images={transaction?.imageUrls ?? []} merchantName={displayTransaction.merchant} onClose={() => setShowImageViewer(false)} />
       )}
       <EditorConfirmationDialogs showCancelConfirm={showCancelConfirm} onDismissCancelConfirm={() => setShowCancelConfirm(false)}
         onConfirmCancel={() => { setShowCancelConfirm(false); onCancel(); }} creditUsed={creditUsed}
         showRescanConfirm={showRescanConfirm} onDismissRescanConfirm={() => setShowRescanConfirm(false)} onConfirmRescan={handleConfirmRescan}
         showDeleteConfirm={showDeleteConfirm} hasTransactionId={!!transaction?.id} onDismissDeleteConfirm={() => setShowDeleteConfirm(false)}
-        onConfirmDelete={() => { setShowDeleteConfirm(false); onDelete?.(transaction!.id!); }} isDark={isDark} t={t} />
+        onConfirmDelete={() => { setShowDeleteConfirm(false); if (transaction?.id) onDelete?.(transaction.id); }} isDark={isDark} t={t} />
     </div>
   );
 };

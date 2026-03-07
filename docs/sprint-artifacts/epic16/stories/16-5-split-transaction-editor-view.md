@@ -1,6 +1,6 @@
 # Story 16-5: Split TransactionEditorViewInternal.tsx
 
-## Status: review
+## Status: done
 
 ## Intent
 **Epic Handle:** "Untangle the wires, open the test door"
