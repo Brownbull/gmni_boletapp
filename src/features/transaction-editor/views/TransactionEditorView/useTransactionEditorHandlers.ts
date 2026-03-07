@@ -16,7 +16,7 @@
  *
  * Dependencies:
  * - @features/scan/store - ScanStore for scan state and actions
- * - @features/batch-review - BatchReviewStore for batch actions
+ * - @shared/events - Event bus for cross-feature communication (Story 16-7)
  * - @/shared/stores - NavigationStore for view navigation
  * - @managers/ModalManager - Modal actions
  *
@@ -53,7 +53,8 @@ import {
 } from '@features/scan/store';
 // Story 14e-40: ConflictResult type from scan utils
 import type { ConflictResult } from '@features/scan';
-import { batchReviewActions } from '@features/batch-review';
+// Story 16-7: batchReviewActions replaced by event bus (AC-ARCH-NO-2)
+import { appEvents } from '@shared/events';
 import {
     useNavigationActions,
     useWorkflowImages,
@@ -355,8 +356,8 @@ export function useTransactionEditorHandlers(
         setTransactionNavigationList(null);
         if (workflowBatchEditingIndex !== null) {
             setBatchEditingIndexContext(null);
-            // Transition from editing → reviewing when canceling edit
-            batchReviewActions.finishEditing();
+            // Story 16-7: Emit event instead of cross-feature store call (AC-2)
+            appEvents.emit('review:saved', { transactionIds: [] });
             setView('batch-review');
         } else {
             navigateBack();
