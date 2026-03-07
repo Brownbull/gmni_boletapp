@@ -21,6 +21,7 @@ import type {
   CategoryMappingResult,
   MerchantMatchResult,
   BatchProcessingController,
+  CreditCheckResult,
 } from '../handlers/types';
 import type { FindItemNameMatchFn } from '@/features/categories';
 import type { BatchProcessingCallbacks } from './useBatchProcessing';
@@ -43,6 +44,13 @@ export interface ExtendedBatchProcessingController {
     callbacks?: BatchProcessingCallbacks
   ) => Promise<ProcessingResult[]>;
 }
+
+// =============================================================================
+// Shared Types (TD-16-6: DRY — re-export from canonical source)
+// =============================================================================
+
+/** Re-export CreditCheckResult from creditService (single source of truth) */
+export type { CreditCheckResult } from '../handlers/types';
 
 // =============================================================================
 // Props Interface (AC2)
@@ -112,27 +120,9 @@ export interface BatchReviewHandlersProps {
     },
     requiredCredits: number,
     isSuper: boolean
-  ) => {
-    sufficient: boolean;
-    available: number;
-    required: number;
-    remaining: number;
-    shortage: number;
-    maxProcessable: number;
-    creditType: 'normal' | 'super';
-  };
+  ) => CreditCheckResult;
   /** Function to store the credit check result for dialog display (optional) */
-  setCreditCheckResult?: (
-    result: {
-      sufficient: boolean;
-      available: number;
-      required: number;
-      remaining: number;
-      shortage: number;
-      maxProcessable: number;
-      creditType: 'normal' | 'super';
-    } | null
-  ) => void;
+  setCreditCheckResult?: (result: CreditCheckResult | null) => void;
   /** Function to show/hide the credit warning dialog (optional) */
   setShowCreditWarning?: (show: boolean) => void;
 

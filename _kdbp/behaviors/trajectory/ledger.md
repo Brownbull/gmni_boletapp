@@ -25,3 +25,5 @@
 | 2026-03-07 | TD-16-4 | review | boletapp-dev | ✓ done | none |
 | 2026-03-07 | TD-16-5 | none | boletapp-dev | ✓ done | Event bus payload polish: scan:completed emits {resultIndex:0} instead of empty transactionIds. review:saved renamed to batch:editing-finished. pendingTransaction handoff slot added to shared workflow store. getScanState cross-feature import eliminated from useScanEventSubscription. 13 files changed, 7165 tests pass. Self-review APPROVE 8.5/10. | none |
 | 2026-03-07 | TD-16-5 | review | boletapp-dev | ✓ done | APPROVE 8.7/10, 1 quick fix (setPendingTransaction test), 0 TD stories | none |
+| 2026-03-07 | TD-16-6 | none | boletapp-dev | ✓ done | DRY cleanup: CreditCheckResult named type extracted, MERCHANT_CONFIDENCE_THRESHOLD consolidated to single source. 2 files changed, 540 batch-review tests pass. | none |
+| 2026-03-07 | TD-16-6 | review | boletapp-dev | ✓ done | APPROVE 9.0/10, 1 quick fix (duplicate CreditCheckResult → re-export from creditService), 0 TD stories | none |

@@ -18,9 +18,7 @@ import type { Transaction } from '@/types/transaction';
 import type { SaveContext, SaveCompleteContext } from './types';
 // Story 14e-42: Import pure utility from @features/categories
 import { applyItemNameMappings } from '@/features/categories';
-
-/** Merchant match confidence threshold for applying learned mappings */
-const MERCHANT_CONFIDENCE_THRESHOLD = 0.7;
+import { MERCHANT_CONFIDENCE_THRESHOLD } from '../hooks/batchReviewHandlerTypes';
 
 /**
  * Save a single transaction during batch review.
