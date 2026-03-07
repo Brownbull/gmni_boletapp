@@ -1,6 +1,6 @@
 # Story 16-5: Split TransactionEditorViewInternal.tsx
 
-## Status: ready-for-dev
+## Status: review
 
 ## Intent
 **Epic Handle:** "Untangle the wires, open the test door"
@@ -40,32 +40,32 @@ As a developer, I want TransactionEditorViewInternal.tsx decomposed into focused
 ## Tasks
 
 ### Task 1: Analyze Component Structure (2 subtasks)
-- [ ] 1.1: Read `TransactionEditorViewInternal.tsx` fully — map the rendering sections (form fields, scan status, modals, action buttons)
-- [ ] 1.2: Identify which sections depend on scan store imports vs. transaction editor store — these are the split boundaries
+- [x] 1.1: Read `TransactionEditorViewInternal.tsx` fully — map the rendering sections (form fields, scan status, modals, action buttons)
+- [x] 1.2: Identify which sections depend on scan store imports vs. transaction editor store — these are the split boundaries
 
 ### Task 2: Extract TransactionEditorForm (4 subtasks)
-- [ ] 2.1: Create `TransactionEditorForm.tsx` — receives transaction data and onChange handlers as props
-- [ ] 2.2: Move form field rendering (merchant, date, total, category, items) into the form component
-- [ ] 2.3: Define clear props interface (transaction data, field handlers, validation state)
-- [ ] 2.4: Verify form renders identically via visual inspection
+- [x] 2.1: Create `TransactionEditorForm.tsx` — receives transaction data and onChange handlers as props
+- [x] 2.2: Move form field rendering (merchant, date, total, category, items) into the form component
+- [x] 2.3: Define clear props interface (transaction data, field handlers, validation state)
+- [x] 2.4: Verify form renders identically via visual inspection
 
 ### Task 3: Extract TransactionEditorScanStatus (3 subtasks)
-- [ ] 3.1: Create `TransactionEditorScanStatus.tsx` — owns scan-related UI (ScanCompleteModal, processing indicators)
-- [ ] 3.2: Move scan store imports (`useIsProcessing`, `useScanActiveDialog`) into this component
-- [ ] 3.3: Move `ScanCompleteModal` rendering and its associated handlers into this component
+- [x] 3.1: Create `TransactionEditorScanStatus.tsx` — owns scan-related UI (ScanCompleteModal, processing indicators)
+- [x] 3.2: Move scan store imports (`useIsProcessing`, `useScanActiveDialog`) into this component
+- [x] 3.3: Move `ScanCompleteModal` rendering and its associated handlers into this component
 
 ### Task 4: Reassemble Orchestrating Parent (3 subtasks)
-- [ ] 4.1: Reduce `TransactionEditorViewInternal.tsx` to orchestrator that composes Form + ScanStatus + action buttons
-- [ ] 4.2: Parent owns handler hooks (`useTransactionEditorHandlers`, `useTransactionEditorData`) and passes to children
-- [ ] 4.3: Rename to `TransactionEditorView.tsx` if the "Internal" suffix is no longer meaningful
+- [x] 4.1: Reduce `TransactionEditorViewInternal.tsx` to orchestrator that composes Form + ScanStatus + action buttons
+- [x] 4.2: Parent owns handler hooks (`useTransactionEditorHandlers`, `useTransactionEditorData`) and passes to children
+- [x] 4.3: Kept as `TransactionEditorViewInternal.tsx` — directory `TransactionEditorView/` exists at same level, rename would cause module resolution conflict
 
 ### Task 5: Hardening — Integration Tests (2 subtasks)
-- [ ] 5.1: Run existing transaction editor tests — verify all pass without modification
-- [ ] 5.2: If any tests reference internal structure, update selectors/queries to match new component tree
+- [x] 5.1: Run existing transaction editor tests — verify all pass without modification (170/170 pass)
+- [x] 5.2: If any tests reference internal structure, update selectors/queries to match new component tree (no changes needed)
 
 ### Task 6: Verification (2 subtasks)
-- [ ] 6.1: Run `npm run test:quick` — all tests pass
-- [ ] 6.2: Run `npx tsc --noEmit` — zero TypeScript errors
+- [x] 6.1: Run `npm run test:quick` — all tests pass
+- [x] 6.2: Run `npx tsc --noEmit` — zero TypeScript errors
 
 ## Sizing
 - **Points:** 5 (MEDIUM)
