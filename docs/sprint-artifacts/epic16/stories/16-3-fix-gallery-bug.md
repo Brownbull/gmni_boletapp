@@ -1,6 +1,6 @@
 # Story 16-3: Fix Gallery Selection Bug
 
-## Status: review
+## Status: done
 
 ## Intent
 **Epic Handle:** "Untangle the wires, open the test door"
@@ -70,3 +70,13 @@ As a user, I want to select a photo from my gallery after dismissing a scan erro
 - The camera FAB path already works because `handleNewTransaction` calls `resetScanContext()`. The gallery path didn't have this.
 - E2E test note: forcing a scan error in E2E requires either a mock or an invalid image. Using `tests/e2e/fixtures/invalid-receipt.txt` (tiny non-image file) to trigger Gemini rejection.
 - E2E: both invalid and valid image scans error in current staging (Cloud Functions not deployed). Test verifies gallery select works by checking overlay appears (pipeline started) regardless of downstream result.
+
+## Senior Developer Review (ECC)
+- **Date:** 2026-03-06
+- **Classification:** SIMPLE
+- **Agents:** code-reviewer, tdd-guide
+- **Overall Score:** 8.5/10
+- **Outcome:** APPROVE — no CRITICAL, HIGH, or MEDIUM findings
+- **Findings:** 4 LOW/INFO (DRY opportunity deferred to restructuring, redundant overlay reset noted, test gap compensated by E2E, timeout monitoring)
+- **TD Stories Created:** 0 (all items already tracked or informational)
+<!-- CITED: none -->

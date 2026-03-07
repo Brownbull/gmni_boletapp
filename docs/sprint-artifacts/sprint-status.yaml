@@ -301,7 +301,7 @@ development_status:
   TD-16-1-scan-store-quality: done                   # 3 pts - Guard logging + type safety + cross-slice tests (DEPENDS: 16-1)
   TD-16-2-scan-store-hardening-v2: done                 # 3 pts - Value validation + pluggable logging + dialog typing + StateKeys (DEPENDS: TD-16-1)
   16-2-merge-overlay-state: done                      # 5 pts - Merge dual state machine into Zustand (DEPENDS: 16-1)
-  16-3-fix-gallery-bug: review                          # 1 pt  - Verify + E2E gallery selection after scan failure (DEPENDS: 16-2)
+  16-3-fix-gallery-bug: done                            # 1 pt  - Verify + E2E gallery selection after scan failure (DEPENDS: 16-2)
 
   # Chain B: types + view split -> shared store -> events
   16-4-move-scan-types: ready-for-dev                  # 3 pts - Move scanStateMachine.ts + extract shared types
