@@ -19,3 +19,5 @@
 | 2026-03-07 | 16-6 | review | boletapp-dev | ✓ done (APPROVE 7.9/10, 4 quick fixes, 2 TD stories) | ⚑ AC-ARCH-NO partially met (phase-guarded actions need DI/event bus — tracked in 16-7) |
 | 2026-03-07 | 16-7 | none | boletapp-dev | ✓ done | Event bus (mitt) replaces cross-feature store writes. processScan no longer imports transaction-editor; useTransactionEditorHandlers no longer imports batch-review. Hub-and-spoke topology achieved. Self-review APPROVE 9.0/10. |
 | 2026-03-07 | 16-7 | review | boletapp-dev | ✓ done | none |
+| 2026-03-07 | TD-16-3 | none | boletapp-dev | ✓ done | Decompose useBatchReviewHandlers (773→552L) + BatchCaptureView (800→632L). Extracted 3 new files: batchReviewHandlerTypes.ts, BatchCaptureImageGallery.tsx, BatchCaptureCreditSection.tsx. Consolidated duplicate DisplayImage + BatchProcessingCallbacks. Self-review APPROVE 8.5/10. | none |
+| 2026-03-07 | TD-16-3 | review | boletapp-dev | ✓ done | none |

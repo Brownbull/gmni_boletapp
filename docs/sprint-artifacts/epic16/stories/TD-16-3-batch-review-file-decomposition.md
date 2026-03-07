@@ -1,6 +1,6 @@
 # Tech Debt Story TD-16-3: Batch-Review File Decomposition
 
-Status: ready-for-dev
+Status: done
 
 > **Source:** KDBP Code Review (2026-03-07) on story 16-6
 > **Priority:** MEDIUM | **Estimated Effort:** 3 pts
@@ -15,9 +15,9 @@ As a **developer**, I want **useBatchReviewHandlers.ts (773L) and BatchCaptureVi
 - AC-4: All existing tests pass without modification
 
 ## Tasks / Subtasks
-- [ ] 1. Extract helper functions from useBatchReviewHandlers.ts into focused modules
-- [ ] 2. Extract sub-components from BatchCaptureView.tsx (e.g., capture controls, preview section)
-- [ ] 3. Verify all tests pass after extraction
+- [x] 1. Extract helper functions from useBatchReviewHandlers.ts into focused modules
+- [x] 2. Extract sub-components from BatchCaptureView.tsx (e.g., capture controls, preview section)
+- [x] 3. Verify all tests pass after extraction
 
 ## Dev Notes
 - Source story: [16-6](./16-6-extract-shared-workflow-store.md)
@@ -25,3 +25,19 @@ As a **developer**, I want **useBatchReviewHandlers.ts (773L) and BatchCaptureVi
 - Files affected: `src/features/batch-review/hooks/useBatchReviewHandlers.ts`, `src/features/batch-review/views/BatchCaptureView.tsx`
 - BatchCaptureView is AT the 800L limit — any future edit will be blocked
 - useBatchReviewHandlers at 773L — dangerously close
+
+## Review Deferred Items
+
+| TD Story | Description | Priority | Action |
+|----------|-------------|----------|--------|
+| TD-16-6 | DRY: CreditCheckResult named type + MERCHANT_CONFIDENCE_THRESHOLD consolidation | LOW | CREATED |
+
+## Senior Developer Review (KDBP)
+- **Date:** 2026-03-07
+- **Agents:** code-reviewer (sonnet), tdd-guide (sonnet)
+- **Classification:** SIMPLE
+- **Outcome:** APPROVE 8.5/10
+- **Quick fixes:** 2 (import ordering, inline SVG→lucide)
+- **TD stories:** 1 (TD-16-6)
+- **Session cost:** $9.41
+<!-- CITED: none -->

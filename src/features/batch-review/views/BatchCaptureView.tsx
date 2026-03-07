@@ -20,10 +20,6 @@ import {
   Camera,
   Loader2,
   X,
-  Plus,
-  ChevronDown,
-  ChevronUp,
-  AlertTriangle,
   Image,
   ArrowRight,
   Scan,
@@ -33,8 +29,13 @@ import {
   Info,
   Layers,
 } from 'lucide-react';
+// Story TD-16-3: Extracted sub-components
+import { BatchCaptureImageGallery } from './BatchCaptureImageGallery';
+import { BatchCaptureCreditSection } from './BatchCaptureCreditSection';
 import { MAX_BATCH_CAPTURE_IMAGES } from '../hooks/useBatchCapture';
 import { formatCreditsDisplay } from '@/utils/creditFormatters';
+// Story TD-16-3: DisplayImage shared with BatchCaptureImageGallery
+import type { DisplayImage } from './types';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
 import { useScanActions } from '@features/scan/store';
 // Story 16-6: images + isProcessing from shared workflow store
@@ -68,16 +69,6 @@ export interface BatchCaptureViewProps {
   imageDataUrls?: string[];
   /** Story 12.1 v9.7.0: Callback when images change (for persistence) */
   onImagesChange?: (dataUrls: string[]) => void;
-}
-
-/**
- * Story 14d.5a: Local image representation for thumbnail display.
- * Maps context images (data URLs) to display-friendly format with thumbnails.
- */
-interface DisplayImage {
-  id: string;
-  dataUrl: string;
-  thumbnailUrl: string;
 }
 
 /**
@@ -470,186 +461,26 @@ export const BatchCaptureView: React.FC<BatchCaptureViewProps> = ({
           </div>
 
           {/* Collapsible Image Preview */}
-          <div
-            className="rounded-xl overflow-hidden mb-4"
-            style={{ border: '1px solid var(--border-light)' }}
-          >
-            {/* Toggle Header */}
-            <button
-              onClick={() => setShowImageGallery(!showImageGallery)}
-              className="w-full px-4 py-3 flex items-center justify-between cursor-pointer"
-              style={{ backgroundColor: 'var(--bg-tertiary)' }}
-              type="button"
-            >
-              <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                {t('batchViewImages')}
-              </span>
-              {showImageGallery ? (
-                <ChevronUp size={18} style={{ color: 'var(--text-tertiary)' }} />
-              ) : (
-                <ChevronDown size={18} style={{ color: 'var(--text-tertiary)' }} />
-              )}
-            </button>
-
-            {/* Thumbnails Row */}
-            {showImageGallery && (
-              <div
-                className="p-3 flex gap-2 overflow-x-auto"
-                style={{ backgroundColor: 'var(--bg-secondary)' }}
-              >
-                {/* Empty state placeholder */}
-                {!hasImages && (
-                  <button
-                    onClick={handleAddPhoto}
-                    className="flex-shrink-0 rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 transition-colors hover:border-blue-500"
-                    style={{
-                      width: '60px',
-                      height: '76px',
-                      borderColor: 'var(--border-medium)',
-                      backgroundColor: 'var(--bg-tertiary)',
-                    }}
-                    type="button"
-                    aria-label={t('batchAddMore')}
-                  >
-                    <Plus size={22} style={{ color: 'var(--text-tertiary)' }} />
-                  </button>
-                )}
-
-                {/* Existing thumbnails with always-visible X button */}
-                {displayImages.map((image, index) => (
-                  <div
-                    key={image.id}
-                    className="relative flex-shrink-0 rounded-lg overflow-hidden"
-                    style={{
-                      width: '60px',
-                      height: '76px',
-                      backgroundColor: 'var(--bg-tertiary)',
-                      border: '1px solid var(--border-light)',
-                    }}
-                  >
-                    <img
-                      src={image.thumbnailUrl}
-                      alt={`${t('receipt')} ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                    {/* Image number badge */}
-                    <div
-                      className="absolute bottom-1 left-1 w-5 h-5 rounded flex items-center justify-center text-xs font-bold text-white"
-                      style={{ backgroundColor: 'var(--primary)' }}
-                    >
-                      {index + 1}
-                    </div>
-                    {/* Remove button - always visible */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeImageByIndex(index);
-                      }}
-                      className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center"
-                      style={{
-                        backgroundColor: 'rgba(0,0,0,0.6)',
-                        color: 'white',
-                      }}
-                      type="button"
-                      aria-label={`${t('removeImage')} ${index + 1}`}
-                    >
-                      <X size={12} />
-                    </button>
-                  </div>
-                ))}
-
-                {/* Add more button - only when has images and can add more */}
-                {hasImages && canAddMore && (
-                  <button
-                    onClick={handleAddPhoto}
-                    className="flex-shrink-0 rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-0.5 transition-colors hover:border-blue-500"
-                    style={{
-                      width: '60px',
-                      height: '76px',
-                      borderColor: 'var(--border-medium)',
-                      backgroundColor: 'var(--bg-tertiary)',
-                    }}
-                    type="button"
-                    aria-label={t('batchAddMore')}
-                  >
-                    <Plus size={18} style={{ color: 'var(--text-tertiary)' }} />
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+          <BatchCaptureImageGallery
+            displayImages={displayImages}
+            hasImages={hasImages}
+            canAddMore={canAddMore}
+            showImageGallery={showImageGallery}
+            onToggleGallery={() => setShowImageGallery(!showImageGallery)}
+            onAddPhoto={handleAddPhoto}
+            onRemoveImage={removeImageByIndex}
+            t={t}
+          />
 
           {/* Credit Usage Section - always show when superCreditsAvailable is provided */}
           {superCreditsAvailable !== undefined && (
-            <div className="mb-4">
-              {/* Section header with icon */}
-              <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle size={18} style={{ color: 'var(--warning)' }} />
-                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                  {t('batchCreditUsage')}
-                </span>
-              </div>
-
-              {/* Credit rows */}
-              <div
-                className="rounded-xl p-3"
-                style={{ backgroundColor: 'var(--bg-tertiary)' }}
-              >
-                {/* Credits needed - batch uses 1 credit total regardless of image count */}
-                <div
-                  className="flex items-center justify-between py-2.5"
-                  style={{ borderBottom: '1px solid var(--border-light)' }}
-                >
-                  <div className="flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <path d="M8 12h8"/>
-                    </svg>
-                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                      {t('batchCreditsNeeded')}
-                    </span>
-                  </div>
-                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    {creditsNeeded}
-                  </span>
-                </div>
-
-                {/* Credits available */}
-                <div
-                  className="flex items-center justify-between py-2.5"
-                  style={{ borderBottom: '1px solid var(--border-light)' }}
-                >
-                  <div className="flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <path d="M12 6v6l4 2"/>
-                    </svg>
-                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                      {t('batchCreditsAvailable')}
-                    </span>
-                  </div>
-                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    {superCreditsAvailable}
-                  </span>
-                </div>
-
-                {/* Credits after */}
-                <div className="flex items-center justify-between py-2.5">
-                  <div className="flex items-center gap-2">
-                    <ArrowRight size={16} style={{ color: 'var(--text-tertiary)' }} />
-                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                      {t('batchCreditsAfter')}
-                    </span>
-                  </div>
-                  <span
-                    className="text-sm font-semibold"
-                    style={{ color: creditsRemaining < 0 ? 'var(--error)' : 'var(--success)' }}
-                  >
-                    {hasImages ? creditsRemaining : superCreditsAvailable}
-                  </span>
-                </div>
-              </div>
-            </div>
+            <BatchCaptureCreditSection
+              superCreditsAvailable={superCreditsAvailable}
+              creditsNeeded={creditsNeeded}
+              creditsRemaining={creditsRemaining}
+              hasImages={hasImages}
+              t={t}
+            />
           )}
 
           {/* Action Buttons */}

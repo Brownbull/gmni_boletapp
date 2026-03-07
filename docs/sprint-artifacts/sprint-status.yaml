@@ -307,10 +307,11 @@ development_status:
   16-4-move-scan-types: done                           # 3 pts - Move scanStateMachine.ts + extract shared types
   16-5-split-transaction-editor-view: done               # 5 pts - Split TransactionEditorViewInternal.tsx (1,128L BLOCKED)
   16-6-extract-shared-workflow-store: done               # 8 pts - Create shared scan workflow store (DEPENDS: 16-4, 16-5)
-  TD-16-3-batch-review-file-decomposition: ready-for-dev  # 3 pts - Decompose useBatchReviewHandlers (773L) + BatchCaptureView (800L) (DEPENDS: 16-6)
+  TD-16-3-batch-review-file-decomposition: done     # 3 pts - Decompose useBatchReviewHandlers (773L) + BatchCaptureView (800L) (DEPENDS: 16-6)
   TD-16-4-shared-workflow-store-hardening: ready-for-dev  # 3 pts - Integration test + dual-state audit + test coupling + facade review (DEPENDS: 16-6)
   16-7-event-bus: done                                   # 5 pts - Install mitt, create typed event bus (DEPENDS: 16-6)
   TD-16-5-event-bus-payload-polish: ready-for-dev        # 2 pts - Populate event payloads + rename review:saved + remove getScanState coupling (DEPENDS: 16-7)
+  TD-16-6-batch-handler-type-cleanup: ready-for-dev     # 1 pt  - DRY: CreditCheckResult type + MERCHANT_CONFIDENCE_THRESHOLD consolidation (DEPENDS: TD-16-3)
 
   # Independent
   16-8-move-legacy-scan-components: ready-for-dev      # 3 pts - Move ~17 files from src/components/scan/ to features/
