@@ -1,6 +1,6 @@
 # Story 16-6: Extract Shared Scan Workflow Store
 
-## Status: ready-for-dev
+## Status: done
 
 ## Intent
 **Epic Handle:** "Untangle the wires, open the test door"
@@ -96,3 +96,23 @@ As a developer, I want shared scan workflow state (images, batch receipts, progr
 - `useAtomicBatchActions.ts` (186 lines) currently does dual-store atomic operations. With the shared store, these may simplify — the "two stores" become "shared workflow + batch review" instead of "scan + batch review".
 - Mode state: The scan feature sets mode via `startScan(mode)`. The shared store mirrors `mode` as read-only for consumers (FAB icon, conditional rendering). The scan feature is the single writer.
 - Phase guards: The scan feature's phase guards (e.g., `setImages` only works in `capturing` phase) now guard writes to the shared store. The shared store itself does NOT have phase guards — the scan feature mediates access.
+
+## Senior Developer Review (KDBP)
+- **Date:** 2026-03-07
+- **Agents:** code-reviewer, security-reviewer, architect, tdd-guide
+- **Classification:** COMPLEX
+- **Overall Score:** 7.9/10 APPROVE WITH CHANGES
+- **Quick fixes applied:** 4 (#2 cross-store mirroring tests, #3 restoreState forwarding tests, #7 @internal JSDoc, #8 images size bound)
+- **AC Notes:**
+  - AC-1, AC-2, AC-4: MET
+  - AC-3, AC-ARCH-NO-1, AC-ARCH-NO-2: PARTIALLY MET — phase-guarded scan actions still imported by batch-review/transaction-editor (architecturally deliberate; event bus in 16-7 will resolve)
+
+## Deferred Item Tracking
+
+| TD Story | Description | Priority | Action |
+|----------|-------------|----------|--------|
+| 16-7 | AC-ARCH-NO violations + scan action DI (findings #1, #5) | HIGH | ALREADY_TRACKED |
+| TD-16-3 | Batch-review file decomposition — useBatchReviewHandlers 773L, BatchCaptureView 800L (findings #9, #10) | MEDIUM | CREATED |
+| TD-16-4 | Shared store hardening — dual state audit, integration test, test coupling, facade (findings #4, #6, #11, #12) | LOW | CREATED |
+
+<!-- CITED: L2-004, L2-008 -->

@@ -27,7 +27,7 @@ import type { FindItemNameMatchFn } from '@/features/categories';
 import type { Transaction, StoreCategory } from '@/types/transaction';
 import type { User } from 'firebase/auth';
 import type { Services } from '@/contexts/AuthContext';
-import { DIALOG_TYPES } from '@/types/scanStateMachine';
+import { DIALOG_TYPES } from '@shared/types/scanWorkflow';
 
 // =============================================================================
 // Mocks

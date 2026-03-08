@@ -45,7 +45,7 @@ import type {
     CurrencyMismatchDialogData,
     TotalMismatchDialogData,
     QuickSaveDialogData,
-} from '@/types/scanStateMachine';
+} from '../types/scanStateMachine';
 import { createTransactionRepository } from '@/repositories/transactionRepository';
 import {
     generateInsightForTransaction,

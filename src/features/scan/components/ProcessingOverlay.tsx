@@ -18,8 +18,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { DURATION } from '../animation/constants';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { DURATION } from '@/components/animation/constants';
 
 /**
  * Props for ProcessingOverlay component

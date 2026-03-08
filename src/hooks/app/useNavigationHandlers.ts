@@ -53,8 +53,8 @@ import type { View } from '@app/types';
 import type { HistoryFilterState, TemporalFilterState } from '@/types/historyFilters';
 import type { HistoryNavigationPayload } from '@/types/navigation';
 import type { AnalyticsNavigationState } from '../../types/analytics';
-import type { ScanState } from '../../types/scanStateMachine';
-import { DIALOG_TYPES } from '../../types/scanStateMachine';
+import type { ScanState } from '@shared/types/scanWorkflow';
+import { DIALOG_TYPES } from '@shared/types/scanWorkflow';
 import {
     expandStoreCategoryGroup,
     expandItemCategoryGroup,

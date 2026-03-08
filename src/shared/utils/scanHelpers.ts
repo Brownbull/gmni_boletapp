@@ -9,7 +9,7 @@
  * - Computing batch context for navigation display
  */
 
-import type { ScanPhase } from '@/types/scanStateMachine';
+import type { ScanPhase } from '@shared/types/scanWorkflow';
 
 // =============================================================================
 // Types

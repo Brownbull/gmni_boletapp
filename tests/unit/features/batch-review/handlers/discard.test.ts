@@ -16,7 +16,7 @@ import {
   cancelDiscard,
 } from '@features/batch-review/handlers';
 import type { DiscardContext } from '@features/batch-review/handlers';
-import { DIALOG_TYPES } from '@/types/scanStateMachine';
+import { DIALOG_TYPES } from '@shared/types/scanWorkflow';
 import { batchReviewActions } from '@features/batch-review/store';
 
 // Mock the batch review store

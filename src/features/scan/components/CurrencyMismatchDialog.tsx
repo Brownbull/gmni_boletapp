@@ -27,10 +27,10 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import { AlertCircle, ArrowRight, X } from 'lucide-react';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
 import { useScanActiveDialog, useScanActions } from '@features/scan/store';
-import { DIALOG_TYPES } from '../../types/scanStateMachine';
+import { DIALOG_TYPES } from '@shared/types/scanWorkflow';
 
 // Story 14d.6: Import centralized type from scanStateMachine
-import type { CurrencyMismatchDialogData } from '../../types/scanStateMachine';
+import type { CurrencyMismatchDialogData } from '@features/scan/types/scanStateMachine';
 // Re-export for backward compatibility
 export type { CurrencyMismatchDialogData };
 

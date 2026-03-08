@@ -1,6 +1,6 @@
 # Story 16-4: Move scanStateMachine.ts Into Feature & Extract Shared Types
 
-## Status: ready-for-dev
+## Status: done
 
 ## Intent
 **Epic Handle:** "Untangle the wires, open the test door"
@@ -39,25 +39,25 @@ As a developer, I want scan types co-located with the scan feature and shared ty
 ## Tasks
 
 ### Task 1: Analyze Type Usage (2 subtasks)
-- [ ] 1.1: Grep all imports from `@/types/scanStateMachine` or `src/types/scanStateMachine` — catalog every consumer
-- [ ] 1.2: Classify each type as scan-internal (only imported by scan feature) or shared (imported by batch-review, transaction-editor, or app layer)
+- [x] 1.1: Grep all imports from `@/types/scanStateMachine` or `src/types/scanStateMachine` — catalog every consumer
+- [x] 1.2: Classify each type as scan-internal (only imported by scan feature) or shared (imported by batch-review, transaction-editor, or app layer)
 
 ### Task 2: Create Shared Types File (2 subtasks)
-- [ ] 2.1: Create `src/shared/types/scanWorkflow.ts` with shared types: `ScanPhase`, `ScanMode`, `BatchReceipt`, `BatchProgress`, `ScanState` (interface for shared reads)
-- [ ] 2.2: Create or update `src/shared/types/index.ts` barrel to export shared scan types
+- [x] 2.1: Create `src/shared/types/scanWorkflow.ts` with shared types: `ScanPhase`, `ScanMode`, `BatchReceipt`, `BatchProgress`, `ScanState` (interface for shared reads)
+- [x] 2.2: Create or update `src/shared/types/index.ts` barrel to export shared scan types
 
 ### Task 3: Move Scan-Internal Types (2 subtasks)
-- [ ] 3.1: Create `src/features/scan/types/scanStateMachine.ts` with remaining scan-internal types
-- [ ] 3.2: Create `src/features/scan/types/index.ts` barrel, update feature barrel to re-export types
+- [x] 3.1: Create `src/features/scan/types/scanStateMachine.ts` with remaining scan-internal types
+- [x] 3.2: Create `src/features/scan/types/index.ts` barrel, update feature barrel to re-export types
 
 ### Task 4: Update Consumer Imports (3 subtasks)
-- [ ] 4.1: Update scan feature imports to use local types path
-- [ ] 4.2: Update batch-review, transaction-editor imports to use `@shared/types/scanWorkflow`
-- [ ] 4.3: Update app layer imports (useScanWorkflowOrchestrator, etc.)
+- [x] 4.1: Update scan feature imports to use local types path
+- [x] 4.2: Update batch-review, transaction-editor imports to use `@shared/types/scanWorkflow`
+- [x] 4.3: Update app layer imports (useScanWorkflowOrchestrator, etc.)
 
 ### Task 5: Delete Original and Verify (2 subtasks)
-- [ ] 5.1: Delete `src/types/scanStateMachine.ts`
-- [ ] 5.2: Run `npx tsc --noEmit` and `npm run test:quick` — zero errors
+- [x] 5.1: Delete `src/types/scanStateMachine.ts`
+- [x] 5.2: Run `npx tsc --noEmit` and `npm run test:quick` — zero errors
 
 ## Sizing
 - **Points:** 3 (MEDIUM)
@@ -76,3 +76,17 @@ As a developer, I want scan types co-located with the scan feature and shared ty
 - Key shared types to extract: `ScanPhase`, `ScanMode`, `BatchReceipt`, `BatchProgress`, `ScanResult`
 - Key scan-internal types: dialog enums, credit-specific types, overlay types, scan request types
 - Some types may need to stay in both places (re-exported from feature barrel for backward compatibility). Prefer a clean break — update all consumers.
+- Complexity Growth Accepted 2026-03-06: story estimated ~8 files, actual ~48 (28 src + 18 test + 2 new). All growth is mechanical import path changes. Low risk.
+- Scan-internal types file re-exports shared types for backward compatibility. Feature barrel does NOT `export * from './types'` to avoid TS2308 duplicate export conflicts with store re-exports.
+
+## Senior Developer Review (ECC)
+
+- **Date:** 2026-03-06
+- **Agents:** code-reviewer, security-reviewer, architect, tdd-guide (COMPLEX)
+- **Score:** 9.0/10
+- **Outcome:** APPROVE — 3 quick fixes applied (import consolidation, exhaustive switch, canonical-source comment), 5 INFO items noted (all pre-existing)
+- **TD Stories:** 0 (all deferred items are pre-existing, not warranting individual stories)
+
+<!-- CITED: none -->
+<!-- INTENT: aligned -->
+<!-- ORDERING: clean -->

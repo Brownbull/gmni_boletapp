@@ -15,8 +15,8 @@ import { AuthProvider } from '@/contexts/AuthContext';
 // Story 14e-25d: ViewHandlersContext DELETED - views now own their data via internal hooks
 // See: useHistoryViewData, useTrendsViewData, useDashboardViewData, useSettingsViewData
 import type { ScanContextValue } from '@/contexts/ScanContext';
-import type { ScanState, ScanDialogType } from '@/types/scanStateMachine';
-import { DIALOG_TYPES } from '@/types/scanStateMachine';
+import type { ScanState, ScanDialogType } from '@shared/types/scanWorkflow';
+import { DIALOG_TYPES } from '@shared/types/scanWorkflow';
 
 /**
  * Creates a fresh QueryClient for each test to ensure isolation.

@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { ScanFeature } from '@features/scan';
-import type { ScanPhase, ScanMode } from '@/types/scanStateMachine';
+import type { ScanPhase, ScanMode } from '@/features/scan/types/scanStateMachine';
 // Mocks
 
 // Mock Zustand store selectors and actions
@@ -32,7 +32,7 @@ vi.mock('@features/scan/store/useScanStore', () => ({
 }));
 
 // Story 14e-23a: Mock overlay components to verify rendering
-vi.mock('@/components/scan', () => ({
+vi.mock('@features/scan/components', () => ({
   ScanOverlay: ({ visible, state, onCancel, onRetry, onDismiss }: any) =>
     visible ? (
       <div data-testid="scan-overlay" data-state={state}>

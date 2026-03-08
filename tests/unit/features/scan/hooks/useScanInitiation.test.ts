@@ -12,8 +12,8 @@ import { renderHook, act } from '@testing-library/react';
 import { useScanInitiation } from '../../../../../src/features/scan/hooks/useScanInitiation';
 import type { ScanInitiationProps } from '../../../../../src/features/scan/hooks/useScanInitiation';
 import type { Transaction } from '../../../../../src/types/transaction';
-import type { ScanState } from '../../../../../src/types/scanStateMachine';
-import { DIALOG_TYPES } from '../../../../../src/types/scanStateMachine';
+import type { ScanState } from '@/features/scan/types/scanStateMachine';
+import { DIALOG_TYPES } from '@/features/scan/types/scanStateMachine';
 
 // =============================================================================
 // Mocks

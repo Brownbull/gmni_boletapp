@@ -23,7 +23,7 @@ import type {
     QuickSaveDialogData,
     CurrencyMismatchDialogData,
     TotalMismatchDialogData,
-} from '@/types/scanStateMachine';
+} from '@/features/scan/types/scanStateMachine';
 
 // Mock the firestore service module
 vi.mock('@/services/firestore', () => ({

@@ -27,10 +27,16 @@ import { ProcessingResult, ImageProcessingState } from '@features/batch-review/s
 import type { Transaction } from '@/types/transaction';
 import { formatCurrency } from '@/utils/currency';
 import type { Currency } from '@/types/settings';
-// Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
-import { useScanStore, useScanPhase, useScanMode, useBatchProgress, useScanActions } from '@features/scan/store';
-// Story 14e-25d: Direct hooks (ViewHandlersContext deleted)
-import { useNavigationActions } from '@/shared/stores';
+// Story 14e-11: Scan actions still from scan feature (phase-guarded)
+import { useScanActions } from '@features/scan/store';
+// Story 16-6: Phase, mode, batchReceipts, batchProgress from shared workflow store
+import {
+  useWorkflowPhase as useScanPhase,
+  useWorkflowMode as useScanMode,
+  useWorkflowBatchReceipts,
+  useWorkflowBatchProgress,
+  useNavigationActions,
+} from '@shared/stores';
 import { useModalActions } from '@/managers/ModalManager';
 
 /**
@@ -131,8 +137,9 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
   // Story 14e-11: Use Zustand store selectors (migrated from ScanContext)
   const scanPhase = useScanPhase();
   const scanMode = useScanMode();
-  const batchProgress = useBatchProgress();
-  const batchReceipts = useScanStore((s) => s.batchReceipts);
+  // Story 16-6: Read from shared workflow store (source of truth)
+  const batchProgress = useWorkflowBatchProgress();
+  const batchReceipts = useWorkflowBatchReceipts();
   const { updateBatchReceipt, discardBatchReceipt } = useScanActions();
 
   // Derive batch state from Zustand

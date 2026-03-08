@@ -5,13 +5,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { useScanStore, initialScanState, getScanState, scanActions } from '../index';
+import { initialScanState, getScanState, scanActions } from '../index';
 import { logGuardViolation } from '../slices/guardLog';
-import { createMockTransaction, getStateOnly } from './helpers';
+import { createMockTransaction, getStateOnly, resetAllStores, getWorkflowState } from './helpers';
 
 describe('useScanStore — Guards & Edge Cases', () => {
   beforeEach(() => {
-    useScanStore.setState(initialScanState);
+    resetAllStores();
   });
 
   describe('AC2: Reset transitions (any → idle)', () => {
@@ -111,7 +111,7 @@ describe('useScanStore — Guards & Edge Cases', () => {
 
     it('addImage blocked when phase !== capturing', () => {
       scanActions.addImage('should-not-add');
-      expect(getScanState().images).toHaveLength(0);
+      expect(getWorkflowState().images).toHaveLength(0);
     });
 
     it('processStart blocked when phase !== capturing', () => {
@@ -128,7 +128,7 @@ describe('useScanStore — Guards & Edge Cases', () => {
     it('processStart blocked when images.length === 0 in capturing phase', () => {
       scanActions.startSingle('test-user');
       expect(getScanState().phase).toBe('capturing');
-      expect(getScanState().images).toHaveLength(0);
+      expect(getWorkflowState().images).toHaveLength(0);
       scanActions.processStart('normal', 1);
       expect(getScanState().phase).toBe('capturing');
       expect(getScanState().creditStatus).toBe('none');
@@ -248,8 +248,8 @@ describe('useScanStore — Guards & Edge Cases', () => {
       scanActions.addImage('image-1');
       scanActions.addImage('image-2');
       scanActions.addImage('image-3');
-      expect(getScanState().images).toHaveLength(3);
-      expect(getScanState().images).toEqual(['image-1', 'image-2', 'image-3']);
+      expect(getWorkflowState().images).toHaveLength(3);
+      expect(getWorkflowState().images).toEqual(['image-1', 'image-2', 'image-3']);
     });
 
     it('removeImage at invalid index does not crash', () => {
@@ -258,8 +258,8 @@ describe('useScanStore — Guards & Edge Cases', () => {
       scanActions.removeImage(-1);
       scanActions.removeImage(5);
       scanActions.removeImage(100);
-      expect(getScanState().images).toHaveLength(1);
-      expect(getScanState().images[0]).toBe('image-1');
+      expect(getWorkflowState().images).toHaveLength(1);
+      expect(getWorkflowState().images[0]).toBe('image-1');
     });
 
     it('removeImage removes correct image by index', () => {
@@ -268,7 +268,7 @@ describe('useScanStore — Guards & Edge Cases', () => {
       scanActions.addImage('image-1');
       scanActions.addImage('image-2');
       scanActions.removeImage(1);
-      expect(getScanState().images).toEqual(['image-0', 'image-2']);
+      expect(getWorkflowState().images).toEqual(['image-0', 'image-2']);
     });
   });
 

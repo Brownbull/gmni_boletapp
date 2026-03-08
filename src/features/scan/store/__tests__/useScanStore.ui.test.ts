@@ -196,7 +196,7 @@ describe('scanUISlice — overlay state', () => {
       // Phase state reset
       expect(s.phase).toBe('idle');
       expect(s.mode).toBe('single');
-      expect(s.images).toEqual([]);
+      // images now on workflow store (Story 16-6)
       // Overlay state reset
       expect(s.overlayState).toBe('idle');
       expect(s.overlayProgress).toBe(0);

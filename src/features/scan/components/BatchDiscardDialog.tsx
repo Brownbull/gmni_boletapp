@@ -9,7 +9,7 @@
 import React from 'react';
 import { Trash2, ArrowLeft } from 'lucide-react';
 import { useScanStore } from '../store/useScanStore';
-import { DIALOG_TYPES } from '@/types/scanStateMachine';
+import { DIALOG_TYPES } from '../types/scanStateMachine';
 
 interface BatchDiscardDialogProps {
     /** Translation function */

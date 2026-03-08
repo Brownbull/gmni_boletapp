@@ -47,11 +47,17 @@ import type { Language, Theme } from '@/types/settings';
 import type { ItemNameMapping } from '@/types/itemNameMapping';
 
 // Zustand store imports
+// Story 16-6: error still on scan store; phase/processing from shared workflow store
+import { useScanStore } from '@features/scan/store';
 import {
-    useScanStore,
-    useScanPhase,
-    useIsProcessing,
-} from '@features/scan/store';
+    useWorkflowPhase as useScanPhase,
+    useWorkflowIsProcessing as useIsProcessing,
+} from '@shared/stores';
+import {
+    useWorkflowImages,
+    useWorkflowBatchEditingIndex,
+    useWorkflowBatchReceipts,
+} from '@/shared/stores';
 
 // Shared utilities (Story 14e-28 review follow-up: extracted to eliminate duplication)
 import {
@@ -196,9 +202,15 @@ export function useTransactionEditorData(
     );
 
     // === Scan State from Zustand ===
-    const scanState = useScanStore();
+    // Story 16-6: Error still on scan store (scan-internal), phase/processing from shared store
+    const scanError = useScanStore((s) => s.error);
     const scanPhase = useScanPhase();
     const isProcessing = useIsProcessing();
+
+    // Story 16-6: images, batchEditingIndex, batchReceipts moved to workflow store
+    const workflowImages = useWorkflowImages();
+    const workflowBatchEditingIndex = useWorkflowBatchEditingIndex();
+    const workflowBatchReceipts = useWorkflowBatchReceipts();
 
     // Derive scan button state
     const scanButtonState = deriveScanButtonState(scanPhase);
@@ -219,26 +231,26 @@ export function useTransactionEditorData(
     // Pending image URL - show during pending/scanning states
     const pendingImageUrl = useMemo(() => {
         const isPendingOrScanning = scanButtonState === 'pending' || scanButtonState === 'scanning';
-        return isPendingOrScanning && scanState.images.length > 0 ? scanState.images[0] : undefined;
-    }, [scanButtonState, scanState.images]);
+        return isPendingOrScanning && workflowImages.length > 0 ? workflowImages[0] : undefined;
+    }, [scanButtonState, workflowImages]);
 
     // Thumbnail URL with fallback
     const thumbnailUrl = useMemo(() => {
         return currentTransaction?.thumbnailUrl ||
-            (scanState.images.length > 0 ? scanState.images[0] : undefined);
-    }, [currentTransaction?.thumbnailUrl, scanState.images]);
+            (workflowImages.length > 0 ? workflowImages[0] : undefined);
+    }, [currentTransaction?.thumbnailUrl, workflowImages]);
 
     // Batch context
     const batchContext = useMemo(() => {
         return computeBatchContext(
-            scanState.batchEditingIndex,
-            scanState.batchReceipts,
+            workflowBatchEditingIndex,
+            workflowBatchReceipts,
             transactionNavigationList,
             currentTransaction?.id
         );
     }, [
-        scanState.batchEditingIndex,
-        scanState.batchReceipts,
+        workflowBatchEditingIndex,
+        workflowBatchReceipts,
         transactionNavigationList,
         currentTransaction?.id,
     ]);
@@ -277,7 +289,7 @@ export function useTransactionEditorData(
         scanButtonState,
         isProcessing,
         processingEta: null, // Not currently tracked
-        scanError: scanState.error,
+        scanError,
         skipScanCompleteModal,
         thumbnailUrl,
         pendingImageUrl,

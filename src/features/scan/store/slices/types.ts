@@ -11,7 +11,7 @@ import type {
   CreditType,
   DialogState,
   ScanDialogType,
-} from '@/types/scanStateMachine';
+} from '../../types/scanStateMachine';
 import type { Transaction } from '@/types/transaction';
 import type { BatchReceipt } from '@/types/batchReceipt';
 
@@ -20,13 +20,12 @@ import type { BatchReceipt } from '@/types/batchReceipt';
 // =============================================================================
 
 export interface ScanCoreSlice {
-  // State
+  // State (images moved to useScanWorkflowStore — Story 16-6)
   phase: ScanState['phase'];
   mode: ScanState['mode'];
   requestId: ScanState['requestId'];
   userId: ScanState['userId'];
   startedAt: ScanState['startedAt'];
-  images: ScanState['images'];
   results: ScanState['results'];
   activeResultIndex: ScanState['activeResultIndex'];
   error: ScanState['error'];
@@ -63,12 +62,9 @@ export interface ScanCoreSliceInternal extends ScanCoreSlice {
 // =============================================================================
 
 export interface ScanBatchSlice {
-  // State
-  batchProgress: ScanState['batchProgress'];
-  batchReceipts: ScanState['batchReceipts'];
-  batchEditingIndex: ScanState['batchEditingIndex'];
-
-  // Actions
+  // State moved to useScanWorkflowStore (Story 16-6):
+  // - batchProgress, batchReceipts, batchEditingIndex
+  // Actions remain here with phase guards, write to shared workflow store
   batchItemStart: (index: number) => void;
   batchItemSuccess: (index: number, result: Transaction) => void;
   batchItemError: (index: number, error: string) => void;

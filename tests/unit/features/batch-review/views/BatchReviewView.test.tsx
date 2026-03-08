@@ -28,6 +28,12 @@ vi.mock('@/shared/stores', () => ({
     setView: vi.fn(),
     setHistoryFilters: vi.fn(),
   })),
+  // Story 16-6: batchReceipts and batchProgress moved to shared workflow store
+  useWorkflowBatchReceipts: vi.fn(() => null),
+  useWorkflowBatchProgress: vi.fn(() => null),
+  // Story 16-6: phase and mode aliased as useScanPhase/useScanMode in source
+  useWorkflowPhase: vi.fn(() => 'idle'),
+  useWorkflowMode: vi.fn(() => 'single'),
 }));
 
 import { useBatchReview } from '@features/batch-review/hooks/useBatchReview';
