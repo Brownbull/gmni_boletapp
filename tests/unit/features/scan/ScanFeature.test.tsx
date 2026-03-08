@@ -32,7 +32,7 @@ vi.mock('@features/scan/store/useScanStore', () => ({
 }));
 
 // Story 14e-23a: Mock overlay components to verify rendering
-vi.mock('@/components/scan', () => ({
+vi.mock('@features/scan/components', () => ({
   ScanOverlay: ({ visible, state, onCancel, onRetry, onDismiss }: any) =>
     visible ? (
       <div data-testid="scan-overlay" data-state={state}>

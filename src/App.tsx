@@ -45,7 +45,7 @@ import { TransactionEditorView } from './views/TransactionEditorView';
 import { Nav, ScanStatus } from './components/Nav';
 import { TopHeader } from './components/TopHeader';
 import { type SessionAction } from './components/session';
-import { BatchUploadPreview, BatchProcessingOverlay } from './components/scan';
+import { BatchUploadPreview, BatchProcessingOverlay } from '@features/scan/components';
 import { NavigationBlocker } from './components/NavigationBlocker';
 import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
 import { PROCESSING_TIMEOUT_MS } from '@features/scan/store';

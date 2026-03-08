@@ -26,8 +26,10 @@ const SERVICE_ACCOUNT_PATH = join(
     'scripts/keys/serviceAccountKey.staging.json'
 );
 
-// Emails to whitelist: all test users + primary test user from .env.staging
+// Emails to whitelist: developers + test users from staging-test-users.json
 const WHITELISTED_EMAILS = [
+    'carcamo.gabriel@gmail.com',
+    'khujta.ai@gmail.com',
     'staging-test@boletapp.test',
     ...testUsers.users.map((u: { email: string }) => u.email),
 ];

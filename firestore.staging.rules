@@ -34,14 +34,62 @@ service cloud.firestore {
 
     // ============================================================================
     // User Data Isolation + Staging Whitelist
-    // (Covers all sub-collections including transactions)
+    // Explicit sub-collection rules (TD-16-7: replaced /{document=**} wildcard)
+    // Source of truth: src/lib/firestorePaths.ts
     // ============================================================================
-    match /artifacts/{appId}/users/{userId}/{document=**} {
+
+    // --- Transactions (with field-bounds validation) ---
+    match /artifacts/{appId}/users/{userId}/transactions/{transactionId} {
       allow read: if isAllowedStagingUser() && request.auth.uid == userId;
       allow create, update: if isAllowedStagingUser()
         && request.auth.uid == userId
         && hasValidFieldBounds(request.resource.data);
       allow delete: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+
+    // --- Mapping collections (merchant, category, subcategory, item name) ---
+    match /artifacts/{appId}/users/{userId}/merchant_mappings/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+    match /artifacts/{appId}/users/{userId}/category_mappings/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+    match /artifacts/{appId}/users/{userId}/subcategory_mappings/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+    match /artifacts/{appId}/users/{userId}/item_name_mappings/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+
+    // --- Trusted merchants ---
+    match /artifacts/{appId}/users/{userId}/trusted_merchants/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+
+    // --- Airlocks ---
+    match /artifacts/{appId}/users/{userId}/airlocks/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+
+    // --- Personal records ---
+    match /artifacts/{appId}/users/{userId}/personalRecords/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+
+    // --- Notifications ---
+    match /artifacts/{appId}/users/{userId}/notifications/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+
+    // --- Single-document collections (preferences, credits, insightProfile) ---
+    match /artifacts/{appId}/users/{userId}/preferences/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+    match /artifacts/{appId}/users/{userId}/credits/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+    match /artifacts/{appId}/users/{userId}/insightProfile/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
     }
 
     // ============================================================================

@@ -9,7 +9,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
-import { ProcessingOverlay } from '@/components/scan/ProcessingOverlay';
+import { ProcessingOverlay } from '@features/scan/components';
 import { ScanCompleteModal } from '@features/scan/components';
 import { useWorkflowIsProcessing as useScanIsProcessing, useWorkflowActiveDialog as useScanActiveDialog } from '@shared/stores';
 import { DIALOG_TYPES } from '@shared/types/scanWorkflow';

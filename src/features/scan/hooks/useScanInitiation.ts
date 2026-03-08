@@ -17,7 +17,7 @@ import type { SupportedCurrency } from '@/types/preferences';
 import type { ReceiptType } from '@/services/gemini';
 import type { ScanState } from '../types/scanStateMachine';
 import { DIALOG_TYPES } from '../types/scanStateMachine';
-import { MAX_BATCH_IMAGES } from '@/components/scan';
+import { MAX_BATCH_IMAGES } from '../components';
 import { DEFAULT_CURRENCY } from '@/utils/currency';
 import { analyzeReceipt } from '@/services/gemini';
 import { getSafeDate, parseStrictNumber } from '@/utils/validation';

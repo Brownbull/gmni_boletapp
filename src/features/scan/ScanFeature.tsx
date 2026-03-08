@@ -48,7 +48,7 @@ import {
   BatchCompleteModal,
   CurrencyMismatchDialog,
   TotalMismatchDialog,
-} from '@/components/scan';
+} from './components';
 import { DIALOG_TYPES } from './types/scanStateMachine';
 import type {
   BatchCompleteDialogData,
