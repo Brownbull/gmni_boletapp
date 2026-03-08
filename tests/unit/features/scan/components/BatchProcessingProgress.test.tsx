@@ -6,8 +6,8 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { BatchProcessingProgress } from '../../../../src/components/scan/BatchProcessingProgress';
-import type { BatchItemResult } from '../../../../src/components/scan/BatchProcessingProgress';
+import { BatchProcessingProgress } from '@features/scan/components/BatchProcessingProgress';
+import type { BatchItemResult } from '@features/scan/components/BatchProcessingProgress';
 
 // Mock translation function
 const mockT = (key: string) => {

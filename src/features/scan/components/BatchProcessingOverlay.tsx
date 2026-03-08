@@ -15,7 +15,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Loader2, Layers } from 'lucide-react';
-import { DURATION } from '../animation/constants';
+import { DURATION } from '@/components/animation/constants';
 
 /**
  * Props for BatchProcessingOverlay component

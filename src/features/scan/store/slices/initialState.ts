@@ -1,12 +1,17 @@
 /**
  * Story 16-1: Shared initial state for all scan store slices
+ * Story 16-6: images, batchProgress, batchReceipts, batchEditingIndex moved to useScanWorkflowStore
  *
  * Single source of truth for initial/reset state.
  * Used by each slice for default values and by reset/cancel actions.
  */
 
-import type { ScanState } from '@/types/scanStateMachine';
+import type { ScanState } from '../../types/scanStateMachine';
 import type { ScanFullStore, ScanOverlayState, ScanErrorType } from './types';
+
+// Fields moved to useScanWorkflowStore (Story 16-6)
+type WorkflowFields = 'images' | 'batchProgress' | 'batchReceipts' | 'batchEditingIndex';
+type ScanStoreState = Omit<ScanState, WorkflowFields>;
 
 interface ScanUIState {
   skipScanCompleteModal: boolean;
@@ -20,7 +25,7 @@ interface ScanUIState {
   processingStartedAt: number | null;
 }
 
-export const initialScanState: ScanState & ScanUIState = {
+export const initialScanState: ScanStoreState & ScanUIState = {
   // Core state
   phase: 'idle',
   mode: 'single',
@@ -30,8 +35,7 @@ export const initialScanState: ScanState & ScanUIState = {
   userId: null,
   startedAt: null,
 
-  // Image data
-  images: [],
+  // Image data: moved to useScanWorkflowStore (Story 16-6)
 
   // Results
   results: [],
@@ -48,10 +52,7 @@ export const initialScanState: ScanState & ScanUIState = {
   // Error state
   error: null,
 
-  // Batch mode
-  batchProgress: null,
-  batchReceipts: null,
-  batchEditingIndex: null,
+  // Batch mode: moved to useScanWorkflowStore (Story 16-6)
 
   // Pre-scan options
   storeType: null,

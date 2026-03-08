@@ -15,7 +15,7 @@ import {
   navigateToNextReceipt,
 } from '@features/batch-review/handlers';
 import type { BatchNavigationContext } from '@features/batch-review/handlers';
-import type { ScanState } from '@/types/scanStateMachine';
+import type { ScanState } from '@shared/types/scanWorkflow';
 import type { BatchReceipt } from '@/types/batchReceipt';
 import type { Transaction } from '@/types/transaction';
 

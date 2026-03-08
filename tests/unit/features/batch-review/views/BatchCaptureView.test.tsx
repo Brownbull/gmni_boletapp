@@ -33,7 +33,6 @@ const mockScanStore = vi.fn((selector?: (state: unknown) => unknown) => {
 })
 const mockReset = vi.fn()
 const mockSetImages = vi.fn()
-const mockIsProcessing = vi.fn(() => false)
 
 vi.mock('@features/scan/store', () => ({
   useScanStore: (selector?: (state: unknown) => unknown) => mockScanStore(selector),
@@ -41,7 +40,6 @@ vi.mock('@features/scan/store', () => ({
     reset: mockReset,
     setImages: mockSetImages,
   })),
-  useIsProcessing: () => mockIsProcessing(),
 }))
 
 // Story 14e-25c.2: Mock navigation store for BatchCaptureView
@@ -53,6 +51,9 @@ vi.mock('@/shared/stores/useNavigationStore', () => ({
     view: 'batch-capture',
   }),
 }))
+
+// Story 16-6: Import workflow store to set shared state for tests
+import { useScanWorkflowStore } from '@shared/stores/useScanWorkflowStore';
 
 // Import after mocking
 import { BatchCaptureView } from '@features/batch-review/views/BatchCaptureView'
@@ -107,6 +108,8 @@ describe('BatchCaptureView Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Story 16-6: Reset workflow store (images now read from here)
+    useScanWorkflowStore.getState().reset();
     // Story 14e-11: Reset Zustand store mocks to default state
     storeState = {
       images: [],
@@ -118,7 +121,6 @@ describe('BatchCaptureView Component', () => {
     });
     mockReset.mockClear();
     mockSetImages.mockClear();
-    mockIsProcessing.mockReturnValue(false);
     // Story 14e-25c.2: Reset navigation mock
     mockNavigateBack.mockClear();
   });
@@ -158,6 +160,8 @@ describe('BatchCaptureView Component', () => {
         mode: 'batch' as const,
         phase: 'capturing' as const,
       };
+      // Story 16-6: Set workflow store images (source of truth)
+      useScanWorkflowStore.setState({ images: ['data:image/jpeg;base64,test1'] });
 
       render(<BatchCaptureView {...defaultProps} />);
 
@@ -205,6 +209,8 @@ describe('BatchCaptureView Component', () => {
         mode: 'batch' as const,
         phase: 'capturing' as const,
       };
+      // Story 16-6: Set workflow store images (source of truth)
+      useScanWorkflowStore.setState({ images: ['data:image/jpeg;base64,test1', 'data:image/jpeg;base64,test2'] });
 
       render(<BatchCaptureView {...defaultProps} />);
 
@@ -230,8 +236,9 @@ describe('BatchCaptureView Component', () => {
 
   describe('Processing State', () => {
     // Story 14e-25c.2: isProcessing comes from store only (prop removed)
+    // Story 16-6: isProcessing derived from workflow store phase
     it('should disable capture buttons when processing', () => {
-      mockIsProcessing.mockReturnValue(true);
+      useScanWorkflowStore.setState({ phase: 'scanning' });
       render(<BatchCaptureView {...defaultProps} />);
 
       const captureButton = screen.getByRole('button', { name: 'Capture Photo' });
@@ -239,7 +246,7 @@ describe('BatchCaptureView Component', () => {
     });
 
     it('should enable capture buttons when not processing', () => {
-      mockIsProcessing.mockReturnValue(false);
+      useScanWorkflowStore.setState({ phase: 'capturing' });
       render(<BatchCaptureView {...defaultProps} />);
 
       const captureButton = screen.getByRole('button', { name: 'Capture Photo' });
@@ -270,6 +277,8 @@ describe('BatchCaptureView Component', () => {
         mode: 'batch' as const,
         phase: 'capturing' as const,
       };
+      // Story 16-6: Set workflow store images (source of truth)
+      useScanWorkflowStore.setState({ images: ['data:image/jpeg;base64,test1'] });
 
       render(<BatchCaptureView {...defaultProps} superCreditsAvailable={5} />);
 

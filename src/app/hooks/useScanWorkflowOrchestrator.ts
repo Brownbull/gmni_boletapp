@@ -15,6 +15,7 @@ import {
     useSkipScanCompleteModal,
     useIsRescanning,
 } from '@features/scan/store';
+import { getWorkflowState, useWorkflowImages, useWorkflowBatchReceipts } from '@shared/stores';
 // Story 16-2: useScanOverlayState removed — overlay state now in Zustand store
 import { useBatchProcessing } from '../../hooks/useBatchProcessing';
 import { useBatchSession } from '../../hooks/useBatchSession';
@@ -73,18 +74,22 @@ export function useScanWorkflowOrchestrator(
         restoreScanState({ currency });
     }, [restoreScanState]);
 
-    // Helper for batch receipts existence check
-    const hasBatchReceipts = (scanState.batchReceipts?.length ?? 0) > 0;
+    // Helper for batch receipts existence check (Story 16-6: read from workflow store)
+    const workflowBatchReceipts = useWorkflowBatchReceipts();
+    const hasBatchReceipts = (workflowBatchReceipts?.length ?? 0) > 0;
 
     // ==========================================================================
     // State Variable Migrations - ScanContext wrappers for backward compatibility
     // ==========================================================================
 
     // scanImages wrapper - auto-transitions to 'capturing' phase when setting images
-    const scanImages = scanState.images;
+    // Story 16-6: images moved to shared workflow store
+    const workflowImages = useWorkflowImages();
+    const scanImages = workflowImages;
     const setScanImages = useCallback((newImages: string[] | ((prev: string[]) => string[])) => {
+        const currentImages = getWorkflowState().images;
         const imagesToSet = typeof newImages === 'function'
-            ? newImages(scanState.images)
+            ? newImages(currentImages)
             : newImages;
 
         // Auto-transition to 'capturing' phase if needed
@@ -98,7 +103,7 @@ export function useScanWorkflowOrchestrator(
         } else {
             setScanContextImages(imagesToSet);
         }
-    }, [scanState.images, scanState.phase, user?.uid, startScanContext, setScanContextImages, resetScanContext]);
+    }, [workflowImages, scanState.phase, user?.uid, startScanContext, setScanContextImages, resetScanContext]);
 
     // Story 14e-28b: scanError now accessed internally by TransactionEditorView via Zustand store
     const setScanError = useCallback((error: string | null) => {

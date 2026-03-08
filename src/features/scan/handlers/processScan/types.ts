@@ -263,7 +263,7 @@ export interface QuickSaveDialogData {
  * - setToastMessage: No toast store exists yet
  *
  * @see scanActions from '@features/scan/store'
- * @see transactionEditorActions from '@features/transaction-editor/store'
+ * @see appEvents from '@shared/events' (Story 16-7: replaced transactionEditorActions)
  * @see navigationActions from '@shared/stores'
  */
 export interface UIDependencies {

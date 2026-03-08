@@ -32,7 +32,7 @@ import type {
 // We mock the store modules so tests can verify the correct actions are called.
 // Using vi.hoisted() to ensure mocks are available when vi.mock factories run.
 
-const { mockScanActions, mockTransactionEditorActions, mockNavigationActions, mockInsightActions } =
+const { mockScanActions, mockAppEvents, mockNavigationActions, mockInsightActions } =
   vi.hoisted(() => ({
     mockScanActions: {
       processError: vi.fn(),
@@ -42,10 +42,12 @@ const { mockScanActions, mockTransactionEditorActions, mockNavigationActions, mo
       setImages: vi.fn(),
       setSkipScanCompleteModal: vi.fn(),
     },
-    mockTransactionEditorActions: {
-      setTransaction: vi.fn(),
-      setCreditUsed: vi.fn(),
-      setAnimateItems: vi.fn(),
+    // Story 16-7: processScan now uses event bus instead of transactionEditorActions
+    mockAppEvents: {
+      emit: vi.fn(),
+      on: vi.fn(),
+      off: vi.fn(),
+      all: { clear: vi.fn() },
     },
     mockNavigationActions: {
       setView: vi.fn(),
@@ -60,8 +62,9 @@ vi.mock('@features/scan/store', () => ({
   scanActions: mockScanActions,
 }));
 
-vi.mock('@features/transaction-editor/store', () => ({
-  transactionEditorActions: mockTransactionEditorActions,
+// Story 16-7: Replace transaction-editor/store mock with shared/events mock
+vi.mock('@shared/events', () => ({
+  appEvents: mockAppEvents,
 }));
 
 vi.mock('@shared/stores', () => ({
@@ -239,7 +242,8 @@ describe('processScan', () => {
     vi.clearAllMocks();
     // Story 14e-43: Also reset all store action mocks
     Object.values(mockScanActions).forEach((fn) => fn.mockClear());
-    Object.values(mockTransactionEditorActions).forEach((fn) => fn.mockClear());
+    // Story 16-7: Reset event bus mock
+    mockAppEvents.emit.mockClear();
     Object.values(mockNavigationActions).forEach((fn) => fn.mockClear());
     Object.values(mockInsightActions).forEach((fn) => fn.mockClear());
   });
@@ -369,8 +373,7 @@ describe('processScan', () => {
 
       await processScan(params);
 
-      // Story 14e-43: Now uses store actions instead of ui callbacks
-      expect(mockTransactionEditorActions.setCreditUsed).toHaveBeenCalledWith(true);
+      // Story 16-7: setCreditUsed moved to scan:completed subscriber
       expect(mockScanActions.processStart).toHaveBeenCalledWith('normal', 1);
       expect(params.scanOverlay.startUpload).toHaveBeenCalled();
       expect(params.scanOverlay.setProgress).toHaveBeenCalledWith(100);
@@ -424,22 +427,24 @@ describe('processScan', () => {
 
       expect(result.success).toBe(true);
       expect(result.route).toBe('edit-view');
-      // Story 14e-43: Now uses store action instead of ui callback
-      expect(mockTransactionEditorActions.setAnimateItems).toHaveBeenCalledWith(true);
+      // Story 16-7: scan:completed event emitted (subscriber handles animation)
+      // TD-16-5: resultIndex replaces empty transactionIds
+      expect(mockAppEvents.emit).toHaveBeenCalledWith('scan:completed', { resultIndex: 0 });
     });
 
-    it('should set current transaction on success', async () => {
+    it('should store transaction in scan results and emit event on success', async () => {
       const params = createMockParams();
 
       await processScan(params);
 
-      // Story 14e-43: Now uses store action instead of ui callback
-      expect(mockTransactionEditorActions.setTransaction).toHaveBeenCalledWith(
+      // Story 16-7: Transaction stored via processSuccess, event emitted for subscribers
+      expect(mockScanActions.processSuccess).toHaveBeenCalledWith([
         expect.objectContaining({
           merchant: 'Test Merchant',
           total: 10000,
         })
-      );
+      ]);
+      expect(mockAppEvents.emit).toHaveBeenCalledWith('scan:completed', { resultIndex: 0 });
     });
 
     it('should dispatch success with transaction', async () => {
@@ -543,15 +548,15 @@ describe('processScan', () => {
 
       await processScan(params);
 
-      // Story 14e-43: Now uses store action instead of ui callback
-      expect(mockTransactionEditorActions.setTransaction).toHaveBeenCalledWith(
+      // Story 16-7: Transaction stored in scan results via processSuccess
+      expect(mockScanActions.processSuccess).toHaveBeenCalledWith([
         expect.objectContaining({
           date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
         })
-      );
+      ]);
 
       // Verify the date is current year, not future
-      const call = mockTransactionEditorActions.setTransaction.mock.calls[0][0];
+      const call = mockScanActions.processSuccess.mock.calls[0][0][0];
       const year = new Date(call.date).getFullYear();
       expect(year).toBe(new Date().getFullYear());
     });
@@ -600,13 +605,13 @@ describe('processScan', () => {
       await processScan(params);
 
       expect(mockFindMerchantMatch).toHaveBeenCalled();
-      // Story 14e-43: Now uses store action instead of ui callback
-      expect(mockTransactionEditorActions.setTransaction).toHaveBeenCalledWith(
+      // Story 16-7: Transaction stored in scan results via processSuccess
+      expect(mockScanActions.processSuccess).toHaveBeenCalledWith([
         expect.objectContaining({
           alias: 'Normalized Merchant',
           merchantSource: 'learned',
         })
-      );
+      ]);
     });
 
     it('should NOT apply merchant mapping when confidence is low', async () => {
@@ -628,12 +633,12 @@ describe('processScan', () => {
       await processScan(params);
 
       // Should not have alias from mapping
-      // Story 14e-43: Now uses store action instead of ui callback
-      expect(mockTransactionEditorActions.setTransaction).toHaveBeenCalledWith(
+      // Story 16-7: Transaction stored in scan results via processSuccess
+      expect(mockScanActions.processSuccess).toHaveBeenCalledWith([
         expect.not.objectContaining({
           alias: 'Normalized Merchant',
         })
-      );
+      ]);
     });
   });
 

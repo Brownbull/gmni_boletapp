@@ -1,0 +1,83 @@
+# Story 16-9: Manual staging deployment workflow
+# Deploys to Firebase Hosting on boletapp-staging project
+#
+# Trigger: Manual only (workflow_dispatch)
+# Auto-deploy on develop merge can be added later if needed
+#
+# Auth: FIREBASE_TOKEN env var (from GitHub secrets).
+# Future upgrade: google-github-actions/auth@v2 with workload identity
+# federation eliminates token rotation — evaluate when GCP project is set up.
+
+name: Deploy Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      component:
+        description: 'What to deploy'
+        type: choice
+        options:
+          - all
+          - hosting
+          - rules
+        default: 'all'
+
+env:
+  STAGING_URL: https://boletapp-staging.web.app
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    environment: staging
+    env:
+      FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy Firestore rules
+        if: inputs.component == 'all' || inputs.component == 'rules'
+        run: |
+          firebase deploy --only firestore:rules \
+            --project boletapp-staging \
+            --config firebase.staging.json
+
+      - name: Stamp version
+        if: inputs.component == 'all' || inputs.component == 'hosting'
+        # Writes to public/ so Vite copies it to dist/ during build (Vite default behavior)
+        run: |
+          echo "{\"sha\":\"${{ github.sha }}\",\"ref\":\"${{ github.ref }}\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > public/version.json
+
+      - name: Build for staging
+        if: inputs.component == 'all' || inputs.component == 'hosting'
+        run: npm run build:staging
+
+      - name: Deploy hosting
+        if: inputs.component == 'all' || inputs.component == 'hosting'
+        run: |
+          firebase deploy --only hosting \
+            --project boletapp-staging
+
+      - name: Smoke test
+        if: inputs.component == 'all' || inputs.component == 'hosting'
+        run: |
+          bash scripts/smoke-test-staging.sh "$STAGING_URL"
+          # Verify deployed version matches this commit
+          VERSION_SHA=$(curl -sf "$STAGING_URL/version.json" | python3 -c "import sys,json; print(json.load(sys.stdin)['sha'])")
+          if [ "$VERSION_SHA" != "${{ github.sha }}" ]; then
+            echo "::error::Deployed version SHA ($VERSION_SHA) does not match commit (${{ github.sha }})"
+            exit 1
+          fi
+          echo "Version verified: $VERSION_SHA"

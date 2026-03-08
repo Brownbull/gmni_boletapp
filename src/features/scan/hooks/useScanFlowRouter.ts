@@ -19,8 +19,8 @@ import type { ToastMessage } from '@/shared/hooks';
 import type {
     CurrencyMismatchDialogData,
     QuickSaveDialogData,
-} from '@/types/scanStateMachine';
-import { DIALOG_TYPES } from '@/types/scanStateMachine';
+} from '../types/scanStateMachine';
+import { DIALOG_TYPES } from '../types/scanStateMachine';
 import { createTransactionRepository } from '@/repositories/transactionRepository';
 import { shouldShowQuickSave, calculateConfidence } from '@/utils/confidenceCheck';
 

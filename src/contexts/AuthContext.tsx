@@ -45,7 +45,7 @@ import {
     signInWithEmailAndPassword,
     signOut as firebaseSignOut,
 } from 'firebase/auth';
-import { Firestore, clearIndexedDbPersistence, terminate } from 'firebase/firestore';
+import { Firestore, clearIndexedDbPersistence, terminate, doc, getDoc } from 'firebase/firestore';
 import { auth, db, firebaseConfig } from '../config/firebase';
 import {
     disableWebPushNotifications,
@@ -144,8 +144,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const appId = firebaseConfig.projectId;
             setServices({ auth, db, appId });
 
-            // Standard Firebase Auth Listener
-            const unsubscribe = onAuthStateChanged(auth, setUser);
+            // Story 16-9: Staging whitelist check — block non-whitelisted users
+            const isStaging = appId === 'boletapp-staging';
+
+            const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+                if (firebaseUser && isStaging) {
+                    if (!firebaseUser.email) {
+                        setInitError('Email-based authentication required for staging.');
+                        await firebaseSignOut(auth);
+                        return;
+                    }
+                    try {
+                        const emailRef = doc(db, 'allowedEmails', firebaseUser.email);
+                        const snap = await getDoc(emailRef);
+                        if (!snap.exists()) {
+                            setInitError('Access not authorized. Your email is not in the staging whitelist.');
+                            await firebaseSignOut(auth);
+                            return;
+                        }
+                    } catch {
+                        setInitError('Unable to verify staging access. Please try again.');
+                        await firebaseSignOut(auth);
+                        return;
+                    }
+                }
+                setUser(firebaseUser);
+            });
             return unsubscribe;
         } catch (e: unknown) {
             const info = getErrorInfo(classifyError(e));

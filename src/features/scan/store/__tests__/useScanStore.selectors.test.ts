@@ -7,8 +7,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import {
-  useScanStore,
-  initialScanState,
   scanActions,
   useScanPhase,
   useScanMode,
@@ -25,11 +23,11 @@ import {
   useImageCount,
   useResultCount,
 } from '../index';
-import { createMockTransaction } from './helpers';
+import { createMockTransaction, resetAllStores } from './helpers';
 
 describe('useScanStore — Selectors (AC5)', () => {
   beforeEach(() => {
-    useScanStore.setState(initialScanState);
+    resetAllStores();
   });
 
   it('useIsIdle returns true when phase === idle', () => {

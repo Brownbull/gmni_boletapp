@@ -14,8 +14,10 @@ import type { BatchReviewHandlersProps } from '../../../../../src/features/batch
 import type { User } from 'firebase/auth';
 import type { Transaction } from '../../../../../src/types/transaction';
 import type { BatchReceipt } from '../../../../../src/types/batchReceipt';
-import type { ScanState, ScanDialogType } from '../../../../../src/types/scanStateMachine';
-import { DIALOG_TYPES } from '../../../../../src/types/scanStateMachine';
+import type { ScanState, ScanDialogType } from '@shared/types/scanWorkflow';
+import { DIALOG_TYPES } from '@shared/types/scanWorkflow';
+// Story 16-6: Import workflow store to set shared state for tests
+import { useScanWorkflowStore } from '@shared/stores/useScanWorkflowStore';
 
 // =============================================================================
 // Mocks
@@ -226,6 +228,9 @@ describe('useBatchReviewHandlers', () => {
     vi.clearAllMocks();
     // Story 14e-33: Reset mock store state
     mockBatchReviewStoreState.items = [];
+    // Story 16-6: Reset workflow store and set default images
+    useScanWorkflowStore.getState().reset();
+    useScanWorkflowStore.setState({ images: mockScanStoreImages.current });
   });
 
   afterEach(() => {
@@ -711,6 +716,7 @@ describe('useBatchReviewHandlers', () => {
     it('should call startProcessing with correct params', async () => {
       // Story 14e-34a: Set mock store images instead of props
       mockScanStoreImages.current = ['img1.jpg', 'img2.jpg'];
+      useScanWorkflowStore.setState({ images: ['img1.jpg', 'img2.jpg'] });
       const props = createMockProps({
         scanCurrency: 'USD',
         scanStoreType: 'supermarket',
@@ -785,6 +791,7 @@ describe('useBatchReviewHandlers', () => {
     it('should remove image at specified index', () => {
       // Story 14e-34a: Set mock store images instead of props
       mockScanStoreImages.current = ['img1.jpg', 'img2.jpg', 'img3.jpg'];
+      useScanWorkflowStore.setState({ images: ['img1.jpg', 'img2.jpg', 'img3.jpg'] });
       const props = createMockProps();
       const { result } = renderHook(() => useBatchReviewHandlers(props));
 
@@ -799,6 +806,7 @@ describe('useBatchReviewHandlers', () => {
     it('should switch to single mode when one image left', () => {
       // Story 14e-34a: Set mock store images instead of props
       mockScanStoreImages.current = ['img1.jpg', 'img2.jpg'];
+      useScanWorkflowStore.setState({ images: ['img1.jpg', 'img2.jpg'] });
       const props = createMockProps();
       const { result } = renderHook(() => useBatchReviewHandlers(props));
 
@@ -815,6 +823,7 @@ describe('useBatchReviewHandlers', () => {
     it('should not switch mode when more than one image left', () => {
       // Story 14e-34a: Set mock store images instead of props
       mockScanStoreImages.current = ['img1.jpg', 'img2.jpg', 'img3.jpg'];
+      useScanWorkflowStore.setState({ images: ['img1.jpg', 'img2.jpg', 'img3.jpg'] });
       const props = createMockProps();
       const { result } = renderHook(() => useBatchReviewHandlers(props));
 

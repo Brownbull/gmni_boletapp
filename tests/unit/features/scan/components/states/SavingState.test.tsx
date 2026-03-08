@@ -8,7 +8,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import type { ScanPhase } from '@/types/scanStateMachine';
+import type { ScanPhase } from '@/features/scan/types/scanStateMachine';
 
 // Story 14e-11: Mock Zustand store for phase guard
 const mockUseScanPhase = vi.fn<[], ScanPhase>(() => 'saving');

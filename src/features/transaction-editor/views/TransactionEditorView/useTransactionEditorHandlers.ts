@@ -16,7 +16,7 @@
  *
  * Dependencies:
  * - @features/scan/store - ScanStore for scan state and actions
- * - @features/batch-review - BatchReviewStore for batch actions
+ * - @shared/events - Event bus for cross-feature communication (Story 16-7)
  * - @/shared/stores - NavigationStore for view navigation
  * - @managers/ModalManager - Modal actions
  *
@@ -53,8 +53,15 @@ import {
 } from '@features/scan/store';
 // Story 14e-40: ConflictResult type from scan utils
 import type { ConflictResult } from '@features/scan';
-import { batchReviewActions } from '@features/batch-review';
-import { useNavigationActions } from '@/shared/stores';
+// Story 16-7: batchReviewActions replaced by event bus (AC-ARCH-NO-2)
+import { appEvents } from '@shared/events';
+import {
+    useNavigationActions,
+    useWorkflowImages,
+    useWorkflowBatchEditingIndex,
+    useWorkflowBatchReceipts,
+    getWorkflowState,
+} from '@/shared/stores';
 // Story 14e-36c: Transaction editor store (replaces App.tsx props)
 // Story 15b-1c: Use intra-feature relative import to avoid circular dependency via barrel
 import {
@@ -191,6 +198,11 @@ export function useTransactionEditorHandlers(
         startBatch: startBatchScanContext,
     } = useScanActions();
 
+    // Story 16-6: images, batchEditingIndex, batchReceipts moved to workflow store
+    const workflowImages = useWorkflowImages();
+    const workflowBatchEditingIndex = useWorkflowBatchEditingIndex();
+    const workflowBatchReceipts = useWorkflowBatchReceipts();
+
     const { setView, navigateBack, navigateToView } = useNavigationActions();
 
     // ==========================================================================
@@ -199,7 +211,7 @@ export function useTransactionEditorHandlers(
 
     const setScanImages = useCallback((newImages: string[] | ((prev: string[]) => string[])) => {
         const imagesToSet = typeof newImages === 'function'
-            ? newImages(scanState.images)
+            ? newImages(getWorkflowState().images)
             : newImages;
 
         if (scanState.phase === 'idle' && imagesToSet.length > 0 && user?.uid) {
@@ -210,7 +222,7 @@ export function useTransactionEditorHandlers(
         } else {
             setScanContextImages(imagesToSet);
         }
-    }, [scanState.images, scanState.phase, user?.uid, setScanContextImages, resetScanContext]);
+    }, [workflowImages, scanState.phase, user?.uid, setScanContextImages, resetScanContext]);
 
     const setScanError = useCallback((error: string | null) => {
         if (error) {
@@ -223,28 +235,28 @@ export function useTransactionEditorHandlers(
     // ==========================================================================
 
     const handleBatchPreviousInternal = useCallback(() => {
-        if (scanState.batchEditingIndex === null || !scanState.batchReceipts) return;
-        if (scanState.batchEditingIndex > 0) {
-            const newIndex = scanState.batchEditingIndex - 1;
+        if (workflowBatchEditingIndex === null || !workflowBatchReceipts) return;
+        if (workflowBatchEditingIndex > 0) {
+            const newIndex = workflowBatchEditingIndex - 1;
             setBatchEditingIndexContext(newIndex);
-            const prevReceipt = scanState.batchReceipts[newIndex];
+            const prevReceipt = workflowBatchReceipts[newIndex];
             if (prevReceipt?.transaction) {
                 setCurrentTransaction(prevReceipt.transaction);
             }
         }
-    }, [scanState.batchEditingIndex, scanState.batchReceipts, setBatchEditingIndexContext, setCurrentTransaction]);
+    }, [workflowBatchEditingIndex, workflowBatchReceipts, setBatchEditingIndexContext, setCurrentTransaction]);
 
     const handleBatchNextInternal = useCallback(() => {
-        if (scanState.batchEditingIndex === null || !scanState.batchReceipts) return;
-        if (scanState.batchEditingIndex < scanState.batchReceipts.length - 1) {
-            const newIndex = scanState.batchEditingIndex + 1;
+        if (workflowBatchEditingIndex === null || !workflowBatchReceipts) return;
+        if (workflowBatchEditingIndex < workflowBatchReceipts.length - 1) {
+            const newIndex = workflowBatchEditingIndex + 1;
             setBatchEditingIndexContext(newIndex);
-            const nextReceipt = scanState.batchReceipts[newIndex];
+            const nextReceipt = workflowBatchReceipts[newIndex];
             if (nextReceipt?.transaction) {
                 setCurrentTransaction(nextReceipt.transaction);
             }
         }
-    }, [scanState.batchEditingIndex, scanState.batchReceipts, setBatchEditingIndexContext, setCurrentTransaction]);
+    }, [workflowBatchEditingIndex, workflowBatchReceipts, setBatchEditingIndexContext, setCurrentTransaction]);
 
     // ==========================================================================
     // Transaction List Navigation Handlers (internal)
@@ -282,13 +294,13 @@ export function useTransactionEditorHandlers(
     const handleUpdateTransaction = useCallback((trans: Transaction) => {
         setCurrentTransaction(trans);
         // Sync with batch context if editing a batch receipt
-        if (scanState.batchEditingIndex !== null && scanState.batchReceipts) {
-            const receiptId = scanState.batchReceipts[scanState.batchEditingIndex]?.id;
+        if (workflowBatchEditingIndex !== null && workflowBatchReceipts) {
+            const receiptId = workflowBatchReceipts[workflowBatchEditingIndex]?.id;
             if (receiptId) {
                 updateBatchReceiptContext(receiptId, { transaction: trans });
             }
         }
-    }, [scanState.batchEditingIndex, scanState.batchReceipts, updateBatchReceiptContext, setCurrentTransaction]);
+    }, [workflowBatchEditingIndex, workflowBatchReceipts, updateBatchReceiptContext, setCurrentTransaction]);
 
     /**
      * Handle save from editor
@@ -297,7 +309,7 @@ export function useTransactionEditorHandlers(
         if (isTransactionSaving) return;
         setIsTransactionSaving(true);
         // Capture batch editing state BEFORE saveTransaction clears it
-        const wasInBatchEditingMode = scanState.batchEditingIndex !== null;
+        const wasInBatchEditingMode = workflowBatchEditingIndex !== null;
         try {
             await saveTransaction(trans);
             // Bug fix: Only clear scan images when NOT in batch editing mode.
@@ -319,7 +331,7 @@ export function useTransactionEditorHandlers(
         saveTransaction,
         setScanImages,
         setScanError,
-        scanState.batchEditingIndex,
+        workflowBatchEditingIndex,
         setIsTransactionSaving,
         setCurrentTransaction,
         setIsViewingReadOnly,
@@ -333,7 +345,7 @@ export function useTransactionEditorHandlers(
     const handleCancel = useCallback(() => {
         // Bug fix: Only clear scan images when NOT in batch editing mode.
         // Clearing images triggers resetScanContext() which would wipe all batch receipts.
-        if (scanState.batchEditingIndex === null) {
+        if (workflowBatchEditingIndex === null) {
             setScanImages([]);
         }
         setScanError(null);
@@ -342,10 +354,11 @@ export function useTransactionEditorHandlers(
         setIsViewingReadOnly(false);
         setCreditUsedInSession(false);
         setTransactionNavigationList(null);
-        if (scanState.batchEditingIndex !== null) {
+        if (workflowBatchEditingIndex !== null) {
             setBatchEditingIndexContext(null);
-            // Transition from editing → reviewing when canceling edit
-            batchReviewActions.finishEditing();
+            // Story 16-7: Emit event instead of cross-feature store call (AC-2)
+            // TD-16-5: Renamed to match cancel-path semantics (AC-3)
+            appEvents.emit('batch:editing-finished', {});
             setView('batch-review');
         } else {
             navigateBack();
@@ -353,7 +366,7 @@ export function useTransactionEditorHandlers(
     }, [
         setScanImages,
         setScanError,
-        scanState.batchEditingIndex,
+        workflowBatchEditingIndex,
         setBatchEditingIndexContext,
         navigateBack,
         setView,
@@ -419,27 +432,27 @@ export function useTransactionEditorHandlers(
      * Handle batch previous (conditional on batch vs list context)
      */
     const handleBatchPrevious = useMemo(() => {
-        if (scanState.batchEditingIndex !== null) {
+        if (workflowBatchEditingIndex !== null) {
             return handleBatchPreviousInternal;
         }
         if (transactionNavigationList) {
             return handleTransactionListPrevious;
         }
         return undefined;
-    }, [scanState.batchEditingIndex, transactionNavigationList, handleBatchPreviousInternal, handleTransactionListPrevious]);
+    }, [workflowBatchEditingIndex, transactionNavigationList, handleBatchPreviousInternal, handleTransactionListPrevious]);
 
     /**
      * Handle batch next (conditional on batch vs list context)
      */
     const handleBatchNext = useMemo(() => {
-        if (scanState.batchEditingIndex !== null) {
+        if (workflowBatchEditingIndex !== null) {
             return handleBatchNextInternal;
         }
         if (transactionNavigationList) {
             return handleTransactionListNext;
         }
         return undefined;
-    }, [scanState.batchEditingIndex, transactionNavigationList, handleBatchNextInternal, handleTransactionListNext]);
+    }, [workflowBatchEditingIndex, transactionNavigationList, handleBatchNextInternal, handleTransactionListNext]);
 
     /**
      * Handle batch mode click from editor
@@ -512,30 +525,30 @@ export function useTransactionEditorHandlers(
     // ==========================================================================
 
     const canNavigatePrevious = useMemo(() => {
-        if (scanState.batchEditingIndex !== null && scanState.batchReceipts) {
-            return scanState.batchEditingIndex > 0;
+        if (workflowBatchEditingIndex !== null && workflowBatchReceipts) {
+            return workflowBatchEditingIndex > 0;
         }
         if (transactionNavigationList && currentTransaction?.id) {
             const currentIndex = transactionNavigationList.indexOf(currentTransaction.id);
             return currentIndex > 0;
         }
         return false;
-    }, [scanState.batchEditingIndex, scanState.batchReceipts, transactionNavigationList, currentTransaction?.id]);
+    }, [workflowBatchEditingIndex, workflowBatchReceipts, transactionNavigationList, currentTransaction?.id]);
 
     const canNavigateNext = useMemo(() => {
-        if (scanState.batchEditingIndex !== null && scanState.batchReceipts) {
-            return scanState.batchEditingIndex < scanState.batchReceipts.length - 1;
+        if (workflowBatchEditingIndex !== null && workflowBatchReceipts) {
+            return workflowBatchEditingIndex < workflowBatchReceipts.length - 1;
         }
         if (transactionNavigationList && currentTransaction?.id) {
             const currentIndex = transactionNavigationList.indexOf(currentTransaction.id);
             return currentIndex >= 0 && currentIndex < transactionNavigationList.length - 1;
         }
         return false;
-    }, [scanState.batchEditingIndex, scanState.batchReceipts, transactionNavigationList, currentTransaction?.id]);
+    }, [workflowBatchEditingIndex, workflowBatchReceipts, transactionNavigationList, currentTransaction?.id]);
 
     const navigationLabel = useMemo(() => {
-        if (scanState.batchEditingIndex !== null && scanState.batchReceipts) {
-            return `${scanState.batchEditingIndex + 1} de ${scanState.batchReceipts.length}`;
+        if (workflowBatchEditingIndex !== null && workflowBatchReceipts) {
+            return `${workflowBatchEditingIndex + 1} de ${workflowBatchReceipts.length}`;
         }
         if (transactionNavigationList && currentTransaction?.id) {
             const currentIndex = transactionNavigationList.indexOf(currentTransaction.id);
@@ -544,7 +557,7 @@ export function useTransactionEditorHandlers(
             }
         }
         return null;
-    }, [scanState.batchEditingIndex, scanState.batchReceipts, transactionNavigationList, currentTransaction?.id]);
+    }, [workflowBatchEditingIndex, workflowBatchReceipts, transactionNavigationList, currentTransaction?.id]);
 
     // ==========================================================================
     // Return

@@ -15,10 +15,10 @@ import { renderHook, act } from '@testing-library/react';
 import type { RefObject } from 'react';
 import type { View } from '@app/types';
 import type { HistoryFilterState } from '@/types/historyFilters';
-import type { ScanState } from '../../../../src/types/scanStateMachine';
+import type { ScanState } from '@shared/types/scanWorkflow';
 import type { UseNavigationHandlersProps } from '../../../../src/hooks/app/useNavigationHandlers';
 import { useNavigationHandlers } from '../../../../src/hooks/app/useNavigationHandlers';
-import { DIALOG_TYPES } from '../../../../src/types/scanStateMachine';
+import { DIALOG_TYPES } from '@shared/types/scanWorkflow';
 
 describe('useNavigationHandlers', () => {
     // Mock refs

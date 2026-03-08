@@ -5,12 +5,12 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useScanStore, initialScanState, getScanState, scanActions } from '../index';
-import { createMockTransaction, createMockBatchReceipts } from './helpers';
+import { getScanState, scanActions } from '../index';
+import { createMockTransaction, createMockBatchReceipts, resetAllStores, getWorkflowState } from './helpers';
 
 describe('useScanStore — Batch', () => {
   beforeEach(() => {
-    useScanStore.setState(initialScanState);
+    resetAllStores();
   });
 
   describe('Batch actions', () => {
@@ -23,18 +23,18 @@ describe('useScanStore — Batch', () => {
 
     it('batchItemStart updates current index', () => {
       scanActions.batchItemStart(1);
-      expect(getScanState().batchProgress?.current).toBe(1);
+      expect(getWorkflowState().batchProgress?.current).toBe(1);
     });
 
     it('batchItemSuccess adds to completed', () => {
       const mockTx = createMockTransaction();
       scanActions.batchItemSuccess(0, mockTx);
-      expect(getScanState().batchProgress?.completed).toContain(mockTx);
+      expect(getWorkflowState().batchProgress?.completed).toContain(mockTx);
     });
 
     it('batchItemError adds to failed', () => {
       scanActions.batchItemError(1, 'Processing failed');
-      expect(getScanState().batchProgress?.failed).toContainEqual({
+      expect(getWorkflowState().batchProgress?.failed).toContainEqual({
         index: 1,
         error: 'Processing failed',
       });
@@ -46,7 +46,7 @@ describe('useScanStore — Batch', () => {
       expect(getScanState().phase).toBe('reviewing');
       const receipts = createMockBatchReceipts(2);
       scanActions.setBatchReceipts(receipts);
-      expect(getScanState().batchReceipts).toEqual(receipts);
+      expect(getWorkflowState().batchReceipts).toEqual(receipts);
     });
 
     it('updateBatchReceipt updates specific receipt', () => {
@@ -54,7 +54,7 @@ describe('useScanStore — Batch', () => {
       const receipts = createMockBatchReceipts(2);
       scanActions.batchComplete(receipts);
       scanActions.updateBatchReceipt('receipt-0', { status: 'edited' });
-      expect(getScanState().batchReceipts?.find((r) => r.id === 'receipt-0')?.status).toBe(
+      expect(getWorkflowState().batchReceipts?.find((r) => r.id === 'receipt-0')?.status).toBe(
         'edited'
       );
     });
@@ -63,19 +63,19 @@ describe('useScanStore — Batch', () => {
       scanActions.batchItemSuccess(0, createMockTransaction({ id: 'tx-1' }));
       const receipts = createMockBatchReceipts(3);
       scanActions.batchComplete(receipts);
-      expect(getScanState().batchReceipts).toHaveLength(3);
+      expect(getWorkflowState().batchReceipts).toHaveLength(3);
       scanActions.discardBatchReceipt('receipt-1');
-      expect(getScanState().batchReceipts).toHaveLength(2);
-      expect(getScanState().batchReceipts?.find((r) => r.id === 'receipt-1')).toBeUndefined();
+      expect(getWorkflowState().batchReceipts).toHaveLength(2);
+      expect(getWorkflowState().batchReceipts?.find((r) => r.id === 'receipt-1')).toBeUndefined();
     });
 
     it('clearBatchReceipts sets batchReceipts to null', () => {
       scanActions.batchItemSuccess(0, createMockTransaction({ id: 'tx-1' }));
       const receipts = createMockBatchReceipts(2);
       scanActions.batchComplete(receipts);
-      expect(getScanState().batchReceipts).not.toBeNull();
+      expect(getWorkflowState().batchReceipts).not.toBeNull();
       scanActions.clearBatchReceipts();
-      expect(getScanState().batchReceipts).toBeNull();
+      expect(getWorkflowState().batchReceipts).toBeNull();
     });
 
     it('setBatchEditingIndex sets editing index in batch reviewing', () => {
@@ -83,13 +83,13 @@ describe('useScanStore — Batch', () => {
       scanActions.batchItemSuccess(0, createMockTransaction({ id: 'tx-1' }));
       scanActions.batchComplete(receipts);
       scanActions.setBatchEditingIndex(1);
-      expect(getScanState().batchEditingIndex).toBe(1);
+      expect(getWorkflowState().batchEditingIndex).toBe(1);
     });
 
     it('setBatchEditingIndex null is always allowed', () => {
       scanActions.reset();
       scanActions.setBatchEditingIndex(null);
-      expect(getScanState().batchEditingIndex).toBeNull();
+      expect(getWorkflowState().batchEditingIndex).toBeNull();
     });
   });
 
@@ -100,27 +100,27 @@ describe('useScanStore — Batch', () => {
 
     it('addImage updates batchProgress.total in batch mode', () => {
       scanActions.addImage('image-1');
-      expect(getScanState().batchProgress?.total).toBe(1);
+      expect(getWorkflowState().batchProgress?.total).toBe(1);
       scanActions.addImage('image-2');
-      expect(getScanState().batchProgress?.total).toBe(2);
+      expect(getWorkflowState().batchProgress?.total).toBe(2);
       scanActions.addImage('image-3');
-      expect(getScanState().batchProgress?.total).toBe(3);
+      expect(getWorkflowState().batchProgress?.total).toBe(3);
     });
 
     it('removeImage updates batchProgress.total in batch mode', () => {
       scanActions.addImage('image-1');
       scanActions.addImage('image-2');
       scanActions.addImage('image-3');
-      expect(getScanState().batchProgress?.total).toBe(3);
+      expect(getWorkflowState().batchProgress?.total).toBe(3);
       scanActions.removeImage(1);
-      expect(getScanState().batchProgress?.total).toBe(2);
-      expect(getScanState().images).toEqual(['image-1', 'image-3']);
+      expect(getWorkflowState().batchProgress?.total).toBe(2);
+      expect(getWorkflowState().images).toEqual(['image-1', 'image-3']);
     });
 
     it('setImages updates batchProgress.total in batch mode', () => {
       scanActions.setImages(['img-1', 'img-2', 'img-3', 'img-4']);
-      expect(getScanState().images).toHaveLength(4);
-      expect(getScanState().batchProgress?.total).toBe(4);
+      expect(getWorkflowState().images).toHaveLength(4);
+      expect(getWorkflowState().batchProgress?.total).toBe(4);
     });
   });
 });

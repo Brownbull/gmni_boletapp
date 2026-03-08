@@ -14,7 +14,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import React, { useState } from 'react';
-import { BatchUploadPreview, MAX_BATCH_IMAGES } from '../../src/components/scan/BatchUploadPreview';
+import { BatchUploadPreview, MAX_BATCH_IMAGES } from '../../src/features/scan/components/BatchUploadPreview';
 
 // Story 14e-34a: Mock the scan store for integration tests
 // BatchUploadPreview now reads images from the store instead of props
@@ -22,8 +22,8 @@ let mockStoreImages: string[] = [];
 vi.mock('../../src/features/scan/store', () => ({
   useScanImages: () => mockStoreImages,
 }));
-import { BatchProcessingProgress } from '../../src/components/scan/BatchProcessingProgress';
-import type { BatchItemResult } from '../../src/components/scan/BatchProcessingProgress';
+import { BatchProcessingProgress } from '../../src/features/scan/components/BatchProcessingProgress';
+import type { BatchItemResult } from '../../src/features/scan/components/BatchProcessingProgress';
 import type { Transaction, StoreCategory } from '../../src/types/transaction';
 
 // ============================================================================

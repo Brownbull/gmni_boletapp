@@ -17,8 +17,8 @@
  * Images are stored as base64 strings which can be large, so we use a size limit.
  */
 
-import type { ScanState, PersistedScanState, ScanPhase, BatchReceipt, BatchProgress } from '../types/scanStateMachine';
-import { SCAN_STATE_VERSION, generateRequestId } from '../types/scanStateMachine';
+import type { ScanState, PersistedScanState, ScanPhase, BatchReceipt, BatchProgress } from '@shared/types/scanWorkflow';
+import { SCAN_STATE_VERSION, generateRequestId } from '@shared/types/scanWorkflow';
 import type { PendingScan, PendingScanStatus } from '../types/scan';
 import type { Transaction } from '../types/transaction';
 // Story 14d.5e: Import ProcessingResult for PendingBatch migration

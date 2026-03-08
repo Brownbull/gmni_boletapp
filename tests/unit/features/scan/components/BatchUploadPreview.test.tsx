@@ -7,7 +7,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { BatchUploadPreview, MAX_BATCH_IMAGES } from '../../../../src/components/scan/BatchUploadPreview';
+import { BatchUploadPreview, MAX_BATCH_IMAGES } from '@features/scan/components/BatchUploadPreview';
 
 // Story 14e-34a: Mock the scan store module
 let mockImages: string[] = [];

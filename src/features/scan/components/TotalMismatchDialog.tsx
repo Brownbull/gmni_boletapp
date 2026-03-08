@@ -26,10 +26,10 @@ import { TotalValidationResult } from '@features/scan/utils/totalValidation';
 import { formatCurrency, DEFAULT_CURRENCY } from '@/utils/currency';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
 import { useScanActiveDialog, useScanActions } from '@features/scan/store';
-import { DIALOG_TYPES } from '../../types/scanStateMachine';
+import { DIALOG_TYPES } from '@shared/types/scanWorkflow';
 
 // Story 14d.6: Import centralized type from scanStateMachine
-import type { TotalMismatchDialogData } from '../../types/scanStateMachine';
+import type { TotalMismatchDialogData } from '@features/scan/types/scanStateMachine';
 // Re-export for backward compatibility
 export type { TotalMismatchDialogData };
 

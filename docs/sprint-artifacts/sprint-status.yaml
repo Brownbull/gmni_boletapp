@@ -301,17 +301,22 @@ development_status:
   TD-16-1-scan-store-quality: done                   # 3 pts - Guard logging + type safety + cross-slice tests (DEPENDS: 16-1)
   TD-16-2-scan-store-hardening-v2: done                 # 3 pts - Value validation + pluggable logging + dialog typing + StateKeys (DEPENDS: TD-16-1)
   16-2-merge-overlay-state: done                      # 5 pts - Merge dual state machine into Zustand (DEPENDS: 16-1)
-  16-3-fix-gallery-bug: review                          # 1 pt  - Verify + E2E gallery selection after scan failure (DEPENDS: 16-2)
+  16-3-fix-gallery-bug: done                            # 1 pt  - Verify + E2E gallery selection after scan failure (DEPENDS: 16-2)
 
   # Chain B: types + view split -> shared store -> events
-  16-4-move-scan-types: ready-for-dev                  # 3 pts - Move scanStateMachine.ts + extract shared types
-  16-5-split-transaction-editor-view: ready-for-dev    # 5 pts - Split TransactionEditorViewInternal.tsx (1,128L BLOCKED)
-  16-6-extract-shared-workflow-store: ready-for-dev    # 8 pts - Create shared scan workflow store (DEPENDS: 16-4, 16-5)
-  16-7-event-bus: ready-for-dev                        # 5 pts - Install mitt, create typed event bus (DEPENDS: 16-6)
+  16-4-move-scan-types: done                           # 3 pts - Move scanStateMachine.ts + extract shared types
+  16-5-split-transaction-editor-view: done               # 5 pts - Split TransactionEditorViewInternal.tsx (1,128L BLOCKED)
+  16-6-extract-shared-workflow-store: done               # 8 pts - Create shared scan workflow store (DEPENDS: 16-4, 16-5)
+  TD-16-3-batch-review-file-decomposition: done     # 3 pts - Decompose useBatchReviewHandlers (773L) + BatchCaptureView (800L) (DEPENDS: 16-6)
+  TD-16-4-shared-workflow-store-hardening: done  # 3 pts - Integration test + dual-state audit + test coupling + facade review (DEPENDS: 16-6)
+  16-7-event-bus: done                                   # 5 pts - Install mitt, create typed event bus (DEPENDS: 16-6)
+  TD-16-5-event-bus-payload-polish: done                   # 2 pts - Populate event payloads + rename review:saved + remove getScanState coupling (DEPENDS: 16-7)
+  TD-16-6-batch-handler-type-cleanup: done                 # 1 pt  - DRY: CreditCheckResult type + MERCHANT_CONFIDENCE_THRESHOLD consolidation (DEPENDS: TD-16-3)
 
   # Independent
-  16-8-move-legacy-scan-components: ready-for-dev      # 3 pts - Move ~17 files from src/components/scan/ to features/
-  16-9-staging-deployment: ready-for-dev               # 5 pts - Firebase Hosting staging + registration blocking + CI
+  16-8-move-legacy-scan-components: done                 # 3 pts - Move ~17 files from src/components/scan/ to features/ | done: 2026-03-07
+  16-9-staging-deployment: done                          # 5 pts - Firebase Hosting staging + registration blocking + CI | done: 2026-03-07
+  TD-16-7-staging-deployment-hardening: done    # 2 pts - CI auth migration + smoke test version + rules scoping (from 16-9 review) | DEPENDS: 16-9 | done: 2026-03-07
 
   epic-16-retrospective: optional
 

@@ -37,23 +37,23 @@
 
 import React, { useCallback, useState, useEffect } from 'react';
 import { Check, X, AlertTriangle, ArrowLeft, Trash2, Pencil, Save, MapPin, Calendar, Clock, DollarSign } from 'lucide-react';
-import type { Transaction } from '../../types/transaction';
-import type { StoreCategory } from '../../../shared/schema/categories';
-import { getCategoryEmoji } from '../../utils/categoryEmoji';
-import { translateCategory } from '../../utils/categoryTranslations';
-import { getCategoryPillColors } from '../../config/categoryColors';
-import { useStaggeredReveal } from '../../hooks/useStaggeredReveal';
-import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { AnimatedItem } from '../AnimatedItem';
-import { DURATION, EASING } from '../animation/constants';
-import type { Language } from '../../utils/translations';
+import type { Transaction } from '@/types/transaction';
+import type { StoreCategory } from '../../../../shared/schema/categories';
+import { getCategoryEmoji } from '@/utils/categoryEmoji';
+import { translateCategory } from '@/utils/categoryTranslations';
+import { getCategoryPillColors } from '@/config/categoryColors';
+import { useStaggeredReveal } from '@/hooks/useStaggeredReveal';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { AnimatedItem } from '@/components/AnimatedItem';
+import { DURATION, EASING } from '@/components/animation/constants';
+import type { Language } from '@/utils/translations';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
 import { useScanActiveDialog, useScanActions } from '@features/scan/store';
-import { DIALOG_TYPES } from '../../types/scanStateMachine';
-import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';
-import { useLocationDisplay } from '../../hooks/useLocations';
+import { DIALOG_TYPES } from '@shared/types/scanWorkflow';
+import { useIsForeignLocation } from '@/hooks/useIsForeignLocation';
+import { useLocationDisplay } from '@/hooks/useLocations';
 // Story 14d.6: Import centralized type from scanStateMachine
-import type { QuickSaveDialogData } from '../../types/scanStateMachine';
+import type { QuickSaveDialogData } from '@features/scan/types/scanStateMachine';
 // Re-export for backward compatibility
 export type { QuickSaveDialogData };
 

@@ -36,7 +36,7 @@ import type { Transaction, TransactionPeriods, StoreCategory } from '../../src/t
 // ============================================================================
 
 const APP_ID = 'boletapp-d609f'; // Must match VITE_FIREBASE_PROJECT_ID in .env (used by AuthContext as appId)
-const MULTI_USER_PASSWORD = 'test-password-123';
+const MULTI_USER_PASSWORD = 'test-password-123!';
 
 interface TestUser {
     email: string;

@@ -5,11 +5,12 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useScanStore, initialScanState, getScanState, scanActions } from '../index';
+import { initialScanState, getScanState, scanActions } from '../index';
+import { resetAllStores } from './helpers';
 
 describe('useScanStore — Dialog & UI Flags', () => {
   beforeEach(() => {
-    useScanStore.setState(initialScanState);
+    resetAllStores();
   });
 
   describe('Dialog actions', () => {

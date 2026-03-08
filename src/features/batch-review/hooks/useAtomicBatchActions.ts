@@ -1,32 +1,30 @@
 /**
  * Story 14e-34b: Atomic Batch Operations Hook
+ * Story 16-6: Migrated from scan store to shared workflow store (AC-4).
  *
  * Provides atomic (synchronous) operations that update both
- * useBatchReviewStore and useScanStore in a single JS execution.
+ * useScanWorkflowStore and useBatchReviewStore in a single JS execution.
  *
  * Problem Solved:
  * Sequential updates to separate stores create race conditions.
  * When discarding the last receipt:
  * 1. discardItem() removes from batch review store
  * 2. Auto-complete effect triggers (sees empty items)
- * 3. handleBack() checks scan store (still has items!)
+ * 3. handleBack() checks workflow store (still has items!)
  * 4. Shows discard dialog for already-discarded receipt
  *
  * Solution:
  * This hook provides atomic operations that update BOTH stores
  * synchronously (in the same JS event loop tick), preventing
  * any intermediate invalid state.
- *
- * Architecture Reference:
- * - docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-34b-atomic-batch-operations.md
- * - Story 14e-34a eliminated batchImages duplication (prerequisite)
  */
 
 import { useCallback } from 'react';
 import type { BatchReceipt } from '@/types/batchReceipt';
 
 // Direct store access - NOT hooks, to ensure synchronous updates
-import { useScanStore } from '@/features/scan/store';
+// Story 16-6: Uses shared workflow store (no scan store dependency per AC-4)
+import { useScanWorkflowStore } from '@shared/stores/useScanWorkflowStore';
 import { useBatchReviewStore } from '../store';
 
 // =============================================================================
@@ -133,23 +131,23 @@ export const atomicBatchActions = {
    * AC5: No duplicate operations - single function call updates both stores
    */
   discardReceiptAtomic: (id: string) => {
-    const scanState = useScanStore.getState();
+    const workflowState = useScanWorkflowStore.getState();
     const reviewState = useBatchReviewStore.getState();
 
     // Update both stores in sequence (synchronous, no yields)
-    // Order: scan store first (source of batchReceipts), then review store (UI items)
-    scanState.discardBatchReceipt(id);
+    // Order: workflow store first (source of batchReceipts), then review store (UI items)
+    workflowState.discardBatchReceipt(id);
     reviewState.discardItem(id);
 
     // DEV logging for debugging race conditions
     if (import.meta.env.DEV) {
-      const newScanState = useScanStore.getState();
+      const newWorkflowState = useScanWorkflowStore.getState();
       const newReviewState = useBatchReviewStore.getState();
       console.debug(
         '[atomicBatchActions] discardReceiptAtomic completed:',
         {
           discardedId: id,
-          scanBatchReceipts: newScanState.batchReceipts?.length ?? 0,
+          workflowBatchReceipts: newWorkflowState.batchReceipts?.length ?? 0,
           reviewItems: newReviewState.items.length,
         }
       );
@@ -164,11 +162,11 @@ export const atomicBatchActions = {
    * AC2: Both stores updated together with same data
    */
   updateReceiptAtomic: (id: string, updates: Partial<BatchReceipt>) => {
-    const scanState = useScanStore.getState();
+    const workflowState = useScanWorkflowStore.getState();
     const reviewState = useBatchReviewStore.getState();
 
     // Update both stores with same data (synchronous, no yields)
-    scanState.updateBatchReceipt(id, updates);
+    workflowState.updateBatchReceipt(id, updates);
     reviewState.updateItem(id, updates);
 
     // DEV logging for debugging

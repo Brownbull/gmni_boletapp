@@ -10,8 +10,8 @@
  */
 import React from 'react';
 import { Check, X, Loader2 } from 'lucide-react';
-import { formatCurrency as formatCurrencyFn } from '../../utils/currency';
-import type { Currency } from '../../types/settings';
+import { formatCurrency as formatCurrencyFn } from '@/utils/currency';
+import type { Currency } from '@/types/settings';
 
 /** Result status for each processed image */
 export type BatchItemStatus = 'pending' | 'processing' | 'success' | 'failed';

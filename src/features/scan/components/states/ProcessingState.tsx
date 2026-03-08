@@ -12,6 +12,7 @@ import React from 'react';
 import { Loader2 } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 import { useScanStore } from '../../store';
+import { useWorkflowBatchProgress } from '@shared/stores';
 import { ScanProgress } from '../ScanProgress';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
@@ -38,13 +39,14 @@ export const ProcessingState: React.FC<ProcessingStateProps> = ({
   onCancel,
 }) => {
   // useShallow optimization: Combined selector reduces re-renders (14e-10 review follow-up)
-  const { phase, mode, batchProgress } = useScanStore(
+  const { phase, mode } = useScanStore(
     useShallow((s) => ({
       phase: s.phase,
       mode: s.mode,
-      batchProgress: s.batchProgress,
     }))
   );
+  // Story 16-6: batchProgress moved to shared workflow store
+  const batchProgress = useWorkflowBatchProgress();
 
   // Calculate progress from batch state
   const progress =

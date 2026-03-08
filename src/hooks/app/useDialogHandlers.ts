@@ -56,7 +56,7 @@
 
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { Transaction } from '../../types/transaction';
-import type { ScanState } from '../../types/scanStateMachine';
+import type { ScanState } from '@shared/types/scanWorkflow';
 import type { ConflictingTransaction, ConflictReason } from '@/types/conflict';
 import type { View } from '@app/types';
 import { openModalDirect, closeModalDirect } from '@managers/ModalManager';

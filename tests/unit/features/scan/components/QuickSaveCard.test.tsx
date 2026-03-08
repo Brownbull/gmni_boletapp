@@ -8,15 +8,15 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { QuickSaveCard } from '../../../../src/components/scan/QuickSaveCard';
-import type { Transaction } from '../../../../src/types/transaction';
+import { QuickSaveCard } from '@features/scan/components/QuickSaveCard';
+import type { Transaction } from '@/types/transaction';
 
 // Mock useReducedMotion hook
-vi.mock('../../../../src/hooks/useReducedMotion', () => ({
+vi.mock('@/hooks/useReducedMotion', () => ({
   useReducedMotion: vi.fn(() => false),
 }));
 
-import { useReducedMotion } from '../../../../src/hooks/useReducedMotion';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 // Mock transaction for testing
 const mockTransaction: Transaction = {

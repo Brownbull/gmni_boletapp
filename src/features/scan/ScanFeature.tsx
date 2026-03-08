@@ -48,14 +48,14 @@ import {
   BatchCompleteModal,
   CurrencyMismatchDialog,
   TotalMismatchDialog,
-} from '@/components/scan';
-import { DIALOG_TYPES } from '@/types/scanStateMachine';
+} from './components';
+import { DIALOG_TYPES } from './types/scanStateMachine';
 import type {
   BatchCompleteDialogData,
   QuickSaveDialogData,
   CurrencyMismatchDialogData,
   TotalMismatchDialogData,
-} from '@/types/scanStateMachine';
+} from './types/scanStateMachine';
 // Story 16-2: overlay types from store (ScanOverlayState unused - reads via store selectors)
 import type { SupportedCurrency } from '@/types/preferences';
 import { DEFAULT_CURRENCY } from '@/utils/currency';

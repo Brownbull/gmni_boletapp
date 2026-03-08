@@ -1,6 +1,6 @@
 # Story 16-7: Replace Cross-Feature Store Writes with Event Bus (mitt)
 
-## Status: ready-for-dev
+## Status: done
 
 ## Intent
 **Epic Handle:** "Untangle the wires, open the test door"
@@ -44,8 +44,8 @@ As a developer, I want cross-feature handoffs to use a typed event bus, so that 
 ## Tasks
 
 ### Task 1: Install mitt and Create Event Infrastructure (3 subtasks)
-- [ ] 1.1: Install `mitt` as a dependency (`npm install mitt`)
-- [ ] 1.2: Create `src/shared/events/eventTypes.ts` — typed event map:
+- [x] 1.1: Install `mitt` as a dependency (`npm install mitt`)
+- [x] 1.2: Create `src/shared/events/eventTypes.ts` — typed event map:
   ```typescript
   type AppEvents = {
     'scan:completed': { transactionIds: string[] }
@@ -53,27 +53,27 @@ As a developer, I want cross-feature handoffs to use a typed event bus, so that 
     'review:saved': { transactionIds: string[] }
   }
   ```
-- [ ] 1.3: Create `src/shared/events/eventBus.ts` — typed mitt instance + barrel export
+- [x] 1.3: Create `src/shared/events/eventBus.ts` — typed mitt instance + barrel export
 
 ### Task 2: Replace processScan Cross-Feature Write (3 subtasks)
-- [ ] 2.1: In `processScan.ts`, replace `transactionEditorActions.setTransaction()` with `appEvents.emit('scan:completed', { transactionIds })`
-- [ ] 2.2: Remove import of `@features/transaction-editor/store` from `processScan.ts`
-- [ ] 2.3: Create `useScanEventSubscription.ts` in transaction-editor — subscribes to `scan:completed`, calls local `setTransaction()` handler
+- [x] 2.1: In `processScan.ts`, replace `transactionEditorActions.setTransaction()` with `appEvents.emit('scan:completed', { transactionIds })`
+- [x] 2.2: Remove import of `@features/transaction-editor/store` from `processScan.ts`
+- [x] 2.3: Create `useScanEventSubscription.ts` in transaction-editor — subscribes to `scan:completed`, calls local `setTransaction()` handler
 
 ### Task 3: Replace Transaction-Editor Cross-Feature Write (3 subtasks)
-- [ ] 3.1: In `useTransactionEditorHandlers.ts`, replace `batchReviewActions.finishEditing()` with `appEvents.emit('review:saved', { transactionIds })`
-- [ ] 3.2: Remove import of `@features/batch-review` from `useTransactionEditorHandlers.ts`
-- [ ] 3.3: Create `useScanEventSubscription.ts` in batch-review — subscribes to `review:saved`, calls local `finishEditing()` handler
+- [x] 3.1: In `useTransactionEditorHandlers.ts`, replace `batchReviewActions.finishEditing()` with `appEvents.emit('review:saved', { transactionIds })`
+- [x] 3.2: Remove import of `@features/batch-review` from `useTransactionEditorHandlers.ts`
+- [x] 3.3: Create `useBatchReviewEventSubscription.ts` in batch-review — subscribes to `review:saved`, calls local `finishEditing()` handler
 
 ### Task 4: Hardening — Cleanup and Integration (3 subtasks)
-- [ ] 4.1: Verify all `useEffect` subscriptions return cleanup (`unsub` from `appEvents.on(...)`)
-- [ ] 4.2: Write integration test: emit `scan:completed` -> verify transaction-editor receives -> verify state update
-- [ ] 4.3: Write integration test: emit `review:saved` -> verify batch-review receives -> verify finishEditing called
+- [x] 4.1: Verify all `useEffect` subscriptions return cleanup (via `appEvents.off()`)
+- [x] 4.2: Write integration test: emit `scan:completed` -> verify transaction-editor receives -> verify state update
+- [x] 4.3: Write integration test: emit `review:saved` -> verify batch-review receives -> verify finishEditing called
 
 ### Task 5: Verification (3 subtasks)
-- [ ] 5.1: Run `npm run test:quick` — all tests pass
-- [ ] 5.2: Run `npx tsc --noEmit` — zero TypeScript errors
-- [ ] 5.3: Verify zero cross-feature store WRITE imports between scan/batch-review/transaction-editor (grep check)
+- [x] 5.1: Run `npm run test:quick` — all 7165 tests pass (312 files)
+- [x] 5.2: Run `npx tsc --noEmit` — zero TypeScript errors
+- [x] 5.3: Verify zero cross-feature store WRITE imports between scan/batch-review/transaction-editor (grep check)
 
 ## Sizing
 - **Points:** 5 (MEDIUM)
@@ -86,6 +86,21 @@ As a developer, I want cross-feature handoffs to use a typed event bus, so that 
 
 ## Risk Flags
 - CROSS_STORE (replacing direct writes with events)
+
+## Deferred Items (from code review 2026-03-07)
+
+| TD Story | Description | Priority | Action |
+|----------|-------------|----------|--------|
+| TD-16-5 | Populate event payloads + rename review:saved + remove getScanState coupling | LOW | CREATED |
+
+## Senior Developer Review (ECC)
+- **Date:** 2026-03-07
+- **Classification:** COMPLEX
+- **Agents:** code-reviewer, security-reviewer (opus), architect (opus), tdd-guide
+- **Outcome:** APPROVE 8.6/10
+- **Quick fixes:** 1 (event type JSDoc documentation)
+- **TD stories created:** 1 (TD-16-5: payload polish + naming + coupling)
+<!-- CITED: L2-004 (feature module exports), L2-008 (TOCTOU — N/A, no auth mutations) -->
 
 ## Dev Notes
 - Architecture decision 4b specifies `mitt` and the `feature:action` naming convention — follow exactly.

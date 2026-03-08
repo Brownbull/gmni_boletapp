@@ -51,11 +51,12 @@ import { classifyError, extractErrorMessage } from '@/utils/errorHandler';
 //
 // Pattern:
 //   scanActions.processError('error')      // Instead of: ui.setScanError('error')
-//   transactionEditorActions.setTransaction(tx)  // Instead of: ui.setCurrentTransaction(tx)
+//   appEvents.emit('scan:completed', ...)  // Instead of: transactionEditorActions.setTransaction(tx)
 //   navigationActions.setView('dashboard')  // Instead of: ui.setView('dashboard')
 
 import { scanActions } from '@features/scan/store';
-import { transactionEditorActions } from '@features/transaction-editor/store';
+// Story 16-7: transactionEditorActions replaced by event bus (AC-ARCH-NO-1)
+import { appEvents } from '@shared/events';
 import { navigationActions, insightActions } from '@shared/stores';
 
 // =============================================================================
@@ -151,8 +152,7 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
     return { success: false, error: 'Credit deduction failed' };
   }
 
-  // Story 14e-43: Use store actions directly
-  transactionEditorActions.setCreditUsed(true);
+  // Story 16-7: setCreditUsed moved to scan:completed subscriber in transaction-editor
   scanActions.processStart('normal', 1);
   scanOverlay.startUpload();
   scanOverlay.setProgress(100);
@@ -301,32 +301,26 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
     }
 
     // ========================================================================
-    // Step 10: Set Current Transaction
+    // Step 10: Determine Success Route
     // ========================================================================
-
-    // Story 14e-43: Use store action directly
-    transactionEditorActions.setTransaction(finalTransaction);
-
-    // ========================================================================
-    // Step 11: Determine Success Route
-    // ========================================================================
+    // Story 16-7: setTransaction moved to scan:completed subscriber (AC-1)
 
     // If trustedAutoSave dependencies provided, check trusted status
     let routeResult: { route: 'quicksave' | 'trusted-autosave' | 'edit-view'; confidence?: number; isTrusted?: boolean };
 
     if (trustedAutoSave) {
       // Story 14e-43: Use store actions directly
+      // Story 16-7: setAnimateEditViewItems no-op — subscriber handles animation
       routeResult = await handleScanSuccess(finalTransaction, {
         checkTrusted: trustedAutoSave.checkTrusted,
         showScanDialog: (type, data) => scanActions.showDialog({ type, data }),
         setSkipScanCompleteModal: scanActions.setSkipScanCompleteModal,
-        setAnimateEditViewItems: transactionEditorActions.setAnimateItems,
+        setAnimateEditViewItems: () => {},
       });
     } else {
       // No trusted check - default to edit view
       const confidence = calculateConfidence(finalTransaction);
-      // Story 14e-43: Use store action directly
-      transactionEditorActions.setAnimateItems(true);
+      // Story 16-7: setAnimateItems moved to scan:completed subscriber
       routeResult = { route: 'edit-view', confidence, isTrusted: false };
     }
 
@@ -337,6 +331,10 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
     // Story 14e-43: Use store action directly
     scanActions.processSuccess([finalTransaction]);
     scanOverlay.setReady();
+
+    // Story 16-7: Emit event for cross-feature subscribers (AC-1, AC-5)
+    // TD-16-5: resultIndex 0 = active result; subscriber reads from shared workflow store
+    appEvents.emit('scan:completed', { resultIndex: 0 });
 
     // Haptic feedback on scan success (only when motion enabled)
     if (!prefersReducedMotion && typeof navigator !== 'undefined' && navigator.vibrate) {
@@ -382,8 +380,8 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
         );
 
         // Story 14e-43: Clean up scan state using store actions directly
+        // Story 16-7: setTransaction(null) removed — scan:completed subscriber handles editor state
         scanActions.setImages([]);
-        transactionEditorActions.setTransaction(null);
         ui.setToastMessage({ text: t('autoSaved'), type: 'success' });
         navigationActions.setView('dashboard');
 

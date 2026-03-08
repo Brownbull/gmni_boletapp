@@ -1,0 +1,102 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================================================
+    // Staging Whitelist — only approved test emails can access data
+    // Story 16-9: Registration blocking via allowedEmails collection
+    // ============================================================================
+    function isAllowedStagingUser() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/allowedEmails/$(request.auth.token.email));
+    }
+
+    // AllowedEmails collection — readable by any authenticated user (for client-side check),
+    // writable only via Firebase Console or admin scripts
+    match /allowedEmails/{email} {
+      allow get: if request.auth != null && request.auth.token.email == email;
+      allow list: if false;
+      allow write: if false;
+    }
+
+    function hasValidFieldBounds(data) {
+      return (!('merchant' in data) || (data.merchant is string && data.merchant.size() >= 1 && data.merchant.size() <= 200))
+        && (!('total' in data) || (data.total is number && data.total >= 0 && data.total <= 999999999));
+    }
+
+    // ============================================================================
+    // Collection Group Query - Denied
+    // ============================================================================
+    match /{path=**}/transactions/{transactionId} {
+      allow read: if false;
+    }
+
+    // ============================================================================
+    // User Data Isolation + Staging Whitelist
+    // Explicit sub-collection rules (TD-16-7: replaced /{document=**} wildcard)
+    // Source of truth: src/lib/firestorePaths.ts
+    // ============================================================================
+
+    // --- Transactions (with field-bounds validation) ---
+    match /artifacts/{appId}/users/{userId}/transactions/{transactionId} {
+      allow read: if isAllowedStagingUser() && request.auth.uid == userId;
+      allow create, update: if isAllowedStagingUser()
+        && request.auth.uid == userId
+        && hasValidFieldBounds(request.resource.data);
+      allow delete: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+
+    // --- Mapping collections (merchant, category, subcategory, item name) ---
+    match /artifacts/{appId}/users/{userId}/merchant_mappings/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+    match /artifacts/{appId}/users/{userId}/category_mappings/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+    match /artifacts/{appId}/users/{userId}/subcategory_mappings/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+    match /artifacts/{appId}/users/{userId}/item_name_mappings/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+
+    // --- Trusted merchants ---
+    match /artifacts/{appId}/users/{userId}/trusted_merchants/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+
+    // --- Airlocks ---
+    match /artifacts/{appId}/users/{userId}/airlocks/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+
+    // --- Personal records ---
+    match /artifacts/{appId}/users/{userId}/personalRecords/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+
+    // --- Notifications ---
+    match /artifacts/{appId}/users/{userId}/notifications/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+
+    // --- Single-document collections (preferences, credits, insightProfile) ---
+    match /artifacts/{appId}/users/{userId}/preferences/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+    match /artifacts/{appId}/users/{userId}/credits/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+    match /artifacts/{appId}/users/{userId}/insightProfile/{docId} {
+      allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
+    }
+
+    // ============================================================================
+    // Default Deny - All other paths
+    // ============================================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
