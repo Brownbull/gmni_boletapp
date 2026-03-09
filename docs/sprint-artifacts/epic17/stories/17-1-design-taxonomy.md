@@ -1,6 +1,6 @@
 # Story 17-1: Design and Document New Category Taxonomy
 
-## Status: ready-for-dev
+## Status: review
 
 ## Intent
 **Epic Handle:** "Name everything in the language the user thinks in"
@@ -27,23 +27,23 @@ As a product owner, I want a documented 4-level Spanish taxonomy with zero overl
 
 | File/Component | EXACT Path | Pattern Reference | Status |
 |----------------|------------|-------------------|--------|
-| Taxonomy spec | `docs/architecture/category-taxonomy-v2.md` | Architecture doc | NEW |
+| Taxonomy spec | `docs/architecture/category-taxonomy-v2.md` | Architecture doc | CREATED |
 
 ## Tasks
 
 ### Task 1: Audit Current Taxonomy (3 subtasks)
-- [ ] 1.1: Read current category constants -- catalog all 4 levels with exact values
-- [ ] 1.2: Identify overlapping names across levels (e.g., same string used as store category and item category)
-- [ ] 1.3: Identify categories with unclear or English-only names
+- [x] 1.1: Read current category constants -- catalog all 4 levels with exact values
+- [x] 1.2: Identify overlapping names across levels (e.g., same string used as store category and item category)
+- [x] 1.3: Identify categories with unclear or English-only names
 
 ### Task 2: Design New Spanish Labels (3 subtasks)
-- [ ] 2.1: Define level names: Rubro (store group), Negocio/Giro (store category), Familia/Pasillo (item group), Tipo de Producto (item category)
-- [ ] 2.2: Review each category within each level -- rename to clear Spanish, de-overlap
-- [ ] 2.3: Validate with user: present proposed taxonomy for approval
+- [x] 2.1: Define level names: Rubro (store group), Negocio/Giro (store category), Familia/Pasillo (item group), Tipo de Producto (item category)
+- [x] 2.2: Review each category within each level -- rename to clear Spanish, de-overlap
+- [x] 2.3: Validate with user: present proposed taxonomy for approval
 
 ### Task 3: Document Mapping and Spec (2 subtasks)
-- [ ] 3.1: Create old-to-new mapping table for every category at every level
-- [ ] 3.2: Write Gemini prompt guidance section -- how the AI should use the new names
+- [x] 3.1: Create old-to-new mapping table for every category at every level
+- [x] 3.2: Write Gemini prompt guidance section -- how the AI should use the new names
 
 ## Sizing
 - **Points:** 2 (SMALL)
@@ -63,3 +63,10 @@ As a product owner, I want a documented 4-level Spanish taxonomy with zero overl
 - Level name candidates from PRD: Rubro, Negocio/Giro, Familia/Pasillo, Tipo de Producto -- user confirms final choice
 - De-overlapping may require merging some categories (e.g., if "Food" appears at both store and item level)
 - This story requires USER COLLABORATION -- the taxonomy decisions are product decisions, not engineering decisions
+- Source of truth for all categories: `shared/schema/categories.ts` (synced to `functions/src/shared/schema/categories.ts`)
+- Category colors/groups: `src/config/categoryColors.ts`
+- Gemini prompt: `functions/src/prompts/v3-category-standardization.ts`
+- Brainstorming session: `_kdbp-output/brainstorming/brainstorming-session-2026-03-07.md`
+<!-- CITED: none -->
+<!-- INTENT: aligned -->
+<!-- ORDERING: clean -->
