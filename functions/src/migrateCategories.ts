@@ -228,17 +228,25 @@ export const migrateCategories = functions.https.onCall(
             userStats: [],
         };
 
-        // Enumerate all users
-        const usersRef = db.collection(`artifacts/${appId}/users`);
-        const usersSnapshot = await usersRef.get();
-        result.totalUsers = usersSnapshot.size;
+        // Enumerate all users via Firebase Auth (user parent docs may not exist in Firestore)
+        const auth = admin.auth();
+        const allUserIds: string[] = [];
+        let pageToken: string | undefined;
+        do {
+            const listResult = await auth.listUsers(1000, pageToken);
+            for (const user of listResult.users) {
+                allUserIds.push(user.uid);
+            }
+            pageToken = listResult.pageToken;
+        } while (pageToken);
+
+        result.totalUsers = allUserIds.length;
 
         console.log(
-            `[migrateCategories] Processing ${usersSnapshot.size} users...`
+            `[migrateCategories] Processing ${allUserIds.length} users...`
         );
 
-        for (const userDoc of usersSnapshot.docs) {
-            const userId = userDoc.id;
+        for (const userId of allUserIds) {
             const userStats: UserStats = {
                 userId,
                 totalTransactions: 0,
