@@ -23,6 +23,7 @@ import {
   formatCategoryName,
 } from './reportCategoryGrouping';
 import { TRANSLATIONS } from '@/utils/translations';
+import type { Language } from '@/utils/translations';
 import { getSettingsState } from '@shared/stores/useSettingsStore';
 
 // ============================================================================
@@ -31,13 +32,14 @@ import { getSettingsState } from '@shared/stores/useSettingsStore';
 
 /**
  * Holiday/seasonal months in Chile (for contextual insights)
+ * Bilingual: keyed by month index, values per language.
  */
-const HOLIDAY_MONTHS: Record<number, string> = {
-  0: 'verano', // January - summer vacation
-  1: 'verano', // February - summer vacation
-  2: 'vuelta a clases', // March - back to school
-  8: 'fiestas patrias', // September - Independence Day
-  11: 'fiestas de fin de año', // December - holidays
+const HOLIDAY_MONTHS: Record<number, Record<Language, string>> = {
+  0: { es: 'verano', en: 'summer' },
+  1: { es: 'verano', en: 'summer' },
+  2: { es: 'vuelta a clases', en: 'back to school' },
+  8: { es: 'fiestas patrias', en: 'national holidays' },
+  11: { es: 'fiestas de fin de año', en: 'year-end holidays' },
 };
 
 /**
@@ -51,15 +53,18 @@ export function generateMonthlyPersonaInsight(
   monthIndex: number,
   prevMonthCategories?: CategoryBreakdown[]
 ): string | undefined {
+  const lang = getSettingsState().lang;
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
+
   if (isFirst) {
-    return 'Tu primer mes completo con Gastify.';
+    return t.reportFirstMonthGastify;
   }
 
   // Check for holiday context
-  const holidayContext = HOLIDAY_MONTHS[monthIndex];
+  const holidayEntry = HOLIDAY_MONTHS[monthIndex];
+  const holidayContext = holidayEntry?.[lang];
 
   // Find the category with biggest increase
-  const lang = getSettingsState().lang;
   if (categories.length > 0 && prevMonthCategories && prevMonthCategories.length > 0) {
     const categoryChanges: { category: string; change: number; name: string }[] = [];
 
@@ -86,23 +91,23 @@ export function generateMonthlyPersonaInsight(
       // Holiday-aware insights
       if (holidayContext && biggest.change > 20) {
         if (monthIndex === 11) {
-          return `Las ${holidayContext} se notaron: ${biggest.name} subió ${Math.round(biggest.change)}% este mes.`;
+          return t.reportMonthHolidayNoticed.replace('{holiday}', holidayContext).replace('{category}', biggest.name).replace('{percent}', String(Math.round(biggest.change)));
         } else if (monthIndex === 8) {
-          return `Las ${holidayContext} impulsaron ${biggest.name}: +${Math.round(biggest.change)}%.`;
+          return t.reportMonthHolidayImpulse.replace('{holiday}', holidayContext).replace('{category}', biggest.name).replace('{percent}', String(Math.round(biggest.change)));
         } else if (monthIndex <= 2) {
-          return `El ${holidayContext} trajo más gastos en ${biggest.name}.`;
+          return t.reportMonthHolidayMore.replace('{holiday}', holidayContext).replace('{category}', biggest.name);
         }
       }
 
       // Generic category change insights
       if (biggest.change > 25) {
-        return `${biggest.name} subió harto este mes: +${Math.round(biggest.change)}% vs el anterior.`;
+        return t.reportMonthCategoryBigRise.replace('{category}', biggest.name).replace('{percent}', String(Math.round(biggest.change)));
       } else if (biggest.change < -25) {
-        return `Buen control en ${biggest.name}: bajaste ${Math.round(Math.abs(biggest.change))}% este mes.`;
+        return t.reportMonthCategoryBigDrop.replace('{category}', biggest.name).replace('{percent}', String(Math.round(Math.abs(biggest.change))));
       } else if (biggest.change > 15) {
-        return `${biggest.name} subió ${Math.round(biggest.change)}% este mes.`;
+        return t.reportMonthCategoryRise.replace('{category}', biggest.name).replace('{percent}', String(Math.round(biggest.change)));
       } else if (biggest.change < -15) {
-        return `Gastaste menos en ${biggest.name}: -${Math.round(Math.abs(biggest.change))}%.`;
+        return t.reportMonthCategoryDrop.replace('{category}', biggest.name).replace('{percent}', String(Math.round(Math.abs(biggest.change))));
       }
     }
   }
@@ -110,20 +115,20 @@ export function generateMonthlyPersonaInsight(
   // Trend-based insights
   if (trend && trendPercent !== undefined) {
     if (trend === 'down' && trendPercent > 10) {
-      return `Buen control este mes. Gastaste ${Math.round(trendPercent)}% menos que el anterior.`;
+      return t.reportMonthTrendDown.replace('{percent}', String(Math.round(trendPercent)));
     } else if (trend === 'up' && trendPercent > 15) {
-      return `Mes de mayor gasto: +${Math.round(trendPercent)}% vs el mes anterior.`;
+      return t.reportMonthTrendUp.replace('{percent}', String(Math.round(trendPercent)));
     }
   }
 
   // Dominant category insight
   if (categories.length > 0 && categories[0].percent >= 45) {
-    return `${formatCategoryName(categories[0].category, lang)} dominó tu mes con ${categories[0].percent}% del gasto.`;
+    return t.reportMonthDominated.replace('{category}', formatCategoryName(categories[0].category, lang)).replace('{percent}', String(categories[0].percent));
   }
 
   // Diversity insight
   if (categories.length >= 4) {
-    return `Gastos diversos este mes: ${categories.length} categorías diferentes.`;
+    return t.reportMonthDiverse.replace('{count}', String(categories.length));
   }
 
   return undefined;
@@ -160,20 +165,22 @@ export function generateMonthlyHighlights(
   _year: number,
   _monthIndex: number
 ): Array<{ label: string; value: string }> {
+  const lang = getSettingsState().lang;
+  const tr = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
   const highlights: Array<{ label: string; value: string }> = [];
 
   // Group transactions by week to find highest/lowest week
   // Track both total and date range for each week
   const weeklyData = new Map<number, { total: number; start: Date; end: Date }>();
-  for (const t of transactions) {
-    const txDate = parseDate(t.date);
+  for (const tx of transactions) {
+    const txDate = parseDate(tx.date);
     const weekNum = getISOWeekNumber(txDate);
     const existing = weeklyData.get(weekNum);
     if (existing) {
-      existing.total += t.total;
+      existing.total += tx.total;
     } else {
       weeklyData.set(weekNum, {
-        total: t.total,
+        total: tx.total,
         start: getWeekStart(txDate),
         end: getWeekEnd(txDate),
       });
@@ -189,25 +196,23 @@ export function generateMonthlyHighlights(
 
     const highDateRange = formatWeekDateRange(highestWeek[1].start, highestWeek[1].end);
     highlights.push({
-      label: 'Semana más alta',
+      label: tr.reportLabelHighWeek,
       value: `S${highestWeek[0]} (${highDateRange}) · ${formatCurrency(highestWeek[1].total)}`,
     });
 
     if (highestWeek[0] !== lowestWeek[0]) {
       const lowDateRange = formatWeekDateRange(lowestWeek[1].start, lowestWeek[1].end);
       highlights.push({
-        label: 'Semana más baja',
+        label: tr.reportLabelLowWeek,
         value: `S${lowestWeek[0]} (${lowDateRange}) · ${formatCurrency(lowestWeek[1].total)}`,
       });
     }
   }
 
   // Top category
-  const lang = getSettingsState().lang;
-  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
   if (categories.length > 0) {
     highlights.push({
-      label: 'Categoría líder',
+      label: tr.reportLabelCategoryLeader,
       value: `${formatCategoryName(categories[0].category, lang)} · ${categories[0].percent}%`,
     });
   }
@@ -219,8 +224,8 @@ export function generateMonthlyHighlights(
     )[0];
     if (mostTransactions.category !== categories[0].category) {
       highlights.push({
-        label: 'Más visitas',
-        value: `${formatCategoryName(mostTransactions.category, lang)} · ${mostTransactions.transactionCount} ${t.reportPurchasePlural}`,
+        label: tr.reportLabelMostVisits,
+        value: `${formatCategoryName(mostTransactions.category, lang)} · ${mostTransactions.transactionCount} ${tr.reportPurchasePlural}`,
       });
     }
   }
@@ -238,13 +243,15 @@ export function generateQuarterlyHighlights(
   _quarter: number,
   prevQuarterCategories?: CategoryBreakdown[]
 ): Array<{ label: string; value: string }> {
+  const lang = getSettingsState().lang;
+  const tr = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
   const highlights: Array<{ label: string; value: string }> = [];
 
   // Group by month to find highest/lowest
   const monthlyTotals = new Map<number, { total: number; name: string }>();
 
-  for (const t of transactions) {
-    const txDate = parseDate(t.date);
+  for (const tx of transactions) {
+    const txDate = parseDate(tx.date);
     const month = txDate.getMonth();
     const existing = monthlyTotals.get(month) || { total: 0, name: '' };
     if (!existing.name) {
@@ -253,7 +260,7 @@ export function generateQuarterlyHighlights(
         monthDate.toLocaleDateString('es-CL', { month: 'long' }).charAt(0).toUpperCase() +
         monthDate.toLocaleDateString('es-CL', { month: 'long' }).slice(1);
     }
-    monthlyTotals.set(month, { total: existing.total + t.total, name: existing.name });
+    monthlyTotals.set(month, { total: existing.total + tx.total, name: existing.name });
   }
 
   if (monthlyTotals.size >= 2) {
@@ -264,23 +271,22 @@ export function generateQuarterlyHighlights(
     const lowestMonth = months[months.length - 1];
 
     highlights.push({
-      label: 'Mes más alto',
+      label: tr.reportLabelHighMonth,
       value: `${highestMonth[1].name} · ${formatCurrency(highestMonth[1].total)}`,
     });
 
     if (highestMonth[0] !== lowestMonth[0]) {
       highlights.push({
-        label: 'Mes más bajo',
+        label: tr.reportLabelLowMonth,
         value: `${lowestMonth[1].name} · ${formatCurrency(lowestMonth[1].total)}`,
       });
     }
   }
 
   // Leading category
-  const lang = getSettingsState().lang;
   if (categories.length > 0) {
     highlights.push({
-      label: 'Categoría líder',
+      label: tr.reportLabelCategoryLeader,
       value: `${formatCategoryName(categories[0].category, lang)} · ${categories[0].percent}%`,
     });
   }
@@ -305,7 +311,7 @@ export function generateQuarterlyHighlights(
 
     if (biggestIncrease) {
       highlights.push({
-        label: 'Mayor aumento',
+        label: tr.reportLabelBiggestIncrease,
         value: `${biggestIncrease.name} · +${biggestIncrease.change}%`,
       });
     }
@@ -323,14 +329,16 @@ export function generateQuarterlyPersonaInsight(
   quarter: number,
   prevQuarterCategories?: CategoryBreakdown[]
 ): string | undefined {
+  const lang = getSettingsState().lang;
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
+
   if (isFirst) {
-    return 'Tu historia financiera comienza aquí.';
+    return t.reportFirstQuarterInsight;
   }
 
   if (categories.length === 0) return undefined;
 
   const topCategory = categories[0];
-  const lang = getSettingsState().lang;
   const topCategoryName = formatCategoryName(topCategory.category, lang);
 
   // Check for category changes
@@ -343,20 +351,20 @@ export function generateQuarterlyPersonaInsight(
       if (change > 20) {
         // Seasonal insights
         if (quarter === 4) {
-          return `Este trimestre, ${topCategoryName} fue tu categoría estrella con ${topCategory.percent}% del gasto total. Las fiestas de fin de año impulsaron el gasto.`;
+          return t.reportQuarterStarQ4.replace('{category}', topCategoryName).replace('{percent}', String(topCategory.percent));
         } else if (quarter === 3) {
-          return `El verano trajo más gastos en ${topCategoryName}. ¡Disfrutaste bien!`;
+          return t.reportQuarterStarQ3.replace('{category}', topCategoryName);
         } else if (quarter === 1) {
-          return `Vuelta a la rutina: ${topCategoryName} lideró con ${topCategory.percent}% del total.`;
+          return t.reportQuarterStarQ1.replace('{category}', topCategoryName).replace('{percent}', String(topCategory.percent));
         }
-        return `${topCategoryName} creció ${Math.round(change)}% este trimestre, llegando a ${topCategory.percent}% del total.`;
+        return t.reportQuarterCategoryGrew.replace('{category}', topCategoryName).replace('{percent}', String(Math.round(change))).replace('{totalPercent}', String(topCategory.percent));
       } else if (change < -15) {
-        return `Buen control: ${topCategoryName} bajó ${Math.round(Math.abs(change))}% vs el trimestre anterior.`;
+        return t.reportQuarterGoodControl.replace('{category}', topCategoryName).replace('{percent}', String(Math.round(Math.abs(change))));
       }
     }
   }
 
-  return `Este trimestre, ${topCategoryName} fue tu categoría estrella con ${topCategory.percent}% del gasto total.`;
+  return t.reportQuarterStarCategory.replace('{category}', topCategoryName).replace('{percent}', String(topCategory.percent));
 }
 
 /**
@@ -367,13 +375,15 @@ export function generateYearlyHighlights(
   categories: CategoryBreakdown[],
   year: number
 ): Array<{ label: string; value: string }> {
+  const lang = getSettingsState().lang;
+  const tr = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
   const highlights: Array<{ label: string; value: string }> = [];
 
   // Group by month to find highest/lowest
   const monthlyTotals = new Map<number, { total: number; name: string }>();
 
-  for (const t of transactions) {
-    const txDate = parseDate(t.date);
+  for (const tx of transactions) {
+    const txDate = parseDate(tx.date);
     const month = txDate.getMonth();
     const existing = monthlyTotals.get(month) || { total: 0, name: '' };
     if (!existing.name) {
@@ -382,7 +392,7 @@ export function generateYearlyHighlights(
         monthDate.toLocaleDateString('es-CL', { month: 'long' }).charAt(0).toUpperCase() +
         monthDate.toLocaleDateString('es-CL', { month: 'long' }).slice(1);
     }
-    monthlyTotals.set(month, { total: existing.total + t.total, name: existing.name });
+    monthlyTotals.set(month, { total: existing.total + tx.total, name: existing.name });
   }
 
   if (monthlyTotals.size >= 2) {
@@ -393,23 +403,22 @@ export function generateYearlyHighlights(
     const lowestMonth = months[months.length - 1];
 
     highlights.push({
-      label: 'Mes más alto',
+      label: tr.reportLabelHighMonth,
       value: `${highestMonth[1].name} · ${formatCurrency(highestMonth[1].total)}`,
     });
 
     if (highestMonth[0] !== lowestMonth[0]) {
       highlights.push({
-        label: 'Mes más bajo',
+        label: tr.reportLabelLowMonth,
         value: `${lowestMonth[1].name} · ${formatCurrency(lowestMonth[1].total)}`,
       });
     }
   }
 
   // Top category
-  const lang = getSettingsState().lang;
   if (categories.length > 0) {
     highlights.push({
-      label: 'Categoría #1',
+      label: tr.reportLabelCategoryTop,
       value: `${formatCategoryName(categories[0].category, lang)} · ${categories[0].percent}%`,
     });
   }
@@ -424,22 +433,24 @@ export function generateYearlyPersonaInsight(
   categories: CategoryBreakdown[],
   isFirst: boolean
 ): string | undefined {
+  const lang = getSettingsState().lang;
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
+
   if (isFirst) {
-    return 'Tu primer año completo de decisiones inteligentes.';
+    return t.reportFirstYearInsight;
   }
 
   if (categories.length === 0) return undefined;
 
   // Get top 2 categories for a richer insight
-  const lang = getSettingsState().lang;
   const topCategory = categories[0];
   const topCategoryName = formatCategoryName(topCategory.category, lang).toLowerCase();
 
   // If we have a second category that's also significant (>20%), mention both
   if (categories.length >= 2 && categories[1].percent >= 20) {
     const secondCategoryName = formatCategoryName(categories[1].category, lang).toLowerCase();
-    return `Un año completo de decisiones inteligentes. Tu mayor inversión fue en ${topCategoryName} y ${secondCategoryName}.`;
+    return t.reportYearInsightTwo.replace('{category1}', topCategoryName).replace('{category2}', secondCategoryName);
   }
 
-  return `Un año completo de seguimiento financiero. Tu mayor inversión fue en ${topCategoryName}.`;
+  return t.reportYearInsightSingle.replace('{category}', topCategoryName);
 }

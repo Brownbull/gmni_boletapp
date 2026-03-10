@@ -34,6 +34,7 @@ import {
   NEUTRAL_THRESHOLD,
 } from './reportCategoryGrouping';
 import { getSettingsState } from '@shared/stores/useSettingsStore';
+import { TRANSLATIONS } from '@/utils/translations';
 import type { ReportRowData } from './reportGeneration';
 import {
   generateMonthlyPersonaInsight,
@@ -160,21 +161,22 @@ function generateWeeklyReportsForYear(
     const monthName = thursday.toLocaleDateString('es-CL', { month: 'long' });
 
     const lang = getSettingsState().lang;
+    const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
     let personaInsight: string | undefined;
     if (categories.length > 0) {
       const topCategory = categories[0];
       const topCategoryName = formatCategoryName(topCategory.category, lang);
 
       if (isFirst) {
-        personaInsight = `Tu primera semana registrada. ${topCategoryName} fue tu mayor gasto.`;
+        personaInsight = t.reportWeekFirstInsight.replace('{category}', topCategoryName);
       } else if (trend === 'up' && trendPercent > 20) {
-        personaInsight = `Semana de mayor gasto: +${Math.abs(trendPercent)}% vs la semana anterior.`;
+        personaInsight = t.reportWeekHighSpend.replace('{percent}', String(Math.abs(trendPercent)));
       } else if (trend === 'down' && trendPercent < -20) {
-        personaInsight = `¡Buen control! Redujiste ${Math.abs(trendPercent)}% vs la semana anterior.`;
+        personaInsight = t.reportWeekGoodControl.replace('{percent}', String(Math.abs(trendPercent)));
       } else if (topCategory.percent >= 50) {
-        personaInsight = `${topCategoryName} dominó tu semana con ${topCategory.percent}% del gasto.`;
+        personaInsight = t.reportWeekCategoryDominated.replace('{category}', topCategoryName).replace('{percent}', String(topCategory.percent));
       } else if (categories.length >= 3) {
-        personaInsight = `Gastos diversos esta semana: ${categories.length} categorías diferentes.`;
+        personaInsight = t.reportWeekDiverseSpending.replace('{count}', String(categories.length));
       }
     }
 
@@ -194,7 +196,7 @@ function generateWeeklyReportsForYear(
       periodType: 'weekly',
       isUnread: false,
       isFirst,
-      firstLabel: 'Tu primera semana',
+      firstLabel: t.reportFirstWeekly,
       categories,
       transactionGroups,
       itemGroups,
@@ -301,7 +303,7 @@ function generateMonthlyReportsForYear(
       periodType: 'monthly',
       isUnread: false,
       isFirst,
-      firstLabel: 'Tu primer mes',
+      firstLabel: (TRANSLATIONS[getSettingsState().lang] ?? TRANSLATIONS.es).reportFirstMonthly,
       categories,
       transactionGroups,
       itemGroups,
@@ -406,8 +408,8 @@ function generateQuarterlyReportsForYear(
       periodType: 'quarterly',
       isUnread: false,
       isFirst,
-      firstLabel: 'Tu primer trimestre',
-      personaHook: 'Descubre qué categoría dominó tu trimestre',
+      firstLabel: (TRANSLATIONS[getSettingsState().lang] ?? TRANSLATIONS.es).reportFirstQuarterly,
+      personaHook: (TRANSLATIONS[getSettingsState().lang] ?? TRANSLATIONS.es).reportHookQuarterly,
       categories,
       transactionGroups,
       itemGroups,
@@ -463,8 +465,8 @@ function generateYearlyReportForYear(
     periodType: 'yearly',
     isUnread: false,
     isFirst,
-    firstLabel: 'Tu primer año completo',
-    personaHook: 'Un año de decisiones financieras inteligentes',
+    firstLabel: (TRANSLATIONS[getSettingsState().lang] ?? TRANSLATIONS.es).reportFirstYearly,
+    personaHook: (TRANSLATIONS[getSettingsState().lang] ?? TRANSLATIONS.es).reportHookYearly,
     categories,
     transactionGroups,
     itemGroups,

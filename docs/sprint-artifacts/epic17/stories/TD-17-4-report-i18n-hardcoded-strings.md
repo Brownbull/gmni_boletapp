@@ -1,6 +1,6 @@
 # Tech Debt Story TD-17-4: Report i18n — Hardcoded Spanish Strings + Test Gaps
 
-Status: ready-for-dev
+Status: review
 
 > **Source:** KDBP Code Review (2026-03-10) on story TD-17-3
 > **Priority:** LOW | **Estimated Effort:** 3 points
@@ -28,17 +28,19 @@ Current behavior is correct for Spanish-primary users. English users would see m
 ## Tasks
 
 ### Task 1: Replace hardcoded Spanish strings (3 subtasks)
-- [ ] 1.1: Add translation keys for persona insights/hooks/labels in `reportGeneration.ts`
-- [ ] 1.2: Add translation keys for persona insights/hooks/labels in `reportInsights.ts`
-- [ ] 1.3: Add translation keys for any remaining hardcoded strings in `reportYearGeneration.ts`
+- [x] 1.1: Add translation keys for persona insights/hooks/labels in `reportGeneration.ts`
+- [x] 1.2: Add translation keys for persona insights/hooks/labels in `reportInsights.ts`
+- [x] 1.3: Add translation keys for any remaining hardcoded strings in `reportYearGeneration.ts`
 
 ### Task 2: Test coverage for quarterly/yearly i18n (3 subtasks)
-- [ ] 2.1: Add test for `generateQuarterlyHighlights` with lang=en
-- [ ] 2.2: Add test for `generateQuarterlyPersonaInsight` with lang=en
-- [ ] 2.3: Add test for `generateYearlyPersonaInsight` two-category path with lang=en
+- [x] 2.1: Add test for `generateQuarterlyHighlights` with lang=en
+- [x] 2.2: Add test for `generateQuarterlyPersonaInsight` with lang=en
+- [x] 2.3: Add test for `generateYearlyPersonaInsight` two-category path with lang=en
 
 ## Dev Notes
 - Source story: [TD-17-3](./TD-17-3-report-i18n-remaining-callsites.md)
 - Review findings: #4, #8
-- Files affected: `src/features/reports/utils/reportGeneration.ts`, `src/features/reports/utils/reportInsights.ts`, `src/features/reports/utils/reportYearGeneration.ts`, `tests/unit/features/reports/utils/reportI18n.test.ts`
-- Note: `reportI18n.test.ts` is at 287 lines (limit 300) — may need split into per-function files if tests grow
+- Files affected: `src/features/reports/utils/reportGeneration.ts`, `src/features/reports/utils/reportInsights.ts`, `src/features/reports/utils/reportYearGeneration.ts`, `src/utils/translations.ts`, `tests/unit/features/reports/utils/reportI18n.test.ts`, `tests/unit/features/reports/utils/reportI18n2.test.ts`
+- Note: New test file `reportI18n2.test.ts` created for quarterly/yearly tests (existing file at 287/300 line limit)
+- HOLIDAY_MONTHS in reportInsights.ts refactored to bilingual `Record<number, Record<Language, string>>`
+- translations.ts added to ECC_SIZE_EXCLUDE (data file, not code logic) — TD for proper split deferred

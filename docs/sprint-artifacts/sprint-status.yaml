@@ -335,7 +335,7 @@ development_status:
   17-4-update-ui-labels: done                          # 5 pts - Update all UI components showing categories (DEPENDS: 17-2)
   TD-17-2-report-grouping-i18n: done                     # 3 pts - Report grouping i18n completion: locale param + hardcoded strings (DEPENDS: 17-4)
   TD-17-3-report-i18n-remaining: done                      # 5 pts - Report i18n remaining call sites: generation, insights, year (DEPENDS: TD-17-2)
-  TD-17-4-report-i18n-hardcoded-strings: ready-for-dev    # 3 pts - Remaining hardcoded Spanish strings + quarterly/yearly i18n tests (DEPENDS: TD-17-3)
+  TD-17-4-report-i18n-hardcoded-strings: review          # 3 pts - Remaining hardcoded Spanish strings + quarterly/yearly i18n tests (DEPENDS: TD-17-3)
   17-5-batch-migration: ready-for-dev                  # 5 pts - Idempotent Cloud Function batch migration (DEPENDS: 17-2)
 
   epic-17-retrospective: optional

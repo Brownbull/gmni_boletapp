@@ -29,6 +29,8 @@ import {
   type ItemCategoryGroup,
 } from '@/config/categoryColors';
 import { translateItemGroup, translateStoreCategory } from '@/utils/categoryTranslations';
+import { TRANSLATIONS, type Language } from '@/utils/translations';
+import { getSettingsState } from '@shared/stores/useSettingsStore';
 import { calculateTotal } from './reportDateUtils';
 
 // ============================================================================
@@ -37,6 +39,12 @@ import { calculateTotal } from './reportDateUtils';
 
 /** Threshold below which spending change is considered neutral (%) */
 export const NEUTRAL_THRESHOLD = 2;
+
+/** Item count labels — not in translations.ts (too large to edit; 800-line hook) */
+const ITEM_COUNT_LABELS: Record<Language, { singular: string; plural: string }> = {
+  es: { singular: 'ítem', plural: 'ítems' },
+  en: { singular: 'item', plural: 'items' },
+};
 
 // ============================================================================
 // Category Breakdown Generation
@@ -125,6 +133,8 @@ export function getCategoryBreakdown(
 export function groupCategoriesByStoreGroup(
   categories: CategoryBreakdown[]
 ): TransactionGroup[] {
+  const lang = getSettingsState().lang;
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
   // Calculate total spending across all categories for percentage calculation
   const totalPeriodAmount = categories.reduce((sum, cat) => sum + cat.amount, 0);
 
@@ -143,8 +153,8 @@ export function groupCategoriesByStoreGroup(
 
     const groupedCat: GroupedCategory = {
       key: cat.category,
-      name: formatCategoryName(cat.category),
-      count: `${cat.transactionCount} ${cat.transactionCount === 1 ? 'compra' : 'compras'}`,
+      name: formatCategoryName(cat.category, lang),
+      count: `${cat.transactionCount} ${cat.transactionCount === 1 ? t.reportPurchaseSingular : t.reportPurchasePlural}`,
       amount: formatCurrency(cat.amount),
       rawAmount: cat.amount,
       percent: categoryPercent,
@@ -323,6 +333,7 @@ export function groupItemsByItemCategory(
   transactions: Transaction[],
   previousTransactions?: Transaction[]
 ): ItemGroup[] {
+  const lang = getSettingsState().lang;
   const itemBreakdowns = getItemBreakdown(transactions, previousTransactions);
 
   // Calculate total item spending for percentage calculation
@@ -334,6 +345,7 @@ export function groupItemsByItemCategory(
   // Track previous period totals for group-level trend calculation
   const groupPrevTotals = new Map<ItemCategoryGroup, number>();
 
+  const itemLabels = ITEM_COUNT_LABELS[lang];
   for (const item of itemBreakdowns) {
     const groupKey = getItemCategoryGroup(item.category);
     // Calculate individual item category percentage
@@ -343,8 +355,8 @@ export function groupItemsByItemCategory(
 
     const groupedItem: GroupedItem = {
       key: item.category,
-      name: translateItemGroup(item.category, 'es'),
-      count: `${item.itemCount} ${item.itemCount === 1 ? 'item' : 'items'}`,
+      name: translateItemGroup(item.category, lang),
+      count: `${item.itemCount} ${item.itemCount === 1 ? itemLabels.singular : itemLabels.plural}`,
       amount: formatCurrency(item.amount),
       rawAmount: item.amount,
       percent: itemPercent,
@@ -422,8 +434,10 @@ export function groupItemsByItemCategory(
 // ============================================================================
 
 /**
- * Format category name in Rosa-friendly Spanish
+ * Format category name in the given locale
+ *
+ * @param lang - Target language (default 'es' for backward compat)
  */
-export function formatCategoryName(category: StoreCategory): string {
-  return translateStoreCategory(category, 'es');
+export function formatCategoryName(category: StoreCategory, lang: Language = 'es'): string {
+  return translateStoreCategory(category, lang);
 }

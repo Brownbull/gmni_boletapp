@@ -174,7 +174,7 @@ describe('generateMonthlyHighlights — i18n (TD-17-3)', () => {
       5
     );
 
-    const visitHighlight = result.find((h) => h.label === 'Más visitas');
+    const visitHighlight = result.find((h) => h.label === 'Most visits');
     expect(visitHighlight).toBeDefined();
     expect(visitHighlight!.value).toContain('purchases');
     expect(visitHighlight!.value).not.toContain('compras');
@@ -194,7 +194,7 @@ describe('generateMonthlyHighlights — i18n (TD-17-3)', () => {
 
     const result = generateMonthlyHighlights(categories, transactions, 2025, 5);
 
-    const leaderHighlight = result.find((h) => h.label === 'Categoría líder');
+    const leaderHighlight = result.find((h) => h.label === 'Leading category');
     expect(leaderHighlight).toBeDefined();
     expect(leaderHighlight!.value).toContain('Supermarket');
     expect(leaderHighlight!.value).not.toContain('Supermercado');

@@ -1,1 +1,1 @@
-{"date":"2026-03-06","story":"16-3-fix-gallery-bug","type":"e2e","total":1,"passed":1,"skipped":0,"failed":0,"duration_ms":8400,"determinism":"2/2 passes","file":"tests/e2e/staging/scan-gallery-after-error.spec.ts"}
+{"date":"2026-03-10","story":"TD-17-4","type":"unit","total":7391,"passed":7391,"skipped":0,"failed":0,"files":318,"duration_s":35}
