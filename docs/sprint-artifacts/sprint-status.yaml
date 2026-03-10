@@ -339,7 +339,7 @@ development_status:
   TD-17-5-report-i18n-locale-cleanup: done                 # 2 pts - Locale cleanup: es-CL hardcoding, dual-purpose key, Other fallback (DEPENDS: TD-17-4)
   TD-17-6-report-locale-remaining-strings: done  # 1 pt  - Remaining hardcoded locale strings: S/W prefix + Dic abbreviation (DEPENDS: TD-17-5)
   TD-17-7-report-i18n-test-coverage: done                   # 2 pts - Locale test coverage gaps: 3 untested functions + fallback path (DEPENDS: TD-17-5)
-  17-5-batch-migration: ready-for-dev                  # 5 pts - Idempotent Cloud Function batch migration (DEPENDS: 17-2)
+  17-5-batch-migration: review                         # 5 pts - Idempotent Cloud Function batch migration (DEPENDS: 17-2)
 
   epic-17-retrospective: optional
 

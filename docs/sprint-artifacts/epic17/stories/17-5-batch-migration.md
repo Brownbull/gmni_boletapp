@@ -1,6 +1,6 @@
 # Story 17-5: Build and Execute Category Batch Migration
 
-## Status: ready-for-dev
+## Status: review
 
 ## Intent
 **Epic Handle:** "Name everything in the language the user thinks in"
@@ -38,31 +38,31 @@ As a user, I want my existing transaction data migrated to the new taxonomy, so 
 ## Tasks
 
 ### Task 1: Build Migration Mapping (2 subtasks)
-- [ ] 1.1: Create `categoryMigrationMap.ts` with old-to-new mapping for all 4 levels (from taxonomy spec)
-- [ ] 1.2: Include item-level mappings (items[].category, items[].subcategory) -- not just transaction-level
+- [x] 1.1: Create `categoryMigrationMap.ts` with old-to-new mapping for all 4 levels (from taxonomy spec)
+- [x] 1.2: Include item-level mappings (items[].category, items[].subcategory) -- not just transaction-level
 
 ### Task 2: Build Migration Cloud Function (4 subtasks)
-- [ ] 2.1: Create `migrateCategories.ts` -- callable Cloud Function (admin-only)
-- [ ] 2.2: Implement user enumeration: iterate all users under `/artifacts/{appId}/users/`
-- [ ] 2.3: For each user: read all transactions, check each category field, batch-update with new values
-- [ ] 2.4: **HARDENING:** Implement 500-op batch chunking with error handling and retry logic
+- [x] 2.1: Create `migrateCategories.ts` -- callable Cloud Function (admin-only)
+- [x] 2.2: Implement user enumeration: iterate all users under `/artifacts/{appId}/users/`
+- [x] 2.3: For each user: read all transactions, check each category field, batch-update with new values
+- [x] 2.4: **HARDENING:** Implement 500-op batch chunking with error handling and retry logic
 
 ### Task 3: Idempotency and Safety (3 subtasks)
-- [ ] 3.1: Check-before-write: skip documents where all category fields already match new values
-- [ ] 3.2: Logging: report per-user stats (total transactions, migrated, skipped, errors)
-- [ ] 3.3: **HARDENING:** Dry-run mode flag -- log what would change without writing
+- [x] 3.1: Check-before-write: skip documents where all category fields already match new values
+- [x] 3.2: Logging: report per-user stats (total transactions, migrated, skipped, errors)
+- [x] 3.3: **HARDENING:** Dry-run mode flag -- log what would change without writing
 
 ### Task 4: Test Migration (3 subtasks)
-- [ ] 4.1: Unit test: mapping completeness -- every old value produces a new value
-- [ ] 4.2: Unit test: idempotency -- running twice produces same result
-- [ ] 4.3: Integration test: migrate sample data set (10 transactions with mixed old/new categories)
+- [x] 4.1: Unit test: mapping completeness -- every old value produces a new value
+- [x] 4.2: Unit test: idempotency -- running twice produces same result
+- [x] 4.3: Integration test: migrate sample data set (10 transactions with mixed old/new categories)
 
 ### Task 5: Verify Read-Time Normalizer Coverage (2 subtasks)
-- [ ] 5.1: Verify normalizer handles all intermediate states: un-migrated data, partially-migrated data, fully-migrated data
-- [ ] 5.2: Test: user sees correct categories while migration runs in background
+- [x] 5.1: Verify normalizer handles all intermediate states: un-migrated data, partially-migrated data, fully-migrated data
+- [x] 5.2: Test: user sees correct categories while migration runs in background
 
 ### Task 6: Build and Deploy (2 subtasks)
-- [ ] 6.1: `cd functions && npm run build` -- verify build succeeds
+- [x] 6.1: `cd functions && npm run build` -- verify build succeeds
 - [ ] 6.2: Deploy to staging, execute migration on staging data, verify results
 
 ## Sizing

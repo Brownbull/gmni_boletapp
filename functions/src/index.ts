@@ -141,3 +141,21 @@ export { adminTestWebPush } from './webPushService'
  */
 export { getVapidPublicKey } from './webPushService'
 
+// =============================================================================
+// ADMIN: One-Time Category Migration (Story 17-5)
+// Batch-migrates all transaction category fields from V1/V2/V3 to V4.
+// Idempotent, chunked at 500, dry-run by default.
+// =============================================================================
+
+/**
+ * migrateCategories - HTTPS Callable (ADMIN)
+ *
+ * One-time migration function that updates all stored transaction
+ * category fields to V4 canonical PascalCase names.
+ *
+ * - Authentication: Required (Firebase Auth)
+ * - Default: dry-run mode (logs changes without writing)
+ * - Batch: 500 ops per Firestore batch
+ * - Idempotent: safe to run multiple times
+ */
+export { migrateCategories } from './migrateCategories'
