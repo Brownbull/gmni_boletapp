@@ -35,8 +35,8 @@ export function computePreviousPeriodTotals(
             case 'store-groups': {
                 const storeCat = tx.category || 'Unknown';
                 // Look up the group for this store category
-                // STORE_CATEGORY_GROUPS maps category -> group (e.g., 'Supermarket' -> 'food-dining')
-                return STORE_CATEGORY_GROUPS[storeCat as keyof typeof STORE_CATEGORY_GROUPS] || 'other';
+                // STORE_CATEGORY_GROUPS maps category -> group (e.g., 'Supermarket' -> 'supermercados')
+                return STORE_CATEGORY_GROUPS[storeCat as keyof typeof STORE_CATEGORY_GROUPS] || 'otros';
             }
             case 'store-categories':
                 return tx.category || 'Unknown';

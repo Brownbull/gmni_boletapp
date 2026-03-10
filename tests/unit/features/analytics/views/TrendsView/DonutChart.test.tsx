@@ -21,20 +21,23 @@ import { makeCategoryDataPartial as makeCategoryData } from '../../../../views/_
 vi.mock('@/config/categoryColors', () => ({
   getCategoryColorsAuto: () => ({ bg: '#eee', fg: '#333', border: '#ccc' }),
   ALL_STORE_CATEGORY_GROUPS: [
-    'food-dining', 'health-wellness', 'retail-general', 'retail-specialty',
-    'automotive', 'services', 'hospitality', 'other',
+    'supermercados', 'restaurantes', 'comercio-barrio', 'vivienda',
+    'salud-bienestar', 'tiendas-generales', 'tiendas-especializadas',
+    'transporte-vehiculo', 'educacion', 'servicios-finanzas',
+    'entretenimiento-hospedaje', 'otros',
   ],
   ALL_ITEM_CATEGORY_GROUPS: [
-    'food-fresh', 'food-packaged', 'health-personal', 'household',
-    'nonfood-retail', 'services-fees', 'other-item',
+    'food-fresh', 'food-packaged', 'food-prepared',
+    'salud-cuidado', 'hogar', 'productos-generales',
+    'servicios-cargos', 'vicios', 'otros-item',
   ],
   STORE_CATEGORY_GROUPS: {
-    Supermercado: 'food-dining',
-    Restaurante: 'food-dining',
-    Farmacia: 'health-wellness',
+    Supermarket: 'supermercados',
+    Restaurant: 'restaurantes',
+    Pharmacy: 'salud-bienestar',
   },
   ITEM_CATEGORY_GROUPS: {
-    'Carnes y Mariscos': 'food-fresh',
+    MeatSeafood: 'food-fresh',
     Snacks: 'food-packaged',
   },
   ITEM_CATEGORY_TO_KEY: {},

@@ -13,8 +13,8 @@ import type { Transaction } from '../../../src/types/transaction';
 import type { HistoryFilterState } from '@/types/historyFilters';
 
 // Helper to create a test transaction
-// NOTE: Item categories should use canonical English names (Meat & Seafood, Produce, etc.)
-// because normalizeItemCategory() converts Spanish names to English
+// NOTE: Item categories should use V4 PascalCase names (MeatSeafood, Produce, etc.)
+// because normalizeItemCategory() converts V3/Spanish names to V4 canonical keys
 function createTransaction(overrides: Partial<Transaction>): Transaction {
   return {
     id: 'test-id',
@@ -24,7 +24,7 @@ function createTransaction(overrides: Partial<Transaction>): Transaction {
     total: 100,
     currency: 'CLP',
     items: [
-      { name: 'Test Item', price: 100, category: 'Meat & Seafood' },
+      { name: 'Test Item', price: 100, category: 'MeatSeafood' }, // V4 PascalCase
     ],
     ...overrides,
   } as Transaction;
@@ -81,20 +81,20 @@ describe('matchesCategoryFilter with drillDownPath', () => {
     it('should expand storeGroup to all categories in the group', () => {
       const transactions = [
         createTransaction({ category: 'Supermarket' }),
-        createTransaction({ category: 'Restaurant' }),
+        createTransaction({ category: 'Wholesale' }),
         createTransaction({ category: 'Pharmacy' }),
       ];
 
-      // 'food-dining' group includes Supermarket, Restaurant, etc.
+      // 'supermercados' group includes Supermarket, Wholesale
       const filters = createFilterWithDrillDownPath({
-        storeGroup: 'food-dining',
+        storeGroup: 'supermercados',
       });
 
       const result = filterTransactionsByHistoryFilters(transactions, filters);
-      // Supermarket and Restaurant should match, Pharmacy should not
-      expect(result.length).toBeGreaterThanOrEqual(2);
+      // Supermarket and Wholesale should match, Pharmacy should not
+      expect(result).toHaveLength(2);
       expect(result.some(t => t.category === 'Supermarket')).toBe(true);
-      expect(result.some(t => t.category === 'Restaurant')).toBe(true);
+      expect(result.some(t => t.category === 'Wholesale')).toBe(true);
     });
 
     it('should ignore storeGroup when storeCategory is also set', () => {
@@ -105,7 +105,7 @@ describe('matchesCategoryFilter with drillDownPath', () => {
 
       // storeCategory takes priority over storeGroup
       const filters = createFilterWithDrillDownPath({
-        storeGroup: 'food-dining',
+        storeGroup: 'supermercados',
         storeCategory: 'Supermarket',
       });
 
@@ -121,7 +121,7 @@ describe('matchesCategoryFilter with drillDownPath', () => {
         createTransaction({
           id: '1',
           category: 'Supermarket',
-          items: [{ name: 'Beef', price: 100, category: 'Meat & Seafood' }],
+          items: [{ name: 'Beef', price: 100, category: 'MeatSeafood' }],
         }),
         createTransaction({
           id: '2',
@@ -130,7 +130,7 @@ describe('matchesCategoryFilter with drillDownPath', () => {
         }),
       ];
 
-      // 'food-fresh' group includes Meat & Seafood, Dairy & Eggs, Produce, ItemBakery
+      // 'food-fresh' group includes MeatSeafood, DairyEggs, Produce, BreadPastry
       const filters = createFilterWithDrillDownPath({
         itemGroup: 'food-fresh',
       });
@@ -138,15 +138,15 @@ describe('matchesCategoryFilter with drillDownPath', () => {
       const result = filterTransactionsByHistoryFilters(transactions, filters);
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('1');
-      expect(result[0].items?.[0].category).toBe('Meat & Seafood');
+      expect(result[0].items?.[0].category).toBe('MeatSeafood');
     });
 
     it('should ignore itemGroup when itemCategory is also set', () => {
       const transactions = [
         createTransaction({
           items: [
-            { name: 'Beef', price: 100, category: 'Meat & Seafood' },
-            { name: 'Fish', price: 80, category: 'Meat & Seafood' },
+            { name: 'Beef', price: 100, category: 'MeatSeafood' },
+            { name: 'Fish', price: 80, category: 'MeatSeafood' },
           ],
         }),
       ];
@@ -154,7 +154,7 @@ describe('matchesCategoryFilter with drillDownPath', () => {
       // itemCategory takes priority over itemGroup
       const filters = createFilterWithDrillDownPath({
         itemGroup: 'food-fresh',
-        itemCategory: 'Meat & Seafood',
+        itemCategory: 'MeatSeafood',
       });
 
       const result = filterTransactionsByHistoryFilters(transactions, filters);
@@ -166,31 +166,31 @@ describe('matchesCategoryFilter with drillDownPath', () => {
     it('should filter by itemCategory (transaction must have matching item)', () => {
       const transactions = [
         createTransaction({
-          items: [{ name: 'Beef', price: 100, category: 'Meat & Seafood' }],
+          items: [{ name: 'Beef', price: 100, category: 'MeatSeafood' }],
         }),
         createTransaction({
-          items: [{ name: 'Milk', price: 50, category: 'Dairy & Eggs' }],
+          items: [{ name: 'Milk', price: 50, category: 'DairyEggs' }],
         }),
       ];
 
       const filters = createFilterWithDrillDownPath({
-        itemCategory: 'Meat & Seafood',
+        itemCategory: 'MeatSeafood',
       });
 
       const result = filterTransactionsByHistoryFilters(transactions, filters);
       expect(result).toHaveLength(1);
-      expect(result[0].items?.[0].category).toBe('Meat & Seafood');
+      expect(result[0].items?.[0].category).toBe('MeatSeafood');
     });
 
     it('should match itemCategory case-insensitively', () => {
       const transactions = [
         createTransaction({
-          items: [{ name: 'Beef', price: 100, category: 'meat & seafood' }], // lowercase
+          items: [{ name: 'Beef', price: 100, category: 'meatseafood' }], // lowercase V4
         }),
       ];
 
       const filters = createFilterWithDrillDownPath({
-        itemCategory: 'Meat & Seafood', // Title case
+        itemCategory: 'MeatSeafood', // PascalCase V4
       });
 
       const result = filterTransactionsByHistoryFilters(transactions, filters);
@@ -202,10 +202,10 @@ describe('matchesCategoryFilter with drillDownPath', () => {
     it('should filter by subcategory (transaction must have matching item)', () => {
       const transactions = [
         createTransaction({
-          items: [{ name: 'Beef', price: 100, category: 'Meat & Seafood', subcategory: 'Res' }],
+          items: [{ name: 'Beef', price: 100, category: 'MeatSeafood', subcategory: 'Res' }],
         }),
         createTransaction({
-          items: [{ name: 'Pork', price: 80, category: 'Meat & Seafood', subcategory: 'Cerdo' }],
+          items: [{ name: 'Pork', price: 80, category: 'MeatSeafood', subcategory: 'Cerdo' }],
         }),
       ];
 
@@ -226,7 +226,7 @@ describe('matchesCategoryFilter with drillDownPath', () => {
         createTransaction({
           id: '1',
           category: 'Supermarket',
-          items: [{ name: 'Beef', price: 100, category: 'Meat & Seafood' }],
+          items: [{ name: 'Beef', price: 100, category: 'MeatSeafood' }],
         }),
         // Supermarket with packaged food - should NOT match (wrong item group)
         createTransaction({
@@ -238,13 +238,13 @@ describe('matchesCategoryFilter with drillDownPath', () => {
         createTransaction({
           id: '3',
           category: 'Restaurant',
-          items: [{ name: 'Fish', price: 150, category: 'Meat & Seafood' }],
+          items: [{ name: 'Fish', price: 150, category: 'MeatSeafood' }],
         }),
       ];
 
       const filters = createFilterWithDrillDownPath({
         storeCategory: 'Supermarket',
-        itemGroup: 'food-fresh', // Includes Meat & Seafood but not Pantry
+        itemGroup: 'food-fresh', // Includes MeatSeafood but not Pantry
       });
 
       const result = filterTransactionsByHistoryFilters(transactions, filters);
@@ -258,25 +258,25 @@ describe('matchesCategoryFilter with drillDownPath', () => {
         createTransaction({
           id: '1',
           category: 'Supermarket',
-          items: [{ name: 'Beef', price: 100, category: 'Meat & Seafood' }],
+          items: [{ name: 'Beef', price: 100, category: 'MeatSeafood' }],
         }),
         // Supermarket with Dairy & Eggs - should NOT match
         createTransaction({
           id: '2',
           category: 'Supermarket',
-          items: [{ name: 'Milk', price: 50, category: 'Dairy & Eggs' }],
+          items: [{ name: 'Milk', price: 50, category: 'DairyEggs' }],
         }),
         // Restaurant with Carnes - should NOT match
         createTransaction({
           id: '3',
           category: 'Restaurant',
-          items: [{ name: 'Steak', price: 200, category: 'Meat & Seafood' }],
+          items: [{ name: 'Steak', price: 200, category: 'MeatSeafood' }],
         }),
       ];
 
       const filters = createFilterWithDrillDownPath({
         storeCategory: 'Supermarket',
-        itemCategory: 'Meat & Seafood',
+        itemCategory: 'MeatSeafood',
       });
 
       const result = filterTransactionsByHistoryFilters(transactions, filters);
@@ -290,19 +290,19 @@ describe('matchesCategoryFilter with drillDownPath', () => {
         createTransaction({
           id: '1',
           category: 'Supermarket',
-          items: [{ name: 'Prime Rib', price: 500, category: 'Meat & Seafood', subcategory: 'Res' }],
+          items: [{ name: 'Prime Rib', price: 500, category: 'MeatSeafood', subcategory: 'Res' }],
         }),
         // Wrong subcategory
         createTransaction({
           id: '2',
           category: 'Supermarket',
-          items: [{ name: 'Pork Chop', price: 300, category: 'Meat & Seafood', subcategory: 'Cerdo' }],
+          items: [{ name: 'Pork Chop', price: 300, category: 'MeatSeafood', subcategory: 'Cerdo' }],
         }),
       ];
 
       const filters = createFilterWithDrillDownPath({
         storeCategory: 'Supermarket',
-        itemCategory: 'Meat & Seafood',
+        itemCategory: 'MeatSeafood',
         subcategory: 'Res',
       });
 
@@ -332,7 +332,7 @@ describe('matchesCategoryFilter with drillDownPath', () => {
       ];
 
       const filters = createFilterWithDrillDownPath({
-        itemCategory: 'Meat & Seafood',
+        itemCategory: 'MeatSeafood',
       });
 
       const result = filterTransactionsByHistoryFilters(transactions, filters);
@@ -347,11 +347,11 @@ describe('matchesCategoryFilter with drillDownPath', () => {
       ];
 
       const filters = createFilterWithDrillDownPath({
-        itemCategory: 'Other',
+        itemCategory: 'OtherItem',
       });
 
       const result = filterTransactionsByHistoryFilters(transactions, filters);
-      // Should match because normalizeItemCategory defaults to 'Other'
+      // Should match because normalizeItemCategory('Other') -> 'OtherItem' (V4)
       expect(result).toHaveLength(1);
     });
 

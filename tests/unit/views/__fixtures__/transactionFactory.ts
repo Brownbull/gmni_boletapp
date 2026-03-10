@@ -9,7 +9,7 @@ import type { Transaction } from '@/types/transaction';
 export function makeTx(overrides: Partial<Transaction> & { date: string; total: number }): Transaction {
   return {
     merchant: 'TestMerchant',
-    category: 'Supermercado' as Transaction['category'],
+    category: 'Supermarket' as Transaction['category'],
     items: [],
     ...overrides,
   };

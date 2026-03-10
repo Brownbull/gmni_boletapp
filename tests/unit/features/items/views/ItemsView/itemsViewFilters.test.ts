@@ -106,8 +106,8 @@ describe('applyDrillDownFilters', () => {
     });
 
     it('filters by itemCategory (uses normalized name)', () => {
-        // 'Dairy' normalizes to 'Dairy & Eggs' via normalizeItemCategory
-        const result = applyDrillDownFilters(items, { itemCategory: 'Dairy & Eggs' });
+        // 'Dairy' normalizes to 'DairyEggs' via normalizeItemCategory (V4)
+        const result = applyDrillDownFilters(items, { itemCategory: 'DairyEggs' });
         expect(result).toHaveLength(1);
         expect(result[0].category).toBe('Dairy');
     });
@@ -185,8 +185,8 @@ describe('applyAllItemsFilters', () => {
         const temporal: TemporalFilterState = { level: 'all' };
         const category: CategoryFilterState = {
             level: 'all',
-            // 'Dairy' normalizes to 'Dairy & Eggs', so use normalized name
-            drillDownPath: { itemCategory: 'Dairy & Eggs' },
+            // 'Dairy' normalizes to 'DairyEggs' (V4), so use normalized name
+            drillDownPath: { itemCategory: 'DairyEggs' },
         };
         const result = applyAllItemsFilters(items, temporal, category);
         expect(result).toHaveLength(2);

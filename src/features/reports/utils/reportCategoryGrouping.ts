@@ -135,7 +135,7 @@ export function groupCategoriesByStoreGroup(
   const groupPrevTotals = new Map<StoreCategoryGroup, number>();
 
   for (const cat of categories) {
-    const groupKey = STORE_CATEGORY_GROUPS[cat.category] || 'other';
+    const groupKey = STORE_CATEGORY_GROUPS[cat.category] || 'otros';
     // Calculate individual category percentage
     const categoryPercent = totalPeriodAmount > 0
       ? Math.round((cat.amount / totalPeriodAmount) * 100)
@@ -426,52 +426,60 @@ export function groupItemsByItemCategory(
  */
 export function formatCategoryName(category: StoreCategory): string {
   const categoryNames: Record<StoreCategory, string> = {
-    // Food & Dining
+    // Supermercados
     Supermarket: 'Supermercado',
-    Almacen: 'Almacén',
+    Wholesale: 'Mayorista',
+    // Restaurantes
     Restaurant: 'Restaurantes',
+    // Comercio de Barrio
+    Almacen: 'Almacén',
+    Minimarket: 'Minimarket',
+    OpenMarket: 'Feria',
+    Kiosk: 'Kiosco',
+    LiquorStore: 'Botillería',
     Bakery: 'Panadería',
     Butcher: 'Carnicería',
-    StreetVendor: 'Comida Callejera',
-    // Health & Wellness
+    // Vivienda
+    UtilityCompany: 'Servicios Básicos',
+    PropertyAdmin: 'Administración',
+    // Salud y Bienestar
     Pharmacy: 'Farmacia',
     Medical: 'Salud',
     Veterinary: 'Veterinaria',
     HealthBeauty: 'Belleza',
-    // Retail - General
+    // Tiendas Generales
     Bazaar: 'Bazar',
-    Clothing: 'Ropa',
-    Electronics: 'Electrónica',
+    ClothingStore: 'Ropa',
+    ElectronicsStore: 'Electrónica',
     HomeGoods: 'Hogar',
-    Furniture: 'Muebles',
+    FurnitureStore: 'Muebles',
     Hardware: 'Ferretería',
     GardenCenter: 'Jardín',
-    // Retail - Specialty
+    // Tiendas Especializadas
     PetShop: 'Mascotas',
-    BooksMedia: 'Libros',
+    BookStore: 'Libros',
     OfficeSupplies: 'Oficina',
-    SportsOutdoors: 'Deportes',
-    ToysGames: 'Juguetes',
-    Jewelry: 'Joyería',
-    Optical: 'Óptica',
-    MusicStore: 'Música',
-    // Automotive & Transport
-    Automotive: 'Auto',
+    SportsStore: 'Deportes',
+    ToyStore: 'Juguetes',
+    AccessoriesOptical: 'Accesorios',
+    OnlineStore: 'Tienda Online',
+    // Transporte y Vehiculo
+    AutoShop: 'Auto',
     GasStation: 'Bencina',
     Transport: 'Transporte',
-    // Services & Finance
-    Services: 'Servicios',
+    // Servicios y Finanzas
+    GeneralServices: 'Servicios',
     BankingFinance: 'Banco',
-    Education: 'Educación',
     TravelAgency: 'Viajes',
-    Subscription: 'Suscripción',
-    // Hospitality & Entertainment
-    HotelLodging: 'Hotel',
-    Entertainment: 'Entretenimiento',
-    Gambling: 'Juegos de Azar',
-    // Government & Legal
+    SubscriptionService: 'Suscripción',
     Government: 'Gobierno',
-    // Other
+    // Educacion
+    Education: 'Educación',
+    // Entretenimiento y Hospedaje
+    Lodging: 'Hotel',
+    Entertainment: 'Entretenimiento',
+    Casino: 'Casino',
+    // Otros
     CharityDonation: 'Donación',
     Other: 'Otros',
   };

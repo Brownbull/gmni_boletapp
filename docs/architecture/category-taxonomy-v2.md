@@ -52,107 +52,107 @@ BoletApp uses a 4-level category taxonomy. Levels 1-2 classify **where** (the me
 
 ### Rubro: Supermercados (2)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 1 | Supermarket | Supermercado | Supermarket |
-| 2 | Wholesale | Mayorista | Wholesale |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 1 | Supermarket | Supermercado | Supermarket | 🛒 |
+| 2 | Wholesale | Mayorista | Wholesale | 📦 |
 
 ### Rubro: Restaurantes (1)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 3 | Restaurant | Restaurante | Restaurant |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 3 | Restaurant | Restaurante | Restaurant | 🍽️ |
 
 ### Rubro: Comercio de Barrio (7)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 4 | Almacen | Almacén | Corner Store |
-| 5 | Minimarket | Minimarket | Minimarket |
-| 6 | OpenMarket | Feria | Open-Air Market |
-| 7 | Kiosk | Kiosko | Kiosk |
-| 8 | LiquorStore | Botillería | Liquor Store |
-| 9 | Bakery | Panadería | Bakery |
-| 10 | Butcher | Carnicería | Butcher |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 4 | Almacen | Almacén | Corner Store | 🏪 |
+| 5 | Minimarket | Minimarket | Minimarket | 🛍️ |
+| 6 | OpenMarket | Feria | Open-Air Market | 🌿 |
+| 7 | Kiosk | Kiosko | Kiosk | 🗞️ |
+| 8 | LiquorStore | Botillería | Liquor Store | 🍾 |
+| 9 | Bakery | Panadería | Bakery | 🥖 |
+| 10 | Butcher | Carnicería | Butcher | 🥩 |
 
 ### Rubro: Vivienda (2)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 11 | UtilityCompany | Servicios Básicos | Utility Company |
-| 12 | PropertyAdmin | Administración | Property Management |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 11 | UtilityCompany | Servicios Básicos | Utility Company | 💡 |
+| 12 | PropertyAdmin | Administración | Property Management | 🏗️ |
 
 ### Rubro: Salud y Bienestar (4)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 13 | Pharmacy | Farmacia | Pharmacy |
-| 14 | Medical | Médico | Medical |
-| 15 | Veterinary | Veterinario | Veterinary |
-| 16 | HealthBeauty | Salud y Belleza | Health & Beauty |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 13 | Pharmacy | Farmacia | Pharmacy | 💊 |
+| 14 | Medical | Médico | Medical | 🏥 |
+| 15 | Veterinary | Veterinario | Veterinary | 🐾 |
+| 16 | HealthBeauty | Salud y Belleza | Health & Beauty | 💅 |
 
 ### Rubro: Tiendas Generales (7)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 17 | Bazaar | Bazar | Bazaar |
-| 18 | ClothingStore | Tienda de Ropa | Clothing Store |
-| 19 | ElectronicsStore | Tienda de Electrónica | Electronics Store |
-| 20 | HomeGoods | Hogar | Home Goods |
-| 21 | FurnitureStore | Mueblería | Furniture Store |
-| 22 | Hardware | Ferretería | Hardware Store |
-| 23 | GardenCenter | Jardinería | Garden Center |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 17 | Bazaar | Bazar | Bazaar | 🏬 |
+| 18 | ClothingStore | Tienda de Ropa | Clothing Store | 👔 |
+| 19 | ElectronicsStore | Tienda de Electrónica | Electronics Store | 💻 |
+| 20 | HomeGoods | Hogar | Home Goods | 🪴 |
+| 21 | FurnitureStore | Mueblería | Furniture Store | 🛋️ |
+| 22 | Hardware | Ferretería | Hardware Store | 🔨 |
+| 23 | GardenCenter | Jardinería | Garden Center | 🌻 |
 
 ### Rubro: Tiendas Especializadas (7)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 24 | PetShop | Tienda de Mascotas | Pet Shop |
-| 25 | BooksMedia | Libros y Medios | Books & Media |
-| 26 | OfficeSupplies | Artículos de Oficina | Office Supplies |
-| 27 | SportsOutdoors | Deportes y Exterior | Sports & Outdoors |
-| 28 | ToysGames | Juguetes y Juegos | Toys & Games |
-| 29 | AccessoriesOptical | Accesorios y Óptica | Accessories & Optical |
-| 30 | OnlineStore | Tienda Online | Online Store |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 24 | PetShop | Tienda de Mascotas | Pet Shop | 🐕 |
+| 25 | BookStore | Librería | Book Store | 📖 |
+| 26 | OfficeSupplies | Artículos de Oficina | Office Supplies | 📌 |
+| 27 | SportsStore | Tienda de Deportes | Sports Store | 🏅 |
+| 28 | ToyStore | Juguetería | Toy Store | 🧸 |
+| 29 | AccessoriesOptical | Accesorios y Óptica | Accessories & Optical | 👓 |
+| 30 | OnlineStore | Tienda Online | Online Store | 🌐 |
 
 ### Rubro: Transporte y Vehículo (3)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 31 | AutoShop | Taller Automotriz | Auto Shop |
-| 32 | GasStation | Bencinera | Gas Station |
-| 33 | Transport | Transporte | Transport |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 31 | AutoShop | Taller Automotriz | Auto Shop | 🔧 |
+| 32 | GasStation | Bencinera | Gas Station | ⛽ |
+| 33 | Transport | Transporte | Transport | 🚌 |
 
 ### Rubro: Educación (1)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 34 | Education | Educación | Education |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 34 | Education | Educación | Education | 🎓 |
 
 ### Rubro: Servicios y Finanzas (5)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 35 | GeneralServices | Servicios Generales | General Services |
-| 36 | BankingFinance | Banca y Finanzas | Banking & Finance |
-| 37 | TravelAgency | Agencia de Viajes | Travel Agency |
-| 38 | Subscription | Suscripción | Subscription |
-| 39 | Government | Gobierno | Government |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 35 | GeneralServices | Servicios Generales | General Services | ⚙️ |
+| 36 | BankingFinance | Banca y Finanzas | Banking & Finance | 🏦 |
+| 37 | TravelAgency | Agencia de Viajes | Travel Agency | ✈️ |
+| 38 | SubscriptionService | Servicio de Suscripción | Subscription Service | 📲 |
+| 39 | Government | Gobierno | Government | 🏛️ |
 
 ### Rubro: Entretenimiento y Hospedaje (3)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 40 | Lodging | Hospedaje | Lodging |
-| 41 | Entertainment | Entretenimiento | Entertainment |
-| 42 | Casino | Casino / Apuestas | Casino / Gambling |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 40 | Lodging | Hospedaje | Lodging | 🏨 |
+| 41 | Entertainment | Entretenimiento | Entertainment | 🎭 |
+| 42 | Casino | Casino / Apuestas | Casino / Gambling | 🎰 |
 
 ### Rubro: Otros (2)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 43 | CharityDonation | Caridad y Donación | Charity & Donation |
-| 44 | Other | Otro | Other |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 43 | CharityDonation | Caridad y Donación | Charity & Donation | 🤝 |
+| 44 | Other | Otro | Other | ❓ |
 
 ---
 
@@ -176,90 +176,90 @@ BoletApp uses a 4-level category taxonomy. Levels 1-2 classify **where** (the me
 
 ### Familia: Alimentos Frescos (4)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 1 | Produce | Frutas y Verduras | Produce |
-| 2 | MeatSeafood | Carnes y Mariscos | Meat & Seafood |
-| 3 | BreadPastry | Pan y Repostería | Bread & Pastries |
-| 4 | DairyEggs | Lácteos y Huevos | Dairy & Eggs |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 1 | Produce | Frutas y Verduras | Produce | 🥬 |
+| 2 | MeatSeafood | Carnes y Mariscos | Meat & Seafood | 🥩 |
+| 3 | BreadPastry | Pan y Repostería | Bread & Pastries | 🥖 |
+| 4 | DairyEggs | Lácteos y Huevos | Dairy & Eggs | 🥛 |
 
 ### Familia: Alimentos Envasados (4)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 5 | Pantry | Despensa | Pantry |
-| 6 | FrozenFoods | Congelados | Frozen Foods |
-| 7 | Snacks | Snacks y Golosinas | Snacks & Candy |
-| 8 | Beverages | Bebidas | Beverages |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 5 | Pantry | Despensa | Pantry | 🥫 |
+| 6 | FrozenFoods | Congelados | Frozen Foods | 🧊 |
+| 7 | Snacks | Snacks y Golosinas | Snacks & Candy | 🍿 |
+| 8 | Beverages | Bebidas | Beverages | 🥤 |
 
 ### Familia: Comida Preparada (1)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 9 | PreparedFood | Comida Preparada | Prepared Food |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 9 | PreparedFood | Comida Preparada | Prepared Food | 🍱 |
 
 ### Familia: Salud y Cuidado Personal (5)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 10 | BeautyCosmetics | Belleza y Cosmética | Beauty & Cosmetics |
-| 11 | PersonalCare | Cuidado Personal | Personal Care |
-| 12 | Medications | Medicamentos | Medications |
-| 13 | Supplements | Suplementos | Supplements |
-| 14 | BabyProducts | Productos para Bebé | Baby Products |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 10 | BeautyCosmetics | Belleza y Cosmética | Beauty & Cosmetics | 💄 |
+| 11 | PersonalCare | Cuidado Personal | Personal Care | 🧴 |
+| 12 | Medications | Medicamentos | Medications | 💊 |
+| 13 | Supplements | Suplementos | Supplements | 💪 |
+| 14 | BabyProducts | Productos para Bebé | Baby Products | 🍼 |
 
 ### Familia: Hogar (5)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 15 | CleaningSupplies | Productos de Limpieza | Cleaning Supplies |
-| 16 | HomeEssentials | Artículos del Hogar | Home Essentials |
-| 17 | PetSupplies | Productos para Mascotas | Pet Supplies |
-| 18 | PetFood | Comida para Mascotas | Pet Food |
-| 19 | Furnishings | Mobiliario y Hogar | Furnishings |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 15 | CleaningSupplies | Productos de Limpieza | Cleaning Supplies | 🧹 |
+| 16 | HomeEssentials | Artículos del Hogar | Home Essentials | 🏠 |
+| 17 | PetSupplies | Productos para Mascotas | Pet Supplies | 🐾 |
+| 18 | PetFood | Comida para Mascotas | Pet Food | 🦴 |
+| 19 | Furnishings | Mobiliario y Hogar | Furnishings | 🪑 |
 
-### Familia: Productos Generales (9)
+### Familia: Productos Generales (10)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 20 | Apparel | Vestuario | Apparel |
-| 21 | Technology | Tecnología | Technology |
-| 22 | Tools | Herramientas | Tools & Supplies |
-| 23 | Garden | Jardín | Garden |
-| 24 | CarAccessories | Accesorios de Auto | Car Accessories |
-| 25 | SportsOutdoors | Deportes y Exterior | Sports & Outdoors |
-| 26 | ToysGames | Juguetes y Juegos | Toys & Games |
-| 27 | BooksMedia | Libros y Medios | Books & Media |
-| 28 | OfficeStationery | Oficina y Papelería | Office & Stationery |
-| 29 | Crafts | Manualidades | Crafts |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 20 | Apparel | Vestuario | Apparel | 👕 |
+| 21 | Technology | Tecnología | Technology | 📱 |
+| 22 | Tools | Herramientas | Tools & Supplies | 🔧 |
+| 23 | Garden | Jardín | Garden | 🌱 |
+| 24 | CarAccessories | Accesorios de Auto | Car Accessories | 🚗 |
+| 25 | SportsOutdoors | Deportes y Exterior | Sports & Outdoors | ⚽ |
+| 26 | ToysGames | Juguetes y Juegos | Toys & Games | 🎮 |
+| 27 | BooksMedia | Libros y Medios | Books & Media | 📚 |
+| 28 | OfficeStationery | Oficina y Papelería | Office & Stationery | 📎 |
+| 29 | Crafts | Manualidades | Crafts | 🎨 |
 
-### Familia: Servicios y Cargos (8)
+### Familia: Servicios y Cargos (9)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 30 | ServiceCharge | Cargo por Servicio | Service Charge |
-| 31 | TaxFees | Impuestos y Cargos | Tax & Fees |
-| 32 | Subscription | Suscripción | Subscription |
-| 33 | Insurance | Seguros | Insurance |
-| 34 | LoanPayment | Pago de Préstamo | Loan Payment |
-| 35 | TicketsEvents | Entradas y Eventos | Tickets & Events |
-| 36 | HouseholdBills | Cuentas del Hogar | Household Bills |
-| 37 | CondoFees | Gastos Comunes | Condo Fees |
-| 38 | Education | Educación | Education |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 30 | ServiceCharge | Cargo por Servicio | Service Charge | ⚙️ |
+| 31 | TaxFees | Impuestos y Cargos | Tax & Fees | 📋 |
+| 32 | Subscription | Suscripción | Subscription | 📅 |
+| 33 | Insurance | Seguros | Insurance | 🛡️ |
+| 34 | LoanPayment | Pago de Préstamo | Loan Payment | 💳 |
+| 35 | TicketsEvents | Entradas y Eventos | Tickets & Events | 🎟️ |
+| 36 | HouseholdBills | Cuentas del Hogar | Household Bills | 💡 |
+| 37 | CondoFees | Gastos Comunes | Condo Fees | 🏢 |
+| 38 | EducationFees | Gastos de Educación | Education Fees | 🎓 |
 
 ### Familia: Vicios (3)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 39 | Alcohol | Alcohol | Alcohol |
-| 40 | Tobacco | Tabaco | Tobacco |
-| 41 | GamesOfChance | Juegos de Azar | Games of Chance |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 39 | Alcohol | Alcohol | Alcohol | 🍷 |
+| 40 | Tobacco | Tabaco | Tobacco | 🚬 |
+| 41 | GamesOfChance | Juegos de Azar | Games of Chance | 🎰 |
 
 ### Familia: Otros (1)
 
-| # | Key | ES | EN |
-|---|-----|----|----|
-| 42 | Other | Otro | Other |
+| # | Key | ES | EN | Emoji |
+|---|-----|----|----|-------|
+| 42 | OtherItem | Otro Producto | Other Item | 📦 |
 
 ---
 
@@ -285,6 +285,10 @@ BoletApp uses a 4-level category taxonomy. Levels 1-2 classify **where** (the me
 | HotelLodging | Lodging | Simplified |
 | Gambling | Casino | De-overlap with L4 GamesOfChance |
 | Services | GeneralServices | Clarified |
+| BooksMedia | BookStore | De-overlap with L4 BooksMedia |
+| SportsOutdoors | SportsStore | De-overlap with L4 SportsOutdoors |
+| ToysGames | ToyStore | De-overlap with L4 ToysGames |
+| Subscription | SubscriptionService | De-overlap with L4 Subscription |
 
 ### New L2 Giros
 
@@ -311,8 +315,8 @@ BoletApp uses a 4-level category taxonomy. Levels 1-2 classify **where** (the me
 
 | Old Key | Disposition |
 |---------|------------|
-| Musical Instruments | Eliminated — merged into Technology or Entertainment |
-| Furniture (item) | Merged into HomeEssentials → Furnishings |
+| Musical Instruments | Eliminated — use Technology (instruments are products) |
+| Furniture (item) | Replaced by Furnishings (sibling under Hogar) |
 
 ### Renamed L4 Categorías (key changed)
 
@@ -344,6 +348,8 @@ BoletApp uses a 4-level category taxonomy. Levels 1-2 classify **where** (the me
 | Tax & Fees | TaxFees | Impuestos y Cargos | Key normalization |
 | Loan Payment | LoanPayment | Pago de Préstamo | Key normalization |
 | Tickets & Events | TicketsEvents | Entradas y Eventos | Key normalization |
+| Education | EducationFees | Gastos de Educación | De-overlap with L2 Education |
+| Other | OtherItem | Otro Producto | De-overlap with L2 Other |
 
 ### New L4 Categorías
 
@@ -352,7 +358,7 @@ BoletApp uses a 4-level category taxonomy. Levels 1-2 classify **where** (the me
 | PetFood | Comida para Mascotas | Hogar |
 | HouseholdBills | Cuentas del Hogar | Servicios y Cargos |
 | CondoFees | Gastos Comunes | Servicios y Cargos |
-| Education | Educación | Servicios y Cargos |
+| EducationFees | Gastos de Educación | Servicios y Cargos |
 | Furnishings | Mobiliario y Hogar | Hogar |
 
 ### Familia Membership Changes
@@ -440,12 +446,49 @@ IMPORTANT: Store category and item categories are INDEPENDENT dimensions.
 5. **Handle removed/renamed categories in transition period:**
 
 ```
-LEGACY MAPPING (for receipts with old category names):
-- If you would have said "Clothing" (store), say "ClothingStore"
-- If you would have said "Bakery" (item), say "BreadPastry"
-- If you would have said "Pharmacy" (item), say "Medications"
-- "StreetVendor" → use "OpenMarket"
-- "MusicStore" → use "Entertainment"
+LEGACY MAPPING — STORE CATEGORIES (L2):
+- "Clothing" → "ClothingStore"
+- "Electronics" → "ElectronicsStore"
+- "Furniture" → "FurnitureStore"
+- "Automotive" → "AutoShop"
+- "HotelLodging" → "Lodging"
+- "Gambling" → "Casino"
+- "Services" → "GeneralServices"
+- "BooksMedia" → "BookStore"
+- "SportsOutdoors" → "SportsStore"
+- "ToysGames" → "ToyStore"
+- "Subscription" → "SubscriptionService"
+- "StreetVendor" → "OpenMarket"
+- "MusicStore" → "Entertainment"
+- "Jewelry" or "Optical" → "AccessoriesOptical"
+
+LEGACY MAPPING — ITEM CATEGORIES (L4):
+- "Bakery" → "BreadPastry"
+- "Pharmacy" → "Medications"
+- "Clothing" → "Apparel"
+- "Electronics" → "Technology"
+- "Hardware" → "Tools"
+- "Automotive" → "CarAccessories"
+- "Gambling" → "GamesOfChance"
+- "Health & Beauty" → "BeautyCosmetics"
+- "Household" → "HomeEssentials"
+- "Service" → "ServiceCharge"
+- "Education" → "EducationFees"
+- "Other" → "OtherItem"
+- "Musical Instruments" → "Technology"
+- "Furniture" (item) → "Furnishings"
+
+NOTE: Story 17-3 must generate the complete list from the Migration Map section above.
+```
+
+6. **Define catch-all behavior for "Other" categories:**
+
+```
+FALLBACK RULES:
+- "Other" (L2) and "OtherItem" (L4) are LAST RESORT categories
+- Only use them when NO other category fits after reviewing all options
+- If confidence is low but a specific category seems plausible, pick the specific category
+- Never default to "Other" for common Chilean store types or everyday products
 ```
 
 ### Key Files to Update (Story 17-3)
@@ -466,7 +509,7 @@ LEGACY MAPPING (for receipts with old category names):
 | L2 Giros | 39 | 44 | +5 |
 | L3 Familias | 7 | 9 | +2 |
 | L4 Categorías | 39 | 42 | +3 |
-| Cross-level name overlaps | 9 | 0 | -9 |
+| Cross-level name overlaps | 15 | 0 | -15 |
 | Chilean-specific giros | 2 | 9 | +7 |
 
 ## Design Decisions
@@ -476,7 +519,7 @@ LEGACY MAPPING (for receipts with old category names):
 3. **Vivienda promoted to L1** — housing is #1 lifetime expense, was invisible.
 4. **Educación promoted to L1** — critical for Chilean families (private schools = 20%+ budget).
 5. **Alcohol moved to Vicios** — supports V4 "detect the black holes" value.
-6. **9 de-overlaps applied** — zero cross-level name conflicts.
+6. **15 de-overlaps applied** — zero cross-level name conflicts (9 original + 6 from review).
 7. **Option A for financial granularity** — simple L4 categories + subcategories for detail (e.g., LoanPayment with subcategory "Crédito Hipotecario").
 
 ## Implementation Roadmap

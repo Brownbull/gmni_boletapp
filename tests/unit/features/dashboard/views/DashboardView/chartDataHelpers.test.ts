@@ -63,9 +63,9 @@ describe('computeRadarChartData', () => {
   describe('basic structure', () => {
     it('returns radar data with correct structure', () => {
       const currTxs = [
-        makeTx({ date: '2026-01-10', total: 1000, category: 'Supermercado' as Transaction['category'] }),
-        makeTx({ date: '2026-01-15', total: 500, category: 'Restaurante' as Transaction['category'] }),
-        makeTx({ date: '2026-01-20', total: 200, category: 'Farmacia' as Transaction['category'] }),
+        makeTx({ date: '2026-01-10', total: 1000, category: 'Supermarket' as Transaction['category'] }),
+        makeTx({ date: '2026-01-15', total: 500, category: 'Restaurant' as Transaction['category'] }),
+        makeTx({ date: '2026-01-20', total: 200, category: 'Pharmacy' as Transaction['category'] }),
       ];
 
       const result = computeRadarChartData(currTxs, currTxs, selectedMonth, 'store-categories');
@@ -173,15 +173,15 @@ describe('computeRadarChartData', () => {
   describe('previous month comparison', () => {
     it('includes previous month amounts', () => {
       const currTxs = [
-        makeTx({ date: '2026-01-10', total: 500, category: 'Supermercado' as Transaction['category'] }),
+        makeTx({ date: '2026-01-10', total: 500, category: 'Supermarket' as Transaction['category'] }),
       ];
       const allTxs = [
         ...currTxs,
-        makeTx({ date: '2025-12-15', total: 300, category: 'Supermercado' as Transaction['category'] }),
+        makeTx({ date: '2025-12-15', total: 300, category: 'Supermarket' as Transaction['category'] }),
       ];
 
       const result = computeRadarChartData(currTxs, allTxs, selectedMonth, 'store-categories');
-      const supermercado = result.categories.find(c => c.name === 'Supermercado');
+      const supermercado = result.categories.find(c => c.name === 'Supermarket');
       expect(supermercado).toBeDefined();
       expect(supermercado!.currAmount).toBe(500);
       expect(supermercado!.prevAmount).toBe(300);
@@ -221,14 +221,17 @@ describe('computeRadarChartData', () => {
   describe('view mode support', () => {
     it('aggregates by store-groups', () => {
       const currTxs = [
-        makeTx({ date: '2026-01-10', total: 500, category: 'Supermercado' as Transaction['category'] }),
-        makeTx({ date: '2026-01-10', total: 300, category: 'Restaurante' as Transaction['category'] }),
+        makeTx({ date: '2026-01-10', total: 500, category: 'Supermarket' as Transaction['category'] }),
+        makeTx({ date: '2026-01-10', total: 300, category: 'Restaurant' as Transaction['category'] }),
       ];
 
       const result = computeRadarChartData(currTxs, currTxs, selectedMonth, 'store-groups');
-      const foodDining = result.categories.find(c => c.name === 'food-dining');
-      expect(foodDining).toBeDefined();
-      expect(foodDining!.currAmount).toBe(800);
+      const supermercados = result.categories.find(c => c.name === 'supermercados');
+      expect(supermercados).toBeDefined();
+      expect(supermercados!.currAmount).toBe(500);
+      const restaurantes = result.categories.find(c => c.name === 'restaurantes');
+      expect(restaurantes).toBeDefined();
+      expect(restaurantes!.currAmount).toBe(300);
     });
 
     it('aggregates by item-categories', () => {
@@ -237,16 +240,16 @@ describe('computeRadarChartData', () => {
           date: '2026-01-10',
           total: 500,
           items: [
-            { name: 'Milk', price: 300, category: 'Lácteos' },
-            { name: 'Apple', price: 200, category: 'Frutas y Verduras' },
+            { name: 'Milk', price: 300, category: 'DairyEggs' },
+            { name: 'Apple', price: 200, category: 'Produce' },
           ],
         }),
       ];
 
       const result = computeRadarChartData(currTxs, currTxs, selectedMonth, 'item-categories');
-      const lacteos = result.categories.find(c => c.name === 'Lácteos');
-      expect(lacteos).toBeDefined();
-      expect(lacteos!.currAmount).toBe(300);
+      const dairyEggs = result.categories.find(c => c.name === 'DairyEggs');
+      expect(dairyEggs).toBeDefined();
+      expect(dairyEggs!.currAmount).toBe(300);
     });
 
     it('aggregates by item-groups', () => {
@@ -255,8 +258,8 @@ describe('computeRadarChartData', () => {
           date: '2026-01-10',
           total: 500,
           items: [
-            { name: 'Apple', price: 200, category: 'Frutas y Verduras' },
-            { name: 'Steak', price: 300, category: 'Carnes y Mariscos' },
+            { name: 'Apple', price: 200, category: 'Produce' },
+            { name: 'Steak', price: 300, category: 'MeatSeafood' },
           ],
         }),
       ];
@@ -411,14 +414,17 @@ describe('computeBumpChartData', () => {
   describe('view mode support', () => {
     it('aggregates by store-groups', () => {
       const allTxs = [
-        makeTx({ date: '2026-04-01', total: 500, category: 'Supermercado' as Transaction['category'] }),
-        makeTx({ date: '2026-04-01', total: 300, category: 'Restaurante' as Transaction['category'] }),
+        makeTx({ date: '2026-04-01', total: 500, category: 'Supermarket' as Transaction['category'] }),
+        makeTx({ date: '2026-04-01', total: 300, category: 'Restaurant' as Transaction['category'] }),
       ];
 
       const result = computeBumpChartData(allTxs, selectedMonth, 'store-groups');
-      const foodDining = result.categories.find(c => c.name === 'food-dining');
-      expect(foodDining).toBeDefined();
-      expect(foodDining!.amounts[3]).toBe(800);
+      const supermercados = result.categories.find(c => c.name === 'supermercados');
+      expect(supermercados).toBeDefined();
+      expect(supermercados!.amounts[3]).toBe(500);
+      const restaurantes = result.categories.find(c => c.name === 'restaurantes');
+      expect(restaurantes).toBeDefined();
+      expect(restaurantes!.amounts[3]).toBe(300);
     });
 
     it('aggregates by item-categories', () => {
@@ -427,16 +433,16 @@ describe('computeBumpChartData', () => {
           date: '2026-04-01',
           total: 500,
           items: [
-            { name: 'Milk', price: 300, category: 'Lácteos' },
-            { name: 'Apple', price: 200, category: 'Frutas y Verduras' },
+            { name: 'Milk', price: 300, category: 'DairyEggs' },
+            { name: 'Apple', price: 200, category: 'Produce' },
           ],
         }),
       ];
 
       const result = computeBumpChartData(allTxs, selectedMonth, 'item-categories');
-      const lacteos = result.categories.find(c => c.name === 'Lácteos');
-      expect(lacteos).toBeDefined();
-      expect(lacteos!.amounts[3]).toBe(300);
+      const dairyEggs = result.categories.find(c => c.name === 'DairyEggs');
+      expect(dairyEggs).toBeDefined();
+      expect(dairyEggs!.amounts[3]).toBe(300);
     });
 
     it('aggregates by item-groups', () => {
@@ -445,8 +451,8 @@ describe('computeBumpChartData', () => {
           date: '2026-04-01',
           total: 500,
           items: [
-            { name: 'Apple', price: 200, category: 'Frutas y Verduras' },
-            { name: 'Steak', price: 300, category: 'Carnes y Mariscos' },
+            { name: 'Apple', price: 200, category: 'Produce' },
+            { name: 'Steak', price: 300, category: 'MeatSeafood' },
           ],
         }),
       ];

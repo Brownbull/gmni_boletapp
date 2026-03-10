@@ -2,72 +2,84 @@
  * Category Emoji Mapping
  *
  * Story 11.2: Quick Save Card Component (AC #8)
+ * Updated for V4 taxonomy (Story 17-2)
  * Maps store categories to representative emojis for visual display.
  */
 
 import type { StoreCategory } from '../../shared/schema/categories';
 
 /**
- * Emoji mapping for store categories.
+ * Emoji mapping for store categories (V4 — 44 giros).
  * Each category is mapped to a representative emoji.
  */
 const CATEGORY_EMOJI_MAP: Record<StoreCategory, string> = {
-  // Food & Dining
-  Supermarket: '🛒',
-  Almacen: '🏪',
-  Restaurant: '🍽️',
-  Bakery: '🥐',
-  Butcher: '🥩',
-  StreetVendor: '🌮',
+  // Supermercados
+  Supermarket: '\uD83D\uDED2', // 🛒
+  Wholesale: '\uD83D\uDCE6', // 📦
 
-  // Health & Wellness
-  Pharmacy: '💊',
-  Medical: '🏥',
-  Veterinary: '🐾',
-  HealthBeauty: '💄',
+  // Restaurantes
+  Restaurant: '\uD83C\uDF7D\uFE0F', // 🍽️
 
-  // Retail - General
-  Bazaar: '🏪',
-  Clothing: '👕',
-  Electronics: '📱',
-  HomeGoods: '🏠',
-  Furniture: '🛋️',
-  Hardware: '🔧',
-  GardenCenter: '🌱',
+  // Comercio de Barrio
+  Almacen: '\uD83C\uDFEA', // 🏪
+  Minimarket: '\uD83D\uDECD\uFE0F', // 🛍️
+  OpenMarket: '\uD83C\uDF3F', // 🌿
+  Kiosk: '\uD83D\uDDDE\uFE0F', // 🗞️
+  LiquorStore: '\uD83C\uDF7E', // 🍾
+  Bakery: '\uD83E\uDD50', // 🥐
+  Butcher: '\uD83E\uDD69', // 🥩
 
-  // Retail - Specialty
-  PetShop: '🐕',
-  BooksMedia: '📚',
-  OfficeSupplies: '📎',
-  SportsOutdoors: '⚽',
-  ToysGames: '🎮',
-  Jewelry: '💎',
-  Optical: '👓',
-  MusicStore: '🎸',
+  // Vivienda
+  UtilityCompany: '\uD83D\uDCA1', // 💡
+  PropertyAdmin: '\uD83C\uDFD7\uFE0F', // 🏗️
 
-  // Automotive & Transport
-  Automotive: '🚗',
-  GasStation: '⛽',
-  Transport: '🚌',
+  // Salud y Bienestar
+  Pharmacy: '\uD83D\uDC8A', // 💊
+  Medical: '\uD83C\uDFE5', // 🏥
+  Veterinary: '\uD83D\uDC3E', // 🐾
+  HealthBeauty: '\uD83D\uDC84', // 💄
 
-  // Services & Finance
-  Services: '🔧',
-  BankingFinance: '🏦',
-  Education: '📖',
-  TravelAgency: '✈️',
-  Subscription: '📺',
+  // Tiendas Generales
+  Bazaar: '\uD83C\uDFEA', // 🏪
+  ClothingStore: '\uD83D\uDC54', // 👔
+  ElectronicsStore: '\uD83D\uDCBB', // 💻
+  HomeGoods: '\uD83C\uDFE0', // 🏠
+  FurnitureStore: '\uD83D\uDECB\uFE0F', // 🛋️
+  Hardware: '\uD83D\uDD27', // 🔧
+  GardenCenter: '\uD83C\uDF31', // 🌱
 
-  // Hospitality & Entertainment
-  HotelLodging: '🏨',
-  Entertainment: '🎬',
-  Gambling: '🎰',
+  // Tiendas Especializadas
+  PetShop: '\uD83D\uDC15', // 🐕
+  BookStore: '\uD83D\uDCD6', // 📖
+  OfficeSupplies: '\uD83D\uDCCE', // 📎
+  SportsStore: '\uD83C\uDFC5', // 🏅
+  ToyStore: '\uD83E\uDDF8', // 🧸
+  AccessoriesOptical: '\uD83D\uDC53', // 👓
+  OnlineStore: '\uD83C\uDF10', // 🌐
 
-  // Government & Legal
-  Government: '🏛️',
+  // Transporte y Vehiculo
+  AutoShop: '\uD83D\uDD27', // 🔧
+  GasStation: '\u26FD', // ⛽
+  Transport: '\uD83D\uDE8C', // 🚌
 
-  // Other
-  CharityDonation: '❤️',
-  Other: '📦',
+  // Servicios y Finanzas
+  GeneralServices: '\u2699\uFE0F', // ⚙️
+  BankingFinance: '\uD83C\uDFE6', // 🏦
+  TravelAgency: '\u2708\uFE0F', // ✈️
+  SubscriptionService: '\uD83D\uDCF2', // 📲
+  Government: '\uD83C\uDFDB\uFE0F', // 🏛️
+
+  // Educacion
+  Education: '\uD83D\uDCD6', // 📖
+
+  // Entretenimiento y Hospedaje
+  Lodging: '\uD83C\uDFE8', // 🏨
+  Entertainment: '\uD83C\uDFAC', // 🎬
+  Casino: '\uD83C\uDFB0', // 🎰
+
+  // Otros
+  CharityDonation: '\u2764\uFE0F', // ❤️
+  Other: '\uD83D\uDCE6', // 📦
 };
 
 /**
@@ -88,7 +100,7 @@ export function getCategoryEmoji(category: StoreCategory | string): string {
   }
 
   // Default fallback for unknown categories
-  return '📦';
+  return '\uD83D\uDCE6'; // 📦
 }
 
 /**

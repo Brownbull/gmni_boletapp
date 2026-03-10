@@ -328,8 +328,8 @@ development_status:
   # ============================================================================
   epic-17: backlog
 
-  17-1-design-taxonomy: review                         # 2 pts - Design 4-level Spanish taxonomy spec
-  17-2-update-constants-types: ready-for-dev           # 3 pts - Update constants, types, translations, normalizer (DEPENDS: 17-1)
+  17-1-design-taxonomy: done                            # 2 pts - Design 4-level Spanish taxonomy spec
+  17-2-update-constants-types: review                   # 3 pts - Update constants, types, translations, normalizer (DEPENDS: 17-1)
   17-3-update-ai-prompt: ready-for-dev                 # 2 pts - Update Gemini Cloud Function prompt (DEPENDS: 17-1)
   17-4-update-ui-labels: ready-for-dev                 # 5 pts - Update all UI components showing categories (DEPENDS: 17-2)
   17-5-batch-migration: ready-for-dev                  # 5 pts - Idempotent Cloud Function batch migration (DEPENDS: 17-2)

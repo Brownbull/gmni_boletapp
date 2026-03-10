@@ -1,6 +1,6 @@
 # Story 17-2: Update Category Constants, Types, and Translations
 
-## Status: ready-for-dev
+## Status: review
 
 ## Intent
 **Epic Handle:** "Name everything in the language the user thinks in"
@@ -37,26 +37,26 @@ As a developer, I want category constants, TypeScript types, and translation fil
 ## Tasks
 
 ### Task 1: Locate and Catalog Category Files (2 subtasks)
-- [ ] 1.1: Grep for category constant definitions -- catalog all files that define category values
-- [ ] 1.2: Catalog all files that import/reference category constants (impact scope)
+- [x] 1.1: Grep for category constant definitions -- catalog all files that define category values
+- [x] 1.2: Catalog all files that import/reference category constants (impact scope)
 
 ### Task 2: Update Constants and Types (3 subtasks)
-- [ ] 2.1: Update store category group constants (8 groups -> new Spanish names per spec)
-- [ ] 2.2: Update store category constants (36 categories -> new Spanish names per spec)
-- [ ] 2.3: Update item category group and item category constants (7 groups, 39 categories)
+- [x] 2.1: Update store category group constants (8 groups -> 12 new Spanish names per spec)
+- [x] 2.2: Update store category constants (36 categories -> 44 new Spanish names per spec)
+- [x] 2.3: Update item category group and item category constants (7 groups -> 9, 39 categories -> 42)
 
 ### Task 3: Update Translations (2 subtasks)
-- [ ] 3.1: Update `translations.ts` Spanish entries for all 4 category levels
-- [ ] 3.2: Update English translation entries (for EN locale display)
+- [x] 3.1: Update `categoryTranslations.ts` Spanish entries for all 4 category levels
+- [x] 3.2: Update English translation entries (for EN locale display)
 
 ### Task 4: Update Normalizer (2 subtasks)
-- [ ] 4.1: Add old-to-new mappings to the normalizer (additive -- keep existing legacy mappings)
-- [ ] 4.2: **HARDENING:** Validate normalizer completeness -- every old canonical name must map to a new one
+- [x] 4.1: Add old-to-new mappings to the normalizer (additive -- keep existing legacy mappings)
+- [x] 4.2: **HARDENING:** Validate normalizer completeness -- every old canonical name maps to a new one
 
 ### Task 5: Update Tests and Verify (3 subtasks)
-- [ ] 5.1: Update test assertions that reference old category names
-- [ ] 5.2: **HARDENING:** Add test verifying no category name appears in more than one level
-- [ ] 5.3: Run `npm run test:quick` and `npx tsc --noEmit` -- zero errors
+- [x] 5.1: Update test assertions that reference old category names (~15 test files)
+- [x] 5.2: **HARDENING:** Add test verifying no category name appears in more than one level (11 tests)
+- [x] 5.3: Run `npm run test:quick` and `npx tsc --noEmit` -- zero errors (7197 pass, 0 TS errors)
 
 ## Sizing
 - **Points:** 3 (MEDIUM)
@@ -76,3 +76,8 @@ As a developer, I want category constants, TypeScript types, and translation fil
 - After 17-5 (migration), old entries in the normalizer can be pruned. But for now, keep all entries.
 - TypeScript types should use string literal unions (not enums) for category values -- check current pattern.
 - This story will cause test failures in files that assert on old category names. Fix them here, not in later stories.
+- **Complexity Growth Accepted 2026-03-09:** Planning revealed categoryColors.ts (1281L) must split first (800L hook). Scope ~6→~15 files. Phase 0 split as first commit within story.
+- **Self-review 2026-03-09:** Code-reviewer found 4 CRITICAL stale V3 fallback strings in `chartDataHelpers.ts`, `reportCategoryGrouping.ts`, `useCategoryStatistics.ts`, `DashboardRadarSlide.tsx`, `DashboardBumpSlide.tsx` — all fixed. Score: 7→9/10 after fixes.
+<!-- CITED: none -->
+<!-- INTENT: aligned -->
+<!-- ORDERING: clean -->

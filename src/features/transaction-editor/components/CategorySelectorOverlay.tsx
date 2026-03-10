@@ -81,7 +81,7 @@ export const CategorySelectorOverlay: React.FC<CategorySelectorOverlayProps> = (
       const groupMap = new Map<StoreCategoryGroup, CategoryItem[]>();
 
       // Initialize groups in display order
-      const groupOrder: StoreCategoryGroup[] = ['food-dining', 'health-wellness', 'retail-general', 'retail-specialty', 'automotive', 'services', 'hospitality', 'other'];
+      const groupOrder: StoreCategoryGroup[] = ['supermercados', 'restaurantes', 'comercio-barrio', 'vivienda', 'salud-bienestar', 'tiendas-generales', 'tiendas-especializadas', 'transporte-vehiculo', 'educacion', 'servicios-finanzas', 'entretenimiento-hospedaje', 'otros'];
       groupOrder.forEach(g => groupMap.set(g, []));
 
       // Populate groups
@@ -112,7 +112,7 @@ export const CategorySelectorOverlay: React.FC<CategorySelectorOverlayProps> = (
       const groupMap = new Map<ItemCategoryGroup, CategoryItem[]>();
 
       // Initialize groups in display order
-      const groupOrder: ItemCategoryGroup[] = ['food-fresh', 'food-packaged', 'health-personal', 'household', 'nonfood-retail', 'services-fees', 'other-item'];
+      const groupOrder: ItemCategoryGroup[] = ['food-fresh', 'food-packaged', 'food-prepared', 'salud-cuidado', 'hogar', 'productos-generales', 'servicios-cargos', 'vicios', 'otros-item'];
       groupOrder.forEach(g => groupMap.set(g, []));
 
       // Populate groups from ITEM_GROUP_TRANSLATIONS

@@ -139,7 +139,7 @@ const itemMatchesCategory = (
       const normalizedItemCategory = normalizeItemCategory(item.category);
       // Look up group from the normalized (English) category name
       const itemKey = ITEM_CATEGORY_TO_KEY[normalizedItemCategory as keyof typeof ITEM_CATEGORY_TO_KEY];
-      const itemGroup = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
+      const itemGroup = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'otros-item';
       return itemGroup === categoryName;
     }
 

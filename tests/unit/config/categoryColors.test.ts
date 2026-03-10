@@ -1,10 +1,11 @@
 /**
  * Unit tests for categoryColors.ts
  * Story 14.21: Category Color Consolidation
+ * Updated for V4 taxonomy (Story 17-2)
  *
  * Tests the unified category color configuration system across:
- * - 32 Store Categories
- * - 32 Item Categories
+ * - 44 Store Categories (L2 giros)
+ * - 42 Item Categories (L4 categorias)
  * - 3 Themes: normal, professional, mono
  * - 2 Modes: light, dark
  */
@@ -14,8 +15,6 @@ import {
   // Types
   type ThemeName,
   type ModeName,
-  type CategoryColorSet,
-  type GroupColorSet,
   type StoreCategoryGroup,
   type ItemCategoryGroup,
   // Store category functions
@@ -38,8 +37,9 @@ import {
   // Constants
   STORE_CATEGORY_GROUPS,
   ITEM_CATEGORY_GROUPS,
-  // Story 14.15c: Group helper functions
+  // Group helper functions
   ALL_STORE_CATEGORY_GROUPS,
+  ALL_ITEM_CATEGORY_GROUPS,
   expandStoreCategoryGroup,
   detectStoreCategoryGroup,
   getStoreCategoryGroupPrimaryCategory,
@@ -53,24 +53,24 @@ import type { StoreCategory, ItemCategory } from '../../../src/types/transaction
 const THEMES: ThemeName[] = ['normal', 'professional', 'mono'];
 const MODES: ModeName[] = ['light', 'dark'];
 
-// Sample store categories for testing
+// Sample store categories for testing (V4)
 const SAMPLE_STORE_CATEGORIES: StoreCategory[] = [
   'Supermarket',
   'Restaurant',
   'Pharmacy',
-  'Technology',
+  'ElectronicsStore',
   'GasStation',
   'Other',
 ];
 
-// Sample item categories for testing (matches actual ItemCategory type from transaction.ts)
+// Sample item categories for testing (V4 PascalCase)
 const SAMPLE_ITEM_CATEGORIES: ItemCategory[] = [
   'Produce',
-  'Meat & Seafood',
-  'Dairy & Eggs',
+  'MeatSeafood',
+  'DairyEggs',
   'Beverages',
-  'Electronics',
-  'Other',
+  'Technology',
+  'OtherItem',
 ];
 
 // ============================================================================
@@ -111,7 +111,6 @@ describe('categoryColors - Store Categories', () => {
       const lightColors = getStoreCategoryColors('Supermarket', 'normal', 'light');
       const darkColors = getStoreCategoryColors('Supermarket', 'normal', 'dark');
 
-      // Dark mode should have different colors (usually inverted fg/bg pattern)
       expect(lightColors.bg).not.toBe(darkColors.bg);
     });
 
@@ -141,26 +140,31 @@ describe('categoryColors - Store Categories', () => {
   });
 
   describe('getStoreCategoryGroup', () => {
-    it('returns correct group for food & dining categories', () => {
-      expect(getStoreCategoryGroup('Supermarket')).toBe('food-dining');
-      expect(getStoreCategoryGroup('Restaurant')).toBe('food-dining');
-      expect(getStoreCategoryGroup('Bakery')).toBe('food-dining');
+    it('returns correct group for supermercados categories', () => {
+      expect(getStoreCategoryGroup('Supermarket')).toBe('supermercados');
+      expect(getStoreCategoryGroup('Wholesale')).toBe('supermercados');
     });
 
-    it('returns correct group for health & wellness categories', () => {
-      expect(getStoreCategoryGroup('Pharmacy')).toBe('health-wellness');
-      expect(getStoreCategoryGroup('Medical')).toBe('health-wellness');
-      expect(getStoreCategoryGroup('HealthBeauty')).toBe('health-wellness');
+    it('returns correct group for comercio-barrio categories', () => {
+      expect(getStoreCategoryGroup('Bakery')).toBe('comercio-barrio');
+      expect(getStoreCategoryGroup('Butcher')).toBe('comercio-barrio');
+      expect(getStoreCategoryGroup('Almacen')).toBe('comercio-barrio');
     });
 
-    it('returns correct group for automotive categories', () => {
-      expect(getStoreCategoryGroup('GasStation')).toBe('automotive');
-      expect(getStoreCategoryGroup('Automotive')).toBe('automotive');
-      expect(getStoreCategoryGroup('Transport')).toBe('automotive');
+    it('returns correct group for salud-bienestar categories', () => {
+      expect(getStoreCategoryGroup('Pharmacy')).toBe('salud-bienestar');
+      expect(getStoreCategoryGroup('Medical')).toBe('salud-bienestar');
+      expect(getStoreCategoryGroup('HealthBeauty')).toBe('salud-bienestar');
     });
 
-    it('returns "other" for Other category', () => {
-      expect(getStoreCategoryGroup('Other')).toBe('other');
+    it('returns correct group for transporte-vehiculo categories', () => {
+      expect(getStoreCategoryGroup('GasStation')).toBe('transporte-vehiculo');
+      expect(getStoreCategoryGroup('AutoShop')).toBe('transporte-vehiculo');
+      expect(getStoreCategoryGroup('Transport')).toBe('transporte-vehiculo');
+    });
+
+    it('returns "otros" for Other category', () => {
+      expect(getStoreCategoryGroup('Other')).toBe('otros');
     });
   });
 });
@@ -186,8 +190,8 @@ describe('categoryColors - Item Categories', () => {
       }
     });
 
-    it('handles item categories with spaces in names', () => {
-      const colors = getItemCategoryColors('Meat & Seafood', 'normal', 'light');
+    it('handles V4 PascalCase item categories', () => {
+      const colors = getItemCategoryColors('MeatSeafood', 'normal', 'light');
 
       expect(colors.fg).toMatch(/^#[0-9a-fA-F]{6}$/);
       expect(colors.bg).toMatch(/^#[0-9a-fA-F]{6}$/);
@@ -221,18 +225,24 @@ describe('categoryColors - Item Categories', () => {
   describe('getItemCategoryGroup', () => {
     it('returns correct group for food fresh categories', () => {
       expect(getItemCategoryGroup('Produce')).toBe('food-fresh');
-      expect(getItemCategoryGroup('Meat & Seafood')).toBe('food-fresh');
-      expect(getItemCategoryGroup('Dairy & Eggs')).toBe('food-fresh');
+      expect(getItemCategoryGroup('MeatSeafood')).toBe('food-fresh');
+      expect(getItemCategoryGroup('DairyEggs')).toBe('food-fresh');
     });
 
     it('returns correct group for food packaged categories', () => {
       expect(getItemCategoryGroup('Pantry')).toBe('food-packaged');
       expect(getItemCategoryGroup('Snacks')).toBe('food-packaged');
-      expect(getItemCategoryGroup('Frozen Foods')).toBe('food-packaged');
+      expect(getItemCategoryGroup('FrozenFoods')).toBe('food-packaged');
     });
 
-    it('returns "other-item" for unknown categories', () => {
-      expect(getItemCategoryGroup('Unknown')).toBe('other-item');
+    it('returns correct group for vicios categories', () => {
+      expect(getItemCategoryGroup('Alcohol')).toBe('vicios');
+      expect(getItemCategoryGroup('Tobacco')).toBe('vicios');
+      expect(getItemCategoryGroup('GamesOfChance')).toBe('vicios');
+    });
+
+    it('returns "otros-item" for unknown categories', () => {
+      expect(getItemCategoryGroup('Unknown')).toBe('otros-item');
     });
   });
 });
@@ -285,33 +295,39 @@ describe('categoryColors - Universal Functions', () => {
 });
 
 // ============================================================================
-// Group Color Tests
+// Group Color Tests — V4
 // ============================================================================
 
 describe('categoryColors - Group Colors', () => {
   const STORE_GROUPS: StoreCategoryGroup[] = [
-    'food-dining',
-    'health-wellness',
-    'retail-general',
-    'retail-specialty',
-    'automotive',
-    'services',
-    'hospitality',
-    'other',
+    'supermercados',
+    'restaurantes',
+    'comercio-barrio',
+    'vivienda',
+    'salud-bienestar',
+    'tiendas-generales',
+    'tiendas-especializadas',
+    'transporte-vehiculo',
+    'educacion',
+    'servicios-finanzas',
+    'entretenimiento-hospedaje',
+    'otros',
   ];
 
   const ITEM_GROUPS: ItemCategoryGroup[] = [
     'food-fresh',
     'food-packaged',
-    'health-personal',
-    'household',
-    'nonfood-retail',
-    'services-fees',
-    'other-item',
+    'food-prepared',
+    'salud-cuidado',
+    'hogar',
+    'productos-generales',
+    'servicios-cargos',
+    'vicios',
+    'otros-item',
   ];
 
   describe('getStoreGroupColors', () => {
-    it('returns fg, bg, and border colors for all groups', () => {
+    it('returns fg, bg, and border colors for all 12 groups', () => {
       for (const group of STORE_GROUPS) {
         for (const theme of THEMES) {
           for (const mode of MODES) {
@@ -330,7 +346,7 @@ describe('categoryColors - Group Colors', () => {
   });
 
   describe('getItemGroupColors', () => {
-    it('returns fg, bg, and border colors for all groups', () => {
+    it('returns fg, bg, and border colors for all 9 groups', () => {
       for (const group of ITEM_GROUPS) {
         for (const theme of THEMES) {
           for (const mode of MODES) {
@@ -350,48 +366,26 @@ describe('categoryColors - Group Colors', () => {
 });
 
 // ============================================================================
-// All 32 Store Categories Coverage Test
+// All 44 Store Categories Coverage Test
 // ============================================================================
 
 describe('categoryColors - Full Store Category Coverage', () => {
   const ALL_STORE_CATEGORIES: StoreCategory[] = [
-    'Supermarket',
+    'Supermarket', 'Wholesale',
     'Restaurant',
-    'Bakery',
-    'Butcher',
-    'StreetVendor',
-    'Pharmacy',
-    'Medical',
-    'Veterinary',
-    'HealthBeauty',
-    'Bazaar',
-    'Clothing',
-    'Electronics',
-    'HomeGoods',
-    'Furniture',
-    'Hardware',
-    'GardenCenter',
-    'PetShop',
-    'BooksMedia',
-    'OfficeSupplies',
-    'SportsOutdoors',
-    'ToysGames',
-    'Jewelry',
-    'Optical',
-    'Automotive',
-    'GasStation',
-    'Transport',
-    'Services',
-    'BankingFinance',
+    'Almacen', 'Minimarket', 'OpenMarket', 'Kiosk', 'LiquorStore', 'Bakery', 'Butcher',
+    'UtilityCompany', 'PropertyAdmin',
+    'Pharmacy', 'Medical', 'Veterinary', 'HealthBeauty',
+    'Bazaar', 'ClothingStore', 'ElectronicsStore', 'HomeGoods', 'FurnitureStore', 'Hardware', 'GardenCenter',
+    'PetShop', 'BookStore', 'OfficeSupplies', 'SportsStore', 'ToyStore', 'AccessoriesOptical', 'OnlineStore',
+    'AutoShop', 'GasStation', 'Transport',
+    'GeneralServices', 'BankingFinance', 'TravelAgency', 'SubscriptionService', 'Government',
     'Education',
-    'Entertainment',
-    'TravelAgency',
-    'HotelLodging',
-    'CharityDonation',
-    'Other',
+    'Lodging', 'Entertainment', 'Casino',
+    'CharityDonation', 'Other',
   ];
 
-  it('has colors defined for all 32 store categories', () => {
+  it('has colors defined for all 44 store categories', () => {
     for (const category of ALL_STORE_CATEGORIES) {
       const colors = getStoreCategoryColors(category, 'normal', 'light');
 
@@ -400,66 +394,38 @@ describe('categoryColors - Full Store Category Coverage', () => {
     }
   });
 
-  it('has group mapping for all 32 store categories', () => {
+  it('has group mapping for all 44 store categories', () => {
+    const V4_STORE_GROUPS = [
+      'supermercados', 'restaurantes', 'comercio-barrio', 'vivienda',
+      'salud-bienestar', 'tiendas-generales', 'tiendas-especializadas',
+      'transporte-vehiculo', 'educacion', 'servicios-finanzas',
+      'entretenimiento-hospedaje', 'otros',
+    ];
     for (const category of ALL_STORE_CATEGORIES) {
       const group = getStoreCategoryGroup(category);
-
-      expect(
-        ['food-dining', 'health-wellness', 'retail-general', 'retail-specialty', 'automotive', 'services', 'hospitality', 'other']
-      ).toContain(group);
+      expect(V4_STORE_GROUPS).toContain(group);
     }
   });
 });
 
 // ============================================================================
-// All 32 Item Categories Coverage Test
+// All 42 Item Categories Coverage Test
 // ============================================================================
 
 describe('categoryColors - Full Item Category Coverage', () => {
-  // Matches actual ItemCategory type from transaction.ts
   const ALL_ITEM_CATEGORIES: ItemCategory[] = [
-    // Food - Fresh
-    'Produce',
-    'Meat & Seafood',
-    'Bakery',
-    'Dairy & Eggs',
-    // Food - Packaged
-    'Pantry',
-    'Frozen Foods',
-    'Snacks',
-    'Beverages',
-    'Alcohol',
-    // Health & Personal
-    'Health & Beauty',
-    'Personal Care',
-    'Pharmacy',
-    'Supplements',
-    'Baby Products',
-    // Household
-    'Cleaning Supplies',
-    'Household',
-    'Pet Supplies',
-    // Non-Food Retail
-    'Clothing',
-    'Electronics',
-    'Hardware',
-    'Garden',
-    'Automotive',
-    'Sports & Outdoors',
-    'Toys & Games',
-    'Books & Media',
-    'Office & Stationery',
-    'Crafts & Hobbies',
-    'Furniture',
-    // Services & Fees
-    'Service',
-    'Tax & Fees',
-    'Tobacco',
-    // Catch-all
-    'Other',
+    'Produce', 'MeatSeafood', 'BreadPastry', 'DairyEggs',
+    'Pantry', 'FrozenFoods', 'Snacks', 'Beverages',
+    'PreparedFood',
+    'BeautyCosmetics', 'PersonalCare', 'Medications', 'Supplements', 'BabyProducts',
+    'CleaningSupplies', 'HomeEssentials', 'PetSupplies', 'PetFood', 'Furnishings',
+    'Apparel', 'Technology', 'Tools', 'Garden', 'CarAccessories', 'SportsOutdoors', 'ToysGames', 'BooksMedia', 'OfficeStationery', 'Crafts',
+    'ServiceCharge', 'TaxFees', 'Subscription', 'Insurance', 'LoanPayment', 'TicketsEvents', 'HouseholdBills', 'CondoFees', 'EducationFees',
+    'Alcohol', 'Tobacco', 'GamesOfChance',
+    'OtherItem',
   ];
 
-  it('has colors defined for all 32 item categories', () => {
+  it('has colors defined for all 42 item categories', () => {
     for (const category of ALL_ITEM_CATEGORIES) {
       const colors = getItemCategoryColors(category, 'normal', 'light');
 
@@ -469,12 +435,14 @@ describe('categoryColors - Full Item Category Coverage', () => {
   });
 
   it('has group mapping for all item categories', () => {
+    const V4_ITEM_GROUPS = [
+      'food-fresh', 'food-packaged', 'food-prepared',
+      'salud-cuidado', 'hogar', 'productos-generales',
+      'servicios-cargos', 'vicios', 'otros-item',
+    ];
     for (const category of ALL_ITEM_CATEGORIES) {
       const group = getItemCategoryGroup(category);
-
-      expect(
-        ['food-fresh', 'food-packaged', 'health-personal', 'household', 'nonfood-retail', 'services-fees', 'other-item']
-      ).toContain(group);
+      expect(V4_ITEM_GROUPS).toContain(group);
     }
   });
 });
@@ -494,56 +462,81 @@ describe('categoryColors - Theme/Mode Combinations', () => {
       }
     }
 
-    // We expect some uniqueness (not all 6 need to be unique, but not all the same)
     const uniqueColors = new Set(allColors);
     expect(uniqueColors.size).toBeGreaterThan(1);
   });
 
   it('dark mode has appropriately inverted colors', () => {
-    // In dark mode, backgrounds are typically darker and foregrounds lighter
-    // This is a basic sanity check
-    const lightColors = getStoreCategoryColors('Technology', 'professional', 'light');
-    const darkColors = getStoreCategoryColors('Technology', 'professional', 'dark');
+    const lightColors = getStoreCategoryColors('ElectronicsStore', 'professional', 'light');
+    const darkColors = getStoreCategoryColors('ElectronicsStore', 'professional', 'dark');
 
-    // The colors should be different between light and dark
     expect(lightColors.bg).not.toBe(darkColors.bg);
     expect(lightColors.fg).not.toBe(darkColors.fg);
   });
 });
 
 // ============================================================================
-// Story 14.15c: Category Group Filter Helpers
+// V4 Category Group Filter Helpers
 // ============================================================================
 
-describe('categoryColors - Story 14.15c Group Helpers', () => {
+describe('categoryColors - V4 Group Helpers', () => {
   describe('ALL_STORE_CATEGORY_GROUPS', () => {
-    it('contains all 8 store category groups', () => {
-      expect(ALL_STORE_CATEGORY_GROUPS).toHaveLength(8);
-      expect(ALL_STORE_CATEGORY_GROUPS).toContain('food-dining');
-      expect(ALL_STORE_CATEGORY_GROUPS).toContain('health-wellness');
-      expect(ALL_STORE_CATEGORY_GROUPS).toContain('retail-general');
-      expect(ALL_STORE_CATEGORY_GROUPS).toContain('retail-specialty');
-      expect(ALL_STORE_CATEGORY_GROUPS).toContain('automotive');
-      expect(ALL_STORE_CATEGORY_GROUPS).toContain('services');
-      expect(ALL_STORE_CATEGORY_GROUPS).toContain('hospitality');
-      expect(ALL_STORE_CATEGORY_GROUPS).toContain('other');
+    it('contains all 12 store category groups', () => {
+      expect(ALL_STORE_CATEGORY_GROUPS).toHaveLength(12);
+      expect(ALL_STORE_CATEGORY_GROUPS).toContain('supermercados');
+      expect(ALL_STORE_CATEGORY_GROUPS).toContain('restaurantes');
+      expect(ALL_STORE_CATEGORY_GROUPS).toContain('comercio-barrio');
+      expect(ALL_STORE_CATEGORY_GROUPS).toContain('vivienda');
+      expect(ALL_STORE_CATEGORY_GROUPS).toContain('salud-bienestar');
+      expect(ALL_STORE_CATEGORY_GROUPS).toContain('tiendas-generales');
+      expect(ALL_STORE_CATEGORY_GROUPS).toContain('tiendas-especializadas');
+      expect(ALL_STORE_CATEGORY_GROUPS).toContain('transporte-vehiculo');
+      expect(ALL_STORE_CATEGORY_GROUPS).toContain('educacion');
+      expect(ALL_STORE_CATEGORY_GROUPS).toContain('servicios-finanzas');
+      expect(ALL_STORE_CATEGORY_GROUPS).toContain('entretenimiento-hospedaje');
+      expect(ALL_STORE_CATEGORY_GROUPS).toContain('otros');
+    });
+  });
+
+  describe('ALL_ITEM_CATEGORY_GROUPS', () => {
+    it('contains all 9 item category groups', () => {
+      expect(ALL_ITEM_CATEGORY_GROUPS).toHaveLength(9);
+      expect(ALL_ITEM_CATEGORY_GROUPS).toContain('food-fresh');
+      expect(ALL_ITEM_CATEGORY_GROUPS).toContain('food-packaged');
+      expect(ALL_ITEM_CATEGORY_GROUPS).toContain('food-prepared');
+      expect(ALL_ITEM_CATEGORY_GROUPS).toContain('salud-cuidado');
+      expect(ALL_ITEM_CATEGORY_GROUPS).toContain('hogar');
+      expect(ALL_ITEM_CATEGORY_GROUPS).toContain('productos-generales');
+      expect(ALL_ITEM_CATEGORY_GROUPS).toContain('servicios-cargos');
+      expect(ALL_ITEM_CATEGORY_GROUPS).toContain('vicios');
+      expect(ALL_ITEM_CATEGORY_GROUPS).toContain('otros-item');
     });
   });
 
   describe('expandStoreCategoryGroup', () => {
-    it('expands food-dining group to correct categories', () => {
-      const categories = expandStoreCategoryGroup('food-dining');
+    it('expands supermercados group to correct categories', () => {
+      const categories = expandStoreCategoryGroup('supermercados');
 
       expect(categories).toContain('Supermarket');
-      expect(categories).toContain('Restaurant');
-      expect(categories).toContain('Bakery');
-      expect(categories).toContain('Butcher');
-      expect(categories).toContain('StreetVendor');
-      expect(categories.length).toBeGreaterThanOrEqual(5);
+      expect(categories).toContain('Wholesale');
+      expect(categories).toHaveLength(2);
     });
 
-    it('expands health-wellness group to correct categories', () => {
-      const categories = expandStoreCategoryGroup('health-wellness');
+    it('expands comercio-barrio group to correct categories', () => {
+      const categories = expandStoreCategoryGroup('comercio-barrio');
+
+      expect(categories).toContain('Almacen');
+      expect(categories).toContain('Minimarket');
+      expect(categories).toContain('OpenMarket');
+      expect(categories).toContain('Kiosk');
+      expect(categories).toContain('LiquorStore');
+      expect(categories).toContain('Bakery');
+      expect(categories).toContain('Butcher');
+      expect(categories).toHaveLength(7);
+    });
+
+    it('expands salud-bienestar group to correct categories', () => {
+      const categories = expandStoreCategoryGroup('salud-bienestar');
 
       expect(categories).toContain('Pharmacy');
       expect(categories).toContain('Medical');
@@ -551,18 +544,19 @@ describe('categoryColors - Story 14.15c Group Helpers', () => {
       expect(categories).toContain('HealthBeauty');
     });
 
-    it('expands automotive group to correct categories', () => {
-      const categories = expandStoreCategoryGroup('automotive');
+    it('expands transporte-vehiculo group to correct categories', () => {
+      const categories = expandStoreCategoryGroup('transporte-vehiculo');
 
-      expect(categories).toContain('Automotive');
+      expect(categories).toContain('AutoShop');
       expect(categories).toContain('GasStation');
       expect(categories).toContain('Transport');
     });
 
-    it('expands other group to just "Other"', () => {
-      const categories = expandStoreCategoryGroup('other');
+    it('expands otros group', () => {
+      const categories = expandStoreCategoryGroup('otros');
 
       expect(categories).toContain('Other');
+      expect(categories).toContain('CharityDonation');
     });
 
     it('all groups expand to at least one category', () => {
@@ -574,30 +568,29 @@ describe('categoryColors - Story 14.15c Group Helpers', () => {
   });
 
   describe('detectStoreCategoryGroup', () => {
-    it('detects food-dining group from exact category list', () => {
-      const foodCategories = expandStoreCategoryGroup('food-dining');
-      const detected = detectStoreCategoryGroup(foodCategories);
+    it('detects supermercados group from exact category list', () => {
+      const categories = expandStoreCategoryGroup('supermercados');
+      const detected = detectStoreCategoryGroup(categories);
 
-      expect(detected).toBe('food-dining');
+      expect(detected).toBe('supermercados');
     });
 
-    it('detects health-wellness group from exact category list', () => {
-      const healthCategories = expandStoreCategoryGroup('health-wellness');
+    it('detects salud-bienestar group from exact category list', () => {
+      const healthCategories = expandStoreCategoryGroup('salud-bienestar');
       const detected = detectStoreCategoryGroup(healthCategories);
 
-      expect(detected).toBe('health-wellness');
+      expect(detected).toBe('salud-bienestar');
     });
 
-    it('detects automotive group from exact category list', () => {
-      const autoCategories = expandStoreCategoryGroup('automotive');
+    it('detects transporte-vehiculo group from exact category list', () => {
+      const autoCategories = expandStoreCategoryGroup('transporte-vehiculo');
       const detected = detectStoreCategoryGroup(autoCategories);
 
-      expect(detected).toBe('automotive');
+      expect(detected).toBe('transporte-vehiculo');
     });
 
     it('returns null for partial group selection', () => {
-      // Only Supermarket and Restaurant (partial food-dining)
-      const partialCategories = ['Supermarket', 'Restaurant'];
+      const partialCategories = ['Supermarket'];
       const detected = detectStoreCategoryGroup(partialCategories);
 
       expect(detected).toBeNull();
@@ -616,19 +609,18 @@ describe('categoryColors - Story 14.15c Group Helpers', () => {
     });
 
     it('detects group regardless of category order', () => {
-      const foodCategories = expandStoreCategoryGroup('food-dining');
-      // Shuffle the array
-      const shuffled = [...foodCategories].reverse();
+      const categories = expandStoreCategoryGroup('supermercados');
+      const shuffled = [...categories].reverse();
       const detected = detectStoreCategoryGroup(shuffled);
 
-      expect(detected).toBe('food-dining');
+      expect(detected).toBe('supermercados');
     });
   });
 
   describe('getStoreCategoryGroupPrimaryCategory', () => {
-    it('returns first category for food-dining group', () => {
-      const primary = getStoreCategoryGroupPrimaryCategory('food-dining');
-      const categories = expandStoreCategoryGroup('food-dining');
+    it('returns first category for supermercados group', () => {
+      const primary = getStoreCategoryGroupPrimaryCategory('supermercados');
+      const categories = expandStoreCategoryGroup('supermercados');
 
       expect(primary).toBe(categories[0]);
     });

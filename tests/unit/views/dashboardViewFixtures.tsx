@@ -84,7 +84,7 @@ export const createTransaction = (overrides: Record<string, unknown> = {}) => {
     alias: 'Grocery Store',
     date: `${currentMonth}-15`,
     total: 45.99,
-    category: 'Supermercado',
+    category: 'Supermarket',
     ...overrides,
   };
 };
@@ -100,12 +100,12 @@ export const createCategoryTransactions = () => {
   const now = new Date();
   const currentMonth = now.toISOString().slice(0, 7);
   return [
-    { id: 'tx-1', merchant: 'Supermarket A', alias: 'Super A', date: `${currentMonth}-15`, total: 200, category: 'Supermercado' },
-    { id: 'tx-2', merchant: 'Restaurant B', alias: 'Rest B', date: `${currentMonth}-14`, total: 150, category: 'Restaurante' },
-    { id: 'tx-3', merchant: 'Gas Station', alias: 'Gas', date: `${currentMonth}-13`, total: 100, category: 'Transporte' },
-    { id: 'tx-4', merchant: 'Other Store', alias: 'Other', date: `${currentMonth}-12`, total: 50, category: 'Otro' },
-    { id: 'tx-5', merchant: 'Supermarket C', alias: 'Super C', date: `${currentMonth}-11`, total: 100, category: 'Supermercado' },
-    { id: 'tx-6', merchant: 'Restaurant D', alias: 'Rest D', date: `${currentMonth}-10`, total: 75, category: 'Restaurante' },
+    { id: 'tx-1', merchant: 'Supermarket A', alias: 'Super A', date: `${currentMonth}-15`, total: 200, category: 'Supermarket' },
+    { id: 'tx-2', merchant: 'Restaurant B', alias: 'Rest B', date: `${currentMonth}-14`, total: 150, category: 'Restaurant' },
+    { id: 'tx-3', merchant: 'Gas Station', alias: 'Gas', date: `${currentMonth}-13`, total: 100, category: 'Transport' },
+    { id: 'tx-4', merchant: 'Other Store', alias: 'Other', date: `${currentMonth}-12`, total: 50, category: 'Other' },
+    { id: 'tx-5', merchant: 'Supermarket C', alias: 'Super C', date: `${currentMonth}-11`, total: 100, category: 'Supermarket' },
+    { id: 'tx-6', merchant: 'Restaurant D', alias: 'Rest D', date: `${currentMonth}-10`, total: 75, category: 'Restaurant' },
   ];
 };
 
@@ -119,7 +119,7 @@ export const createManyTransactions = (count: number) => {
     alias: `Alias ${i + 1}`,
     date: `${currentMonth}-${String(15 - Math.floor(i / 3)).padStart(2, '0')}`,
     total: 10 + i,
-    category: 'Supermercado',
+    category: 'Supermarket',
   }));
 };
 
@@ -128,7 +128,7 @@ export const createDuplicateTransactions = () => {
   const now = new Date();
   const currentMonth = now.toISOString().slice(0, 7);
   return [
-    { id: 'dup-1', merchant: 'Duplicate Store', alias: 'Dup Store', date: `${currentMonth}-15`, total: 50.00, category: 'Supermercado' },
-    { id: 'dup-2', merchant: 'Duplicate Store', alias: 'Dup Store', date: `${currentMonth}-15`, total: 50.00, category: 'Supermercado' },
+    { id: 'dup-1', merchant: 'Duplicate Store', alias: 'Dup Store', date: `${currentMonth}-15`, total: 50.00, category: 'Supermarket' },
+    { id: 'dup-2', merchant: 'Duplicate Store', alias: 'Dup Store', date: `${currentMonth}-15`, total: 50.00, category: 'Supermarket' },
   ];
 };
