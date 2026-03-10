@@ -1,6 +1,6 @@
 # Tech Debt Story TD-17-7: Report i18n — Test Coverage Gaps
 
-Status: ready-for-dev
+Status: review
 
 > **Source:** KDBP Code Review (2026-03-10) on story TD-17-5
 > **Priority:** LOW | **Estimated Effort:** 2 points
@@ -18,11 +18,12 @@ As a **developer**, I want **locale-switching test coverage for all report gener
 ## Tasks
 
 ### Task 1: Locale tests for report generation (3 subtasks)
-- [ ] 1.1: Add `formatWeekDateRange` locale test (en/es) to `reportI18n2.test.ts`
-- [ ] 1.2: Add `getAvailableReportsForYear('monthly')` locale test (en/es) — assert `report.title` and `comparisonLabel` use correct language
-- [ ] 1.3: Add `groupItemsByItemCategory` test with undefined category — assert item appears in result under 'Other' group
+- [x] 1.1: Add `formatWeekDateRange` locale test (en/es) — 4 tests (same-month + cross-month, en + es)
+- [x] 1.2: Add `getAvailableReportsForYear('monthly')` locale test (en/es) — 3 tests (title en/es + comparisonLabel)
+- [x] 1.3: Add `groupItemsByItemCategory` test with undefined category — 2 tests (mixed items + solo undefined)
 
 ## Dev Notes
 - Source story: [TD-17-5](./TD-17-5-report-i18n-locale-cleanup.md)
 - Review findings: #7, #8
-- Files affected: `tests/unit/features/reports/utils/reportI18n2.test.ts` (or new test file if size limit reached)
+- New file created: `tests/unit/features/reports/utils/reportI18n3.test.ts` (reportI18n2 was at 404 lines, over 300-line unit test limit)
+- 9 tests total, all passing
