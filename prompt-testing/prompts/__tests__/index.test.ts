@@ -41,9 +41,9 @@ describe('Shared Prompts Library', () => {
       expect(ACTIVE_PROMPT.prompt).toContain('{{date}}');
     });
 
-    it('should reference PROMPT_V3 (current active)', () => {
-      // ACTIVE_PROMPT was promoted from V2 to V3
-      expect(ACTIVE_PROMPT.id).toBe('v3-category-standardization');
+    it('should reference PROMPT_V4 (current active)', () => {
+      // ACTIVE_PROMPT was promoted from V3 to V4 (Story 17-3)
+      expect(ACTIVE_PROMPT.id).toBe('v4-spanish-taxonomy');
     });
   });
 
@@ -184,9 +184,9 @@ describe('Shared Prompts Library', () => {
   });
 
   describe('Category constants', () => {
-    it('should have 39 store categories', () => {
-      // V3 expanded categories from shared/schema/categories.ts (includes Almacen etc)
-      expect(STORE_CATEGORIES).toHaveLength(39);
+    it('should have 44 store categories', () => {
+      // V4 expanded categories from shared/schema/categories.ts
+      expect(STORE_CATEGORIES).toHaveLength(44);
     });
 
     it('should include common store types', () => {
@@ -196,16 +196,16 @@ describe('Shared Prompts Library', () => {
       expect(STORE_CATEGORIES).toContain('Other');
     });
 
-    it('should have 39 item categories', () => {
-      // V3 expanded categories from shared/schema/categories.ts
-      expect(ITEM_CATEGORIES).toHaveLength(39);
+    it('should have 42 item categories', () => {
+      // V4 expanded categories from shared/schema/categories.ts
+      expect(ITEM_CATEGORIES).toHaveLength(42);
     });
 
     it('should include common item types', () => {
       expect(ITEM_CATEGORIES).toContain('Produce');
       expect(ITEM_CATEGORIES).toContain('Pantry');
       expect(ITEM_CATEGORIES).toContain('Beverages');
-      expect(ITEM_CATEGORIES).toContain('Other');
+      expect(ITEM_CATEGORIES).toContain('OtherItem');
     });
   });
 
@@ -427,18 +427,19 @@ describe('Shared Prompts Library', () => {
     });
   });
 
-  describe('Prompt Registry - V3 inclusion', () => {
-    it('should have 3 prompts registered (V1, V2, V3)', () => {
+  describe('Prompt Registry - V4 inclusion', () => {
+    it('should have 4 prompts registered (V1, V2, V3, V4)', () => {
       const prompts = listPrompts();
-      expect(prompts).toHaveLength(3);
+      expect(prompts).toHaveLength(4);
     });
 
-    it('should include V1, V2, and V3', () => {
+    it('should include V1, V2, V3, and V4', () => {
       const prompts = listPrompts();
       const ids = prompts.map((p) => p.id);
       expect(ids).toContain('v1-original');
       expect(ids).toContain('v2-multi-currency-types');
       expect(ids).toContain('v3-category-standardization');
+      expect(ids).toContain('v4-spanish-taxonomy');
     });
 
     it('error message should list all prompts', () => {
@@ -450,14 +451,15 @@ describe('Shared Prompts Library', () => {
         expect(message).toContain('v1-original');
         expect(message).toContain('v2-multi-currency-types');
         expect(message).toContain('v3-category-standardization');
+        expect(message).toContain('v4-spanish-taxonomy');
       }
     });
   });
 
   describe('buildPrompt() - Generic Prompt Builder', () => {
-    it('should use ACTIVE_PROMPT (V3) by default', () => {
+    it('should use ACTIVE_PROMPT (V4) by default', () => {
       const result = buildPrompt();
-      // ACTIVE_PROMPT is now V3, which auto-detects currency
+      // ACTIVE_PROMPT is now V4, which auto-detects currency
       expect(result).toContain('CURRENCY DETECTION');
     });
 

@@ -75,6 +75,7 @@ export type { SupportedCurrency, InputHints, RuntimeVariables } from './input-hi
 import { PROMPT_V1 } from './v1-original';
 import { PROMPT_V2, getReceiptTypeDescription, getCurrencyContext } from './v2-multi-currency-receipt-types';
 import { PROMPT_V3 } from './v3-category-standardization';
+import { PROMPT_V4 } from './v4-spanish-taxonomy';
 import type { PromptConfig } from './types';
 import type { ReceiptType } from './v2-multi-currency-receipt-types';
 import { DEFAULT_INPUT_HINTS } from './input-hints';
@@ -87,6 +88,7 @@ const PROMPT_REGISTRY: Map<string, PromptConfig> = new Map([
   [PROMPT_V1.id, PROMPT_V1],
   [PROMPT_V2.id, PROMPT_V2],
   [PROMPT_V3.id, PROMPT_V3],
+  [PROMPT_V4.id, PROMPT_V4],
 ]);
 
 // ============================================================================
@@ -104,7 +106,7 @@ const PROMPT_REGISTRY: Map<string, PromptConfig> = new Map([
  *   2. Change PRODUCTION_PROMPT to the new version
  *   3. Deploy: npm run build && firebase deploy --only functions
  */
-export const PRODUCTION_PROMPT: PromptConfig = PROMPT_V3;
+export const PRODUCTION_PROMPT: PromptConfig = PROMPT_V4;
 
 /**
  * DEVELOPMENT PROMPT - Used by the test harness
@@ -118,7 +120,7 @@ export const PRODUCTION_PROMPT: PromptConfig = PROMPT_V3;
  *   3. Run tests: npm run test:scan
  *   4. When satisfied, promote to PRODUCTION_PROMPT
  */
-export const DEV_PROMPT: PromptConfig = PROMPT_V3;
+export const DEV_PROMPT: PromptConfig = PROMPT_V4;
 
 /**
  * ACTIVE_PROMPT - Runtime selection
@@ -235,8 +237,9 @@ export function buildPrompt(options: BuildPromptOptions = {}): string {
   // Use explicit promptConfig if provided, otherwise select based on context
   const selectedPrompt = promptConfig ?? getActivePrompt(context);
 
-  // Check if this is V3 (which auto-detects currency, no {{currency}} placeholder)
-  const isV3 = selectedPrompt.id === 'v3-category-standardization';
+  // Check if this is V3+ (which auto-detects currency, no {{currency}} placeholder)
+  const isV3 = selectedPrompt.id === 'v3-category-standardization'
+    || selectedPrompt.id === 'v4-spanish-taxonomy';
 
   // Get human-readable description for receipt type
   const receiptTypeDescription = getReceiptTypeDescription(receiptType);
@@ -290,3 +293,7 @@ export {
   PROMPT_V3,
   buildCompleteV3Prompt,
 } from './v3-category-standardization';
+export {
+  PROMPT_V4,
+  buildCompleteV4Prompt,
+} from './v4-spanish-taxonomy';

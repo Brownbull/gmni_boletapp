@@ -331,7 +331,7 @@ development_status:
   17-1-design-taxonomy: done                            # 2 pts - Design 4-level Spanish taxonomy spec
   17-2-update-constants-types: done                     # 3 pts - Update constants, types, translations, normalizer (DEPENDS: 17-1)
   TD-17-1-normalizer-chart-tests: done                     # 2 pts - Normalizer unit tests + chart otherKey tests (DEPENDS: 17-2)
-  17-3-update-ai-prompt: ready-for-dev                 # 2 pts - Update Gemini Cloud Function prompt (DEPENDS: 17-1)
+  17-3-update-ai-prompt: in-progress                   # 2 pts - Update Gemini Cloud Function prompt (DEPENDS: 17-1)
   17-4-update-ui-labels: ready-for-dev                 # 5 pts - Update all UI components showing categories (DEPENDS: 17-2)
   17-5-batch-migration: ready-for-dev                  # 5 pts - Idempotent Cloud Function batch migration (DEPENDS: 17-2)
 
