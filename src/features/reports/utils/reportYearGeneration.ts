@@ -33,6 +33,7 @@ import {
   formatCategoryName,
   NEUTRAL_THRESHOLD,
 } from './reportCategoryGrouping';
+import { getSettingsState } from '@shared/stores/useSettingsStore';
 import type { ReportRowData } from './reportGeneration';
 import {
   generateMonthlyPersonaInsight,
@@ -158,10 +159,11 @@ function generateWeeklyReportsForYear(
     thursday.setDate(thursday.getDate() + 3);
     const monthName = thursday.toLocaleDateString('es-CL', { month: 'long' });
 
+    const lang = getSettingsState().lang;
     let personaInsight: string | undefined;
     if (categories.length > 0) {
       const topCategory = categories[0];
-      const topCategoryName = formatCategoryName(topCategory.category);
+      const topCategoryName = formatCategoryName(topCategory.category, lang);
 
       if (isFirst) {
         personaInsight = `Tu primera semana registrada. ${topCategoryName} fue tu mayor gasto.`;

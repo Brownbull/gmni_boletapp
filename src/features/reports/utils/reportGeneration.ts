@@ -43,6 +43,8 @@ import {
   formatCategoryName,
   NEUTRAL_THRESHOLD,
 } from './reportCategoryGrouping';
+import { TRANSLATIONS } from '@/utils/translations';
+import { getSettingsState } from '@shared/stores/useSettingsStore';
 
 // ============================================================================
 // Constants
@@ -93,6 +95,9 @@ export interface ReportRowData {
 
 /**
  * Generate weekly summary from transactions
+ *
+ * Note: topCategories contain raw category keys — translated downstream by
+ * generateReportCards via formatCategoryName(cat.category, lang).
  *
  * @param transactions - All user transactions
  * @param weeksAgo - Number of weeks ago (0 = current week)
@@ -172,6 +177,8 @@ export function generateWeeklySummary(
  * @returns Array of ReportCard objects for carousel
  */
 export function generateReportCards(summary: WeeklySummary): ReportCard[] {
+  const lang = getSettingsState().lang;
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
   const cards: ReportCard[] = [];
 
   // Summary card (AC #3)
@@ -199,10 +206,10 @@ export function generateReportCards(summary: WeeklySummary): ReportCard[] {
       return {
         id,
         type: 'category',
-        title: formatCategoryName(cat.category),
+        title: formatCategoryName(cat.category, lang),
         primaryValue: formatCurrency(cat.amount),
         secondaryValue: `${cat.percent}% del total · ${cat.transactionCount} ${
-          cat.transactionCount === 1 ? 'compra' : 'compras'
+          cat.transactionCount === 1 ? t.reportPurchaseSingular : t.reportPurchasePlural
         }`,
         category: cat.category,
         categoryIcon: cat.icon,
@@ -283,11 +290,12 @@ export function generateMonthlySummary(
   const prevMonthCapitalized = prevMonthName.charAt(0).toUpperCase() + prevMonthName.slice(1);
 
   // Generate persona insight based on data
+  const lang = getSettingsState().lang;
   let personaInsight: string | undefined;
   if (categories.length > 0) {
     const topCategory = categories[0];
     if (topCategory.trend === 'up' && topCategory.trendPercent && topCategory.trendPercent > 15) {
-      personaInsight = `${formatCategoryName(topCategory.category)} subió ${topCategory.trendPercent}% este mes.`;
+      personaInsight = `${formatCategoryName(topCategory.category, lang)} subió ${topCategory.trendPercent}% este mes.`;
     } else if (isFirst) {
       personaInsight = 'Tu primer mes completo con Gastify.';
     }
@@ -354,12 +362,13 @@ export function generateQuarterlySummary(
   const prevQuarterNum = getQuarterNumber(previousQuarter.start);
 
   // Generate highlights for quarterly reports
+  const lang = getSettingsState().lang;
   const highlights: Array<{ label: string; value: string }> = [];
   if (categories.length > 0) {
     const topCategory = categories[0];
     highlights.push({
       label: 'Categoría líder',
-      value: `${formatCategoryName(topCategory.category)} · ${topCategory.percent}%`,
+      value: `${formatCategoryName(topCategory.category, lang)} · ${topCategory.percent}%`,
     });
   }
 
@@ -368,7 +377,7 @@ export function generateQuarterlySummary(
   let personaInsight: string | undefined;
   if (categories.length > 0) {
     const topCategory = categories[0];
-    personaInsight = `Este trimestre, ${formatCategoryName(topCategory.category)} fue tu categoría estrella con ${topCategory.percent}% del gasto total.`;
+    personaInsight = `Este trimestre, ${formatCategoryName(topCategory.category, lang)} fue tu categoría estrella con ${topCategory.percent}% del gasto total.`;
   }
 
   return {
@@ -433,11 +442,12 @@ export function generateYearlySummary(
   const prevYear = previousYear.start.getFullYear();
 
   // Generate highlights for yearly reports
+  const lang = getSettingsState().lang;
   const highlights: Array<{ label: string; value: string }> = [];
   if (categories.length > 0) {
     highlights.push({
       label: 'Categoría #1',
-      value: `${formatCategoryName(categories[0].category)} · ${categories[0].percent}%`,
+      value: `${formatCategoryName(categories[0].category, lang)} · ${categories[0].percent}%`,
     });
   }
 
@@ -445,7 +455,7 @@ export function generateYearlySummary(
   const personaHook = 'Un año de decisiones financieras inteligentes';
   const personaInsight = isFirst
     ? 'Tu primer año completo de decisiones inteligentes.'
-    : `Un año completo de seguimiento financiero. Tu mayor inversión fue en ${categories.length > 0 ? formatCategoryName(categories[0].category).toLowerCase() : 'gastos generales'}.`;
+    : `Un año completo de seguimiento financiero. Tu mayor inversión fue en ${categories.length > 0 ? formatCategoryName(categories[0].category, lang).toLowerCase() : 'gastos generales'}.`;
 
   return {
     id: `yearly-${yearsAgo}`,

@@ -22,6 +22,8 @@ import {
 import {
   formatCategoryName,
 } from './reportCategoryGrouping';
+import { TRANSLATIONS } from '@/utils/translations';
+import { getSettingsState } from '@shared/stores/useSettingsStore';
 
 // ============================================================================
 // Insight Generation Helpers
@@ -57,6 +59,7 @@ export function generateMonthlyPersonaInsight(
   const holidayContext = HOLIDAY_MONTHS[monthIndex];
 
   // Find the category with biggest increase
+  const lang = getSettingsState().lang;
   if (categories.length > 0 && prevMonthCategories && prevMonthCategories.length > 0) {
     const categoryChanges: { category: string; change: number; name: string }[] = [];
 
@@ -68,7 +71,7 @@ export function generateMonthlyPersonaInsight(
           categoryChanges.push({
             category: cat.category,
             change,
-            name: formatCategoryName(cat.category),
+            name: formatCategoryName(cat.category, lang),
           });
         }
       }
@@ -115,7 +118,7 @@ export function generateMonthlyPersonaInsight(
 
   // Dominant category insight
   if (categories.length > 0 && categories[0].percent >= 45) {
-    return `${formatCategoryName(categories[0].category)} dominó tu mes con ${categories[0].percent}% del gasto.`;
+    return `${formatCategoryName(categories[0].category, lang)} dominó tu mes con ${categories[0].percent}% del gasto.`;
   }
 
   // Diversity insight
@@ -200,10 +203,12 @@ export function generateMonthlyHighlights(
   }
 
   // Top category
+  const lang = getSettingsState().lang;
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
   if (categories.length > 0) {
     highlights.push({
       label: 'Categoría líder',
-      value: `${formatCategoryName(categories[0].category)} · ${categories[0].percent}%`,
+      value: `${formatCategoryName(categories[0].category, lang)} · ${categories[0].percent}%`,
     });
   }
 
@@ -215,7 +220,7 @@ export function generateMonthlyHighlights(
     if (mostTransactions.category !== categories[0].category) {
       highlights.push({
         label: 'Más visitas',
-        value: `${formatCategoryName(mostTransactions.category)} · ${mostTransactions.transactionCount} compras`,
+        value: `${formatCategoryName(mostTransactions.category, lang)} · ${mostTransactions.transactionCount} ${t.reportPurchasePlural}`,
       });
     }
   }
@@ -272,10 +277,11 @@ export function generateQuarterlyHighlights(
   }
 
   // Leading category
+  const lang = getSettingsState().lang;
   if (categories.length > 0) {
     highlights.push({
       label: 'Categoría líder',
-      value: `${formatCategoryName(categories[0].category)} · ${categories[0].percent}%`,
+      value: `${formatCategoryName(categories[0].category, lang)} · ${categories[0].percent}%`,
     });
   }
 
@@ -290,7 +296,7 @@ export function generateQuarterlyHighlights(
         // Lower threshold to 10% to show more category changes
         if (change > 10 && (!biggestIncrease || change > biggestIncrease.change)) {
           biggestIncrease = {
-            name: formatCategoryName(cat.category),
+            name: formatCategoryName(cat.category, lang),
             change: Math.round(change),
           };
         }
@@ -324,7 +330,8 @@ export function generateQuarterlyPersonaInsight(
   if (categories.length === 0) return undefined;
 
   const topCategory = categories[0];
-  const topCategoryName = formatCategoryName(topCategory.category);
+  const lang = getSettingsState().lang;
+  const topCategoryName = formatCategoryName(topCategory.category, lang);
 
   // Check for category changes
   if (prevQuarterCategories && prevQuarterCategories.length > 0) {
@@ -399,10 +406,11 @@ export function generateYearlyHighlights(
   }
 
   // Top category
+  const lang = getSettingsState().lang;
   if (categories.length > 0) {
     highlights.push({
       label: 'Categoría #1',
-      value: `${formatCategoryName(categories[0].category)} · ${categories[0].percent}%`,
+      value: `${formatCategoryName(categories[0].category, lang)} · ${categories[0].percent}%`,
     });
   }
 
@@ -423,12 +431,13 @@ export function generateYearlyPersonaInsight(
   if (categories.length === 0) return undefined;
 
   // Get top 2 categories for a richer insight
+  const lang = getSettingsState().lang;
   const topCategory = categories[0];
-  const topCategoryName = formatCategoryName(topCategory.category).toLowerCase();
+  const topCategoryName = formatCategoryName(topCategory.category, lang).toLowerCase();
 
   // If we have a second category that's also significant (>20%), mention both
   if (categories.length >= 2 && categories[1].percent >= 20) {
-    const secondCategoryName = formatCategoryName(categories[1].category).toLowerCase();
+    const secondCategoryName = formatCategoryName(categories[1].category, lang).toLowerCase();
     return `Un año completo de decisiones inteligentes. Tu mayor inversión fue en ${topCategoryName} y ${secondCategoryName}.`;
   }
 

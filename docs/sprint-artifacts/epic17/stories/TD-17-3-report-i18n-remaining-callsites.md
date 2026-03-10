@@ -1,6 +1,6 @@
 # Tech Debt Story TD-17-3: Report i18n — Remaining Call Sites
 
-Status: ready-for-dev
+Status: done
 
 > **Source:** KDBP Code Review (2026-03-10) on story TD-17-2
 > **Priority:** LOW | **Estimated Effort:** 5 points
@@ -26,17 +26,17 @@ Current behavior is correct for Spanish-primary users (the default). English use
 ## Tasks
 
 ### Task 1: Thread `lang` through report generation (3 subtasks)
-- [ ] 1.1: Add `lang` parameter or read `getSettingsState().lang` in `reportGeneration.ts` generation functions
-- [ ] 1.2: Update all `formatCategoryName` calls in `reportGeneration.ts` to pass `lang`
-- [ ] 1.3: Update all `formatCategoryName` calls in `reportYearGeneration.ts` to pass `lang`
+- [x] 1.1: Add `lang` parameter or read `getSettingsState().lang` in `reportGeneration.ts` generation functions
+- [x] 1.2: Update all `formatCategoryName` calls in `reportGeneration.ts` to pass `lang`
+- [x] 1.3: Update all `formatCategoryName` calls in `reportYearGeneration.ts` to pass `lang`
 
 ### Task 2: Thread `lang` through report insights (2 subtasks)
-- [ ] 2.1: Update all `formatCategoryName` calls in `reportInsights.ts` to pass `lang`
-- [ ] 2.2: Replace hardcoded `'compras'` at line 218 with `t.reportPurchasePlural`
+- [x] 2.1: Update all `formatCategoryName` calls in `reportInsights.ts` to pass `lang`
+- [x] 2.2: Replace hardcoded `'compras'` at line 218 with `t.reportPurchasePlural`
 
 ### Task 3: Test coverage (2 subtasks)
-- [ ] 3.1: Add test for English output from a `reportGeneration.ts` function
-- [ ] 3.2: Add test for English output from a `reportInsights.ts` function
+- [x] 3.1: Add test for English output from a `reportGeneration.ts` function
+- [x] 3.2: Add test for English output from a `reportInsights.ts` function
 
 ## Dev Notes
 - Source story: [TD-17-2](./TD-17-2-report-grouping-i18n.md)
@@ -47,3 +47,20 @@ Current behavior is correct for Spanish-primary users (the default). English use
   - `getSettingsState().lang` in pure functions couples them to Zustand singleton (#3)
   - `ITEM_COUNT_LABELS` inline map is a second source of locale strings (#4)
   - No compile-time narrowing for `lang` key in TRANSLATIONS access (#6)
+
+## Review Deferred Items
+
+| TD Story | Description | Priority | Action |
+|----------|-------------|----------|--------|
+| TD-17-4 | Hardcoded Spanish strings + quarterly/yearly i18n test gaps | LOW | CREATED |
+
+## Senior Developer Review (KDBP)
+- **Date:** 2026-03-10
+- **Classification:** SIMPLE
+- **Agents:** code-reviewer (8/10), tdd-guide (4/10 → improved)
+- **Overall:** APPROVE 6.75/10 → improved after 6 quick fixes
+- **Quick fixes:** 6 (vi.resetModules, comment clarity, 2 new AC tests)
+- **TD stories:** 1 (TD-17-4: hardcoded strings + test gaps)
+- **Tests:** 7383 pass, 0 failures
+
+<!-- CITED: none -->
