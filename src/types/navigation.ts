@@ -14,7 +14,7 @@
  * Contains accumulated context from analytics drill-down navigation.
  */
 export interface DrillDownPath {
-  /** Store category group (e.g., "food-dining") */
+  /** Store category group (e.g., "supermercados") */
   storeGroup?: string;
   /** Store category (e.g., "Supermercado") */
   storeCategory?: string;

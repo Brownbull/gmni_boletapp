@@ -10,7 +10,7 @@ interface LoginScreenProps {
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onSignIn, onTestSignIn, t }) => {
     // Check if we're in development/test environment
-    const isDev = import.meta.env.DEV || window.location.hostname === 'localhost' || import.meta.env.VITE_ENABLE_TEST_LOGIN === 'true';
+    const isDev = import.meta.env.DEV || window.location.hostname === 'localhost';
 
     // Story 7.12: LoginScreen uses gradient accent pattern (AC #5)
     // Always uses dark theme for login screen for visual impact

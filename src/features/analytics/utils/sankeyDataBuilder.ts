@@ -15,7 +15,7 @@ export { getDefaultExpansion } from './sankeyThreshold';
 // ============================================================================
 
 export interface SankeyNode {
-    /** Unique node name with level prefix (e.g., "L1_food-dining") */
+    /** Unique node name with level prefix (e.g., "L1_supermercados") */
     name: string;
     /** Node styling */
     itemStyle: { color: string };

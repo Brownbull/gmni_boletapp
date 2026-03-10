@@ -138,7 +138,7 @@ export function computeStoreCategoriesData(
 // ============================================================================
 
 /**
- * Aggregate transactions by store category group (e.g., food-dining, health-wellness).
+ * Aggregate transactions by store category group (e.g., supermercados, salud-bienestar).
  */
 export function computeStoreGroupsData(
     monthTransactions: Transaction[],
@@ -243,7 +243,7 @@ export function computeItemCategoriesData(
 // ============================================================================
 
 /**
- * Aggregate transaction line items by item category group (e.g., food-fresh, household).
+ * Aggregate transaction line items by item category group (e.g., food-fresh, hogar).
  */
 export function computeItemGroupsData(
     monthTransactions: Transaction[],

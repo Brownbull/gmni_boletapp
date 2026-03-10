@@ -249,10 +249,10 @@ export interface GroupedCategory {
  * @example
  * ```ts
  * const group: TransactionGroup = {
- *   key: 'food-dining',
- *   name: 'Alimentación',
- *   emoji: '🍽️',
- *   cssClass: 'food-dining',
+ *   key: 'supermercados',
+ *   name: 'Supermercados',
+ *   emoji: '🛒',
+ *   cssClass: 'supermercados',
  *   totalAmount: '$35.300',
  *   rawTotalAmount: 35300,
  *   categories: [
@@ -263,7 +263,7 @@ export interface GroupedCategory {
  * ```
  */
 export interface TransactionGroup {
-  /** Group key matching StoreCategoryGroup (e.g., 'food-dining') */
+  /** Group key matching StoreCategoryGroup (e.g., 'supermercados') */
   key: StoreCategoryGroup;
   /** Display name in Spanish (e.g., 'Alimentación') */
   name: string;

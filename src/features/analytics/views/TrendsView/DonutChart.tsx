@@ -246,7 +246,7 @@ export const DonutChart: React.FC<{
 
     // Story 14.14b: Get store categories within a store group
     // Story 14.13 Session 6: Use allCategoryData (raw store categories) instead of categoryData
-    // When in store-groups mode, categoryData contains groups (food-dining), not categories (Supermarket)
+    // When in store-groups mode, categoryData contains groups (supermercados), not categories (Supermarket)
     const getStoreCategoriesInGroup = useCallback((groupKey: string): CategoryData[] => {
         // Filter allCategoryData to only include categories in this group
         return allCategoryData.filter(cat => {

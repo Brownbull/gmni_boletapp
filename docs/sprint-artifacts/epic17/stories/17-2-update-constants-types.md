@@ -1,6 +1,6 @@
 # Story 17-2: Update Category Constants, Types, and Translations
 
-## Status: review
+## Status: done
 
 ## Intent
 **Epic Handle:** "Name everything in the language the user thinks in"
@@ -78,6 +78,15 @@ As a developer, I want category constants, TypeScript types, and translation fil
 - This story will cause test failures in files that assert on old category names. Fix them here, not in later stories.
 - **Complexity Growth Accepted 2026-03-09:** Planning revealed categoryColors.ts (1281L) must split first (800L hook). Scope ~6→~15 files. Phase 0 split as first commit within story.
 - **Self-review 2026-03-09:** Code-reviewer found 4 CRITICAL stale V3 fallback strings in `chartDataHelpers.ts`, `reportCategoryGrouping.ts`, `useCategoryStatistics.ts`, `DashboardRadarSlide.tsx`, `DashboardBumpSlide.tsx` — all fixed. Score: 7→9/10 after fixes.
+- **KDBP Code Review 2026-03-09:** COMPLEX review (4 agents). Fixed: otherKey V3→V4 bug (chartDataHelpers), constants.ts SSOT re-export, stale JSDoc in 10 files, LoginScreen scope creep reverted, `isLegacyCategory` prototype safety. Score: 7→8.5/10 after fixes.
+
+## Deferred Items (from code review)
+
+| TD Story | Description | Priority | Action |
+|----------|-------------|----------|--------|
+| TD-17-1 | categoryNormalizer.ts zero direct tests (110 mappings) + chartDataHelpers otherKey group-mode tests | HIGH | CREATED |
+| Normalizer pruning | Remove old legacy mappings after 17-5 migration | MEDIUM | ALREADY_TRACKED (17-5 AC-5) |
+
 <!-- CITED: none -->
 <!-- INTENT: aligned -->
 <!-- ORDERING: clean -->

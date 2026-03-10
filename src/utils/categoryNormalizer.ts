@@ -235,7 +235,7 @@ export function normalizeStoreCategory(category: string): string {
 export function isLegacyCategory(category: string, type: 'item' | 'store'): boolean {
   if (!category) return false;
   const map = type === 'item' ? LEGACY_ITEM_CATEGORY_MAP : LEGACY_STORE_CATEGORY_MAP;
-  return category in map;
+  return Object.prototype.hasOwnProperty.call(map, category);
 }
 
 /**

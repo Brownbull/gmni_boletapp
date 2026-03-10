@@ -175,8 +175,8 @@ export function computeRadarChartData(
 
     // Get all unique categories with their percentage of current month budget
     const allCategories = new Set([...Object.keys(currTotals), ...Object.keys(prevTotals)]);
-    const otherKey = treemapViewMode === 'item-groups' ? 'other-item' :
-                     treemapViewMode === 'store-groups' ? 'other' : 'Otro';
+    const otherKey = treemapViewMode === 'item-groups' ? 'otros-item' :
+                     treemapViewMode === 'store-groups' ? 'otros' : 'Otro';
 
     const allCategoriesWithData = Array.from(allCategories)
         .map(name => ({
@@ -337,8 +337,8 @@ export function computeBumpChartData(
 
     // Calculate category totals per month
     const categoryRankings: Record<string, { amounts: number[]; color: string }> = {};
-    const otherKey = treemapViewMode === 'item-groups' ? 'other-item' :
-                     treemapViewMode === 'store-groups' ? 'other' : 'Otro';
+    const otherKey = treemapViewMode === 'item-groups' ? 'otros-item' :
+                     treemapViewMode === 'store-groups' ? 'otros' : 'Otro';
 
     months.forEach((m, idx) => {
         const monthStr = `${m.year}-${String(m.month + 1).padStart(2, '0')}`;

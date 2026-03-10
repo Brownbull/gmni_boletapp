@@ -11,10 +11,10 @@
  * ```tsx
  * <CategoryGroupCard
  *   group={{
- *     key: 'food-dining',
- *     name: 'Alimentación',
- *     emoji: '🍽️',
- *     cssClass: 'food-dining',
+ *     key: 'supermercados',
+ *     name: 'Supermercados',
+ *     emoji: '🛒',
+ *     cssClass: 'supermercados',
  *     totalAmount: '$35.300',
  *     rawTotalAmount: 35300,
  *     categories: [...]
