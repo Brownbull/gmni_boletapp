@@ -332,7 +332,8 @@ development_status:
   17-2-update-constants-types: done                     # 3 pts - Update constants, types, translations, normalizer (DEPENDS: 17-1)
   TD-17-1-normalizer-chart-tests: done                     # 2 pts - Normalizer unit tests + chart otherKey tests (DEPENDS: 17-2)
   17-3-update-ai-prompt: done                           # 2 pts - Update Gemini Cloud Function prompt (DEPENDS: 17-1)
-  17-4-update-ui-labels: ready-for-dev                 # 5 pts - Update all UI components showing categories (DEPENDS: 17-2)
+  17-4-update-ui-labels: done                          # 5 pts - Update all UI components showing categories (DEPENDS: 17-2)
+  TD-17-2-report-grouping-i18n: ready-for-dev           # 3 pts - Report grouping i18n completion: locale param + hardcoded strings (DEPENDS: 17-4)
   17-5-batch-migration: ready-for-dev                  # 5 pts - Idempotent Cloud Function batch migration (DEPENDS: 17-2)
 
   epic-17-retrospective: optional

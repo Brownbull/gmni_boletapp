@@ -28,7 +28,7 @@ import {
   type StoreCategoryGroup,
   type ItemCategoryGroup,
 } from '@/config/categoryColors';
-import { translateItemGroup } from '@/utils/categoryTranslations';
+import { translateItemGroup, translateStoreCategory } from '@/utils/categoryTranslations';
 import { calculateTotal } from './reportDateUtils';
 
 // ============================================================================
@@ -425,64 +425,5 @@ export function groupItemsByItemCategory(
  * Format category name in Rosa-friendly Spanish
  */
 export function formatCategoryName(category: StoreCategory): string {
-  const categoryNames: Record<StoreCategory, string> = {
-    // Supermercados
-    Supermarket: 'Supermercado',
-    Wholesale: 'Mayorista',
-    // Restaurantes
-    Restaurant: 'Restaurantes',
-    // Comercio de Barrio
-    Almacen: 'Almacén',
-    Minimarket: 'Minimarket',
-    OpenMarket: 'Feria',
-    Kiosk: 'Kiosco',
-    LiquorStore: 'Botillería',
-    Bakery: 'Panadería',
-    Butcher: 'Carnicería',
-    // Vivienda
-    UtilityCompany: 'Servicios Básicos',
-    PropertyAdmin: 'Administración',
-    // Salud y Bienestar
-    Pharmacy: 'Farmacia',
-    Medical: 'Salud',
-    Veterinary: 'Veterinaria',
-    HealthBeauty: 'Belleza',
-    // Tiendas Generales
-    Bazaar: 'Bazar',
-    ClothingStore: 'Ropa',
-    ElectronicsStore: 'Electrónica',
-    HomeGoods: 'Hogar',
-    FurnitureStore: 'Muebles',
-    Hardware: 'Ferretería',
-    GardenCenter: 'Jardín',
-    // Tiendas Especializadas
-    PetShop: 'Mascotas',
-    BookStore: 'Libros',
-    OfficeSupplies: 'Oficina',
-    SportsStore: 'Deportes',
-    ToyStore: 'Juguetes',
-    AccessoriesOptical: 'Accesorios',
-    OnlineStore: 'Tienda Online',
-    // Transporte y Vehiculo
-    AutoShop: 'Auto',
-    GasStation: 'Bencina',
-    Transport: 'Transporte',
-    // Servicios y Finanzas
-    GeneralServices: 'Servicios',
-    BankingFinance: 'Banco',
-    TravelAgency: 'Viajes',
-    SubscriptionService: 'Suscripción',
-    Government: 'Gobierno',
-    // Educacion
-    Education: 'Educación',
-    // Entretenimiento y Hospedaje
-    Lodging: 'Hotel',
-    Entertainment: 'Entretenimiento',
-    Casino: 'Casino',
-    // Otros
-    CharityDonation: 'Donación',
-    Other: 'Otros',
-  };
-
-  return categoryNames[category] || 'Otros';
+  return translateStoreCategory(category, 'es');
 }

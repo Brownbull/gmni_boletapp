@@ -568,70 +568,7 @@ export function downloadYearlyStatistics(
 
 import type { AggregatedItem } from '../types/item';
 import type { Language } from './translations';
-
-/** Item category translations for CSV export */
-const ITEM_CATEGORY_TRANSLATIONS_ES: Record<string, string> = {
-  // Food - Fresh
-  'Produce': 'Frutas y Verduras',
-  'Meat & Seafood': 'Carnes y Mariscos',
-  'Bakery': 'Panadería',
-  'Dairy & Eggs': 'Lácteos y Huevos',
-  // Food - Packaged
-  'Pantry': 'Despensa',
-  'Frozen Foods': 'Congelados',
-  'Snacks': 'Snacks',
-  'Beverages': 'Bebidas',
-  'Alcohol': 'Alcohol',
-  // Food - Prepared
-  'Prepared Food': 'Comida Preparada',
-  'Fresh Food': 'Comida Fresca',
-  // Health & Personal
-  'Health & Beauty': 'Salud y Belleza',
-  'Personal Care': 'Cuidado Personal',
-  'Pharmacy': 'Farmacia',
-  'Supplements': 'Suplementos',
-  'Baby Products': 'Productos de Bebé',
-  // Household
-  'Cleaning Supplies': 'Limpieza',
-  'Household': 'Hogar',
-  'Pet Supplies': 'Mascotas',
-  // Non-Food Retail
-  'Clothing': 'Ropa',
-  'Electronics': 'Electrónica',
-  'Hardware': 'Ferretería',
-  'Garden': 'Jardín',
-  'Automotive': 'Automotriz',
-  'Sports & Outdoors': 'Deportes',
-  'Toys & Games': 'Juguetes',
-  'Books & Media': 'Libros y Medios',
-  'Office & Stationery': 'Oficina',
-  'Crafts & Hobbies': 'Manualidades',
-  'Furniture': 'Muebles',
-  'Musical Instruments': 'Instrumentos Musicales',
-  // Services & Fees
-  'Service': 'Servicio',
-  'Tax & Fees': 'Impuestos y Cargos',
-  'Subscription': 'Suscripción',
-  'Insurance': 'Seguro',
-  'Loan Payment': 'Pago de Préstamo',
-  'Tickets & Events': 'Entradas y Eventos',
-  // Vices
-  'Tobacco': 'Tabaco',
-  'Gambling': 'Juegos de Azar',
-  // Other
-  'Other': 'Otro',
-};
-
-/**
- * Translates an item category to the specified language.
- * Returns the original category if no translation is found.
- */
-function translateItemCategory(category: string, lang: Language): string {
-  if (lang === 'es') {
-    return ITEM_CATEGORY_TRANSLATIONS_ES[category] || category;
-  }
-  return category;
-}
+import { translateItemGroup, translateSubcategory } from './categoryTranslations';
 
 /** Row structure for aggregated items export */
 interface AggregatedItemExportRow {
@@ -692,8 +629,8 @@ export function downloadAggregatedItemsCSV(
   const exportData: AggregatedItemExportRow[] = items.map((item) => ({
     itemName: item.displayName,
     totalAmount: roundTo(item.totalAmount),
-    category: item.category ? translateItemCategory(item.category, lang) : '',
-    subcategory: item.subcategory ? translateItemCategory(item.subcategory, lang) : '',
+    category: item.category ? translateItemGroup(item.category, lang) : '',
+    subcategory: item.subcategory ? translateSubcategory(item.subcategory, lang) : '',
     transactionCount: item.transactionCount,
   }));
 

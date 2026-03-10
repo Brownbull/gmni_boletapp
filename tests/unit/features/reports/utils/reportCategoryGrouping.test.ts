@@ -11,6 +11,9 @@ import {
   groupCategoriesByStoreGroup,
   groupItemsByItemCategory,
 } from '@features/reports/utils/reportUtils';
+import { formatCategoryName } from '@features/reports/utils/reportCategoryGrouping';
+import { translateStoreCategory } from '@/utils/categoryTranslations';
+import type { StoreCategory } from '../../../../../shared/schema/categories';
 import type { Transaction } from '@/types/transaction';
 
 // ============================================================================
@@ -229,5 +232,62 @@ describe('groupItemsByItemCategory — trend edge cases', () => {
       expect(Number.isFinite(group.rawTotalAmount)).toBe(true);
       expect(group.trend).toBeUndefined();
     }
+  });
+});
+
+// ============================================================================
+// formatCategoryName — Delegation to translateStoreCategory (Story 17-4)
+// ============================================================================
+
+describe('formatCategoryName — delegates to translateStoreCategory', () => {
+  it('should delegate to translateStoreCategory for Supermarket', () => {
+    const result = formatCategoryName('Supermarket' as StoreCategory);
+    expect(result).toBe(translateStoreCategory('Supermarket', 'es'));
+  });
+
+  it('should delegate to translateStoreCategory for Medical (not old "Salud")', () => {
+    const result = formatCategoryName('Medical' as StoreCategory);
+    expect(result).toBe(translateStoreCategory('Medical', 'es'));
+  });
+
+  it('should delegate to translateStoreCategory for Restaurant (not old "Restaurantes")', () => {
+    const result = formatCategoryName('Restaurant' as StoreCategory);
+    expect(result).toBe(translateStoreCategory('Restaurant', 'es'));
+  });
+
+  it('should delegate to translateStoreCategory for HealthBeauty', () => {
+    const result = formatCategoryName('HealthBeauty' as StoreCategory);
+    expect(result).toBe(translateStoreCategory('HealthBeauty', 'es'));
+  });
+
+  it('should delegate to translateStoreCategory for ClothingStore', () => {
+    const result = formatCategoryName('ClothingStore' as StoreCategory);
+    expect(result).toBe(translateStoreCategory('ClothingStore', 'es'));
+  });
+
+  it('should delegate to translateStoreCategory for Other', () => {
+    const result = formatCategoryName('Other' as StoreCategory);
+    expect(result).toBe(translateStoreCategory('Other', 'es'));
+  });
+
+  it('should delegate to translateStoreCategory for Veterinary (not old "Veterinaria")', () => {
+    const result = formatCategoryName('Veterinary' as StoreCategory);
+    expect(result).toBe(translateStoreCategory('Veterinary', 'es'));
+  });
+
+  it('should delegate to translateStoreCategory for GasStation', () => {
+    const result = formatCategoryName('GasStation' as StoreCategory);
+    expect(result).toBe(translateStoreCategory('GasStation', 'es'));
+  });
+
+  it('should delegate to translateStoreCategory for FurnitureStore (not old "Muebles")', () => {
+    const result = formatCategoryName('FurnitureStore' as StoreCategory);
+    expect(result).toBe(translateStoreCategory('FurnitureStore', 'es'));
+  });
+
+  it('should fall back to original key for unknown category', () => {
+    // translateStoreCategory returns original key if not found
+    const result = formatCategoryName('UnknownCategory' as StoreCategory);
+    expect(result).toBe('UnknownCategory');
   });
 });
