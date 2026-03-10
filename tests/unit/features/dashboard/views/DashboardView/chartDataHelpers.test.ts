@@ -269,6 +269,36 @@ describe('computeRadarChartData', () => {
       expect(foodFresh).toBeDefined();
       expect(foodFresh!.currAmount).toBe(500);
     });
+
+    it('uses "otros" otherKey for unmapped store-groups', () => {
+      const currTxs = [
+        makeTx({ date: '2026-01-10', total: 800, category: 'Supermarket' as Transaction['category'] }),
+        makeTx({ date: '2026-01-10', total: 200, category: 'UnmappedStore' as Transaction['category'] }),
+      ];
+
+      const result = computeRadarChartData(currTxs, currTxs, selectedMonth, 'store-groups');
+      const otros = result.categories.find(c => c.name === 'otros');
+      expect(otros).toBeDefined();
+      expect(otros!.currAmount).toBe(200);
+    });
+
+    it('uses "otros-item" otherKey for unmapped item-groups', () => {
+      const currTxs = [
+        makeTx({
+          date: '2026-01-10',
+          total: 500,
+          items: [
+            { name: 'Apple', price: 300, category: 'Produce' },
+            { name: 'Mystery', price: 200, category: 'UnmappedItem' },
+          ],
+        }),
+      ];
+
+      const result = computeRadarChartData(currTxs, currTxs, selectedMonth, 'item-groups');
+      const otrosItem = result.categories.find(c => c.name === 'otros-item');
+      expect(otrosItem).toBeDefined();
+      expect(otrosItem!.currAmount).toBe(200);
+    });
   });
 
   describe('edge cases', () => {
@@ -461,6 +491,36 @@ describe('computeBumpChartData', () => {
       const foodFresh = result.categories.find(c => c.name === 'food-fresh');
       expect(foodFresh).toBeDefined();
       expect(foodFresh!.amounts[3]).toBe(500);
+    });
+
+    it('uses "otros" otherKey for unmapped store-groups', () => {
+      const allTxs = [
+        makeTx({ date: '2026-04-01', total: 800, category: 'Supermarket' as Transaction['category'] }),
+        makeTx({ date: '2026-04-01', total: 200, category: 'UnmappedStore' as Transaction['category'] }),
+      ];
+
+      const result = computeBumpChartData(allTxs, selectedMonth, 'store-groups');
+      const otros = result.categories.find(c => c.name === 'otros');
+      expect(otros).toBeDefined();
+      expect(otros!.amounts[3]).toBe(200);
+    });
+
+    it('uses "otros-item" otherKey for unmapped item-groups', () => {
+      const allTxs = [
+        makeTx({
+          date: '2026-04-01',
+          total: 500,
+          items: [
+            { name: 'Apple', price: 300, category: 'Produce' },
+            { name: 'Mystery', price: 200, category: 'UnmappedItem' },
+          ],
+        }),
+      ];
+
+      const result = computeBumpChartData(allTxs, selectedMonth, 'item-groups');
+      const otrosItem = result.categories.find(c => c.name === 'otros-item');
+      expect(otrosItem).toBeDefined();
+      expect(otrosItem!.amounts[3]).toBe(200);
     });
   });
 
