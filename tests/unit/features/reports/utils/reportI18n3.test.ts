@@ -68,6 +68,7 @@ describe('formatWeekDateRange — locale month abbreviations (TD-17-7, AC-1)', (
     // Spanish: "Abr" not "Apr"
     expect(result).toMatch(/Abr/i);
     expect(result).not.toContain('Apr');
+    expect(result).toMatch(/^7-13 Abr$/);
   });
 
   it('returns English month abbreviations for cross-month range when lang=en', async () => {
@@ -170,6 +171,26 @@ describe('getAvailableReportsForYear monthly — locale titles (TD-17-7, AC-2)',
     expect(marReport).toBeDefined();
     // comparisonLabel references previous month abbreviation in English
     expect(marReport!.comparisonLabel).toContain('Feb');
+  });
+
+  it('uses Spanish month abbreviation in comparisonLabel when lang=es', async () => {
+    mockLang = 'es';
+    const { getAvailableReportsForYear } = await import(
+      '@features/reports/utils/reportYearGeneration'
+    );
+
+    const transactions = [
+      makeTx({ id: 'tx-feb', date: '2024-02-15', total: 5000 }),
+      makeTx({ id: 'tx-mar', date: '2024-03-15', total: 6000 }),
+    ];
+
+    const reports = getAvailableReportsForYear(transactions, 'monthly', 2024);
+    const marReport = reports.find((r) => r.id === 'monthly-2024-2');
+
+    expect(marReport).toBeDefined();
+    // comparisonLabel references previous month abbreviation in Spanish
+    expect(marReport!.comparisonLabel).toMatch(/Feb/i);
+    expect(marReport!.comparisonLabel).not.toContain('February');
   });
 });
 

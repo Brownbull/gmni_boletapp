@@ -54,3 +54,4 @@
 | 2026-03-10 | TD-17-6 | none | boletapp-dev | ✓ done | Replace hardcoded S/W week prefix with reportWeekAbbrev translation key, replace hardcoded "Dic" with toLocaleDateString(locale, {month:'short'}). 3 new locale tests (6 assertions), 7400 total pass. $5.72. | none |
 | 2026-03-10 | TD-17-6 | review | boletapp-dev | ✓ done | APPROVE 8.5/10, 2 quick fixes (quarterly loop hoist, test assertion), 0 TD stories. $5.41. | none |
 | 2026-03-10 | TD-17-7 | none | boletapp-dev | ✓ done | 9 locale tests in new reportI18n3.test.ts: formatWeekDateRange en/es (4), getAvailableReportsForYear monthly titles (3), groupItemsByItemCategory undefined→Other (2). 7409 total pass. $6.74. | none |
+| 2026-03-10 | TD-17-7 | review | boletapp-dev | ✓ done | APPROVE 7.5/10, 2 quick fixes (exact Spanish format assertion, Spanish comparisonLabel mirror test), 0 TD stories. 10 tests pass. $5.99. | none |
