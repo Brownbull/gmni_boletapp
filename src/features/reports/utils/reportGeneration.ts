@@ -43,6 +43,8 @@ import {
   formatCategoryName,
   NEUTRAL_THRESHOLD,
 } from './reportCategoryGrouping';
+import { TRANSLATIONS } from '@/utils/translations';
+import { getSettingsState } from '@shared/stores/useSettingsStore';
 
 // ============================================================================
 // Constants
@@ -93,6 +95,9 @@ export interface ReportRowData {
 
 /**
  * Generate weekly summary from transactions
+ *
+ * Note: topCategories contain raw category keys — translated downstream by
+ * generateReportCards via formatCategoryName(cat.category, lang).
  *
  * @param transactions - All user transactions
  * @param weeksAgo - Number of weeks ago (0 = current week)
@@ -172,17 +177,19 @@ export function generateWeeklySummary(
  * @returns Array of ReportCard objects for carousel
  */
 export function generateReportCards(summary: WeeklySummary): ReportCard[] {
+  const lang = getSettingsState().lang;
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
   const cards: ReportCard[] = [];
 
   // Summary card (AC #3)
   const summaryCard: ReportCard = {
     id: 'summary',
     type: 'summary',
-    title: 'Esta Semana',
+    title: t.reportThisWeek,
     primaryValue: formatCurrency(summary.totalSpent),
     secondaryValue: summary.isFirstWeek
-      ? 'Tu primera semana'
-      : `vs ${formatCurrency(summary.previousWeekSpent)} la semana pasada`,
+      ? t.reportFirstWeekly
+      : `vs ${formatCurrency(summary.previousWeekSpent)} ${t.reportLastWeek}`,
     trend: summary.isFirstWeek ? undefined : summary.trendDirection,
     trendPercent: summary.isFirstWeek ? undefined : Math.abs(summary.trendPercent),
     description: summary.isFirstWeek
@@ -199,10 +206,10 @@ export function generateReportCards(summary: WeeklySummary): ReportCard[] {
       return {
         id,
         type: 'category',
-        title: formatCategoryName(cat.category),
+        title: formatCategoryName(cat.category, lang),
         primaryValue: formatCurrency(cat.amount),
         secondaryValue: `${cat.percent}% del total · ${cat.transactionCount} ${
-          cat.transactionCount === 1 ? 'compra' : 'compras'
+          cat.transactionCount === 1 ? t.reportPurchaseSingular : t.reportPurchasePlural
         }`,
         category: cat.category,
         categoryIcon: cat.icon,
@@ -224,13 +231,15 @@ export function generateReportCards(summary: WeeklySummary): ReportCard[] {
  * Generate empty state report card for users with no data
  */
 export function generateEmptyStateCard(): ReportCard {
+  const lang = getSettingsState().lang;
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
   return {
     id: 'empty',
     type: 'summary',
-    title: 'Esta Semana',
+    title: t.reportThisWeek,
     primaryValue: '$0',
-    secondaryValue: 'Sin transacciones todavía',
-    description: 'Escanea una boleta para comenzar',
+    secondaryValue: t.reportNoTransactionsYet,
+    description: t.reportScanToStart,
   };
 }
 
@@ -283,13 +292,15 @@ export function generateMonthlySummary(
   const prevMonthCapitalized = prevMonthName.charAt(0).toUpperCase() + prevMonthName.slice(1);
 
   // Generate persona insight based on data
+  const lang = getSettingsState().lang;
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
   let personaInsight: string | undefined;
   if (categories.length > 0) {
     const topCategory = categories[0];
     if (topCategory.trend === 'up' && topCategory.trendPercent && topCategory.trendPercent > 15) {
-      personaInsight = `${formatCategoryName(topCategory.category)} subió ${topCategory.trendPercent}% este mes.`;
+      personaInsight = t.reportMonthCategoryRise.replace('{category}', formatCategoryName(topCategory.category, lang)).replace('{percent}', String(topCategory.trendPercent));
     } else if (isFirst) {
-      personaInsight = 'Tu primer mes completo con Gastify.';
+      personaInsight = t.reportFirstMonthGastify;
     }
   }
 
@@ -304,7 +315,7 @@ export function generateMonthlySummary(
     periodType: 'monthly',
     isUnread: monthsAgo === 0, // Current month is unread
     isFirst,
-    firstLabel: 'Tu primer mes',
+    firstLabel: t.reportFirstMonthly,
     categories,
     personaInsight,
     transactionCount: currentTransactions.length,
@@ -354,21 +365,23 @@ export function generateQuarterlySummary(
   const prevQuarterNum = getQuarterNumber(previousQuarter.start);
 
   // Generate highlights for quarterly reports
+  const lang = getSettingsState().lang;
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
   const highlights: Array<{ label: string; value: string }> = [];
   if (categories.length > 0) {
     const topCategory = categories[0];
     highlights.push({
-      label: 'Categoría líder',
-      value: `${formatCategoryName(topCategory.category)} · ${topCategory.percent}%`,
+      label: t.reportLabelCategoryLeader,
+      value: `${formatCategoryName(topCategory.category, lang)} · ${topCategory.percent}%`,
     });
   }
 
   // Generate persona hook
-  const personaHook = 'Descubre qué categoría dominó tu trimestre';
+  const personaHook = t.reportHookQuarterly;
   let personaInsight: string | undefined;
   if (categories.length > 0) {
     const topCategory = categories[0];
-    personaInsight = `Este trimestre, ${formatCategoryName(topCategory.category)} fue tu categoría estrella con ${topCategory.percent}% del gasto total.`;
+    personaInsight = t.reportQuarterStarCategory.replace('{category}', formatCategoryName(topCategory.category, lang)).replace('{percent}', String(topCategory.percent));
   }
 
   return {
@@ -382,7 +395,7 @@ export function generateQuarterlySummary(
     periodType: 'quarterly',
     isUnread: quartersAgo === 0,
     isFirst,
-    firstLabel: 'Tu primer trimestre',
+    firstLabel: t.reportFirstQuarterly,
     personaHook,
     categories,
     personaInsight,
@@ -433,19 +446,21 @@ export function generateYearlySummary(
   const prevYear = previousYear.start.getFullYear();
 
   // Generate highlights for yearly reports
+  const lang = getSettingsState().lang;
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
   const highlights: Array<{ label: string; value: string }> = [];
   if (categories.length > 0) {
     highlights.push({
-      label: 'Categoría #1',
-      value: `${formatCategoryName(categories[0].category)} · ${categories[0].percent}%`,
+      label: t.reportLabelCategoryTop,
+      value: `${formatCategoryName(categories[0].category, lang)} · ${categories[0].percent}%`,
     });
   }
 
   // Generate persona hook
-  const personaHook = 'Un año de decisiones financieras inteligentes';
+  const personaHook = t.reportHookYearly;
   const personaInsight = isFirst
-    ? 'Tu primer año completo de decisiones inteligentes.'
-    : `Un año completo de seguimiento financiero. Tu mayor inversión fue en ${categories.length > 0 ? formatCategoryName(categories[0].category).toLowerCase() : 'gastos generales'}.`;
+    ? t.reportFirstYearInsight
+    : t.reportYearInsightSingle.replace('{category}', categories.length > 0 ? formatCategoryName(categories[0].category, lang).toLowerCase() : t.reportCategoryGeneral);
 
   return {
     id: `yearly-${yearsAgo}`,
@@ -458,7 +473,7 @@ export function generateYearlySummary(
     periodType: 'yearly',
     isUnread: yearsAgo === 0,
     isFirst,
-    firstLabel: 'Tu primer año completo',
+    firstLabel: t.reportFirstYearly,
     personaHook,
     categories,
     personaInsight,
@@ -480,6 +495,8 @@ export function generateWeeklyReportRow(
   const summary = generateWeeklySummary(transactions, weeksAgo);
   if (!summary) return null;
 
+  const lang = getSettingsState().lang;
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
   const prevWeekNum = summary.weekNumber - 1 > 0 ? summary.weekNumber - 1 : 52;
 
   // Get transactions for this week and previous week to generate item groups with trends
@@ -507,8 +524,8 @@ export function generateWeeklyReportRow(
 
   return {
     id: `weekly-${weeksAgo}`,
-    title: `Semana ${summary.weekNumber}`,
-    fullTitle: `Semana ${summary.weekNumber} · ${summary.dateRange.start.toLocaleDateString('es-CL', { month: 'long' })} · Q${getQuarterNumber(summary.dateRange.start)} ${summary.dateRange.start.getFullYear()}`,
+    title: `${t.reportWeekLabel} ${summary.weekNumber}`,
+    fullTitle: `${t.reportWeekLabel} ${summary.weekNumber} · ${summary.dateRange.start.toLocaleDateString('es-CL', { month: 'long' })} · Q${getQuarterNumber(summary.dateRange.start)} ${summary.dateRange.start.getFullYear()}`,
     amount: summary.totalSpent,
     trend: summary.isFirstWeek ? undefined : summary.trendDirection,
     trendPercent: summary.isFirstWeek ? undefined : Math.abs(summary.trendPercent),
@@ -516,7 +533,7 @@ export function generateWeeklyReportRow(
     periodType: 'weekly',
     isUnread: weeksAgo === 0,
     isFirst: summary.isFirstWeek,
-    firstLabel: 'Tu primera semana',
+    firstLabel: t.reportFirstWeekly,
     categories: summary.topCategories,
     transactionGroups,
     itemGroups,

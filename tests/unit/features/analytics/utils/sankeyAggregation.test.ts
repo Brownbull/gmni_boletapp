@@ -170,7 +170,7 @@ describe('aggregateTransactions', () => {
     it('counts per item not per transaction', () => {
         const tx = createTransaction('Supermarket', [
             { name: 'Apples', price: 3000, category: 'Produce' },
-            { name: 'Milk', price: 2000, category: 'Dairy & Eggs' },
+            { name: 'Milk', price: 2000, category: 'DairyEggs' },
             { name: 'Oranges', price: 1000, category: 'Produce' },
         ]);
         const result = aggregateTransactions([tx]);

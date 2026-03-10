@@ -49,7 +49,7 @@ export interface CategoryFilterState {
      * When present, enables multi-dimension filtering (e.g., items in "Supermercado" + "Alimentos Frescos").
      */
     drillDownPath?: {
-        storeGroup?: string;     // Store category group (e.g., "food-dining")
+        storeGroup?: string;     // Store category group (e.g., "supermercados")
         storeCategory?: string;  // Store category (e.g., "Supermercado")
         itemGroup?: string;      // Item category group (e.g., "food-fresh")
         itemCategory?: string;   // Item category (e.g., "Carnes y Mariscos")

@@ -70,8 +70,21 @@ Cost tracking, E2E/backend analysis, behavioral ledger, final story status updat
   Append: `<!-- ORDERING: {{p2_ordering_verdict}} -->`
   Passive tag. Harvestable by: `grep -r "ORDERING:" docs/sprint-artifacts/`</action>
 
+<!-- Execution Debt Check — detect stories that build infrastructure without executing it -->
+<action>Scan story tasks for any incomplete `[ ]` items</action>
+<action>Scan story title and ACs for execution keywords: "execute", "migrate", "deploy", "run", "apply"</action>
+<check if="incomplete tasks exist AND story title/ACs contain execution keywords">
+  <ask>**Execution Debt Detected** — This story says "{{execution_keyword}}" but {{incomplete_tasks}} are not done yet.
+    [N] Execute now (within this dev-story session)
+    [D] Defer to deploy-story (mark task as deferred, proceed to review)
+  </ask>
+  <check if="user chooses D">
+    <action>Add to story Dev Notes: `Execution deferred to deploy-story by user ({{date}})`</action>
+  </check>
+</check>
+
 <!-- Story Completion -->
-<action>Verify ALL tasks marked [x] complete</action>
+<action>Verify ALL tasks marked [x] complete (or explicitly deferred above)</action>
 <action>Verify ALL functional acceptance criteria satisfied</action>
 <action>Verify ALL architectural acceptance criteria satisfied (validated per-task in Step 4)</action>
 <action>Update story Status to "review"</action>

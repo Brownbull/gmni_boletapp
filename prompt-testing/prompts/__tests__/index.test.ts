@@ -3,10 +3,12 @@ import {
   ACTIVE_PROMPT,
   PROMPT_V1,
   PROMPT_V2,
+  PROMPT_V4,
   getPrompt,
   listPrompts,
   replacePromptVariables,
   buildPrompt,
+  buildCompleteV4Prompt,
   STORE_CATEGORIES,
   ITEM_CATEGORIES,
   getCurrencyContext,
@@ -37,13 +39,13 @@ describe('Shared Prompts Library', () => {
     });
 
     it('should contain {{date}} placeholder', () => {
-      // V3 auto-detects currency so doesn't have {{currency}} placeholder
+      // V4 auto-detects currency so doesn't have {{currency}} placeholder
       expect(ACTIVE_PROMPT.prompt).toContain('{{date}}');
     });
 
-    it('should reference PROMPT_V3 (current active)', () => {
-      // ACTIVE_PROMPT was promoted from V2 to V3
-      expect(ACTIVE_PROMPT.id).toBe('v3-category-standardization');
+    it('should reference PROMPT_V4 (current active)', () => {
+      // ACTIVE_PROMPT was promoted from V3 to V4 (Story 17-3)
+      expect(ACTIVE_PROMPT.id).toBe('v4-spanish-taxonomy');
     });
   });
 
@@ -184,9 +186,9 @@ describe('Shared Prompts Library', () => {
   });
 
   describe('Category constants', () => {
-    it('should have 39 store categories', () => {
-      // V3 expanded categories from shared/schema/categories.ts (includes Almacen etc)
-      expect(STORE_CATEGORIES).toHaveLength(39);
+    it('should have 44 store categories', () => {
+      // V4 expanded categories from shared/schema/categories.ts
+      expect(STORE_CATEGORIES).toHaveLength(44);
     });
 
     it('should include common store types', () => {
@@ -196,16 +198,16 @@ describe('Shared Prompts Library', () => {
       expect(STORE_CATEGORIES).toContain('Other');
     });
 
-    it('should have 39 item categories', () => {
-      // V3 expanded categories from shared/schema/categories.ts
-      expect(ITEM_CATEGORIES).toHaveLength(39);
+    it('should have 42 item categories', () => {
+      // V4 expanded categories from shared/schema/categories.ts
+      expect(ITEM_CATEGORIES).toHaveLength(42);
     });
 
     it('should include common item types', () => {
       expect(ITEM_CATEGORIES).toContain('Produce');
       expect(ITEM_CATEGORIES).toContain('Pantry');
       expect(ITEM_CATEGORIES).toContain('Beverages');
-      expect(ITEM_CATEGORIES).toContain('Other');
+      expect(ITEM_CATEGORIES).toContain('OtherItem');
     });
   });
 
@@ -427,18 +429,19 @@ describe('Shared Prompts Library', () => {
     });
   });
 
-  describe('Prompt Registry - V3 inclusion', () => {
-    it('should have 3 prompts registered (V1, V2, V3)', () => {
+  describe('Prompt Registry - V4 inclusion', () => {
+    it('should have 4 prompts registered (V1, V2, V3, V4)', () => {
       const prompts = listPrompts();
-      expect(prompts).toHaveLength(3);
+      expect(prompts).toHaveLength(4);
     });
 
-    it('should include V1, V2, and V3', () => {
+    it('should include V1, V2, V3, and V4', () => {
       const prompts = listPrompts();
       const ids = prompts.map((p) => p.id);
       expect(ids).toContain('v1-original');
       expect(ids).toContain('v2-multi-currency-types');
       expect(ids).toContain('v3-category-standardization');
+      expect(ids).toContain('v4-spanish-taxonomy');
     });
 
     it('error message should list all prompts', () => {
@@ -450,14 +453,15 @@ describe('Shared Prompts Library', () => {
         expect(message).toContain('v1-original');
         expect(message).toContain('v2-multi-currency-types');
         expect(message).toContain('v3-category-standardization');
+        expect(message).toContain('v4-spanish-taxonomy');
       }
     });
   });
 
   describe('buildPrompt() - Generic Prompt Builder', () => {
-    it('should use ACTIVE_PROMPT (V3) by default', () => {
+    it('should use ACTIVE_PROMPT (V4) by default', () => {
       const result = buildPrompt();
-      // ACTIVE_PROMPT is now V3, which auto-detects currency
+      // ACTIVE_PROMPT is now V4, which auto-detects currency
       expect(result).toContain('CURRENCY DETECTION');
     });
 
@@ -529,11 +533,84 @@ describe('Shared Prompts Library', () => {
       });
     });
 
-    it('should ignore currency param for V3 (auto-detects)', () => {
-      // V3 auto-detects currency, so currency param is ignored
+    it('should ignore currency param for V4 (auto-detects)', () => {
+      // V4 auto-detects currency, so currency param is ignored
       const result = buildPrompt({ currency: 'XYZ' });
-      // V3 doesn't have {{currency}} placeholder, so it won't contain XYZ
       expect(result).toContain('CURRENCY DETECTION');
+    });
+  });
+
+  describe('PROMPT_V4 - Spanish Taxonomy', () => {
+    it('should contain all store categories in prompt', () => {
+      STORE_CATEGORIES.forEach((category) => {
+        expect(PROMPT_V4.prompt).toContain(category);
+      });
+    });
+
+    it('should contain all item categories in prompt', () => {
+      ITEM_CATEGORIES.forEach((category) => {
+        expect(PROMPT_V4.prompt).toContain(category);
+      });
+    });
+
+    it('should contain grouped store categories (L1 rubros)', () => {
+      expect(PROMPT_V4.prompt).toContain('Supermercados:');
+      expect(PROMPT_V4.prompt).toContain('Comercio de Barrio:');
+      expect(PROMPT_V4.prompt).toContain('Salud y Bienestar:');
+      expect(PROMPT_V4.prompt).toContain('Transporte y Vehículo:');
+    });
+
+    it('should contain grouped item categories (L3 familias)', () => {
+      expect(PROMPT_V4.prompt).toContain('Alimentos Frescos:');
+      expect(PROMPT_V4.prompt).toContain('Alimentos Envasados:');
+      expect(PROMPT_V4.prompt).toContain('Salud y Cuidado Personal:');
+      expect(PROMPT_V4.prompt).toContain('Vicios:');
+    });
+
+    it('should contain Chilean market rules', () => {
+      expect(PROMPT_V4.prompt).toContain('Feria');
+      expect(PROMPT_V4.prompt).toContain('Almacén');
+      expect(PROMPT_V4.prompt).toContain('Botillería');
+    });
+
+    it('should instruct to return English KEYs', () => {
+      expect(PROMPT_V4.prompt).toContain('RETURN the English KEY');
+    });
+  });
+
+  describe('buildCompleteV4Prompt()', () => {
+    it('should replace all placeholders', () => {
+      const result = buildCompleteV4Prompt({ date: '2026-03-09' });
+      expect(result).not.toContain('{{date}}');
+      expect(result).not.toContain('{{receiptType}}');
+    });
+
+    it('should default receiptType to auto', () => {
+      const result = buildCompleteV4Prompt({ date: '2026-03-09' });
+      expect(result).toContain('auto-detect');
+    });
+
+    it('should include provided date', () => {
+      const result = buildCompleteV4Prompt({ date: '2026-03-09' });
+      expect(result).toContain('2026-03-09');
+    });
+
+    it('should handle specific receipt type', () => {
+      const result = buildCompleteV4Prompt({ date: '2026-03-09', receiptType: 'restaurant' });
+      expect(result).toContain('restaurant bill');
+      expect(result).not.toContain('{{receiptType}}');
+    });
+
+    it('should contain grouped store categories', () => {
+      const result = buildCompleteV4Prompt({ date: '2026-03-09' });
+      expect(result).toContain('Supermercados:');
+      expect(result).toContain('Comercio de Barrio:');
+    });
+
+    it('should contain grouped item categories', () => {
+      const result = buildCompleteV4Prompt({ date: '2026-03-09' });
+      expect(result).toContain('Alimentos Frescos:');
+      expect(result).toContain('Vicios:');
     });
   });
 });

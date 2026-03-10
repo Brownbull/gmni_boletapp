@@ -33,8 +33,11 @@ import {
   formatCategoryName,
   NEUTRAL_THRESHOLD,
 } from './reportCategoryGrouping';
+import { getSettingsState } from '@shared/stores/useSettingsStore';
+import { TRANSLATIONS } from '@/utils/translations';
 import type { ReportRowData } from './reportGeneration';
 import {
+  LANG_LOCALE,
   generateMonthlyPersonaInsight,
   generateMonthlyHighlights,
   generateQuarterlyHighlights,
@@ -118,6 +121,10 @@ function generateWeeklyReportsForYear(
     currentYearWeeksMap.set(weekNum, txs);
   });
 
+  const lang = getSettingsState().lang;
+  const locale = LANG_LOCALE[lang];
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
+
   for (const { weekNum, transactions: weekTransactions } of yearWeeks) {
     const isCurrentWeek = year === currentYear && weekNum === currentWeekNum;
     if (isCurrentWeek) continue;
@@ -138,10 +145,10 @@ function generateWeeklyReportsForYear(
 
     if (weekNum === 1) {
       prevWeekTransactions = prevYearWeeksMap.get(52) || prevYearWeeksMap.get(53) || [];
-      comparisonLabel = `vs S52 ${year - 1}`;
+      comparisonLabel = `vs ${t.reportWeekAbbrev}52 ${year - 1}`;
     } else {
       prevWeekTransactions = currentYearWeeksMap.get(weekNum - 1) || [];
-      comparisonLabel = `vs S${weekNum - 1}`;
+      comparisonLabel = `vs ${t.reportWeekAbbrev}${weekNum - 1}`;
     }
 
     const prevTotalSpent = calculateTotal(prevWeekTransactions);
@@ -156,23 +163,22 @@ function generateWeeklyReportsForYear(
 
     const thursday = new Date(weekStart);
     thursday.setDate(thursday.getDate() + 3);
-    const monthName = thursday.toLocaleDateString('es-CL', { month: 'long' });
-
+    const monthName = thursday.toLocaleDateString(locale, { month: 'long' });
     let personaInsight: string | undefined;
     if (categories.length > 0) {
       const topCategory = categories[0];
-      const topCategoryName = formatCategoryName(topCategory.category);
+      const topCategoryName = formatCategoryName(topCategory.category, lang);
 
       if (isFirst) {
-        personaInsight = `Tu primera semana registrada. ${topCategoryName} fue tu mayor gasto.`;
+        personaInsight = t.reportWeekFirstInsight.replace('{category}', topCategoryName);
       } else if (trend === 'up' && trendPercent > 20) {
-        personaInsight = `Semana de mayor gasto: +${Math.abs(trendPercent)}% vs la semana anterior.`;
+        personaInsight = t.reportWeekHighSpend.replace('{percent}', String(Math.abs(trendPercent)));
       } else if (trend === 'down' && trendPercent < -20) {
-        personaInsight = `¡Buen control! Redujiste ${Math.abs(trendPercent)}% vs la semana anterior.`;
+        personaInsight = t.reportWeekGoodControl.replace('{percent}', String(Math.abs(trendPercent)));
       } else if (topCategory.percent >= 50) {
-        personaInsight = `${topCategoryName} dominó tu semana con ${topCategory.percent}% del gasto.`;
+        personaInsight = t.reportWeekCategoryDominated.replace('{category}', topCategoryName).replace('{percent}', String(topCategory.percent));
       } else if (categories.length >= 3) {
-        personaInsight = `Gastos diversos esta semana: ${categories.length} categorías diferentes.`;
+        personaInsight = t.reportWeekDiverseSpending.replace('{count}', String(categories.length));
       }
     }
 
@@ -183,8 +189,8 @@ function generateWeeklyReportsForYear(
 
     reports.push({
       id: `weekly-${year}-${weekNum}`,
-      title: `Semana ${weekNum}`,
-      fullTitle: `Semana ${weekNum} · ${monthName} · Q${getQuarterNumber(thursday)} ${year}`,
+      title: `${t.reportWeekLabel} ${weekNum}`,
+      fullTitle: `${t.reportWeekLabel} ${weekNum} · ${monthName} · Q${getQuarterNumber(thursday)} ${year}`,
       amount: totalSpent,
       trend: isFirst ? undefined : trend,
       trendPercent: isFirst ? undefined : Math.abs(trendPercent),
@@ -192,7 +198,7 @@ function generateWeeklyReportsForYear(
       periodType: 'weekly',
       isUnread: false,
       isFirst,
-      firstLabel: 'Tu primera semana',
+      firstLabel: t.reportFirstWeekly,
       categories,
       transactionGroups,
       itemGroups,
@@ -252,6 +258,10 @@ function generateMonthlyReportsForYear(
   const prevYearDecemberCategories =
     prevYearDecemberTransactions.length > 0 ? getCategoryBreakdown(prevYearDecemberTransactions) : undefined;
 
+  const lang = getSettingsState().lang;
+  const locale = LANG_LOCALE[lang];
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
+
   for (const month of sortedMonths) {
     if (year === currentYear && month === currentMonth) continue;
 
@@ -266,12 +276,14 @@ function generateMonthlyReportsForYear(
     if (month === 0) {
       prevMonthTransactions = prevYearDecemberTransactions;
       prevCategories = prevYearDecemberCategories;
-      comparisonLabel = `vs Dic ${year - 1}`;
+      const decDate = new Date(year - 1, 11, 1);
+      const decName = decDate.toLocaleDateString(locale, { month: 'short' });
+      comparisonLabel = `vs ${decName.charAt(0).toUpperCase() + decName.slice(1)} ${year - 1}`;
     } else {
       prevMonthTransactions = monthsWithData.get(month - 1) || [];
       prevCategories = monthCategories.get(month - 1);
       const prevMonthDate = new Date(year, month - 1, 1);
-      const prevMonthName = prevMonthDate.toLocaleDateString('es-CL', { month: 'short' });
+      const prevMonthName = prevMonthDate.toLocaleDateString(locale, { month: 'short' });
       comparisonLabel = `vs ${prevMonthName.charAt(0).toUpperCase() + prevMonthName.slice(1)}`;
     }
 
@@ -280,14 +292,13 @@ function generateMonthlyReportsForYear(
     const isFirst = prevMonthTransactions.length === 0;
 
     const monthDate = new Date(year, month, 1);
-    const monthName = monthDate.toLocaleDateString('es-CL', { month: 'long' });
+    const monthName = monthDate.toLocaleDateString(locale, { month: 'long' });
     const monthNameCapitalized = monthName.charAt(0).toUpperCase() + monthName.slice(1);
 
     const personaInsight = generateMonthlyPersonaInsight(categories, trend, Math.abs(trendPercent), isFirst, month, prevCategories);
     const highlights = generateMonthlyHighlights(categories, monthTransactions, year, month);
     const transactionGroups = sortGroupsAlphabetically(groupCategoriesByStoreGroup(categories));
     const itemGroups = sortGroupsAlphabetically(groupItemsByItemCategory(monthTransactions, prevMonthTransactions));
-
     reports.push({
       id: `monthly-${year}-${month}`,
       title: monthNameCapitalized,
@@ -299,7 +310,7 @@ function generateMonthlyReportsForYear(
       periodType: 'monthly',
       isUnread: false,
       isFirst,
-      firstLabel: 'Tu primer mes',
+      firstLabel: t.reportFirstMonthly,
       categories,
       transactionGroups,
       itemGroups,
@@ -360,6 +371,9 @@ function generateQuarterlyReportsForYear(
   const prevYearQ4Categories =
     prevYearQ4Transactions.length > 0 ? getCategoryBreakdown(prevYearQ4Transactions) : undefined;
 
+  const lang = getSettingsState().lang;
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
+
   for (const quarter of sortedQuarters) {
     if (year === currentYear && quarter === currentQuarter) continue;
 
@@ -404,8 +418,8 @@ function generateQuarterlyReportsForYear(
       periodType: 'quarterly',
       isUnread: false,
       isFirst,
-      firstLabel: 'Tu primer trimestre',
-      personaHook: 'Descubre qué categoría dominó tu trimestre',
+      firstLabel: t.reportFirstQuarterly,
+      personaHook: t.reportHookQuarterly,
       categories,
       transactionGroups,
       itemGroups,
@@ -450,6 +464,8 @@ function generateYearlyReportForYear(
   const transactionGroups = sortGroupsAlphabetically(groupCategoriesByStoreGroup(categories));
   const itemGroups = sortGroupsAlphabetically(groupItemsByItemCategory(yearTransactions, prevYearTransactions));
 
+  const lang = getSettingsState().lang;
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
   return [{
     id: `yearly-${year}`,
     title: `${year}`,
@@ -461,8 +477,8 @@ function generateYearlyReportForYear(
     periodType: 'yearly',
     isUnread: false,
     isFirst,
-    firstLabel: 'Tu primer año completo',
-    personaHook: 'Un año de decisiones financieras inteligentes',
+    firstLabel: t.reportFirstYearly,
+    personaHook: t.reportHookYearly,
     categories,
     transactionGroups,
     itemGroups,

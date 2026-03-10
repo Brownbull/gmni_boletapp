@@ -243,7 +243,7 @@ export const DashboardRadarSlide: React.FC<DashboardRadarSlideProps> = ({
                                 <span>{selectedRadarCategory.emoji}</span>
                                 <span className="truncate" style={{ maxWidth: '60px' }}>{
                                     selectedRadarCategory.name === 'Otro' || selectedRadarCategory.name === 'Other' ||
-                                    selectedRadarCategory.name === 'other' || selectedRadarCategory.name === 'other-item'
+                                    selectedRadarCategory.name === 'otros' || selectedRadarCategory.name === 'otros-item'
                                         ? t('otherCategory')
                                         : translateTreemapName(selectedRadarCategory.name)
                                 }</span>

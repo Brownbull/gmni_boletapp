@@ -5,26 +5,8 @@
 export const APP_ID = 'boletapp';
 
 /**
- * Store categories for the app UI.
- * IMPORTANT: Keep in sync with prompt-testing/prompts/output-schema.ts STORE_CATEGORIES
+ * Store categories (V4) — re-exported from shared schema (single source of truth).
  */
-export const STORE_CATEGORIES = [
-    // Food & Dining
-    'Supermarket', 'Restaurant', 'Bakery', 'Butcher', 'StreetVendor',
-    // Health & Wellness
-    'Pharmacy', 'Medical', 'Veterinary', 'HealthBeauty',
-    // Retail - General
-    'Bazaar', 'Clothing', 'Electronics', 'HomeGoods', 'Furniture', 'Hardware', 'GardenCenter',
-    // Retail - Specialty
-    'PetShop', 'BooksMedia', 'OfficeSupplies', 'SportsOutdoors', 'ToysGames', 'Jewelry', 'Optical',
-    // Automotive & Transport
-    'Automotive', 'GasStation', 'Transport',
-    // Services & Finance
-    'Services', 'BankingFinance', 'Education', 'TravelAgency',
-    // Hospitality & Entertainment
-    'HotelLodging', 'Entertainment',
-    // Other
-    'CharityDonation', 'Other',
-] as const;
+export { STORE_CATEGORIES } from '../../shared/schema/categories';
 
 export const ITEMS_PER_PAGE = 20;

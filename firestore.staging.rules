@@ -2,17 +2,40 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // ============================================================================
+    // COMBINED STAGING RULES — boletapp-staging
+    //
+    // !! SHARED BY TWO APPLICATIONS !!
+    // This file covers BOTH Boletapp (Gastify) AND Gustify paths.
+    // The boletapp-staging Firebase project is shared by both apps.
+    //
+    // BEFORE DEPLOYING: Ensure rules work for BOTH apps. Changes that
+    // remove or break paths for either app will cause "missing or
+    // insufficient permissions" errors in the other.
+    //
+    // Gustify source:  gustify/firestore.staging.rules
+    // Boletapp source: boletapp/firestore.staging.rules
+    //
+    // When EITHER app updates staging rules, the combined file must be
+    // re-merged and deployed from ONE canonical location. Currently
+    // deployed from Gustify repo:
+    //   firebase deploy --only firestore:rules --project boletapp-staging \
+    //     --config firebase.staging.json
+    //
+    // Whitelist: Only approved emails in the allowedEmails collection
+    // can access any data. Seed via Boletapp:
+    //   npm run staging:seed-whitelist
+    // ============================================================================
 
-    // ============================================================================
-    // Staging Whitelist — only approved test emails can access data
-    // Story 16-9: Registration blocking via allowedEmails collection
-    // ============================================================================
+    // --- Staging Whitelist (Boletapp Story 16-9) ---
+    // Only approved test emails can access data. Prevents unauthorized
+    // users from creating accounts and accessing staging data.
     function isAllowedStagingUser() {
       return request.auth != null
         && exists(/databases/$(database)/documents/allowedEmails/$(request.auth.token.email));
     }
 
-    // AllowedEmails collection — readable by any authenticated user (for client-side check),
+    // AllowedEmails collection — readable by owner only (for client-side check),
     // writable only via Firebase Console or admin scripts
     match /allowedEmails/{email} {
       allow get: if request.auth != null && request.auth.token.email == email;
@@ -20,23 +43,23 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // --- Shared helper functions ---
+
+    // Validate top-level field bounds (Boletapp TD-15b-9 through TD-15b-13)
     function hasValidFieldBounds(data) {
       return (!('merchant' in data) || (data.merchant is string && data.merchant.size() >= 1 && data.merchant.size() <= 200))
         && (!('total' in data) || (data.total is number && data.total >= 0 && data.total <= 999999999));
     }
 
     // ============================================================================
-    // Collection Group Query - Denied
+    // BOLETAPP (Gastify) RULES
+    // Source: boletapp/firestore.staging.rules (Epic 16 / TD-16-7)
     // ============================================================================
+
+    // Collection group query deny (Boletapp security)
     match /{path=**}/transactions/{transactionId} {
       allow read: if false;
     }
-
-    // ============================================================================
-    // User Data Isolation + Staging Whitelist
-    // Explicit sub-collection rules (TD-16-7: replaced /{document=**} wildcard)
-    // Source of truth: src/lib/firestorePaths.ts
-    // ============================================================================
 
     // --- Transactions (with field-bounds validation) ---
     match /artifacts/{appId}/users/{userId}/transactions/{transactionId} {
@@ -93,7 +116,83 @@ service cloud.firestore {
     }
 
     // ============================================================================
-    // Default Deny - All other paths
+    // GUSTIFY RULES
+    // Source: gustify/firestore.staging.rules
+    // ============================================================================
+
+    // Gustify user profiles and subcollections
+    match /users/{userId} {
+      allow read: if isAllowedStagingUser() && request.auth.uid == userId;
+      allow create, update: if isAllowedStagingUser() && request.auth.uid == userId;
+      allow delete: if false;
+
+      match /pantry/{ingredientId} {
+        allow read: if isAllowedStagingUser() && request.auth.uid == userId;
+        allow create, update, delete: if isAllowedStagingUser() && request.auth.uid == userId;
+      }
+      match /cookedMeals/{mealId} {
+        allow read: if isAllowedStagingUser() && request.auth.uid == userId;
+        allow create, update, delete: if isAllowedStagingUser() && request.auth.uid == userId;
+      }
+      match /shoppingList/{listId} {
+        allow read: if isAllowedStagingUser() && request.auth.uid == userId;
+        allow create, update, delete: if isAllowedStagingUser() && request.auth.uid == userId;
+      }
+    }
+
+    // Canonical ingredients dictionary (read-only)
+    match /canonicalIngredients/{id} {
+      allow read: if isAllowedStagingUser();
+      allow write: if false;
+    }
+
+    // Item mappings (Gastify items → canonical ingredients)
+    match /itemMappings/{hash} {
+      allow read: if isAllowedStagingUser();
+      allow create: if isAllowedStagingUser()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.source is string
+        && request.resource.data.source.size() <= 200
+        && request.resource.data.canonicalId is string;
+      allow update, delete: if false;
+    }
+
+    // Recipes (read-only)
+    match /recipes/{recipeId} {
+      allow read: if isAllowedStagingUser();
+      allow write: if false;
+    }
+
+    // Canonical prepared foods dictionary (read-only)
+    match /canonicalPreparedFoods/{id} {
+      allow read: if isAllowedStagingUser();
+      allow write: if false;
+    }
+
+    // Unknown ingredients tracking (community crowdsource)
+    match /unknownIngredients/{itemId} {
+      allow read: if isAllowedStagingUser();
+      allow create: if isAllowedStagingUser()
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 200
+        && request.resource.data.reportedBy == request.auth.uid;
+      allow update: if isAllowedStagingUser();
+      allow delete: if false;
+    }
+
+    // Unknown prepared foods tracking (community crowdsource)
+    match /unknownPreparedFoods/{itemId} {
+      allow read: if isAllowedStagingUser();
+      allow create: if isAllowedStagingUser()
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 200
+        && request.resource.data.reportedBy == request.auth.uid;
+      allow update: if isAllowedStagingUser();
+      allow delete: if false;
+    }
+
+    // ============================================================================
+    // DEFAULT DENY — All other paths
     // ============================================================================
     match /{document=**} {
       allow read, write: if false;

@@ -77,13 +77,13 @@ beforeEach(() => {
 describe('computeStoreCategoriesData', () => {
   it('aggregates transactions by category', () => {
     const txs = [
-      makeTx({ id: 'tx1', date: '2026-01-01', total: 1000, category: 'Supermercado' as Transaction['category'] }),
-      makeTx({ id: 'tx2', date: '2026-01-02', total: 500, category: 'Supermercado' as Transaction['category'] }),
-      makeTx({ id: 'tx3', date: '2026-01-03', total: 300, category: 'Restaurante' as Transaction['category'] }),
+      makeTx({ id: 'tx1', date: '2026-01-01', total: 1000, category: 'Supermarket' as Transaction['category'] }),
+      makeTx({ id: 'tx2', date: '2026-01-02', total: 500, category: 'Supermarket' as Transaction['category'] }),
+      makeTx({ id: 'tx3', date: '2026-01-03', total: 300, category: 'Restaurant' as Transaction['category'] }),
     ];
 
     const result = computeStoreCategoriesData(txs, 1800);
-    const supermarket = result.displayCategories.find(c => c.name === 'Supermercado');
+    const supermarket = result.displayCategories.find(c => c.name === 'Supermarket');
     expect(supermarket).toBeDefined();
     expect(supermarket!.amount).toBe(1500);
     expect(supermarket!.count).toBe(2);
@@ -146,7 +146,7 @@ describe('computeStoreCategoriesData', () => {
         id: 'tx1',
         date: '2026-01-01',
         total: 500,
-        category: 'Supermercado' as Transaction['category'],
+        category: 'Supermarket' as Transaction['category'],
         items: [
           { name: 'Apple', price: 200 },
           { name: 'Banana', price: 300 },
@@ -180,15 +180,15 @@ describe('computeStoreCategoriesData', () => {
 describe('computeStoreGroupsData', () => {
   it('aggregates transactions by store group', () => {
     const txs = [
-      makeTx({ id: 'tx1', date: '2026-01-01', total: 1000, category: 'Supermercado' as Transaction['category'] }),
-      makeTx({ id: 'tx2', date: '2026-01-02', total: 500, category: 'Restaurante' as Transaction['category'] }),
-      makeTx({ id: 'tx3', date: '2026-01-03', total: 300, category: 'Farmacia' as Transaction['category'] }),
+      makeTx({ id: 'tx1', date: '2026-01-01', total: 1000, category: 'Supermarket' as Transaction['category'] }),
+      makeTx({ id: 'tx2', date: '2026-01-02', total: 500, category: 'Restaurant' as Transaction['category'] }),
+      makeTx({ id: 'tx3', date: '2026-01-03', total: 300, category: 'Pharmacy' as Transaction['category'] }),
     ];
 
     const result = computeStoreGroupsData(txs, 1800);
-    const foodDining = result.displayCategories.find(c => c.name === 'food-dining');
-    expect(foodDining).toBeDefined();
-    expect(foodDining!.amount).toBe(1500); // Supermercado + Restaurante
+    const supermercados = result.displayCategories.find(c => c.name === 'supermercados');
+    expect(supermercados).toBeDefined();
+    expect(supermercados!.amount).toBe(1000); // Supermarket only
   });
 
   it('maps unknown categories to "other" group', () => {
@@ -197,30 +197,30 @@ describe('computeStoreGroupsData', () => {
     ];
 
     const result = computeStoreGroupsData(txs, 200);
-    const other = result.displayCategories.find(c => c.name === 'other');
-    expect(other).toBeDefined();
-    expect(other!.amount).toBe(200);
+    const otros = result.displayCategories.find(c => c.name === 'otros');
+    expect(otros).toBeDefined();
+    expect(otros!.amount).toBe(200);
   });
 
   it('filters out empty groups', () => {
     const txs = [
-      makeTx({ id: 'tx1', date: '2026-01-01', total: 100, category: 'Supermercado' as Transaction['category'] }),
+      makeTx({ id: 'tx1', date: '2026-01-01', total: 100, category: 'Supermarket' as Transaction['category'] }),
     ];
 
     const result = computeStoreGroupsData(txs, 100);
-    // Only food-dining should have data; other groups should be filtered out
+    // Only supermercados should have data; other groups should be filtered out
     expect(result.displayCategories.every(c => c.amount > 0)).toBe(true);
   });
 
   it('sorts by amount descending', () => {
     const txs = [
-      makeTx({ id: 'tx1', date: '2026-01-01', total: 100, category: 'Farmacia' as Transaction['category'] }),
-      makeTx({ id: 'tx2', date: '2026-01-01', total: 500, category: 'Supermercado' as Transaction['category'] }),
+      makeTx({ id: 'tx1', date: '2026-01-01', total: 100, category: 'Pharmacy' as Transaction['category'] }),
+      makeTx({ id: 'tx2', date: '2026-01-01', total: 500, category: 'Supermarket' as Transaction['category'] }),
     ];
 
     const result = computeStoreGroupsData(txs, 600);
-    expect(result.displayCategories[0].name).toBe('food-dining');
-    expect(result.displayCategories[1].name).toBe('health-wellness');
+    expect(result.displayCategories[0].name).toBe('supermercados');
+    expect(result.displayCategories[1].name).toBe('salud-bienestar');
   });
 
   it('returns empty for no transactions', () => {
@@ -241,8 +241,8 @@ describe('computeItemCategoriesData', () => {
         date: '2026-01-01',
         total: 1000,
         items: [
-          { name: 'Milk', price: 300, category: 'Lácteos' },
-          { name: 'Apple', price: 200, category: 'Frutas y Verduras' },
+          { name: 'Milk', price: 300, category: 'DairyEggs' },
+          { name: 'Apple', price: 200, category: 'Produce' },
         ],
       }),
       makeTx({
@@ -250,16 +250,16 @@ describe('computeItemCategoriesData', () => {
         date: '2026-01-02',
         total: 500,
         items: [
-          { name: 'Cheese', price: 500, category: 'Lácteos' },
+          { name: 'Cheese', price: 500, category: 'DairyEggs' },
         ],
       }),
     ];
 
     const result = computeItemCategoriesData(txs);
-    const lacteos = result.displayCategories.find(c => c.name === 'Lácteos');
-    expect(lacteos).toBeDefined();
-    expect(lacteos!.amount).toBe(800); // 300 + 500
-    expect(lacteos!.count).toBe(2); // 2 unique transactions
+    const dairy = result.displayCategories.find(c => c.name === 'DairyEggs');
+    expect(dairy).toBeDefined();
+    expect(dairy!.amount).toBe(800); // 300 + 500
+    expect(dairy!.count).toBe(2); // 2 unique transactions
   });
 
   it('defaults missing item category to "Other"', () => {
@@ -325,15 +325,15 @@ describe('computeItemCategoriesData', () => {
         date: '2026-01-01',
         total: 500,
         items: [
-          { name: 'Milk', price: 200, category: 'Lácteos' },
-          { name: 'Cheese', price: 300, category: 'Lácteos' },
+          { name: 'Milk', price: 200, category: 'DairyEggs' },
+          { name: 'Cheese', price: 300, category: 'DairyEggs' },
         ],
       }),
     ];
 
     const result = computeItemCategoriesData(txs);
-    const lacteos = result.displayCategories.find(c => c.name === 'Lácteos');
-    expect(lacteos!.itemCount).toBe(2);
+    const dairy = result.displayCategories.find(c => c.name === 'DairyEggs');
+    expect(dairy!.itemCount).toBe(2);
   });
 });
 
@@ -349,9 +349,9 @@ describe('computeItemGroupsData', () => {
         date: '2026-01-01',
         total: 1000,
         items: [
-          { name: 'Apple', price: 200, category: 'Frutas y Verduras' },
-          { name: 'Steak', price: 500, category: 'Carnes y Mariscos' },
-          { name: 'Milk', price: 300, category: 'Lácteos' },
+          { name: 'Apple', price: 200, category: 'Produce' },
+          { name: 'Steak', price: 500, category: 'MeatSeafood' },
+          { name: 'Milk', price: 300, category: 'DairyEggs' },
         ],
       }),
     ];
@@ -359,11 +359,11 @@ describe('computeItemGroupsData', () => {
     const result = computeItemGroupsData(txs);
     const foodFresh = result.displayCategories.find(c => c.name === 'food-fresh');
     expect(foodFresh).toBeDefined();
-    expect(foodFresh!.amount).toBe(700); // Frutas(200) + Carnes(500)
+    expect(foodFresh!.amount).toBe(700); // Produce(200) + MeatSeafood(500)
 
     const foodPackaged = result.displayCategories.find(c => c.name === 'food-packaged');
     expect(foodPackaged).toBeDefined();
-    expect(foodPackaged!.amount).toBe(300); // Lácteos
+    expect(foodPackaged!.amount).toBe(300); // DairyEggs
   });
 
   it('maps unknown item categories to "other-item" group', () => {
@@ -377,7 +377,7 @@ describe('computeItemGroupsData', () => {
     ];
 
     const result = computeItemGroupsData(txs);
-    const otherItem = result.displayCategories.find(c => c.name === 'other-item');
+    const otherItem = result.displayCategories.find(c => c.name === 'otros-item');
     expect(otherItem).toBeDefined();
     expect(otherItem!.amount).toBe(100);
   });
@@ -388,7 +388,7 @@ describe('computeItemGroupsData', () => {
         id: 'tx1',
         date: '2026-01-01',
         total: 100,
-        items: [{ name: 'Apple', price: 100, category: 'Frutas y Verduras' }],
+        items: [{ name: 'Apple', price: 100, category: 'Produce' }],
       }),
     ];
 
@@ -403,8 +403,8 @@ describe('computeItemGroupsData', () => {
         date: '2026-01-01',
         total: 500,
         items: [
-          { name: 'Milk', price: 100, category: 'Lácteos' },
-          { name: 'Apple', price: 400, category: 'Frutas y Verduras' },
+          { name: 'Milk', price: 100, category: 'DairyEggs' },
+          { name: 'Apple', price: 400, category: 'Produce' },
         ],
       }),
     ];
@@ -421,8 +421,8 @@ describe('computeItemGroupsData', () => {
         date: '2026-01-01',
         total: 9999, // Ignored
         items: [
-          { name: 'A', price: 600, category: 'Frutas y Verduras' },
-          { name: 'B', price: 400, category: 'Lácteos' },
+          { name: 'A', price: 600, category: 'Produce' },
+          { name: 'B', price: 400, category: 'DairyEggs' },
         ],
       }),
     ];

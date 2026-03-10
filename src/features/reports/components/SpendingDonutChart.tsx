@@ -18,8 +18,8 @@
  * ```tsx
  * <SpendingDonutChart
  *   segments={[
- *     { key: 'food-dining', name: 'Alimentación', value: 35300, percent: 45, emoji: '🍽️' },
- *     { key: 'health-wellness', name: 'Salud', value: 15000, percent: 20, emoji: '💊' },
+ *     { key: 'supermercados', name: 'Supermercados', value: 35300, percent: 45, emoji: '🛒' },
+ *     { key: 'salud-bienestar', name: 'Salud y Bienestar', value: 15000, percent: 20, emoji: '💊' },
  *   ]}
  *   isStoreGroups={true}
  * />

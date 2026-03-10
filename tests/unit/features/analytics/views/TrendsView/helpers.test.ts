@@ -27,21 +27,22 @@ vi.mock('@/config/categoryColors', () => ({
   getCurrentTheme: vi.fn(() => 'light'),
   getCurrentMode: vi.fn(() => 'default'),
   ALL_ITEM_CATEGORY_GROUPS: [
-    'food-fresh', 'food-packaged', 'health-personal',
-    'household', 'nonfood-retail', 'services-fees', 'other-item',
+    'food-fresh', 'food-packaged', 'food-prepared',
+    'salud-cuidado', 'hogar', 'productos-generales',
+    'servicios-cargos', 'vicios', 'otros-item',
   ],
   ITEM_CATEGORY_GROUPS: {
-    'Frutas y Verduras': 'food-fresh',
-    'Carnes y Mariscos': 'food-fresh',
-    'Lácteos': 'food-packaged',
-    'Bebidas': 'food-packaged',
+    'Produce': 'food-fresh',
+    'MeatSeafood': 'food-fresh',
+    'DairyEggs': 'food-packaged',
+    'Beverages': 'food-packaged',
     'Snacks': 'food-packaged',
   } as Record<string, string>,
   ITEM_CATEGORY_TO_KEY: {
-    'Frutas y Verduras': 'Frutas y Verduras',
-    'Carnes y Mariscos': 'Carnes y Mariscos',
-    'Lácteos': 'Lácteos',
-    'Bebidas': 'Bebidas',
+    'Produce': 'Produce',
+    'MeatSeafood': 'MeatSeafood',
+    'DairyEggs': 'DairyEggs',
+    'Beverages': 'Beverages',
     'Snacks': 'Snacks',
   } as Record<string, string>,
 }));
@@ -53,8 +54,8 @@ vi.mock('@/utils/currency', () => ({
 vi.mock('@/utils/categoryAggregation', () => ({
   applyTreemapGrouping: vi.fn(
     (categories: Array<{ percent: number; name: string }>, expandedCount: number) => {
-      const above = categories.filter(c => c.percent > 10 && c.name !== 'Más');
-      const below = categories.filter(c => c.percent <= 10 && c.name !== 'Más');
+      const above = categories.filter(c => c.percent > 10 && c.name !== 'M\u00e1s');
+      const below = categories.filter(c => c.percent <= 10 && c.name !== 'M\u00e1s');
       const display = [...above];
       if (below.length > 0) display.push(below[0]);
       const expanded = below.slice(1, 1 + expandedCount);
@@ -153,8 +154,8 @@ describe('Constants', () => {
     expect(MONTH_NAMES_EN[11]).toBe('December');
   });
 
-  it('CAROUSEL_TITLES_BASE has Distribution and Tendencia', () => {
-    expect(CAROUSEL_TITLES_BASE).toEqual(['Distribución', 'Tendencia']);
+  it('CAROUSEL_TITLES_BASE has Distribuci\u00f3n and Tendencia', () => {
+    expect(CAROUSEL_TITLES_BASE).toEqual(['Distribuci\u00f3n', 'Tendencia']);
   });
 });
 
@@ -285,17 +286,17 @@ describe('filterByPeriod', () => {
 describe('computeAllCategoryData', () => {
   it('aggregates transactions by category', () => {
     const txs: Transaction[] = [
-      makeTx({ date: '2026-01-01', total: 1000, category: 'Supermercado' as Transaction['category'] }),
-      makeTx({ date: '2026-01-02', total: 500, category: 'Supermercado' as Transaction['category'] }),
-      makeTx({ date: '2026-01-03', total: 300, category: 'Restaurante' as Transaction['category'] }),
+      makeTx({ date: '2026-01-01', total: 1000, category: 'Supermarket' as Transaction['category'] }),
+      makeTx({ date: '2026-01-02', total: 500, category: 'Supermarket' as Transaction['category'] }),
+      makeTx({ date: '2026-01-03', total: 300, category: 'Restaurant' as Transaction['category'] }),
     ];
 
     const result = computeAllCategoryData(txs);
     expect(result).toHaveLength(2);
     // Sorted by value descending
-    expect(result[0].name).toBe('Supermercado');
+    expect(result[0].name).toBe('Supermarket');
     expect(result[0].value).toBe(1500);
-    expect(result[1].name).toBe('Restaurante');
+    expect(result[1].name).toBe('Restaurant');
     expect(result[1].value).toBe(300);
   });
 
@@ -333,7 +334,7 @@ describe('computeAllCategoryData', () => {
       makeTx({
         date: '2026-01-01',
         total: 100,
-        category: 'Supermercado' as Transaction['category'],
+        category: 'Supermarket' as Transaction['category'],
         items: [
           { name: 'Apple', price: 50 },
           { name: 'Banana', price: 50 },
@@ -354,11 +355,11 @@ describe('computeAllCategoryData', () => {
 
   it('sets colors from getCategoryPillColors', () => {
     const txs: Transaction[] = [
-      makeTx({ date: '2026-01-01', total: 100, category: 'Supermercado' as Transaction['category'] }),
+      makeTx({ date: '2026-01-01', total: 100, category: 'Supermarket' as Transaction['category'] }),
     ];
     const result = computeAllCategoryData(txs);
-    expect(result[0].color).toBe('Supermercado-bg');
-    expect(result[0].fgColor).toBe('Supermercado-fg');
+    expect(result[0].color).toBe('Supermarket-bg');
+    expect(result[0].fgColor).toBe('Supermarket-fg');
   });
 
   it('returns empty array for no transactions', () => {
@@ -386,8 +387,8 @@ describe('computeItemCategoryData', () => {
         date: '2026-01-01',
         total: 1000,
         items: [
-          { name: 'Milk', price: 300, category: 'Lácteos' },
-          { name: 'Apple', price: 200, category: 'Frutas y Verduras' },
+          { name: 'Milk', price: 300, category: 'DairyEggs' },
+          { name: 'Apple', price: 200, category: 'Produce' },
         ],
       }),
       makeTx({
@@ -395,16 +396,16 @@ describe('computeItemCategoryData', () => {
         date: '2026-01-02',
         total: 500,
         items: [
-          { name: 'Cheese', price: 500, category: 'Lácteos' },
+          { name: 'Cheese', price: 500, category: 'DairyEggs' },
         ],
       }),
     ];
 
     const result = computeItemCategoryData(txs);
-    const lacteos = result.find(c => c.name === 'Lácteos');
-    expect(lacteos).toBeDefined();
-    expect(lacteos!.value).toBe(800); // 300 + 500
-    expect(lacteos!.count).toBe(2); // 2 unique transactions
+    const dairy = result.find(c => c.name === 'DairyEggs');
+    expect(dairy).toBeDefined();
+    expect(dairy!.value).toBe(800); // 300 + 500
+    expect(dairy!.count).toBe(2); // 2 unique transactions
   });
 
   it('normalizes item categories via normalizeItemCategory', () => {
@@ -451,9 +452,9 @@ describe('computeSubcategoryData', () => {
       date: '2026-01-01',
       total: 1000,
       items: [
-        { name: 'Ribeye', price: 500, category: 'Carnes y Mariscos', subcategory: 'Beef' },
-        { name: 'Salmon', price: 300, category: 'Carnes y Mariscos', subcategory: 'Fish' },
-        { name: 'Apple', price: 200, category: 'Frutas y Verduras', subcategory: 'Fruits' },
+        { name: 'Ribeye', price: 500, category: 'MeatSeafood', subcategory: 'Beef' },
+        { name: 'Salmon', price: 300, category: 'MeatSeafood', subcategory: 'Fish' },
+        { name: 'Apple', price: 200, category: 'Produce', subcategory: 'Fruits' },
       ],
     }),
     makeTx({
@@ -461,7 +462,7 @@ describe('computeSubcategoryData', () => {
       date: '2026-01-02',
       total: 400,
       items: [
-        { name: 'Chicken', price: 400, category: 'Carnes y Mariscos', subcategory: 'Poultry' },
+        { name: 'Chicken', price: 400, category: 'MeatSeafood', subcategory: 'Poultry' },
       ],
     }),
   ];
@@ -475,7 +476,7 @@ describe('computeSubcategoryData', () => {
   });
 
   it('filters by item category when provided', () => {
-    const result = computeSubcategoryData(txs, 'Carnes y Mariscos');
+    const result = computeSubcategoryData(txs, 'MeatSeafood');
     // Should only include Beef, Fish, Poultry subcategories
     const names = result.map(c => c.name);
     expect(names).toContain('Beef');
@@ -489,7 +490,7 @@ describe('computeSubcategoryData', () => {
       makeTx({
         date: '2026-01-01',
         total: 100,
-        items: [{ name: 'Milk', price: 100, category: 'Lácteos' }], // no subcategory
+        items: [{ name: 'Milk', price: 100, category: 'DairyEggs' }], // no subcategory
       }),
     ];
     const result = computeSubcategoryData(txsNoSubcat);
@@ -513,27 +514,27 @@ describe('computeItemGroupsForStore', () => {
         id: 'tx1',
         date: '2026-01-01',
         total: 1000,
-        category: 'Supermercado' as Transaction['category'],
+        category: 'Supermarket' as Transaction['category'],
         items: [
-          { name: 'Milk', price: 300, category: 'Lácteos' },
-          { name: 'Apple', price: 200, category: 'Frutas y Verduras' },
+          { name: 'Milk', price: 300, category: 'DairyEggs' },
+          { name: 'Apple', price: 200, category: 'Produce' },
         ],
       }),
       makeTx({
         id: 'tx2',
         date: '2026-01-02',
         total: 500,
-        category: 'Restaurante' as Transaction['category'], // Different store
+        category: 'Restaurant' as Transaction['category'], // Different store
         items: [
-          { name: 'Steak', price: 500, category: 'Carnes y Mariscos' },
+          { name: 'Steak', price: 500, category: 'MeatSeafood' },
         ],
       }),
     ];
 
-    const result = computeItemGroupsForStore(txs, 'Supermercado');
-    // Should only include items from Supermercado transactions
+    const result = computeItemGroupsForStore(txs, 'Supermarket');
+    // Should only include items from Supermarket transactions
     expect(result.length).toBeGreaterThan(0);
-    // Total should not include Restaurante items
+    // Total should not include Restaurant items
     const totalValue = result.reduce((sum, g) => sum + g.value, 0);
     expect(totalValue).toBe(500); // 300 + 200
   });
@@ -543,11 +544,11 @@ describe('computeItemGroupsForStore', () => {
       makeTx({
         date: '2026-01-01',
         total: 100,
-        category: 'Supermercado' as Transaction['category'],
-        items: [{ name: 'Milk', price: 100, category: 'Lácteos' }],
+        category: 'Supermarket' as Transaction['category'],
+        items: [{ name: 'Milk', price: 100, category: 'DairyEggs' }],
       }),
     ];
-    const result = computeItemGroupsForStore(txs, 'Supermercado');
+    const result = computeItemGroupsForStore(txs, 'Supermarket');
     // Only groups with value > 0 should appear
     expect(result.every(g => g.value > 0)).toBe(true);
   });
@@ -557,8 +558,8 @@ describe('computeItemGroupsForStore', () => {
       makeTx({
         date: '2026-01-01',
         total: 100,
-        category: 'Supermercado' as Transaction['category'],
-        items: [{ name: 'Milk', price: 100, category: 'Lácteos' }],
+        category: 'Supermarket' as Transaction['category'],
+        items: [{ name: 'Milk', price: 100, category: 'DairyEggs' }],
       }),
     ];
     const result = computeItemGroupsForStore(txs, 'NonExistent');
@@ -570,14 +571,14 @@ describe('computeItemGroupsForStore', () => {
       makeTx({
         date: '2026-01-01',
         total: 1000,
-        category: 'Supermercado' as Transaction['category'],
+        category: 'Supermarket' as Transaction['category'],
         items: [
-          { name: 'Milk', price: 100, category: 'Lácteos' },
-          { name: 'Apple', price: 500, category: 'Frutas y Verduras' },
+          { name: 'Milk', price: 100, category: 'DairyEggs' },
+          { name: 'Apple', price: 500, category: 'Produce' },
         ],
       }),
     ];
-    const result = computeItemGroupsForStore(txs, 'Supermercado');
+    const result = computeItemGroupsForStore(txs, 'Supermarket');
     for (let i = 1; i < result.length; i++) {
       expect(result[i - 1].value).toBeGreaterThanOrEqual(result[i].value);
     }
@@ -593,23 +594,23 @@ describe('computeItemCategoriesInGroup', () => {
     makeTx({
       date: '2026-01-01',
       total: 1000,
-      category: 'Supermercado' as Transaction['category'],
+      category: 'Supermarket' as Transaction['category'],
       items: [
-        { name: 'Milk', price: 300, category: 'Lácteos' },
-        { name: 'Cheese', price: 200, category: 'Lácteos' },
-        { name: 'Apple', price: 200, category: 'Frutas y Verduras' },
-        { name: 'Steak', price: 300, category: 'Carnes y Mariscos' },
+        { name: 'Milk', price: 300, category: 'DairyEggs' },
+        { name: 'Cheese', price: 200, category: 'DairyEggs' },
+        { name: 'Apple', price: 200, category: 'Produce' },
+        { name: 'Steak', price: 300, category: 'MeatSeafood' },
       ],
     }),
   ];
 
   it('returns item categories belonging to the specified group', () => {
-    // 'food-fresh' group contains 'Frutas y Verduras' and 'Carnes y Mariscos'
+    // 'food-fresh' group contains 'Produce' and 'MeatSeafood'
     const result = computeItemCategoriesInGroup(txs, 'food-fresh');
     const names = result.map(c => c.name);
-    expect(names).toContain('Frutas y Verduras');
-    expect(names).toContain('Carnes y Mariscos');
-    expect(names).not.toContain('Lácteos'); // 'food-packaged' group
+    expect(names).toContain('Produce');
+    expect(names).toContain('MeatSeafood');
+    expect(names).not.toContain('DairyEggs'); // 'food-packaged' group
   });
 
   it('filters by store category when provided', () => {
@@ -617,21 +618,21 @@ describe('computeItemCategoriesInGroup', () => {
       makeTx({
         date: '2026-01-01',
         total: 500,
-        category: 'Supermercado' as Transaction['category'],
-        items: [{ name: 'Apple', price: 200, category: 'Frutas y Verduras' }],
+        category: 'Supermarket' as Transaction['category'],
+        items: [{ name: 'Apple', price: 200, category: 'Produce' }],
       }),
       makeTx({
         date: '2026-01-02',
         total: 300,
-        category: 'Restaurante' as Transaction['category'],
-        items: [{ name: 'Steak', price: 300, category: 'Carnes y Mariscos' }],
+        category: 'Restaurant' as Transaction['category'],
+        items: [{ name: 'Steak', price: 300, category: 'MeatSeafood' }],
       }),
     ];
-    const result = computeItemCategoriesInGroup(txsMultiStore, 'food-fresh', 'Supermercado');
-    // Only Supermercado transactions → only Apple/Frutas
+    const result = computeItemCategoriesInGroup(txsMultiStore, 'food-fresh', 'Supermarket');
+    // Only Supermarket transactions -> only Apple/Produce
     const names = result.map(c => c.name);
-    expect(names).toContain('Frutas y Verduras');
-    expect(names).not.toContain('Carnes y Mariscos'); // Restaurante only
+    expect(names).toContain('Produce');
+    expect(names).not.toContain('MeatSeafood'); // Restaurant only
   });
 
   it('returns all stores when storeCategoryName is undefined', () => {
@@ -715,7 +716,7 @@ describe('computeTrendCategories', () => {
     expect(names).toContain('Small1'); // First below threshold
   });
 
-  it('aggregates remaining into "Más" when 2+ categories remain', () => {
+  it('aggregates remaining into "M\u00e1s" when 2+ categories remain', () => {
     const trends: TrendData[] = [
       makeTrendData('Big', 800, 80),
       makeTrendData('Small1', 50, 5),
@@ -724,13 +725,13 @@ describe('computeTrendCategories', () => {
     ];
 
     const result = computeTrendCategories(trends, 0);
-    const mas = result.displayTrends.find(t => t.name === 'Más');
+    const mas = result.displayTrends.find(t => t.name === 'M\u00e1s');
     expect(mas).toBeDefined();
     // Small2 (30) + Small3 (20) = 50
     expect(mas!.value).toBe(50);
   });
 
-  it('shows single remaining category directly instead of "Más"', () => {
+  it('shows single remaining category directly instead of "M\u00e1s"', () => {
     const trends: TrendData[] = [
       makeTrendData('Big', 800, 80),
       makeTrendData('Small1', 50, 5),
@@ -738,13 +739,13 @@ describe('computeTrendCategories', () => {
     ];
 
     const result = computeTrendCategories(trends, 0);
-    // Small1 = first below, Small2 = only 1 remaining → shown directly
+    // Small1 = first below, Small2 = only 1 remaining -> shown directly
     const names = result.displayTrends.map(t => t.name);
     expect(names).toContain('Small2');
-    expect(names).not.toContain('Más');
+    expect(names).not.toContain('M\u00e1s');
   });
 
-  it('reveals expanded categories from "Más"', () => {
+  it('reveals expanded categories from "M\u00e1s"', () => {
     const trends: TrendData[] = [
       makeTrendData('Big', 800, 80),
       makeTrendData('Small1', 50, 5),
@@ -759,7 +760,7 @@ describe('computeTrendCategories', () => {
     expect(names).toContain('Small2');
   });
 
-  it('aggregates sparkline data for "Más" group', () => {
+  it('aggregates sparkline data for "M\u00e1s" group', () => {
     const trends: TrendData[] = [
       makeTrendData('Big', 800, 80),
       makeTrendData('Small1', 50, 5, { sparkline: [10, 20, 30] }),
@@ -768,13 +769,13 @@ describe('computeTrendCategories', () => {
     ];
 
     const result = computeTrendCategories(trends, 0);
-    const mas = result.displayTrends.find(t => t.name === 'Más');
+    const mas = result.displayTrends.find(t => t.name === 'M\u00e1s');
     expect(mas).toBeDefined();
     // Small2 + Small3 sparklines aggregated: [5+3, 10+6, 15+9] = [8, 16, 24]
     expect(mas!.sparkline).toEqual([8, 16, 24]);
   });
 
-  it('calculates change for "Más" group via calculateChange', () => {
+  it('calculates change for "M\u00e1s" group via calculateChange', () => {
     const trends: TrendData[] = [
       makeTrendData('Big', 800, 80),
       makeTrendData('Small1', 50, 5, { previousValue: 40 }),
@@ -783,28 +784,28 @@ describe('computeTrendCategories', () => {
     ];
 
     const result = computeTrendCategories(trends, 0);
-    const mas = result.displayTrends.find(t => t.name === 'Más');
+    const mas = result.displayTrends.find(t => t.name === 'M\u00e1s');
     expect(mas).toBeDefined();
-    // Más previousValue = 20 + 10 = 30
+    // M\u00e1s previousValue = 20 + 10 = 30
     expect(mas!.previousValue).toBe(30);
   });
 
-  it('excludes pre-existing "Más" entries from threshold check', () => {
+  it('excludes pre-existing "M\u00e1s" entries from threshold check', () => {
     const trends: TrendData[] = [
       makeTrendData('Big', 800, 80),
-      makeTrendData('Más', 100, 10), // pre-existing
+      makeTrendData('M\u00e1s', 100, 10), // pre-existing
       makeTrendData('Small1', 60, 6),
       makeTrendData('Small2', 40, 4),
     ];
 
     const result = computeTrendCategories(trends, 0);
-    // Pre-existing "Más" should be excluded from above/below logic
+    // Pre-existing "M\u00e1s" should be excluded from above/below logic
     const displayNames = result.displayTrends.map(t => t.name);
     expect(displayNames).toContain('Big');
     expect(displayNames).toContain('Small1'); // first below threshold
   });
 
-  it('sets canExpand true only when 2+ categories would go to Más', () => {
+  it('sets canExpand true only when 2+ categories would go to M\u00e1s', () => {
     const trends: TrendData[] = [
       makeTrendData('Big', 800, 80),
       makeTrendData('Small1', 50, 5),
@@ -830,7 +831,7 @@ describe('computeTrendCategories', () => {
     expect(result.canCollapse).toBe(true);
   });
 
-  it('merges transactionIds for "Más" group', () => {
+  it('merges transactionIds for "M\u00e1s" group', () => {
     const trends: TrendData[] = [
       makeTrendData('Big', 800, 80),
       makeTrendData('Small1', 50, 5, { transactionIds: new Set(['t1']) }),
@@ -839,9 +840,9 @@ describe('computeTrendCategories', () => {
     ];
 
     const result = computeTrendCategories(trends, 0);
-    const mas = result.displayTrends.find(t => t.name === 'Más');
+    const mas = result.displayTrends.find(t => t.name === 'M\u00e1s');
     expect(mas).toBeDefined();
-    // t2, t3, t4 = 3 unique (Small2 + Small3 go to Más)
+    // t2, t3, t4 = 3 unique (Small2 + Small3 go to M\u00e1s)
     expect(mas!.transactionIds?.size).toBe(3);
     expect(mas!.count).toBe(3);
   });

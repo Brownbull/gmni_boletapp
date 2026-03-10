@@ -140,8 +140,8 @@ describe('DashboardView — Carousel', () => {
   describe('AC#1a: Treemap View (Slide 0)', () => {
     it('should display top categories in treemap grid', () => {
       renderDashboardView({ allTransactions: createCategoryTransactions() });
-      expect(screen.getByText('Supermercado')).toBeInTheDocument();
-      expect(screen.getByText('Restaurante')).toBeInTheDocument();
+      expect(screen.getByText('Supermarket')).toBeInTheDocument();
+      expect(screen.getByText('Restaurant')).toBeInTheDocument();
     });
 
     it.skip('should navigate to filtered transactions when treemap cell is clicked', () => {
@@ -176,7 +176,7 @@ describe('DashboardView — Carousel', () => {
       const now = new Date();
       const currentMonth = now.toISOString().slice(0, 7);
       renderDashboardView({
-        allTransactions: [{ id: 'tx-1', merchant: 'Store', alias: 'S', date: `${currentMonth}-15`, total: 100, category: 'Supermercado' }],
+        allTransactions: [{ id: 'tx-1', merchant: 'Store', alias: 'S', date: `${currentMonth}-15`, total: 100, category: 'Supermarket' }],
       });
       fireEvent.click(screen.getByTestId('carousel-indicator-1'));
       expect(screen.getByText('needMoreCategories')).toBeInTheDocument();

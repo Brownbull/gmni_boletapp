@@ -173,33 +173,33 @@ describe('useCategoryStatistics', () => {
       const { result } = renderHook(() =>
         useCategoryStatistics({
           transactions: mockTransactions,
-          categoryName: 'food-dining',
+          categoryName: 'supermercados',
           categoryType: 'store-group',
           totalSpentAllCategories,
         })
       );
 
-      // 'food-dining' group includes Supermercado and Restaurante
+      // 'supermercados' group includes Supermarket (3 txns), not Restaurant
       expect(result.current).not.toBeNull();
-      expect(result.current!.transactionCount).toBe(4); // All 4 transactions
+      expect(result.current!.transactionCount).toBe(3);
     });
   });
 
   describe('item-category filtering', () => {
-    // Story 14.44: categoryName must be in English (matching computeItemCategoryData output)
-    // Items are stored with Spanish names, but normalizeItemCategory converts them to English
+    // Story 14.44: categoryName must be in V4 PascalCase (matching computeItemCategoryData output)
+    // Items are stored with Spanish names, but normalizeItemCategory converts them to V4 keys
     it('filters transactions containing matching item category', () => {
       const { result } = renderHook(() =>
         useCategoryStatistics({
           transactions: mockTransactions,
-          categoryName: 'Meat & Seafood', // English - normalized from 'Carnes y Mariscos'
+          categoryName: 'MeatSeafood', // V4 PascalCase - normalized from 'Carnes y Mariscos'
           categoryType: 'item-category',
           totalSpentAllCategories,
         })
       );
 
       expect(result.current).not.toBeNull();
-      // 2 transactions have items normalized to "Meat & Seafood": tx-2 and tx-4
+      // 2 transactions have items normalized to "MeatSeafood": tx-2 and tx-4
       expect(result.current!.transactionCount).toBe(2);
     });
 
@@ -207,7 +207,7 @@ describe('useCategoryStatistics', () => {
       const { result } = renderHook(() =>
         useCategoryStatistics({
           transactions: mockTransactions,
-          categoryName: 'Meat & Seafood', // English - normalized from 'Carnes y Mariscos'
+          categoryName: 'MeatSeafood', // V4 PascalCase - normalized from 'Carnes y Mariscos'
           categoryType: 'item-category',
           totalSpentAllCategories,
         })
@@ -221,11 +221,11 @@ describe('useCategoryStatistics', () => {
     });
 
     // Story 14.44: Verify normalization handles Spanish item categories correctly
-    it('normalizes Spanish item categories to English for matching', () => {
+    it('normalizes Spanish item categories to V4 keys for matching', () => {
       const { result } = renderHook(() =>
         useCategoryStatistics({
           transactions: mockTransactions,
-          categoryName: 'Prepared Food', // English for 'Comida Preparada'
+          categoryName: 'PreparedFood', // V4 PascalCase for 'Comida Preparada'
           categoryType: 'item-category',
           totalSpentAllCategories,
         })

@@ -319,7 +319,7 @@ export function useNavigationHandlers(props: UseNavigationHandlersProps): UseNav
             // Store category filter (e.g., "Supermarket")
             categoryFilter = { level: 'category', category: payload.category };
         } else if (payload.storeGroup) {
-            // Store group filter (e.g., "food-dining") - expand to all categories in the group
+            // Store group filter (e.g., "supermercados") - expand to all categories in the group
             const storeCategories = expandStoreCategoryGroup(payload.storeGroup as StoreCategoryGroup);
             categoryFilter = { level: 'category', category: storeCategories.join(',') };
         } else if (payload.itemGroup) {
