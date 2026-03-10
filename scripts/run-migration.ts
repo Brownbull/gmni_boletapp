@@ -114,7 +114,7 @@ const dryRun = !args.includes('--live');
 const isProduction = args.includes('--app') && args[args.indexOf('--app') + 1] === 'production';
 const appId = isProduction ? 'boletapp-d609f' : 'boletapp-staging';
 const keyPath = isProduction
-    ? 'scripts/keys/serviceAccountKey.production.json'
+    ? 'scripts/keys/serviceAccountKey.json'
     : 'scripts/keys/serviceAccountKey.staging.json';
 const BATCH_SIZE = 500;
 
