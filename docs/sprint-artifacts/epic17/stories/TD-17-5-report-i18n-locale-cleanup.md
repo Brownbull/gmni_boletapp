@@ -1,6 +1,6 @@
 # Tech Debt Story TD-17-5: Report i18n — Locale Cleanup & Minor Gaps
 
-Status: ready-for-dev
+Status: done
 
 > **Source:** KDBP Code Review (2026-03-10) on story TD-17-4
 > **Priority:** LOW | **Estimated Effort:** 2 points
@@ -26,15 +26,34 @@ TD-17-4 review found 3 deferred items plus 1 pre-existing deferral:
 ## Tasks
 
 ### Task 1: Dynamic locale for month names (2 subtasks)
-- [ ] 1.1: Add locale mapping (`Language → locale string`) and use in `reportInsights.ts:260-261,392-393`
-- [ ] 1.2: Use same mapping in `reportYearGeneration.ts:161,287`
+- [x] 1.1: Add locale mapping (`Language → locale string`) and use in `reportInsights.ts:260-261,392-393`
+- [x] 1.2: Use same mapping in `reportYearGeneration.ts:161,287`
 
 ### Task 2: Minor i18n gaps (2 subtasks)
-- [ ] 2.1: Split or document `reportFirstWeekly` dual-purpose key
-- [ ] 2.2: Replace `'Other'` fallback with translation key in `reportCategoryGrouping.ts`
+- [x] 2.1: Split or document `reportFirstWeekly` dual-purpose key
+- [x] 2.2: Replace `'Other'` fallback with translation key in `reportCategoryGrouping.ts`
+
+## Deferred Items
+
+| TD Story | Description | Priority | Action |
+|----------|-------------|----------|--------|
+| [TD-17-6](./TD-17-6-report-locale-remaining-strings.md) | Hardcoded `S` week prefix + `"Dic"` month abbreviation | LOW | CREATED |
+| [TD-17-7](./TD-17-7-report-i18n-test-coverage.md) | Locale test coverage gaps (3 functions + fallback path) | LOW | CREATED |
+| translations.ts split | Growing data file (800+ lines) | LOW | ALREADY_TRACKED (TD-17-4) |
 
 ## Dev Notes
 - Source story: [TD-17-4](./TD-17-4-report-i18n-hardcoded-strings.md)
 - Review findings: #3, #5, #6
 - Files affected: `src/features/reports/utils/reportInsights.ts`, `src/features/reports/utils/reportYearGeneration.ts`, `src/features/reports/utils/reportCategoryGrouping.ts`, `src/utils/translations.ts`
 - translations.ts split deferred to separate epic (file is data, not logic — excluded from size hooks)
+
+## Senior Developer Review (KDBP)
+- **Date:** 2026-03-10
+- **Agents:** code-reviewer (sonnet), tdd-guide (sonnet)
+- **Classification:** SIMPLE
+- **Score:** 7.5/10 (code) · 5/10 (tests) → 6.25/10 overall
+- **Outcome:** APPROVE with 5 quick fixes applied
+- **Quick fixes:** DRY LANG_LOCALE, import order, weekly loop hoisting, comment style, test assertion consistency
+- **TD stories created:** TD-17-6 (remaining locale strings), TD-17-7 (test coverage gaps)
+- **Scope alerts:** categoryColors.ts deletion + firestore.staging.rules rewrite are out-of-scope (from other work)
+<!-- CITED: L2-004 (DRY), L2-008 (i18n completeness) -->

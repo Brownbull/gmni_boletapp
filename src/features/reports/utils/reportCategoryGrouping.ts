@@ -40,6 +40,13 @@ import { calculateTotal } from './reportDateUtils';
 /** Threshold below which spending change is considered neutral (%) */
 export const NEUTRAL_THRESHOLD = 2;
 
+/**
+ * Fallback item category key when a scanned item has no category assigned.
+ * This is a data key, not a display string — display translation happens
+ * downstream via translateItemGroup('Other', lang) which returns 'Otro'/'Other'.
+ */
+const FALLBACK_ITEM_CATEGORY = 'Other' as const;
+
 /** Item count labels — kept local; translations.ts is a flat data file excluded from size hooks */
 const ITEM_COUNT_LABELS: Record<Language, { singular: string; plural: string }> = {
   es: { singular: 'ítem', plural: 'ítems' },
@@ -269,7 +276,7 @@ function getItemBreakdown(
     if (!tx.items || tx.items.length === 0) continue;
 
     for (const item of tx.items) {
-      const category = item.category || 'Other';
+      const category = item.category || FALLBACK_ITEM_CATEGORY;
       const existing = itemMap.get(category) || { amount: 0, count: 0 };
       // Story 14.24: price is total for line item, qty is informational only
       existing.amount += item.price;
@@ -284,7 +291,7 @@ function getItemBreakdown(
     for (const tx of previousTransactions) {
       if (!tx.items || tx.items.length === 0) continue;
       for (const item of tx.items) {
-        const category = item.category || 'Other';
+        const category = item.category || FALLBACK_ITEM_CATEGORY;
         const existing = prevItemMap.get(category) || 0;
         // Story 14.24: price is total for line item, qty is informational only
         prevItemMap.set(category, existing + item.price);

@@ -868,6 +868,8 @@ export const TRANSLATIONS = {
         reportTotalMonthly: "Total for the month",
         reportTotalQuarterly: "Total for the quarter",
         reportTotalYearly: "Total for the year",
+        // Dual-use (TD-17-5): secondaryValue on dashboard card + firstLabel on report row/overlay
+        // Same semantic context — split unnecessary
         reportFirstWeekly: "Your first week",
         reportFirstMonthly: "Your first month",
         reportFirstQuarterly: "Your first quarter",
@@ -887,6 +889,7 @@ export const TRANSLATIONS = {
         reportTransactionsViewHistory: "{count} transactions, view in history",
         // Report generation i18n (Story TD-17-4)
         reportWeekLabel: "Week",
+        reportWeekAbbrev: "W",
         reportThisWeek: "This Week",
         reportLastWeek: "last week",
         reportNoTransactionsYet: "No transactions yet",
@@ -1799,6 +1802,8 @@ export const TRANSLATIONS = {
         reportTotalMonthly: "Total del mes",
         reportTotalQuarterly: "Total del trimestre",
         reportTotalYearly: "Total del año",
+        // Dual-use (TD-17-5): secondaryValue on dashboard card + firstLabel on report row/overlay
+        // Same semantic context — split unnecessary
         reportFirstWeekly: "Tu primera semana",
         reportFirstMonthly: "Tu primer mes",
         reportFirstQuarterly: "Tu primer trimestre",
@@ -1818,6 +1823,7 @@ export const TRANSLATIONS = {
         reportTransactionsViewHistory: "{count} transacciones, ver en historial",
         // Report generation i18n (Story TD-17-4)
         reportWeekLabel: "Semana",
+        reportWeekAbbrev: "S",
         reportThisWeek: "Esta Semana",
         reportLastWeek: "la semana pasada",
         reportNoTransactionsYet: "Sin transacciones todavía",

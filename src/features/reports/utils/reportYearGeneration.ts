@@ -37,6 +37,7 @@ import { getSettingsState } from '@shared/stores/useSettingsStore';
 import { TRANSLATIONS } from '@/utils/translations';
 import type { ReportRowData } from './reportGeneration';
 import {
+  LANG_LOCALE,
   generateMonthlyPersonaInsight,
   generateMonthlyHighlights,
   generateQuarterlyHighlights,
@@ -120,6 +121,10 @@ function generateWeeklyReportsForYear(
     currentYearWeeksMap.set(weekNum, txs);
   });
 
+  const lang = getSettingsState().lang;
+  const locale = LANG_LOCALE[lang];
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
+
   for (const { weekNum, transactions: weekTransactions } of yearWeeks) {
     const isCurrentWeek = year === currentYear && weekNum === currentWeekNum;
     if (isCurrentWeek) continue;
@@ -140,10 +145,10 @@ function generateWeeklyReportsForYear(
 
     if (weekNum === 1) {
       prevWeekTransactions = prevYearWeeksMap.get(52) || prevYearWeeksMap.get(53) || [];
-      comparisonLabel = `vs S52 ${year - 1}`;
+      comparisonLabel = `vs ${t.reportWeekAbbrev}52 ${year - 1}`;
     } else {
       prevWeekTransactions = currentYearWeeksMap.get(weekNum - 1) || [];
-      comparisonLabel = `vs S${weekNum - 1}`;
+      comparisonLabel = `vs ${t.reportWeekAbbrev}${weekNum - 1}`;
     }
 
     const prevTotalSpent = calculateTotal(prevWeekTransactions);
@@ -158,10 +163,7 @@ function generateWeeklyReportsForYear(
 
     const thursday = new Date(weekStart);
     thursday.setDate(thursday.getDate() + 3);
-    const monthName = thursday.toLocaleDateString('es-CL', { month: 'long' });
-
-    const lang = getSettingsState().lang;
-    const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
+    const monthName = thursday.toLocaleDateString(locale, { month: 'long' });
     let personaInsight: string | undefined;
     if (categories.length > 0) {
       const topCategory = categories[0];
@@ -256,6 +258,10 @@ function generateMonthlyReportsForYear(
   const prevYearDecemberCategories =
     prevYearDecemberTransactions.length > 0 ? getCategoryBreakdown(prevYearDecemberTransactions) : undefined;
 
+  const lang = getSettingsState().lang;
+  const locale = LANG_LOCALE[lang];
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
+
   for (const month of sortedMonths) {
     if (year === currentYear && month === currentMonth) continue;
 
@@ -270,12 +276,14 @@ function generateMonthlyReportsForYear(
     if (month === 0) {
       prevMonthTransactions = prevYearDecemberTransactions;
       prevCategories = prevYearDecemberCategories;
-      comparisonLabel = `vs Dic ${year - 1}`;
+      const decDate = new Date(year - 1, 11, 1);
+      const decName = decDate.toLocaleDateString(locale, { month: 'short' });
+      comparisonLabel = `vs ${decName.charAt(0).toUpperCase() + decName.slice(1)} ${year - 1}`;
     } else {
       prevMonthTransactions = monthsWithData.get(month - 1) || [];
       prevCategories = monthCategories.get(month - 1);
       const prevMonthDate = new Date(year, month - 1, 1);
-      const prevMonthName = prevMonthDate.toLocaleDateString('es-CL', { month: 'short' });
+      const prevMonthName = prevMonthDate.toLocaleDateString(locale, { month: 'short' });
       comparisonLabel = `vs ${prevMonthName.charAt(0).toUpperCase() + prevMonthName.slice(1)}`;
     }
 
@@ -284,16 +292,13 @@ function generateMonthlyReportsForYear(
     const isFirst = prevMonthTransactions.length === 0;
 
     const monthDate = new Date(year, month, 1);
-    const monthName = monthDate.toLocaleDateString('es-CL', { month: 'long' });
+    const monthName = monthDate.toLocaleDateString(locale, { month: 'long' });
     const monthNameCapitalized = monthName.charAt(0).toUpperCase() + monthName.slice(1);
 
     const personaInsight = generateMonthlyPersonaInsight(categories, trend, Math.abs(trendPercent), isFirst, month, prevCategories);
     const highlights = generateMonthlyHighlights(categories, monthTransactions, year, month);
     const transactionGroups = sortGroupsAlphabetically(groupCategoriesByStoreGroup(categories));
     const itemGroups = sortGroupsAlphabetically(groupItemsByItemCategory(monthTransactions, prevMonthTransactions));
-
-    const lang = getSettingsState().lang;
-    const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
     reports.push({
       id: `monthly-${year}-${month}`,
       title: monthNameCapitalized,

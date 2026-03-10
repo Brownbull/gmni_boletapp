@@ -34,6 +34,12 @@ import { getSettingsState } from '@shared/stores/useSettingsStore';
  * Holiday/seasonal months in Chile (for contextual insights)
  * Bilingual: keyed by month index, values per language.
  */
+/** Maps Language to BCP 47 locale string for toLocaleDateString calls */
+export const LANG_LOCALE: Record<Language, string> = {
+  es: 'es-CL',
+  en: 'en-US',
+};
+
 const HOLIDAY_MONTHS: Record<number, Record<Language, string>> = {
   0: { es: 'verano', en: 'summer' },
   1: { es: 'verano', en: 'summer' },
@@ -139,10 +145,12 @@ export function generateMonthlyPersonaInsight(
  * Example: "1-7 Ene" or "28 Dic - 3 Ene" (cross-month)
  */
 export function formatWeekDateRange(weekStart: Date, weekEnd: Date): string {
+  const lang = getSettingsState().lang;
+  const locale = LANG_LOCALE[lang];
   const startDay = weekStart.getDate();
   const endDay = weekEnd.getDate();
-  const startMonth = weekStart.toLocaleDateString('es-CL', { month: 'short' });
-  const endMonth = weekEnd.toLocaleDateString('es-CL', { month: 'short' });
+  const startMonth = weekStart.toLocaleDateString(locale, { month: 'short' });
+  const endMonth = weekEnd.toLocaleDateString(locale, { month: 'short' });
 
   // Capitalize first letter of month
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).replace('.', '');
@@ -244,6 +252,7 @@ export function generateQuarterlyHighlights(
   prevQuarterCategories?: CategoryBreakdown[]
 ): Array<{ label: string; value: string }> {
   const lang = getSettingsState().lang;
+  const locale = LANG_LOCALE[lang];
   const tr = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
   const highlights: Array<{ label: string; value: string }> = [];
 
@@ -256,9 +265,8 @@ export function generateQuarterlyHighlights(
     const existing = monthlyTotals.get(month) || { total: 0, name: '' };
     if (!existing.name) {
       const monthDate = new Date(year, month, 1);
-      existing.name =
-        monthDate.toLocaleDateString('es-CL', { month: 'long' }).charAt(0).toUpperCase() +
-        monthDate.toLocaleDateString('es-CL', { month: 'long' }).slice(1);
+      const monthLong = monthDate.toLocaleDateString(locale, { month: 'long' });
+      existing.name = monthLong.charAt(0).toUpperCase() + monthLong.slice(1);
     }
     monthlyTotals.set(month, { total: existing.total + tx.total, name: existing.name });
   }
@@ -376,6 +384,7 @@ export function generateYearlyHighlights(
   year: number
 ): Array<{ label: string; value: string }> {
   const lang = getSettingsState().lang;
+  const locale = LANG_LOCALE[lang];
   const tr = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
   const highlights: Array<{ label: string; value: string }> = [];
 
@@ -388,9 +397,8 @@ export function generateYearlyHighlights(
     const existing = monthlyTotals.get(month) || { total: 0, name: '' };
     if (!existing.name) {
       const monthDate = new Date(year, month, 1);
-      existing.name =
-        monthDate.toLocaleDateString('es-CL', { month: 'long' }).charAt(0).toUpperCase() +
-        monthDate.toLocaleDateString('es-CL', { month: 'long' }).slice(1);
+      const monthLong = monthDate.toLocaleDateString(locale, { month: 'long' });
+      existing.name = monthLong.charAt(0).toUpperCase() + monthLong.slice(1);
     }
     monthlyTotals.set(month, { total: existing.total + tx.total, name: existing.name });
   }
