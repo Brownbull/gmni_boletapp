@@ -350,10 +350,9 @@ describe('Weekly comparisonLabel — locale-aware week prefix (TD-17-6, AC-1)', 
 
     const reports = getAvailableReportsForYear(transactions, 'weekly', 2025);
     const week2Report = reports.find((r) => r.id === 'weekly-2025-2');
-    if (week2Report) {
-      expect(week2Report.comparisonLabel).toMatch(/^vs W\d/);
-      expect(week2Report.comparisonLabel).not.toMatch(/^vs S\d/);
-    }
+    expect(week2Report).toBeDefined();
+    expect(week2Report!.comparisonLabel).toMatch(/^vs W\d/);
+    expect(week2Report!.comparisonLabel).not.toMatch(/^vs S\d/);
   });
 });
 

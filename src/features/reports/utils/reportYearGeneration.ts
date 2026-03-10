@@ -371,6 +371,9 @@ function generateQuarterlyReportsForYear(
   const prevYearQ4Categories =
     prevYearQ4Transactions.length > 0 ? getCategoryBreakdown(prevYearQ4Transactions) : undefined;
 
+  const lang = getSettingsState().lang;
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
+
   for (const quarter of sortedQuarters) {
     if (year === currentYear && quarter === currentQuarter) continue;
 
@@ -404,8 +407,6 @@ function generateQuarterlyReportsForYear(
     const transactionGroups = sortGroupsAlphabetically(groupCategoriesByStoreGroup(categories));
     const itemGroups = sortGroupsAlphabetically(groupItemsByItemCategory(quarterTransactions, prevQuarterTransactions));
 
-    const lang = getSettingsState().lang;
-    const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
     reports.push({
       id: `quarterly-${year}-${quarter}`,
       title: `Q${quarter} ${year}`,

@@ -1,6 +1,6 @@
 # Tech Debt Story TD-17-6: Report i18n — Remaining Hardcoded Locale Strings
 
-Status: review
+Status: done
 
 > **Source:** KDBP Code Review (2026-03-10) on story TD-17-5
 > **Priority:** LOW | **Estimated Effort:** 1 point
@@ -19,6 +19,17 @@ As a **developer**, I want **remaining hardcoded locale strings in report genera
 ### Task 1: Locale-aware week and month abbreviations (2 subtasks)
 - [x] 1.1: Replace `S` prefix in `reportYearGeneration.ts:144,147` with translation key or locale-derived abbreviation
 - [x] 1.2: Replace hardcoded `"Dic"` in `reportYearGeneration.ts:284` with `toLocaleDateString(locale, { month: 'short' })` for December of previous year
+
+## Senior Developer Review (KDBP)
+
+- **Date:** 2026-03-10
+- **Classification:** TRIVIAL
+- **Agents:** code-reviewer (sonnet)
+- **Score:** 8.5/10 → APPROVE
+- **Quick fixes:** Quarterly loop `lang`/`t` hoisting (#1), cross-year test assertion strengthening (#4). Finding #3 (es-CL trailing period) dismissed as false positive — all short months have periods in es-CL locale.
+- **TD stories:** 0 (deferred items #2 DRY capitalize and #5 LANG_LOCALE coupling are pre-existing, not regressions)
+
+<!-- CITED: L2-004 (DRY), L2-008 (i18n completeness) -->
 
 ## Dev Notes
 - Source story: [TD-17-5](./TD-17-5-report-i18n-locale-cleanup.md)
