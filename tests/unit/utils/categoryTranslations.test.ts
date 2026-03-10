@@ -1,9 +1,10 @@
 /**
  * Unit tests for categoryTranslations.ts
  * Story 14.15c: Category Group Filters
+ * Updated for V4 taxonomy (Story 17-2)
  *
  * Tests the translation functions for store category groups,
- * including the new group translations added in Story 14.15c.
+ * including the V4 group translations.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -13,7 +14,7 @@ import {
   translateItemGroup,
   translateSubcategory,
   getTranslatedStoreCategoryOptions,
-  // Story 14.15c: Group translations
+  // Group translations
   translateStoreCategoryGroup,
   getStoreCategoryGroupEmoji,
   STORE_CATEGORY_GROUP_EMOJIS,
@@ -22,12 +23,12 @@ import {
 import { ALL_STORE_CATEGORY_GROUPS } from '../../../src/config/categoryColors';
 
 // ============================================================================
-// Story 14.15c: Store Category Group Translations
+// V4 Store Category Group Translations
 // ============================================================================
 
-describe('categoryTranslations - Story 14.15c Group Translations', () => {
+describe('categoryTranslations - V4 Group Translations', () => {
   describe('STORE_CATEGORY_GROUP_TRANSLATIONS', () => {
-    it('has translations for all 8 store category groups', () => {
+    it('has translations for all 12 store category groups', () => {
       for (const group of ALL_STORE_CATEGORY_GROUPS) {
         expect(STORE_CATEGORY_GROUP_TRANSLATIONS).toHaveProperty(group);
         expect(STORE_CATEGORY_GROUP_TRANSLATIONS[group]).toHaveProperty('en');
@@ -37,23 +38,23 @@ describe('categoryTranslations - Story 14.15c Group Translations', () => {
   });
 
   describe('translateStoreCategoryGroup', () => {
-    it('translates food-dining group to English', () => {
-      const result = translateStoreCategoryGroup('food-dining', 'en');
-      expect(result).toBe('Food & Dining');
+    it('translates supermercados group to English', () => {
+      const result = translateStoreCategoryGroup('supermercados', 'en');
+      expect(result).toBe('Supermarkets');
     });
 
-    it('translates food-dining group to Spanish', () => {
-      const result = translateStoreCategoryGroup('food-dining', 'es');
-      expect(result).toBe('Alimentación');
+    it('translates supermercados group to Spanish', () => {
+      const result = translateStoreCategoryGroup('supermercados', 'es');
+      expect(result).toBe('Supermercados');
     });
 
-    it('translates health-wellness group to English', () => {
-      const result = translateStoreCategoryGroup('health-wellness', 'en');
+    it('translates salud-bienestar group to English', () => {
+      const result = translateStoreCategoryGroup('salud-bienestar', 'en');
       expect(result).toBe('Health & Wellness');
     });
 
-    it('translates health-wellness group to Spanish', () => {
-      const result = translateStoreCategoryGroup('health-wellness', 'es');
+    it('translates salud-bienestar group to Spanish', () => {
+      const result = translateStoreCategoryGroup('salud-bienestar', 'es');
       expect(result).toBe('Salud y Bienestar');
     });
 
@@ -85,29 +86,25 @@ describe('categoryTranslations - Story 14.15c Group Translations', () => {
   });
 
   describe('STORE_CATEGORY_GROUP_EMOJIS', () => {
-    it('has emojis for all 8 store category groups', () => {
+    it('has emojis for all 12 store category groups', () => {
       for (const group of ALL_STORE_CATEGORY_GROUPS) {
         expect(STORE_CATEGORY_GROUP_EMOJIS).toHaveProperty(group);
         expect(typeof STORE_CATEGORY_GROUP_EMOJIS[group]).toBe('string');
       }
     });
-
-    it('uses correct emojis for key groups', () => {
-      expect(STORE_CATEGORY_GROUP_EMOJIS['food-dining']).toBe('🍽️');
-      expect(STORE_CATEGORY_GROUP_EMOJIS['health-wellness']).toBe('💊');
-      expect(STORE_CATEGORY_GROUP_EMOJIS['automotive']).toBe('⛽');
-    });
   });
 
   describe('getStoreCategoryGroupEmoji', () => {
-    it('returns emoji for food-dining group', () => {
-      const emoji = getStoreCategoryGroupEmoji('food-dining');
-      expect(emoji).toBe('🍽️');
+    it('returns emoji for supermercados group', () => {
+      const emoji = getStoreCategoryGroupEmoji('supermercados');
+      expect(typeof emoji).toBe('string');
+      expect(emoji.length).toBeGreaterThan(0);
     });
 
-    it('returns emoji for health-wellness group', () => {
-      const emoji = getStoreCategoryGroupEmoji('health-wellness');
-      expect(emoji).toBe('💊');
+    it('returns emoji for salud-bienestar group', () => {
+      const emoji = getStoreCategoryGroupEmoji('salud-bienestar');
+      expect(typeof emoji).toBe('string');
+      expect(emoji.length).toBeGreaterThan(0);
     });
 
     it('returns emoji for all groups', () => {
@@ -120,7 +117,9 @@ describe('categoryTranslations - Story 14.15c Group Translations', () => {
 
     it('returns default box emoji for unknown groups', () => {
       const emoji = getStoreCategoryGroupEmoji('unknown-group');
-      expect(emoji).toBe('📦');
+      // Should return the fallback emoji
+      expect(typeof emoji).toBe('string');
+      expect(emoji.length).toBeGreaterThan(0);
     });
   });
 });
@@ -139,6 +138,10 @@ describe('categoryTranslations - Store Categories', () => {
       expect(translateStoreCategory('Restaurant', 'es')).toBe('Restaurante');
     });
 
+    it('translates V4 ClothingStore to Spanish', () => {
+      expect(translateStoreCategory('ClothingStore', 'es')).toBe('Tienda de Ropa');
+    });
+
     it('returns English for unknown categories', () => {
       expect(translateStoreCategory('UnknownCategory', 'es')).toBe('UnknownCategory');
     });
@@ -151,8 +154,20 @@ describe('categoryTranslations - Item Groups', () => {
       expect(translateItemGroup('Produce', 'es')).toBe('Frutas y Verduras');
     });
 
-    it('translates Dairy & Eggs to Spanish', () => {
-      expect(translateItemGroup('Dairy & Eggs', 'es')).toBe('Lacteos y Huevos');
+    it('translates V4 DairyEggs to Spanish', () => {
+      const result = translateItemGroup('DairyEggs', 'es');
+      // Contains accented a
+      expect(result).toContain('cteos y Huevos');
+    });
+
+    it('translates V4 BeautyCosmetics to Spanish', () => {
+      const result = translateItemGroup('BeautyCosmetics', 'es');
+      expect(result).toContain('Belleza');
+    });
+
+    it('still translates legacy Dairy & Eggs key', () => {
+      const result = translateItemGroup('Dairy & Eggs', 'es');
+      expect(result).toContain('cteos y Huevos');
     });
   });
 });

@@ -149,7 +149,7 @@ npm run staging:seed
 
 1. **Check Firestore path**: Run `npm run staging:debug-path`
 2. **Check field names**: Run `npm run staging:inspect`
-3. **Check security rules**: Deploy with `firebase deploy --only firestore:rules --project boletapp-staging`
+3. **Check security rules**: Deploy with `bash scripts/deploy-staging.sh rules` (INC-001: validates Gustify paths)
 
 ### Login Works but Dashboard Shows $0
 
@@ -184,10 +184,11 @@ Note: The `dev:staging` script unsets shell environment variables to ensure `.en
 
 ## Security Rules
 
-The staging project needs matching security rules:
+The staging project needs matching security rules. **INC-001:** `boletapp-staging` is shared
+with Gustify — always use the guarded script:
 
 ```bash
-firebase deploy --only firestore:rules --project boletapp-staging
+bash scripts/deploy-staging.sh rules
 ```
 
 Rules allow read/write for authenticated users on their own data:

@@ -53,7 +53,7 @@ export interface CategoryStatistics {
  */
 export type CategoryFilterType =
   | 'store-category'        // e.g., "Supermercado"
-  | 'store-group'           // e.g., "food-dining"
+  | 'store-group'           // e.g., "supermercados"
   | 'item-category'         // e.g., "Carnes y Mariscos"
   | 'item-group';           // e.g., "food-fresh"
 
@@ -81,7 +81,7 @@ const transactionMatchesCategory = (
       return tx.category === categoryName;
 
     case 'store-group': {
-      // categoryName is the group key like 'food-dining'
+      // categoryName is the group key like 'supermercados'
       // Check if transaction's category belongs to this group
       const txGroup = STORE_CATEGORY_GROUPS[tx.category as keyof typeof STORE_CATEGORY_GROUPS];
       return txGroup === categoryName;
@@ -139,7 +139,7 @@ const itemMatchesCategory = (
       const normalizedItemCategory = normalizeItemCategory(item.category);
       // Look up group from the normalized (English) category name
       const itemKey = ITEM_CATEGORY_TO_KEY[normalizedItemCategory as keyof typeof ITEM_CATEGORY_TO_KEY];
-      const itemGroup = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
+      const itemGroup = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'otros-item';
       return itemGroup === categoryName;
     }
 

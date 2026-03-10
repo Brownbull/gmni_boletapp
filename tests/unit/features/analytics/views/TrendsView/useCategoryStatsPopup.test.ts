@@ -12,8 +12,8 @@ import { useCategoryStatsPopup } from '@features/analytics/views/TrendsView/useC
 vi.mock('@/config/categoryColors', () => ({
     getContrastTextColor: (color: string) => color === '#000000' ? '#ffffff' : '#000000',
     ALL_ITEM_CATEGORY_GROUPS: [
-        'food-fresh', 'food-packaged', 'health-personal', 'household',
-        'nonfood-retail', 'services-fees', 'other-item',
+        'food-fresh', 'food-packaged', 'food-prepared', 'salud-cuidado',
+        'hogar', 'productos-generales', 'servicios-cargos', 'vicios', 'otros-item',
     ],
 }));
 

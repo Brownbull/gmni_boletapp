@@ -369,8 +369,8 @@ describe('grouping functions', () => {
         it('groups items by category', () => {
             const groups = groupItemsByCategory(allItems);
 
-            expect(groups.get('Dairy & Eggs')).toHaveLength(2);
-            expect(groups.get('Bakery')).toHaveLength(1);
+            expect(groups.get('DairyEggs')).toHaveLength(2);
+            expect(groups.get('BreadPastry')).toHaveLength(1);
             expect(groups.get('Produce')).toHaveLength(1);
         });
 
@@ -414,10 +414,10 @@ describe('utility functions', () => {
         it('extracts unique categories', () => {
             const available = extractAvailableItemFilters(allItems);
 
-            expect(available.categories).toContain('Dairy & Eggs');
-            expect(available.categories).toContain('Bakery');
+            expect(available.categories).toContain('DairyEggs');
+            expect(available.categories).toContain('BreadPastry');
             expect(available.categories).toContain('Produce');
-            expect(available.categories).toContain('Meat & Seafood');
+            expect(available.categories).toContain('MeatSeafood');
         });
 
         it('extracts unique merchants', () => {

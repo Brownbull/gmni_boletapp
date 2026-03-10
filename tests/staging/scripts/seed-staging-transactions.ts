@@ -23,35 +23,51 @@ import { join } from 'path';
 // Types
 // ============================================================================
 
+// V4 canonical PascalCase categories (subset used in seed data)
+// @see shared/schema/categories.ts for full list
+
 type StoreCategory =
     | 'Supermarket'
     | 'Restaurant'
+    | 'GasStation'
     | 'Transport'
-    | 'Healthcare'
-    | 'Technology'
-    | 'Services'
+    | 'Pharmacy'
+    | 'ElectronicsStore'
+    | 'SubscriptionService'
+    | 'UtilityCompany'
+    | 'Hardware'
+    | 'ClothingStore'
+    | 'Almacen'
+    | 'Bakery'
+    | 'OpenMarket'
     | 'Other';
 
 type ItemCategory =
     | 'Produce'
-    | 'Meat & Seafood'
-    | 'Bakery'
-    | 'Dairy & Eggs'
+    | 'MeatSeafood'
+    | 'BreadPastry'
+    | 'DairyEggs'
     | 'Pantry'
-    | 'Frozen Foods'
+    | 'FrozenFoods'
     | 'Snacks'
     | 'Beverages'
-    | 'Prepared Food'
-    | 'Health & Beauty'
-    | 'Personal Care'
-    | 'Pharmacy'
-    | 'Electronics'
-    | 'Clothing'
-    | 'Fuel'
-    | 'Service'
+    | 'PreparedFood'
+    | 'BeautyCosmetics'
+    | 'PersonalCare'
+    | 'Medications'
+    | 'Supplements'
+    | 'Technology'
+    | 'Apparel'
+    | 'CarAccessories'
+    | 'ServiceCharge'
     | 'Subscription'
-    | 'Home & Garden'
-    | 'Other';
+    | 'HouseholdBills'
+    | 'Tools'
+    | 'Garden'
+    | 'Furnishings'
+    | 'CleaningSupplies'
+    | 'HomeEssentials'
+    | 'OtherItem';
 
 interface TransactionItem {
     name: string;
@@ -93,115 +109,151 @@ const STAGING_APP_ID = 'boletapp-staging';
 // Service account key path (relative to project root)
 const SERVICE_ACCOUNT_PATH = 'scripts/keys/serviceAccountKey.staging.json';
 
-// Transaction templates for realistic data
+// Transaction templates for realistic Chilean data (V4 categories)
 const TRANSACTION_TEMPLATES: TransactionTemplate[] = [
-    // Supermarkets
+    // Supermercados
     { storeName: 'Líder Express', category: 'Supermarket', minAmount: 15000, maxAmount: 85000 },
     { storeName: 'Jumbo', category: 'Supermarket', minAmount: 20000, maxAmount: 120000 },
     { storeName: 'Santa Isabel', category: 'Supermarket', minAmount: 10000, maxAmount: 60000 },
     { storeName: 'Unimarc', category: 'Supermarket', minAmount: 8000, maxAmount: 45000 },
-    // Restaurants
+    // Restaurantes
     { storeName: 'Starbucks', category: 'Restaurant', minAmount: 3500, maxAmount: 12000 },
     { storeName: 'McDonald\'s', category: 'Restaurant', minAmount: 4000, maxAmount: 15000 },
     { storeName: 'Domino\'s Pizza', category: 'Restaurant', minAmount: 8000, maxAmount: 25000 },
     { storeName: 'Sushi Express', category: 'Restaurant', minAmount: 12000, maxAmount: 35000 },
-    // Transport
-    { storeName: 'Copec', category: 'Transport', minAmount: 20000, maxAmount: 60000 },
-    { storeName: 'Shell', category: 'Transport', minAmount: 25000, maxAmount: 70000 },
+    // Bencinera (was Transport in V3)
+    { storeName: 'Copec', category: 'GasStation', minAmount: 20000, maxAmount: 60000 },
+    { storeName: 'Shell', category: 'GasStation', minAmount: 25000, maxAmount: 70000 },
+    // Transporte
     { storeName: 'Metro de Santiago', category: 'Transport', minAmount: 1000, maxAmount: 5000 },
     { storeName: 'Uber', category: 'Transport', minAmount: 3000, maxAmount: 15000 },
-    // Healthcare
-    { storeName: 'Cruz Verde', category: 'Healthcare', minAmount: 5000, maxAmount: 50000 },
-    { storeName: 'Farmacias Ahumada', category: 'Healthcare', minAmount: 3000, maxAmount: 30000 },
-    // Technology
-    { storeName: 'PC Factory', category: 'Technology', minAmount: 30000, maxAmount: 500000 },
-    { storeName: 'Falabella Tech', category: 'Technology', minAmount: 20000, maxAmount: 300000 },
-    // Services
-    { storeName: 'VTR', category: 'Services', minAmount: 25000, maxAmount: 45000 },
-    { storeName: 'Entel', category: 'Services', minAmount: 15000, maxAmount: 35000 },
-    { storeName: 'Enel', category: 'Services', minAmount: 30000, maxAmount: 80000 },
-    // Other
-    { storeName: 'Sodimac', category: 'Other', minAmount: 15000, maxAmount: 200000 },
-    { storeName: 'Paris', category: 'Other', minAmount: 10000, maxAmount: 150000 },
+    // Farmacia (was Healthcare in V3)
+    { storeName: 'Cruz Verde', category: 'Pharmacy', minAmount: 5000, maxAmount: 50000 },
+    { storeName: 'Farmacias Ahumada', category: 'Pharmacy', minAmount: 3000, maxAmount: 30000 },
+    // Tienda de Electrónica (was Technology in V3)
+    { storeName: 'PC Factory', category: 'ElectronicsStore', minAmount: 30000, maxAmount: 500000 },
+    { storeName: 'Falabella Tech', category: 'ElectronicsStore', minAmount: 20000, maxAmount: 300000 },
+    // Suscripciones (was Services in V3)
+    { storeName: 'VTR', category: 'SubscriptionService', minAmount: 25000, maxAmount: 45000 },
+    { storeName: 'Entel', category: 'SubscriptionService', minAmount: 15000, maxAmount: 35000 },
+    // Servicios Básicos (was Services in V3)
+    { storeName: 'Enel', category: 'UtilityCompany', minAmount: 30000, maxAmount: 80000 },
+    // Ferretería (was Other in V3)
+    { storeName: 'Sodimac', category: 'Hardware', minAmount: 15000, maxAmount: 200000 },
+    // Tienda de Ropa (was Other in V3)
+    { storeName: 'Paris', category: 'ClothingStore', minAmount: 10000, maxAmount: 150000 },
+    // Comercio de Barrio (NEW V4 categories)
+    { storeName: 'Almacén Don Pedro', category: 'Almacen', minAmount: 2000, maxAmount: 15000 },
+    { storeName: 'Panadería La Rosa', category: 'Bakery', minAmount: 1500, maxAmount: 8000 },
+    { storeName: 'Feria Libre', category: 'OpenMarket', minAmount: 5000, maxAmount: 25000 },
 ];
 
-// Item templates mapped to store categories - ensures realistic items per store type
+// Item templates mapped to V4 store categories - ensures realistic items per store type
 const ITEM_TEMPLATES_BY_CATEGORY: Record<StoreCategory, ItemTemplate[]> = {
     Supermarket: [
-        { name: 'Leche entera', category: 'Dairy & Eggs', minPrice: 1200, maxPrice: 2500 },
-        { name: 'Pan de molde', category: 'Bakery', minPrice: 1500, maxPrice: 3000 },
+        { name: 'Leche entera', category: 'DairyEggs', minPrice: 1200, maxPrice: 2500 },
+        { name: 'Pan de molde', category: 'BreadPastry', minPrice: 1500, maxPrice: 3000 },
         { name: 'Manzanas', category: 'Produce', minPrice: 1800, maxPrice: 4000 },
         { name: 'Plátanos', category: 'Produce', minPrice: 800, maxPrice: 2000 },
-        { name: 'Pollo entero', category: 'Meat & Seafood', minPrice: 4500, maxPrice: 8000 },
+        { name: 'Pollo entero', category: 'MeatSeafood', minPrice: 4500, maxPrice: 8000 },
         { name: 'Arroz', category: 'Pantry', minPrice: 1500, maxPrice: 3500 },
         { name: 'Fideos', category: 'Pantry', minPrice: 800, maxPrice: 1800 },
         { name: 'Aceite vegetal', category: 'Pantry', minPrice: 2500, maxPrice: 5000 },
-        { name: 'Huevos docena', category: 'Dairy & Eggs', minPrice: 3000, maxPrice: 5500 },
-        { name: 'Queso laminado', category: 'Dairy & Eggs', minPrice: 2500, maxPrice: 4500 },
-        { name: 'Yogurt pack', category: 'Dairy & Eggs', minPrice: 2000, maxPrice: 4000 },
+        { name: 'Huevos docena', category: 'DairyEggs', minPrice: 3000, maxPrice: 5500 },
+        { name: 'Queso laminado', category: 'DairyEggs', minPrice: 2500, maxPrice: 4500 },
+        { name: 'Yogurt pack', category: 'DairyEggs', minPrice: 2000, maxPrice: 4000 },
         { name: 'Jugo de naranja', category: 'Beverages', minPrice: 1500, maxPrice: 3500 },
         { name: 'Agua mineral 6L', category: 'Beverages', minPrice: 2500, maxPrice: 4500 },
         { name: 'Galletas', category: 'Snacks', minPrice: 1200, maxPrice: 2800 },
-        { name: 'Helado 1L', category: 'Frozen Foods', minPrice: 3500, maxPrice: 6500 },
-        { name: 'Pizza congelada', category: 'Frozen Foods', minPrice: 4000, maxPrice: 7000 },
-        { name: 'Papel higiénico', category: 'Personal Care', minPrice: 4000, maxPrice: 8000 },
-        { name: 'Detergente', category: 'Personal Care', minPrice: 3500, maxPrice: 7000 },
+        { name: 'Helado 1L', category: 'FrozenFoods', minPrice: 3500, maxPrice: 6500 },
+        { name: 'Pizza congelada', category: 'FrozenFoods', minPrice: 4000, maxPrice: 7000 },
+        { name: 'Papel higiénico', category: 'PersonalCare', minPrice: 4000, maxPrice: 8000 },
+        { name: 'Detergente', category: 'CleaningSupplies', minPrice: 3500, maxPrice: 7000 },
     ],
     Restaurant: [
-        { name: 'Menú del día', category: 'Prepared Food', minPrice: 5000, maxPrice: 12000 },
+        { name: 'Menú del día', category: 'PreparedFood', minPrice: 5000, maxPrice: 12000 },
         { name: 'Café latte', category: 'Beverages', minPrice: 2500, maxPrice: 4500 },
-        { name: 'Sandwich', category: 'Prepared Food', minPrice: 3500, maxPrice: 7000 },
-        { name: 'Hamburguesa', category: 'Prepared Food', minPrice: 5500, maxPrice: 12000 },
-        { name: 'Pizza mediana', category: 'Prepared Food', minPrice: 8000, maxPrice: 15000 },
-        { name: 'Sushi roll', category: 'Prepared Food', minPrice: 6000, maxPrice: 14000 },
+        { name: 'Sandwich', category: 'PreparedFood', minPrice: 3500, maxPrice: 7000 },
+        { name: 'Hamburguesa', category: 'PreparedFood', minPrice: 5500, maxPrice: 12000 },
+        { name: 'Pizza mediana', category: 'PreparedFood', minPrice: 8000, maxPrice: 15000 },
+        { name: 'Sushi roll', category: 'PreparedFood', minPrice: 6000, maxPrice: 14000 },
         { name: 'Bebida gaseosa', category: 'Beverages', minPrice: 1500, maxPrice: 3000 },
-        { name: 'Postre', category: 'Prepared Food', minPrice: 3000, maxPrice: 6000 },
-        { name: 'Papas fritas', category: 'Prepared Food', minPrice: 2500, maxPrice: 5000 },
-        { name: 'Ensalada', category: 'Prepared Food', minPrice: 4000, maxPrice: 8000 },
+        { name: 'Postre', category: 'PreparedFood', minPrice: 3000, maxPrice: 6000 },
+        { name: 'Papas fritas', category: 'PreparedFood', minPrice: 2500, maxPrice: 5000 },
+        { name: 'Ensalada', category: 'PreparedFood', minPrice: 4000, maxPrice: 8000 },
+    ],
+    GasStation: [
+        { name: 'Gasolina 95', category: 'CarAccessories', minPrice: 15000, maxPrice: 60000 },
+        { name: 'Gasolina 93', category: 'CarAccessories', minPrice: 12000, maxPrice: 50000 },
+        { name: 'Petróleo diesel', category: 'CarAccessories', minPrice: 18000, maxPrice: 55000 },
+        { name: 'Lavado auto', category: 'ServiceCharge', minPrice: 5000, maxPrice: 15000 },
     ],
     Transport: [
-        { name: 'Gasolina 95', category: 'Fuel', minPrice: 15000, maxPrice: 60000 },
-        { name: 'Gasolina 93', category: 'Fuel', minPrice: 12000, maxPrice: 50000 },
-        { name: 'Petróleo diesel', category: 'Fuel', minPrice: 18000, maxPrice: 55000 },
-        { name: 'Viaje metro', category: 'Service', minPrice: 800, maxPrice: 1500 },
-        { name: 'Viaje Uber', category: 'Service', minPrice: 2500, maxPrice: 12000 },
-        { name: 'Lavado auto', category: 'Service', minPrice: 5000, maxPrice: 15000 },
+        { name: 'Viaje metro', category: 'ServiceCharge', minPrice: 800, maxPrice: 1500 },
+        { name: 'Viaje Uber', category: 'ServiceCharge', minPrice: 2500, maxPrice: 12000 },
     ],
-    Healthcare: [
-        { name: 'Ibuprofeno', category: 'Pharmacy', minPrice: 2000, maxPrice: 5000 },
-        { name: 'Paracetamol', category: 'Pharmacy', minPrice: 1500, maxPrice: 4000 },
-        { name: 'Vitaminas', category: 'Pharmacy', minPrice: 5000, maxPrice: 15000 },
-        { name: 'Jarabe para tos', category: 'Pharmacy', minPrice: 4000, maxPrice: 12000 },
-        { name: 'Crema hidratante', category: 'Health & Beauty', minPrice: 3500, maxPrice: 12000 },
-        { name: 'Protector solar', category: 'Health & Beauty', minPrice: 6000, maxPrice: 18000 },
-        { name: 'Shampoo', category: 'Personal Care', minPrice: 3000, maxPrice: 8000 },
-        { name: 'Pasta dental', category: 'Personal Care', minPrice: 2000, maxPrice: 5000 },
+    Pharmacy: [
+        { name: 'Ibuprofeno', category: 'Medications', minPrice: 2000, maxPrice: 5000 },
+        { name: 'Paracetamol', category: 'Medications', minPrice: 1500, maxPrice: 4000 },
+        { name: 'Vitaminas', category: 'Supplements', minPrice: 5000, maxPrice: 15000 },
+        { name: 'Jarabe para tos', category: 'Medications', minPrice: 4000, maxPrice: 12000 },
+        { name: 'Crema hidratante', category: 'BeautyCosmetics', minPrice: 3500, maxPrice: 12000 },
+        { name: 'Protector solar', category: 'BeautyCosmetics', minPrice: 6000, maxPrice: 18000 },
+        { name: 'Shampoo', category: 'PersonalCare', minPrice: 3000, maxPrice: 8000 },
+        { name: 'Pasta dental', category: 'PersonalCare', minPrice: 2000, maxPrice: 5000 },
     ],
-    Technology: [
-        { name: 'Auriculares bluetooth', category: 'Electronics', minPrice: 15000, maxPrice: 80000 },
-        { name: 'Cable USB-C', category: 'Electronics', minPrice: 5000, maxPrice: 15000 },
-        { name: 'Mouse inalámbrico', category: 'Electronics', minPrice: 12000, maxPrice: 45000 },
-        { name: 'Teclado', category: 'Electronics', minPrice: 20000, maxPrice: 120000 },
-        { name: 'Pendrive 64GB', category: 'Electronics', minPrice: 8000, maxPrice: 25000 },
-        { name: 'Cargador rápido', category: 'Electronics', minPrice: 10000, maxPrice: 35000 },
-        { name: 'Funda celular', category: 'Electronics', minPrice: 5000, maxPrice: 20000 },
-        { name: 'Parlante portátil', category: 'Electronics', minPrice: 25000, maxPrice: 150000 },
+    ElectronicsStore: [
+        { name: 'Auriculares bluetooth', category: 'Technology', minPrice: 15000, maxPrice: 80000 },
+        { name: 'Cable USB-C', category: 'Technology', minPrice: 5000, maxPrice: 15000 },
+        { name: 'Mouse inalámbrico', category: 'Technology', minPrice: 12000, maxPrice: 45000 },
+        { name: 'Teclado', category: 'Technology', minPrice: 20000, maxPrice: 120000 },
+        { name: 'Pendrive 64GB', category: 'Technology', minPrice: 8000, maxPrice: 25000 },
+        { name: 'Cargador rápido', category: 'Technology', minPrice: 10000, maxPrice: 35000 },
+        { name: 'Funda celular', category: 'Technology', minPrice: 5000, maxPrice: 20000 },
+        { name: 'Parlante portátil', category: 'Technology', minPrice: 25000, maxPrice: 150000 },
     ],
-    Services: [
+    SubscriptionService: [
         { name: 'Plan mensual internet', category: 'Subscription', minPrice: 20000, maxPrice: 45000 },
         { name: 'Plan celular', category: 'Subscription', minPrice: 12000, maxPrice: 35000 },
-        { name: 'Cuenta eléctrica', category: 'Service', minPrice: 25000, maxPrice: 80000 },
-        { name: 'Cuenta agua', category: 'Service', minPrice: 8000, maxPrice: 25000 },
-        { name: 'Cuenta gas', category: 'Service', minPrice: 15000, maxPrice: 45000 },
+    ],
+    UtilityCompany: [
+        { name: 'Cuenta eléctrica', category: 'HouseholdBills', minPrice: 25000, maxPrice: 80000 },
+        { name: 'Cuenta agua', category: 'HouseholdBills', minPrice: 8000, maxPrice: 25000 },
+        { name: 'Cuenta gas', category: 'HouseholdBills', minPrice: 15000, maxPrice: 45000 },
+    ],
+    Hardware: [
+        { name: 'Herramientas', category: 'Tools', minPrice: 8000, maxPrice: 50000 },
+        { name: 'Pintura', category: 'Tools', minPrice: 12000, maxPrice: 45000 },
+        { name: 'Plantas', category: 'Garden', minPrice: 5000, maxPrice: 25000 },
+        { name: 'Tornillos y clavos', category: 'Tools', minPrice: 1500, maxPrice: 8000 },
+        { name: 'Decoración hogar', category: 'Furnishings', minPrice: 10000, maxPrice: 60000 },
+    ],
+    ClothingStore: [
+        { name: 'Ropa', category: 'Apparel', minPrice: 15000, maxPrice: 80000 },
+        { name: 'Zapatos', category: 'Apparel', minPrice: 25000, maxPrice: 120000 },
+        { name: 'Accesorios', category: 'OtherItem', minPrice: 5000, maxPrice: 35000 },
+    ],
+    Almacen: [
+        { name: 'Pan', category: 'BreadPastry', minPrice: 500, maxPrice: 2000 },
+        { name: 'Bebida', category: 'Beverages', minPrice: 800, maxPrice: 2500 },
+        { name: 'Fiambre', category: 'MeatSeafood', minPrice: 1500, maxPrice: 4000 },
+        { name: 'Dulces', category: 'Snacks', minPrice: 300, maxPrice: 1500 },
+    ],
+    Bakery: [
+        { name: 'Marraqueta', category: 'BreadPastry', minPrice: 500, maxPrice: 1500 },
+        { name: 'Hallullas', category: 'BreadPastry', minPrice: 500, maxPrice: 1500 },
+        { name: 'Torta', category: 'BreadPastry', minPrice: 5000, maxPrice: 15000 },
+        { name: 'Empanadas', category: 'PreparedFood', minPrice: 1000, maxPrice: 3000 },
+    ],
+    OpenMarket: [
+        { name: 'Frutas de estación', category: 'Produce', minPrice: 1000, maxPrice: 5000 },
+        { name: 'Verduras frescas', category: 'Produce', minPrice: 800, maxPrice: 4000 },
+        { name: 'Huevos campo', category: 'DairyEggs', minPrice: 3000, maxPrice: 6000 },
+        { name: 'Queso fresco', category: 'DairyEggs', minPrice: 2000, maxPrice: 5000 },
+        { name: 'Pescado fresco', category: 'MeatSeafood', minPrice: 3000, maxPrice: 12000 },
     ],
     Other: [
-        { name: 'Herramientas', category: 'Home & Garden', minPrice: 8000, maxPrice: 50000 },
-        { name: 'Pintura', category: 'Home & Garden', minPrice: 12000, maxPrice: 45000 },
-        { name: 'Plantas', category: 'Home & Garden', minPrice: 5000, maxPrice: 25000 },
-        { name: 'Ropa', category: 'Clothing', minPrice: 15000, maxPrice: 80000 },
-        { name: 'Zapatos', category: 'Clothing', minPrice: 25000, maxPrice: 120000 },
-        { name: 'Accesorios', category: 'Other', minPrice: 5000, maxPrice: 35000 },
-        { name: 'Decoración hogar', category: 'Home & Garden', minPrice: 10000, maxPrice: 60000 },
+        { name: 'Producto general', category: 'OtherItem', minPrice: 5000, maxPrice: 50000 },
     ],
 };
 
@@ -237,7 +289,7 @@ function generateItemsForTransaction(
     const itemTemplates = ITEM_TEMPLATES_BY_CATEGORY[category];
     if (!itemTemplates || itemTemplates.length === 0) {
         // Fallback: single generic item
-        return [{ name: 'Producto', price: targetTotal, category: 'Other', qty: 1 }];
+        return [{ name: 'Producto', price: targetTotal, category: 'OtherItem', qty: 1 }];
     }
 
     // Determine number of items (1-5, weighted toward 2-3)
@@ -329,20 +381,24 @@ function generateUserTransactions(persona: 'alice' | 'bob' | 'charlie' | 'diana'
 
     switch (persona) {
         case 'alice':
+            // Family shopper: groceries, restaurants, gas, subscriptions, utilities
             frequency = 3;
-            preferredCategories = ['Supermarket', 'Restaurant', 'Transport', 'Services'];
+            preferredCategories = ['Supermarket', 'Restaurant', 'GasStation', 'SubscriptionService', 'UtilityCompany', 'Bakery'];
             break;
         case 'bob':
+            // Frequent eater: restaurants, supermarkets, transport, corner stores
             frequency = 2;
-            preferredCategories = ['Restaurant', 'Supermarket', 'Transport'];
+            preferredCategories = ['Restaurant', 'Supermarket', 'Transport', 'Almacen'];
             break;
         case 'charlie':
+            // Tech + home: electronics, hardware, supermarkets, subscriptions
             frequency = 5;
-            preferredCategories = ['Technology', 'Other', 'Supermarket', 'Services'];
+            preferredCategories = ['ElectronicsStore', 'Hardware', 'Supermarket', 'SubscriptionService'];
             break;
         case 'diana':
+            // Diverse spender: all categories for rich analytics data
             frequency = 2.5;
-            preferredCategories = ['Supermarket', 'Restaurant', 'Healthcare', 'Technology', 'Services', 'Transport', 'Other'];
+            preferredCategories = ['Supermarket', 'Restaurant', 'Pharmacy', 'ElectronicsStore', 'SubscriptionService', 'Transport', 'ClothingStore', 'OpenMarket', 'GasStation'];
             break;
     }
 

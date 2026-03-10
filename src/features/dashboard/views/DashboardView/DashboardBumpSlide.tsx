@@ -175,7 +175,7 @@ export const DashboardBumpSlide: React.FC<DashboardBumpSlideProps> = ({
                         }}>
                         <span className="text-sm">{getTreemapEmoji(cat.name)}</span>
                         <span style={{ color: cat.color }}>
-                            {cat.name === 'Otro' || cat.name === 'Other' || cat.name === 'other' || cat.name === 'other-item'
+                            {cat.name === 'Otro' || cat.name === 'Other' || cat.name === 'otros' || cat.name === 'otros-item'
                                 ? t('otherCategory')
                                 : translateTreemapName(cat.name)} #{idx + 1}
                         </span>

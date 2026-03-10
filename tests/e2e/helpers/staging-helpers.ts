@@ -11,7 +11,7 @@
  */
 import { expect, type Page } from '@playwright/test';
 
-export const STAGING_URL = 'http://localhost:5174';
+export const STAGING_URL = process.env.STAGING_URL || 'http://localhost:5174';
 
 /**
  * Login as a test user via TestUserMenu.

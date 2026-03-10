@@ -52,23 +52,23 @@ function createSampleTransactions(): Transaction[] {
         // Supermarket transactions (70% of total)
         createTransaction('Supermarket', [
             { name: 'Apples', price: 5000, category: 'Produce' },
-            { name: 'Milk', price: 3000, category: 'Dairy & Eggs' },
-            { name: 'Bread', price: 2000, category: 'Bakery' },
+            { name: 'Milk', price: 3000, category: 'DairyEggs' },
+            { name: 'Bread', price: 2000, category: 'BreadPastry' },
         ]),
         createTransaction('Supermarket', [
-            { name: 'Chicken', price: 8000, category: 'Meat & Seafood' },
+            { name: 'Chicken', price: 8000, category: 'MeatSeafood' },
             { name: 'Rice', price: 4000, category: 'Pantry' },
         ]),
         createTransaction('Supermarket', [
             { name: 'Oranges', price: 3000, category: 'Produce' },
-            { name: 'Cheese', price: 5000, category: 'Dairy & Eggs' },
+            { name: 'Cheese', price: 5000, category: 'DairyEggs' },
         ]),
         // Restaurant transactions (30% of total)
         createTransaction('Restaurant', [
-            { name: 'Lunch', price: 12000, category: 'Prepared Food' },
+            { name: 'Lunch', price: 12000, category: 'PreparedFood' },
         ]),
         createTransaction('Restaurant', [
-            { name: 'Dinner', price: 18000, category: 'Prepared Food' },
+            { name: 'Dinner', price: 18000, category: 'PreparedFood' },
         ]),
     ];
 }
@@ -84,23 +84,23 @@ function createDiverseTransactions(): Transaction[] {
         ]),
         // Medium category (25%)
         createTransaction('Restaurant', [
-            { name: 'Dining', price: 25000, category: 'Prepared Food' },
+            { name: 'Dining', price: 25000, category: 'PreparedFood' },
         ]),
         // Small category (15%)
         createTransaction('Pharmacy', [
-            { name: 'Medicine', price: 15000, category: 'Pharmacy' },
+            { name: 'Medicine', price: 15000, category: 'Medications' },
         ]),
         // Very small category (8%)
         createTransaction('GasStation', [
-            { name: 'Gas', price: 8000, category: 'Automotive' },
+            { name: 'Gas', price: 8000, category: 'CarAccessories' },
         ]),
         // Tiny category (7%)
         createTransaction('Bakery', [
-            { name: 'Pastries', price: 7000, category: 'Bakery' },
+            { name: 'Pastries', price: 7000, category: 'BreadPastry' },
         ]),
         // Very tiny category (5%)
         createTransaction('Butcher', [
-            { name: 'Meat', price: 5000, category: 'Meat & Seafood' },
+            { name: 'Meat', price: 5000, category: 'MeatSeafood' },
         ]),
     ];
 }
@@ -115,7 +115,7 @@ describe('sankeyDataBuilder helpers', () => {
             expect(nodeName(1, 'Supermarket')).toBe('L1_Supermarket');
             expect(nodeName(2, 'Produce')).toBe('L2_Produce');
             expect(nodeName(3, 'food-fresh')).toBe('L3_food-fresh');
-            expect(nodeName(4, 'Dairy & Eggs')).toBe('L4_Dairy & Eggs');
+            expect(nodeName(4, 'DairyEggs')).toBe('L4_DairyEggs');
         });
     });
 
@@ -124,7 +124,7 @@ describe('sankeyDataBuilder helpers', () => {
             expect(stripNodePrefix('L1_Supermarket')).toBe('Supermarket');
             expect(stripNodePrefix('L2_Produce')).toBe('Produce');
             expect(stripNodePrefix('L3_food-fresh')).toBe('food-fresh');
-            expect(stripNodePrefix('L4_Dairy & Eggs')).toBe('Dairy & Eggs');
+            expect(stripNodePrefix('L4_DairyEggs')).toBe('DairyEggs');
         });
 
         it('returns original string if no prefix', () => {
@@ -137,7 +137,7 @@ describe('sankeyDataBuilder helpers', () => {
             expect(getNodeLevel('L1_Supermarket')).toBe(1);
             expect(getNodeLevel('L2_Produce')).toBe(2);
             expect(getNodeLevel('L3_food-fresh')).toBe(3);
-            expect(getNodeLevel('L4_Dairy & Eggs')).toBe(4);
+            expect(getNodeLevel('L4_DairyEggs')).toBe(4);
         });
 
         it('returns 0 for names without prefix', () => {

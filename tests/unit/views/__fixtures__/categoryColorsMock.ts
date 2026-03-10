@@ -12,34 +12,37 @@
  */
 
 export const MOCK_STORE_CATEGORY_GROUPS: Record<string, string> = {
-  Supermercado: 'food-dining',
-  Restaurante: 'food-dining',
-  Farmacia: 'health-wellness',
-  Ferretería: 'retail-general',
+  Supermarket: 'supermercados',
+  Restaurant: 'restaurantes',
+  Pharmacy: 'salud-bienestar',
+  Hardware: 'tiendas-generales',
 };
 
 export const MOCK_ITEM_CATEGORY_GROUPS: Record<string, string> = {
-  'Frutas y Verduras': 'food-fresh',
-  'Carnes y Mariscos': 'food-fresh',
-  Lácteos: 'food-packaged',
-  Bebidas: 'food-packaged',
+  Produce: 'food-fresh',
+  MeatSeafood: 'food-fresh',
+  DairyEggs: 'food-packaged',
+  Beverages: 'food-packaged',
   Snacks: 'food-packaged',
 };
 
 export const MOCK_ITEM_CATEGORY_TO_KEY: Record<string, string> = {
-  'Frutas y Verduras': 'Frutas y Verduras',
-  'Carnes y Mariscos': 'Carnes y Mariscos',
-  Lácteos: 'Lácteos',
-  Bebidas: 'Bebidas',
+  Produce: 'Produce',
+  MeatSeafood: 'MeatSeafood',
+  DairyEggs: 'DairyEggs',
+  Beverages: 'Beverages',
   Snacks: 'Snacks',
 };
 
 export const MOCK_ALL_STORE_CATEGORY_GROUPS = [
-  'food-dining', 'health-wellness', 'retail-general',
-  'retail-specialty', 'automotive', 'services', 'hospitality', 'other',
+  'supermercados', 'restaurantes', 'comercio-barrio', 'vivienda',
+  'salud-bienestar', 'tiendas-generales', 'tiendas-especializadas',
+  'transporte-vehiculo', 'educacion', 'servicios-finanzas',
+  'entretenimiento-hospedaje', 'otros',
 ];
 
 export const MOCK_ALL_ITEM_CATEGORY_GROUPS = [
-  'food-fresh', 'food-packaged', 'health-personal',
-  'household', 'nonfood-retail', 'services-fees', 'other-item',
+  'food-fresh', 'food-packaged', 'food-prepared',
+  'salud-cuidado', 'hogar', 'productos-generales',
+  'servicios-cargos', 'vicios', 'otros-item',
 ];

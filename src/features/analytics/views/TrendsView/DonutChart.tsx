@@ -124,20 +124,24 @@ export const DonutChart: React.FC<{
         const theme = getCurrentTheme();
         const mode = getCurrentMode();
         const groupTotals: Record<StoreCategoryGroup, { value: number; count: number; itemCount: number }> = {
-            'food-dining': { value: 0, count: 0, itemCount: 0 },
-            'health-wellness': { value: 0, count: 0, itemCount: 0 },
-            'retail-general': { value: 0, count: 0, itemCount: 0 },
-            'retail-specialty': { value: 0, count: 0, itemCount: 0 },
-            'automotive': { value: 0, count: 0, itemCount: 0 },
-            'services': { value: 0, count: 0, itemCount: 0 },
-            'hospitality': { value: 0, count: 0, itemCount: 0 },
-            'other': { value: 0, count: 0, itemCount: 0 },
+            'supermercados': { value: 0, count: 0, itemCount: 0 },
+            'restaurantes': { value: 0, count: 0, itemCount: 0 },
+            'comercio-barrio': { value: 0, count: 0, itemCount: 0 },
+            'vivienda': { value: 0, count: 0, itemCount: 0 },
+            'salud-bienestar': { value: 0, count: 0, itemCount: 0 },
+            'tiendas-generales': { value: 0, count: 0, itemCount: 0 },
+            'tiendas-especializadas': { value: 0, count: 0, itemCount: 0 },
+            'transporte-vehiculo': { value: 0, count: 0, itemCount: 0 },
+            'educacion': { value: 0, count: 0, itemCount: 0 },
+            'servicios-finanzas': { value: 0, count: 0, itemCount: 0 },
+            'entretenimiento-hospedaje': { value: 0, count: 0, itemCount: 0 },
+            'otros': { value: 0, count: 0, itemCount: 0 },
         };
 
         // Aggregate allCategoryData into groups (use all categories, not treemap-filtered)
         for (const cat of allCategoryData) {
             // Map category name to its group
-            const group = STORE_CATEGORY_GROUPS[cat.name as keyof typeof STORE_CATEGORY_GROUPS] || 'other';
+            const group = STORE_CATEGORY_GROUPS[cat.name as keyof typeof STORE_CATEGORY_GROUPS] || 'otros';
             groupTotals[group].value += cat.value;
             groupTotals[group].count += cat.count;
             groupTotals[group].itemCount += cat.itemCount || 0;
@@ -179,11 +183,13 @@ export const DonutChart: React.FC<{
         const groupTotals: Record<ItemCategoryGroup, { value: number; transactionIds: Set<string>; uniqueProducts: Set<string> }> = {
             'food-fresh': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
             'food-packaged': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'health-personal': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'household': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'nonfood-retail': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'services-fees': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
-            'other-item': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'food-prepared': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'salud-cuidado': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'hogar': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'productos-generales': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'servicios-cargos': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'vicios': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'otros-item': { value: 0, transactionIds: new Set(), uniqueProducts: new Set() },
         };
 
         // Story 14.13 Session 7: Compute directly from transactions to properly count unique products per group
@@ -191,7 +197,7 @@ export const DonutChart: React.FC<{
             (tx.items || []).forEach(item => {
                 const cat = normalizeItemCategory(item.category || 'Other');
                 const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
-                const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
+                const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'otros-item';
 
                 groupTotals[group].value += item.price;
                 groupTotals[group].transactionIds.add(tx.id ?? `tx-${index}`);
@@ -240,7 +246,7 @@ export const DonutChart: React.FC<{
 
     // Story 14.14b: Get store categories within a store group
     // Story 14.13 Session 6: Use allCategoryData (raw store categories) instead of categoryData
-    // When in store-groups mode, categoryData contains groups (food-dining), not categories (Supermarket)
+    // When in store-groups mode, categoryData contains groups (supermercados), not categories (Supermarket)
     const getStoreCategoriesInGroup = useCallback((groupKey: string): CategoryData[] => {
         // Filter allCategoryData to only include categories in this group
         return allCategoryData.filter(cat => {

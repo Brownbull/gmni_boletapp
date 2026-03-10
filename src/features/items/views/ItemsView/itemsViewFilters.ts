@@ -110,10 +110,10 @@ export function applyDrillDownFilters(
     if (drillDownPath.storeGroup && !drillDownPath.storeCategory) {
         const targetGroup = drillDownPath.storeGroup as StoreCategoryGroup;
 
-        if (targetGroup === 'other') {
+        if (targetGroup === 'otros') {
             result = result.filter(item => {
                 const storeGroup = getStoreCategoryGroup(item.merchantCategory as StoreCategory);
-                return storeGroup === 'other';
+                return storeGroup === 'otros';
             });
         } else {
             const groupCategories = expandStoreCategoryGroup(targetGroup);
@@ -131,11 +131,11 @@ export function applyDrillDownFilters(
     if (drillDownPath.itemGroup && !drillDownPath.itemCategory) {
         const targetGroup = drillDownPath.itemGroup as ItemCategoryGroup;
 
-        if (targetGroup === 'other-item') {
+        if (targetGroup === 'otros-item') {
             result = result.filter(item => {
                 const normalizedCategory = normalizeItemCategory(item.category || 'Other');
                 const itemGroup = getItemCategoryGroup(normalizedCategory);
-                return itemGroup === 'other-item';
+                return itemGroup === 'otros-item';
             });
         } else {
             const itemCategories = expandItemCategoryGroup(targetGroup);

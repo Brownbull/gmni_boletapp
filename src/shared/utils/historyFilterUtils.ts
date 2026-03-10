@@ -18,7 +18,7 @@ import type {
 // Story 14.15b: Category normalization for legacy data compatibility
 import { normalizeItemCategory } from '@/utils/categoryNormalizer';
 // Story 14.13a: Category group expansion for multi-dimension filtering
-// Story 14.13 Session 15: Added getItemCategoryGroup and getStoreCategoryGroup for proper 'other' group filtering
+// Story 14.13 Session 15: Added getItemCategoryGroup and getStoreCategoryGroup for proper 'otros' group filtering
 import {
   expandStoreCategoryGroup,
   expandItemCategoryGroup,
@@ -294,16 +294,16 @@ function matchesCategoryFilter(
 
     // Filter by store group (expand to all categories in the group)
     // Only if storeCategory is not set (storeCategory is more specific)
-    // Story 14.13 Session 15: Special handling for 'other' group to match Dashboard counting
+    // Story 14.13 Session 15: Special handling for 'otros' group to match Dashboard counting
     if (path.storeGroup && !path.storeCategory) {
       const targetGroup = path.storeGroup as StoreCategoryGroup;
 
-      if (targetGroup === 'other') {
-        // For 'other' group, include transactions whose category doesn't map to any known group
-        // This matches how Dashboard counts transactions in the 'other' group
+      if (targetGroup === 'otros') {
+        // For 'otros' group, include transactions whose category doesn't map to any known group
+        // This matches how Dashboard counts transactions in the 'otros' group
         const txCategory = tx.category as StoreCategory;
         const storeGroup = getStoreCategoryGroup(txCategory);
-        if (storeGroup !== 'other') {
+        if (storeGroup !== 'otros') {
           return false;
         }
       } else {
@@ -335,17 +335,17 @@ function matchesCategoryFilter(
 
     // Filter by item group (expand to all item categories in the group)
     // Only if itemCategory is not set (itemCategory is more specific)
-    // Story 14.13 Session 15: Special handling for 'other-item' group to match Dashboard counting
+    // Story 14.13 Session 15: Special handling for 'otros-item' group to match Dashboard counting
     if (path.itemGroup && !path.itemCategory) {
       const targetGroup = path.itemGroup as ItemCategoryGroup;
 
-      if (targetGroup === 'other-item') {
-        // For 'other-item' group, include transactions with items whose category doesn't map to any known group
-        // This matches how Dashboard counts items in the 'other-item' group
+      if (targetGroup === 'otros-item') {
+        // For 'otros-item' group, include transactions with items whose category doesn't map to any known group
+        // This matches how Dashboard counts items in the 'otros-item' group
         const hasMatchingItem = tx.items?.some(item => {
           const normalizedCategory = normalizeItemCategory(item.category || 'Other');
           const itemGroup = getItemCategoryGroup(normalizedCategory);
-          return itemGroup === 'other-item';
+          return itemGroup === 'otros-item';
         });
         if (!hasMatchingItem) return false;
       } else {

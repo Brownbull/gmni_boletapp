@@ -45,14 +45,14 @@ describe('computePreviousPeriodTotals', () => {
   describe('store-categories mode', () => {
     it('aggregates by transaction category', () => {
       const txs = [
-        makeTx({ date: '2026-01-01', total: 1000, category: 'Supermercado' as Transaction['category'] }),
-        makeTx({ date: '2026-01-02', total: 500, category: 'Supermercado' as Transaction['category'] }),
-        makeTx({ date: '2026-01-03', total: 300, category: 'Restaurante' as Transaction['category'] }),
+        makeTx({ date: '2026-01-01', total: 1000, category: 'Supermarket' as Transaction['category'] }),
+        makeTx({ date: '2026-01-02', total: 500, category: 'Supermarket' as Transaction['category'] }),
+        makeTx({ date: '2026-01-03', total: 300, category: 'Restaurant' as Transaction['category'] }),
       ];
 
       const result = computePreviousPeriodTotals(txs, 'store-categories');
-      expect(result.get('Supermercado')).toBe(1500);
-      expect(result.get('Restaurante')).toBe(300);
+      expect(result.get('Supermarket')).toBe(1500);
+      expect(result.get('Restaurant')).toBe(300);
     });
 
     it('defaults missing category to "Unknown"', () => {
@@ -73,14 +73,15 @@ describe('computePreviousPeriodTotals', () => {
   describe('store-groups mode', () => {
     it('maps store categories to their groups', () => {
       const txs = [
-        makeTx({ date: '2026-01-01', total: 1000, category: 'Supermercado' as Transaction['category'] }),
-        makeTx({ date: '2026-01-02', total: 500, category: 'Restaurante' as Transaction['category'] }),
-        makeTx({ date: '2026-01-03', total: 300, category: 'Farmacia' as Transaction['category'] }),
+        makeTx({ date: '2026-01-01', total: 1000, category: 'Supermarket' as Transaction['category'] }),
+        makeTx({ date: '2026-01-02', total: 500, category: 'Restaurant' as Transaction['category'] }),
+        makeTx({ date: '2026-01-03', total: 300, category: 'Pharmacy' as Transaction['category'] }),
       ];
 
       const result = computePreviousPeriodTotals(txs, 'store-groups');
-      expect(result.get('food-dining')).toBe(1500); // Supermercado + Restaurante
-      expect(result.get('health-wellness')).toBe(300);
+      expect(result.get('supermercados')).toBe(1000); // Supermarket
+      expect(result.get('restaurantes')).toBe(500); // Restaurant
+      expect(result.get('salud-bienestar')).toBe(300); // Pharmacy
     });
 
     it('maps unknown categories to "other" group', () => {
@@ -89,7 +90,7 @@ describe('computePreviousPeriodTotals', () => {
       ];
 
       const result = computePreviousPeriodTotals(txs, 'store-groups');
-      expect(result.get('other')).toBe(200);
+      expect(result.get('otros')).toBe(200);
     });
   });
 
@@ -100,15 +101,15 @@ describe('computePreviousPeriodTotals', () => {
           date: '2026-01-01',
           total: 1000,
           items: [
-            { name: 'Milk', price: 300, category: 'Lácteos', qty: 2 },
-            { name: 'Apple', price: 200, category: 'Frutas y Verduras' },
+            { name: 'Milk', price: 300, category: 'DairyEggs', qty: 2 },
+            { name: 'Apple', price: 200, category: 'Produce' },
           ],
         }),
       ];
 
       const result = computePreviousPeriodTotals(txs, 'item-categories');
-      expect(result.get('Lácteos')).toBe(600); // 300 * 2
-      expect(result.get('Frutas y Verduras')).toBe(200); // 200 * 1 (default qty)
+      expect(result.get('DairyEggs')).toBe(600); // 300 * 2
+      expect(result.get('Produce')).toBe(200); // 200 * 1 (default qty)
     });
 
     it('defaults missing item category to "Unknown"', () => {
@@ -138,9 +139,9 @@ describe('computePreviousPeriodTotals', () => {
           date: '2026-01-01',
           total: 1000,
           items: [
-            { name: 'Apple', price: 200, category: 'Frutas y Verduras' },
-            { name: 'Steak', price: 500, category: 'Carnes y Mariscos' },
-            { name: 'Milk', price: 300, category: 'Lácteos' },
+            { name: 'Apple', price: 200, category: 'Produce' },
+            { name: 'Steak', price: 500, category: 'MeatSeafood' },
+            { name: 'Milk', price: 300, category: 'DairyEggs' },
           ],
         }),
       ];
@@ -171,7 +172,7 @@ describe('computePreviousPeriodTotals', () => {
       // 'store-categories' or 'item-categories' falls through to item-based aggregation.
       // Transactions with no items produce empty results in this branch.
       const txs = [
-        makeTx({ date: '2026-01-01', total: 500, category: 'Supermercado' as Transaction['category'] }),
+        makeTx({ date: '2026-01-01', total: 500, category: 'Supermarket' as Transaction['category'] }),
       ];
 
       const result = computePreviousPeriodTotals(txs, 'unknown-mode' as DonutViewMode);
@@ -191,11 +192,11 @@ describe('computeDailySparkline', () => {
   describe('week period', () => {
     it('returns 7-point cumulative sparkline', () => {
       const txs = [
-        makeTx({ date: '2026-01-05', total: 100, category: 'Supermercado' as Transaction['category'] }), // Monday=1
-        makeTx({ date: '2026-01-07', total: 200, category: 'Supermercado' as Transaction['category'] }), // Wednesday=3
+        makeTx({ date: '2026-01-05', total: 100, category: 'Supermarket' as Transaction['category'] }), // Monday=1
+        makeTx({ date: '2026-01-07', total: 200, category: 'Supermarket' as Transaction['category'] }), // Wednesday=3
       ];
 
-      const result = computeDailySparkline('Supermercado', txs, 'store-categories', 'week', basePeriod);
+      const result = computeDailySparkline('Supermarket', txs, 'store-categories', 'week', basePeriod);
       expect(result).toHaveLength(7);
       // Cumulative data, last value should be total
       expect(result[result.length - 1]).toBe(300);
@@ -204,25 +205,25 @@ describe('computeDailySparkline', () => {
 
   describe('month period', () => {
     it('returns correct number of days for January', () => {
-      const result = computeDailySparkline('Supermercado', [], 'store-categories', 'month', basePeriod);
+      const result = computeDailySparkline('Supermarket', [], 'store-categories', 'month', basePeriod);
       expect(result).toHaveLength(20); // 31 days > 20 max → downsampled to 20
     });
 
     it('returns correct number of days for February (non-leap)', () => {
       const febPeriod: CurrentPeriod = { year: 2025, month: 2, quarter: 1, week: 1 };
-      const result = computeDailySparkline('Supermercado', [], 'store-categories', 'month', febPeriod);
+      const result = computeDailySparkline('Supermarket', [], 'store-categories', 'month', febPeriod);
       expect(result).toHaveLength(20); // 28 days > 20 max → downsampled to 20
     });
 
     it('accumulates daily totals cumulatively', () => {
       // Use mid-month dates to avoid UTC/local timezone day-boundary issues
       const txs = [
-        makeTx({ date: '2026-01-10T12:00:00', total: 100, category: 'Supermercado' as Transaction['category'] }),
-        makeTx({ date: '2026-01-10T14:00:00', total: 50, category: 'Supermercado' as Transaction['category'] }),
-        makeTx({ date: '2026-01-20T12:00:00', total: 200, category: 'Supermercado' as Transaction['category'] }),
+        makeTx({ date: '2026-01-10T12:00:00', total: 100, category: 'Supermarket' as Transaction['category'] }),
+        makeTx({ date: '2026-01-10T14:00:00', total: 50, category: 'Supermarket' as Transaction['category'] }),
+        makeTx({ date: '2026-01-20T12:00:00', total: 200, category: 'Supermarket' as Transaction['category'] }),
       ];
 
-      const result = computeDailySparkline('Supermercado', txs, 'store-categories', 'month', basePeriod);
+      const result = computeDailySparkline('Supermarket', txs, 'store-categories', 'month', basePeriod);
       // Last value should be cumulative total of all matching transactions
       expect(result[result.length - 1]).toBe(350);
       // Values should be non-decreasing (cumulative)
@@ -235,7 +236,7 @@ describe('computeDailySparkline', () => {
   describe('quarter period', () => {
     it('computes days across 3 months', () => {
       const q1Period: CurrentPeriod = { year: 2026, month: 1, quarter: 1, week: 1 };
-      const result = computeDailySparkline('Supermercado', [], 'store-categories', 'quarter', q1Period);
+      const result = computeDailySparkline('Supermarket', [], 'store-categories', 'quarter', q1Period);
       // Q1 = Jan(31) + Feb(28) + Mar(31) = 90 days → downsampled to 20
       expect(result).toHaveLength(20);
     });
@@ -243,7 +244,7 @@ describe('computeDailySparkline', () => {
 
   describe('year period', () => {
     it('returns 20 downsampled points for 365-day period', () => {
-      const result = computeDailySparkline('Supermercado', [], 'store-categories', 'year', basePeriod);
+      const result = computeDailySparkline('Supermarket', [], 'store-categories', 'year', basePeriod);
       expect(result).toHaveLength(20);
     });
   });
@@ -251,12 +252,12 @@ describe('computeDailySparkline', () => {
   describe('category matching', () => {
     it('only includes matching store-categories transactions', () => {
       const txs = [
-        makeTx({ date: '2026-01-05', total: 100, category: 'Supermercado' as Transaction['category'] }),
-        makeTx({ date: '2026-01-05', total: 200, category: 'Restaurante' as Transaction['category'] }),
+        makeTx({ date: '2026-01-05', total: 100, category: 'Supermarket' as Transaction['category'] }),
+        makeTx({ date: '2026-01-05', total: 200, category: 'Restaurant' as Transaction['category'] }),
       ];
 
-      const result = computeDailySparkline('Supermercado', txs, 'store-categories', 'week', basePeriod);
-      expect(result[result.length - 1]).toBe(100); // Only Supermercado
+      const result = computeDailySparkline('Supermarket', txs, 'store-categories', 'week', basePeriod);
+      expect(result[result.length - 1]).toBe(100); // Only Supermarket
     });
 
     it('matches item-categories by item category', () => {
@@ -265,22 +266,22 @@ describe('computeDailySparkline', () => {
           date: '2026-01-05',
           total: 500,
           items: [
-            { name: 'Milk', price: 300, category: 'Lácteos' },
-            { name: 'Apple', price: 200, category: 'Frutas y Verduras' },
+            { name: 'Milk', price: 300, category: 'DairyEggs' },
+            { name: 'Apple', price: 200, category: 'Produce' },
           ],
         }),
       ];
 
-      const result = computeDailySparkline('Lácteos', txs, 'item-categories', 'week', basePeriod);
-      expect(result[result.length - 1]).toBe(300); // Only Lácteos items
+      const result = computeDailySparkline('DairyEggs', txs, 'item-categories', 'week', basePeriod);
+      expect(result[result.length - 1]).toBe(300); // Only DairyEggs items
     });
 
     it('returns all zeros for non-matching category', () => {
       const txs = [
-        makeTx({ date: '2026-01-05', total: 100, category: 'Supermercado' as Transaction['category'] }),
+        makeTx({ date: '2026-01-05', total: 100, category: 'Supermarket' as Transaction['category'] }),
       ];
 
-      const result = computeDailySparkline('Farmacia', txs, 'store-categories', 'week', basePeriod);
+      const result = computeDailySparkline('Pharmacy', txs, 'store-categories', 'week', basePeriod);
       expect(result.every(v => v === 0)).toBe(true);
     });
   });
@@ -289,20 +290,20 @@ describe('computeDailySparkline', () => {
     // Fixed in 15-TD-26: replaced String.includes loop with direct key lookup
     it('matches store categories to their groups via direct lookup', () => {
       const txs = [
-        makeTx({ date: '2026-01-05', total: 500, category: 'Supermercado' as Transaction['category'] }),
+        makeTx({ date: '2026-01-05', total: 500, category: 'Supermarket' as Transaction['category'] }),
       ];
 
-      // STORE_CATEGORY_GROUPS['Supermercado'] === 'food-dining' → direct lookup
-      const result = computeDailySparkline('food-dining', txs, 'store-groups', 'week', basePeriod);
+      // STORE_CATEGORY_GROUPS['Supermarket'] === 'supermercados' → direct lookup
+      const result = computeDailySparkline('supermercados', txs, 'store-groups', 'week', basePeriod);
       expect(result[result.length - 1]).toBe(500);
     });
 
     it('returns zeros when category does not belong to requested group', () => {
       const txs = [
-        makeTx({ date: '2026-01-05', total: 500, category: 'Supermercado' as Transaction['category'] }),
+        makeTx({ date: '2026-01-05', total: 500, category: 'Supermarket' as Transaction['category'] }),
       ];
 
-      const result = computeDailySparkline('health-wellness', txs, 'store-groups', 'week', basePeriod);
+      const result = computeDailySparkline('salud-bienestar', txs, 'store-groups', 'week', basePeriod);
       expect(result.every(v => v === 0)).toBe(true);
     });
   });
@@ -315,8 +316,8 @@ describe('computeDailySparkline', () => {
           date: '2026-01-05',
           total: 500,
           items: [
-            { name: 'Apple', price: 200, category: 'Frutas y Verduras' },
-            { name: 'Steak', price: 300, category: 'Carnes y Mariscos' },
+            { name: 'Apple', price: 200, category: 'Produce' },
+            { name: 'Steak', price: 300, category: 'MeatSeafood' },
           ],
         }),
       ];
@@ -331,11 +332,11 @@ describe('computeDailySparkline', () => {
         makeTx({
           date: '2026-01-05',
           total: 300,
-          items: [{ name: 'Milk', price: 300, category: 'Lácteos' }],
+          items: [{ name: 'Milk', price: 300, category: 'DairyEggs' }],
         }),
       ];
 
-      // Lácteos maps to 'food-packaged', not 'food-fresh'
+      // DairyEggs maps to 'food-packaged', not 'food-fresh'
       const result = computeDailySparkline('food-fresh', txs, 'item-groups', 'week', basePeriod);
       expect(result.every(v => v === 0)).toBe(true);
     });
@@ -346,11 +347,11 @@ describe('computeDailySparkline', () => {
       // Month with 31 days → downsampled to 20 points
       // Use mid-month dates to avoid UTC/local timezone day-boundary issues
       const txs = [
-        makeTx({ date: '2026-01-10T12:00:00', total: 100, category: 'Supermercado' as Transaction['category'] }),
-        makeTx({ date: '2026-01-25T12:00:00', total: 100, category: 'Supermercado' as Transaction['category'] }),
+        makeTx({ date: '2026-01-10T12:00:00', total: 100, category: 'Supermarket' as Transaction['category'] }),
+        makeTx({ date: '2026-01-25T12:00:00', total: 100, category: 'Supermarket' as Transaction['category'] }),
       ];
 
-      const result = computeDailySparkline('Supermercado', txs, 'store-categories', 'month', basePeriod);
+      const result = computeDailySparkline('Supermarket', txs, 'store-categories', 'month', basePeriod);
       expect(result).toHaveLength(20);
       // Last sampled point includes cumulative total
       expect(result[result.length - 1]).toBe(200);
@@ -362,14 +363,14 @@ describe('computeDailySparkline', () => {
 
     it('does not downsample when ≤20 points', () => {
       // Week = 7 days → no downsampling
-      const result = computeDailySparkline('Supermercado', [], 'store-categories', 'week', basePeriod);
+      const result = computeDailySparkline('Supermarket', [], 'store-categories', 'week', basePeriod);
       expect(result).toHaveLength(7);
     });
   });
 
   describe('edge cases', () => {
     it('handles empty transactions', () => {
-      const result = computeDailySparkline('Supermercado', [], 'store-categories', 'week', basePeriod);
+      const result = computeDailySparkline('Supermarket', [], 'store-categories', 'week', basePeriod);
       expect(result).toHaveLength(7);
       expect(result.every(v => v === 0)).toBe(true);
     });
@@ -377,10 +378,10 @@ describe('computeDailySparkline', () => {
     it('clamps day index within bounds', () => {
       // Transaction with date far outside the period shouldn't crash
       const txs = [
-        makeTx({ date: '2026-12-31', total: 100, category: 'Supermercado' as Transaction['category'] }),
+        makeTx({ date: '2026-12-31', total: 100, category: 'Supermarket' as Transaction['category'] }),
       ];
 
-      const result = computeDailySparkline('Supermercado', txs, 'store-categories', 'week', basePeriod);
+      const result = computeDailySparkline('Supermarket', txs, 'store-categories', 'week', basePeriod);
       expect(result).toHaveLength(7);
       // Value should be placed at clamped boundary
       expect(result[result.length - 1]).toBe(100);

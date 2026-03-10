@@ -138,7 +138,7 @@ export function computeStoreCategoriesData(
 // ============================================================================
 
 /**
- * Aggregate transactions by store category group (e.g., food-dining, health-wellness).
+ * Aggregate transactions by store category group (e.g., supermercados, salud-bienestar).
  */
 export function computeStoreGroupsData(
     monthTransactions: Transaction[],
@@ -148,19 +148,23 @@ export function computeStoreGroupsData(
     const mode = getCurrentMode();
 
     const groupTotals: Record<StoreCategoryGroup, AggregationBucket> = {
-        'food-dining': newBucket(),
-        'health-wellness': newBucket(),
-        'retail-general': newBucket(),
-        'retail-specialty': newBucket(),
-        'automotive': newBucket(),
-        'services': newBucket(),
-        'hospitality': newBucket(),
-        'other': newBucket(),
+        'supermercados': newBucket(),
+        'restaurantes': newBucket(),
+        'comercio-barrio': newBucket(),
+        'vivienda': newBucket(),
+        'salud-bienestar': newBucket(),
+        'tiendas-generales': newBucket(),
+        'tiendas-especializadas': newBucket(),
+        'transporte-vehiculo': newBucket(),
+        'educacion': newBucket(),
+        'servicios-finanzas': newBucket(),
+        'entretenimiento-hospedaje': newBucket(),
+        'otros': newBucket(),
     };
 
     monthTransactions.forEach((tx, index) => {
         const cat = tx.category || 'Otro';
-        const group = STORE_CATEGORY_GROUPS[cat as keyof typeof STORE_CATEGORY_GROUPS] || 'other';
+        const group = STORE_CATEGORY_GROUPS[cat as keyof typeof STORE_CATEGORY_GROUPS] || 'otros';
         groupTotals[group].amount += tx.total;
         groupTotals[group].transactionIds.add(tx.id ?? `tx-${index}`);
         (tx.items || []).forEach(item => {
@@ -239,7 +243,7 @@ export function computeItemCategoriesData(
 // ============================================================================
 
 /**
- * Aggregate transaction line items by item category group (e.g., food-fresh, household).
+ * Aggregate transaction line items by item category group (e.g., food-fresh, hogar).
  */
 export function computeItemGroupsData(
     monthTransactions: Transaction[],
@@ -250,18 +254,20 @@ export function computeItemGroupsData(
     const groupTotals: Record<ItemCategoryGroup, AggregationBucket> = {
         'food-fresh': newBucket(),
         'food-packaged': newBucket(),
-        'health-personal': newBucket(),
-        'household': newBucket(),
-        'nonfood-retail': newBucket(),
-        'services-fees': newBucket(),
-        'other-item': newBucket(),
+        'food-prepared': newBucket(),
+        'salud-cuidado': newBucket(),
+        'hogar': newBucket(),
+        'productos-generales': newBucket(),
+        'servicios-cargos': newBucket(),
+        'vicios': newBucket(),
+        'otros-item': newBucket(),
     };
 
     monthTransactions.forEach((tx, index) => {
         (tx.items || []).forEach(item => {
             const cat = normalizeItemCategory(item.category || 'Other');
             const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
-            const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
+            const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'otros-item';
             groupTotals[group].amount += item.price;
             groupTotals[group].transactionIds.add(tx.id ?? `tx-${index}`);
             trackProduct(groupTotals[group], item.name || '', tx.merchant || '');

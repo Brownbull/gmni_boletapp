@@ -13,7 +13,7 @@ test.use({
     viewport: { width: 360, height: 780 },
 });
 
-const STAGING_URL = 'http://localhost:5174';
+const STAGING_URL = process.env.STAGING_URL || 'http://localhost:5174';
 
 const STAGING_USERS = [
   { name: 'alice' },

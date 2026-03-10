@@ -31,11 +31,12 @@ const SERVICE_ACCOUNT_PATH = 'scripts/keys/serviceAccountKey.staging.json';
 // Minimum transactions needed for idempotency check
 const MIN_CURRENT_MONTH_TRANSACTIONS = 5;
 
+// V4 canonical PascalCase categories
 const CURRENT_MONTH_TRANSACTIONS = [
     { merchant: 'Líder Express', category: 'Supermarket', total: 45230 },
     { merchant: 'Starbucks', category: 'Restaurant', total: 7850 },
-    { merchant: 'Copec', category: 'Transport', total: 32000 },
-    { merchant: 'Cruz Verde', category: 'Healthcare', total: 15600 },
+    { merchant: 'Copec', category: 'GasStation', total: 32000 },
+    { merchant: 'Cruz Verde', category: 'Pharmacy', total: 15600 },
     { merchant: 'Metro de Santiago', category: 'Transport', total: 2500 },
 ];
 

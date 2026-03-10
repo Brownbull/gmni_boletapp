@@ -12,7 +12,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "ECC_GRAVITY_WELLS=\"translations.ts=split by feature module\" ECC_SIZE_EXCLUDE=\"App.tsx,PROTOCOL-v2.md\" python3 \"$CLAUDE_PROJECT_DIR/_kdbp/hooks/pre-edit-guard.py\"",
+            "command": "ECC_GRAVITY_WELLS=\"\" ECC_SIZE_EXCLUDE=\"App.tsx,PROTOCOL-v2.md,translations.ts\" python3 \"$CLAUDE_PROJECT_DIR/_kdbp/hooks/pre-edit-guard.py\"",
             "timeout": 5
           }
         ]

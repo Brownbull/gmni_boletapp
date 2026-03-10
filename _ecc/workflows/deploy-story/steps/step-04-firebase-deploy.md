@@ -53,8 +53,17 @@ Detect backend changes, deploy targets, sync staging.
     <check if="deploy succeeds">
       <output>**Backend deployed to production** — Deployed: {{deploy_targets}}</output>
       <check if="firestore:rules or firestore:indexes in {{deploy_targets}}">
-        <action>Run `firebase deploy --only firestore:rules,firestore:indexes --project boletapp-staging`</action>
-        <output>Staging Firestore rules/indexes synced.</output>
+        <critical>INC-001 WARNING: boletapp-staging is SHARED with Gustify.
+          Firestore rules are per-project — deploying overwrites BOTH apps' rules.
+          The canonical combined rules file lives in the Gustify repo.
+          Before deploying: verify firestore.staging.rules contains Gustify paths
+          (canonicalIngredients, itemMappings, recipes, canonicalPreparedFoods, unknownIngredients, unknownPreparedFoods).
+          deploy-staging.sh validates this automatically — use it instead of raw firebase CLI.</critical>
+        <action>Run `bash scripts/deploy-staging.sh rules`</action>
+        <check if="firestore:indexes in {{deploy_targets}}">
+          <action>Run `firebase deploy --only firestore:indexes --project boletapp-staging`</action>
+        </check>
+        <output>Staging Firestore rules/indexes synced (rules validated for both apps).</output>
       </check>
     </check>
   </check>

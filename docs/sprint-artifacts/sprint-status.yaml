@@ -294,7 +294,7 @@ development_status:
   # Source: docs/architecture/proposals/SCAN-WORKFLOW-RESTRUCTURING-PROPOSAL.md
   # FRs: FR-1.5, FR-8.8 | NFRs: NFR-4.2
   # ============================================================================
-  epic-16: backlog
+  epic-16: done  # All 16 stories done (2026-03-07), 47 pts delivered
 
   # Chain A: store split -> overlay merge -> bug fix
   16-1-split-scan-store-slices: done          # 8 pts - Split useScanStore (946L) into 5-6 Zustand slices
@@ -326,13 +326,20 @@ development_status:
   # 4-level Spanish taxonomy + batch migration + AI prompt update
   # FRs: FR-4.3, FR-4.4 | NFRs: NFR-6.4
   # ============================================================================
-  epic-17: backlog
+  epic-17: done  # All stories done, migration built + seed scripts V4-updated (2026-03-10)
 
-  17-1-design-taxonomy: ready-for-dev                  # 2 pts - Design 4-level Spanish taxonomy spec
-  17-2-update-constants-types: ready-for-dev           # 3 pts - Update constants, types, translations, normalizer (DEPENDS: 17-1)
-  17-3-update-ai-prompt: ready-for-dev                 # 2 pts - Update Gemini Cloud Function prompt (DEPENDS: 17-1)
-  17-4-update-ui-labels: ready-for-dev                 # 5 pts - Update all UI components showing categories (DEPENDS: 17-2)
-  17-5-batch-migration: ready-for-dev                  # 5 pts - Idempotent Cloud Function batch migration (DEPENDS: 17-2)
+  17-1-design-taxonomy: done                            # 2 pts - Design 4-level Spanish taxonomy spec
+  17-2-update-constants-types: done                     # 3 pts - Update constants, types, translations, normalizer (DEPENDS: 17-1)
+  TD-17-1-normalizer-chart-tests: done                     # 2 pts - Normalizer unit tests + chart otherKey tests (DEPENDS: 17-2)
+  17-3-update-ai-prompt: done                           # 2 pts - Update Gemini Cloud Function prompt (DEPENDS: 17-1)
+  17-4-update-ui-labels: done                          # 5 pts - Update all UI components showing categories (DEPENDS: 17-2)
+  TD-17-2-report-grouping-i18n: done                     # 3 pts - Report grouping i18n completion: locale param + hardcoded strings (DEPENDS: 17-4)
+  TD-17-3-report-i18n-remaining: done                      # 5 pts - Report i18n remaining call sites: generation, insights, year (DEPENDS: TD-17-2)
+  TD-17-4-report-i18n-hardcoded-strings: done             # 3 pts - Remaining hardcoded Spanish strings + quarterly/yearly i18n tests (DEPENDS: TD-17-3)
+  TD-17-5-report-i18n-locale-cleanup: done                 # 2 pts - Locale cleanup: es-CL hardcoding, dual-purpose key, Other fallback (DEPENDS: TD-17-4)
+  TD-17-6-report-locale-remaining-strings: done  # 1 pt  - Remaining hardcoded locale strings: S/W prefix + Dic abbreviation (DEPENDS: TD-17-5)
+  TD-17-7-report-i18n-test-coverage: done                   # 2 pts - Locale test coverage gaps: 3 untested functions + fallback path (DEPENDS: TD-17-5)
+  17-5-batch-migration: done                           # 5 pts - Idempotent Cloud Function batch migration (DEPENDS: 17-2)
 
   epic-17-retrospective: optional
 

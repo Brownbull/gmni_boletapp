@@ -5,13 +5,24 @@
  * Verifies no Infinity/NaN propagation in group-level trend output.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { CategoryBreakdown } from '@/types/report';
 import {
   groupCategoriesByStoreGroup,
   groupItemsByItemCategory,
 } from '@features/reports/utils/reportUtils';
+import { formatCategoryName } from '@features/reports/utils/reportCategoryGrouping';
+import { translateStoreCategory } from '@/utils/categoryTranslations';
+import type { StoreCategory } from '../../../../../shared/schema/categories';
 import type { Transaction } from '@/types/transaction';
+import type { Language } from '@/utils/translations';
+
+// TD-17-2: Mock getSettingsState for locale-aware grouping tests
+let mockLang: Language = 'es';
+vi.mock('@shared/stores/useSettingsStore', () => ({
+  getSettingsState: () => ({ lang: mockLang }),
+  useSettingsStore: { getState: () => ({ lang: mockLang }) },
+}));
 
 // ============================================================================
 // Helpers
@@ -151,6 +162,102 @@ describe('groupCategoriesByStoreGroup — trend edge cases', () => {
 });
 
 // ============================================================================
+// TD-17-2: groupCategoriesByStoreGroup — i18n count labels
+// ============================================================================
+
+describe('groupCategoriesByStoreGroup — i18n count labels (TD-17-2)', () => {
+  beforeEach(() => {
+    mockLang = 'es';
+  });
+
+  it('should use translated purchase singular in Spanish', () => {
+    const categories: CategoryBreakdown[] = [
+      makeCategoryBreakdown({ transactionCount: 1 }),
+    ];
+    const groups = groupCategoriesByStoreGroup(categories);
+    const cat = groups[0].categories[0];
+    expect(cat.count).toBe('1 compra');
+  });
+
+  it('should use translated purchase plural in Spanish', () => {
+    const categories: CategoryBreakdown[] = [
+      makeCategoryBreakdown({ transactionCount: 3 }),
+    ];
+    const groups = groupCategoriesByStoreGroup(categories);
+    const cat = groups[0].categories[0];
+    expect(cat.count).toBe('3 compras');
+  });
+
+  it('should use English purchase labels when lang=en', () => {
+    mockLang = 'en';
+    const categories: CategoryBreakdown[] = [
+      makeCategoryBreakdown({ transactionCount: 1 }),
+    ];
+    const groups = groupCategoriesByStoreGroup(categories);
+    const cat = groups[0].categories[0];
+    expect(cat.count).toBe('1 purchase');
+  });
+
+  it('should use English purchase plural when lang=en', () => {
+    mockLang = 'en';
+    const categories: CategoryBreakdown[] = [
+      makeCategoryBreakdown({ transactionCount: 5 }),
+    ];
+    const groups = groupCategoriesByStoreGroup(categories);
+    const cat = groups[0].categories[0];
+    expect(cat.count).toBe('5 purchases');
+  });
+});
+
+// ============================================================================
+// TD-17-2: groupItemsByItemCategory — i18n count labels
+// ============================================================================
+
+describe('groupItemsByItemCategory — i18n count labels (TD-17-2)', () => {
+  beforeEach(() => {
+    mockLang = 'es';
+  });
+
+  it('should use translated item singular in Spanish', () => {
+    const txs: Transaction[] = [
+      makeTx({ items: [{ name: 'Apple', category: 'Produce', price: 500, qty: 1 }] }),
+    ];
+    const groups = groupItemsByItemCategory(txs);
+    const item = groups[0].items[0];
+    expect(item.count).toBe('1 ítem');
+  });
+
+  it('should use translated item plural in Spanish', () => {
+    const txs: Transaction[] = [
+      makeTx({ items: [{ name: 'Apple', category: 'Produce', price: 500, qty: 3 }] }),
+    ];
+    const groups = groupItemsByItemCategory(txs);
+    const item = groups[0].items[0];
+    expect(item.count).toBe('3 ítems');
+  });
+
+  it('should use English item labels when lang=en', () => {
+    mockLang = 'en';
+    const txs: Transaction[] = [
+      makeTx({ items: [{ name: 'Apple', category: 'Produce', price: 500, qty: 1 }] }),
+    ];
+    const groups = groupItemsByItemCategory(txs);
+    const item = groups[0].items[0];
+    expect(item.count).toBe('1 item');
+  });
+
+  it('should use English item plural when lang=en', () => {
+    mockLang = 'en';
+    const txs: Transaction[] = [
+      makeTx({ items: [{ name: 'Apple', category: 'Produce', price: 500, qty: 4 }] }),
+    ];
+    const groups = groupItemsByItemCategory(txs);
+    const item = groups[0].items[0];
+    expect(item.count).toBe('4 items');
+  });
+});
+
+// ============================================================================
 // groupItemsByItemCategory — Trend Edge Cases
 // ============================================================================
 
@@ -229,5 +336,77 @@ describe('groupItemsByItemCategory — trend edge cases', () => {
       expect(Number.isFinite(group.rawTotalAmount)).toBe(true);
       expect(group.trend).toBeUndefined();
     }
+  });
+});
+
+// ============================================================================
+// formatCategoryName — Delegation to translateStoreCategory (Story 17-4)
+// ============================================================================
+
+describe('formatCategoryName — delegates to translateStoreCategory', () => {
+  beforeEach(() => {
+    mockLang = 'es';
+  });
+
+  it('should delegate to translateStoreCategory for Supermarket', () => {
+    const result = formatCategoryName('Supermarket' as StoreCategory);
+    expect(result).toBe(translateStoreCategory('Supermarket', 'es'));
+  });
+
+  it('should delegate to translateStoreCategory for Medical (not old "Salud")', () => {
+    const result = formatCategoryName('Medical' as StoreCategory);
+    expect(result).toBe(translateStoreCategory('Medical', 'es'));
+  });
+
+  it('should delegate to translateStoreCategory for Restaurant (not old "Restaurantes")', () => {
+    const result = formatCategoryName('Restaurant' as StoreCategory);
+    expect(result).toBe(translateStoreCategory('Restaurant', 'es'));
+  });
+
+  it('should delegate to translateStoreCategory for HealthBeauty', () => {
+    const result = formatCategoryName('HealthBeauty' as StoreCategory);
+    expect(result).toBe(translateStoreCategory('HealthBeauty', 'es'));
+  });
+
+  it('should delegate to translateStoreCategory for ClothingStore', () => {
+    const result = formatCategoryName('ClothingStore' as StoreCategory);
+    expect(result).toBe(translateStoreCategory('ClothingStore', 'es'));
+  });
+
+  it('should delegate to translateStoreCategory for Other', () => {
+    const result = formatCategoryName('Other' as StoreCategory);
+    expect(result).toBe(translateStoreCategory('Other', 'es'));
+  });
+
+  it('should delegate to translateStoreCategory for Veterinary (not old "Veterinaria")', () => {
+    const result = formatCategoryName('Veterinary' as StoreCategory);
+    expect(result).toBe(translateStoreCategory('Veterinary', 'es'));
+  });
+
+  it('should delegate to translateStoreCategory for GasStation', () => {
+    const result = formatCategoryName('GasStation' as StoreCategory);
+    expect(result).toBe(translateStoreCategory('GasStation', 'es'));
+  });
+
+  it('should delegate to translateStoreCategory for FurnitureStore (not old "Muebles")', () => {
+    const result = formatCategoryName('FurnitureStore' as StoreCategory);
+    expect(result).toBe(translateStoreCategory('FurnitureStore', 'es'));
+  });
+
+  it('should fall back to original key for unknown category', () => {
+    // translateStoreCategory returns original key if not found
+    const result = formatCategoryName('UnknownCategory' as StoreCategory);
+    expect(result).toBe('UnknownCategory');
+  });
+
+  // TD-17-2: AC-1 — explicit lang parameter
+  it('should use English translation when lang=en is passed explicitly', () => {
+    const result = formatCategoryName('Supermarket' as StoreCategory, 'en');
+    expect(result).toBe(translateStoreCategory('Supermarket', 'en'));
+  });
+
+  it('should use Spanish translation when lang=es is passed explicitly', () => {
+    const result = formatCategoryName('Restaurant' as StoreCategory, 'es');
+    expect(result).toBe(translateStoreCategory('Restaurant', 'es'));
   });
 });

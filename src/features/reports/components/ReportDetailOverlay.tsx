@@ -22,7 +22,7 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, Download, Receipt } from 'lucide-react';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useLang } from '@shared/stores/useSettingsStore';
-import { TRANSLATIONS } from '@/utils/translations';
+import { TRANSLATIONS, type Language } from '@/utils/translations';
 import type { TrendDirection, ReportPeriodType, CategoryBreakdown, TransactionGroup, ItemGroup } from '@/types/report';
 import { formatCurrency } from '@/types/report';
 import { CategoryGroupCard } from './CategoryGroupCard';
@@ -271,9 +271,10 @@ const HighlightsCard: React.FC<HighlightsCardProps> = ({ highlights, periodType,
 interface CategoryBreakdownCardProps {
   categories: CategoryBreakdown[];
   t: Translations;
+  lang: Language;
 }
 
-const CategoryBreakdownCard: React.FC<CategoryBreakdownCardProps> = ({ categories, t }) => (
+const CategoryBreakdownCard: React.FC<CategoryBreakdownCardProps> = ({ categories, t, lang }) => (
   <div
     className="rounded-xl p-5 border"
     style={{
@@ -299,7 +300,7 @@ const CategoryBreakdownCard: React.FC<CategoryBreakdownCardProps> = ({ categorie
           {/* Category info */}
           <div className="flex-1">
             <div className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-              {formatCategoryName(cat.category)}
+              {formatCategoryName(cat.category, lang)}
             </div>
             <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
               {cat.transactionCount} {cat.transactionCount === 1 ? t.reportPurchaseSingular : t.reportPurchasePlural}
@@ -432,7 +433,7 @@ export const ReportDetailOverlay: React.FC<ReportDetailOverlayProps> = ({
   onViewTransactions,
 }) => {
   const lang = useLang();
-  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
   const prefersReducedMotion = useReducedMotion();
   const overlayRef = useRef<HTMLDivElement>(null);
   const downloadButtonRef = useRef<HTMLButtonElement>(null);
@@ -669,7 +670,7 @@ export const ReportDetailOverlay: React.FC<ReportDetailOverlayProps> = ({
             {(!reportData.transactionGroups || reportData.transactionGroups.length === 0) &&
              (!reportData.itemGroups || reportData.itemGroups.length === 0) &&
              reportData.categories && reportData.categories.length > 0 && (
-              <CategoryBreakdownCard categories={reportData.categories} t={t} />
+              <CategoryBreakdownCard categories={reportData.categories} t={t} lang={lang} />
             )}
           </div>
         </div>

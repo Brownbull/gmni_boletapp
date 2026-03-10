@@ -166,7 +166,9 @@ firebase deploy --only hosting --project boletapp-d609f
 
 # Deploy to BOTH environments (rules + indexes)
 firebase deploy --only firestore:rules,firestore:indexes --project boletapp-d609f
-firebase deploy --only firestore:rules,firestore:indexes --project boletapp-staging
+# STAGING: Use deploy-staging.sh — validates Gustify paths (INC-001)
+bash scripts/deploy-staging.sh rules
+firebase deploy --only firestore:indexes --project boletapp-staging
 ```
 
 ---
@@ -199,7 +201,7 @@ After the PR merges to main:
 1. [ ] `cd functions && npm run build` (if functions changed)
 2. [ ] `firebase deploy --only <targets> --project boletapp-d609f`
 3. [ ] Verify in Firebase Console (functions list, rules, indexes)
-4. [ ] `firebase deploy --only firestore:rules,firestore:indexes --project boletapp-staging` (keep staging in sync)
+4. [ ] Sync staging: `bash scripts/deploy-staging.sh rules` + `firebase deploy --only firestore:indexes --project boletapp-staging` (INC-001: script validates Gustify paths)
 5. [ ] Update "Environment Parity Status" table above with today's date
 
 ---

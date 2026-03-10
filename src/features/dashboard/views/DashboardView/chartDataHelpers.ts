@@ -127,13 +127,13 @@ export function computeRadarChartData(
     } else if (treemapViewMode === 'store-groups') {
         currMonthTx.forEach(tx => {
             const cat = tx.category || 'Otro';
-            const group = STORE_CATEGORY_GROUPS[cat as keyof typeof STORE_CATEGORY_GROUPS] || 'other';
+            const group = STORE_CATEGORY_GROUPS[cat as keyof typeof STORE_CATEGORY_GROUPS] || 'otros';
             currTotals[group] = (currTotals[group] || 0) + tx.total;
             totalCurrMonth += tx.total;
         });
         prevMonthTx.forEach(tx => {
             const cat = tx.category || 'Otro';
-            const group = STORE_CATEGORY_GROUPS[cat as keyof typeof STORE_CATEGORY_GROUPS] || 'other';
+            const group = STORE_CATEGORY_GROUPS[cat as keyof typeof STORE_CATEGORY_GROUPS] || 'otros';
             prevTotals[group] = (prevTotals[group] || 0) + tx.total;
             totalPrevMonth += tx.total;
         });
@@ -157,7 +157,7 @@ export function computeRadarChartData(
             (tx.items || []).forEach(item => {
                 const cat = normalizeItemCategory(item.category || 'Other');
                 const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
-                const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
+                const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'otros-item';
                 currTotals[group] = (currTotals[group] || 0) + item.price;
                 totalCurrMonth += item.price;
             });
@@ -166,7 +166,7 @@ export function computeRadarChartData(
             (tx.items || []).forEach(item => {
                 const cat = normalizeItemCategory(item.category || 'Other');
                 const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
-                const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
+                const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'otros-item';
                 prevTotals[group] = (prevTotals[group] || 0) + item.price;
                 totalPrevMonth += item.price;
             });
@@ -175,8 +175,8 @@ export function computeRadarChartData(
 
     // Get all unique categories with their percentage of current month budget
     const allCategories = new Set([...Object.keys(currTotals), ...Object.keys(prevTotals)]);
-    const otherKey = treemapViewMode === 'item-groups' ? 'other-item' :
-                     treemapViewMode === 'store-groups' ? 'other' : 'Otro';
+    const otherKey = treemapViewMode === 'item-groups' ? 'otros-item' :
+                     treemapViewMode === 'store-groups' ? 'otros' : 'Otro';
 
     const allCategoriesWithData = Array.from(allCategories)
         .map(name => ({
@@ -337,8 +337,8 @@ export function computeBumpChartData(
 
     // Calculate category totals per month
     const categoryRankings: Record<string, { amounts: number[]; color: string }> = {};
-    const otherKey = treemapViewMode === 'item-groups' ? 'other-item' :
-                     treemapViewMode === 'store-groups' ? 'other' : 'Otro';
+    const otherKey = treemapViewMode === 'item-groups' ? 'otros-item' :
+                     treemapViewMode === 'store-groups' ? 'otros' : 'Otro';
 
     months.forEach((m, idx) => {
         const monthStr = `${m.year}-${String(m.month + 1).padStart(2, '0')}`;
@@ -355,7 +355,7 @@ export function computeBumpChartData(
         } else if (treemapViewMode === 'store-groups') {
             monthTx.forEach(tx => {
                 const cat = tx.category || 'Otro';
-                const group = STORE_CATEGORY_GROUPS[cat as keyof typeof STORE_CATEGORY_GROUPS] || 'other';
+                const group = STORE_CATEGORY_GROUPS[cat as keyof typeof STORE_CATEGORY_GROUPS] || 'otros';
                 totals[group] = (totals[group] || 0) + tx.total;
             });
         } else if (treemapViewMode === 'item-categories') {
@@ -370,7 +370,7 @@ export function computeBumpChartData(
                 (tx.items || []).forEach(item => {
                     const cat = normalizeItemCategory(item.category || 'Other');
                     const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
-                    const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
+                    const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'otros-item';
                     totals[group] = (totals[group] || 0) + item.price;
                 });
             });
