@@ -237,9 +237,8 @@ export function buildPrompt(options: BuildPromptOptions = {}): string {
   // Use explicit promptConfig if provided, otherwise select based on context
   const selectedPrompt = promptConfig ?? getActivePrompt(context);
 
-  // Check if this is V3+ (which auto-detects currency, no {{currency}} placeholder)
-  const isV3 = selectedPrompt.id === 'v3-category-standardization'
-    || selectedPrompt.id === 'v4-spanish-taxonomy';
+  // Auto-detect whether prompt handles currency detection itself (no {{currency}} placeholder)
+  const autoDetectsCurrency = !selectedPrompt.prompt.includes('{{currency}}');
 
   // Get human-readable description for receipt type
   const receiptTypeDescription = getReceiptTypeDescription(receiptType);
@@ -247,8 +246,8 @@ export function buildPrompt(options: BuildPromptOptions = {}): string {
   // Start with the base prompt
   let result = selectedPrompt.prompt;
 
-  // Replace {{currency}} only for V1/V2 (V3 doesn't have this placeholder)
-  if (!isV3) {
+  // Replace {{currency}} only for prompts that have the placeholder (V1/V2)
+  if (!autoDetectsCurrency) {
     // V1/V2: currency is required, use default if not provided
     const currencyToUse = currency || DEFAULT_INPUT_HINTS.currency || 'CLP';
     const currencyContext = getCurrencyContext(currencyToUse);

@@ -1,6 +1,6 @@
 # Story 17-3: Update Gemini AI Prompt for New Taxonomy
 
-## Status: review
+## Status: done
 
 ## Intent
 **Epic Handle:** "Name everything in the language the user thinks in"
@@ -58,6 +58,24 @@ As a user, I want AI receipt scanning to categorize items and merchants using th
 
 ## Risk Flags
 - DATA_PIPELINE (AI prompt changes affect extraction accuracy)
+
+## Deferred Items
+
+| Item | Description | Priority | Action |
+|------|-------------|----------|--------|
+| Prompt test file split | `prompt-testing/prompts/__tests__/index.test.ts` at ~620 lines, exceeds 500-line integration test limit. Split by prompt version. | LOW | DEFER — bundle with next prompt story |
+
+## Senior Developer Review (KDBP)
+
+- **Date:** 2026-03-09
+- **Classification:** SIMPLE
+- **Agents:** code-reviewer (9/10 APPROVE), tdd-guide (5/10 CHANGES REQUESTED)
+- **Overall:** 7/10 APPROVE (after fixes)
+- **Triage:** 6 quick fixes applied, 1 deferred (test file split)
+- **Quick fixes:** renamed `isV3` to self-maintaining `autoDetectsCurrency`, added V4 category-in-prompt tests, `buildCompleteV4Prompt` tests, grouped category tests, stale comment fix
+- **Tests:** 84/84 pass, TypeScript clean
+
+<!-- CITED: none -->
 
 ## Dev Notes
 - CRITICAL: Always `cd functions && npm run build` locally before CI -- Cloud Function builds are separate from frontend.
