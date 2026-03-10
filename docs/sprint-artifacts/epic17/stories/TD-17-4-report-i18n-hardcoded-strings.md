@@ -1,6 +1,6 @@
 # Tech Debt Story TD-17-4: Report i18n — Hardcoded Spanish Strings + Test Gaps
 
-Status: review
+Status: done
 
 > **Source:** KDBP Code Review (2026-03-10) on story TD-17-3
 > **Priority:** LOW | **Estimated Effort:** 3 points
@@ -44,3 +44,22 @@ Current behavior is correct for Spanish-primary users. English users would see m
 - Note: New test file `reportI18n2.test.ts` created for quarterly/yearly tests (existing file at 287/300 line limit)
 - HOLIDAY_MONTHS in reportInsights.ts refactored to bilingual `Record<number, Record<Language, string>>`
 - translations.ts added to ECC_SIZE_EXCLUDE (data file, not code logic) — TD for proper split deferred
+
+## Deferred Items (from review 2026-03-10)
+
+| TD Story | Description | Priority | Action |
+|----------|-------------|----------|--------|
+| TD-17-5 | Hardcoded `es-CL` locale in toLocaleDateString (4 sites) | LOW | CREATED |
+| TD-17-5 | `reportFirstWeekly` dual-purpose key coupling | LOW | CREATED |
+| TD-17-5 | `'Other'` fallback untranslated in reportCategoryGrouping | LOW | CREATED |
+| TD-17-5 | translations.ts split (data file growth) | LOW | DEFERRED (separate epic) |
+
+## Senior Developer Review (KDBP)
+
+- **Date:** 2026-03-10
+- **Agents:** code-reviewer (sonnet), security-reviewer (sonnet)
+- **Classification:** STANDARD
+- **Score:** 8.0/10 (Code: 7.5, Security: 8.5)
+- **Outcome:** APPROVE — 5 quick fixes applied, 1 TD story created (TD-17-5)
+- **Quick fixes:** inline pattern consistency, hardcoded "Semana" strings, misleading comment, test explicit mockLang, emoji in test
+<!-- CITED: L2-004, L2-008 -->

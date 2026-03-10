@@ -886,6 +886,7 @@ export const TRANSLATIONS = {
         reportDownloadPdf: "Download as PDF",
         reportTransactionsViewHistory: "{count} transactions, view in history",
         // Report generation i18n (Story TD-17-4)
+        reportWeekLabel: "Week",
         reportThisWeek: "This Week",
         reportLastWeek: "last week",
         reportNoTransactionsYet: "No transactions yet",
@@ -1816,6 +1817,7 @@ export const TRANSLATIONS = {
         reportDownloadPdf: "Descargar como PDF",
         reportTransactionsViewHistory: "{count} transacciones, ver en historial",
         // Report generation i18n (Story TD-17-4)
+        reportWeekLabel: "Semana",
         reportThisWeek: "Esta Semana",
         reportLastWeek: "la semana pasada",
         reportNoTransactionsYet: "Sin transacciones todavía",

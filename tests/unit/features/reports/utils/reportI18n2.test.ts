@@ -20,7 +20,7 @@ function makeCategoryBreakdown(
 ): CategoryBreakdown {
   return {
     category: 'Supermarket',
-    icon: '🛒',
+    icon: 'cart',
     amount: 10000,
     percent: 50,
     transactionCount: 5,
@@ -71,6 +71,7 @@ describe('generateQuarterlyHighlights — i18n (TD-17-4, AC-3)', () => {
   });
 
   it('uses Spanish highlight labels when lang=es', async () => {
+    mockLang = 'es';
     const { generateQuarterlyHighlights } = await import(
       '@features/reports/utils/reportInsights'
     );

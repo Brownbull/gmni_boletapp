@@ -187,8 +187,8 @@ function generateWeeklyReportsForYear(
 
     reports.push({
       id: `weekly-${year}-${weekNum}`,
-      title: `Semana ${weekNum}`,
-      fullTitle: `Semana ${weekNum} · ${monthName} · Q${getQuarterNumber(thursday)} ${year}`,
+      title: `${t.reportWeekLabel} ${weekNum}`,
+      fullTitle: `${t.reportWeekLabel} ${weekNum} · ${monthName} · Q${getQuarterNumber(thursday)} ${year}`,
       amount: totalSpent,
       trend: isFirst ? undefined : trend,
       trendPercent: isFirst ? undefined : Math.abs(trendPercent),
@@ -292,6 +292,8 @@ function generateMonthlyReportsForYear(
     const transactionGroups = sortGroupsAlphabetically(groupCategoriesByStoreGroup(categories));
     const itemGroups = sortGroupsAlphabetically(groupItemsByItemCategory(monthTransactions, prevMonthTransactions));
 
+    const lang = getSettingsState().lang;
+    const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
     reports.push({
       id: `monthly-${year}-${month}`,
       title: monthNameCapitalized,
@@ -303,7 +305,7 @@ function generateMonthlyReportsForYear(
       periodType: 'monthly',
       isUnread: false,
       isFirst,
-      firstLabel: (TRANSLATIONS[getSettingsState().lang] ?? TRANSLATIONS.es).reportFirstMonthly,
+      firstLabel: t.reportFirstMonthly,
       categories,
       transactionGroups,
       itemGroups,
@@ -397,6 +399,8 @@ function generateQuarterlyReportsForYear(
     const transactionGroups = sortGroupsAlphabetically(groupCategoriesByStoreGroup(categories));
     const itemGroups = sortGroupsAlphabetically(groupItemsByItemCategory(quarterTransactions, prevQuarterTransactions));
 
+    const lang = getSettingsState().lang;
+    const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
     reports.push({
       id: `quarterly-${year}-${quarter}`,
       title: `Q${quarter} ${year}`,
@@ -408,8 +412,8 @@ function generateQuarterlyReportsForYear(
       periodType: 'quarterly',
       isUnread: false,
       isFirst,
-      firstLabel: (TRANSLATIONS[getSettingsState().lang] ?? TRANSLATIONS.es).reportFirstQuarterly,
-      personaHook: (TRANSLATIONS[getSettingsState().lang] ?? TRANSLATIONS.es).reportHookQuarterly,
+      firstLabel: t.reportFirstQuarterly,
+      personaHook: t.reportHookQuarterly,
       categories,
       transactionGroups,
       itemGroups,
@@ -454,6 +458,8 @@ function generateYearlyReportForYear(
   const transactionGroups = sortGroupsAlphabetically(groupCategoriesByStoreGroup(categories));
   const itemGroups = sortGroupsAlphabetically(groupItemsByItemCategory(yearTransactions, prevYearTransactions));
 
+  const lang = getSettingsState().lang;
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS.es;
   return [{
     id: `yearly-${year}`,
     title: `${year}`,
@@ -465,8 +471,8 @@ function generateYearlyReportForYear(
     periodType: 'yearly',
     isUnread: false,
     isFirst,
-    firstLabel: (TRANSLATIONS[getSettingsState().lang] ?? TRANSLATIONS.es).reportFirstYearly,
-    personaHook: (TRANSLATIONS[getSettingsState().lang] ?? TRANSLATIONS.es).reportHookYearly,
+    firstLabel: t.reportFirstYearly,
+    personaHook: t.reportHookYearly,
     categories,
     transactionGroups,
     itemGroups,

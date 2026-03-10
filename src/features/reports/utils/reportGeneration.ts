@@ -524,8 +524,8 @@ export function generateWeeklyReportRow(
 
   return {
     id: `weekly-${weeksAgo}`,
-    title: `Semana ${summary.weekNumber}`,
-    fullTitle: `Semana ${summary.weekNumber} · ${summary.dateRange.start.toLocaleDateString('es-CL', { month: 'long' })} · Q${getQuarterNumber(summary.dateRange.start)} ${summary.dateRange.start.getFullYear()}`,
+    title: `${t.reportWeekLabel} ${summary.weekNumber}`,
+    fullTitle: `${t.reportWeekLabel} ${summary.weekNumber} · ${summary.dateRange.start.toLocaleDateString('es-CL', { month: 'long' })} · Q${getQuarterNumber(summary.dateRange.start)} ${summary.dateRange.start.getFullYear()}`,
     amount: summary.totalSpent,
     trend: summary.isFirstWeek ? undefined : summary.trendDirection,
     trendPercent: summary.isFirstWeek ? undefined : Math.abs(summary.trendPercent),

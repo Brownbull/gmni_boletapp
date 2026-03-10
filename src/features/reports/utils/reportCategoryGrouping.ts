@@ -40,7 +40,7 @@ import { calculateTotal } from './reportDateUtils';
 /** Threshold below which spending change is considered neutral (%) */
 export const NEUTRAL_THRESHOLD = 2;
 
-/** Item count labels — not in translations.ts (too large to edit; 800-line hook) */
+/** Item count labels — kept local; translations.ts is a flat data file excluded from size hooks */
 const ITEM_COUNT_LABELS: Record<Language, { singular: string; plural: string }> = {
   es: { singular: 'ítem', plural: 'ítems' },
   en: { singular: 'item', plural: 'items' },
