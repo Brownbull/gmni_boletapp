@@ -1,6 +1,6 @@
 # Story 17-5: Build and Execute Category Batch Migration
 
-## Status: review
+## Status: done
 
 ## Intent
 **Epic Handle:** "Name everything in the language the user thinks in"
