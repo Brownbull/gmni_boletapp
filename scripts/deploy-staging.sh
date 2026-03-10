@@ -53,6 +53,22 @@ deploy_rules() {
         exit 1
     fi
 
+    # INC-001 guard: boletapp-staging is shared with Gustify.
+    # Deploying rules that lack Gustify paths breaks Gustify's Firestore access.
+    REQUIRED_GUSTIFY_PATHS=("canonicalIngredients" "itemMappings" "recipes" "canonicalPreparedFoods" "unknownIngredients" "unknownPreparedFoods")
+    MISSING=()
+    for path in "${REQUIRED_GUSTIFY_PATHS[@]}"; do
+        if ! grep -q "$path" firestore.staging.rules; then
+            MISSING+=("$path")
+        fi
+    done
+    if [ ${#MISSING[@]} -gt 0 ]; then
+        err "BLOCKED: firestore.staging.rules is missing Gustify paths: ${MISSING[*]}"
+        err "boletapp-staging is shared with Gustify — deploying without these paths will break Gustify."
+        err "See: INC-001. The canonical combined rules live in the Gustify repo."
+        exit 1
+    fi
+
     log "Deploying Firestore rules to ${PROJECT}..."
     # Use staging config that points to firestore.staging.rules
     firebase deploy --only firestore:rules --project "${PROJECT}" --config firebase.staging.json
