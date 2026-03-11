@@ -1,9 +1,12 @@
 /**
- * Story 15b-5a: Scan error recovery UX tests
+ * Scan error recovery UX tests
  *
- * Tests that handleScanOverlayRetry properly resets BOTH the scan overlay
- * AND the Zustand scan store, so users can retry with camera OR gallery
- * after a scan failure (not locked into camera-only mode).
+ * Story 15b-5a: Tests that handleScanOverlayRetry properly resets BOTH the
+ * scan overlay AND the Zustand scan store.
+ *
+ * Story 18-0: Tests that handleScanOverlayCancel has identical reset logic
+ * (cancel was missing useScanStore.getState().reset() — the only user-accessible
+ * button on the error overlay besides Retry).
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -212,6 +215,159 @@ describe('handleScanOverlayRetry — error recovery (Story 15b-5a)', () => {
 
         // All 5 reset actions should fire
         expect(mockScanOverlay.retry).toHaveBeenCalledOnce();
+        expect(mockStoreReset).toHaveBeenCalledOnce();
+        expect(setScanImages).toHaveBeenCalledWith([]);
+        expect(setCurrentTransaction).toHaveBeenCalledWith(null);
+        expect(setView).toHaveBeenCalledWith('dashboard');
+    });
+});
+
+describe('handleScanOverlayCancel — error recovery (Story 18-0)', () => {
+    const mockUser = { uid: 'test-user-123' } as User;
+    const mockDb = {} as Firestore;
+    const mockServices = { db: mockDb, appId: 'test-app-id' };
+
+    const mockUserPreferences: UserPreferences = {
+        defaultCountry: 'Chile',
+        defaultCity: 'Santiago',
+        defaultCurrency: 'CLP',
+        language: 'es',
+        theme: 'normal',
+        fontSize: 'medium',
+        notificationSettings: {
+            transactionReminders: true,
+            weeklyReports: true,
+            insightNotifications: true,
+        },
+    };
+
+    const mockScanOverlay = {
+        reset: vi.fn(),
+        retry: vi.fn(),
+    };
+
+    const createProps = (overrides: Partial<UseScanHandlersProps> = {}): UseScanHandlersProps => ({
+        user: mockUser,
+        services: mockServices,
+        userPreferences: mockUserPreferences,
+        transactions: [],
+        currency: 'CLP',
+        lang: 'es',
+        currentTransaction: null,
+        insightProfile: {
+            schemaVersion: 1 as const,
+            firstTransactionDate: new Date().toISOString(),
+            totalTransactions: 10,
+            recentInsights: [],
+        },
+        insightCache: { silencedUntil: null, recentInsightIds: [] },
+        recordInsightShown: vi.fn(() => Promise.resolve()),
+        trackTransactionForInsight: vi.fn(() => Promise.resolve()),
+        incrementInsightCounter: vi.fn(),
+        batchSession: { receipts: [] },
+        addToBatch: vi.fn(),
+        checkTrusted: vi.fn(() => Promise.resolve(false)),
+        recordMerchantScan: vi.fn(() => Promise.resolve({ shouldShowPrompt: false, reason: 'insufficient_scans' })),
+        findItemNameMatch: vi.fn(() => null),
+        categoryMappings: [],
+        findMerchantMatch: vi.fn(() => null),
+        applyCategoryMappings: vi.fn((tx) => ({ transaction: tx, appliedMappingIds: [] })),
+        incrementMappingUsage: vi.fn(() => Promise.resolve()),
+        incrementMerchantMappingUsage: vi.fn(() => Promise.resolve()),
+        incrementItemNameMappingUsage: vi.fn(() => Promise.resolve()),
+        showScanDialog: vi.fn(),
+        dismissScanDialog: vi.fn(),
+        dispatchProcessSuccess: vi.fn(),
+        resetScanContext: vi.fn(),
+        setScanImages: vi.fn(),
+        scanOverlay: mockScanOverlay,
+        setToastMessage: vi.fn(),
+        setCurrentTransaction: vi.fn(),
+        setView: vi.fn(),
+        navigateToView: vi.fn(),
+        setCurrentInsight: vi.fn(),
+        setShowInsightCard: vi.fn(),
+        setShowBatchSummary: vi.fn(),
+        setSessionContext: vi.fn(),
+        setAnimateEditViewItems: vi.fn(),
+        setSkipScanCompleteModal: vi.fn(),
+        setTransactionEditorMode: vi.fn(),
+        setIsQuickSaving: vi.fn(),
+        isQuickSaving: false,
+        setTrustPromptData: vi.fn(),
+        setShowTrustPrompt: vi.fn(),
+        t: vi.fn((key) => key),
+        ...overrides,
+    });
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should call scanOverlay.reset() (not retry)', () => {
+        const props = createProps();
+        const { result } = renderHook(() => useScanHandlers(props));
+
+        act(() => {
+            result.current.handleScanOverlayCancel();
+        });
+
+        expect(mockScanOverlay.reset).toHaveBeenCalledOnce();
+        expect(mockScanOverlay.retry).not.toHaveBeenCalled();
+    });
+
+    it('should reset scan store to idle via useScanStore.getState().reset()', () => {
+        const props = createProps();
+        const { result } = renderHook(() => useScanHandlers(props));
+
+        act(() => {
+            result.current.handleScanOverlayCancel();
+        });
+
+        expect(mockStoreReset).toHaveBeenCalledOnce();
+    });
+
+    it('should clear scan images so gallery select works after cancel', () => {
+        const setScanImages = vi.fn();
+        const props = createProps({ setScanImages });
+        const { result } = renderHook(() => useScanHandlers(props));
+
+        act(() => {
+            result.current.handleScanOverlayCancel();
+        });
+
+        expect(setScanImages).toHaveBeenCalledWith([]);
+    });
+
+    it('should clear current transaction', () => {
+        const setCurrentTransaction = vi.fn();
+        const props = createProps({ setCurrentTransaction });
+        const { result } = renderHook(() => useScanHandlers(props));
+
+        act(() => {
+            result.current.handleScanOverlayCancel();
+        });
+
+        expect(setCurrentTransaction).toHaveBeenCalledWith(null);
+    });
+
+    it('should perform full reset sequence matching retry parity', () => {
+        const setScanImages = vi.fn();
+        const setCurrentTransaction = vi.fn();
+        const setView = vi.fn();
+        const props = createProps({ setScanImages, setCurrentTransaction, setView });
+        const { result } = renderHook(() => useScanHandlers(props));
+
+        act(() => {
+            result.current.handleScanOverlayCancel();
+        });
+
+        // All 5 reset actions should fire (matching retry handler)
+        expect(mockScanOverlay.reset).toHaveBeenCalledOnce();
         expect(mockStoreReset).toHaveBeenCalledOnce();
         expect(setScanImages).toHaveBeenCalledWith([]);
         expect(setCurrentTransaction).toHaveBeenCalledWith(null);
