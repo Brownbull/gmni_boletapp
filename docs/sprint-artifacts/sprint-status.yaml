@@ -352,7 +352,7 @@ development_status:
   epic-18: backlog
 
   18-0-scan-cancel-phase-reset-hotfix: done   # 2 pts - HOTFIX: Cancel button missing useScanStore.reset()
-  TD-18-1-error-recovery-test-cleanup: ready-for-dev  # 1 pt - Extract shared createProps factory + dismiss test coverage + dedup (DEPENDS: 18-0)
+  TD-18-1-error-recovery-test-cleanup: done  # 1 pt - Extract shared createProps factory + dismiss test coverage + dedup (DEPENDS: 18-0)
   18-1-statement-scan-spike: ready-for-dev             # 2 pts - Gemini PDF feasibility validation
   18-2-statement-scan-mode-store: ready-for-dev        # 3 pts - useStatementScanStore + ScanMode 'statement'
   18-3-statement-cloud-function: ready-for-dev         # 5 pts - analyzeStatement Cloud Function (DEPENDS: 18-1)
