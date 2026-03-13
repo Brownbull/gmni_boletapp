@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getScanState, scanActions } from '../index';
+import { getScanState, scanActions, registerCreditRefundCallback } from '../index';
 import { createMockTransaction, resetAllStores, getWorkflowState } from './helpers';
 
 describe('useScanStore — Credit & Control', () => {
@@ -201,6 +201,105 @@ describe('useScanStore — Credit & Control', () => {
         )
       );
       expect(typeCalls).toHaveLength(0);
+    });
+  });
+
+  // =========================================================================
+  // TD-18-3: Credit safety net tests
+  // =========================================================================
+
+  describe('Credit safety net (TD-18-3)', () => {
+    let consoleSpy: ReturnType<typeof vi.spyOn>;
+    const mockRefund = vi.fn<(amount: number) => Promise<void>>().mockResolvedValue(undefined);
+
+    beforeEach(() => {
+      consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      mockRefund.mockClear();
+      registerCreditRefundCallback(mockRefund);
+    });
+
+    afterEach(() => {
+      consoleSpy.mockRestore();
+      // Unregister callback
+      registerCreditRefundCallback(null);
+    });
+
+    // AC-17: reset() with creditStatus 'reserved' → refund + guard violation
+    it('reset() with creditStatus reserved calls refund and logs guard violation', () => {
+      scanActions.startSingle('test-user');
+      scanActions.addImage('image');
+      scanActions.processStart('normal', 1);
+      expect(getScanState().creditStatus).toBe('reserved');
+
+      scanActions.reset();
+
+      expect(mockRefund).toHaveBeenCalledWith(1);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[ScanStore:guard]',
+        expect.stringContaining('credit safety net')
+      );
+      expect(getScanState().creditStatus).toBe('none');
+      expect(getScanState().phase).toBe('idle');
+    });
+
+    // AC-18: reset() with creditStatus 'none' → no refund
+    it('reset() with creditStatus none does NOT call refund', () => {
+      scanActions.startSingle('test-user');
+      expect(getScanState().creditStatus).toBe('none');
+
+      scanActions.reset();
+
+      expect(mockRefund).not.toHaveBeenCalled();
+    });
+
+    // AC-19: cancel() with creditStatus 'confirmed' → refund + guard violation
+    it('cancel() with creditStatus confirmed calls refund and logs guard violation', () => {
+      scanActions.startSingle('test-user');
+      scanActions.addImage('image');
+      scanActions.processStart('normal', 1);
+      scanActions.processSuccess([createMockTransaction()]);
+      expect(getScanState().creditStatus).toBe('confirmed');
+
+      scanActions.cancel();
+
+      expect(mockRefund).toHaveBeenCalledWith(1);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[ScanStore:guard]',
+        expect.stringContaining('credit safety net')
+      );
+    });
+
+    // AC-20: processStart → processError → reset → no double-refund
+    it('processError then reset does NOT double-refund (already refunded)', () => {
+      scanActions.startSingle('test-user');
+      scanActions.addImage('image');
+      scanActions.processStart('normal', 1);
+      scanActions.processError('test error');
+      expect(getScanState().creditStatus).toBe('refunded');
+
+      scanActions.reset();
+
+      // 'refunded' is not 'reserved' or 'confirmed', so no safety net fires
+      expect(mockRefund).not.toHaveBeenCalled();
+    });
+
+    // AC-21: processStart → dialog shown (no processSuccess) → reset → refund
+    it('reserved credit with dialog shown then reset triggers refund (TD-18-3 scenario)', () => {
+      scanActions.startSingle('test-user');
+      scanActions.addImage('image');
+      scanActions.processStart('normal', 1);
+      expect(getScanState().creditStatus).toBe('reserved');
+
+      // Dialog is shown (simulating showScanDialog call) but processSuccess never called
+      scanActions.showDialog({ type: 'total_mismatch', data: {} });
+      expect(getScanState().activeDialog).not.toBeNull();
+
+      // Reset fires (simulating handleScanOverlayDismiss)
+      scanActions.reset();
+
+      expect(mockRefund).toHaveBeenCalledWith(1);
+      expect(getScanState().creditStatus).toBe('none');
+      expect(getScanState().phase).toBe('idle');
     });
   });
 });

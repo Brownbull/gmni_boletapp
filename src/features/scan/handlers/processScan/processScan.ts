@@ -232,8 +232,6 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
     // Story 14e-43: Pass store action directly instead of ui callback
     const validationResult = validateScanResult(tempTransaction, parsedItems, {
       showScanDialog: (type, data) => scanActions.showDialog({ type, data }),
-      // Story 14e-25d: setIsAnalyzing removed - state managed by state machine
-      scanOverlay,
       reconcileItemsTotal,
       lang,
     });
@@ -282,8 +280,6 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
       hasDiscrepancy,
       {
         showScanDialog: (type, data) => scanActions.showDialog({ type, data }),
-        // Story 14e-25d: setIsAnalyzing removed - state managed by state machine
-        scanOverlay,
       }
     );
 

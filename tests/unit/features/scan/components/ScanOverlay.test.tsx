@@ -17,6 +17,7 @@ import userEvent from '@testing-library/user-event';
 import { ScanOverlay } from '@features/scan/components';
 import type { ScanOverlayProps, ScanOverlayState } from '@features/scan/components/ScanOverlay';
 import { AnimationProvider } from '@/components/animation';
+import { useScanStore, initialScanState } from '@features/scan/store';
 
 // Mock useReducedMotion
 vi.mock('@/hooks/useReducedMotion', () => ({
@@ -280,6 +281,31 @@ describe('ScanOverlay', () => {
       expect(backdrop).toHaveClass('backdrop-blur-sm');
     });
   });
-});
 
-// useScanOverlayState hook tests are covered via component behavior tests above
+  // TD-18-3: Auto-dismiss guard when activeDialog is set
+  describe('Auto-dismiss with activeDialog guard (TD-18-3)', () => {
+    afterEach(() => {
+      useScanStore.setState(initialScanState);
+    });
+
+    // AC-7: Dialog active → auto-dismiss suppressed
+    it('should NOT auto-dismiss when activeDialog is non-null', () => {
+      useScanStore.setState({ activeDialog: { type: 'total_mismatch', data: {} } });
+      const onDismiss = vi.fn();
+      renderOverlay({ state: 'ready', onDismiss });
+
+      act(() => { vi.advanceTimersByTime(1000); });
+      expect(onDismiss).not.toHaveBeenCalled();
+    });
+
+    // AC-8: No dialog → auto-dismiss fires normally
+    it('should auto-dismiss normally when activeDialog is null', () => {
+      useScanStore.setState({ activeDialog: null });
+      const onDismiss = vi.fn();
+      renderOverlay({ state: 'ready', onDismiss });
+
+      act(() => { vi.advanceTimersByTime(500); });
+      expect(onDismiss).toHaveBeenCalledTimes(1);
+    });
+  });
+});
