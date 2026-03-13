@@ -103,15 +103,17 @@ export const ScanOverlay: React.FC<ScanOverlayProps> = ({
     }
   }, [visible, state]);
 
-  // Auto-dismiss on ready state
+  // Auto-dismiss on ready state — only when overlay is actually visible
+  // Story 16-3 regression fix: onDismiss now navigates to dashboard (for error recovery),
+  // so firing it when invisible (phase='reviewing') would kill the transaction editor.
   useEffect(() => {
-    if (state === 'ready' && onDismiss) {
+    if (state === 'ready' && visible && onDismiss) {
       const timer = setTimeout(() => {
         onDismiss();
       }, READY_DISPLAY_MS);
       return () => clearTimeout(timer);
     }
-  }, [state, onDismiss]);
+  }, [state, visible, onDismiss]);
 
   // Get aria-label based on current state
   const getAriaLabel = useCallback(() => {
