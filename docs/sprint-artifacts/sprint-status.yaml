@@ -344,23 +344,47 @@ development_status:
   epic-17-retrospective: optional
 
   # ============================================================================
-  # Epic 18: Credit Card Statement Scanning (~23 points, 6 stories)
-  # "One statement in, many transactions out"
-  # Statement mode (image + PDF), multi-txn extraction, batch review
+  # Epic 18: Credit Card Statement Scanning (~43 points, 12 stories)
+  # "One statement in, many verified transactions out"
+  # Complete flow: PDF upload → AI extraction → transform → match → merge → verified
+  # Architecture Plan V4: memory/epic18-architecture-plan-v4.md
+  # KDBP values: V5 primary (friction reduction), V1/V2 via matching, V3 consent
   # FRs: FR-1.6, FR-1.7 | NFRs: NFR-1.2, NFR-5.1
   # ============================================================================
-  epic-18: backlog
+  epic-18: in-progress
 
   18-0-scan-cancel-phase-reset-hotfix: done   # 2 pts - HOTFIX: Cancel button missing useScanStore.reset()
   TD-18-1-error-recovery-test-cleanup: done  # 1 pt - Extract shared createProps factory + dismiss test coverage + dedup (DEPENDS: 18-0)
-  18-1-statement-scan-spike: ready-for-dev             # 2 pts - Gemini PDF feasibility validation
-  18-2-statement-scan-mode-store: ready-for-dev        # 3 pts - useStatementScanStore + ScanMode 'statement'
-  18-3-statement-cloud-function: ready-for-dev         # 5 pts - analyzeStatement Cloud Function (DEPENDS: 18-1)
-  18-4-statement-capture-ui: ready-for-dev             # 5 pts - Camera/gallery/PDF upload UI (DEPENDS: 18-2, 18-3)
-  18-5-statement-batch-review: ready-for-dev           # 5 pts - Statement batch review adapter (DEPENDS: 18-4)
-  18-6-statement-e2e: ready-for-dev                    # 3 pts - E2E test for full statement flow (DEPENDS: 18-5)
+  18-1-statement-scan-spike: done                       # 2 pts - Gemini PDF feasibility validation | GO decision: 2026-03-11
+  # Stories below UPDATED per Architecture Plan V4 (2026-03-11, KDBP value alignment):
+  # Critical path (sequential):
+  18-5-statement-prompt-v2: backlog                    # 3 pts - Fix categories (mixed lang), add cardHolder flag, location hints (DEPENDS: 18-1)
+  18-2-transaction-type-extensions: backlog             # 5 pts - chargeType, installments, recurrenceFrequency, source, cardHolder, sourceDocumentUrl + statementVerified/At/ImportId on Transaction (DEPENDS: 18-5)
+  18-3-statement-transformer-infra: backlog             # 5 pts - StatementTransaction→Transaction transformer (amount>0 filter) + PDF storage + password support (DEPENDS: 18-1, 18-2)
+  18-4-statement-ui-consent: backlog                   # 5 pts - Upload flow, consent modal (V3), password prompt, processing, review/edit view, save (DEPENDS: 18-3)
+  18-10a-transaction-matching-logic: backlog           # 5 pts - Matching algorithm (fuzzy merchant+amount+date), merge logic, re-import protection, unit tests (DEPENDS: 18-4)
+  18-10b-transaction-matching-ui: backlog              # 5 pts - Matching review UI, manual search, amount conflict dialog, store+save (DEPENDS: 18-10a)
+  18-6-transaction-editor-new-fields: backlog          # 5 pts - chargeType, installments, recurrence, cardHolder editing in editor (DEPENDS: 18-2)
+  # Independent (end of epic):
+  18-7-receipttype-fix: backlog                        # 2 pts - Re-enable receipt type selection in scan UI (currently dead parameter)
+  18-8-single-scan-prompt-spike: backlog               # 2 pts - Improve quantity/unit price/total calculation in receipt extraction
+  18-9-admin-endpoint-security: backlog                # 3 pts - Secure admin endpoints (adminCleanup, adminSendTest, adminTestWebPush) with Firebase Auth — evaluate Auth callable vs App Check
+  18-11-statement-e2e: backlog                         # 3 pts - E2E tests: on-demand smoke + staging consent/password/matching/reimport (DEPENDS: 18-10b)
 
   epic-18-retrospective: optional
+
+  # ============================================================================
+  # Epic 18.5: Multi-Currency Normalization (PLANNING)
+  # "Every transaction speaks dollars behind the scenes"
+  # USD as standard internal currency, currency pairs collection, 24h refresh
+  # Needs: architecture review + requirements brainstorm before stories
+  # ============================================================================
+  epic-18-5: planning  # Placeholder — needs architecture review before story creation
+  # Concept: All transactions store totalUsd + exchangeRate + exchangeRateDate
+  # Shared collection: currencyPairs/{code} with usdRate, updatedAt (24h refresh)
+  # Display uses user's settings currency, converting from USD via pairs
+  # Backfill script for existing transactions using historical rates
+  # Affects ALL transactions (receipts, statements, manual)
 
   # ============================================================================
   # Epic 19: Shared Groups (~42 points, 10 stories)

@@ -33,6 +33,22 @@
 export { analyzeReceipt } from './analyzeReceipt'
 
 /**
+ * analyzeStatement - HTTPS Callable (FEATURE)
+ *
+ * Analyzes credit card statement PDFs using Gemini AI.
+ * Extracts multiple transactions, statement metadata, and categories.
+ *
+ * - Authentication: Required (Firebase Auth)
+ * - Rate Limit: 5 requests/minute/user
+ * - PDF Validation: Max 7MB (Firebase callable overhead; see analyzeStatement.ts)
+ * - Timeout: 300s (statements are larger than receipts)
+ * - Model: gemini-2.5-flash (configurable via GEMINI_MODEL)
+ *
+ * Dependencies: prompts/statement/
+ */
+export { analyzeStatement } from './analyzeStatement'
+
+/**
  * onTransactionDeleted - Firestore Trigger (CRITICAL)
  *
  * Cascade deletes receipt images from Firebase Storage when a

@@ -61,3 +61,4 @@
 | 2026-03-10 | 18-0 | review | boletapp-dev | ✓ done | APPROVE 7.5/10, 2 quick fixes (comment wording, isolated test), 1 TD story (TD-18-1 test cleanup). $7.04. | none |
 | 2026-03-10 | TD-18-1 | none | boletapp-dev | ✓ done | Test cleanup: shared createProps factory (377→254L), dismiss parity tests, omnibus-only per block. Self-review APPROVE 8.5/10, 2 fixes (deterministic date, per-test mockScanOverlay). 6 tests, 7410 total pass. | none |
 | 2026-03-11 | TD-18-1 | review | boletapp-dev | ✓ done | none |
+| 2026-03-12 | 18-1 | review | boletapp-dev | ✓ done | ⚑ scope-expansion ⚑ ssot-duplicate |
