@@ -96,6 +96,7 @@ Cost tracking, E2E coverage check, backend analysis, commit commands, and final 
     - Run `/workflow-close` to verify tests, status files, and branch state
     {{#if new_status == "done"}}- Run `/deploy-story` to deploy{{/if}}
     {{#if has_ui_changes and ui_missing_e2e and is_critical_path}}- **Recommend:** Run E2E tests — E2E gap on critical path{{/if}}
+    {{#if files_to_review match scan/** or analyze*.ts}}- **V5 Skill Gate:** Scan files changed — run `npx playwright test tests/e2e/staging/scan-post-success-transition.spec.ts --project=staging` before deploy{{/if}}
     {{#if new_status != "done"}}- Address remaining issues, re-run `/kdbp-code-review`{{/if}}
   </output>
 
