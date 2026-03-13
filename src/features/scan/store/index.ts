@@ -74,6 +74,9 @@ export { useScanActions } from './selectors';
 // Direct access for non-React code
 export { getScanState, scanActions } from './selectors';
 
+// TD-18-3: Credit safety net callback registration
+export { registerCreditRefundCallback } from './slices/scanCoreSlice';
+
 // Type export
 export type { ScanActionsType } from './selectors';
 

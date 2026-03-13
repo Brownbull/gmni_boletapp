@@ -21,7 +21,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Upload, Loader2, Check, AlertCircle, X, RefreshCw, Info } from 'lucide-react';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { READY_DISPLAY_MS } from '@features/scan/store';
+import { READY_DISPLAY_MS, useScanStore } from '@features/scan/store';
 import type { ScanErrorType, ScanOverlayState } from '@features/scan/store';
 import { DURATION } from '@/components/animation/constants';
 
@@ -81,6 +81,8 @@ export const ScanOverlay: React.FC<ScanOverlayProps> = ({
 }) => {
   const isDark = theme === 'dark';
   const prefersReducedMotion = useReducedMotion();
+  // TD-18-3: Read activeDialog to guard auto-dismiss when a dialog is open
+  const activeDialog = useScanStore((s) => s.activeDialog);
 
   // Track animation state for transitions
   const [isVisible, setIsVisible] = useState(false);
@@ -103,17 +105,18 @@ export const ScanOverlay: React.FC<ScanOverlayProps> = ({
     }
   }, [visible, state]);
 
-  // Auto-dismiss on ready state — only when overlay is actually visible
+  // Auto-dismiss on ready state — only when overlay is actually visible AND no dialog is active
   // Story 16-3 regression fix: onDismiss now navigates to dashboard (for error recovery),
   // so firing it when invisible (phase='reviewing') would kill the transaction editor.
+  // TD-18-3: Also skip auto-dismiss when activeDialog is set — dialog IS the user's next action.
   useEffect(() => {
-    if (state === 'ready' && visible && onDismiss) {
+    if (state === 'ready' && visible && onDismiss && !activeDialog) {
       const timer = setTimeout(() => {
         onDismiss();
       }, READY_DISPLAY_MS);
       return () => clearTimeout(timer);
     }
-  }, [state, visible, onDismiss]);
+  }, [state, visible, onDismiss, activeDialog]);
 
   // Get aria-label based on current state
   const getAriaLabel = useCallback(() => {

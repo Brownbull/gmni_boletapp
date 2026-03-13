@@ -47,15 +47,6 @@ function createMockTransaction(overrides?: Partial<Transaction>): Transaction {
   };
 }
 
-function createMockScanOverlay() {
-  return {
-    startUpload: vi.fn(),
-    setProgress: vi.fn(),
-    startProcessing: vi.fn(),
-    setReady: vi.fn(),
-    setError: vi.fn(),
-  };
-}
 
 function createMockValidateScanResultDeps(
   overrides?: Partial<ValidateScanResultDeps>
@@ -63,7 +54,6 @@ function createMockValidateScanResultDeps(
   return {
     showScanDialog: vi.fn(),
     setIsAnalyzing: vi.fn(),
-    scanOverlay: createMockScanOverlay(),
     reconcileItemsTotal: (items, total, _lang) => ({ items, hasDiscrepancy: false, discrepancyAmount: 0 }),
     lang: 'en',
     ...overrides,
@@ -135,8 +125,6 @@ describe('validateScanResult', () => {
     expect(result.isValid).toBe(false);
     expect(result.shouldContinue).toBe(false);
     expect(deps.showScanDialog).toHaveBeenCalledWith('total_mismatch', expect.any(Object));
-    // Story 14e-25d: setIsAnalyzing removed - state managed by state machine
-    expect(deps.scanOverlay.setReady).toHaveBeenCalled();
   });
 
   it('should include validation result in dialog data', () => {
@@ -373,7 +361,6 @@ describe('handleCurrencyDetection', () => {
     deps = {
       showScanDialog: vi.fn(),
       setIsAnalyzing: vi.fn(),
-      scanOverlay: createMockScanOverlay(),
     };
   });
 
@@ -399,8 +386,6 @@ describe('handleCurrencyDetection', () => {
       pendingTransaction: transaction,
       hasDiscrepancy: false,
     });
-    // Story 14e-25d: setIsAnalyzing removed - state managed by state machine
-    expect(deps.scanOverlay.setReady).toHaveBeenCalled();
   });
 
   it('should use default currency when none detected', () => {

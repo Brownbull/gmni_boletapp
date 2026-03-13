@@ -37,6 +37,38 @@ import { useScanWorkflowStore } from '@shared/stores/useScanWorkflowStore';
 // Shorthand for shared workflow store access (single-writer: only this slice calls wf() mutators)
 const wf = () => useScanWorkflowStore.getState();
 
+// TD-18-3: Credit safety net — module-level refund callback registration
+// The store can't access the async credit service directly (Zustand stores are sync).
+// App layer registers the callback once via registerCreditRefundCallback().
+let _creditRefundCallback: ((amount: number) => Promise<void>) | null = null;
+
+export function registerCreditRefundCallback(cb: ((amount: number) => Promise<void>) | null): void {
+  _creditRefundCallback = cb;
+}
+
+/** Fire-and-forget refund if creditStatus is reserved or confirmed. Logs guard violation. */
+function _refundIfOutstanding(get: () => ScanFullStoreInternal, actionName: string): void {
+  const state = get();
+  if (state.creditStatus === 'reserved' || state.creditStatus === 'confirmed') {
+    logGuardViolation({
+      action: actionName,
+      currentPhase: state.phase,
+      expectedPhase: 'any',
+      detail: `credit safety net: refunding unredeemed credit (status was '${state.creditStatus}')`,
+    });
+    if (_creditRefundCallback) {
+      _creditRefundCallback(1).catch((err) => {
+        logGuardViolation({
+          action: actionName,
+          currentPhase: state.phase,
+          expectedPhase: 'any',
+          detail: `credit safety net: refund call failed (${err instanceof Error ? err.message : 'unknown'})`,
+        });
+      });
+    }
+  }
+}
+
 // Runtime validation sets for restoreState (AC-1)
 const VALID_PHASES: ReadonlySet<string> = new Set<ScanPhase>(['idle', 'capturing', 'scanning', 'reviewing', 'saving', 'error']);
 const VALID_CREDIT_STATUSES: ReadonlySet<string> = new Set<CreditStatus>(['none', 'reserved', 'confirmed', 'refunded']);
@@ -226,6 +258,7 @@ export const createScanCoreSlice: StateCreator<
 
   saveSuccess: () => {
     if (!get()._guardPhase('saving', 'saveSuccess')) return;
+    // TD-18-3: No _refundIfOutstanding here — credit was legitimately spent (transaction saved).
     set({ ...initialScanState }, undefined, 'scan/saveSuccess');
     wf().reset(); // MIRROR: full reset → shared store (clears phase, mode, images, etc.)
   },
@@ -248,11 +281,15 @@ export const createScanCoreSlice: StateCreator<
       });
       return;
     }
+    // TD-18-3: Credit safety net — refund if credit is still outstanding
+    _refundIfOutstanding(get, 'cancel');
     set({ ...initialScanState }, undefined, 'scan/cancel');
     wf().reset(); // MIRROR: full reset → shared store
   },
 
   reset: () => {
+    // TD-18-3: Credit safety net — refund if credit is still outstanding
+    _refundIfOutstanding(get, 'reset');
     set({ ...initialScanState }, undefined, 'scan/reset');
     wf().reset(); // MIRROR: full reset → shared store
   },

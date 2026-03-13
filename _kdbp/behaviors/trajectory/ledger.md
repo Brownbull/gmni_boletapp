@@ -65,3 +65,5 @@
 | 2026-03-12 | TD-18-2 | create | boletapp-dev | ✓ done | none |
 | 2026-03-12 | TD-18-2 | none | boletapp-dev | ✓ done | Coercion layer: parseGeminiNumber + coerceGeminiNumericFields in analyzeReceipt.ts, coerceStatementNumericFields in analyzeStatement.ts. Diagnostic validation: validateGeminiResult/validateStatementResult replace boolean type guards with field-level failure capture. Chilean separator handling: strip dots/commas before Number() (CLP integer assumption). Empty string → NaN guard. Nullable fields use != null (loose equality). 27 new tests (10 receipt + 6 statement coercion, 11 pre-existing). Self-review APPROVE 8/10, null guard fix applied. $4.28 (lower bound). | none |
 | 2026-03-12 | TD-18-2 | review | boletapp-dev | ✓ done | ⚑ pre-existing-test-drift |
+| 2026-03-13 | TD-18-3 | none | boletapp-dev | ✓ done | none |
+| 2026-03-13 | TD-18-3 | review | boletapp-dev | ✓ done | none |

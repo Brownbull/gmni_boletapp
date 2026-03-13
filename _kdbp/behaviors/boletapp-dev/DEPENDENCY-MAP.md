@@ -1,7 +1,7 @@
 # Dependency Map: boletapp-dev
 
-Version: 1.0.0
-Last updated: 2026-03-10
+Version: 1.1.0
+Last updated: 2026-03-13
 Source: Epic 17 alignment check (first population)
 
 ## Value → Workflow Linkage
@@ -12,7 +12,7 @@ Source: Epic 17 alignment check (first population)
 | V2 | "Would you bet money on this number?" | ecc-dev-story (normalizer tests, migration safety, store quality), ecc-code-review (test coverage enforcement) | Are all data transformations tested? Is the migration idempotent and dry-run-first? | — |
 | V3 | "Your money story is yours to tell" | kdbp-prd (won't-have decisions), deploy-story (Firestore rules) | Does this feature expose user data to anyone the user didn't choose? | — |
 | V4 | "Detect the black holes, don't judge them" | kdbp-create-epics (taxonomy naming), ecc-dev-story (category design) | Does any category name, label, or grouping apply moral judgment to a spending pattern? | — |
-| V5 | "Easier than the receipt drawer" | ecc-dev-story (scan workflow, auto-categorization, normalizer), ecc-code-review (friction check) | Does this change add a step, a wait, or a decision the user didn't have before? | — |
+| V5 | "Easier than the receipt drawer" | ecc-dev-story (scan workflow, auto-categorization, normalizer), ecc-code-review (friction check) | Does this change add a step, a wait, or a decision the user didn't have before? | critical-path-regression-guard |
 | V7 | "Where does OUR money go?" | kdbp-create-epics (shared taxonomy, group epic scoping) | Does the shared vocabulary let group members understand each other's entries? | — |
 
 ## Orphan Analysis
@@ -30,5 +30,6 @@ Source: Epic 17 alignment check (first population)
 
 ## Skills
 
-No skills defined yet. Skills emerge during evolution cycles ([SC] or [EB]).
-The "Skills" column in the linkage table will be populated when skills are created.
+| Skill | Value | File | Created | Origin |
+|-------|-------|------|---------|--------|
+| critical-path-regression-guard | V5 | skills/critical-path-regression-guard.md | 2026-03-13 | Story 16-3 regression (scan happy path broken 7 days) |
