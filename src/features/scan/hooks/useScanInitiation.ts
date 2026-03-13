@@ -11,7 +11,7 @@
  * - src/features/batch-review/hooks/useBatchReviewHandlers.ts (pattern reference)
  */
 
-import { useCallback, type RefObject } from 'react';
+import { useCallback, useEffect, type RefObject } from 'react';
 import type { Transaction } from '@/types/transaction';
 import type { SupportedCurrency } from '@/types/preferences';
 import type { ReceiptType } from '@/services/gemini';
@@ -25,6 +25,7 @@ import { classifyError, getErrorInfo } from '@/utils/errorHandler';
 
 // Store imports
 import { useScanStore } from '../store/useScanStore';
+import { registerCreditRefundCallback } from '../store';
 import { useNavigationStore } from '@/shared/stores/useNavigationStore';
 
 // =============================================================================
@@ -224,6 +225,12 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
     setImages: setBatchImages,
   } = useScanStore();
   const { setView, navigateToView } = useNavigationStore();
+
+  // TD-18-3: Register credit refund callback so store's reset/cancel can refund credits
+  useEffect(() => {
+    registerCreditRefundCallback(addUserCredits);
+    return () => { registerCreditRefundCallback(null); };
+  }, [addUserCredits]);
 
   // =========================================================================
   // handleNewTransaction

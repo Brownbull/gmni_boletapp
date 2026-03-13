@@ -23,7 +23,6 @@ import type {
   ValidateScanResultOutput,
   CurrencyDetectionResult,
   ScanSuccessResult,
-  ScanOverlayController,
 } from './types';
 // Story 14e-43: UIDependencies import removed - subhandler deps now use direct function types
 
@@ -64,8 +63,6 @@ export interface ValidateScanResultDeps {
    * @deprecated Story 14e-25d: No-op - state managed by state machine
    */
   setIsAnalyzing?: (analyzing: boolean) => void;
-  /** Scan overlay controller */
-  scanOverlay: ScanOverlayController;
   /** Reconcile items total function */
   reconcileItemsTotal: (
     items: TransactionItem[],
@@ -108,7 +105,7 @@ export function validateScanResult(
   parsedItems: TransactionItem[],
   deps: ValidateScanResultDeps
 ): ValidateScanResultOutput {
-  const { showScanDialog, scanOverlay, reconcileItemsTotal, lang } = deps;
+  const { showScanDialog, reconcileItemsTotal, lang } = deps;
 
   // Validate total using centralized utility
   const totalValidation: TotalValidationResult = validateTotal(transaction);
@@ -122,8 +119,8 @@ export function validateScanResult(
     };
 
     showScanDialog('total_mismatch', dialogData);
-    // Story 14e-25d: setIsAnalyzing removed - state managed by state machine
-    scanOverlay.setReady();
+    // TD-18-3: removed scanOverlay.setReady() — dialog IS the user's next action,
+    // setReady() triggered auto-dismiss which killed the dialog after 500ms
 
     return {
       isValid: false,
@@ -308,8 +305,6 @@ export interface HandleCurrencyDetectionDeps {
    * @deprecated Story 14e-25d: No-op - state managed by state machine
    */
   setIsAnalyzing?: (analyzing: boolean) => void;
-  /** Scan overlay controller */
-  scanOverlay: ScanOverlayController;
 }
 
 /**
@@ -350,7 +345,7 @@ export function handleCurrencyDetection(
   hasDiscrepancy: boolean,
   deps: HandleCurrencyDetectionDeps
 ): CurrencyDetectionResult {
-  const { showScanDialog, scanOverlay } = deps;
+  const { showScanDialog } = deps;
 
   // Check for currency mismatch
   if (detectedCurrency && userDefaultCurrency && detectedCurrency !== userDefaultCurrency) {
@@ -361,8 +356,7 @@ export function handleCurrencyDetection(
     };
 
     showScanDialog('currency_mismatch', dialogData);
-    // Story 14e-25d: setIsAnalyzing removed - state managed by state machine
-    scanOverlay.setReady();
+    // TD-18-3: removed scanOverlay.setReady() — same fix as total_mismatch path
 
     return {
       shouldContinue: false,

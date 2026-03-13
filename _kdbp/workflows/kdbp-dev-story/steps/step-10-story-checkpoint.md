@@ -41,4 +41,21 @@ Gated on `{{dbp_active}}` — skips entirely if no behaviors registered.
     <output>**[SC] Story Checkpoint: aligned.** No drift detected for {{story_key}}.</output>
   </check>
 
+  <!-- Skill gate: critical-path-regression-guard (V5) -->
+  <check if="{{files_to_review}} match scan/** OR transaction-editor/hooks/useScanEventSubscription.ts OR functions/**/analyze*.ts">
+    <output>**[SC] SKILL GATE: critical-path-regression-guard (V5)**
+
+      Scan-related files changed in this story. The scan happy path is the primary
+      user journey — if it breaks, V5 ("Easier than the receipt drawer") is violated.
+
+      **Recommended:** Run the scan E2E regression test before marking done:
+      ```bash
+      npx playwright test tests/e2e/staging/scan-post-success-transition.spec.ts --project=staging
+      ```
+
+      **If skipping:** Confirm change is cosmetic-only (no logic/state/handler changes).
+      Signal: `critical-path-regression-deferred` + reason.
+    </output>
+  </check>
+
 </check>
