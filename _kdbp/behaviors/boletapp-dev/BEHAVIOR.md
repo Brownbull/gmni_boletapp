@@ -21,8 +21,8 @@ boletapp-dev guides how BoletApp serves individuals and households seeking finan
 | V7 | "Where does OUR money go?" | Epic |
 
 ## Linkage Map
-Populated during first evolution cycle ([SC] or [EB]).
-Initial values have no linked workflow steps yet — this is expected at seedling maturity.
+See DEPENDENCY-MAP.md — populated 2026-03-10 from Epic 17 alignment check.
+All 6 values linked to workflow steps. No orphans. No skills yet (seedling).
 
 ## Skills
 No skills defined yet. Skills emerge during evolution cycles.

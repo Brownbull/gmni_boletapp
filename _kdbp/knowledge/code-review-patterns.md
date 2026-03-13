@@ -181,6 +181,39 @@ style={{ backgroundColor: record.color }}
 
 ---
 
+### 8. Single Source of Truth (SSoT)
+
+**Severity:** HIGH - Prevents type drift, duplication cascades, and multi-file refactoring debt
+
+| Check | Rule |
+|-------|------|
+| Type/const definitions | Each type, const array, or enum MUST be defined in exactly one file. Other files import or derive. |
+| Derived types | Use `typeof arr[number]`, `keyof typeof`, `Lowercase<>`, or equivalent derivation — not manual duplication |
+| Validation schemas | Validator (Zod, Set, array) must derive from the canonical type, not redefine it |
+| Cross-boundary types | When types cross a build boundary (e.g., client → cloud functions), a CI sync guard script MUST exist |
+| Re-exports | Barrel `index.ts` re-exports are acceptable. Duplicate `export type X =` definitions are not. |
+
+**Signals (any triggers review):**
+- Same `type X =` or `export const X =` in >1 file (excluding re-exports/barrel files)
+- Validation logic (Zod schema, Set, array) that manually lists values already defined in a type
+- Cloud functions or backend duplicating client-side type definitions without a sync guard
+- Multiple files defining overlapping category/enum values with different counts
+
+**Verification:**
+```bash
+# Find potential duplicate type definitions
+grep -rn "export type\|export const\|export enum" <src>/ --include="*.ts" | sort -t: -k3 | uniq -D -f2
+
+# Check for sync guard scripts (cross-boundary projects)
+ls scripts/check-*-sync.* 2>/dev/null
+```
+
+**Historical frequency:** High — Epic 2 generated 4 TD stories (TD-2-2 through TD-2-5) from a single AllergenType triple-definition that should have been caught at story creation.
+
+**Pattern:** When a story introduces a new type or const array, verify at review time that no other file defines the same concept. When a story touches a type already defined elsewhere, flag for consolidation.
+
+---
+
 ## Additional Review Checks
 
 - **Defensive timestamps:** Use optional chaining + try/catch when converting DB timestamps
