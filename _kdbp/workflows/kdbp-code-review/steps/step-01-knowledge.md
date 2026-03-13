@@ -10,8 +10,11 @@ Load all project knowledge once at review session start. Cache for ECC review ag
 <action>Load {project-root}/docs/architecture/component-patterns.md → {{cached_components}}</action>
 <action>Load .claude/rules/testing.md → {{cached_testing_guidelines}}</action>
 <action>Load {project-root}/_kdbp/knowledge/dbp-workflow-integration.md → {{cached_dbp_integration}}</action>
+<action>Load {project-root}/_kdbp/knowledge/product-stages.md → {{cached_product_stages}}</action>
+<action>Load {project-root}/_kdbp/knowledge/ui-patterns.md → {{cached_ui_patterns}}</action>
 <action>Store combined as {{project_patterns}} for ECC agents</action>
 <action>Store testing content as {{project_testing_patterns}} for TDD Guide</action>
+<action>Store product stages as {{product_stages}} for Smart Triage (step-05)</action>
 
 <output>📚 **ECC Orchestrator Initialized for Parallel Review**
 

@@ -8,27 +8,38 @@ Tools detect; agents judge. Agents receive structured findings, not raw code to 
 
 ## 2a: Shell Pre-Classification (HIGH certainty findings)
 
+<!-- Conditional pre-classification: scale checks to PR size -->
+<action>Count {{files_to_review_count}} = number of files in {{files_to_review}}</action>
+
 <action>Run deterministic checks on {{files_to_review}} — collect output as {{preclassified_findings}}:
 
 ```bash
-# 1. AI slop patterns (HIGH certainty)
+# 1. AI slop patterns (HIGH certainty) — ALWAYS run
 grep -rn "console\.\(log\|debug\|warn\)" src/ --include="*.ts" --include="*.tsx" \
   2>/dev/null | grep -v "__tests__\|\.test\.\|\.spec\." | head -20
 
-# 2. TypeScript anti-patterns (HIGH certainty)
+# 2. TypeScript anti-patterns (HIGH certainty) — ALWAYS run
 grep -rn ": any\b" src/ --include="*.ts" --include="*.tsx" \
   2>/dev/null | grep -v "\.test\." | head -20
 
-# 3. TODO/FIXME left in code (HIGH certainty)
+# 3. TODO/FIXME left in code (HIGH certainty) — ALWAYS run
 grep -rn "// TODO\|// FIXME\|// HACK\|// TEMP" src/ \
   --include="*.ts" --include="*.tsx" 2>/dev/null | head -10
+```
 
-# 4. TypeScript errors (HIGH certainty)
+Conditional checks (skip on small PRs to save tokens):
+```bash
+# 4. TypeScript errors — SKIP if files_to_review_count <= 3
+#    Rationale: tsc --noEmit type-checks entire project; overkill for small changes
 npx tsc --noEmit 2>&1 | head -30 || true
 
-# 5. Circular dependencies (MEDIUM certainty — requires judgment)
+# 5. Circular dependencies — SKIP if files_to_review_count <= 5
+#    Rationale: madge scans full dependency graph; unlikely to surface on small diffs
 npx madge --circular src/ 2>/dev/null | head -20 || true
 ```
+
+Run checks 4-5 ONLY if {{files_to_review_count}} exceeds their threshold.
+If skipped, note in output: "tsc/madge skipped ({{files_to_review_count}} files, below threshold)"
 
 Format results as:
 | Type | Certainty | file:line | Finding |
@@ -41,6 +52,33 @@ Store as {{preclassified_findings}}.
   - Otherwise → "sonnet"
 </action>
 
+## 2b: Prepare Scoped Context Per Agent
+
+<!-- Each agent receives ONLY its relevant knowledge subset, not the full {{project_patterns}} blob -->
+<action>Build scoped context variables from cached knowledge (loaded in Step 01):
+
+  {{code_reviewer_context}}:
+    - {{cached_review_patterns}} (code-review-patterns.md — 8 MUST-CHECK patterns)
+    - {{cached_state_mgmt}} (state management conventions)
+
+  {{security_reviewer_context}}:
+    - OWASP Top 10 checklist (built into agent prompt — no external knowledge needed)
+    - {{cached_review_patterns}} § Input Sanitization (P2) and § TOCTOU (P4) sections only
+
+  {{architect_context}}:
+    - {{cached_components}} (component patterns)
+    - {{cached_db_patterns}} (database patterns, if present)
+    - {{cached_state_mgmt}} (state management conventions)
+
+  {{tdd_context}}:
+    - {{cached_testing_guidelines}} (testing.md rules)
+    - {{project_testing_patterns}} (already separated in Step 01)
+
+  {{ui_reviewer_context}}:
+    - {{cached_ui_patterns}} (ui-patterns.md — component manifest, theming rules, checklist)
+    - {{cached_components}} (component-patterns.md — architecture-level patterns)
+</action>
+
 <agent-directives>
   IMPORTANT — include in EVERY agent prompt:
   1. File contents provided below. Do NOT use Read/Grep/Glob to read review files.
@@ -50,7 +88,7 @@ Store as {{preclassified_findings}}.
      recommendation (APPROVE / CHANGES REQUESTED / BLOCKED), score (X/10). Max ~50 lines. No code snippets.
 </agent-directives>
 
-## 2b: Spawn Agents
+## 2c: Spawn Agents
 
 <output>**Spawning {{classification}} Review Team: {{review_agents}}**</output>
 
@@ -69,7 +107,7 @@ Store as {{preclassified_findings}}.
       {{preclassified_findings}}
 
       **Acceptance Criteria:** {{acceptance_criteria}}
-      **Project Patterns:** {{project_patterns}}
+      **Code Review Patterns:** {{code_reviewer_context}}
       **Adversarial Patterns (tag findings with IDs where applicable, e.g. `[P6] broken ref`):**
       P1 Missing Infrastructure | P2 Wrong Ordering | P4 Self-Inconsistency |
       P5 No Scaling Strategy | P6 Orphaned References | P7 No Validation Before Action |
@@ -97,6 +135,9 @@ Store as {{preclassified_findings}}.
       ## Security Review Task — Story: {{story_key}}
       **IMPORTANT: File contents provided below. Do NOT read files yourself.**
 
+      **Security-relevant patterns:**
+      {{security_reviewer_context}}
+
       **Check:** OWASP Top 10 (injection, XSS, auth, access control, secrets, data exposure, CSRF, input validation)
 
       **Output (max 50 lines):**
@@ -121,7 +162,7 @@ Store as {{preclassified_findings}}.
       **Architecture Source:** {{architecture_reference}}
       **Architectural ACs:** {{architectural_acs}}
       **File Specification:** {{file_specification_table}}
-      **Patterns:** {{project_patterns}}
+      **Architecture Patterns:** {{architect_context}}
 
       **Validate:** file locations, pattern compliance, anti-patterns, architectural ACs, separation of concerns, dependency management
 
@@ -145,7 +186,7 @@ Store as {{preclassified_findings}}.
       **IMPORTANT: File contents provided below. Do NOT read files yourself.**
 
       **Acceptance Criteria:** {{acceptance_criteria}}
-      **Testing Patterns:** {{project_testing_patterns}}
+      **Testing Patterns:** {{tdd_context}}
 
       **Review:** AC coverage, edge cases, error scenarios, assertion quality, mock appropriateness, naming
 
@@ -157,6 +198,53 @@ Store as {{preclassified_findings}}.
       Overall: X/100 — GOOD / NEEDS IMPROVEMENT
       Recommendation: APPROVE / CHANGES REQUESTED
       Score: X/10
+
+      **FILE CONTENTS:** {{file_contents_manifest}}
+  </task-call>
+
+  <!-- Task 5: UI Consistency Reviewer (CONDITIONAL — only when UI files touched) -->
+  <!-- Fires when any file in {{files_to_review}} matches src/features/*/components/, src/components/, src/shared/ui/ -->
+  <task-call id="ui_consistency_review" if="{{files_to_review}} contains .tsx files in UI paths">
+    subagent_type: "everything-claude-code:code-reviewer"
+    model: "sonnet"
+    max_turns: 5
+    description: "UI consistency review for {{story_key}}"
+    prompt: |
+      ## UI Consistency Review Task — Story: {{story_key}}
+      **IMPORTANT: File contents provided below. Do NOT read files yourself.**
+
+      You are a UI CONSISTENCY reviewer. Your ONLY job is to check that new/modified UI code
+      follows the established patterns in this project. You are NOT reviewing code quality
+      (that's the code reviewer's job) — you are reviewing VISUAL and INTERACTION consistency.
+
+      **UI Pattern Manifest (MANDATORY compliance):**
+      {{ui_reviewer_context}}
+
+      **Check each file against this checklist:**
+      1. THEMING: All colors use CSS variables (no hardcoded hex/rgb). Dark mode supported.
+      2. COMPONENTS: Reuses existing components (ConfirmationDialog, TransactionCard, Toast,
+         CategoryCombobox, CircularProgress, ScanOverlay) — NO new primitives without justification.
+      3. LAYOUT: max-w-md constraint, 44px touch targets, safe area awareness.
+      4. ICONS: Lucide React only, correct size/strokeWidth pattern.
+      5. MODALS: Registered in ModalManager, uses ConfirmationDialog pattern, focus trap, ESC dismiss.
+      6. FORMS: Standard input pattern, label+id association, keyboard navigation.
+      7. i18n: All user-facing strings via translations (no hardcoded text).
+      8. ANIMATIONS: Uses constants from animation/constants.ts.
+      9. STATE: Zustand stores, no new state libraries introduced.
+      10. ACCESSIBILITY: ARIA labels, roles, live regions, focus management.
+
+      **Severity guide:**
+      - BLOCK: Hardcoded colors, missing dark mode, new icon library, new state library
+      - HIGH: Missing i18n, no focus management in modal, touch target < 44px
+      - MEDIUM: New component that could reuse existing, missing animation constants
+      - LOW: Minor pattern deviation, missing aria-label on decorative element
+
+      **Output (max 40 lines):**
+      | # | Sev | Check | Finding | file:line |
+      New components introduced: [list] — justified: Y/N
+      Existing components reused: [list]
+      Recommendation: APPROVE / CHANGES REQUESTED
+      Consistency Score: X/10
 
       **FILE CONTENTS:** {{file_contents_manifest}}
   </task-call>

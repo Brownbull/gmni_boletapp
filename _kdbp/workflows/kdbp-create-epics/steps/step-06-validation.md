@@ -21,7 +21,10 @@ ALL validations must pass before finalization. USER GATE: final approval.
        -> {{story_files_status}} = PASS/FAIL
     8. **Story Format** — all story files have required sections
        (Functional ACs, Architectural ACs, File Spec, Tasks/Subtasks, Dev Notes)
-       -> {{story_format_status}} = PASS/FAIL</action>
+       -> {{story_format_status}} = PASS/FAIL
+    9. **E2E Coverage** — epics with multi-step user flows or performance NFRs
+       have a dedicated E2E test story (on-demand for AI-dependent flows, staging for UI flows)
+       -> {{e2e_coverage_status}} = PASS/FAIL</action>
 
   <output>**Final Validation Report**
 
@@ -35,6 +38,7 @@ ALL validations must pass before finalization. USER GATE: final approval.
     | Hardening Coverage | {{hardening_coverage_status}} |
     | Story Files | {{story_files_status}} |
     | Story Format | {{story_format_status}} |
+    | E2E Coverage | {{e2e_coverage_status}} |
 
     **Summary:**
     - Total Epics: {{epic_count}}

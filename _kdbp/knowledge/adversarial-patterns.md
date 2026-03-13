@@ -1,7 +1,7 @@
 # Adversarial Patterns — Structural Blind Spots
 
 > **Value:** Structural Humility — "Build the immune system, not the hospital."
-> **Source:** 85+ findings across 8 adversarial reviews (2026-02 to 2026-03)
+> **Source:** 85+ findings across 8 adversarial reviews (2026-02 to 2026-03) + P13 from Epic 18 replanning incident
 > **Used by:** code-review (step-03), dev-story (step-08), create-story (step-05), evolve-behavior (step-05)
 
 ---
@@ -22,6 +22,7 @@
 | P10 | Domain Mismatch | 5% | 3 | "Hired a plumber to fix the wiring" | Design principle only |
 | P11 | Invisible Cost | 6% | 3 | "Free samples that cost $50 in shipping" | Already covered: `session-budget.py` |
 | P12 | Survival/Portability | 5% | 3 | "Works in MY kitchen but breaks in yours" | Design principle only |
+| P13 | Replanning Story Drop | NEW | 2 | "Rewrote the menu but forgot a dish was already ordered" | step-06 E2E check + cross-ref guard |
 
 ---
 
@@ -77,6 +78,12 @@ Tier 3 patterns are honestly labeled as such. They require human vigilance or pe
 ### P7 — No Validation Before Action (5%)
 **What:** Assumptions acted on without verification (e.g., file exists? user has permission? value is non-null?).
 **Gate:** `dev-story/step-08` code-reviewer checklist item.
+
+### P13 — Replanning Story Drop (NEW)
+**What:** When an epic's story list is revised (architecture review, value alignment, scope change), stories from the original plan get dropped without explicit acknowledgment. The revision creates new stories but doesn't cross-reference the original list to verify nothing was lost.
+**Gate:** `create-epics/step-06` E2E Coverage check (#9) catches the most common drop (E2E stories).
+**Cross-ref guard:** When revising an epic's story list, diff the new list against `_kdbp-output/epics.md` (the original plan). For each original story NOT in the new list, explicitly state: absorbed into X, replaced by Y, or intentionally dropped because Z.
+**Evidence:** Epic 18 V3→V4 revision dropped the E2E story (18-6) — caught only when reviewing the final story set, not during the revision itself.
 
 ---
 
