@@ -62,3 +62,6 @@
 | 2026-03-10 | TD-18-1 | none | boletapp-dev | ✓ done | Test cleanup: shared createProps factory (377→254L), dismiss parity tests, omnibus-only per block. Self-review APPROVE 8.5/10, 2 fixes (deterministic date, per-test mockScanOverlay). 6 tests, 7410 total pass. | none |
 | 2026-03-11 | TD-18-1 | review | boletapp-dev | ✓ done | none |
 | 2026-03-12 | 18-1 | review | boletapp-dev | ✓ done | ⚑ scope-expansion ⚑ ssot-duplicate |
+| 2026-03-12 | TD-18-2 | create | boletapp-dev | ✓ done | none |
+| 2026-03-12 | TD-18-2 | none | boletapp-dev | ✓ done | Coercion layer: parseGeminiNumber + coerceGeminiNumericFields in analyzeReceipt.ts, coerceStatementNumericFields in analyzeStatement.ts. Diagnostic validation: validateGeminiResult/validateStatementResult replace boolean type guards with field-level failure capture. Chilean separator handling: strip dots/commas before Number() (CLP integer assumption). Empty string → NaN guard. Nullable fields use != null (loose equality). 27 new tests (10 receipt + 6 statement coercion, 11 pre-existing). Self-review APPROVE 8/10, null guard fix applied. $4.28 (lower bound). | none |
+| 2026-03-12 | TD-18-2 | review | boletapp-dev | ✓ done | ⚑ pre-existing-test-drift |

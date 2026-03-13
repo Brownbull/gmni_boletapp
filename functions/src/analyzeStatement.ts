@@ -88,36 +88,136 @@ interface AnalyzeStatementResponse extends StatementResult {
 // ============================================================================
 
 /**
- * Type guard: validates parsed JSON conforms to StatementResult.
+ * Coerce a string-typed numeric value from Gemini to an actual number.
+ * Strips dots and commas (Chilean thousands separators: "15.990" → 15990).
+ *
+ * CLP-only assumption: all values are integers per prompt instructions.
+ * WARNING: strips ALL dots/commas — "1.50" becomes 150 (100x error for decimals).
+ * If multi-currency decimal handling is added (Epic 18.5), update this function.
+ *
+ * @returns The original value if not a string, or the parsed number (may be NaN).
  */
-function isValidStatementResult(value: unknown): value is StatementResult {
-  if (typeof value !== 'object' || value === null) return false
-  const v = value as Record<string, unknown>
+function parseGeminiNumber(value: unknown): unknown {
+  if (typeof value !== 'string') return value
+  if (value === '') return NaN
+  const cleaned = value.replace(/[.,]/g, '')
+  const num = Number(cleaned)
+  return Number.isFinite(num) ? num : NaN
+}
 
-  // Validate statementInfo
-  if (typeof v['statementInfo'] !== 'object' || v['statementInfo'] === null) return false
-  const info = v['statementInfo'] as Record<string, unknown>
-  if (typeof info['bank'] !== 'string') return false
-  if (typeof info['currency'] !== 'string') return false
+/**
+ * Coerce known numeric fields in a raw Gemini statement response.
+ * Applied BEFORE validation — does not relax the type guard.
+ * Fields: transactions[].amount, transactions[].originalAmount (skip null),
+ *         statementInfo.totalDebit (skip null), statementInfo.totalCredit (skip null),
+ *         metadata.totalTransactions, metadata.confidence, metadata.pageCount
+ */
+function coerceStatementNumericFields(raw: Record<string, unknown>): Record<string, unknown> {
+  const result = { ...raw }
 
-  // Validate transactions array
-  if (!Array.isArray(v['transactions'])) return false
-  for (const tx of v['transactions'] as unknown[]) {
-    if (typeof tx !== 'object' || tx === null) return false
-    const t = tx as Record<string, unknown>
-    if (typeof t['date'] !== 'string') return false
-    if (typeof t['description'] !== 'string') return false
-    if (typeof t['amount'] !== 'number' || !Number.isFinite(t['amount'])) return false
-    if (typeof t['type'] !== 'string') return false
-    if (!VALID_STATEMENT_TYPES.has(t['type'] as string)) return false
+  if (typeof result['statementInfo'] === 'object' && result['statementInfo'] !== null) {
+    const info = { ...(result['statementInfo'] as Record<string, unknown>) }
+    if (info['totalDebit'] != null) {
+      info['totalDebit'] = parseGeminiNumber(info['totalDebit'])
+    }
+    if (info['totalCredit'] != null) {
+      info['totalCredit'] = parseGeminiNumber(info['totalCredit'])
+    }
+    result['statementInfo'] = info
   }
 
-  // Validate metadata
-  if (typeof v['metadata'] !== 'object' || v['metadata'] === null) return false
-  const meta = v['metadata'] as Record<string, unknown>
-  if (typeof meta['totalTransactions'] !== 'number') return false
+  if (Array.isArray(result['transactions'])) {
+    result['transactions'] = (result['transactions'] as unknown[]).map((tx) => {
+      if (typeof tx !== 'object' || tx === null) return tx
+      const t = { ...(tx as Record<string, unknown>) }
+      t['amount'] = parseGeminiNumber(t['amount'])
+      if (t['originalAmount'] != null) {
+        t['originalAmount'] = parseGeminiNumber(t['originalAmount'])
+      }
+      return t
+    })
+  }
 
-  return true
+  if (typeof result['metadata'] === 'object' && result['metadata'] !== null) {
+    const meta = { ...(result['metadata'] as Record<string, unknown>) }
+    meta['totalTransactions'] = parseGeminiNumber(meta['totalTransactions'])
+    if ('confidence' in meta) {
+      meta['confidence'] = parseGeminiNumber(meta['confidence'])
+    }
+    if ('pageCount' in meta) {
+      meta['pageCount'] = parseGeminiNumber(meta['pageCount'])
+    }
+    result['metadata'] = meta
+  }
+
+  return result
+}
+
+interface ValidationDiagnostic {
+  valid: boolean
+  failedField?: string
+  expectedType?: string
+  actualType?: string
+  actualValue?: string
+}
+
+/**
+ * Validate a Gemini statement response with diagnostic output.
+ * Mirrors isValidStatementResult checks but captures the first failure point.
+ * Privacy: logs only the failed field's value, not the full response.
+ */
+function validateStatementResult(value: unknown): ValidationDiagnostic {
+  if (typeof value !== 'object' || value === null) {
+    return { valid: false, failedField: '(root)', expectedType: 'object', actualType: typeof value, actualValue: String(value) }
+  }
+  const v = value as Record<string, unknown>
+
+  if (typeof v['statementInfo'] !== 'object' || v['statementInfo'] === null) {
+    return { valid: false, failedField: 'statementInfo', expectedType: 'object', actualType: typeof v['statementInfo'], actualValue: String(v['statementInfo']) }
+  }
+  const info = v['statementInfo'] as Record<string, unknown>
+  if (typeof info['bank'] !== 'string') {
+    return { valid: false, failedField: 'statementInfo.bank', expectedType: 'string', actualType: typeof info['bank'], actualValue: String(info['bank']) }
+  }
+  if (typeof info['currency'] !== 'string') {
+    return { valid: false, failedField: 'statementInfo.currency', expectedType: 'string', actualType: typeof info['currency'], actualValue: String(info['currency']) }
+  }
+
+  if (!Array.isArray(v['transactions'])) {
+    return { valid: false, failedField: 'transactions', expectedType: 'array', actualType: typeof v['transactions'], actualValue: String(v['transactions']) }
+  }
+  for (let idx = 0; idx < (v['transactions'] as unknown[]).length; idx++) {
+    const tx = (v['transactions'] as unknown[])[idx]
+    if (typeof tx !== 'object' || tx === null) {
+      return { valid: false, failedField: `transactions[${idx}]`, expectedType: 'object', actualType: typeof tx, actualValue: String(tx) }
+    }
+    const t = tx as Record<string, unknown>
+    if (typeof t['date'] !== 'string') {
+      return { valid: false, failedField: `transactions[${idx}].date`, expectedType: 'string', actualType: typeof t['date'], actualValue: String(t['date']) }
+    }
+    if (typeof t['description'] !== 'string') {
+      return { valid: false, failedField: `transactions[${idx}].description`, expectedType: 'string', actualType: typeof t['description'], actualValue: String(t['description']) }
+    }
+    if (typeof t['amount'] !== 'number' || !Number.isFinite(t['amount'])) {
+      return { valid: false, failedField: `transactions[${idx}].amount`, expectedType: 'number (finite)', actualType: typeof t['amount'], actualValue: String(t['amount']) }
+    }
+    if (typeof t['type'] !== 'string') {
+      return { valid: false, failedField: `transactions[${idx}].type`, expectedType: 'string', actualType: typeof t['type'], actualValue: String(t['type']) }
+    }
+    if (!VALID_STATEMENT_TYPES.has(t['type'] as string)) {
+      return { valid: false, failedField: `transactions[${idx}].type`, expectedType: 'one of: cargo|abono|interes|comision|seguro|otro', actualType: 'string', actualValue: String(t['type']) }
+    }
+  }
+
+  if (typeof v['metadata'] !== 'object' || v['metadata'] === null) {
+    return { valid: false, failedField: 'metadata', expectedType: 'object', actualType: typeof v['metadata'], actualValue: String(v['metadata']) }
+  }
+  const meta = v['metadata'] as Record<string, unknown>
+  if (typeof meta['totalTransactions'] !== 'number' || !Number.isFinite(meta['totalTransactions'])) {
+    return { valid: false, failedField: 'metadata.totalTransactions', expectedType: 'number (finite)', actualType: typeof meta['totalTransactions'], actualValue: String(meta['totalTransactions']) }
+  }
+
+  return { valid: true }
 }
 
 /**
@@ -251,15 +351,20 @@ export const analyzeStatement = functions
         .trim()
 
       const rawParsed: unknown = JSON.parse(cleanedText)
-      if (!isValidStatementResult(rawParsed)) {
-        const fields = typeof rawParsed === 'object' && rawParsed !== null ? Object.keys(rawParsed) : []
-        console.error('Statement response failed schema validation. Fields:', fields.join(', '))
+      const coerced = typeof rawParsed === 'object' && rawParsed !== null
+        ? coerceStatementNumericFields(rawParsed as Record<string, unknown>)
+        : rawParsed
+      const diagnostic = validateStatementResult(coerced)
+      if (!diagnostic.valid) {
+        console.error(
+          `Gemini statement validation failed: field="${diagnostic.failedField}" expected="${diagnostic.expectedType}" actual="${diagnostic.actualType}" value="${diagnostic.actualValue}"`
+        )
         throw new functions.https.HttpsError(
           'internal',
           'Statement analysis returned unexpected format. Please try again.'
         )
       }
-      const parsed: StatementResult = rawParsed
+      const parsed = coerced as StatementResult
 
       const latencyMs = Date.now() - startTime
       const activePrompt = getActiveStatementPrompt(promptContext)
