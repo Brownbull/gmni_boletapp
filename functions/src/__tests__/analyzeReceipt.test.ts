@@ -27,6 +27,28 @@ jest.mock('@google/generative-ai', () => {
   }
 })
 
+// Mock image processing — isolate tests from sharp dependency
+jest.mock('../imageProcessing', () => ({
+  base64ToBuffer: jest.fn().mockReturnValue(Buffer.from('fake-image')),
+  resizeAndCompress: jest.fn().mockResolvedValue({ buffer: Buffer.from('fake-compressed') }),
+  generateThumbnail: jest.fn().mockResolvedValue({ buffer: Buffer.from('fake-thumbnail') })
+}))
+
+// Mock storage service
+jest.mock('../storageService', () => ({
+  uploadReceiptImages: jest.fn().mockResolvedValue({
+    imageUrls: ['https://storage.googleapis.com/bucket/image.jpg'],
+    thumbnailUrl: 'https://storage.googleapis.com/bucket/thumb.jpg'
+  })
+}))
+
+// Mock prompts
+jest.mock('../prompts', () => ({
+  ...jest.requireActual('../prompts'),
+  buildPrompt: jest.fn().mockReturnValue('Analyze this receipt'),
+  getActivePrompt: jest.fn().mockReturnValue({ version: '3.0.0' })
+}))
+
 // Set required environment variable for tests
 process.env.GEMINI_API_KEY = 'test-api-key'
 
@@ -389,6 +411,142 @@ describe('analyzeReceipt Cloud Function', () => {
       }
 
       await expect(wrapped(data, context)).rejects.toThrow('Failed to analyze receipt')
+    })
+  })
+
+  describe('Number Coercion (TD-18-2)', () => {
+    it('should coerce string-number total and prices to actual numbers', async () => {
+      const { GoogleGenerativeAI } = require('@google/generative-ai')
+      GoogleGenerativeAI.mockImplementationOnce(() => ({
+        getGenerativeModel: () => ({
+          generateContent: jest.fn().mockResolvedValue({
+            response: {
+              text: () => JSON.stringify({
+                merchant: 'Test Market',
+                date: '2025-11-27',
+                total: '15000',
+                category: 'Supermarket',
+                items: [
+                  { name: 'Milk', price: '1500', category: 'Fresh Food' },
+                  { name: 'Bread', price: '2000', category: 'Pantry' }
+                ]
+              })
+            }
+          })
+        })
+      }))
+
+      const data = {
+        images: ['data:image/jpeg;base64,/9j/4AAQSkZJRg=='],
+        currency: 'CLP'
+      }
+      const context = { auth: { uid: 'coercion-test-1', token: {} } }
+
+      const result = await wrapped(data, context)
+      expect(result.total).toBe(15000)
+      expect(typeof result.total).toBe('number')
+      expect(result.items[0].price).toBe(1500)
+      expect(typeof result.items[0].price).toBe('number')
+    })
+
+    it('should strip Chilean thousands separators before coercion', async () => {
+      const { GoogleGenerativeAI } = require('@google/generative-ai')
+      GoogleGenerativeAI.mockImplementationOnce(() => ({
+        getGenerativeModel: () => ({
+          generateContent: jest.fn().mockResolvedValue({
+            response: {
+              text: () => JSON.stringify({
+                merchant: 'Test Market',
+                date: '2025-11-27',
+                total: '15.990',
+                category: 'Supermarket',
+                items: [
+                  { name: 'Milk', price: '1.500', category: 'Fresh Food' }
+                ]
+              })
+            }
+          })
+        })
+      }))
+
+      const data = {
+        images: ['data:image/jpeg;base64,/9j/4AAQSkZJRg=='],
+        currency: 'CLP'
+      }
+      const context = { auth: { uid: 'coercion-test-2', token: {} } }
+
+      const result = await wrapped(data, context)
+      expect(result.total).toBe(15990)
+      expect(result.items[0].price).toBe(1500)
+    })
+
+    it('should reject empty string numeric fields', async () => {
+      const { GoogleGenerativeAI } = require('@google/generative-ai')
+      GoogleGenerativeAI.mockImplementationOnce(() => ({
+        getGenerativeModel: () => ({
+          generateContent: jest.fn().mockResolvedValue({
+            response: {
+              text: () => JSON.stringify({
+                merchant: 'Test Market',
+                date: '2025-11-27',
+                total: '',
+                category: 'Supermarket',
+                items: []
+              })
+            }
+          })
+        })
+      }))
+
+      const data = {
+        images: ['data:image/jpeg;base64,/9j/4AAQSkZJRg=='],
+        currency: 'CLP'
+      }
+      const context = { auth: { uid: 'coercion-test-3', token: {} } }
+
+      await expect(wrapped(data, context)).rejects.toThrow(
+        'Receipt analysis returned unexpected format'
+      )
+    })
+
+    it('should log diagnostic field info on validation failure', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
+
+      const { GoogleGenerativeAI } = require('@google/generative-ai')
+      GoogleGenerativeAI.mockImplementationOnce(() => ({
+        getGenerativeModel: () => ({
+          generateContent: jest.fn().mockResolvedValue({
+            response: {
+              text: () => JSON.stringify({
+                merchant: 'Test Market',
+                date: '2025-11-27',
+                total: 'N/A',
+                category: 'Supermarket',
+                items: []
+              })
+            }
+          })
+        })
+      }))
+
+      const data = {
+        images: ['data:image/jpeg;base64,/9j/4AAQSkZJRg=='],
+        currency: 'CLP'
+      }
+      const context = { auth: { uid: 'coercion-test-4', token: {} } }
+
+      await expect(wrapped(data, context)).rejects.toThrow(
+        'Receipt analysis returned unexpected format'
+      )
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('field="total"')
+      )
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('value="NaN"')
+      )
+
+      consoleSpy.mockRestore()
     })
   })
 

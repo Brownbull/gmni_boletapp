@@ -206,6 +206,8 @@ export function useScanHandlers(
      */
     const handleScanOverlayCancel = useCallback(() => {
         scanOverlay.reset();
+        // Reset scan store to idle so _guardPhase unblocks subsequent scan attempts
+        useScanStore.getState().reset();
         setScanImages([]);
         setCurrentTransaction(null);
         setView('dashboard');

@@ -63,12 +63,17 @@ Spawn ECC Planner, validate post-planning scope, mark story in-progress.
       **Tasks to Implement:** {{task_list}}
       **Architecture Patterns:** {{project_patterns}}
 
+      **UI Pattern Manifest (if story touches UI files):** {{cached_ui_patterns}}
+      When planning UI changes: list which EXISTING components will be reused.
+      New UI components require justification (why can't an existing one be extended?).
+
       **Output Required:**
       1. Implementation approach for each task
       2. File changes required (paths must match story File Specification)
       3. Dependencies and order
       4. Risk assessment
       5. Testing strategy alignment
+      6. UI component reuse plan (if applicable — list existing components to use)
 
       Create a clear implementation plan that the TDD Guide agent can follow.
   </task-call>

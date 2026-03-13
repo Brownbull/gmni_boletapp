@@ -40,7 +40,7 @@ Cost tracking, E2E coverage check, backend analysis, commit commands, and final 
   </check>
 
   <!-- Build commit file list -->
-  <action>Build {{review_changed_files}}: story file, sprint-status.yaml, new TD story files, source/test files from quick fixes</action>
+  <action>Build {{review_changed_files}}: story file, sprint-status.yaml, new TD story files, deferred-findings.md (if created/modified), source/test files from quick fixes</action>
 
   <!-- P3 Usage Tracking: tag which L2 patterns were relevant in review (CX-03) -->
   <action>Append to review output a CITED tag listing any L2 patterns detected during review.
@@ -71,7 +71,7 @@ Cost tracking, E2E coverage check, backend analysis, commit commands, and final 
   <output>**ECC Code Review Complete!**
 
     Story: {{story_key}} | Status: {{new_status}} | Classification: {{classification}}
-    Triage: {{fixed_count}} fixed, {{td_story_count}} TD stories | Agents: {{review_agents}}
+    Triage: {{fixed_count}} fixed, {{td_story_count}} TD stories, {{backlog_count}} backlog | Agents: {{review_agents}}
 
     {{#if has_ui_changes and ui_missing_e2e}}**E2E Gap:** {{uncovered_testids}}{{#if is_critical_path}} — CRITICAL PATH{{/if}}{{/if}}
     {{#if has_backend_changes}}**Backend:** Changes to {{backend_deploy_targets}} — use `/deploy-story` to deploy.{{/if}}
@@ -85,7 +85,7 @@ Cost tracking, E2E coverage check, backend analysis, commit commands, and final 
     {{#each review_changed_files}}git add {{file_path}}
     {{/each}}
     git commit -m "$(cat <<'EOF'
-    Review {{story_key}}: {{overall_status}} {{overall_score}}/10{{#if td_story_count}}, create {{td_stories_list}}{{/if}}
+    Review {{story_key}}: {{overall_status}} {{overall_score}}/10{{#if td_story_count}}, create {{td_stories_list}}{{/if}}{{#if backlog_count}}, {{backlog_count}} to backlog{{/if}}
 
     Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
     EOF
@@ -102,11 +102,11 @@ Cost tracking, E2E coverage check, backend analysis, commit commands, and final 
   <!-- DBP: [GL] Ledger Entry (gated on dbp_active)
        Ledger format must match step-09-review-checkpoint.md -->
   <check if="{{dbp_active}}">
-    <action>Draft ledger entry:
+    <action>Draft and auto-write ledger entry (no confirmation needed):
       | Date | Story | PM-Ref | Behavior | Outcome | Signals |
       | {{date}} | {{story_key}} | review | {{behavior_names}} | {{#if new_status == "done"}}✓ done{{else}}~ partial{{/if}} | {{workflow_signals}} |
     </action>
-    <action>Append row to behaviors/trajectory/ledger.md (auto-write, no confirmation needed)</action>
+    <action>Append row to behaviors/trajectory/ledger.md</action>
     <output>**[GL] Ledger Entry Written:**
       | {{date}} | {{story_key}} | review | {{behavior_names}} | {{outcome}} | {{signals}} |
     </output>

@@ -238,6 +238,105 @@ function classifyImages(images: string[]): 'url' | 'base64' {
 }
 
 /**
+ * Coerce a string-typed numeric value from Gemini to an actual number.
+ * Strips dots and commas (Chilean thousands separators: "15.990" → 15990).
+ *
+ * CLP-only assumption: all values are integers per prompt instructions.
+ * WARNING: strips ALL dots/commas — "1.50" becomes 150 (100x error for decimals).
+ * If multi-currency decimal handling is added (Epic 18.5), update this function.
+ *
+ * @returns The original value if not a string, or the parsed number (may be NaN).
+ */
+function parseGeminiNumber(value: unknown): unknown {
+  if (typeof value !== 'string') return value
+  if (value === '') return NaN
+  const cleaned = value.replace(/[.,]/g, '')
+  const num = Number(cleaned)
+  return Number.isFinite(num) ? num : NaN
+}
+
+/**
+ * Coerce known numeric fields in a raw Gemini receipt response.
+ * Applied BEFORE validation — does not relax the type guard.
+ * Fields: total, items[].price, items[].quantity, metadata.confidence
+ */
+function coerceGeminiNumericFields(raw: Record<string, unknown>): Record<string, unknown> {
+  const result = { ...raw }
+  result['total'] = parseGeminiNumber(result['total'])
+
+  if (Array.isArray(result['items'])) {
+    result['items'] = (result['items'] as unknown[]).map((item) => {
+      if (typeof item !== 'object' || item === null) return item
+      const i = { ...(item as Record<string, unknown>) }
+      i['price'] = parseGeminiNumber(i['price'])
+      if ('quantity' in i) {
+        i['quantity'] = parseGeminiNumber(i['quantity'])
+      }
+      return i
+    })
+  }
+
+  if (typeof result['metadata'] === 'object' && result['metadata'] !== null) {
+    const meta = { ...(result['metadata'] as Record<string, unknown>) }
+    if ('confidence' in meta) {
+      meta['confidence'] = parseGeminiNumber(meta['confidence'])
+    }
+    result['metadata'] = meta
+  }
+
+  return result
+}
+
+interface ValidationDiagnostic {
+  valid: boolean
+  failedField?: string
+  expectedType?: string
+  actualType?: string
+  actualValue?: string
+}
+
+/**
+ * Validate a Gemini receipt response with diagnostic output.
+ * Mirrors isValidGeminiAnalysisResult checks but captures the first failure point.
+ * Privacy: logs only the failed field's value, not the full response.
+ */
+function validateGeminiResult(value: unknown): ValidationDiagnostic {
+  if (typeof value !== 'object' || value === null) {
+    return { valid: false, failedField: '(root)', expectedType: 'object', actualType: typeof value, actualValue: String(value) }
+  }
+  const v = value as Record<string, unknown>
+  if (typeof v['merchant'] !== 'string') {
+    return { valid: false, failedField: 'merchant', expectedType: 'string', actualType: typeof v['merchant'], actualValue: String(v['merchant']) }
+  }
+  if (typeof v['date'] !== 'string') {
+    return { valid: false, failedField: 'date', expectedType: 'string', actualType: typeof v['date'], actualValue: String(v['date']) }
+  }
+  if (typeof v['total'] !== 'number' || !Number.isFinite(v['total'])) {
+    return { valid: false, failedField: 'total', expectedType: 'number (finite)', actualType: typeof v['total'], actualValue: String(v['total']) }
+  }
+  if (typeof v['category'] !== 'string') {
+    return { valid: false, failedField: 'category', expectedType: 'string', actualType: typeof v['category'], actualValue: String(v['category']) }
+  }
+  if (!Array.isArray(v['items'])) {
+    return { valid: false, failedField: 'items', expectedType: 'array', actualType: typeof v['items'], actualValue: String(v['items']) }
+  }
+  for (let idx = 0; idx < (v['items'] as unknown[]).length; idx++) {
+    const item = (v['items'] as unknown[])[idx]
+    if (typeof item !== 'object' || item === null) {
+      return { valid: false, failedField: `items[${idx}]`, expectedType: 'object', actualType: typeof item, actualValue: String(item) }
+    }
+    const i = item as Record<string, unknown>
+    if (typeof i['name'] !== 'string') {
+      return { valid: false, failedField: `items[${idx}].name`, expectedType: 'string', actualType: typeof i['name'], actualValue: String(i['name']) }
+    }
+    if (typeof i['price'] !== 'number' || !Number.isFinite(i['price'])) {
+      return { valid: false, failedField: `items[${idx}].price`, expectedType: 'number (finite)', actualType: typeof i['price'], actualValue: String(i['price']) }
+    }
+  }
+  return { valid: true }
+}
+
+/**
  * Response from Gemini AI analysis (parsed from receipt)
  * Includes v2.6.0 fields: time, currency, country, city, metadata
  */
@@ -262,27 +361,6 @@ interface GeminiAnalysisResult {
     receiptType?: string  // Detected receipt type (e.g., "receipt", "invoice")
     confidence?: number   // Confidence score 0.0-1.0
   }
-}
-
-/**
- * Type guard: validates parsed JSON conforms to GeminiAnalysisResult (TD-15b-36 AC3).
- * Checks required fields and types. Optional fields are not validated — safe if absent.
- */
-function isValidGeminiAnalysisResult(value: unknown): value is GeminiAnalysisResult {
-  if (typeof value !== 'object' || value === null) return false
-  const v = value as Record<string, unknown>
-  if (typeof v['merchant'] !== 'string') return false
-  if (typeof v['date'] !== 'string') return false
-  if (typeof v['total'] !== 'number' || !Number.isFinite(v['total'])) return false
-  if (typeof v['category'] !== 'string') return false
-  if (!Array.isArray(v['items'])) return false
-  for (const item of v['items'] as unknown[]) {
-    if (typeof item !== 'object' || item === null) return false
-    const i = item as Record<string, unknown>
-    if (typeof i['name'] !== 'string') return false
-    if (typeof i['price'] !== 'number' || !Number.isFinite(i['price'])) return false
-  }
-  return true
 }
 
 /**
@@ -471,15 +549,20 @@ export const analyzeReceipt = functions.https.onCall(
         .trim()
 
       const rawParsed: unknown = JSON.parse(cleanedText)
-      if (!isValidGeminiAnalysisResult(rawParsed)) {
-        const fields = typeof rawParsed === 'object' && rawParsed !== null ? Object.keys(rawParsed) : []
-        console.error('Gemini response failed schema validation. Fields present:', fields.join(', '))
+      const coerced = typeof rawParsed === 'object' && rawParsed !== null
+        ? coerceGeminiNumericFields(rawParsed as Record<string, unknown>)
+        : rawParsed
+      const diagnostic = validateGeminiResult(coerced)
+      if (!diagnostic.valid) {
+        console.error(
+          `Gemini receipt validation failed: field="${diagnostic.failedField}" expected="${diagnostic.expectedType}" actual="${diagnostic.actualType}" value="${diagnostic.actualValue}"`
+        )
         throw new functions.https.HttpsError(
           'internal',
           'Receipt analysis returned unexpected format. Please try again.'
         )
       }
-      const parsed: GeminiAnalysisResult = rawParsed
+      const parsed = coerced as GeminiAnalysisResult
 
       // Log successful analysis (helpful for monitoring)
       console.log(`Receipt analyzed: transaction ${transactionId}`)
