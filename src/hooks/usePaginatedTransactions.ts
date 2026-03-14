@@ -78,7 +78,8 @@ function sanitizeTransaction(tx: Transaction): Transaction {
         items: Array.isArray(tx.items)
             ? tx.items.map(i => ({
                 ...i,
-                price: parseStrictNumber(i.price)
+                // TODO(TD-18-8): Remove (i as any).price fallback after Firestore migration (2026-Q2)
+                totalPrice: parseStrictNumber(i.totalPrice ?? (i as any).price)
             }))
             : []
     };

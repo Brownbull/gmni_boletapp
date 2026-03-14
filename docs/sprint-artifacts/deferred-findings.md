@@ -58,6 +58,46 @@
 - **Stage:** PROD — Test coverage gap for error path
 - **Estimated effort:** 1 point (add test with mockRefund.mockRejectedValue)
 
+### [PROD] QuickSaveCard timeStr Derived from Date Instead of Time
+
+- **Source:** TD-18-7-hide-default-time-sentinel review (2026-03-13)
+- **Finding:** `timeStr` in QuickSaveCard is computed from `transaction.date` via `toLocaleTimeString()`, not from `transaction.time`. When a real time exists, the Clock row displays the date-parsed local time rather than the stored time string. The conditional guard from TD-18-7 correctly suppresses the sentinel, but the displayed value for real times is the wrong source.
+- **Files:** `src/features/scan/components/QuickSaveCard.tsx`
+- **Stage:** PROD — Data display accuracy, not breaking but misleading
+- **Estimated effort:** 2 points (use transaction.time for display, format consistently)
+
+### [PROD] Duplicate getTimeDisplay() Logic Across TransactionCard Variants
+
+- **Source:** TD-18-7-hide-default-time-sentinel review (2026-03-13)
+- **Finding:** `getTimeDisplay()` is duplicated verbatim in `src/features/history/components/TransactionCard.tsx` and `src/components/transactions/TransactionCard.tsx`. TD-18-7 extended the duplication with the sentinel filter. Should extract to a shared utility.
+- **Files:** `src/features/history/components/TransactionCard.tsx`, `src/components/transactions/TransactionCard.tsx`
+- **Stage:** PROD — DRY violation, maintenance risk for future time display changes
+- **Estimated effort:** 2 points (extract shared util, update imports, move tests)
+
+### [PROD] Missing Test Coverage for Legacy TransactionCard
+
+- **Source:** TD-18-7-hide-default-time-sentinel review (2026-03-13)
+- **Finding:** `src/components/transactions/TransactionCard.tsx` (legacy shared component) has no test file. Its `getTimeDisplay()` sentinel logic is identical to the history variant but has zero test coverage. The component has a different props interface (structured `transaction` object, `formatters`, `theme` objects).
+- **Files:** `src/components/transactions/TransactionCard.tsx`
+- **Stage:** PROD — Test coverage gap for shared component
+- **Estimated effort:** 3 points (create test file with structured props, cover sentinel + existing functionality)
+
+### [PROD] parseHour DEFAULT_TIME Guard Undocumented by Tests
+
+- **Source:** TD-18-7-hide-default-time-sentinel review (2026-03-13)
+- **Finding:** `parseHour()` in `insightGenerators.ts` already guards against DEFAULT_TIME (`if (time === DEFAULT_TIME) return null`), but no test explicitly documents this behavior. AC-6 claim ("no analytics aggregate by time") is factually incorrect — insights DO aggregate by time, the guard is the safety net.
+- **Files:** `src/utils/insightGenerators.ts`
+- **Stage:** PROD — Test documentation of existing safety guard
+- **Estimated effort:** 1 point (add parseHour(DEFAULT_TIME) → null assertion in insights test file)
+
+### [PROD] Consolidate price→totalPrice Compat Fallback to Single Location
+
+- **Source:** TD-18-8-rename-item-price-to-totalprice review (2026-03-13)
+- **Finding:** AC-9 requires "ONE mapping in the normalizer" but backward-compat fallback `totalPrice ?? (i as any).price` exists in two locations: `src/repositories/utils.ts` and `src/hooks/usePaginatedTransactions.ts`. Both are at the data boundary layer but should be consolidated into a shared util (e.g., `normalizeItemPrice()`) or the hook should delegate to the repository normalizer.
+- **Files:** `src/repositories/utils.ts`, `src/hooks/usePaginatedTransactions.ts`
+- **Stage:** PROD — Code hygiene, not feature-breaking. Both paths produce correct output.
+- **Estimated effort:** 1 point (extract shared normalizer function, update 2 call sites)
+
 ---
 
 ## SCALE Backlog
@@ -69,3 +109,45 @@
 - **Files:** `src/features/scan/store/slices/guardLog.ts`
 - **Stage:** SCALE — Only matters at compliance/audit scale
 - **Estimated effort:** 0.5 points (add documentation comment)
+
+---
+
+## TD Backlog (from Story 18-8 prompt review — 2026-03-14)
+
+### [TD] Eliminate prompt file duplication between prompt-testing/ and functions/src/
+
+- **Source:** Story 18-8 prompt adversarial review (2026-03-14)
+- **Finding:** All prompt files exist as identical copies in `prompt-testing/prompts/` and `functions/src/prompts/` (differing only in import paths). Same for `shared/schema/`. Manual sync required for every change — high drift risk.
+- **Files:** `prompt-testing/prompts/*.ts`, `functions/src/prompts/*.ts`, `shared/schema/`, `functions/src/shared/schema/`
+- **Options:** (A) Symlinks or build step to generate functions copy from prompt-testing; (B) Add a CI test that diffs the two directories and fails on divergence
+- **Estimated effort:** 2-3 points
+
+### [TD] Rename `qty` → `quantity` codebase-wide
+
+- **Source:** Story 18-8 prompt adversarial review (2026-03-14)
+- **Finding:** Prompt uses `quantity` (full word), TypeScript `TransactionItem` uses `qty`. Cloud Function maps between them. Inconsistent naming across the boundary. Should use `quantity` everywhere for clarity.
+- **Files:** `src/types/transaction.ts`, `src/types/item.ts`, all consumers of `item.qty`
+- **Scope:** Similar to TD-18-8 (price→totalPrice rename), estimated ~30 files
+- **Estimated effort:** 3 points
+
+### [TD] Update statement prompt to English-only pattern
+
+- **Source:** Story 18-8 prompt adversarial review (2026-03-14)
+- **Finding:** `prompt-testing/prompts/statement/v1-statement-extraction.ts` still uses `STORE_CATEGORIES_GROUPED` (Spanish labels). Should switch to `STORE_CATEGORY_LIST` + locale import for consistency with V4 receipt prompt changes.
+- **Files:** `prompt-testing/prompts/statement/v1-statement-extraction.ts`, `functions/src/prompts/statement/v1-statement-extraction.ts`
+- **Estimated effort:** 1 point
+
+### [PROD] normalizeItems Diverges from Pipeline (Missing deriveItemsPrices)
+
+- **Source:** 18-8-item-price-extraction review (2026-03-14)
+- **Finding:** `normalizeItems()` in `src/features/scan/handlers/processScan/utils.ts` maps AI fields but does NOT call `deriveItemsPrices()`. The live pipeline in `processScan.ts` calls both sequentially, but direct callers of `normalizeItems` will produce items with raw unitPrice (no derivation). Function should be renamed to `normalizeItemFields` or should call `deriveItemsPrices` internally.
+- **Files:** `src/features/scan/handlers/processScan/utils.ts`
+- **Stage:** PROD — Maintenance trap for future callers, not currently breaking
+- **Estimated effort:** 1 point (rename + update callers, or compose with deriveItemsPrices)
+
+### [TD] Regenerate all expected.json baselines after Cloud Function deploy
+
+- **Source:** Story 18-8 prompt adversarial review (2026-03-14)
+- **Finding:** Existing `expected.json` files in `prompt-testing/test-cases/` were generated with old V4 prompt (Spanish groups, no unitPrice). After deploying the updated Cloud Function, regenerate with `--force` to capture new prompt behavior.
+- **Files:** `prompt-testing/test-cases/**/*.expected.json`
+- **Estimated effort:** 1 point (scripted, but needs manual review of diffs)

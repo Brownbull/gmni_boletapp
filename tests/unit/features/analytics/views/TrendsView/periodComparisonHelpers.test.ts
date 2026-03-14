@@ -95,21 +95,21 @@ describe('computePreviousPeriodTotals', () => {
   });
 
   describe('item-categories mode', () => {
-    it('aggregates by item category using item price * qty', () => {
+    it('aggregates by item category using totalPrice (line total)', () => {
       const txs = [
         makeTx({
           date: '2026-01-01',
           total: 1000,
           items: [
-            { name: 'Milk', price: 300, category: 'DairyEggs', qty: 2 },
-            { name: 'Apple', price: 200, category: 'Produce' },
+            { name: 'Milk', totalPrice: 300, category: 'DairyEggs', qty: 2 },
+            { name: 'Apple', totalPrice: 200, category: 'Produce' },
           ],
         }),
       ];
 
       const result = computePreviousPeriodTotals(txs, 'item-categories');
-      expect(result.get('DairyEggs')).toBe(600); // 300 * 2
-      expect(result.get('Produce')).toBe(200); // 200 * 1 (default qty)
+      expect(result.get('DairyEggs')).toBe(300); // totalPrice is already the line total
+      expect(result.get('Produce')).toBe(200);
     });
 
     it('defaults missing item category to "Unknown"', () => {
@@ -117,7 +117,7 @@ describe('computePreviousPeriodTotals', () => {
         makeTx({
           date: '2026-01-01',
           total: 100,
-          items: [{ name: 'Mystery', price: 100 }],
+          items: [{ name: 'Mystery', totalPrice: 100 }],
         }),
       ];
 
@@ -139,9 +139,9 @@ describe('computePreviousPeriodTotals', () => {
           date: '2026-01-01',
           total: 1000,
           items: [
-            { name: 'Apple', price: 200, category: 'Produce' },
-            { name: 'Steak', price: 500, category: 'MeatSeafood' },
-            { name: 'Milk', price: 300, category: 'DairyEggs' },
+            { name: 'Apple', totalPrice: 200, category: 'Produce' },
+            { name: 'Steak', totalPrice: 500, category: 'MeatSeafood' },
+            { name: 'Milk', totalPrice: 300, category: 'DairyEggs' },
           ],
         }),
       ];
@@ -156,7 +156,7 @@ describe('computePreviousPeriodTotals', () => {
         makeTx({
           date: '2026-01-01',
           total: 100,
-          items: [{ name: 'Widget', price: 100, category: 'UnmappedCat' }],
+          items: [{ name: 'Widget', totalPrice: 100, category: 'UnmappedCat' }],
         }),
       ];
 
@@ -266,8 +266,8 @@ describe('computeDailySparkline', () => {
           date: '2026-01-05',
           total: 500,
           items: [
-            { name: 'Milk', price: 300, category: 'DairyEggs' },
-            { name: 'Apple', price: 200, category: 'Produce' },
+            { name: 'Milk', totalPrice: 300, category: 'DairyEggs' },
+            { name: 'Apple', totalPrice: 200, category: 'Produce' },
           ],
         }),
       ];
@@ -316,8 +316,8 @@ describe('computeDailySparkline', () => {
           date: '2026-01-05',
           total: 500,
           items: [
-            { name: 'Apple', price: 200, category: 'Produce' },
-            { name: 'Steak', price: 300, category: 'MeatSeafood' },
+            { name: 'Apple', totalPrice: 200, category: 'Produce' },
+            { name: 'Steak', totalPrice: 300, category: 'MeatSeafood' },
           ],
         }),
       ];
@@ -332,7 +332,7 @@ describe('computeDailySparkline', () => {
         makeTx({
           date: '2026-01-05',
           total: 300,
-          items: [{ name: 'Milk', price: 300, category: 'DairyEggs' }],
+          items: [{ name: 'Milk', totalPrice: 300, category: 'DairyEggs' }],
         }),
       ];
 

@@ -21,7 +21,10 @@ export function sanitizeTransactions(docs: Transaction[]): Transaction[] {
         items: Array.isArray(d.items)
             ? d.items.map(i => ({
                 ...i,
-                price: parseStrictNumber(i.price)
+                // TODO(TD-18-8): Remove (i as any).price fallback after Firestore migration (2026-Q2)
+                totalPrice: parseStrictNumber(i.totalPrice ?? (i as any).price),
+                // Story 18-8: Sanitize unitPrice at Firestore read boundary (CLP-only: parseStrictNumber strips decimals)
+                unitPrice: i.unitPrice != null ? parseStrictNumber(i.unitPrice) : undefined,
             }))
             : []
     }));

@@ -258,7 +258,7 @@ function parseGeminiNumber(value: unknown): unknown {
 /**
  * Coerce known numeric fields in a raw Gemini receipt response.
  * Applied BEFORE validation — does not relax the type guard.
- * Fields: total, items[].price, items[].quantity, metadata.confidence
+ * Fields: total, items[].totalPrice, items[].quantity, metadata.confidence
  */
 function coerceGeminiNumericFields(raw: Record<string, unknown>): Record<string, unknown> {
   const result = { ...raw }
@@ -268,7 +268,16 @@ function coerceGeminiNumericFields(raw: Record<string, unknown>): Record<string,
     result['items'] = (result['items'] as unknown[]).map((item) => {
       if (typeof item !== 'object' || item === null) return item
       const i = { ...(item as Record<string, unknown>) }
-      i['price'] = parseGeminiNumber(i['price'])
+      // Defense-in-depth: remap legacy 'price' field if Gemini returns old schema
+      if (!('totalPrice' in i) && 'price' in i) {
+        i['totalPrice'] = i['price']
+        delete i['price']
+      }
+      i['totalPrice'] = parseGeminiNumber(i['totalPrice'])
+      if ('unitPrice' in i) {
+        const coerced = parseGeminiNumber(i['unitPrice'])
+        i['unitPrice'] = (typeof coerced === 'number' && Number.isFinite(coerced)) ? coerced : undefined
+      }
       if ('quantity' in i) {
         i['quantity'] = parseGeminiNumber(i['quantity'])
       }
@@ -329,8 +338,8 @@ function validateGeminiResult(value: unknown): ValidationDiagnostic {
     if (typeof i['name'] !== 'string') {
       return { valid: false, failedField: `items[${idx}].name`, expectedType: 'string', actualType: typeof i['name'], actualValue: String(i['name']) }
     }
-    if (typeof i['price'] !== 'number' || !Number.isFinite(i['price'])) {
-      return { valid: false, failedField: `items[${idx}].price`, expectedType: 'number (finite)', actualType: typeof i['price'], actualValue: String(i['price']) }
+    if (typeof i['totalPrice'] !== 'number' || !Number.isFinite(i['totalPrice'])) {
+      return { valid: false, failedField: `items[${idx}].totalPrice`, expectedType: 'number (finite)', actualType: typeof i['totalPrice'], actualValue: String(i['totalPrice']) }
     }
   }
   return { valid: true }
@@ -347,7 +356,8 @@ interface GeminiAnalysisResult {
   category: string
   items: Array<{
     name: string
-    price: number
+    totalPrice: number
+    unitPrice?: number
     category?: string
     quantity?: number
     subcategory?: string

@@ -31,7 +31,7 @@ export type {
 /**
  * JSON format instructions for Gemini output.
  */
-export const JSON_FORMAT_INSTRUCTIONS = `Strict JSON output. Return 'total' and 'price' as INTEGERS (no dots/commas).`;
+export const JSON_FORMAT_INSTRUCTIONS = `Strict JSON output. Return 'total' and 'totalPrice' as INTEGERS (no dots/commas).`;
 
 /**
  * Date handling instructions.
@@ -55,7 +55,8 @@ export const JSON_STRUCTURE = `{
   "items": [
     {
       "name": "item name",
-      "price": 1234,
+      "unitPrice": 1234,
+      "totalPrice": 1234,
       "category": "one of: ${ITEM_CATEGORY_LIST}",
       "subcategory": "optional subcategory"
     }
@@ -81,7 +82,7 @@ export function buildBasePrompt(options: {
     prompt += `\n\nExpected output format:\n${JSON_STRUCTURE}`;
   }
 
-  prompt += `\n\nExtract: merchant (store name), date (YYYY-MM-DD), total, category (one of: ${STORE_CATEGORY_LIST}). Items: name, price, category (${ITEM_CATEGORY_LIST}), subcategory. ${DATE_INSTRUCTIONS}`;
+  prompt += `\n\nExtract: merchant (store name), date (YYYY-MM-DD), total, category (one of: ${STORE_CATEGORY_LIST}). Items: name, totalPrice, category (${ITEM_CATEGORY_LIST}), subcategory. ${DATE_INSTRUCTIONS}`;
 
   if (additionalInstructions) {
     prompt += `\n\n${additionalInstructions}`;
