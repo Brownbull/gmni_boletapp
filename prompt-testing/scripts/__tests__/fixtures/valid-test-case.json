@@ -15,9 +15,9 @@
     "total": 45990,
     "category": "Groceries",
     "items": [
-      { "name": "Leche Colun 1L", "price": 1290, "category": "Groceries" },
-      { "name": "Pan de Molde", "price": 2490, "category": "Groceries" },
-      { "name": "Coca Cola 2L", "price": 1990, "category": "Groceries" }
+      { "name": "Leche Colun 1L", "totalPrice": 1290, "category": "Groceries" },
+      { "name": "Pan de Molde", "totalPrice": 2490, "category": "Groceries" },
+      { "name": "Coca Cola 2L", "totalPrice": 1990, "category": "Groceries" }
     ],
     "model": "gemini-1.5-flash",
     "modelVersion": "1.5-flash-latest",

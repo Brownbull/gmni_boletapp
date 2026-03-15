@@ -336,8 +336,8 @@ describe('computeAllCategoryData', () => {
         total: 100,
         category: 'Supermarket' as Transaction['category'],
         items: [
-          { name: 'Apple', price: 50 },
-          { name: 'Banana', price: 50 },
+          { name: 'Apple', totalPrice: 50 },
+          { name: 'Banana', totalPrice: 50 },
         ],
       }),
     ];
@@ -387,8 +387,8 @@ describe('computeItemCategoryData', () => {
         date: '2026-01-01',
         total: 1000,
         items: [
-          { name: 'Milk', price: 300, category: 'DairyEggs' },
-          { name: 'Apple', price: 200, category: 'Produce' },
+          { name: 'Milk', totalPrice: 300, category: 'DairyEggs' },
+          { name: 'Apple', totalPrice: 200, category: 'Produce' },
         ],
       }),
       makeTx({
@@ -396,7 +396,7 @@ describe('computeItemCategoryData', () => {
         date: '2026-01-02',
         total: 500,
         items: [
-          { name: 'Cheese', price: 500, category: 'DairyEggs' },
+          { name: 'Cheese', totalPrice: 500, category: 'DairyEggs' },
         ],
       }),
     ];
@@ -413,7 +413,7 @@ describe('computeItemCategoryData', () => {
       makeTx({
         date: '2026-01-01',
         total: 100,
-        items: [{ name: 'Item', price: 100, category: 'legacy-category' }],
+        items: [{ name: 'Item', totalPrice: 100, category: 'legacy-category' }],
       }),
     ];
     computeItemCategoryData(txs);
@@ -425,7 +425,7 @@ describe('computeItemCategoryData', () => {
       makeTx({
         date: '2026-01-01',
         total: 100,
-        items: [{ name: 'Item', price: 100 }],
+        items: [{ name: 'Item', totalPrice: 100 }],
       }),
     ];
     const result = computeItemCategoryData(txs);
@@ -452,9 +452,9 @@ describe('computeSubcategoryData', () => {
       date: '2026-01-01',
       total: 1000,
       items: [
-        { name: 'Ribeye', price: 500, category: 'MeatSeafood', subcategory: 'Beef' },
-        { name: 'Salmon', price: 300, category: 'MeatSeafood', subcategory: 'Fish' },
-        { name: 'Apple', price: 200, category: 'Produce', subcategory: 'Fruits' },
+        { name: 'Ribeye', totalPrice: 500, category: 'MeatSeafood', subcategory: 'Beef' },
+        { name: 'Salmon', totalPrice: 300, category: 'MeatSeafood', subcategory: 'Fish' },
+        { name: 'Apple', totalPrice: 200, category: 'Produce', subcategory: 'Fruits' },
       ],
     }),
     makeTx({
@@ -462,7 +462,7 @@ describe('computeSubcategoryData', () => {
       date: '2026-01-02',
       total: 400,
       items: [
-        { name: 'Chicken', price: 400, category: 'MeatSeafood', subcategory: 'Poultry' },
+        { name: 'Chicken', totalPrice: 400, category: 'MeatSeafood', subcategory: 'Poultry' },
       ],
     }),
   ];
@@ -490,7 +490,7 @@ describe('computeSubcategoryData', () => {
       makeTx({
         date: '2026-01-01',
         total: 100,
-        items: [{ name: 'Milk', price: 100, category: 'DairyEggs' }], // no subcategory
+        items: [{ name: 'Milk', totalPrice: 100, category: 'DairyEggs' }], // no subcategory
       }),
     ];
     const result = computeSubcategoryData(txsNoSubcat);
@@ -516,8 +516,8 @@ describe('computeItemGroupsForStore', () => {
         total: 1000,
         category: 'Supermarket' as Transaction['category'],
         items: [
-          { name: 'Milk', price: 300, category: 'DairyEggs' },
-          { name: 'Apple', price: 200, category: 'Produce' },
+          { name: 'Milk', totalPrice: 300, category: 'DairyEggs' },
+          { name: 'Apple', totalPrice: 200, category: 'Produce' },
         ],
       }),
       makeTx({
@@ -526,7 +526,7 @@ describe('computeItemGroupsForStore', () => {
         total: 500,
         category: 'Restaurant' as Transaction['category'], // Different store
         items: [
-          { name: 'Steak', price: 500, category: 'MeatSeafood' },
+          { name: 'Steak', totalPrice: 500, category: 'MeatSeafood' },
         ],
       }),
     ];
@@ -545,7 +545,7 @@ describe('computeItemGroupsForStore', () => {
         date: '2026-01-01',
         total: 100,
         category: 'Supermarket' as Transaction['category'],
-        items: [{ name: 'Milk', price: 100, category: 'DairyEggs' }],
+        items: [{ name: 'Milk', totalPrice: 100, category: 'DairyEggs' }],
       }),
     ];
     const result = computeItemGroupsForStore(txs, 'Supermarket');
@@ -559,7 +559,7 @@ describe('computeItemGroupsForStore', () => {
         date: '2026-01-01',
         total: 100,
         category: 'Supermarket' as Transaction['category'],
-        items: [{ name: 'Milk', price: 100, category: 'DairyEggs' }],
+        items: [{ name: 'Milk', totalPrice: 100, category: 'DairyEggs' }],
       }),
     ];
     const result = computeItemGroupsForStore(txs, 'NonExistent');
@@ -573,8 +573,8 @@ describe('computeItemGroupsForStore', () => {
         total: 1000,
         category: 'Supermarket' as Transaction['category'],
         items: [
-          { name: 'Milk', price: 100, category: 'DairyEggs' },
-          { name: 'Apple', price: 500, category: 'Produce' },
+          { name: 'Milk', totalPrice: 100, category: 'DairyEggs' },
+          { name: 'Apple', totalPrice: 500, category: 'Produce' },
         ],
       }),
     ];
@@ -596,10 +596,10 @@ describe('computeItemCategoriesInGroup', () => {
       total: 1000,
       category: 'Supermarket' as Transaction['category'],
       items: [
-        { name: 'Milk', price: 300, category: 'DairyEggs' },
-        { name: 'Cheese', price: 200, category: 'DairyEggs' },
-        { name: 'Apple', price: 200, category: 'Produce' },
-        { name: 'Steak', price: 300, category: 'MeatSeafood' },
+        { name: 'Milk', totalPrice: 300, category: 'DairyEggs' },
+        { name: 'Cheese', totalPrice: 200, category: 'DairyEggs' },
+        { name: 'Apple', totalPrice: 200, category: 'Produce' },
+        { name: 'Steak', totalPrice: 300, category: 'MeatSeafood' },
       ],
     }),
   ];
@@ -619,13 +619,13 @@ describe('computeItemCategoriesInGroup', () => {
         date: '2026-01-01',
         total: 500,
         category: 'Supermarket' as Transaction['category'],
-        items: [{ name: 'Apple', price: 200, category: 'Produce' }],
+        items: [{ name: 'Apple', totalPrice: 200, category: 'Produce' }],
       }),
       makeTx({
         date: '2026-01-02',
         total: 300,
         category: 'Restaurant' as Transaction['category'],
-        items: [{ name: 'Steak', price: 300, category: 'MeatSeafood' }],
+        items: [{ name: 'Steak', totalPrice: 300, category: 'MeatSeafood' }],
       }),
     ];
     const result = computeItemCategoriesInGroup(txsMultiStore, 'food-fresh', 'Supermarket');

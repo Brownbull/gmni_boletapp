@@ -43,17 +43,17 @@ function createMockMapping(
 function createMockTransaction(
     merchant: string,
     category: string,
-    items: Array<{ name: string; price: number; category?: string }>
+    items: Array<{ name: string; totalPrice: number; category?: string }>
 ): Transaction {
     return {
         id: 'txn-123',
         date: '2025-01-15',
         merchant,
         category: category as Transaction['category'],
-        total: items.reduce((sum, item) => sum + item.price, 0),
+        total: items.reduce((sum, item) => sum + item.totalPrice, 0),
         items: items.map((item) => ({
             name: item.name,
-            price: item.price,
+            totalPrice: item.totalPrice,
             qty: 1,
             category: item.category,
         })),
@@ -270,7 +270,7 @@ describe('applyCategoryMappings', () => {
     describe('empty mappings', () => {
         it('should return transaction unchanged when mappings is empty', () => {
             const transaction = createMockTransaction('Some Store', 'Other', [
-                { name: 'Item 1', price: 10 },
+                { name: 'Item 1', totalPrice: 10 },
             ]);
 
             const { transaction: result, appliedMappingIds } = applyCategoryMappings(transaction, []);
@@ -281,7 +281,7 @@ describe('applyCategoryMappings', () => {
 
         it('should return transaction unchanged when mappings is null/undefined', () => {
             const transaction = createMockTransaction('Some Store', 'Other', [
-                { name: 'Item 1', price: 10 },
+                { name: 'Item 1', totalPrice: 10 },
             ]);
 
             // @ts-expect-error - Testing null handling
@@ -295,7 +295,7 @@ describe('applyCategoryMappings', () => {
     describe('merchant matching', () => {
         it('should update store category from merchant match', () => {
             const transaction = createMockTransaction('Uber', 'Other', [
-                { name: 'Ride to downtown', price: 15 },
+                { name: 'Ride to downtown', totalPrice: 15 },
             ]);
             const mappings = [createMockMapping('uber', 'Transport')];
 
@@ -307,7 +307,7 @@ describe('applyCategoryMappings', () => {
 
         it('should not update category for low confidence matches', () => {
             const transaction = createMockTransaction('Uber', 'Other', [
-                { name: 'Ride', price: 15 },
+                { name: 'Ride', totalPrice: 15 },
             ]);
             // Low confidence mapping
             const mappings = [
@@ -325,8 +325,8 @@ describe('applyCategoryMappings', () => {
     describe('item matching', () => {
         it('should update individual item categories', () => {
             const transaction = createMockTransaction('Some Store', 'Other', [
-                { name: 'Milk', price: 5 },
-                { name: 'Bread', price: 3 },
+                { name: 'Milk', totalPrice: 5 },
+                { name: 'Bread', totalPrice: 3 },
             ]);
             const mappings = [
                 createMockMapping('milk', 'Supermarket'),
@@ -343,7 +343,7 @@ describe('applyCategoryMappings', () => {
 
         it('should not mutate original transaction', () => {
             const transaction = createMockTransaction('Uber', 'Other', [
-                { name: 'Ride', price: 15 },
+                { name: 'Ride', totalPrice: 15 },
             ]);
             const mappings = [createMockMapping('uber', 'Transport')];
 
@@ -356,8 +356,8 @@ describe('applyCategoryMappings', () => {
 
         it('should preserve unmatched items', () => {
             const transaction = createMockTransaction('Some Store', 'Other', [
-                { name: 'Milk', price: 5 },
-                { name: 'Random Unknown Item', price: 100 },
+                { name: 'Milk', totalPrice: 5 },
+                { name: 'Random Unknown Item', totalPrice: 100 },
             ]);
             const mappings = [createMockMapping('milk', 'Supermarket')];
 
@@ -372,8 +372,8 @@ describe('applyCategoryMappings', () => {
     describe('combined matching', () => {
         it('should apply both merchant and item mappings', () => {
             const transaction = createMockTransaction('Walmart', 'Other', [
-                { name: 'Milk', price: 5 },
-                { name: 'Bread', price: 3 },
+                { name: 'Milk', totalPrice: 5 },
+                { name: 'Bread', totalPrice: 3 },
             ]);
             const mappings = [
                 createMockMapping('walmart', 'Supermarket'),
@@ -410,7 +410,7 @@ describe('applyCategoryMappings', () => {
 
         it('should handle items with special characters', () => {
             const transaction = createMockTransaction('Café Central', 'Other', [
-                { name: 'Café con Leche', price: 5 },
+                { name: 'Café con Leche', totalPrice: 5 },
             ]);
             const mappings = [
                 createMockMapping('caf con leche', 'Restaurant'),
@@ -424,8 +424,8 @@ describe('applyCategoryMappings', () => {
 
         it('should not duplicate mapping IDs for multiple item matches', () => {
             const transaction = createMockTransaction('Some Store', 'Other', [
-                { name: 'Milk', price: 5 },
-                { name: 'milk', price: 8 },  // Same item, different case
+                { name: 'Milk', totalPrice: 5 },
+                { name: 'milk', totalPrice: 8 },  // Same item, different case
             ]);
             // Both items should match the same mapping
             const mappings = [createMockMapping('milk', 'Supermarket')];

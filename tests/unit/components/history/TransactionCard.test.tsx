@@ -9,6 +9,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { TransactionCard } from '@features/history/components/TransactionCard';
+import { DEFAULT_TIME } from '@entities/transaction/utils';
 
 // ============================================================================
 // Test Fixtures
@@ -120,9 +121,9 @@ describe('TransactionCard', () => {
     const propsWithItems = {
       ...defaultProps,
       items: [
-        { name: 'Leche Entera 1L', price: 1290 },
-        { name: 'Pan Molde', price: 2490 },
-        { name: 'Huevos x12', price: 3890 },
+        { name: 'Leche Entera 1L', totalPrice: 1290 },
+        { name: 'Pan Molde', totalPrice: 2490 },
+        { name: 'Huevos x12', totalPrice: 3890 },
       ],
     };
 
@@ -152,13 +153,13 @@ describe('TransactionCard', () => {
 
     it('shows "more items" link when more than 5 items', () => {
       const manyItems = [
-        { name: 'Item 1', price: 100 },
-        { name: 'Item 2', price: 200 },
-        { name: 'Item 3', price: 300 },
-        { name: 'Item 4', price: 400 },
-        { name: 'Item 5', price: 500 },
-        { name: 'Item 6', price: 600 },
-        { name: 'Item 7', price: 700 },
+        { name: 'Item 1', totalPrice: 100 },
+        { name: 'Item 2', totalPrice: 200 },
+        { name: 'Item 3', totalPrice: 300 },
+        { name: 'Item 4', totalPrice: 400 },
+        { name: 'Item 5', totalPrice: 500 },
+        { name: 'Item 6', totalPrice: 600 },
+        { name: 'Item 7', totalPrice: 700 },
       ];
 
       render(<TransactionCard {...defaultProps} items={manyItems} />);
@@ -188,7 +189,7 @@ describe('TransactionCard', () => {
       const handleClick = vi.fn();
       const propsWithItems = {
         ...defaultProps,
-        items: [{ name: 'Item', price: 100 }],
+        items: [{ name: 'Item', totalPrice: 100 }],
         onClick: handleClick,
       };
 
@@ -222,7 +223,7 @@ describe('TransactionCard', () => {
     it('expand button has aria-expanded attribute', () => {
       const propsWithItems = {
         ...defaultProps,
-        items: [{ name: 'Item', price: 100 }],
+        items: [{ name: 'Item', totalPrice: 100 }],
       };
 
       render(<TransactionCard {...propsWithItems} />);
@@ -232,6 +233,43 @@ describe('TransactionCard', () => {
 
       fireEvent.click(chevronButton);
       expect(chevronButton).toHaveAttribute('aria-expanded', 'true');
+    });
+  });
+
+  describe('DEFAULT_TIME sentinel', () => {
+    it('hides sentinel time "04:04" from time pill', () => {
+      render(<TransactionCard {...defaultProps} time={DEFAULT_TIME} />);
+
+      // Should show just "Hoy" without ", 04:04"
+      expect(screen.getByText('Hoy')).toBeInTheDocument();
+      expect(screen.queryByText('Hoy, 04:04')).not.toBeInTheDocument();
+    });
+
+    it('renders valid time "12:30" normally in time pill', () => {
+      render(<TransactionCard {...defaultProps} time="12:30" />);
+
+      expect(screen.getByText('Hoy, 12:30')).toBeInTheDocument();
+    });
+
+    it('renders midnight "00:00" as a valid time (AC-4)', () => {
+      render(<TransactionCard {...defaultProps} time="00:00" />);
+
+      expect(screen.getByText('Hoy, 00:00')).toBeInTheDocument();
+    });
+
+    it('hides sentinel for yesterday dates', () => {
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+      render(<TransactionCard {...defaultProps} date={yesterday} time={DEFAULT_TIME} />);
+
+      expect(screen.getByText('Ayer')).toBeInTheDocument();
+      expect(screen.queryByText('Ayer, 04:04')).not.toBeInTheDocument();
+    });
+
+    it('renders valid time for yesterday dates', () => {
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+      render(<TransactionCard {...defaultProps} date={yesterday} time="08:00" />);
+
+      expect(screen.getByText('Ayer, 08:00')).toBeInTheDocument();
     });
   });
 

@@ -31,7 +31,8 @@ export interface ScanResult {
   city?: string | null;
   items: Array<{
     name: string;
-    price: number;
+    unitPrice?: number;
+    totalPrice: number;
     quantity?: number;
     category?: string;
     subcategory?: string;

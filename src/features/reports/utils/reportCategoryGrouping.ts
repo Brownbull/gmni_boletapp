@@ -279,7 +279,7 @@ function getItemBreakdown(
       const category = item.category || FALLBACK_ITEM_CATEGORY;
       const existing = itemMap.get(category) || { amount: 0, count: 0 };
       // Story 14.24: price is total for line item, qty is informational only
-      existing.amount += item.price;
+      existing.amount += item.totalPrice;
       existing.count += item.qty || 1;
       itemMap.set(category, existing);
     }
@@ -294,7 +294,7 @@ function getItemBreakdown(
         const category = item.category || FALLBACK_ITEM_CATEGORY;
         const existing = prevItemMap.get(category) || 0;
         // Story 14.24: price is total for line item, qty is informational only
-        prevItemMap.set(category, existing + item.price);
+        prevItemMap.set(category, existing + item.totalPrice);
       }
     }
   }

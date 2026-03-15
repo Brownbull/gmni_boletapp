@@ -10,6 +10,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { QuickSaveCard } from '@features/scan/components/QuickSaveCard';
 import type { Transaction } from '@/types/transaction';
+import { DEFAULT_TIME } from '@entities/transaction/utils';
 
 // Mock useReducedMotion hook
 vi.mock('@/hooks/useReducedMotion', () => ({
@@ -26,9 +27,9 @@ const mockTransaction: Transaction = {
   total: 25000,
   category: 'Supermarket',
   items: [
-    { name: 'Milk', price: 5000, qty: 2 },
-    { name: 'Bread', price: 3000, qty: 1 },
-    { name: 'Eggs', price: 7000, qty: 1 },
+    { name: 'Milk', totalPrice: 5000, qty: 2 },
+    { name: 'Bread', totalPrice: 3000, qty: 1 },
+    { name: 'Eggs', totalPrice: 7000, qty: 1 },
   ],
 };
 
@@ -109,7 +110,7 @@ describe('QuickSaveCard', () => {
 
     it('displays singular item for 1 item', () => {
       renderCard({
-        transaction: { ...mockTransaction, items: [{ name: 'Single', price: 100 }] },
+        transaction: { ...mockTransaction, items: [{ name: 'Single', totalPrice: 100 }] },
       });
       // The component removes 's' from "items" for singular - "item"
       expect(screen.getByText(/1 item/i)).toBeInTheDocument();
@@ -288,6 +289,44 @@ describe('QuickSaveCard', () => {
         transaction: { ...mockTransaction, merchant: '', alias: undefined },
       });
       expect(screen.getByText('Desconocido')).toBeInTheDocument();
+    });
+  });
+
+  describe('DEFAULT_TIME sentinel', () => {
+    it('hides time display when time is DEFAULT_TIME', () => {
+      renderCard({
+        transaction: { ...mockTransaction, time: DEFAULT_TIME },
+      });
+
+      // The time row should not be rendered
+      expect(screen.queryByTestId('time-display')).not.toBeInTheDocument();
+    });
+
+    it('hides time display when time is undefined', () => {
+      renderCard({
+        transaction: { ...mockTransaction, time: undefined },
+      });
+
+      // No clock/time row should be rendered
+      expect(screen.queryByTestId('time-display')).not.toBeInTheDocument();
+    });
+
+    it('shows time display when time is a real value', () => {
+      renderCard({
+        transaction: { ...mockTransaction, time: '14:30' },
+      });
+
+      // Clock row renders when transaction.time is set and not DEFAULT_TIME
+      expect(screen.getByTestId('time-display')).toBeInTheDocument();
+    });
+
+    it('renders midnight "00:00" as a valid time (AC-4)', () => {
+      renderCard({
+        transaction: { ...mockTransaction, time: '00:00' },
+      });
+
+      // "00:00" is valid midnight, not a sentinel — Clock row should render
+      expect(screen.getByTestId('time-display')).toBeInTheDocument();
     });
   });
 

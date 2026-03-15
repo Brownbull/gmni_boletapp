@@ -82,7 +82,7 @@ export interface AirlockTransaction {
   currency?: string;
   items?: Array<{
     name: string;
-    price: number;
+    totalPrice: number;
     category?: string;
   }>;
 }

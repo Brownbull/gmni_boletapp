@@ -24,7 +24,7 @@ function createTransaction(overrides: Partial<Transaction>): Transaction {
     total: 100,
     currency: 'CLP',
     items: [
-      { name: 'Test Item', price: 100, category: 'MeatSeafood' }, // V4 PascalCase
+      { name: 'Test Item', totalPrice: 100, category: 'MeatSeafood' }, // V4 PascalCase
     ],
     ...overrides,
   } as Transaction;
@@ -121,12 +121,12 @@ describe('matchesCategoryFilter with drillDownPath', () => {
         createTransaction({
           id: '1',
           category: 'Supermarket',
-          items: [{ name: 'Beef', price: 100, category: 'MeatSeafood' }],
+          items: [{ name: 'Beef', totalPrice: 100, category: 'MeatSeafood' }],
         }),
         createTransaction({
           id: '2',
           category: 'Supermarket',
-          items: [{ name: 'Cereal', price: 50, category: 'Pantry' }], // Pantry is in food-packaged, not food-fresh
+          items: [{ name: 'Cereal', totalPrice: 50, category: 'Pantry' }], // Pantry is in food-packaged, not food-fresh
         }),
       ];
 
@@ -145,8 +145,8 @@ describe('matchesCategoryFilter with drillDownPath', () => {
       const transactions = [
         createTransaction({
           items: [
-            { name: 'Beef', price: 100, category: 'MeatSeafood' },
-            { name: 'Fish', price: 80, category: 'MeatSeafood' },
+            { name: 'Beef', totalPrice: 100, category: 'MeatSeafood' },
+            { name: 'Fish', totalPrice: 80, category: 'MeatSeafood' },
           ],
         }),
       ];
@@ -166,10 +166,10 @@ describe('matchesCategoryFilter with drillDownPath', () => {
     it('should filter by itemCategory (transaction must have matching item)', () => {
       const transactions = [
         createTransaction({
-          items: [{ name: 'Beef', price: 100, category: 'MeatSeafood' }],
+          items: [{ name: 'Beef', totalPrice: 100, category: 'MeatSeafood' }],
         }),
         createTransaction({
-          items: [{ name: 'Milk', price: 50, category: 'DairyEggs' }],
+          items: [{ name: 'Milk', totalPrice: 50, category: 'DairyEggs' }],
         }),
       ];
 
@@ -185,7 +185,7 @@ describe('matchesCategoryFilter with drillDownPath', () => {
     it('should match itemCategory case-insensitively', () => {
       const transactions = [
         createTransaction({
-          items: [{ name: 'Beef', price: 100, category: 'meatseafood' }], // lowercase V4
+          items: [{ name: 'Beef', totalPrice: 100, category: 'meatseafood' }], // lowercase V4
         }),
       ];
 
@@ -202,10 +202,10 @@ describe('matchesCategoryFilter with drillDownPath', () => {
     it('should filter by subcategory (transaction must have matching item)', () => {
       const transactions = [
         createTransaction({
-          items: [{ name: 'Beef', price: 100, category: 'MeatSeafood', subcategory: 'Res' }],
+          items: [{ name: 'Beef', totalPrice: 100, category: 'MeatSeafood', subcategory: 'Res' }],
         }),
         createTransaction({
-          items: [{ name: 'Pork', price: 80, category: 'MeatSeafood', subcategory: 'Cerdo' }],
+          items: [{ name: 'Pork', totalPrice: 80, category: 'MeatSeafood', subcategory: 'Cerdo' }],
         }),
       ];
 
@@ -226,19 +226,19 @@ describe('matchesCategoryFilter with drillDownPath', () => {
         createTransaction({
           id: '1',
           category: 'Supermarket',
-          items: [{ name: 'Beef', price: 100, category: 'MeatSeafood' }],
+          items: [{ name: 'Beef', totalPrice: 100, category: 'MeatSeafood' }],
         }),
         // Supermarket with packaged food - should NOT match (wrong item group)
         createTransaction({
           id: '2',
           category: 'Supermarket',
-          items: [{ name: 'Cereal', price: 50, category: 'Pantry' }],
+          items: [{ name: 'Cereal', totalPrice: 50, category: 'Pantry' }],
         }),
         // Restaurant with fresh food - should NOT match (wrong store category)
         createTransaction({
           id: '3',
           category: 'Restaurant',
-          items: [{ name: 'Fish', price: 150, category: 'MeatSeafood' }],
+          items: [{ name: 'Fish', totalPrice: 150, category: 'MeatSeafood' }],
         }),
       ];
 
@@ -258,19 +258,19 @@ describe('matchesCategoryFilter with drillDownPath', () => {
         createTransaction({
           id: '1',
           category: 'Supermarket',
-          items: [{ name: 'Beef', price: 100, category: 'MeatSeafood' }],
+          items: [{ name: 'Beef', totalPrice: 100, category: 'MeatSeafood' }],
         }),
         // Supermarket with Dairy & Eggs - should NOT match
         createTransaction({
           id: '2',
           category: 'Supermarket',
-          items: [{ name: 'Milk', price: 50, category: 'DairyEggs' }],
+          items: [{ name: 'Milk', totalPrice: 50, category: 'DairyEggs' }],
         }),
         // Restaurant with Carnes - should NOT match
         createTransaction({
           id: '3',
           category: 'Restaurant',
-          items: [{ name: 'Steak', price: 200, category: 'MeatSeafood' }],
+          items: [{ name: 'Steak', totalPrice: 200, category: 'MeatSeafood' }],
         }),
       ];
 
@@ -290,13 +290,13 @@ describe('matchesCategoryFilter with drillDownPath', () => {
         createTransaction({
           id: '1',
           category: 'Supermarket',
-          items: [{ name: 'Prime Rib', price: 500, category: 'MeatSeafood', subcategory: 'Res' }],
+          items: [{ name: 'Prime Rib', totalPrice: 500, category: 'MeatSeafood', subcategory: 'Res' }],
         }),
         // Wrong subcategory
         createTransaction({
           id: '2',
           category: 'Supermarket',
-          items: [{ name: 'Pork Chop', price: 300, category: 'MeatSeafood', subcategory: 'Cerdo' }],
+          items: [{ name: 'Pork Chop', totalPrice: 300, category: 'MeatSeafood', subcategory: 'Cerdo' }],
         }),
       ];
 
@@ -342,7 +342,7 @@ describe('matchesCategoryFilter with drillDownPath', () => {
     it('should handle items without category', () => {
       const transactions = [
         createTransaction({
-          items: [{ name: 'Unknown Item', price: 50 }],
+          items: [{ name: 'Unknown Item', totalPrice: 50 }],
         }),
       ];
 

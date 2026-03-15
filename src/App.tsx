@@ -185,6 +185,9 @@ function App() {
 
     const mainRef = useRef<HTMLDivElement>(null);
 
+    // TD-18-4: Ref to hold processScan for retry handler (defined later at line ~695)
+    const processScanRef = useRef<((images?: string[]) => Promise<void>) | null>(null);
+
     // Batch delete wrapper: surfaces partial-failure via toast (Story 15-TD-12)
     const handleDeleteAllInAppNotifications = useCallback(async () => {
         const result = await deleteAllInAppNotifications();
@@ -468,6 +471,9 @@ function App() {
         },
         // Translation
         t,
+        // TD-18-4: Retry support — ref indirection because processScan is defined later
+        processScan: (images?: string[]) => processScanRef.current?.(images) ?? Promise.resolve(),
+        userCreditsRemaining: userCredits.remaining,
     });
 
     // Story 14e-20a: Toast auto-dismiss is now handled by useToast hook
@@ -796,6 +802,9 @@ function App() {
         batchSession,
         prefersReducedMotion,
     ]);
+
+    // TD-18-4: Update ref so retry handler can access processScan
+    processScanRef.current = processScan;
 
     // Story 14e-30: handleRescan moved to useScanInitiation hook
 

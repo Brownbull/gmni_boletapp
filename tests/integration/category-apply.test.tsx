@@ -39,16 +39,16 @@ function createMockMapping(
 function createMockGeminiTransaction(
     merchant: string,
     category: string,
-    items: Array<{ name: string; price: number; category?: string }>
+    items: Array<{ name: string; totalPrice: number; category?: string }>
 ): Transaction {
     return {
         date: '2025-12-03',
         merchant,
         category: category as Transaction['category'],
-        total: items.reduce((sum, item) => sum + item.price, 0),
+        total: items.reduce((sum, item) => sum + item.totalPrice, 0),
         items: items.map((item) => ({
             name: item.name,
-            price: item.price,
+            totalPrice: item.totalPrice,
             qty: 1,
             category: item.category,
         })),
@@ -415,7 +415,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
                 alias: geminiResult.merchant,
                 items: geminiResult.items.map((i) => ({
                     name: i.name,
-                    price: i.price,
+                    totalPrice: i.totalPrice,
                     qty: 1,
                 })),
             };
@@ -462,7 +462,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
                 alias: geminiResult.merchant,
                 items: geminiResult.items.map((i) => ({
                     name: i.name,
-                    price: i.price,
+                    totalPrice: i.totalPrice,
                     qty: 1,
                 })),
             };

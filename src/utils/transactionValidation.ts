@@ -19,8 +19,8 @@ export function isValidItem(item: TransactionItem): boolean {
   return (
     !!item.name &&
     item.name.trim().length > 0 &&
-    typeof item.price === 'number' &&
-    item.price >= 0
+    typeof item.totalPrice === 'number' &&
+    item.totalPrice >= 0
   );
 }
 
@@ -32,7 +32,7 @@ export function isValidItem(item: TransactionItem): boolean {
  */
 export function hasItemWithPrice(items: TransactionItem[] | undefined): boolean {
   if (!items || items.length === 0) return false;
-  return items.some((item) => item.price > 0);
+  return items.some((item) => item.totalPrice > 0);
 }
 
 /**

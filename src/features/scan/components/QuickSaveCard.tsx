@@ -50,6 +50,7 @@ import type { Language } from '@/utils/translations';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
 import { useScanActiveDialog, useScanActions } from '@features/scan/store';
 import { DIALOG_TYPES } from '@shared/types/scanWorkflow';
+import { DEFAULT_TIME } from '@entities/transaction/utils';
 import { useIsForeignLocation } from '@/hooks/useIsForeignLocation';
 import { useLocationDisplay } from '@/hooks/useLocations';
 // Story 14d.6: Import centralized type from scanStateMachine
@@ -354,13 +355,17 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
                 <Calendar size={12} />
                 {dateStr}
               </span>
-              <span
-                className="inline-flex items-center gap-1 text-xs"
-                style={{ color: 'var(--text-tertiary)' }}
-              >
-                <Clock size={12} />
-                {timeStr}
-              </span>
+              {/* TD-18-7: Hide clock row when time is absent or DEFAULT_TIME sentinel */}
+              {transaction.time && transaction.time !== DEFAULT_TIME && (
+                <span
+                  className="inline-flex items-center gap-1 text-xs"
+                  style={{ color: 'var(--text-tertiary)' }}
+                  data-testid="time-display"
+                >
+                  <Clock size={12} />
+                  {timeStr}
+                </span>
+              )}
               <span
                 className="text-xs font-semibold"
                 style={{ color: 'var(--text-tertiary)' }}
@@ -445,18 +450,20 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
                     >
                       {item.name}
                     </span>
-                    {/* Story 14.15b: Show quantity if > 1 */}
+                    {/* Story 18-8: Show unitPrice x qty when qty > 1 */}
                     <div className="flex items-center gap-1 ml-2">
                       {(item.qty ?? 1) > 1 && (
                         <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
-                          x{item.qty}
+                          {item.unitPrice
+                            ? `${formatCurrency(item.unitPrice, displayCurrency)} x${item.qty}`
+                            : `x${item.qty}`}
                         </span>
                       )}
                       <span
                         className="text-sm font-semibold"
                         style={{ color: 'var(--text-primary)' }}
                       >
-                        {formatCurrency(item.price, displayCurrency)}
+                        {formatCurrency(item.totalPrice, displayCurrency)}
                       </span>
                     </div>
                   </div>

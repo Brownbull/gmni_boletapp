@@ -30,8 +30,8 @@ const createTransaction = (
   category: 'Supermarket',
   total: 25000,
   items: [
-    { name: 'Leche', price: 1500, category: 'Dairy & Eggs' },
-    { name: 'Pan', price: 2000, category: 'Bakery' },
+    { name: 'Leche', totalPrice: 1500, category: 'Dairy & Eggs' },
+    { name: 'Pan', totalPrice: 2000, category: 'Bakery' },
   ],
   ...overrides,
 });
@@ -43,7 +43,7 @@ const createItem = (
   overrides: Partial<TransactionItem> = {}
 ): TransactionItem => ({
   name: 'Test Item',
-  price: 1000,
+  totalPrice: 1000,
   ...overrides,
 });
 
@@ -129,9 +129,9 @@ describe('Transaction-Intrinsic Generators', () => {
     it('generates insight with most expensive item', () => {
       const tx = createTransaction({
         items: [
-          createItem({ name: 'Cheap', price: 100 }),
-          createItem({ name: 'Expensive', price: 5000 }),
-          createItem({ name: 'Medium', price: 1000 }),
+          createItem({ name: 'Cheap', totalPrice: 100 }),
+          createItem({ name: 'Expensive', totalPrice: 5000 }),
+          createItem({ name: 'Medium', totalPrice: 1000 }),
         ],
       });
       const insight = gen.generate(tx, []);
@@ -144,7 +144,7 @@ describe('Transaction-Intrinsic Generators', () => {
 
     it('handles single item', () => {
       const tx = createTransaction({
-        items: [createItem({ name: 'Solo', price: 2500 })],
+        items: [createItem({ name: 'Solo', totalPrice: 2500 })],
       });
       const insight = gen.generate(tx, []);
       expect(insight.message).toContain('Solo');
@@ -153,8 +153,8 @@ describe('Transaction-Intrinsic Generators', () => {
     it('picks first item when prices are equal', () => {
       const tx = createTransaction({
         items: [
-          createItem({ name: 'First', price: 1000 }),
-          createItem({ name: 'Second', price: 1000 }),
+          createItem({ name: 'First', totalPrice: 1000 }),
+          createItem({ name: 'Second', totalPrice: 1000 }),
         ],
       });
       const insight = gen.generate(tx, []);
@@ -1109,12 +1109,12 @@ describe('Spanish Message Format (Chilean Locale)', () => {
       date: '2025-12-20',
       city: 'Valparaíso',
       items: [
-        createItem({ category: 'Dairy & Eggs', price: 5000 }),
-        createItem({ category: 'Bakery', price: 1000 }),
-        createItem({ category: 'Produce', price: 2000 }),
-        createItem({ price: 100 }),
-        createItem({ price: 100 }),
-        createItem({ price: 100 }),
+        createItem({ category: 'Dairy & Eggs', totalPrice: 5000 }),
+        createItem({ category: 'Bakery', totalPrice: 1000 }),
+        createItem({ category: 'Produce', totalPrice: 2000 }),
+        createItem({ totalPrice: 100 }),
+        createItem({ totalPrice: 100 }),
+        createItem({ totalPrice: 100 }),
       ],
     });
 
@@ -1176,7 +1176,7 @@ describe('Spanish Message Format (Chilean Locale)', () => {
 
   it('uses Chilean number formatting', () => {
     const tx = createTransaction({
-      items: [createItem({ name: 'Producto', price: 15000 })],
+      items: [createItem({ name: 'Producto', totalPrice: 15000 })],
     });
     const insight = INSIGHT_GENERATORS.biggest_item.generate(tx, []);
 

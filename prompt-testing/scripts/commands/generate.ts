@@ -298,7 +298,7 @@ async function generateForImage(imagePath: string, force: boolean): Promise<bool
         city: result.city,
         items: result.items,
         aiMetadata: result.metadata, // receiptType, confidence from AI
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         modelVersion: 'latest',
         promptId: DEV_PROMPT.id,
         promptVersion: DEV_PROMPT.version,

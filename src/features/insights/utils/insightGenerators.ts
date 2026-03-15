@@ -31,7 +31,7 @@ const biggestItemGenerator: InsightGenerator = {
   canGenerate: (tx) => tx.items.length > 0,
   generate: (tx) => {
     const biggest = tx.items.reduce(
-      (max, item) => (item.price > max.price ? item : max),
+      (max, item) => (item.totalPrice > max.totalPrice ? item : max),
       tx.items[0]
     );
 
@@ -39,7 +39,7 @@ const biggestItemGenerator: InsightGenerator = {
       id: 'biggest_item',
       category: 'QUIRKY_FIRST',
       title: 'Compra destacada',
-      message: `${biggest.name} fue lo más caro: $${biggest.price.toLocaleString('es-CL')}`,
+      message: `${biggest.name} fue lo más caro: $${biggest.totalPrice.toLocaleString('es-CL')}`,
       icon: 'Star',
       priority: 3,
       transactionId: tx.id,

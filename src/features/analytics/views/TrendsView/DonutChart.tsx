@@ -199,7 +199,7 @@ export const DonutChart: React.FC<{
                 const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
                 const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'otros-item';
 
-                groupTotals[group].value += item.price;
+                groupTotals[group].value += item.totalPrice;
                 groupTotals[group].transactionIds.add(tx.id ?? `tx-${index}`);
 
                 // Track unique products by normalized name + merchant (Story 15-5a: use shared utility)

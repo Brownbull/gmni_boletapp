@@ -90,7 +90,7 @@ export function computeItemCategoryData(transactions: Transaction[]): CategoryDa
                 itemCategoryMap[cat] = { value: 0, transactionIds: new Set(), uniqueProducts: new Set() };
             }
             // Story 14.24: price is total for line item, qty is informational only
-            itemCategoryMap[cat].value += item.price;
+            itemCategoryMap[cat].value += item.totalPrice;
             // Track unique transaction IDs to count transactions, not items
             itemCategoryMap[cat].transactionIds.add(tx.id ?? `tx-${index}`);
             itemCategoryMap[cat].uniqueProducts.add(buildProductKey(item.name || '', tx.merchant || ''));
@@ -147,7 +147,7 @@ export function computeSubcategoryData(
                 subcategoryMap[subcat] = { value: 0, transactionIds: new Set(), uniqueProducts: new Set() };
             }
             // Story 14.24: price is total for line item, qty is informational only
-            subcategoryMap[subcat].value += item.price;
+            subcategoryMap[subcat].value += item.totalPrice;
             // Track unique transaction IDs to count transactions, not items
             subcategoryMap[subcat].transactionIds.add(tx.id ?? `tx-${index}`);
             // Story 14.13 Session 7: Track unique products by normalized name + merchant
@@ -339,7 +339,7 @@ export function computeItemGroupsData(filteredTransactions: Transaction[]): Cate
             const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
             const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'otros-item';
 
-            groupTotals[group].value += item.price;
+            groupTotals[group].value += item.totalPrice;
             groupTotals[group].transactionIds.add(tx.id ?? `tx-${index}`);
 
             // Track unique products by normalized name + merchant

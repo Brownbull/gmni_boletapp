@@ -127,7 +127,7 @@ export function aggregateByItemGroup(
   transactions.forEach((tx) => {
     tx.items.forEach((item) => {
       const category = item.category || 'Other';
-      totals[category] = (totals[category] || 0) + item.price;
+      totals[category] = (totals[category] || 0) + item.totalPrice;
     });
   });
 

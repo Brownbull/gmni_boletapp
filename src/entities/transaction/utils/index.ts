@@ -33,3 +33,11 @@ export {
 
 // Story 14e-41: Transaction reconciliation utility
 export { reconcileItemsTotal, type ReconcileResult } from './reconciliation';
+
+// Story 18-8: Item price derivation (unitPrice ↔ totalPrice)
+export {
+    deriveItemPrices,
+    deriveItemsPrices,
+    validateItemPriceConsistency,
+    PRICE_TOLERANCE,
+} from './itemPriceDerivation';

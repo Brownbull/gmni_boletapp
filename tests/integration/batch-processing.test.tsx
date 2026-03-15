@@ -83,10 +83,10 @@ function createMockTransaction(options?: {
   const items = Array.from({ length: itemCount }, () => {
     const name = itemNames[Math.floor(Math.random() * itemNames.length)];
     const price = Math.floor(Math.random() * 10000) + 500; // 500 to 10500 CLP
-    return { name, price, qty: 1 };
+    return { name, totalPrice: price, qty: 1 };
   });
 
-  const total = items.reduce((sum, item) => sum + item.price, 0);
+  const total = items.reduce((sum, item) => sum + item.totalPrice, 0);
 
   return {
     date: new Date().toISOString().split('T')[0],
@@ -565,7 +565,7 @@ describe('Batch Processing Integration - Story 11.1', () => {
       expect(tx.merchant).toBeDefined();
       expect(tx.category).toBe('Restaurant');
       expect(tx.items).toHaveLength(3);
-      expect(tx.total).toBe(tx.items.reduce((sum, item) => sum + item.price, 0));
+      expect(tx.total).toBe(tx.items.reduce((sum, item) => sum + item.totalPrice, 0));
       expect(tx.currency).toBe('CLP');
       expect(tx.country).toBe('Chile');
     });

@@ -32,4 +32,4 @@ Source: Epic 17 alignment check (first population)
 
 | Skill | Value | File | Created | Origin |
 |-------|-------|------|---------|--------|
-| critical-path-regression-guard | V5 | skills/critical-path-regression-guard.md | 2026-03-13 | Story 16-3 regression (scan happy path broken 7 days) |
+| v5-e2e-awareness | V5 | skills/v5-e2e-awareness.md | 2026-03-13 | Story 16-3 regression (scan happy path broken 7 days). Evolved: tiered test registry + coverage map. |

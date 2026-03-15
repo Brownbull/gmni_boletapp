@@ -162,8 +162,8 @@ function createMockServiceDeps(overrides: Partial<ServiceDependencies> = {}): Se
     total: 10000,
     category: 'Supermercado',
     items: [
-      { name: 'Item 1', price: 5000, qty: 1 },
-      { name: 'Item 2', price: 5000, qty: 1 },
+      { name: 'Item 1', totalPrice: 5000, qty: 1 },
+      { name: 'Item 2', totalPrice: 5000, qty: 1 },
     ],
     currency: 'CLP',
     country: 'Chile',
@@ -536,7 +536,7 @@ describe('processScan', () => {
             date: `${futureYear}-01-20`,
             total: 1000,
             // Provide items that sum to total to pass validation
-            items: [{ name: 'Item', price: 1000, qty: 1 }],
+            items: [{ name: 'Item', totalPrice: 1000, qty: 1 }],
             currency: 'CLP',
           }),
           deductUserCredits: vi.fn().mockResolvedValue(true),
@@ -713,8 +713,8 @@ describe('processScan', () => {
             date: '2025-01-20',
             total: 15000, // Total doesn't match items sum (10000)
             items: [
-              { name: 'Item 1', price: 5000, qty: 1 },
-              { name: 'Item 2', price: 5000, qty: 1 },
+              { name: 'Item 1', totalPrice: 5000, qty: 1 },
+              { name: 'Item 2', totalPrice: 5000, qty: 1 },
             ],
             currency: 'CLP',
           }),

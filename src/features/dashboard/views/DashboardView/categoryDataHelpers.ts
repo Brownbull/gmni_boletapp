@@ -211,7 +211,7 @@ export function computeItemCategoriesData(
             if (!itemCategoryMap[cat]) {
                 itemCategoryMap[cat] = newBucket();
             }
-            itemCategoryMap[cat].amount += item.price;
+            itemCategoryMap[cat].amount += item.totalPrice;
             itemCategoryMap[cat].transactionIds.add(tx.id ?? `tx-${index}`);
             trackProduct(itemCategoryMap[cat], item.name || '', tx.merchant || '');
         });
@@ -268,7 +268,7 @@ export function computeItemGroupsData(
             const cat = normalizeItemCategory(item.category || 'Other');
             const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
             const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'otros-item';
-            groupTotals[group].amount += item.price;
+            groupTotals[group].amount += item.totalPrice;
             groupTotals[group].transactionIds.add(tx.id ?? `tx-${index}`);
             trackProduct(groupTotals[group], item.name || '', tx.merchant || '');
         });

@@ -21,8 +21,8 @@ jest.mock('@google/generative-ai', () => {
               total: 15000,
               category: 'Supermarket',
               items: [
-                { name: 'Milk', price: 1500, category: 'Fresh Food' },
-                { name: 'Bread', price: 2000, category: 'Pantry' }
+                { name: 'Milk', totalPrice: 1500, category: 'Fresh Food' },
+                { name: 'Bread', totalPrice: 2000, category: 'Pantry' }
               ]
             })
           }
@@ -200,7 +200,7 @@ describe('analyzeReceipt Security Hardening (TD-15b-36)', () => {
                 date: '2025-11-27',
                 total: 15000,
                 category: 'Supermarket',
-                items: [{ name: 'Milk' }] // missing price
+                items: [{ name: 'Milk' }] // missing totalPrice
               })
             }
           })

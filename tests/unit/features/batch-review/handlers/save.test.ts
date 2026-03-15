@@ -71,7 +71,7 @@ function createMockTransaction(overrides: Partial<Transaction> = {}): Transactio
     merchant: 'Test Merchant',
     category: 'Supermarket',
     total: 1000,
-    items: [{ name: 'Test Item', price: 1000, qty: 1 }],
+    items: [{ name: 'Test Item', totalPrice: 1000, qty: 1 }],
     currency: 'CLP',
     ...overrides,
   };
@@ -381,7 +381,7 @@ describe('saveBatchTransaction', () => {
   describe('item name mapping application', () => {
     it('should apply item name mappings when merchant matches', async () => {
       const transaction = createMockTransaction({
-        items: [{ name: 'MILK 1L', price: 500, qty: 1 }],
+        items: [{ name: 'MILK 1L', totalPrice: 500, qty: 1 }],
       });
       const merchantMatch: MerchantMatchResult = {
         mapping: {
@@ -421,8 +421,8 @@ describe('saveBatchTransaction', () => {
       // Create transaction with 2 items to test multiple increments
       const transaction = createMockTransaction({
         items: [
-          { name: 'Item 1', price: 500, qty: 1 },
-          { name: 'Item 2', price: 500, qty: 1 },
+          { name: 'Item 1', totalPrice: 500, qty: 1 },
+          { name: 'Item 2', totalPrice: 500, qty: 1 },
         ],
       });
       const merchantMatch: MerchantMatchResult = {

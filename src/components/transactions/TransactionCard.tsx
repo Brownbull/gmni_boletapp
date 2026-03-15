@@ -24,6 +24,7 @@ import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';
 import { useLocationDisplay } from '../../hooks/useLocations';
 import type { ForeignLocationDisplayFormat } from '@/types/preferences';
 import { DEFAULT_CURRENCY } from '../../utils/currency';
+import { DEFAULT_TIME } from '../../entities/transaction/utils';
 import type { Language } from '../../types/settings';
 
 
@@ -312,18 +313,19 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
   const displayName = alias || merchant;
   const displayAmount = formatCurrency(total, currency || defaultCurrency);
 
-  // Format time display
+  // Format time display — hide DEFAULT_TIME sentinel (TD-18-7)
   const getTimeDisplay = (): string => {
+    const displayTime = time && time !== DEFAULT_TIME ? time : undefined;
     const today = new Date().toISOString().split('T')[0];
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
 
     if (date === today) {
-      return time ? `${t('today')}, ${time}` : t('today');
+      return displayTime ? `${t('today')}, ${displayTime}` : t('today');
     } else if (date === yesterday) {
-      return time ? `${t('yesterday')}, ${time}` : t('yesterday');
+      return displayTime ? `${t('yesterday')}, ${displayTime}` : t('yesterday');
     } else {
       const formatted = formatDate(date, dateFormat);
-      return time ? `${formatted}, ${time}` : formatted;
+      return displayTime ? `${formatted}, ${displayTime}` : formatted;
     }
   };
 
@@ -537,7 +539,7 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
                     className="font-medium"
                     style={{ color: 'var(--text-primary)' }}
                   >
-                    {formatCurrency(item.price, currency || defaultCurrency)}
+                    {formatCurrency(item.totalPrice, currency || defaultCurrency)}
                   </span>
                 </div>
               </div>

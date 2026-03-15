@@ -41,20 +41,38 @@ Gated on `{{dbp_active}}` — skips entirely if no behaviors registered.
     <output>**[SC] Story Checkpoint: aligned.** No drift detected for {{story_key}}.</output>
   </check>
 
-  <!-- Skill gate: critical-path-regression-guard (V5) -->
-  <check if="{{files_to_review}} match scan/** OR transaction-editor/hooks/useScanEventSubscription.ts OR functions/**/analyze*.ts">
-    <output>**[SC] SKILL GATE: critical-path-regression-guard (V5)**
+  <!-- Skill gate: v5-e2e-awareness -->
+  <action>Load skill file: {behaviors_path}/{{behavior_name}}/skills/v5-e2e-awareness.md</action>
+  <action>Match {{files_changed}} against Test Registry trigger file patterns</action>
 
-      Scan-related files changed in this story. The scan happy path is the primary
-      user journey — if it breaks, V5 ("Easier than the receipt drawer") is violated.
+  <check if="any T1 (Critical) tests match">
+    <output>**[SC] V5 SKILL GATE: Critical E2E**
 
-      **Recommended:** Run the scan E2E regression test before marking done:
+      Files changed match T1 (Critical) test triggers.
+
+      {{for each matched T1 test, output:}}
+      **{{test_file}}** (cost: {{cost}})
       ```bash
-      npx playwright test tests/e2e/staging/scan-post-success-transition.spec.ts --project=staging
+      npx playwright test {{test_file}} --project=staging
       ```
 
-      **If skipping:** Confirm change is cosmetic-only (no logic/state/handler changes).
-      Signal: `critical-path-regression-deferred` + reason.
+      **If skipping:** Log signal `v5-e2e-deferred` + reason in ledger.
+    </output>
+  </check>
+
+  <check if="any T2 (Regression) tests match">
+    <output>**[SC] V5: Regression E2E available**
+
+      {{for each matched T2 test:}}
+      - **{{test_file}}** (cost: {{cost}})
+    </output>
+  </check>
+
+  <check if="files touch a user journey listed in Known Gaps">
+    <output>**[SC] V5: Coverage gap detected**
+
+      No E2E test covers the **{{journey_description}}** path (suggested tier: {{tier}}).
+      Consider creating a test for this journey.
     </output>
   </check>
 

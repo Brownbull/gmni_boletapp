@@ -16,8 +16,8 @@ jest.mock('@google/generative-ai', () => {
               total: 15000,
               category: 'Supermarket',
               items: [
-                { name: 'Milk', price: 1500, category: 'Fresh Food' },
-                { name: 'Bread', price: 2000, category: 'Pantry' }
+                { name: 'Milk', totalPrice: 1500, category: 'Fresh Food' },
+                { name: 'Bread', totalPrice: 2000, category: 'Pantry' }
               ]
             })
           }
@@ -427,8 +427,8 @@ describe('analyzeReceipt Cloud Function', () => {
                 total: '15000',
                 category: 'Supermarket',
                 items: [
-                  { name: 'Milk', price: '1500', category: 'Fresh Food' },
-                  { name: 'Bread', price: '2000', category: 'Pantry' }
+                  { name: 'Milk', totalPrice: '1500', category: 'Fresh Food' },
+                  { name: 'Bread', totalPrice: '2000', category: 'Pantry' }
                 ]
               })
             }
@@ -445,8 +445,8 @@ describe('analyzeReceipt Cloud Function', () => {
       const result = await wrapped(data, context)
       expect(result.total).toBe(15000)
       expect(typeof result.total).toBe('number')
-      expect(result.items[0].price).toBe(1500)
-      expect(typeof result.items[0].price).toBe('number')
+      expect(result.items[0].totalPrice).toBe(1500)
+      expect(typeof result.items[0].totalPrice).toBe('number')
     })
 
     it('should strip Chilean thousands separators before coercion', async () => {
@@ -461,7 +461,7 @@ describe('analyzeReceipt Cloud Function', () => {
                 total: '15.990',
                 category: 'Supermarket',
                 items: [
-                  { name: 'Milk', price: '1.500', category: 'Fresh Food' }
+                  { name: 'Milk', totalPrice: '1.500', category: 'Fresh Food' }
                 ]
               })
             }
@@ -477,7 +477,7 @@ describe('analyzeReceipt Cloud Function', () => {
 
       const result = await wrapped(data, context)
       expect(result.total).toBe(15990)
-      expect(result.items[0].price).toBe(1500)
+      expect(result.items[0].totalPrice).toBe(1500)
     })
 
     it('should reject empty string numeric fields', async () => {
@@ -574,7 +574,7 @@ describe('analyzeReceipt Cloud Function', () => {
         items: expect.arrayContaining([
           expect.objectContaining({
             name: expect.any(String),
-            price: expect.any(Number)
+            totalPrice: expect.any(Number)
           })
         ])
       })

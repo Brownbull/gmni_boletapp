@@ -30,8 +30,8 @@ function createTransaction(overrides: Partial<Transaction> = {}): Transaction {
     category: 'Supermarket',
     total: 100,
     items: [
-      { name: 'Item 1', price: 50, category: 'Produce', subcategory: 'Fruits' },
-      { name: 'Item 2', price: 50, category: 'Dairy & Eggs', subcategory: 'Milk' },
+      { name: 'Item 1', totalPrice: 50, category: 'Produce', subcategory: 'Fruits' },
+      { name: 'Item 2', totalPrice: 50, category: 'Dairy & Eggs', subcategory: 'Milk' },
     ],
     ...overrides,
   };
@@ -191,9 +191,9 @@ describe('calculatePeriodTotals', () => {
           category: 'Supermarket',
           total: 100,
           items: [
-            { name: 'Apple', price: 30, category: 'Produce', subcategory: 'Fruits' },
-            { name: 'Milk', price: 20, category: 'Dairy & Eggs', subcategory: 'Milk' },
-            { name: 'Bread', price: 50, category: 'Bakery', subcategory: 'Bread' },
+            { name: 'Apple', totalPrice: 30, category: 'Produce', subcategory: 'Fruits' },
+            { name: 'Milk', totalPrice: 20, category: 'Dairy & Eggs', subcategory: 'Milk' },
+            { name: 'Bread', totalPrice: 50, category: 'Bakery', subcategory: 'Bread' },
           ],
         }),
       ];
@@ -212,9 +212,9 @@ describe('calculatePeriodTotals', () => {
       const transactions = [
         createTransaction({
           items: [
-            { name: 'Apple', price: 20, category: 'Produce', subcategory: 'Fruits' },
-            { name: 'Carrot', price: 15, category: 'Produce', subcategory: 'Vegetables' },
-            { name: 'Milk', price: 25, category: 'Dairy & Eggs', subcategory: 'Milk' }, // Different group
+            { name: 'Apple', totalPrice: 20, category: 'Produce', subcategory: 'Fruits' },
+            { name: 'Carrot', totalPrice: 15, category: 'Produce', subcategory: 'Vegetables' },
+            { name: 'Milk', totalPrice: 25, category: 'Dairy & Eggs', subcategory: 'Milk' }, // Different group
           ],
         }),
       ];
@@ -237,9 +237,9 @@ describe('calculatePeriodTotals', () => {
       const transactions = [
         createTransaction({
           items: [
-            { name: 'Apple', price: 20, category: 'Produce', subcategory: 'Fruits' },
-            { name: 'Banana', price: 15, category: 'Produce', subcategory: 'Fruits' },
-            { name: 'Carrot', price: 10, category: 'Produce', subcategory: 'Vegetables' },
+            { name: 'Apple', totalPrice: 20, category: 'Produce', subcategory: 'Fruits' },
+            { name: 'Banana', totalPrice: 15, category: 'Produce', subcategory: 'Fruits' },
+            { name: 'Carrot', totalPrice: 10, category: 'Produce', subcategory: 'Vegetables' },
           ],
         }),
       ];
@@ -306,8 +306,8 @@ describe('calculateCategoryBreakdown', () => {
     const transactions = [
       createTransaction({
         items: [
-          { name: 'Apple', price: 30, category: 'Produce', subcategory: 'Fruits' },
-          { name: 'Milk', price: 20, category: 'Dairy & Eggs', subcategory: 'Milk' },
+          { name: 'Apple', totalPrice: 30, category: 'Produce', subcategory: 'Fruits' },
+          { name: 'Milk', totalPrice: 20, category: 'Dairy & Eggs', subcategory: 'Milk' },
         ],
       }),
     ];

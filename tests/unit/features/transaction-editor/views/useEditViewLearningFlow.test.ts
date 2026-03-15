@@ -22,8 +22,8 @@ function makeTx(overrides: Partial<Transaction> = {}): Transaction {
     merchant: 'TestMerchant', alias: '', date: '2026-01-01',
     total: 1000, category: 'Groceries',
     items: [
-      { name: 'Apple', price: 500, category: 'Produce', subcategory: 'Fruits' },
-      { name: 'Bread', price: 500, category: 'Bakery', subcategory: 'Loaves' },
+      { name: 'Apple', totalPrice: 500, category: 'Produce', subcategory: 'Fruits' },
+      { name: 'Bread', totalPrice: 500, category: 'Bakery', subcategory: 'Loaves' },
     ],
     ...overrides,
   };
@@ -48,19 +48,19 @@ function makeProps(overrides: Record<string, unknown> = {}) {
 const changedCategoryProps = () => makeProps({
   currentTransaction: makeTx({
     items: [
-      { name: 'Apple', price: 500, category: 'Snacks', subcategory: 'Fruits' },
-      { name: 'Bread', price: 500, category: 'Bakery', subcategory: 'Loaves' },
+      { name: 'Apple', totalPrice: 500, category: 'Snacks', subcategory: 'Fruits' },
+      { name: 'Bread', totalPrice: 500, category: 'Bakery', subcategory: 'Loaves' },
     ],
   }),
 });
 
 const changedAliasProps = () => makeProps({
-  currentTransaction: makeTx({ alias: 'NewAlias', items: [{ name: 'Apple', price: 500, category: 'Produce', subcategory: 'Fruits' }] }),
+  currentTransaction: makeTx({ alias: 'NewAlias', items: [{ name: 'Apple', totalPrice: 500, category: 'Produce', subcategory: 'Fruits' }] }),
   originalAliasRef: { current: 'OldAlias' },
 });
 
 const changedSubcategoryProps = () => makeProps({
-  currentTransaction: makeTx({ items: [{ name: 'Apple', price: 500, category: 'Produce', subcategory: 'Organic' }] }),
+  currentTransaction: makeTx({ items: [{ name: 'Apple', totalPrice: 500, category: 'Produce', subcategory: 'Organic' }] }),
   originalItemGroupsRef: { current: { items: [{ name: 'Apple', category: 'Produce', subcategory: 'Fruits' }], capturedForTransactionKey: 'new' } },
 });
 

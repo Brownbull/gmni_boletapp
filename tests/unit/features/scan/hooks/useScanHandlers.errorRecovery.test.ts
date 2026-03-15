@@ -58,6 +58,14 @@ vi.mock('@features/scan/store/useScanStore', () => ({
     }),
 }));
 
+// TD-18-4: Mock useScanWorkflowStore — images live here, not useScanStore
+let mockStoreImages: string[] = [];
+vi.mock('@shared/stores/useScanWorkflowStore', () => ({
+    useScanWorkflowStore: Object.assign(vi.fn(), {
+        getState: () => ({ images: mockStoreImages }),
+    }),
+}));
+
 // Import after mocking
 import { useScanHandlers } from '@features/scan/hooks/useScanHandlers';
 
@@ -139,6 +147,9 @@ const createProps = (overrides: Partial<UseScanHandlersProps> = {}): UseScanHand
     setTrustPromptData: vi.fn(),
     setShowTrustPrompt: vi.fn(),
     t: vi.fn((key) => key),
+    // TD-18-4: Retry support
+    processScan: vi.fn(() => Promise.resolve()),
+    userCreditsRemaining: 5,
     ...overrides,
 });
 
@@ -146,11 +157,13 @@ const createProps = (overrides: Partial<UseScanHandlersProps> = {}): UseScanHand
 // Retry handler tests
 // =========================================================================
 
-describe('handleScanOverlayRetry — error recovery (Story 15b-5a)', () => {
-    beforeEach(() => { vi.clearAllMocks(); });
+describe('handleScanOverlayRetry — error recovery (Story 15b-5a, TD-18-4)', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockStoreImages = ['base64-image-data-1'];
+    });
 
-
-    it('should call scanOverlay.retry() (not reset)', () => {
+    it('should call scanOverlay.retry() (not reset) when images available', () => {
         const scanOverlay = createMockScanOverlay();
         const props = createProps({ scanOverlay });
         const { result } = renderHook(() => useScanHandlers(props));
@@ -161,21 +174,69 @@ describe('handleScanOverlayRetry — error recovery (Story 15b-5a)', () => {
         expect(scanOverlay.reset).not.toHaveBeenCalled();
     });
 
-    it('should perform full reset sequence: overlay + store + images + tx + nav', () => {
+    it('should reset scan store before re-triggering processScan', () => {
         const scanOverlay = createMockScanOverlay();
-        const setScanImages = vi.fn();
-        const setCurrentTransaction = vi.fn();
-        const setView = vi.fn();
-        const props = createProps({ scanOverlay, setScanImages, setCurrentTransaction, setView });
+        const props = createProps({ scanOverlay });
         const { result } = renderHook(() => useScanHandlers(props));
 
         act(() => { result.current.handleScanOverlayRetry(); });
 
-        expect(scanOverlay.retry).toHaveBeenCalledOnce();
         expect(mockStoreReset).toHaveBeenCalledOnce();
+    });
+
+    it('should stash images and call processScan with them (TD-18-4 AC-6, AC-7)', () => {
+        const processScan = vi.fn(() => Promise.resolve());
+        const setScanImages = vi.fn();
+        const props = createProps({ processScan, setScanImages });
+        const { result } = renderHook(() => useScanHandlers(props));
+
+        act(() => { result.current.handleScanOverlayRetry(); });
+
+        expect(processScan).toHaveBeenCalledWith(['base64-image-data-1']);
+        expect(setScanImages).toHaveBeenCalledWith(['base64-image-data-1']);
+    });
+
+    it('should show toast and navigate to dashboard when 0 credits (TD-18-4 AC-8)', () => {
+        const setToastMessage = vi.fn();
+        const setView = vi.fn();
+        const setScanImages = vi.fn();
+        const setCurrentTransaction = vi.fn();
+        const processScan = vi.fn(() => Promise.resolve());
+        const scanOverlay = createMockScanOverlay();
+        const props = createProps({
+            userCreditsRemaining: 0,
+            processScan,
+            setToastMessage,
+            setView,
+            setScanImages,
+            setCurrentTransaction,
+            scanOverlay,
+        });
+        const { result } = renderHook(() => useScanHandlers(props));
+
+        act(() => { result.current.handleScanOverlayRetry(); });
+
+        expect(setToastMessage).toHaveBeenCalledWith({ text: 'noCreditsMessage', type: 'info' });
+        expect(processScan).not.toHaveBeenCalled();
+        expect(setView).toHaveBeenCalledWith('dashboard');
+        expect(scanOverlay.reset).toHaveBeenCalled();
+    });
+
+    it('should fall back to dashboard when no images available', () => {
+        mockStoreImages = []; // No images
+        const setView = vi.fn();
+        const setScanImages = vi.fn();
+        const setCurrentTransaction = vi.fn();
+        const processScan = vi.fn(() => Promise.resolve());
+        const props = createProps({ processScan, setView, setScanImages, setCurrentTransaction });
+        const { result } = renderHook(() => useScanHandlers(props));
+
+        act(() => { result.current.handleScanOverlayRetry(); });
+
+        expect(processScan).not.toHaveBeenCalled();
+        expect(setView).toHaveBeenCalledWith('dashboard');
         expect(setScanImages).toHaveBeenCalledWith([]);
         expect(setCurrentTransaction).toHaveBeenCalledWith(null);
-        expect(setView).toHaveBeenCalledWith('dashboard');
     });
 });
 

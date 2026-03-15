@@ -50,7 +50,8 @@ export function flattenTransactionItems(transactions: Transaction[]): FlattenedI
 
                 // Item data
                 name: item.name,
-                price: item.price,
+                totalPrice: item.totalPrice,
+                unitPrice: item.unitPrice,
                 qty: item.qty ?? 1,
                 category: item.category,
                 subcategory: item.subcategory,
@@ -227,9 +228,9 @@ export function sortItemsByPrice(
 ): FlattenedItem[] {
     return [...items].sort((a, b) => {
         if (direction === 'desc') {
-            return b.price - a.price;
+            return b.totalPrice - a.totalPrice;
         }
-        return a.price - b.price;
+        return a.totalPrice - b.totalPrice;
     });
 }
 
@@ -364,7 +365,7 @@ export function groupItemsByCategory(items: FlattenedItem[]): Map<string, Flatte
  * @returns Total price of all items
  */
 export function calculateItemsTotal(items: FlattenedItem[]): number {
-    return items.reduce((sum, item) => sum + item.price, 0);
+    return items.reduce((sum, item) => sum + item.totalPrice, 0);
 }
 
 // ============================================================================
@@ -433,7 +434,7 @@ export function aggregateItems(items: FlattenedItem[]): AggregatedItem[] {
         const transactionIds = [...new Set(groupItems.map(item => item.transactionId))];
 
         // Calculate totals
-        const totalAmount = groupItems.reduce((sum, item) => sum + item.price, 0);
+        const totalAmount = groupItems.reduce((sum, item) => sum + item.totalPrice, 0);
         const purchaseCount = groupItems.reduce((sum, item) => sum + (item.qty || 1), 0);
 
         // Find most recent purchase date

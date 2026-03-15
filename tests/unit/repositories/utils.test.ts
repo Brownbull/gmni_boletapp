@@ -15,7 +15,7 @@ describe('sanitizeTransactions', () => {
         date: '2026-01-15',
         total: 1500,
         category: 'Supermarket',
-        items: [{ name: 'Item 1', price: 500 }],
+        items: [{ name: 'Item 1', totalPrice: 500 }],
         country: 'Chile',
         city: 'Santiago',
         currency: 'CLP',
@@ -54,12 +54,12 @@ describe('sanitizeTransactions', () => {
 
     it('parses item prices via parseStrictNumber', () => {
         const tx = makeTransaction({
-            items: [{ name: 'Item 1', price: '300' as unknown as number }],
+            items: [{ name: 'Item 1', totalPrice: '300' as unknown as number }],
         });
         const [result] = sanitizeTransactions([tx]);
 
-        expect(result.items[0].price).toBe(300);
-        expect(typeof result.items[0].price).toBe('number');
+        expect(result.items[0].totalPrice).toBe(300);
+        expect(typeof result.items[0].totalPrice).toBe('number');
     });
 
     it('handles non-array items by returning empty array', () => {
@@ -74,6 +74,15 @@ describe('sanitizeTransactions', () => {
         const [result] = sanitizeTransactions([tx]);
 
         expect(result.items).toEqual([]);
+    });
+
+    it('maps legacy price field to totalPrice (AC-7 compat)', () => {
+        const tx = makeTransaction({
+            items: [{ name: 'Legacy Item', price: 750 } as never],
+        });
+        const [result] = sanitizeTransactions([tx]);
+
+        expect(result.items[0].totalPrice).toBe(750);
     });
 
     it('sanitizes multiple transactions', () => {

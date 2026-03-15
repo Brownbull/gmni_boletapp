@@ -22,7 +22,7 @@ import type { TransactionItem } from '../../../src/types/transaction';
 function makeItem(overrides: Partial<TransactionItem> = {}): TransactionItem {
     return {
         name: 'Test Item',
-        price: 100,
+        totalPrice: 100,
         originalName: 'Test Item',
         confidence: 0.9,
         ...overrides,
@@ -31,11 +31,11 @@ function makeItem(overrides: Partial<TransactionItem> = {}): TransactionItem {
 
 describe('isValidItem', () => {
     it('should return true for item with name and positive price', () => {
-        expect(isValidItem(makeItem({ name: 'Coffee', price: 2500 }))).toBe(true);
+        expect(isValidItem(makeItem({ name: 'Coffee', totalPrice: 2500 }))).toBe(true);
     });
 
     it('should return true for item with price of 0', () => {
-        expect(isValidItem(makeItem({ name: 'Free sample', price: 0 }))).toBe(true);
+        expect(isValidItem(makeItem({ name: 'Free sample', totalPrice: 0 }))).toBe(true);
     });
 
     it('should return false for item with empty name', () => {
@@ -47,43 +47,43 @@ describe('isValidItem', () => {
     });
 
     it('should return false for item with negative price', () => {
-        expect(isValidItem(makeItem({ name: 'Item', price: -1 }))).toBe(false);
+        expect(isValidItem(makeItem({ name: 'Item', totalPrice: -1 }))).toBe(false);
     });
 
     it('should return false for item with NaN price', () => {
-        expect(isValidItem(makeItem({ name: 'Item', price: NaN }))).toBe(false);
+        expect(isValidItem(makeItem({ name: 'Item', totalPrice: NaN }))).toBe(false);
     });
 
     it('should return false for item with string price', () => {
-        expect(isValidItem(makeItem({ name: 'Item', price: '100' as unknown as number }))).toBe(false);
+        expect(isValidItem(makeItem({ name: 'Item', totalPrice: '100' as unknown as number }))).toBe(false);
     });
 
     it('should return false for item with undefined price', () => {
-        expect(isValidItem(makeItem({ name: 'Item', price: undefined as unknown as number }))).toBe(false);
+        expect(isValidItem(makeItem({ name: 'Item', totalPrice: undefined as unknown as number }))).toBe(false);
     });
 
     it('should accept item with very large price', () => {
-        expect(isValidItem(makeItem({ name: 'Expensive', price: 999999999 }))).toBe(true);
+        expect(isValidItem(makeItem({ name: 'Expensive', totalPrice: 999999999 }))).toBe(true);
     });
 
     it('should accept item with decimal price', () => {
-        expect(isValidItem(makeItem({ name: 'Precise', price: 1234.56 }))).toBe(true);
+        expect(isValidItem(makeItem({ name: 'Precise', totalPrice: 1234.56 }))).toBe(true);
     });
 });
 
 describe('hasItemWithPrice', () => {
     it('should return true when at least one item has price > 0', () => {
         const items = [
-            makeItem({ name: '', price: 0 }),
-            makeItem({ name: 'Coffee', price: 2500 }),
+            makeItem({ name: '', totalPrice: 0 }),
+            makeItem({ name: 'Coffee', totalPrice: 2500 }),
         ];
         expect(hasItemWithPrice(items)).toBe(true);
     });
 
     it('should return false when all items have price 0', () => {
         const items = [
-            makeItem({ price: 0 }),
-            makeItem({ price: 0 }),
+            makeItem({ totalPrice: 0 }),
+            makeItem({ totalPrice: 0 }),
         ];
         expect(hasItemWithPrice(items)).toBe(false);
     });
@@ -97,16 +97,16 @@ describe('hasItemWithPrice', () => {
     });
 
     it('should return true for single item with price > 0', () => {
-        expect(hasItemWithPrice([makeItem({ price: 1 })])).toBe(true);
+        expect(hasItemWithPrice([makeItem({ totalPrice: 1 })])).toBe(true);
     });
 
     it('should ignore name validity — only checks price', () => {
-        const items = [makeItem({ name: '', price: 100 })];
+        const items = [makeItem({ name: '', totalPrice: 100 })];
         expect(hasItemWithPrice(items)).toBe(true);
     });
 
     it('should return false when items have negative prices only', () => {
-        const items = [makeItem({ price: -100 })];
+        const items = [makeItem({ totalPrice: -100 })];
         expect(hasItemWithPrice(items)).toBe(false);
     });
 });
@@ -114,16 +114,16 @@ describe('hasItemWithPrice', () => {
 describe('hasValidItems', () => {
     it('should return true when at least one item is fully valid', () => {
         const items = [
-            makeItem({ name: '', price: 0 }),     // invalid (no name)
-            makeItem({ name: 'Coffee', price: 0 }), // valid (name + price >= 0)
+            makeItem({ name: '', totalPrice: 0 }),     // invalid (no name)
+            makeItem({ name: 'Coffee', totalPrice: 0 }), // valid (name + price >= 0)
         ];
         expect(hasValidItems(items)).toBe(true);
     });
 
     it('should return false when no items are valid', () => {
         const items = [
-            makeItem({ name: '', price: 100 }),    // invalid (no name)
-            makeItem({ name: '  ', price: 100 }),  // invalid (whitespace name)
+            makeItem({ name: '', totalPrice: 100 }),    // invalid (no name)
+            makeItem({ name: '  ', totalPrice: 100 }),  // invalid (whitespace name)
         ];
         expect(hasValidItems(items)).toBe(false);
     });
@@ -142,19 +142,19 @@ describe('hasValidItems', () => {
 
     it('should return true when all items are valid', () => {
         const items = [
-            makeItem({ name: 'A', price: 100 }),
-            makeItem({ name: 'B', price: 200 }),
+            makeItem({ name: 'A', totalPrice: 100 }),
+            makeItem({ name: 'B', totalPrice: 200 }),
         ];
         expect(hasValidItems(items)).toBe(true);
     });
 
     it('should use strict validation (requires both name and price)', () => {
         // Has price but no name — not valid for hasValidItems
-        const items = [makeItem({ name: '', price: 500 })];
+        const items = [makeItem({ name: '', totalPrice: 500 })];
         expect(hasValidItems(items)).toBe(false);
 
         // Has name but negative price — not valid
-        const items2 = [makeItem({ name: 'Item', price: -1 })];
+        const items2 = [makeItem({ name: 'Item', totalPrice: -1 })];
         expect(hasValidItems(items2)).toBe(false);
     });
 });

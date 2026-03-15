@@ -495,8 +495,8 @@ describe('csvExport utilities', () => {
           category: 'Supermarket',
           total: 100,
           items: [
-            { name: 'Item 1', price: 50 },
-            { name: 'Item 2', price: 50 },
+            { name: 'Item 1', totalPrice: 50 },
+            { name: 'Item 2', totalPrice: 50 },
           ],
         },
       ];
@@ -577,8 +577,8 @@ describe('csvExport utilities', () => {
           category: 'Supermarket',
           total: 100,
           items: [
-            { name: 'Apple', qty: 2, price: 30, category: 'Produce', subcategory: 'Fruit' },
-            { name: 'Bread', qty: 1, price: 70, category: 'Bakery', subcategory: 'Loaves' },
+            { name: 'Apple', qty: 2, totalPrice: 30, category: 'Produce', subcategory: 'Fruit' },
+            { name: 'Bread', qty: 1, totalPrice: 70, category: 'Bakery', subcategory: 'Loaves' },
           ],
         },
       ];

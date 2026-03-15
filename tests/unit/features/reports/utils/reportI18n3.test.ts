@@ -213,8 +213,8 @@ describe('groupItemsByItemCategory — undefined category fallback (TD-17-7, AC-
     const txs: Transaction[] = [
       makeTx({
         items: [
-          { name: 'Mystery Item', category: undefined as unknown as string, price: 1500, qty: 1 },
-          { name: 'Apple', category: 'Produce', price: 500, qty: 2 },
+          { name: 'Mystery Item', category: undefined as unknown as string, totalPrice: 1500, qty: 1 },
+          { name: 'Apple', category: 'Produce', totalPrice: 500, qty: 2 },
         ],
       }),
     ];
@@ -240,7 +240,7 @@ describe('groupItemsByItemCategory — undefined category fallback (TD-17-7, AC-
     const txs: Transaction[] = [
       makeTx({
         items: [
-          { name: 'No Category Item', category: undefined as unknown as string, price: 2000, qty: 1 },
+          { name: 'No Category Item', category: undefined as unknown as string, totalPrice: 2000, qty: 1 },
         ],
       }),
     ];

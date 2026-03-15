@@ -40,8 +40,8 @@ function createMockTransaction(overrides?: Partial<Transaction>): Transaction {
     total: 10000,
     category: 'Supermarket',
     items: [
-      { name: 'Item 1', price: 5000, qty: 1, category: 'Food' },
-      { name: 'Item 2', price: 5000, qty: 1, category: 'Food' },
+      { name: 'Item 1', totalPrice: 5000, qty: 1, category: 'Food' },
+      { name: 'Item 2', totalPrice: 5000, qty: 1, category: 'Food' },
     ],
     ...overrides,
   };
@@ -100,8 +100,8 @@ describe('validateScanResult', () => {
   it('should return valid when total matches items sum', () => {
     const transaction = createMockTransaction({ total: 10000 });
     const parsedItems: TransactionItem[] = [
-      { name: 'Item 1', price: 5000, qty: 1 },
-      { name: 'Item 2', price: 5000, qty: 1 },
+      { name: 'Item 1', totalPrice: 5000, qty: 1 },
+      { name: 'Item 2', totalPrice: 5000, qty: 1 },
     ];
 
     const result = validateScanResult(transaction, parsedItems, deps);
@@ -114,7 +114,7 @@ describe('validateScanResult', () => {
   it('should show dialog when discrepancy exceeds threshold (>40%)', () => {
     // Total is 10000, items sum is 5000 (50% discrepancy)
     // Transaction items must also be 5000 since validateTotal uses transaction.items
-    const parsedItems: TransactionItem[] = [{ name: 'Item 1', price: 5000, qty: 1 }];
+    const parsedItems: TransactionItem[] = [{ name: 'Item 1', totalPrice: 5000, qty: 1 }];
     const transaction = createMockTransaction({
       total: 10000,
       items: parsedItems, // Must match parsedItems for test to work
@@ -128,7 +128,7 @@ describe('validateScanResult', () => {
   });
 
   it('should include validation result in dialog data', () => {
-    const parsedItems: TransactionItem[] = [{ name: 'Item 1', price: 5000, qty: 1 }];
+    const parsedItems: TransactionItem[] = [{ name: 'Item 1', totalPrice: 5000, qty: 1 }];
     const transaction = createMockTransaction({
       total: 10000,
       items: parsedItems,
@@ -159,8 +159,8 @@ describe('validateScanResult', () => {
 
     const transaction = createMockTransaction({ total: 10000 });
     const parsedItems: TransactionItem[] = [
-      { name: 'Item 1', price: 5000, qty: 1 },
-      { name: 'Item 2', price: 5000, qty: 1 },
+      { name: 'Item 1', totalPrice: 5000, qty: 1 },
+      { name: 'Item 2', totalPrice: 5000, qty: 1 },
     ];
 
     const result = validateScanResult(transaction, parsedItems, deps);
@@ -172,8 +172,8 @@ describe('validateScanResult', () => {
 
   it('should pass through hasDiscrepancy from reconciliation', () => {
     const adjustedItems: TransactionItem[] = [
-      { name: 'Item 1', price: 9000, qty: 1 },
-      { name: 'Adjustment', price: 1000, qty: 1 },
+      { name: 'Item 1', totalPrice: 9000, qty: 1 },
+      { name: 'Adjustment', totalPrice: 1000, qty: 1 },
     ];
     deps.reconcileItemsTotal = vi.fn((_items, _total, _lang) => ({
       items: adjustedItems,
@@ -182,7 +182,7 @@ describe('validateScanResult', () => {
     }));
 
     const transaction = createMockTransaction({ total: 10000 });
-    const parsedItems: TransactionItem[] = [{ name: 'Item 1', price: 9000, qty: 1 }];
+    const parsedItems: TransactionItem[] = [{ name: 'Item 1', totalPrice: 9000, qty: 1 }];
 
     const result = validateScanResult(transaction, parsedItems, deps);
 
@@ -453,7 +453,7 @@ describe('handleScanSuccess', () => {
       total: 10000,
       date: '2026-01-25',
       category: 'Supermarket',
-      items: [{ name: 'Item', price: 10000, qty: 1 }],
+      items: [{ name: 'Item', totalPrice: 10000, qty: 1 }],
     });
 
     const result = await handleScanSuccess(transaction, deps);

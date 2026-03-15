@@ -48,7 +48,9 @@ export interface TransactionPeriods {
 export interface TransactionItem {
     name: string;
     qty?: number;
-    price: number;
+    /** Price per single unit. Derived from totalPrice/qty if not provided by AI. */
+    unitPrice?: number;
+    totalPrice: number;
     /**
      * Item category from AI extraction or user edit.
      * Uses ItemCategory type from unified schema.

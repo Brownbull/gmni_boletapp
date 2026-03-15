@@ -27,6 +27,7 @@ import { translateItemCategoryGroup, getItemCategoryGroupEmoji } from '@/utils/c
 import { getItemGroupColors } from '@/config/categoryColors';
 import type { Transaction, TransactionItem } from '@/types/transaction';
 import type { Language } from '@/utils/translations';
+import { sanitizeInput } from '@/utils/sanitize';
 import type { SuggestionData } from './useCrossStoreSuggestions';
 
 // ============================================================================
@@ -355,42 +356,63 @@ function GroupedItemEditView({
         className="w-full px-2 py-1.5 border rounded-lg text-xs"
         style={inputStyle}
         value={item.name}
-        onChange={e => onUpdateItem(i, 'name', e.target.value)}
+        onChange={e => onUpdateItem(i, 'name', sanitizeInput(e.target.value, { maxLength: 100 }))}
         placeholder={t('itemName')}
         autoFocus
       />
-      {/* Price - Story 14.24: Select all on focus for easy replacement */}
-      <input
-        type="text"
-        inputMode="decimal"
-        className="w-full px-2 py-1.5 border rounded-lg text-xs"
-        style={inputStyle}
-        defaultValue={item.price || ''}
-        key={`price-${i}`}
-        onFocus={e => e.target.select()}
-        onChange={e => {
-          const cleaned = e.target.value.replace(/[^0-9.]/g, '');
-          const parts = cleaned.split('.');
-          const sanitized = parts.length > 2
-            ? parts[0] + '.' + parts.slice(1).join('')
-            : cleaned;
-          if (sanitized !== e.target.value) {
-            e.target.value = sanitized;
-          }
-        }}
-        onBlur={e => {
-          const val = parseFloat(e.target.value);
-          if (!isNaN(val) && val >= 0) {
-            onUpdateItem(i, 'price', val);
-            e.target.value = val % 1 === 0 ? String(val) : String(val);
-          } else {
-            onUpdateItem(i, 'price', 0);
-            e.target.value = '0';
-          }
-        }}
-        onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-        placeholder={t('price')}
-      />
+      {/* Price + unitPrice - Story 14.24 + 18-8 */}
+      <div className="flex gap-1.5">
+        <input
+          type="text"
+          inputMode="decimal"
+          className={`${(item.qty ?? 1) > 1 ? 'flex-1' : 'w-full'} px-2 py-1.5 border rounded-lg text-xs`}
+          style={inputStyle}
+          defaultValue={item.totalPrice || ''}
+          key={`totalPrice-${i}`}
+          onFocus={e => e.target.select()}
+          onChange={e => {
+            const cleaned = e.target.value.replace(/[^0-9.]/g, '');
+            const parts = cleaned.split('.');
+            const sanitized = parts.length > 2
+              ? parts[0] + '.' + parts.slice(1).join('')
+              : cleaned;
+            if (sanitized !== e.target.value) {
+              e.target.value = sanitized;
+            }
+          }}
+          onBlur={e => {
+            const val = parseFloat(e.target.value);
+            if (!isNaN(val) && val >= 0) {
+              onUpdateItem(i, 'totalPrice', val);
+              e.target.value = val % 1 === 0 ? String(val) : String(val);
+            } else {
+              onUpdateItem(i, 'totalPrice', 0);
+              e.target.value = '0';
+            }
+          }}
+          onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+          placeholder={t('price')}
+        />
+        {(item.qty ?? 1) > 1 && (
+          <input
+            type="text"
+            inputMode="decimal"
+            className="w-24 px-2 py-1.5 border rounded-lg text-xs"
+            style={inputStyle}
+            defaultValue={item.unitPrice ?? ''}
+            key={`unitPrice-${i}`}
+            onFocus={e => e.target.select()}
+            onBlur={e => {
+              const val = parseFloat(e.target.value);
+              if (!isNaN(val) && val >= 0) {
+                onUpdateItem(i, 'unitPrice', val);
+              }
+            }}
+            onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+            placeholder={t('unitPrice')}
+          />
+        )}
+      </div>
       {/* Story 14.24: Category pill and quantity in same row */}
       <div className="flex items-center gap-2">
         <button
@@ -444,28 +466,30 @@ function GroupedItemEditView({
         className="w-full px-2 py-1.5 border rounded-lg text-xs"
         style={inputStyle}
         value={item.subcategory || ''}
-        onChange={e => onUpdateItem(i, 'subcategory', e.target.value)}
+        onChange={e => onUpdateItem(i, 'subcategory', sanitizeInput(e.target.value, { maxLength: 50 }))}
         placeholder={t('itemSubcat')}
       />
       {/* Action buttons */}
       <div className="flex justify-end gap-2 pt-0.5">
         <button
           onClick={() => onDeleteItem(i)}
-          className="min-w-9 min-h-9 p-1.5 rounded-lg flex items-center justify-center"
+          className="min-w-10 min-h-10 p-1.5 rounded-lg flex items-center justify-center"
           style={{
             color: 'var(--error)',
             backgroundColor: isDark ? 'rgba(248, 113, 113, 0.1)' : 'rgba(239, 68, 68, 0.1)',
           }}
+          aria-label={t('deleteItem')}
         >
           <Trash2 size={16} strokeWidth={2} />
         </button>
         <button
           onClick={onDoneEditing}
-          className="min-w-9 min-h-9 p-1.5 rounded-lg flex items-center justify-center"
+          className="min-w-10 min-h-10 p-1.5 rounded-lg flex items-center justify-center"
           style={{
             color: 'var(--success)',
             backgroundColor: 'rgba(34, 197, 94, 0.1)',
           }}
+          aria-label={t('confirmItem')}
         >
           <Check size={16} strokeWidth={2} />
         </button>
@@ -508,6 +532,9 @@ function ItemDisplayRow({
   return (
     <div
       onClick={() => !effectiveIsProcessing && !readOnly && onStartEditing()}
+      role={readOnly ? undefined : 'button'}
+      tabIndex={readOnly ? undefined : 0}
+      onKeyDown={e => { if (!readOnly && !effectiveIsProcessing && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onStartEditing(); } }}
       className={`px-2.5 py-2 rounded-lg transition-colors ${readOnly ? '' : 'cursor-pointer'}`}
       style={{ backgroundColor: 'var(--bg-tertiary)' }}
     >
@@ -533,7 +560,7 @@ function ItemDisplayRow({
           className="text-xs font-semibold flex-shrink-0"
           style={{ color: 'var(--text-primary)' }}
         >
-          {formatCurrency(item.price, displayCurrency)}
+          {formatCurrency(item.totalPrice, displayCurrency)}
         </span>
       </div>
       <div className="flex justify-between items-center">
@@ -556,7 +583,9 @@ function ItemDisplayRow({
             className="text-xs font-medium flex-shrink-0"
             style={{ color: 'var(--text-tertiary)' }}
           >
-            x{Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}
+            {item.unitPrice
+              ? `${formatCurrency(item.unitPrice, displayCurrency)} x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}`
+              : `x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}`}
           </span>
         )}
       </div>
@@ -606,7 +635,7 @@ function OriginalItemEditView({
           className="flex-1 px-2 py-1.5 border rounded-lg text-xs"
           style={inputStyle}
           value={item.name}
-          onChange={e => onUpdateItem(i, 'name', e.target.value)}
+          onChange={e => onUpdateItem(i, 'name', sanitizeInput(e.target.value, { maxLength: 100 }))}
           placeholder={t('itemName')}
           autoFocus
         />
@@ -617,8 +646,8 @@ function OriginalItemEditView({
           inputMode="decimal"
           className="w-24 px-2 py-1.5 border rounded-lg text-xs"
           style={inputStyle}
-          defaultValue={item.price || ''}
-          key={`price-original-${i}`}
+          defaultValue={item.totalPrice || ''}
+          key={`totalPrice-original-${i}`}
           onFocus={e => e.target.select()}
           onChange={e => {
             const cleaned = e.target.value.replace(/[^0-9.]/g, '');
@@ -628,10 +657,31 @@ function OriginalItemEditView({
           }}
           onBlur={e => {
             const val = parseFloat(e.target.value);
-            if (!isNaN(val) && val >= 0) onUpdateItem(i, 'price', val);
+            if (!isNaN(val) && val >= 0) {
+              onUpdateItem(i, 'totalPrice', val);
+            } else {
+              onUpdateItem(i, 'totalPrice', 0);
+              e.target.value = '0';
+            }
           }}
           placeholder={t('itemPrice')}
         />
+        {(item.qty ?? 1) > 1 && (
+          <input
+            type="text"
+            inputMode="decimal"
+            className="w-20 px-2 py-1.5 border rounded-lg text-xs"
+            style={inputStyle}
+            defaultValue={item.unitPrice ?? ''}
+            key={`unitPrice-original-${i}`}
+            onFocus={e => e.target.select()}
+            onBlur={e => {
+              const val = parseFloat(e.target.value);
+              if (!isNaN(val) && val >= 0) onUpdateItem(i, 'unitPrice', val);
+            }}
+            placeholder={t('unitPrice')}
+          />
+        )}
         <button
           onClick={onShowCategoryOverlay}
           className="px-2 py-1 rounded-lg text-xs"
@@ -644,6 +694,7 @@ function OriginalItemEditView({
           onClick={() => onDeleteItem(i)}
           className="min-w-8 min-h-8 p-1 rounded-lg flex items-center justify-center"
           style={{ color: 'var(--error)', backgroundColor: isDark ? 'rgba(248, 113, 113, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}
+          aria-label={t('deleteItem')}
         >
           <Trash2 size={14} strokeWidth={2} />
         </button>
@@ -651,6 +702,7 @@ function OriginalItemEditView({
           onClick={onDoneEditing}
           className="min-w-8 min-h-8 p-1 rounded-lg flex items-center justify-center"
           style={{ color: 'var(--success)', backgroundColor: 'rgba(34, 197, 94, 0.1)' }}
+          aria-label={t('confirmItem')}
         >
           <Check size={14} strokeWidth={2} />
         </button>
@@ -675,6 +727,9 @@ function OriginalItemDisplayRow({
   return (
     <div
       onClick={() => !effectiveIsProcessing && !readOnly && onStartEditing()}
+      role={readOnly ? undefined : 'button'}
+      tabIndex={readOnly ? undefined : 0}
+      onKeyDown={e => { if (!readOnly && !effectiveIsProcessing && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onStartEditing(); } }}
       className={`flex items-center gap-2 ${readOnly ? '' : 'cursor-pointer'}`}
     >
       <span
@@ -706,7 +761,7 @@ function OriginalItemDisplayRow({
             className="text-xs font-semibold flex-shrink-0"
             style={{ color: 'var(--text-primary)' }}
           >
-            {formatCurrency(item.price, displayCurrency)}
+            {formatCurrency(item.totalPrice, displayCurrency)}
           </span>
         </div>
         <div className="flex items-center gap-1 mt-0.5">
@@ -724,7 +779,9 @@ function OriginalItemDisplayRow({
               className="text-xs font-medium"
               style={{ color: 'var(--text-tertiary)' }}
             >
-              x{Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}
+              {item.unitPrice
+                ? `${formatCurrency(item.unitPrice, displayCurrency)} x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}`
+                : `x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}`}
             </span>
           )}
         </div>

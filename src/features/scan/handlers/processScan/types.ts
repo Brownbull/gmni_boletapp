@@ -28,7 +28,8 @@ export interface ScanResult {
   /** Line items from receipt */
   items?: Array<{
     name: string;
-    price: number;
+    totalPrice: number;
+    unitPrice?: number;
     quantity?: number;
     qty?: number;
     category?: string;

@@ -1,26 +1,31 @@
 /**
- * V4 Prompt - Spanish Taxonomy with Grouped Categories
+ * V4 Prompt - 4-Level Category Taxonomy
  *
- * Story 17-3: Update Gemini prompt for new 4-level Spanish taxonomy
+ * Story 17-3: 4-level taxonomy (L1 rubro → L2 giro, L3 familia → L4 categoria)
+ * Story 18-8: Added unitPrice/totalPrice disambiguation, English-only prompt cleanup
  *
  * KEY CHANGES from V3:
- * 1. Categories grouped by parent level (L1 rubros → L2 giros, L3 familias → L4 categorías)
- * 2. Spanish display names alongside English keys (helps Gemini understand Chilean receipts)
- * 3. Chilean-specific disambiguation rules (Feria, Almacén, Botillería, etc.)
- * 4. L2/L4 independence explanation (store type vs item type are independent dimensions)
+ * 1. Expanded categories (44 store + 42 item) from shared/schema
+ * 2. Store and item categories are independent dimensions
+ * 3. Local term disambiguation loaded from locale files
+ * 4. unitPrice + totalPrice extraction with quantity logic
  * 5. Stricter catch-all rules (Other/OtherItem are last resort)
  *
  * CATEGORY STRUCTURE:
- * - L1 Rubro (12) groups L2 Giro (44) — WHERE you buy
- * - L3 Familia (9) groups L4 Categoría (42) — WHAT you buy
- * - L2 and L4 are independent: any item category can appear at any store type
+ * - L2 (44 store categories) — WHERE you buy — prompt picks one per transaction
+ * - L4 (42 item categories) — WHAT you buy — prompt picks one per item
+ * - L1/L3 grouping is applied post-extraction in app logic, not in the prompt
+ *
+ * NOTE: The file name "v4-spanish-taxonomy" is historical. The prompt is English-only.
+ * The "spanish taxonomy" refers to the 4-level hierarchy design (rubro/giro/familia/categoria).
  */
 
 import type { PromptConfig } from './types';
 import {
-  STORE_CATEGORIES_GROUPED,
-  ITEM_CATEGORIES_GROUPED,
+  STORE_CATEGORY_LIST,
+  ITEM_CATEGORY_LIST,
 } from '../../shared/schema/categories';
+import { CL_LOCAL_TERMS } from '../../shared/schema/locale/cl';
 import { DATE_INSTRUCTIONS } from './output-schema';
 import { getReceiptTypeDescription } from './v2-multi-currency-receipt-types';
 import type { ReceiptType } from './v2-multi-currency-receipt-types';
@@ -30,7 +35,7 @@ import type { ReceiptType } from './v2-multi-currency-receipt-types';
 // ============================================================================
 
 /**
- * Build the V4 prompt with grouped Spanish taxonomy and Chilean context.
+ * Build the V4 prompt with flat category lists and locale disambiguation.
  *
  * Variables (replaced at runtime):
  * - {{date}}: Today's date in YYYY-MM-DD format
@@ -42,36 +47,42 @@ function buildV4Prompt(): string {
   return `Analyze the document image. This is {{receiptType}}.
 
 CURRENCY DETECTION:
-- Detect the currency from the receipt (symbols like $, CLP, or text like "pesos")
+- Detect the currency from the receipt (symbols like $, €, £, ¥, or text like "USD", "EUR", "GBP")
 - Look at country/location clues if currency symbol is ambiguous ($ could be USD, CLP, MXN, etc.)
-- Return the ISO 4217 currency code (e.g., "CLP", "USD", "EUR")
+- Return the ISO 4217 currency code (e.g., "USD", "EUR", "GBP", "CLP", "JPY")
 - Return null if you cannot confidently determine the currency
 
 PRICE CONVERSION:
 - Convert all monetary values to INTEGER smallest units (no dots, no commas)
 - For currencies WITH decimals (USD, EUR, GBP, etc.): multiply by 100 (e.g., $15.99 → 1599)
-- For currencies WITHOUT decimals (CLP, JPY, KRW, COP): use as-is (e.g., $15.990 → 15990)
+- For currencies WITHOUT decimals (CLP, JPY, KRW, COP): use as-is (e.g., $15,990 → 15990, $15.990 → 15990)
 - If currency is null, still extract prices as integers based on the format you see
 
 TODAY: {{date}}
 ${DATE_INSTRUCTIONS}
 
 OUTPUT: Strict JSON only. No markdown, no explanation.
+
+"total" = the transaction grand total (sum of everything on the receipt).
+"totalPrice" = the line total for a single item (cost of that item times its quantity).
+These are different values at different levels — do not confuse them.
+
 {
   "merchant": "store name",
   "date": "YYYY-MM-DD",
   "time": "HH:MM",
-  "total": <integer>,
+  "total": <integer, transaction grand total>,
   "currency": "<detected currency code or null>",
-  "category": "<store category KEY>",
+  "category": "<store category>",
   "country": "<country name or null>",
   "city": "<city name or null>",
   "items": [
     {
       "name": "item description (max 50 chars)",
-      "price": <integer>,
+      "unitPrice": <integer, price per single unit>,
+      "totalPrice": <integer, line total for this item>,
       "quantity": <number, default 1>,
-      "category": "<item category KEY>",
+      "category": "<item category>",
       "subcategory": "optional detail"
     }
   ],
@@ -82,36 +93,33 @@ OUTPUT: Strict JSON only. No markdown, no explanation.
 }
 
 IMPORTANT: Store category and item categories are INDEPENDENT dimensions.
-- Store category (L2 Giro) = the TYPE of establishment on the receipt
-- Item category (L4 Categoría) = what each LINE ITEM is, regardless of store type
-- A "Supermercado" can sell items from ANY item category
-- A "Farmacia" primarily sells "Medications" but may also sell "PersonalCare" or "Snacks"
+- Store category = the TYPE of establishment on the receipt (where you buy)
+- Item category = what each LINE ITEM is, regardless of store type (what you buy)
+- A supermarket can sell items from ANY item category
+- A pharmacy primarily sells medications but may also sell personal care or snacks
 
-STORE CATEGORIES — Giro del Negocio (pick exactly one KEY per transaction):
-${STORE_CATEGORIES_GROUPED}
+STORE CATEGORIES (pick exactly one per transaction):
+${STORE_CATEGORY_LIST}
 
-ITEM CATEGORIES — Categoría de Producto (pick exactly one KEY per item):
-${ITEM_CATEGORIES_GROUPED}
+ITEM CATEGORIES (pick exactly one per item):
+${ITEM_CATEGORY_LIST}
 
-RETURN the English KEY (e.g., "Supermarket", "MeatSeafood"), NOT the Spanish label.
-
-CHILEAN MARKET RULES:
-- "Feria" = open-air market selling produce/seafood → OpenMarket (NOT a fair/exhibition)
-- "Almacén" / "Negocio" = neighborhood corner store → Almacen (NOT a warehouse)
-- "Botillería" = liquor store → LiquorStore
-- "Bencinera" / "Copec" / "Shell" / "Petrobras" = gas station → GasStation
-- "Kiosko" = small street-level shop (snacks, newspapers, phone cards) → Kiosk
-- "Panadería" = bakery (store type, L2) → Bakery; bread items are BreadPastry (L4)
-- "Carnicería" = butcher shop (store type, L2) → Butcher; meat items are MeatSeafood (L4)
-- "Farmacia" / "Cruz Verde" / "Ahumada" / "Salcobrand" = pharmacy → Pharmacy
-- "Ferretería" = hardware store → Hardware
-- "Minimarket" / "OK Market" / "Oxxo" = minimarket → Minimarket
+PRICE LOGIC:
+- For each item, default to: unitPrice = totalPrice, quantity = 1
+- If the receipt shows a quantity greater than 1 (e.g., "4x", "4 UN", "QTY: 4"):
+  extract the actual quantity, and unitPrice = totalPrice divided by quantity
+- Example: receipt shows "4 x $2,000 = $8,000" → unitPrice=2000, quantity=4, totalPrice=8000
+- Example: receipt shows "MILK $1,290" → unitPrice=1290, quantity=1, totalPrice=1290
+- If only one price is visible per line, set both unitPrice and totalPrice to that value
+- If a multiplier like "2x" appears, the larger number is totalPrice
 
 FALLBACK RULES:
 - "Other" (store) and "OtherItem" (item) are LAST RESORT categories
 - Only use them when NO other category fits after reviewing all options
 - If confidence is low but a specific category seems plausible, pick the specific category
-- Never default to "Other" for common Chilean store types or everyday products
+
+LOCAL TERM DISAMBIGUATION:
+${CL_LOCAL_TERMS}
 
 RULES:
 1. Extract ALL visible line items (max 100, summarize excess as "Additional Items")
@@ -120,29 +128,31 @@ RULES:
 4. Item names max 50 characters — abbreviate if needed
 5. Time in 24h format (HH:MM), use "04:04" if not found
 6. Extract country/city ONLY from visible receipt text, null if not found
-7. Subcategory is optional free-form for extra detail (e.g., "Frutas Frescas", "Cerveza Artesanal")
+7. Subcategory is optional free-form for extra detail (e.g., "Fresh Fruits", "Craft Beer")
 8. Currency can be null if you cannot determine it — the app will ask the user
-9. MUST have at least one item: if no line items visible, create one using a keyword from the receipt (e.g., "estacionamiento", "servicio") as name, total as price, and infer both store and item category from that keyword
-10. VALIDATION: The total should roughly equal the sum of (item price x quantity) for all items. If discrepancy exceeds 40%, re-check the total for missing or extra digits`;
+9. MUST have at least one item: if no line items visible, create one using a keyword from the receipt as name, total as totalPrice, and infer both store and item category from that keyword (see LOCAL TERM DISAMBIGUATION for common keywords)
+10. VALIDATION: The transaction total should roughly equal the sum of all items' totalPrice values. Similarly, each item's unitPrice x quantity should approximately equal its totalPrice. If discrepancy exceeds 40%, re-check the total for missing or extra digits`;
 }
 
 /**
- * V4 Spanish Taxonomy Prompt
+ * V4 Category Taxonomy Prompt
  *
  * Key improvements over V3:
- * - 44 store categories grouped by 12 rubros (up from flat list)
- * - 42 item categories grouped by 9 familias (up from flat list)
- * - Spanish display names for Chilean receipt context
- * - Chilean market disambiguation rules
- * - L2/L4 independence explanation
+ * - 44 store categories (up from 35 in V3)
+ * - 42 item categories (up from 37 in V3)
+ * - unitPrice + totalPrice extraction with quantity logic
+ * - Local term disambiguation loaded from locale data files
+ * - Store/item category independence explanation
  * - Stricter catch-all behavior
+ *
+ * NOTE: Prompt ID "v4-spanish-taxonomy" is historical — the prompt is English-only.
  */
 export const PROMPT_V4: PromptConfig = {
   id: 'v4-spanish-taxonomy',
-  name: 'Spanish Taxonomy',
+  name: 'Category Taxonomy V4',
   description:
-    'Grouped categories by rubro/familia. 44 store + 42 item categories with Spanish labels. Chilean market rules.',
-  version: '4.0.0',
+    '44 store + 42 item categories. unitPrice/totalPrice extraction. Local term disambiguation. English-only prompt.',
+  version: '4.1.0',
   createdAt: '2026-03-09',
   prompt: buildV4Prompt(),
 };

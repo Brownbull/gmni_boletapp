@@ -97,7 +97,7 @@ describe('useScanFlowRouter — continueScanWithTransaction', () => {
 
     it('should apply item name mappings when merchant is matched', async () => {
         const applyItemNameMappings = vi.fn((tx) => ({
-            transaction: { ...tx, items: [{ name: 'Renamed Item', price: 5000, qty: 1 }] },
+            transaction: { ...tx, items: [{ name: 'Renamed Item', totalPrice: 5000, qty: 1 }] },
             appliedIds: ['item-mapping-1'],
         }));
         const findMerchantMatch = vi.fn(() => ({

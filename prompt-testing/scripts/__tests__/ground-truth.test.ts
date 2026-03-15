@@ -33,8 +33,8 @@ const createTestCase = (overrides: Partial<TestCaseFile> = {}): TestCaseFile => 
       total: 15990,
       category: 'supermarket',
       items: [
-        { name: 'Leche', price: 1990 },
-        { name: 'Pan', price: 990 },
+        { name: 'Leche', totalPrice: 1990 },
+        { name: 'Pan', totalPrice: 990 },
       ],
       model: 'gemini-1.5-flash',
       modelVersion: '001',
@@ -74,8 +74,8 @@ describe('computeGroundTruth (AC7)', () => {
       const testCase = createTestCase({ corrections: undefined });
       const groundTruth = computeGroundTruth(testCase);
 
-      expect(groundTruth.items[0]).toEqual({ name: 'Leche', price: 1990, category: undefined });
-      expect(groundTruth.items[1]).toEqual({ name: 'Pan', price: 990, category: undefined });
+      expect(groundTruth.items[0]).toEqual({ name: 'Leche', totalPrice: 1990, unitPrice: undefined, category: undefined });
+      expect(groundTruth.items[1]).toEqual({ name: 'Pan', totalPrice: 990, unitPrice: undefined, category: undefined });
     });
   });
 
@@ -217,21 +217,21 @@ describe('computeGroundTruth (AC7)', () => {
       const groundTruth = computeGroundTruth(testCase);
 
       expect(groundTruth.items[0].name).toBe('Leche Descremada');
-      expect(groundTruth.items[0].price).toBe(1990); // Unchanged
+      expect(groundTruth.items[0].totalPrice).toBe(1990); // Unchanged
       expect(groundTruth._source.itemsModified).toBe(1);
     });
 
-    it('should modify item price', () => {
+    it('should modify item totalPrice', () => {
       const testCase = createTestCase({
         corrections: {
           items: {
-            '0': { price: 2190 }, // Correct price
+            '0': { totalPrice: 2190 }, // Correct price
           },
         },
       });
       const groundTruth = computeGroundTruth(testCase);
 
-      expect(groundTruth.items[0].price).toBe(2190);
+      expect(groundTruth.items[0].totalPrice).toBe(2190);
       expect(groundTruth.items[0].name).toBe('Leche'); // Unchanged
     });
 
@@ -252,14 +252,14 @@ describe('computeGroundTruth (AC7)', () => {
       const testCase = createTestCase({
         corrections: {
           items: {
-            '0': { name: 'Leche Descremada', price: 2190 },
+            '0': { name: 'Leche Descremada', totalPrice: 2190 },
           },
         },
       });
       const groundTruth = computeGroundTruth(testCase);
 
       expect(groundTruth.items[0].name).toBe('Leche Descremada');
-      expect(groundTruth.items[0].price).toBe(2190);
+      expect(groundTruth.items[0].totalPrice).toBe(2190);
       expect(groundTruth._source.itemsModified).toBe(1);
     });
   });
@@ -268,7 +268,7 @@ describe('computeGroundTruth (AC7)', () => {
     it('should add items from addItems array', () => {
       const testCase = createTestCase({
         corrections: {
-          addItems: [{ name: 'Queso', price: 3990 }],
+          addItems: [{ name: 'Queso', totalPrice: 3990 }],
         },
       });
       const groundTruth = computeGroundTruth(testCase);
@@ -276,7 +276,7 @@ describe('computeGroundTruth (AC7)', () => {
       expect(groundTruth.items).toHaveLength(3);
       expect(groundTruth.items[2]).toEqual({
         name: 'Queso',
-        price: 3990,
+        totalPrice: 3990,
         category: undefined,
       });
       expect(groundTruth._source.itemsAdded).toBe(1);
@@ -286,8 +286,8 @@ describe('computeGroundTruth (AC7)', () => {
       const testCase = createTestCase({
         corrections: {
           addItems: [
-            { name: 'Queso', price: 3990 },
-            { name: 'Mantequilla', price: 2990 },
+            { name: 'Queso', totalPrice: 3990 },
+            { name: 'Mantequilla', totalPrice: 2990 },
           ],
         },
       });
@@ -300,7 +300,7 @@ describe('computeGroundTruth (AC7)', () => {
     it('should add items with category', () => {
       const testCase = createTestCase({
         corrections: {
-          addItems: [{ name: 'Queso', price: 3990, category: 'dairy' }],
+          addItems: [{ name: 'Queso', totalPrice: 3990, category: 'dairy' }],
         },
       });
       const groundTruth = computeGroundTruth(testCase);
@@ -314,7 +314,7 @@ describe('computeGroundTruth (AC7)', () => {
           items: {
             '0': { delete: true }, // Delete Leche
           },
-          addItems: [{ name: 'Leche Entera', price: 2190 }], // Add correct item
+          addItems: [{ name: 'Leche Entera', totalPrice: 2190 }], // Add correct item
         },
       });
       const groundTruth = computeGroundTruth(testCase);
@@ -357,7 +357,7 @@ describe('computeGroundTruth (AC7)', () => {
           date: '2024-01-15',
           total: 15990,
           category: 'supermarket',
-          addItems: [{ name: 'Item 1', price: 1000 }],
+          addItems: [{ name: 'Item 1', totalPrice: 1000 }],
         },
       };
 
@@ -420,14 +420,14 @@ describe('hasCorrections', () => {
 
   it('should return true when items are corrected', () => {
     const testCase = createTestCase({
-      corrections: { items: { '0': { price: 2000 } } },
+      corrections: { items: { '0': { totalPrice: 2000 } } },
     });
     expect(hasCorrections(testCase)).toBe(true);
   });
 
   it('should return true when addItems exist', () => {
     const testCase = createTestCase({
-      corrections: { addItems: [{ name: 'Test', price: 100 }] },
+      corrections: { addItems: [{ name: 'Test', totalPrice: 100 }] },
     });
     expect(hasCorrections(testCase)).toBe(true);
   });
@@ -466,7 +466,7 @@ describe('summarizeGroundTruth', () => {
     const testCase = createTestCase({
       corrections: {
         items: { '0': { delete: true } },
-        addItems: [{ name: 'New', price: 100 }],
+        addItems: [{ name: 'New', totalPrice: 100 }],
       },
     });
     const groundTruth = computeGroundTruth(testCase);

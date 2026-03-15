@@ -28,6 +28,7 @@ import {
   parseLocationResult,
   buildInitialTransaction,
 } from './utils';
+import { deriveItemsPrices } from '@entities/transaction/utils';
 
 import {
   validateScanResult,
@@ -199,12 +200,14 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
       services.getCitiesForCountry
     );
 
-    // Normalize items (map 'quantity' to 'qty', parse prices)
-    const parsedItems: TransactionItem[] = (result.items || []).map((item) => ({
+    // Normalize items (map 'quantity' to 'qty', parse prices) then derive unitPrice
+    const rawItems: TransactionItem[] = (result.items || []).map((item) => ({
       ...item,
-      price: parseStrictNumber(item.price),
+      totalPrice: parseStrictNumber(item.totalPrice),
+      unitPrice: item.unitPrice != null ? parseStrictNumber(item.unitPrice) : undefined,
       qty: item.quantity ?? item.qty ?? 1,
     }));
+    const parsedItems = deriveItemsPrices(rawItems);
 
     // ========================================================================
     // Step 6: Validate Total (May Show Dialog)

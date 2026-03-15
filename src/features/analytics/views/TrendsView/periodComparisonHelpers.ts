@@ -100,8 +100,8 @@ export function computePreviousPeriodTotals(
                 }
 
                 if (category) {
-                    // TransactionItem uses 'qty' not 'quantity'
-                    const itemTotal = item.price * (item.qty || 1);
+                    // Story 18-8: totalPrice is already the line total (unitPrice * qty)
+                    const itemTotal = item.totalPrice;
                     totals.set(category, (totals.get(category) || 0) + itemTotal);
                 }
             });
@@ -153,11 +153,11 @@ export function computeDailySparkline(
                         if (groupKey) {
                             const itemGroup = ITEM_CATEGORY_GROUPS[groupKey as keyof typeof ITEM_CATEGORY_GROUPS];
                             if (itemGroup === categoryName) {
-                                itemTotal += item.price * (item.qty || 1);
+                                itemTotal += item.totalPrice;
                             }
                         }
                     } else if (itemCat === categoryName) {
-                        itemTotal += item.price * (item.qty || 1);
+                        itemTotal += item.totalPrice;
                     }
                 });
                 return { match: itemTotal > 0, value: itemTotal };

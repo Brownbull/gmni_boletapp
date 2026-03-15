@@ -200,6 +200,12 @@ export interface UseScanHandlersProps {
 
     /** Translation function */
     t: (key: string) => string;
+
+    // TD-18-4: Retry support
+    /** Process scan callback for retry (re-triggers full scan pipeline) */
+    processScan: (images?: string[]) => Promise<void>;
+    /** Current remaining user credits (for retry credit check) */
+    userCreditsRemaining: number;
 }
 
 /**
@@ -249,7 +255,7 @@ export interface UseScanHandlersResult {
 
     /** Reconcile items total with receipt total */
     reconcileItemsTotal: (
-        items: Array<{ name: string; price: number; category?: string; qty?: number; subcategory?: string }>,
+        items: Array<{ name: string; totalPrice: number; category?: string; qty?: number; subcategory?: string }>,
         receiptTotal: number
     ) => { items: typeof items; hasDiscrepancy: boolean; discrepancyAmount: number };
 
