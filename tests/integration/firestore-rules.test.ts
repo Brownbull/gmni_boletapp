@@ -343,7 +343,7 @@ describe('Transaction write validation (TD-15b-11: catch-all bypass closed)', ()
                 date: '2026-02-24',
                 total: 9990,
                 category: 'Groceries',
-                items: [{ name: 'Leche', quantity: 2, price: 4995 }],
+                items: [{ name: 'Leche', quantity: 2, totalPrice: 4995 }],
             })
         );
     });

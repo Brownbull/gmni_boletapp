@@ -65,9 +65,9 @@ describe('Data Persistence', () => {
             total: 87.43,
             category: 'Groceries',
             items: [
-                { name: 'Milk', price: 4.99 },
-                { name: 'Bread', price: 3.50 },
-                { name: 'Eggs', price: 5.99 },
+                { name: 'Milk', totalPrice: 4.99 },
+                { name: 'Bread', totalPrice: 3.50 },
+                { name: 'Eggs', totalPrice: 5.99 },
             ],
         };
 
@@ -172,7 +172,7 @@ describe('Data Persistence', () => {
             date: '2024-11-21',
             total: 5.25,
             category: 'Dining',
-            items: [{ name: 'Latte', price: 5.25 }],
+            items: [{ name: 'Latte', totalPrice: 5.25 }],
         };
 
         const docRef = await assertSucceeds(addDoc(transactionsRef, initialData));
@@ -183,8 +183,8 @@ describe('Data Persistence', () => {
             updateDoc(docToUpdate, {
                 total: 10.50,
                 items: [
-                    { name: 'Latte', price: 5.25 },
-                    { name: 'Croissant', price: 5.25 },
+                    { name: 'Latte', totalPrice: 5.25 },
+                    { name: 'Croissant', totalPrice: 5.25 },
                 ],
             })
         );

@@ -49,8 +49,8 @@ const mockTransactions: Transaction[] = [
     category: 'Supermarket',
     total: 100.0,
     items: [
-      { name: 'Milk', price: 5.0, qty: 2, category: 'Dairy', subcategory: 'Fresh' },
-      { name: 'Bread', price: 3.5, qty: 1, category: 'Bakery', subcategory: 'Loaves' },
+      { name: 'Milk', totalPrice: 5.0, qty: 2, category: 'Dairy', subcategory: 'Fresh' },
+      { name: 'Bread', totalPrice: 3.5, qty: 1, category: 'Bakery', subcategory: 'Loaves' },
     ],
   },
   {
@@ -61,7 +61,7 @@ const mockTransactions: Transaction[] = [
     category: 'Restaurant',
     total: 25.5,
     items: [
-      { name: 'Latte', price: 5.5, qty: 1, category: 'Drinks', subcategory: 'Coffee' },
+      { name: 'Latte', totalPrice: 5.5, qty: 1, category: 'Drinks', subcategory: 'Coffee' },
     ],
   },
 ];

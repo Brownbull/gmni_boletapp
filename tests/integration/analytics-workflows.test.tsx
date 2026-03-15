@@ -73,7 +73,7 @@ const createFixtureTransaction = (
   date,
   total,
   category,
-  items: [{ name: 'Test Item', qty: 1, price: total }],
+  items: [{ name: 'Test Item', qty: 1, totalPrice: total }],
 });
 
 // Fixture data for analytics tests (10+ transactions across 3 months and 4 categories)

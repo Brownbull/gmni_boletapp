@@ -34,9 +34,9 @@ const testTransactions: Transaction[] = [
     category: 'Supermarket',
     total: 50000,
     items: [
-      { name: 'Milk', price: 2000, category: 'Fresh Food', subcategory: 'Dairy' },
-      { name: 'Bread', price: 1500, category: 'Fresh Food', subcategory: 'Bakery' },
-      { name: 'Butter', price: 2500, category: 'Fresh Food', subcategory: 'Dairy' },
+      { name: 'Milk', totalPrice: 2000, category: 'Fresh Food', subcategory: 'Dairy' },
+      { name: 'Bread', totalPrice: 1500, category: 'Fresh Food', subcategory: 'Bakery' },
+      { name: 'Butter', totalPrice: 2500, category: 'Fresh Food', subcategory: 'Dairy' },
     ],
   },
   // Q2 - April
@@ -47,8 +47,8 @@ const testTransactions: Transaction[] = [
     category: 'Restaurant',
     total: 30000,
     items: [
-      { name: 'Lunch', price: 15000, category: 'Food', subcategory: 'Meals' },
-      { name: 'Dessert', price: 8000, category: 'Food', subcategory: 'Sweets' },
+      { name: 'Lunch', totalPrice: 15000, category: 'Food', subcategory: 'Meals' },
+      { name: 'Dessert', totalPrice: 8000, category: 'Food', subcategory: 'Sweets' },
     ],
   },
   // Q3 - July
@@ -59,8 +59,8 @@ const testTransactions: Transaction[] = [
     category: 'Supermarket',
     total: 45000,
     items: [
-      { name: 'Vegetables', price: 10000, category: 'Fresh Food', subcategory: 'Produce' },
-      { name: 'Meat', price: 25000, category: 'Fresh Food', subcategory: 'Meats' },
+      { name: 'Vegetables', totalPrice: 10000, category: 'Fresh Food', subcategory: 'Produce' },
+      { name: 'Meat', totalPrice: 25000, category: 'Fresh Food', subcategory: 'Meats' },
     ],
   },
   // Q4 - October (multiple transactions)
@@ -71,7 +71,7 @@ const testTransactions: Transaction[] = [
     category: 'Pharmacy',
     total: 20000,
     items: [
-      { name: 'Medicine', price: 15000, category: 'Health', subcategory: 'OTC' },
+      { name: 'Medicine', totalPrice: 15000, category: 'Health', subcategory: 'OTC' },
     ],
   },
   {
@@ -81,9 +81,9 @@ const testTransactions: Transaction[] = [
     category: 'Supermarket',
     total: 60000,
     items: [
-      { name: 'Rice', price: 5000, category: 'Pantry', subcategory: 'Staples' },
-      { name: 'Beans', price: 3000, category: 'Pantry', subcategory: 'Staples' },
-      { name: 'Oil', price: 4000, category: 'Pantry', subcategory: 'Cooking' },
+      { name: 'Rice', totalPrice: 5000, category: 'Pantry', subcategory: 'Staples' },
+      { name: 'Beans', totalPrice: 3000, category: 'Pantry', subcategory: 'Staples' },
+      { name: 'Oil', totalPrice: 4000, category: 'Pantry', subcategory: 'Cooking' },
     ],
   },
   {
@@ -93,7 +93,7 @@ const testTransactions: Transaction[] = [
     category: 'Restaurant',
     total: 35000,
     items: [
-      { name: 'Dinner', price: 25000, category: 'Food', subcategory: 'Meals' },
+      { name: 'Dinner', totalPrice: 25000, category: 'Food', subcategory: 'Meals' },
     ],
   },
   // November
@@ -104,7 +104,7 @@ const testTransactions: Transaction[] = [
     category: 'Supermarket',
     total: 55000,
     items: [
-      { name: 'Groceries', price: 40000, category: 'Fresh Food', subcategory: 'Produce' },
+      { name: 'Groceries', totalPrice: 40000, category: 'Fresh Food', subcategory: 'Produce' },
     ],
   },
 ];
