@@ -322,7 +322,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
       date: '2025-12-03',
       total: 100,
       category: 'Supermarket',
-      items: [{ name: 'UBER EATS', price: 50, category: 'Food' }],
+      items: [{ name: 'UBER EATS', totalPrice: 50, category: 'Food' }],
     }
 
     const defaultEditViewProps = {
@@ -370,7 +370,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
       // (In real usage, onUpdateTransaction updates the transaction)
       const updatedTransaction = {
         ...defaultTransaction,
-        items: [{ name: 'UBER EATS', price: 50, category: 'Transport' }], // Changed from 'Food' to 'Transport'
+        items: [{ name: 'UBER EATS', totalPrice: 50, category: 'Transport' }], // Changed from 'Food' to 'Transport'
       }
 
       rerender(
@@ -461,7 +461,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
       // Simulate item group change via rerender
       const updatedTransaction = {
         ...defaultTransaction,
-        items: [{ name: 'UBER EATS', price: 50, category: 'Transport' }], // Changed from 'Food' to 'Transport'
+        items: [{ name: 'UBER EATS', totalPrice: 50, category: 'Transport' }], // Changed from 'Food' to 'Transport'
       }
 
       rerender(
@@ -509,7 +509,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
       // Simulate item group change via rerender
       const updatedTransaction = {
         ...defaultTransaction,
-        items: [{ name: 'UBER EATS', price: 50, category: 'Transport' }],
+        items: [{ name: 'UBER EATS', totalPrice: 50, category: 'Transport' }],
       }
 
       rerender(
@@ -554,7 +554,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
       // Simulate item group change via rerender
       const updatedTransaction = {
         ...defaultTransaction,
-        items: [{ name: 'UBER EATS', price: 50, category: 'Transport' }],
+        items: [{ name: 'UBER EATS', totalPrice: 50, category: 'Transport' }],
       }
 
       rerender(
@@ -599,7 +599,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
 
       const updatedTransaction = {
         ...defaultTransaction,
-        items: [{ name: 'UBER EATS', price: 50, category: 'Transport' }],
+        items: [{ name: 'UBER EATS', totalPrice: 50, category: 'Transport' }],
       }
 
       rerender(
@@ -710,7 +710,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
         // Only item name changed, NOT item group
         const updatedTransaction = {
           ...defaultTransaction,
-          items: [{ name: 'CORRECTED ITEM NAME', price: 50, category: 'Food' }],
+          items: [{ name: 'CORRECTED ITEM NAME', totalPrice: 50, category: 'Food' }],
         }
 
         rerender(
@@ -745,7 +745,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
         // Simulate item price change via rerender
         const updatedTransaction = {
           ...defaultTransaction,
-          items: [{ name: 'UBER EATS', price: 75, category: 'Food' }], // Only price changed
+          items: [{ name: 'UBER EATS', totalPrice: 75, category: 'Food' }], // Only price changed
         }
 
         rerender(
@@ -782,8 +782,8 @@ describe('Category Learning Prompt - Story 6.3', () => {
         const updatedTransaction = {
           ...defaultTransaction,
           items: [
-            { name: 'UBER EATS', price: 50, category: 'Food' },
-            { name: 'NEW ITEM', price: 25, category: 'Other' }, // New item added
+            { name: 'UBER EATS', totalPrice: 50, category: 'Food' },
+            { name: 'NEW ITEM', totalPrice: 25, category: 'Other' }, // New item added
           ],
         }
 
@@ -811,8 +811,8 @@ describe('Category Learning Prompt - Story 6.3', () => {
         const transactionWithTwoItems = {
           ...defaultTransaction,
           items: [
-            { name: 'UBER EATS', price: 50, category: 'Food' },
-            { name: 'SECOND ITEM', price: 25, category: 'Other' },
+            { name: 'UBER EATS', totalPrice: 50, category: 'Food' },
+            { name: 'SECOND ITEM', totalPrice: 25, category: 'Other' },
           ],
         }
 
@@ -827,7 +827,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
         // Simulate removing an item via rerender
         const updatedTransaction = {
           ...transactionWithTwoItems,
-          items: [{ name: 'UBER EATS', price: 50, category: 'Food' }], // One item removed
+          items: [{ name: 'UBER EATS', totalPrice: 50, category: 'Food' }], // One item removed
         }
 
         rerender(
