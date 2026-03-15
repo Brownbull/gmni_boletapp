@@ -46,7 +46,8 @@ export function TransactionEditorScanStatus({
   formatCurrency,
   currency,
   lang,
-  isSaving,
+  // isSaving from parent is intentionally unused — local isSavingFromModal drives the modal (TD-18-5)
+  isSaving: _isSaving,
 }: TransactionEditorScanStatusProps) {
   // Scan store hooks — this component centralizes all @features/scan store imports
   const scanStoreIsProcessing = useScanIsProcessing();
@@ -56,6 +57,8 @@ export function TransactionEditorScanStatus({
 
   // ScanCompleteModal state (for new transactions only)
   const [showScanCompleteModal, setShowScanCompleteModal] = useState(false);
+  // Local saving flag: tracks save-in-progress from modal to prevent premature close (TD-18-5)
+  const [isSavingFromModal, setIsSavingFromModal] = useState(false);
   const prevScanButtonStateRef = useRef<ScanButtonState>(scanButtonState);
 
   // Show ScanCompleteModal when scan TRANSITIONS to complete for NEW transactions
@@ -77,7 +80,7 @@ export function TransactionEditorScanStatus({
   }, [mode, scanButtonState, transaction, skipScanCompleteModal, isQuickSaveDialogActive]);
 
   const handleScanCompleteSave = async () => {
-    setShowScanCompleteModal(false);
+    setIsSavingFromModal(true);
     await onSaveWithLearning();
   };
 
@@ -105,7 +108,7 @@ export function TransactionEditorScanStatus({
         formatCurrency={formatCurrency}
         currency={currency}
         lang={lang}
-        isSaving={isSaving}
+        isSaving={isSavingFromModal}
       />
     </>
   );

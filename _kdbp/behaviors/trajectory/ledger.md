@@ -75,3 +75,4 @@
 | 2026-03-14 | 18-8 | review | boletapp-dev | ✓ done | STANDARD review 6.5→APPROVE. 3 agents (code 7, security 6.5, ui-consistency 6). 12 quick fixes (sanitizeTransactions unitPrice, sanitizeInput name/subcategory, i18n "Unit" placeholders, aria-labels, keyboard a11y, Lucide Pencil, touch targets, negative guard, NaN Cloud Function, prompt wording, onBlur reset, CLP doc). 1 PROD to backlog (normalizeItems divergence). 2 archived. 148 tests pass. | none |
 | 2026-03-14 | TD-18-6 | none | boletapp-dev | ✓ done | Fuzzy duplicate detection: areMerchantsMatching (exact OR containment, 4-char min), getBaseGroupKey drops merchant (date|total only), pairwise merchant+country check in findDuplicates. 15 new tests (9 unit + 4 AC integration + 1 perf + 1 constant), 63 total pass. Self-review APPROVE 8.5/10, 1 fix (stale deprecated JSDoc). | none |
 | 2026-03-14 | TD-18-6 | review | boletapp-dev | ✓ done | none |
+| 2026-03-14 | TD-18-5 | none | boletapp-dev | ✓ done | none |
