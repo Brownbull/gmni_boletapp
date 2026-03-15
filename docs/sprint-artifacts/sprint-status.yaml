@@ -371,7 +371,7 @@ development_status:
   TD-18-7-hide-default-time-sentinel: done               # 1 pt  - Hide 04:04 sentinel time in TransactionCard/QuickSaveCard (V2)
   TD-18-8-rename-item-price-to-totalprice: done         # 3 pts - Rename TransactionItem.price → totalPrice across 33 files (V1+V2, unblocks 18-8)
   18-8-item-price-extraction: done                     # 5 pts - Add unitPrice + prompt disambiguation + derivation logic (V1+V2, absorbs 18-12) (DEPENDS: TD-18-8)
-  TD-18-6-fuzzy-duplicate-detection: drafted          # 3 pts - Lowercase containment matching for merchant names (V2) (DEPENDS: TD-18-7)
+  TD-18-6-fuzzy-duplicate-detection: done              # 3 pts - Lowercase containment matching for merchant names (V2) (DEPENDS: TD-18-7)
   TD-18-5-scan-complete-modal-save-ux: drafted        # 2 pts - Fix modal close-before-save flash in TransactionEditorScanStatus (V5)
   TD-18-4-scan-retry-fix: drafted                     # 5 pts - Backend auto-retry + client retry preserves images + credit handling (V5)
   # Independent (end of epic):

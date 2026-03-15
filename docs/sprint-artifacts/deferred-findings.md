@@ -98,9 +98,57 @@
 - **Stage:** PROD — Code hygiene, not feature-breaking. Both paths produce correct output.
 - **Estimated effort:** 1 point (extract shared normalizer function, update 2 call sites)
 
+### [PROD] Remove Deprecated getDuplicateKey or Complete Deprecation Path
+
+- **Source:** TD-18-6-fuzzy-duplicate-detection review (2026-03-14)
+- **Finding:** `getDuplicateKey` silently changed its return value from `date|merchant|total` to `date|total` — the `@deprecated` annotation was added but the function still exists. Any code comparing old stored keys vs new ones would get different results. Zero external callers currently, but the deprecation path is incomplete.
+- **Files:** `src/services/duplicateDetectionService.ts`
+- **Stage:** PROD — Dead code cleanup, no current breakage
+- **Estimated effort:** 1 point (remove function + update any remaining imports)
+
+### [PROD] Remove Dead Time Exports from Duplicate Detection Service
+
+- **Source:** TD-18-6-fuzzy-duplicate-detection review (2026-03-14)
+- **Finding:** `parseTimeToMinutes` and `areTimesWithinProximity` are exported and tested but NOT used anywhere in duplicate detection logic. They are dead exports that mislead future readers. Tests are marked "(legacy)" but still run.
+- **Files:** `src/services/duplicateDetectionService.ts`, `tests/unit/duplicateDetection.test.ts`
+- **Stage:** PROD — Dead code cleanup
+- **Estimated effort:** 1 point (check for external importers, remove if none, update tests)
+
+### [PROD] filterToDuplicatesGrouped Calls findDuplicates Redundantly
+
+- **Source:** TD-18-6-fuzzy-duplicate-detection review (2026-03-14)
+- **Finding:** `filterToDuplicatesGrouped` internally calls `findDuplicates(transactions)`. If a caller also needs the raw duplicate map (e.g., for counting + rendering), `findDuplicates` runs twice. Consider accepting an optional pre-computed map parameter.
+- **Files:** `src/services/duplicateDetectionService.ts`
+- **Stage:** PROD — Performance optimization, not breaking
+- **Estimated effort:** 1 point (add optional map param, thread through)
+
+### [PROD] Duplicate Detection Test File Exceeds 300-Line Limit
+
+- **Source:** TD-18-6-fuzzy-duplicate-detection review (2026-03-14)
+- **Finding:** `duplicateDetection.test.ts` is 694 lines, exceeding the 300-line unit test limit from testing.md. Pre-existing issue expanded by TD-18-6 additions (~70 lines). Split into focused test files (merchants, grouping, integration).
+- **Files:** `tests/unit/duplicateDetection.test.ts`
+- **Stage:** PROD — Test maintainability
+- **Estimated effort:** 2 points (split file, update imports, verify all tests pass)
+
+### [PROD] Missing Tests for Thin Wrapper Functions in Duplicate Detection
+
+- **Source:** TD-18-6-fuzzy-duplicate-detection review (2026-03-14)
+- **Finding:** `hasPotentialDuplicates`, `getDuplicateCount`, `filterToDuplicateTransactions` are exported public functions with no direct tests. They are thin delegates to `findDuplicates`/`getDuplicateIds` — low risk but untested public surface.
+- **Files:** `src/services/duplicateDetectionService.ts`, `tests/unit/duplicateDetection.test.ts`
+- **Stage:** PROD — Test coverage gap for public API
+- **Estimated effort:** 1 point (add 3-4 simple tests)
+
 ---
 
 ## SCALE Backlog
+
+### [SCALE] Unbounded Group Size in Duplicate Detection O(k^2) Loop
+
+- **Source:** TD-18-6-fuzzy-duplicate-detection review (2026-03-14)
+- **Finding:** `findDuplicates` groups by `date|total` only, then does O(k^2) pairwise merchant comparison within each group. No upper bound on group size. Degenerate data (many transactions same date+total, all different merchants) produces quadratic comparisons. Fine for real data (k=2-5) but no cap exists.
+- **Files:** `src/services/duplicateDetectionService.ts`
+- **Stage:** SCALE — Only relevant at high transaction volume with pathological data patterns
+- **Estimated effort:** 1 point (add early-exit or warning if group size > 20)
 
 ### [SCALE] Guard Violation Logging in Production
 

@@ -4,8 +4,8 @@
  *
  * Core matching criteria (required - all must match):
  * - Same date
- * - Same merchant name
  * - Same total amount
+ * - Merchant match: exact equality OR containment (shorter name >= 4 chars contained in longer)
  *
  * Optional refinement:
  * - Country: If BOTH transactions have a non-null/non-default country, they must match.
@@ -107,27 +107,61 @@ export function areLocationsMatching(tx1: Transaction, tx2: Transaction): boolea
 }
 
 /**
- * Generate a base key for grouping transactions by CORE criteria only.
- * This groups by date + merchant + amount.
+ * Minimum length of the shorter merchant name for containment matching.
+ * Names shorter than this require exact match to prevent false positives
+ * (e.g., "La" matching "La Vega", "La Barra", etc.)
+ */
+export const MIN_MERCHANT_LENGTH_FOR_CONTAINMENT = 4;
+
+/**
+ * Check if two merchant names match via exact equality or containment.
+ *
+ * Rules:
+ * 1. Both normalized to lowercase + trimmed
+ * 2. If exact match → true
+ * 3. If shorter name >= MIN_MERCHANT_LENGTH_FOR_CONTAINMENT chars
+ *    AND longer.includes(shorter) → true
+ * 4. Otherwise → false
+ *
+ * @param name1 - First merchant name
+ * @param name2 - Second merchant name
+ * @returns true if merchants are considered matching
+ */
+export function areMerchantsMatching(name1: string, name2: string): boolean {
+  const n1 = (name1 || '').toLowerCase().trim();
+  const n2 = (name2 || '').toLowerCase().trim();
+
+  // Exact match (includes both-empty case — two unknown merchants = same merchant)
+  if (n1 === n2) return true;
+
+  // Containment: shorter must be >= MIN_MERCHANT_LENGTH_FOR_CONTAINMENT
+  // When lengths are equal but strings differ, assignment is arbitrary (includes checks both ways via symmetry)
+  const shorter = n1.length <= n2.length ? n1 : n2;
+  const longer = n1.length <= n2.length ? n2 : n1;
+
+  if (shorter.length < MIN_MERCHANT_LENGTH_FOR_CONTAINMENT) return false;
+
+  return longer.includes(shorter);
+}
+
+/**
+ * Generate a base key for grouping transactions as duplicate candidates.
+ * Groups by date + amount only. Merchant matching is done in the pairwise phase.
  * Time and location are checked separately as optional refinements.
  *
  * @param tx - Transaction to generate key for
  * @returns Base key string for grouping
  */
 export function getBaseGroupKey(tx: Transaction): string {
-  // Normalize values for consistent comparison
-  // Use lowercase and trim for string fields
   const date = (tx.date || '').trim();
-  const merchant = (tx.merchant || '').toLowerCase().trim();
   const total = tx.total?.toString() || '0';
 
-  // Create a deterministic key from CORE criteria only (date, merchant, amount)
-  // City, country, and time are checked separately as optional refinements
-  return `${date}|${merchant}|${total}`;
+  // Group by date + amount only — merchant matching happens in pairwise phase
+  return `${date}|${total}`;
 }
 
 /**
- * @deprecated Use getBaseGroupKey instead. This function is kept for backward compatibility.
+ * @deprecated Use getBaseGroupKey instead. Returns date|total key (merchant no longer in key).
  */
 export function getDuplicateKey(tx: Transaction): string {
   return getBaseGroupKey(tx);
@@ -139,9 +173,9 @@ export function getDuplicateKey(tx: Transaction): string {
  * of duplicate transaction IDs.
  *
  * Matching criteria:
- * - Same date (required)
- * - Same merchant (required)
- * - Same total amount (required)
+ * - Same date (required, via grouping key)
+ * - Same total amount (required, via grouping key)
+ * - Merchant match (required, via pairwise containment: exact OR shorter >= 4 chars contained in longer)
  * - Same country (only if both have non-null/non-empty country)
  *
  * NOT checked: time, city, items, alias
@@ -155,7 +189,7 @@ export function getDuplicateKey(tx: Transaction): string {
 export function findDuplicates(
   transactions: Transaction[]
 ): Map<string, string[]> {
-  // First pass: Group transactions by base key (date, merchant, amount)
+  // First pass: Group transactions by base key (date, amount)
   const keyToTransactions = new Map<string, Transaction[]>();
 
   for (const tx of transactions) {
@@ -168,14 +202,14 @@ export function findDuplicates(
     keyToTransactions.set(key, existing);
   }
 
-  // Second pass: Within each group, check country refinement
+  // Second pass: Within each group, check merchant + country refinement
   const duplicateMap = new Map<string, string[]>();
 
   for (const [, txGroup] of keyToTransactions) {
     // Skip groups with only one transaction
     if (txGroup.length <= 1) continue;
 
-    // For each pair of transactions in the group, check country
+    // For each pair in the group, check merchant + country
     for (let i = 0; i < txGroup.length; i++) {
       const tx1 = txGroup[i];
       const duplicatesForTx1: string[] = [];
@@ -185,10 +219,16 @@ export function findDuplicates(
 
         const tx2 = txGroup[j];
 
+        // Check merchant match (exact or containment with min 4-char threshold)
+        const merchantsMatch = areMerchantsMatching(
+          tx1.merchant || '',
+          tx2.merchant || ''
+        );
+
         // Check country match (only if both have country, otherwise allow)
         const countriesMatch = areLocationsMatching(tx1, tx2);
 
-        if (countriesMatch) {
+        if (merchantsMatch && countriesMatch) {
           duplicatesForTx1.push(tx2.id!);
         }
       }
