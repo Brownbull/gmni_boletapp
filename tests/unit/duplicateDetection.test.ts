@@ -1,11 +1,11 @@
 /**
  * Unit tests for Duplicate Detection Service
- * Story 9.11: AC #4, #5, #6, #7
+ * Stories: 9.11 (original), TD-18-6 (fuzzy merchant containment)
  *
  * Matching criteria:
  * - Same date (required)
- * - Same merchant (required)
  * - Same total amount (required)
+ * - Merchant match: exact equality OR containment (shorter name >= 4 chars)
  * - Same country (only if both have non-null/non-empty country)
  *
  * NOT checked: time, city, items, alias
@@ -21,6 +21,8 @@ import {
   parseTimeToMinutes,
   areTimesWithinProximity,
   areLocationsMatching,
+  areMerchantsMatching,
+  MIN_MERCHANT_LENGTH_FOR_CONTAINMENT,
   TIME_PROXIMITY_MINUTES,
 } from '../../src/services/duplicateDetectionService';
 import { Transaction } from '../../src/types/transaction';
@@ -170,15 +172,15 @@ describe('duplicateDetectionService', () => {
       expect(getBaseGroupKey(tx1)).toBe(getBaseGroupKey(tx2));
     });
 
-    it('generates consistent key from CORE transaction fields (date, merchant, amount)', () => {
+    it('generates consistent key from date and amount only (merchant NOT in key)', () => {
       const tx = createTransaction({ id: '1' });
       const key = getBaseGroupKey(tx);
 
-      // Key should include ONLY: date|merchant|total
-      expect(key).toBe('2025-12-13|test merchant|100');
+      // Key should include ONLY: date|total (merchant moved to pairwise check)
+      expect(key).toBe('2025-12-13|100');
     });
 
-    it('normalizes values to lowercase and trimmed', () => {
+    it('normalizes values and excludes merchant from key', () => {
       const tx = createTransaction({
         id: '1',
         merchant: '  TEST MERCHANT  ',
@@ -187,8 +189,8 @@ describe('duplicateDetectionService', () => {
       });
       const key = getBaseGroupKey(tx);
 
-      // City/country are NOT in the key
-      expect(key).toBe('2025-12-13|test merchant|100');
+      // Merchant, city, country are NOT in the key
+      expect(key).toBe('2025-12-13|100');
     });
 
     it('handles missing optional fields gracefully', () => {
@@ -202,8 +204,15 @@ describe('duplicateDetectionService', () => {
       };
       const key = getBaseGroupKey(tx);
 
-      // Key only has core fields: date|merchant|total
-      expect(key).toBe('2025-12-13|test|50');
+      // Key only has: date|total
+      expect(key).toBe('2025-12-13|50');
+    });
+
+    it('same date+total but different merchant produces SAME key', () => {
+      const tx1 = createTransaction({ id: '1', merchant: 'SAUKO' });
+      const tx2 = createTransaction({ id: '2', merchant: 'Sauko Emporio' });
+
+      expect(getBaseGroupKey(tx1)).toBe(getBaseGroupKey(tx2));
     });
 
     it('generates different keys for different core fields', () => {
@@ -524,7 +533,7 @@ describe('duplicateDetectionService', () => {
       // Simulate adding a new transaction that duplicates an existing one
       const existingTransactions = [
         createTransaction({ id: 'existing-1', merchant: 'Store' }),
-        createTransaction({ id: 'existing-2', merchant: 'Other Store' }),
+        createTransaction({ id: 'existing-2', merchant: 'Pharmacy' }),
       ];
 
       // Add a "new" transaction that duplicates existing-1
@@ -544,6 +553,149 @@ describe('duplicateDetectionService', () => {
   describe('TIME_PROXIMITY_MINUTES constant (legacy)', () => {
     it('should be 60 minutes (1 hour) - kept for backwards compatibility', () => {
       expect(TIME_PROXIMITY_MINUTES).toBe(60);
+    });
+  });
+
+  describe('MIN_MERCHANT_LENGTH_FOR_CONTAINMENT constant', () => {
+    it('should be 4 characters', () => {
+      expect(MIN_MERCHANT_LENGTH_FOR_CONTAINMENT).toBe(4);
+    });
+  });
+
+  describe('areMerchantsMatching', () => {
+    it('returns true for exact match (case insensitive)', () => {
+      expect(areMerchantsMatching('H&M', 'H&M')).toBe(true);
+      expect(areMerchantsMatching('h&m', 'H&M')).toBe(true);
+    });
+
+    it('returns true when shorter name (>= 4 chars) is contained in longer (AC-2)', () => {
+      // "sauko" (5 chars) is contained in "sauko emporio"
+      expect(areMerchantsMatching('SAUKO', 'Sauko Emporio')).toBe(true);
+    });
+
+    it('returns true at exactly 4 chars (minimum threshold)', () => {
+      expect(areMerchantsMatching('abcd', 'abcd store')).toBe(true);
+    });
+
+    it('returns false when shorter name is below 4 chars (AC-3)', () => {
+      // "la" (2 chars) below minimum
+      expect(areMerchantsMatching('La', 'La Vega')).toBe(false);
+    });
+
+    it('returns false for 3-char containment (below minimum)', () => {
+      expect(areMerchantsMatching('abc', 'abc store')).toBe(false);
+    });
+
+    it('returns false for unrelated merchants (AC-5)', () => {
+      expect(areMerchantsMatching('Jumbo', 'Lider')).toBe(false);
+    });
+
+    it('returns false when empty vs non-empty', () => {
+      expect(areMerchantsMatching('', 'Store')).toBe(false);
+    });
+
+    it('returns true when both are empty (same merchant = match)', () => {
+      expect(areMerchantsMatching('', '')).toBe(true);
+    });
+
+    it('handles whitespace and case normalization', () => {
+      expect(areMerchantsMatching('  SAUKO  ', 'sauko emporio')).toBe(true);
+    });
+  });
+
+  describe('findDuplicates - fuzzy merchant matching (TD-18-6)', () => {
+    it('AC-1+AC-2: "SAUKO" vs "Sauko Emporio" same amount+date → duplicate', () => {
+      const transactions = [
+        createTransaction({ id: '1', merchant: 'SAUKO', total: 32305, date: '2026-03-06', country: 'Chile' }),
+        createTransaction({ id: '2', merchant: 'Sauko Emporio', total: 32305, date: '2026-03-06', country: 'Chile' }),
+      ];
+
+      const duplicates = findDuplicates(transactions);
+
+      expect(duplicates.size).toBe(2);
+      expect(duplicates.get('1')).toEqual(['2']);
+      expect(duplicates.get('2')).toEqual(['1']);
+    });
+
+    it('AC-3: "La" vs "La Vega" same amount+date → NOT duplicate (too short)', () => {
+      const transactions = [
+        createTransaction({ id: '1', merchant: 'La', total: 5000, date: '2026-03-06' }),
+        createTransaction({ id: '2', merchant: 'La Vega', total: 5000, date: '2026-03-06' }),
+      ];
+
+      const duplicates = findDuplicates(transactions);
+
+      expect(duplicates.size).toBe(0);
+    });
+
+    it('AC-4: "H&M" vs "H&M" same amount+date → duplicate (exact match)', () => {
+      const transactions = [
+        createTransaction({ id: '1', merchant: 'H&M', total: 108930, date: '2025-12-15', country: 'Chile' }),
+        createTransaction({ id: '2', merchant: 'H&M', total: 108930, date: '2025-12-15', country: 'Chile' }),
+      ];
+
+      const duplicates = findDuplicates(transactions);
+
+      expect(duplicates.size).toBe(2);
+      expect(duplicates.get('1')).toEqual(['2']);
+    });
+
+    it('AC-5: "Jumbo" vs "Lider" same amount+date → NOT duplicate', () => {
+      const transactions = [
+        createTransaction({ id: '1', merchant: 'Jumbo', total: 50000, date: '2026-03-06' }),
+        createTransaction({ id: '2', merchant: 'Lider', total: 50000, date: '2026-03-06' }),
+      ];
+
+      const duplicates = findDuplicates(transactions);
+
+      expect(duplicates.size).toBe(0);
+    });
+  });
+
+  describe('Performance (AC-6)', () => {
+    it('detects duplicates in 1000 transactions under 100ms', () => {
+      const transactions: Transaction[] = [];
+      for (let g = 0; g < 200; g++) {
+        for (let i = 0; i < 5; i++) {
+          transactions.push(createTransaction({
+            id: `tx-${g}-${i}`,
+            date: `2026-01-${String((g % 28) + 1).padStart(2, '0')}`,
+            total: (g + 1) * 1000,
+            merchant: `Merchant${g}Branch${i}`,
+          }));
+        }
+      }
+      const start = performance.now();
+      findDuplicates(transactions);
+      const elapsed = performance.now() - start;
+      expect(elapsed).toBeLessThan(100);
+    });
+
+    it('exercises containment path in 1000 transactions under 100ms', () => {
+      const transactions: Transaction[] = [];
+      for (let g = 0; g < 200; g++) {
+        // Each group has a base merchant + a variant that triggers containment
+        transactions.push(createTransaction({
+          id: `tx-${g}-base`,
+          date: `2026-01-${String((g % 28) + 1).padStart(2, '0')}`,
+          total: (g + 1) * 1000,
+          merchant: `Store${g}`,
+        }));
+        for (let i = 1; i < 5; i++) {
+          transactions.push(createTransaction({
+            id: `tx-${g}-${i}`,
+            date: `2026-01-${String((g % 28) + 1).padStart(2, '0')}`,
+            total: (g + 1) * 1000,
+            merchant: `Store${g} Branch${i}`, // containment: "Store{g}" in "Store{g} Branch{i}"
+          }));
+        }
+      }
+      const start = performance.now();
+      const result = findDuplicates(transactions);
+      const elapsed = performance.now() - start;
+      expect(elapsed).toBeLessThan(100);
+      // Verify containment actually matched (not just grouped)
+      expect(result.size).toBeGreaterThan(0);
     });
   });
 });

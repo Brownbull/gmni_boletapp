@@ -228,22 +228,22 @@ describe('compareItemsCount (AC4)', () => {
 // ============================================================================
 
 describe('compareItemPrices (AC5)', () => {
-  const createExpected = (items: { name: string; price: number }[]): GroundTruthItem[] => {
+  const createExpected = (items: { name: string; totalPrice: number }[]): GroundTruthItem[] => {
     return items.map((item) => ({ ...item }));
   };
 
-  const createActual = (items: { name: string; price: number }[]) => {
+  const createActual = (items: { name: string; totalPrice: number }[]) => {
     return items.map((item) => ({ ...item }));
   };
 
   it('should return 100% accuracy when all prices match', () => {
     const expected = createExpected([
-      { name: 'Milk', price: 1990 },
-      { name: 'Bread', price: 990 },
+      { name: 'Milk', totalPrice: 1990 },
+      { name: 'Bread', totalPrice: 990 },
     ]);
     const actual = createActual([
-      { name: 'Milk', price: 1990 },
-      { name: 'Bread', price: 990 },
+      { name: 'Milk', totalPrice: 1990 },
+      { name: 'Bread', totalPrice: 990 },
     ]);
 
     const result = compareItemPrices(expected, actual);
@@ -254,12 +254,12 @@ describe('compareItemPrices (AC5)', () => {
 
   it('should return 50% accuracy when half the prices match', () => {
     const expected = createExpected([
-      { name: 'Milk', price: 1990 },
-      { name: 'Bread', price: 990 },
+      { name: 'Milk', totalPrice: 1990 },
+      { name: 'Bread', totalPrice: 990 },
     ]);
     const actual = createActual([
-      { name: 'Milk', price: 1990 },
-      { name: 'Bread', price: 1000 }, // Wrong price
+      { name: 'Milk', totalPrice: 1990 },
+      { name: 'Bread', totalPrice: 1000 }, // Wrong price
     ]);
 
     const result = compareItemPrices(expected, actual);
@@ -268,8 +268,8 @@ describe('compareItemPrices (AC5)', () => {
   });
 
   it('should handle case-insensitive item names', () => {
-    const expected = createExpected([{ name: 'MILK', price: 1990 }]);
-    const actual = createActual([{ name: 'milk', price: 1990 }]);
+    const expected = createExpected([{ name: 'MILK', totalPrice: 1990 }]);
+    const actual = createActual([{ name: 'milk', totalPrice: 1990 }]);
 
     const result = compareItemPrices(expected, actual);
     expect(result.accuracy).toBe(100);
@@ -282,14 +282,14 @@ describe('compareItemPrices (AC5)', () => {
   });
 
   it('should return 0% when actual has no items', () => {
-    const expected = createExpected([{ name: 'Milk', price: 1990 }]);
+    const expected = createExpected([{ name: 'Milk', totalPrice: 1990 }]);
     const result = compareItemPrices(expected, []);
     expect(result.accuracy).toBe(0);
   });
 
   it('should include per-item comparison details', () => {
-    const expected = createExpected([{ name: 'Milk', price: 1990 }]);
-    const actual = createActual([{ name: 'MILK', price: 1990 }]);
+    const expected = createExpected([{ name: 'Milk', totalPrice: 1990 }]);
+    const actual = createActual([{ name: 'MILK', totalPrice: 1990 }]);
 
     const result = compareItemPrices(expected, actual);
     expect(result.details).toHaveLength(1);
@@ -299,8 +299,8 @@ describe('compareItemPrices (AC5)', () => {
   });
 
   it('should match items by similarity when names differ slightly', () => {
-    const expected = createExpected([{ name: 'Leche Descremada', price: 1990 }]);
-    const actual = createActual([{ name: 'LECHE DESCREM.', price: 1990 }]);
+    const expected = createExpected([{ name: 'Leche Descremada', totalPrice: 1990 }]);
+    const actual = createActual([{ name: 'LECHE DESCREM.', totalPrice: 1990 }]);
 
     const result = compareItemPrices(expected, actual);
     // Names should be matched despite abbreviation
@@ -436,7 +436,7 @@ describe('compare (main function)', () => {
       date: '2024-01-15',
       total: 15990,
       category: 'supermarket',
-      items: [{ name: 'Milk', price: 1990 }],
+      items: [{ name: 'Milk', totalPrice: 1990 }],
       _source: {
         hasAiExtraction: true,
         hasCorrections: false,
@@ -450,14 +450,14 @@ describe('compare (main function)', () => {
   };
 
   const createActual = (
-    overrides: Partial<{ merchant: string; date: string; total: number; items: Array<{ name: string; price: number }> }> = {}
+    overrides: Partial<{ merchant: string; date: string; total: number; items: Array<{ name: string; totalPrice: number }> }> = {}
   ) => {
     return {
       merchant: 'JUMBO',
       date: '2024-01-15',
       total: 15990,
       category: 'supermarket',
-      items: [{ name: 'Milk', price: 1990 }],
+      items: [{ name: 'Milk', totalPrice: 1990 }],
       ...overrides,
     };
   };

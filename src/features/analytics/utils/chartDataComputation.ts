@@ -153,7 +153,7 @@ function calculateTransactionContribution(
     // At store category level: sum item prices, segment by item groups
     let total = 0;
     tx.items.forEach(item => {
-      total += item.price;
+      total += item.totalPrice;
     });
     // Segments are handled separately for item-level breakdown
     return { total, segmentKey: null };
@@ -163,7 +163,7 @@ function calculateTransactionContribution(
     tx.items
       .filter(item => item.category === category.group)
       .forEach(item => {
-        total += item.price;
+        total += item.totalPrice;
       });
     return { total, segmentKey: null };
   } else {
@@ -172,7 +172,7 @@ function calculateTransactionContribution(
     tx.items
       .filter(item => item.category === category.group && item.subcategory === category.subcategory)
       .forEach(item => {
-        total += item.price;
+        total += item.totalPrice;
       });
     return { total, segmentKey: category.subcategory || 'Other' };
   }
@@ -207,8 +207,8 @@ export function calculatePeriodTotals(
       // Store category level: segment by item groups
       tx.items.forEach(item => {
         const segmentKey = item.category || 'General';
-        segments[segmentKey] = (segments[segmentKey] || 0) + item.price;
-        total += item.price;
+        segments[segmentKey] = (segments[segmentKey] || 0) + item.totalPrice;
+        total += item.totalPrice;
       });
     } else if (category.level === 'group' || !category.subcategory) {
       // Item group level: segment by subcategories
@@ -216,8 +216,8 @@ export function calculatePeriodTotals(
         .filter(item => item.category === category.group)
         .forEach(item => {
           const segmentKey = item.subcategory || 'Other';
-          segments[segmentKey] = (segments[segmentKey] || 0) + item.price;
-          total += item.price;
+          segments[segmentKey] = (segments[segmentKey] || 0) + item.totalPrice;
+          total += item.totalPrice;
         });
     } else {
       // Subcategory level: single segment for that subcategory
@@ -225,8 +225,8 @@ export function calculatePeriodTotals(
         .filter(item => item.category === category.group && item.subcategory === category.subcategory)
         .forEach(item => {
           const segmentKey = item.subcategory || 'Other';
-          segments[segmentKey] = (segments[segmentKey] || 0) + item.price;
-          total += item.price;
+          segments[segmentKey] = (segments[segmentKey] || 0) + item.totalPrice;
+          total += item.totalPrice;
         });
     }
   });
@@ -268,7 +268,7 @@ export function calculateCategoryBreakdown(
         if (!breakdown[key]) {
           breakdown[key] = { total: 0, count: 0 };
         }
-        breakdown[key].total += item.price;
+        breakdown[key].total += item.totalPrice;
         breakdown[key].count += 1;
       });
     } else if (category.level === 'group' || !category.subcategory) {
@@ -280,7 +280,7 @@ export function calculateCategoryBreakdown(
           if (!breakdown[key]) {
             breakdown[key] = { total: 0, count: 0 };
           }
-          breakdown[key].total += item.price;
+          breakdown[key].total += item.totalPrice;
           breakdown[key].count += 1;
         });
     } else {
@@ -292,7 +292,7 @@ export function calculateCategoryBreakdown(
           if (!breakdown[key]) {
             breakdown[key] = { total: 0, count: 0 };
           }
-          breakdown[key].total += item.price;
+          breakdown[key].total += item.totalPrice;
           breakdown[key].count += 1;
         });
     }

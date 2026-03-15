@@ -27,9 +27,14 @@ export interface FlattenedItem {
     name: string;
 
     /**
-     * Item price (single unit price * qty if qty > 1).
+     * Item total price (line total = unit price x qty).
      */
-    price: number;
+    totalPrice: number;
+
+    /**
+     * Price per single unit (optional, derived if missing).
+     */
+    unitPrice?: number;
 
     /**
      * Quantity purchased (defaults to 1 if not specified).

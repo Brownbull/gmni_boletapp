@@ -106,7 +106,7 @@ const PROMPT_REGISTRY: Map<string, PromptConfig> = new Map([
  *   2. Change PRODUCTION_PROMPT to the new version
  *   3. Deploy: npm run build && firebase deploy --only functions
  */
-export const PRODUCTION_PROMPT: PromptConfig = PROMPT_V4;
+export const PRODUCTION_PROMPT: PromptConfig = PROMPT_V3;
 
 /**
  * DEVELOPMENT PROMPT - Used by the test harness

@@ -61,7 +61,7 @@ vi.mock('@entities/transaction', async (importOriginal) => {
         ...actual,
         reconcileItemsTotal: vi.fn((items, receiptTotal, lang) => {
             // Actual implementation for integration tests
-            const itemsSum = items.reduce((sum: number, item: { price: number }) => sum + item.price, 0);
+            const itemsSum = items.reduce((sum: number, item: { totalPrice: number }) => sum + item.totalPrice, 0);
             const roundedItemsSum = Math.round(itemsSum * 100) / 100;
             const roundedReceiptTotal = Math.round(receiptTotal * 100) / 100;
             const difference = Math.round((roundedReceiptTotal - roundedItemsSum) * 100) / 100;
@@ -75,7 +75,7 @@ vi.mock('@entities/transaction', async (importOriginal) => {
                 : (lang === 'es' ? 'Descuento/Ajuste' : 'Discount/Adjustment');
 
             return {
-                items: [...items, { name: adjustmentName, price: difference, qty: 1, category: 'Other' }],
+                items: [...items, { name: adjustmentName, totalPrice: difference, qty: 1, category: 'Other' }],
                 hasDiscrepancy: true,
                 discrepancyAmount: difference,
             };
@@ -309,7 +309,7 @@ describe('useScanHandlers', () => {
             date: '2026-01-22',
             total: 1500,
             category: 'Supermarket',
-            items: [{ name: 'Item 1', price: 1500 }],
+            items: [{ name: 'Item 1', totalPrice: 1500 }],
             country: 'Chile',
             city: 'Santiago',
             currency: 'CLP',
@@ -384,7 +384,7 @@ describe('useScanHandlers', () => {
         it('should validate items have name and price', async () => {
             const setToastMessage = vi.fn();
             const navigateToView = vi.fn();
-            const invalidTransaction = { ...mockTransaction, items: [{ name: '', price: 0 }] };
+            const invalidTransaction = { ...mockTransaction, items: [{ name: '', totalPrice: 0 }] };
             const dialogData = { ...mockDialogData, transaction: invalidTransaction };
             const props = createDefaultProps({ setToastMessage, navigateToView });
             const { result } = renderHook(() => useScanHandlers(props));
@@ -817,7 +817,7 @@ describe('useScanHandlers', () => {
             date: '2026-01-22',
             total: 100,
             category: 'Supermarket',
-            items: [{ name: 'Item', price: 90 }],
+            items: [{ name: 'Item', totalPrice: 90 }],
             country: 'Chile',
             city: 'Santiago',
             currency: 'CLP',
@@ -831,7 +831,7 @@ describe('useScanHandlers', () => {
                 discrepancy: 10,
             },
             pendingTransaction: mockTransaction,
-            parsedItems: [{ name: 'Item', price: 90 }],
+            parsedItems: [{ name: 'Item', totalPrice: 90 }],
         };
 
         it('should return early when no dialog data', () => {
@@ -894,7 +894,7 @@ describe('useScanHandlers', () => {
             date: '2026-01-22',
             total: 100,
             category: 'Supermarket',
-            items: [{ name: 'Item', price: 90 }],
+            items: [{ name: 'Item', totalPrice: 90 }],
             country: 'Chile',
             city: 'Santiago',
             currency: 'CLP',
@@ -908,7 +908,7 @@ describe('useScanHandlers', () => {
                 discrepancy: 10,
             },
             pendingTransaction: mockTransaction,
-            parsedItems: [{ name: 'Item', price: 90 }],
+            parsedItems: [{ name: 'Item', totalPrice: 90 }],
         };
 
         it('should return early when no dialog data', () => {
@@ -1007,7 +1007,7 @@ describe('useScanHandlers', () => {
                 date: '2026-01-22',
                 total: 100,
                 category: 'Supermarket',
-                items: [{ name: 'Original Item', price: 100 }],
+                items: [{ name: 'Original Item', totalPrice: 100 }],
                 country: 'Chile',
                 city: 'Santiago',
                 currency: 'CLP',
@@ -1042,7 +1042,7 @@ describe('useScanHandlers', () => {
                 date: '2026-01-22',
                 total: 100,
                 category: 'Supermarket',
-                items: [{ name: 'Original Item', price: 100 }],
+                items: [{ name: 'Original Item', totalPrice: 100 }],
                 country: 'Chile',
                 city: 'Santiago',
                 currency: 'CLP',
@@ -1078,7 +1078,7 @@ describe('useScanHandlers', () => {
                 date: '2026-01-22',
                 total: 100,
                 category: 'Supermarket',
-                items: [{ name: 'Original Item', price: 100 }],
+                items: [{ name: 'Original Item', totalPrice: 100 }],
                 country: 'Chile',
                 city: 'Santiago',
                 currency: 'CLP',
@@ -1099,7 +1099,7 @@ describe('useScanHandlers', () => {
             const props = createDefaultProps();
             const { result } = renderHook(() => useScanHandlers(props));
 
-            const items = [{ name: 'Item 1', price: 50 }, { name: 'Item 2', price: 50 }];
+            const items = [{ name: 'Item 1', totalPrice: 50 }, { name: 'Item 2', totalPrice: 50 }];
 
             const { items: reconciled, hasDiscrepancy, discrepancyAmount } =
                 result.current.reconcileItemsTotal(items, 100);
@@ -1113,7 +1113,7 @@ describe('useScanHandlers', () => {
             const props = createDefaultProps();
             const { result } = renderHook(() => useScanHandlers(props));
 
-            const items = [{ name: 'Item 1', price: 99.5 }];
+            const items = [{ name: 'Item 1', totalPrice: 99.5 }];
 
             const { items: reconciled, hasDiscrepancy } =
                 result.current.reconcileItemsTotal(items, 100);
@@ -1126,7 +1126,7 @@ describe('useScanHandlers', () => {
             const props = createDefaultProps();
             const { result } = renderHook(() => useScanHandlers(props));
 
-            const items = [{ name: 'Item 1', price: 80 }];
+            const items = [{ name: 'Item 1', totalPrice: 80 }];
 
             const { items: reconciled, hasDiscrepancy, discrepancyAmount } =
                 result.current.reconcileItemsTotal(items, 100);
@@ -1135,14 +1135,14 @@ describe('useScanHandlers', () => {
             expect(hasDiscrepancy).toBe(true);
             expect(discrepancyAmount).toBe(20);
             // Last item should be surplus
-            expect(reconciled[1].price).toBe(20);
+            expect(reconciled[1].totalPrice).toBe(20);
         });
 
         it('should add discount item for negative discrepancy', () => {
             const props = createDefaultProps();
             const { result } = renderHook(() => useScanHandlers(props));
 
-            const items = [{ name: 'Item 1', price: 120 }];
+            const items = [{ name: 'Item 1', totalPrice: 120 }];
 
             const { items: reconciled, hasDiscrepancy, discrepancyAmount } =
                 result.current.reconcileItemsTotal(items, 100);
@@ -1151,7 +1151,7 @@ describe('useScanHandlers', () => {
             expect(hasDiscrepancy).toBe(true);
             expect(discrepancyAmount).toBe(-20);
             // Last item should be discount (negative)
-            expect(reconciled[1].price).toBe(-20);
+            expect(reconciled[1].totalPrice).toBe(-20);
         });
     });
 
@@ -1161,7 +1161,7 @@ describe('useScanHandlers', () => {
             date: '2026-01-22',
             total: 1500,
             category: 'Supermarket',
-            items: [{ name: 'Item 1', price: 1500 }],
+            items: [{ name: 'Item 1', totalPrice: 1500 }],
             country: 'Chile',
             city: 'Santiago',
             currency: 'CLP',

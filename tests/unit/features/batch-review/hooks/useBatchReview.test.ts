@@ -24,7 +24,7 @@ describe('useBatchReview', () => {
     total,
     date: '2024-12-22',
     category,
-    items: [{ name: 'Item 1', price: total }],
+    items: [{ name: 'Item 1', totalPrice: total }],
   });
 
   // Create mock processing results

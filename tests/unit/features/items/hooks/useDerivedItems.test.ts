@@ -37,8 +37,8 @@ const createMockTransaction = (overrides?: Partial<Transaction>): Transaction =>
     total: 10000,
     category: 'Supermarket',
     items: [
-        { name: 'Milk', price: 3000, category: 'Dairy & Eggs' },
-        { name: 'Bread', price: 2000, category: 'Bakery' },
+        { name: 'Milk', totalPrice: 3000, category: 'Dairy & Eggs' },
+        { name: 'Bread', totalPrice: 2000, category: 'Bakery' },
     ],
     ...overrides,
 });
@@ -53,9 +53,9 @@ const mockTransactions: Transaction[] = [
         category: 'Supermarket',
         city: 'Santiago',
         items: [
-            { name: 'Milk', price: 3000, category: 'Dairy & Eggs' },
-            { name: 'Bread', price: 2000, category: 'Bakery' },
-            { name: 'Apples', price: 5000, category: 'Produce' },
+            { name: 'Milk', totalPrice: 3000, category: 'Dairy & Eggs' },
+            { name: 'Bread', totalPrice: 2000, category: 'Bakery' },
+            { name: 'Apples', totalPrice: 5000, category: 'Produce' },
         ],
     }),
     createMockTransaction({
@@ -65,8 +65,8 @@ const mockTransactions: Transaction[] = [
         total: 8000,
         category: 'Supermarket',
         items: [
-            { name: 'Chicken', price: 6000, category: 'Meat & Seafood' },
-            { name: 'Rice', price: 2000, category: 'Pantry' },
+            { name: 'Chicken', totalPrice: 6000, category: 'Meat & Seafood' },
+            { name: 'Rice', totalPrice: 2000, category: 'Pantry' },
         ],
     }),
 ];
@@ -198,7 +198,7 @@ describe('useDerivedItems', () => {
 
         it('uses cached items when available', () => {
             const cachedItems = [
-                { id: 'cached-1', name: 'Cached Item', price: 1000, transactionDate: '2026-01-08' },
+                { id: 'cached-1', name: 'Cached Item', totalPrice: 1000, transactionDate: '2026-01-08' },
             ];
             mockGetQueryData.mockReturnValue(cachedItems);
 
@@ -227,7 +227,7 @@ describe('useDerivedItems', () => {
                 ...mockTransactions,
                 createMockTransaction({
                     id: 'tx-3',
-                    items: [{ name: 'New Item', price: 1000, category: 'Other' }],
+                    items: [{ name: 'New Item', totalPrice: 1000, category: 'Other' }],
                 }),
             ];
 

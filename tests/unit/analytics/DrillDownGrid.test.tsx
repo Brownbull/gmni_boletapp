@@ -46,8 +46,8 @@ const sampleTransactions: Transaction[] = [
     category: 'Supermarket',
     total: 50000,
     items: [
-      { name: 'Milk', price: 2000, category: 'Fresh Food', subcategory: 'Dairy' },
-      { name: 'Bread', price: 1500, category: 'Fresh Food', subcategory: 'Bakery' },
+      { name: 'Milk', totalPrice: 2000, category: 'Fresh Food', subcategory: 'Dairy' },
+      { name: 'Bread', totalPrice: 1500, category: 'Fresh Food', subcategory: 'Bakery' },
     ],
   },
   {
@@ -57,7 +57,7 @@ const sampleTransactions: Transaction[] = [
     category: 'Restaurant',
     total: 30000,
     items: [
-      { name: 'Lunch', price: 15000, category: 'Food', subcategory: 'Meals' },
+      { name: 'Lunch', totalPrice: 15000, category: 'Food', subcategory: 'Meals' },
     ],
   },
   {
@@ -67,8 +67,8 @@ const sampleTransactions: Transaction[] = [
     category: 'Supermarket',
     total: 45000,
     items: [
-      { name: 'Vegetables', price: 10000, category: 'Fresh Food', subcategory: 'Produce' },
-      { name: 'Meat', price: 25000, category: 'Fresh Food', subcategory: 'Meats' },
+      { name: 'Vegetables', totalPrice: 10000, category: 'Fresh Food', subcategory: 'Produce' },
+      { name: 'Meat', totalPrice: 25000, category: 'Fresh Food', subcategory: 'Meats' },
     ],
   },
   {
@@ -78,7 +78,7 @@ const sampleTransactions: Transaction[] = [
     category: 'Pharmacy',
     total: 20000,
     items: [
-      { name: 'Medicine', price: 15000, category: 'Health', subcategory: 'OTC' },
+      { name: 'Medicine', totalPrice: 15000, category: 'Health', subcategory: 'OTC' },
     ],
   },
   {
@@ -88,7 +88,7 @@ const sampleTransactions: Transaction[] = [
     category: 'Supermarket',
     total: 60000,
     items: [
-      { name: 'Groceries', price: 40000, category: 'Pantry', subcategory: 'Staples' },
+      { name: 'Groceries', totalPrice: 40000, category: 'Pantry', subcategory: 'Staples' },
     ],
   },
 ];

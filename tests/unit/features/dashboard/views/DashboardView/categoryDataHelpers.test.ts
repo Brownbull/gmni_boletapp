@@ -148,8 +148,8 @@ describe('computeStoreCategoriesData', () => {
         total: 500,
         category: 'Supermarket' as Transaction['category'],
         items: [
-          { name: 'Apple', price: 200 },
-          { name: 'Banana', price: 300 },
+          { name: 'Apple', totalPrice: 200 },
+          { name: 'Banana', totalPrice: 300 },
         ],
       }),
     ];
@@ -241,8 +241,8 @@ describe('computeItemCategoriesData', () => {
         date: '2026-01-01',
         total: 1000,
         items: [
-          { name: 'Milk', price: 300, category: 'DairyEggs' },
-          { name: 'Apple', price: 200, category: 'Produce' },
+          { name: 'Milk', totalPrice: 300, category: 'DairyEggs' },
+          { name: 'Apple', totalPrice: 200, category: 'Produce' },
         ],
       }),
       makeTx({
@@ -250,7 +250,7 @@ describe('computeItemCategoriesData', () => {
         date: '2026-01-02',
         total: 500,
         items: [
-          { name: 'Cheese', price: 500, category: 'DairyEggs' },
+          { name: 'Cheese', totalPrice: 500, category: 'DairyEggs' },
         ],
       }),
     ];
@@ -268,7 +268,7 @@ describe('computeItemCategoriesData', () => {
         id: 'tx1',
         date: '2026-01-01',
         total: 100,
-        items: [{ name: 'Mystery', price: 100 }],
+        items: [{ name: 'Mystery', totalPrice: 100 }],
       }),
     ];
 
@@ -283,8 +283,8 @@ describe('computeItemCategoriesData', () => {
         date: '2026-01-01',
         total: 9999, // Ignored for percentage calc
         items: [
-          { name: 'A', price: 750, category: 'CatA' },
-          { name: 'B', price: 250, category: 'CatB' },
+          { name: 'A', totalPrice: 750, category: 'CatA' },
+          { name: 'B', totalPrice: 250, category: 'CatB' },
         ],
       }),
     ];
@@ -302,8 +302,8 @@ describe('computeItemCategoriesData', () => {
         date: '2026-01-01',
         total: 500,
         items: [
-          { name: 'A', price: 100, category: 'Small' },
-          { name: 'B', price: 400, category: 'Big' },
+          { name: 'A', totalPrice: 100, category: 'Small' },
+          { name: 'B', totalPrice: 400, category: 'Big' },
         ],
       }),
     ];
@@ -325,8 +325,8 @@ describe('computeItemCategoriesData', () => {
         date: '2026-01-01',
         total: 500,
         items: [
-          { name: 'Milk', price: 200, category: 'DairyEggs' },
-          { name: 'Cheese', price: 300, category: 'DairyEggs' },
+          { name: 'Milk', totalPrice: 200, category: 'DairyEggs' },
+          { name: 'Cheese', totalPrice: 300, category: 'DairyEggs' },
         ],
       }),
     ];
@@ -349,9 +349,9 @@ describe('computeItemGroupsData', () => {
         date: '2026-01-01',
         total: 1000,
         items: [
-          { name: 'Apple', price: 200, category: 'Produce' },
-          { name: 'Steak', price: 500, category: 'MeatSeafood' },
-          { name: 'Milk', price: 300, category: 'DairyEggs' },
+          { name: 'Apple', totalPrice: 200, category: 'Produce' },
+          { name: 'Steak', totalPrice: 500, category: 'MeatSeafood' },
+          { name: 'Milk', totalPrice: 300, category: 'DairyEggs' },
         ],
       }),
     ];
@@ -372,7 +372,7 @@ describe('computeItemGroupsData', () => {
         id: 'tx1',
         date: '2026-01-01',
         total: 100,
-        items: [{ name: 'Widget', price: 100, category: 'UnmappedCat' }],
+        items: [{ name: 'Widget', totalPrice: 100, category: 'UnmappedCat' }],
       }),
     ];
 
@@ -388,7 +388,7 @@ describe('computeItemGroupsData', () => {
         id: 'tx1',
         date: '2026-01-01',
         total: 100,
-        items: [{ name: 'Apple', price: 100, category: 'Produce' }],
+        items: [{ name: 'Apple', totalPrice: 100, category: 'Produce' }],
       }),
     ];
 
@@ -403,8 +403,8 @@ describe('computeItemGroupsData', () => {
         date: '2026-01-01',
         total: 500,
         items: [
-          { name: 'Milk', price: 100, category: 'DairyEggs' },
-          { name: 'Apple', price: 400, category: 'Produce' },
+          { name: 'Milk', totalPrice: 100, category: 'DairyEggs' },
+          { name: 'Apple', totalPrice: 400, category: 'Produce' },
         ],
       }),
     ];
@@ -421,8 +421,8 @@ describe('computeItemGroupsData', () => {
         date: '2026-01-01',
         total: 9999, // Ignored
         items: [
-          { name: 'A', price: 600, category: 'Produce' },
-          { name: 'B', price: 400, category: 'DairyEggs' },
+          { name: 'A', totalPrice: 600, category: 'Produce' },
+          { name: 'B', totalPrice: 400, category: 'DairyEggs' },
         ],
       }),
     ];

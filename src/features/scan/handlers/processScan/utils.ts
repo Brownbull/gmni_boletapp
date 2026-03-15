@@ -95,6 +95,10 @@ export function parseLocationResult(
 /**
  * Normalizes scan result items to transaction items format.
  * Maps 'quantity' field from AI to 'qty' field, defaults to 1.
+ * Coerces price fields via parseStrictNumber for safety.
+ *
+ * Note: processScan.ts does inline normalization + deriveItemsPrices for the
+ * full pipeline. This function is kept as a tested, standalone utility.
  *
  * @param items - Raw items from scan result
  * @returns Normalized transaction items with qty field
@@ -108,7 +112,8 @@ export function normalizeItems(
 
   return items.map((item): TransactionItem => ({
     name: item.name,
-    price: item.price,
+    totalPrice: parseStrictNumber(item.totalPrice),
+    unitPrice: item.unitPrice != null ? parseStrictNumber(item.unitPrice) : undefined,
     qty: item.quantity ?? item.qty ?? 1,
     category: item.category,
     subcategory: item.subcategory,

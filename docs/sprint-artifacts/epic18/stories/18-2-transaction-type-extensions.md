@@ -1,6 +1,6 @@
 # Story 18-2: Transaction Type Extensions
 
-## Status: backlog
+## Status: drafted
 
 ## Intent
 **Epic Handle:** "One statement in, many verified transactions out"

@@ -1,6 +1,6 @@
 # Story 18-5: Statement Prompt V2 — Fix Categories, CardHolder, Location
 
-## Status: backlog
+## Status: drafted
 
 ## Intent
 **Epic Handle:** "One statement in, many verified transactions out"

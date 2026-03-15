@@ -1,6 +1,6 @@
 # Story 18-3: Statement Transformer + PDF Storage + Password Support
 
-## Status: backlog
+## Status: drafted
 
 ## Intent
 **Epic Handle:** "One statement in, many verified transactions out"

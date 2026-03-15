@@ -122,7 +122,7 @@ describe('aggregateByMerchantCategory', () => {
   const createTransaction = (
     category: string,
     total: number,
-    items: { category?: string; price: number }[] = []
+    items: { category?: string; totalPrice: number }[] = []
   ): Transaction => ({
     id: `tx-${Math.random()}`,
     date: '2024-01-15',
@@ -131,7 +131,7 @@ describe('aggregateByMerchantCategory', () => {
     total,
     items: items.map((item) => ({
       name: 'Test Item',
-      price: item.price,
+      totalPrice: item.totalPrice,
       category: item.category,
     })),
   });
@@ -201,7 +201,7 @@ describe('aggregateByItemGroup', () => {
   const createTransaction = (
     category: string,
     total: number,
-    items: { category?: string; price: number }[]
+    items: { category?: string; totalPrice: number }[]
   ): Transaction => ({
     id: `tx-${Math.random()}`,
     date: '2024-01-15',
@@ -210,7 +210,7 @@ describe('aggregateByItemGroup', () => {
     total,
     items: items.map((item) => ({
       name: 'Test Item',
-      price: item.price,
+      totalPrice: item.totalPrice,
       category: item.category,
     })),
   });
@@ -218,9 +218,9 @@ describe('aggregateByItemGroup', () => {
   it('groups items by item category (group)', () => {
     const transactions: Transaction[] = [
       createTransaction('Supermarket', 100000, [
-        { category: 'Produce', price: 30000 },
-        { category: 'Produce', price: 20000 },
-        { category: 'Pantry', price: 50000 },
+        { category: 'Produce', totalPrice: 30000 },
+        { category: 'Produce', totalPrice: 20000 },
+        { category: 'Pantry', totalPrice: 50000 },
       ]),
     ];
 
@@ -233,10 +233,10 @@ describe('aggregateByItemGroup', () => {
   it('aggregates across multiple transactions', () => {
     const transactions: Transaction[] = [
       createTransaction('Supermarket', 100000, [
-        { category: 'Produce', price: 30000 },
+        { category: 'Produce', totalPrice: 30000 },
       ]),
       createTransaction('Supermarket', 50000, [
-        { category: 'Produce', price: 20000 },
+        { category: 'Produce', totalPrice: 20000 },
       ]),
     ];
 
@@ -248,9 +248,9 @@ describe('aggregateByItemGroup', () => {
   it('sorts by amount descending', () => {
     const transactions: Transaction[] = [
       createTransaction('Supermarket', 100000, [
-        { category: 'Produce', price: 20000 },
-        { category: 'Pantry', price: 50000 },
-        { category: 'Beverages', price: 30000 },
+        { category: 'Produce', totalPrice: 20000 },
+        { category: 'Pantry', totalPrice: 50000 },
+        { category: 'Beverages', totalPrice: 30000 },
       ]),
     ];
 
@@ -264,8 +264,8 @@ describe('aggregateByItemGroup', () => {
   it('assigns colors to each item group', () => {
     const transactions: Transaction[] = [
       createTransaction('Supermarket', 100000, [
-        { category: 'Produce', price: 50000 },
-        { category: 'Pantry', price: 50000 },
+        { category: 'Produce', totalPrice: 50000 },
+        { category: 'Pantry', totalPrice: 50000 },
       ]),
     ];
 
@@ -279,8 +279,8 @@ describe('aggregateByItemGroup', () => {
   it('handles items without category as "Other"', () => {
     const transactions: Transaction[] = [
       createTransaction('Supermarket', 100000, [
-        { price: 30000 }, // No category
-        { category: 'Produce', price: 70000 },
+        { totalPrice: 30000 }, // No category
+        { category: 'Produce', totalPrice: 70000 },
       ]),
     ];
 

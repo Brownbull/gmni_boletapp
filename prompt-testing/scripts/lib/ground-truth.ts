@@ -24,7 +24,8 @@ import type { TestCaseFile, AIExtraction, Corrections, AIExtractionItem } from '
  */
 export interface GroundTruthItem {
   name: string;
-  price: number;
+  totalPrice: number;
+  unitPrice?: number;
   category?: string;
 }
 
@@ -225,12 +226,13 @@ function computeItems(
     // Apply corrections to this item
     const item: GroundTruthItem = {
       name: correction?.name ?? aiItem.name,
-      price: correction?.price ?? aiItem.price,
+      totalPrice: correction?.totalPrice ?? aiItem.totalPrice,
+      unitPrice: correction?.unitPrice ?? aiItem.unitPrice,
       category: correction?.category ?? aiItem.category,
     };
 
     // Track if any field was modified
-    if (correction?.name !== undefined || correction?.price !== undefined || correction?.category !== undefined) {
+    if (correction?.name !== undefined || correction?.totalPrice !== undefined || correction?.category !== undefined) {
       modified++;
     }
 
@@ -243,7 +245,8 @@ function computeItems(
     for (const addItem of addItems) {
       items.push({
         name: addItem.name,
-        price: addItem.price,
+        totalPrice: addItem.totalPrice,
+        unitPrice: addItem.unitPrice,
         category: addItem.category,
       });
     }

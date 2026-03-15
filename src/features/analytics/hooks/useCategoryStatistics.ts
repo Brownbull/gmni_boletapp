@@ -218,8 +218,8 @@ export const useCategoryStatistics = ({
             ? true
             : itemMatchesCategory(item, categoryName, categoryType);
 
-        if (shouldInclude && item.price && item.price > 0) {
-          itemPrices.push(item.price);
+        if (shouldInclude && item.totalPrice && item.totalPrice > 0) {
+          itemPrices.push(item.totalPrice);
         }
       }
     }

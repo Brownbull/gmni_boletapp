@@ -1,6 +1,6 @@
 # Story 18-4: Statement Upload UI + Consent Modal
 
-## Status: backlog
+## Status: drafted
 
 ## Intent
 **Epic Handle:** "One statement in, many verified transactions out"

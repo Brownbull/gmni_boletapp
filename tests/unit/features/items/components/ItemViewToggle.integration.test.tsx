@@ -177,7 +177,7 @@ describe('ItemViewToggle Integration', () => {
 describe('ItemViewToggle with Mock Items Data', () => {
   // Test component simulating real editor behavior
   const TestEditorWithToggle: React.FC<{
-    items: Array<{ name: string; price: number; category: string }>;
+    items: Array<{ name: string; totalPrice: number; category: string }>;
   }> = ({ items }) => {
     const [activeView, setActiveView] = useState<ItemViewMode>('grouped');
 
@@ -211,7 +211,7 @@ describe('ItemViewToggle with Mock Items Data', () => {
                 <h3>{group}</h3>
                 {groupItems.map((item, i) => (
                   <div key={i} data-testid={`grouped-item-${i}`}>
-                    {item.name} - ${item.price}
+                    {item.name} - ${item.totalPrice}
                   </div>
                 ))}
               </div>
@@ -224,7 +224,7 @@ describe('ItemViewToggle with Mock Items Data', () => {
             {items.map((item, i) => (
               <div key={i} data-testid={`original-item-${i}`}>
                 <span data-testid="item-index">{i + 1}.</span>
-                {item.name} - ${item.price}
+                {item.name} - ${item.totalPrice}
               </div>
             ))}
           </div>
@@ -234,11 +234,11 @@ describe('ItemViewToggle with Mock Items Data', () => {
   };
 
   const mockItems = [
-    { name: 'Apple', price: 1.99, category: 'Produce' },
-    { name: 'Milk', price: 3.49, category: 'Dairy' },
-    { name: 'Bread', price: 2.99, category: 'Bakery' },
-    { name: 'Banana', price: 0.99, category: 'Produce' },
-    { name: 'Cheese', price: 4.99, category: 'Dairy' },
+    { name: 'Apple', totalPrice: 1.99, category: 'Produce' },
+    { name: 'Milk', totalPrice: 3.49, category: 'Dairy' },
+    { name: 'Bread', totalPrice: 2.99, category: 'Bakery' },
+    { name: 'Banana', totalPrice: 0.99, category: 'Produce' },
+    { name: 'Cheese', totalPrice: 4.99, category: 'Dairy' },
   ];
 
   it('shows grouped view by default', () => {

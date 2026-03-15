@@ -220,7 +220,7 @@ describe('groupItemsByItemCategory — i18n count labels (TD-17-2)', () => {
 
   it('should use translated item singular in Spanish', () => {
     const txs: Transaction[] = [
-      makeTx({ items: [{ name: 'Apple', category: 'Produce', price: 500, qty: 1 }] }),
+      makeTx({ items: [{ name: 'Apple', category: 'Produce', totalPrice: 500, qty: 1 }] }),
     ];
     const groups = groupItemsByItemCategory(txs);
     const item = groups[0].items[0];
@@ -229,7 +229,7 @@ describe('groupItemsByItemCategory — i18n count labels (TD-17-2)', () => {
 
   it('should use translated item plural in Spanish', () => {
     const txs: Transaction[] = [
-      makeTx({ items: [{ name: 'Apple', category: 'Produce', price: 500, qty: 3 }] }),
+      makeTx({ items: [{ name: 'Apple', category: 'Produce', totalPrice: 500, qty: 3 }] }),
     ];
     const groups = groupItemsByItemCategory(txs);
     const item = groups[0].items[0];
@@ -239,7 +239,7 @@ describe('groupItemsByItemCategory — i18n count labels (TD-17-2)', () => {
   it('should use English item labels when lang=en', () => {
     mockLang = 'en';
     const txs: Transaction[] = [
-      makeTx({ items: [{ name: 'Apple', category: 'Produce', price: 500, qty: 1 }] }),
+      makeTx({ items: [{ name: 'Apple', category: 'Produce', totalPrice: 500, qty: 1 }] }),
     ];
     const groups = groupItemsByItemCategory(txs);
     const item = groups[0].items[0];
@@ -249,7 +249,7 @@ describe('groupItemsByItemCategory — i18n count labels (TD-17-2)', () => {
   it('should use English item plural when lang=en', () => {
     mockLang = 'en';
     const txs: Transaction[] = [
-      makeTx({ items: [{ name: 'Apple', category: 'Produce', price: 500, qty: 4 }] }),
+      makeTx({ items: [{ name: 'Apple', category: 'Produce', totalPrice: 500, qty: 4 }] }),
     ];
     const groups = groupItemsByItemCategory(txs);
     const item = groups[0].items[0];
@@ -268,7 +268,7 @@ describe('groupItemsByItemCategory — trend edge cases', () => {
       makeTx({
         id: 'tx-curr',
         total: 100,
-        items: [{ name: 'Apple', category: 'Produce', price: 100, qty: 1 }],
+        items: [{ name: 'Apple', category: 'Produce', totalPrice: 100, qty: 1 }],
       }),
     ];
     // Previous period had much higher amounts → trend will be "down" with high %
@@ -276,7 +276,7 @@ describe('groupItemsByItemCategory — trend edge cases', () => {
       makeTx({
         id: 'tx-prev',
         total: 10000,
-        items: [{ name: 'Apple', category: 'Produce', price: 10000, qty: 1 }],
+        items: [{ name: 'Apple', category: 'Produce', totalPrice: 10000, qty: 1 }],
       }),
     ];
 
@@ -300,14 +300,14 @@ describe('groupItemsByItemCategory — trend edge cases', () => {
       makeTx({
         id: 'tx-curr',
         total: 1,
-        items: [{ name: 'Apple', category: 'Produce', price: 1, qty: 1 }],
+        items: [{ name: 'Apple', category: 'Produce', totalPrice: 1, qty: 1 }],
       }),
     ];
     const previous: Transaction[] = [
       makeTx({
         id: 'tx-prev',
         total: 100000,
-        items: [{ name: 'Apple', category: 'Produce', price: 100000, qty: 1 }],
+        items: [{ name: 'Apple', category: 'Produce', totalPrice: 100000, qty: 1 }],
       }),
     ];
 
@@ -326,7 +326,7 @@ describe('groupItemsByItemCategory — trend edge cases', () => {
       makeTx({
         id: 'tx-1',
         total: 5000,
-        items: [{ name: 'Bread', category: 'Bakery', price: 5000, qty: 1 }],
+        items: [{ name: 'Bread', category: 'Bakery', totalPrice: 5000, qty: 1 }],
       }),
     ];
 

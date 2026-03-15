@@ -34,7 +34,7 @@ function createMockBatchReceipt(overrides: Partial<BatchReceipt> = {}): BatchRec
       merchant: 'Test Store',
       category: 'Supermarket',
       total: 1000,
-      items: [{ name: 'Item', price: 1000, qty: 1 }],
+      items: [{ name: 'Item', totalPrice: 1000, qty: 1 }],
       currency: 'CLP',
     },
     status: 'ready',

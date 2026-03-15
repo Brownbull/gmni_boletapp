@@ -1,6 +1,6 @@
 # Story 18-10b: Transaction Matching UI
 
-## Status: backlog
+## Status: drafted
 
 ## Intent
 **Epic Handle:** "One statement in, many verified transactions out"

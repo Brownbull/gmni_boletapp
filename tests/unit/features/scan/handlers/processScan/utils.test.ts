@@ -248,48 +248,48 @@ describe('processScan utilities', () => {
     });
 
     it('should normalize items with quantity field', () => {
-      const items = [{ name: 'Item 1', price: 100, quantity: 2 }];
+      const items = [{ name: 'Item 1', totalPrice: 100, quantity: 2 }];
       const result = normalizeItems(items);
       expect(result).toEqual([
-        { name: 'Item 1', price: 100, qty: 2, category: undefined, subcategory: undefined },
+        { name: 'Item 1', totalPrice: 100, qty: 2, category: undefined, subcategory: undefined },
       ]);
     });
 
     it('should normalize items with qty field', () => {
-      const items = [{ name: 'Item 1', price: 100, qty: 3 }];
+      const items = [{ name: 'Item 1', totalPrice: 100, qty: 3 }];
       const result = normalizeItems(items);
       expect(result).toEqual([
-        { name: 'Item 1', price: 100, qty: 3, category: undefined, subcategory: undefined },
+        { name: 'Item 1', totalPrice: 100, qty: 3, category: undefined, subcategory: undefined },
       ]);
     });
 
     it('should default qty to 1 when not provided', () => {
-      const items = [{ name: 'Item 1', price: 100 }];
+      const items = [{ name: 'Item 1', totalPrice: 100 }];
       const result = normalizeItems(items);
       expect(result).toEqual([
-        { name: 'Item 1', price: 100, qty: 1, category: undefined, subcategory: undefined },
+        { name: 'Item 1', totalPrice: 100, qty: 1, category: undefined, subcategory: undefined },
       ]);
     });
 
     it('should prefer quantity over qty when both present', () => {
-      const items = [{ name: 'Item 1', price: 100, quantity: 5, qty: 3 }];
+      const items = [{ name: 'Item 1', totalPrice: 100, quantity: 5, qty: 3 }];
       const result = normalizeItems(items);
       expect(result[0].qty).toBe(5);
     });
 
     it('should preserve category and subcategory', () => {
-      const items = [{ name: 'Item 1', price: 100, category: 'Food', subcategory: 'Dairy' }];
+      const items = [{ name: 'Item 1', totalPrice: 100, category: 'Food', subcategory: 'Dairy' }];
       const result = normalizeItems(items);
       expect(result).toEqual([
-        { name: 'Item 1', price: 100, qty: 1, category: 'Food', subcategory: 'Dairy' },
+        { name: 'Item 1', totalPrice: 100, qty: 1, category: 'Food', subcategory: 'Dairy' },
       ]);
     });
 
     it('should normalize multiple items', () => {
       const items = [
-        { name: 'Item 1', price: 100 },
-        { name: 'Item 2', price: 200, quantity: 2 },
-        { name: 'Item 3', price: 300, qty: 3 },
+        { name: 'Item 1', totalPrice: 100 },
+        { name: 'Item 2', totalPrice: 200, quantity: 2 },
+        { name: 'Item 3', totalPrice: 300, qty: 3 },
       ];
       const result = normalizeItems(items);
       expect(result.length).toBe(3);
@@ -346,8 +346,8 @@ describe('processScan utilities', () => {
     };
 
     const mockParsedItems: TransactionItem[] = [
-      { name: 'Item 1', price: 5000, qty: 1 },
-      { name: 'Item 2', price: 10000, qty: 1 },
+      { name: 'Item 1', totalPrice: 5000, qty: 1 },
+      { name: 'Item 2', totalPrice: 10000, qty: 1 },
     ];
 
     const mockLocation = { country: 'Chile', city: 'Santiago' };
@@ -463,7 +463,7 @@ describe('processScan utilities', () => {
 
   describe('hasItems', () => {
     it('should return true for non-empty arrays', () => {
-      expect(hasItems([{ name: 'Item', price: 100 }])).toBe(true);
+      expect(hasItems([{ name: 'Item', totalPrice: 100 }])).toBe(true);
     });
 
     it('should return false for empty arrays', () => {

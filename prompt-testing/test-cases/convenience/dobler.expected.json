@@ -23,28 +23,28 @@
     "items": [
       {
         "name": "ESPATULA ALBAÑIL 15 M/PLAST-SMART WOKIN",
-        "price": 1890,
+        "totalPrice": 1890,
         "quantity": 1,
         "category": "Hardware",
         "subcategory": null
       },
       {
         "name": "ESPATULA ALBAÑIL 3 MUPLAST SMART WOKIN",
-        "price": 2290,
+        "totalPrice": 2290,
         "quantity": 1,
         "category": "Hardware",
         "subcategory": null
       },
       {
         "name": "MACHETE 10 FULG TRAMONTINA",
-        "price": 6490,
+        "totalPrice": 6490,
         "quantity": 1,
         "category": "Hardware",
         "subcategory": null
       },
       {
         "name": "FMIX HECHONA P/PASTO/TRIGO MANGO MAD TRAMON",
-        "price": 12990,
+        "totalPrice": 12990,
         "quantity": 1,
         "category": "Garden",
         "subcategory": null

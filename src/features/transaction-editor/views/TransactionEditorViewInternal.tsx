@@ -111,7 +111,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
 
   const calculatedTotal = useMemo(() => {
     if (!transaction?.items) return 0;
-    return transaction.items.reduce((sum, item) => sum + item.price, 0);
+    return transaction.items.reduce((sum, item) => sum + item.totalPrice, 0);
   }, [transaction?.items]);
 
   const itemsByGroup = useMemo(() => {
@@ -123,7 +123,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
       groups[gk].push({ item, originalIndex: index });
     });
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
-      .map(([groupKey, items]) => ({ groupKey, items: items.sort((a, b) => b.item.price - a.item.price), total: items.reduce((s, { item }) => s + item.price, 0) }));
+      .map(([groupKey, items]) => ({ groupKey, items: items.sort((a, b) => b.item.totalPrice - a.item.totalPrice), total: items.reduce((s, { item }) => s + item.totalPrice, 0) }));
   }, [transaction?.items]);
 
   const { itemSuggestions, handleShowSuggestion } = useCrossStoreSuggestions({
@@ -151,7 +151,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
 
   const handleAddItem = () => {
     if (!transaction) return;
-    onUpdateTransaction({ ...transaction, items: [...transaction.items, { name: '', price: 0, category: 'Other', subcategory: '' }] });
+    onUpdateTransaction({ ...transaction, items: [...transaction.items, { name: '', totalPrice: 0, category: 'Other', subcategory: '' }] });
     setEditingItemIndex(transaction.items.length);
   };
   const handleUpdateItem = (index: number, field: string, value: unknown) => {

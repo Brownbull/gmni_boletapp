@@ -21,7 +21,7 @@ function createTransaction(overrides: Partial<Transaction> = {}): Transaction {
     date: '2024-01-15',
     total: 25000,
     category: 'Supermarket',
-    items: [{ name: 'Test Item', price: 5000, qty: 1 }],
+    items: [{ name: 'Test Item', totalPrice: 5000, qty: 1 }],
     ...overrides,
   };
 }
@@ -83,7 +83,7 @@ describe('confidenceCheck', () => {
 
     it('considers item with name but no price as invalid', () => {
       const noPrice = createTransaction({
-        items: [{ name: 'Test', price: -1, qty: 1 }],
+        items: [{ name: 'Test', totalPrice: -1, qty: 1 }],
       });
       // Negative prices should not count
       const breakdown = getConfidenceBreakdown(noPrice);
@@ -92,7 +92,7 @@ describe('confidenceCheck', () => {
 
     it('considers item with 0 price as valid', () => {
       const zeroPrice = createTransaction({
-        items: [{ name: 'Free Sample', price: 0, qty: 1 }],
+        items: [{ name: 'Free Sample', totalPrice: 0, qty: 1 }],
       });
       const breakdown = getConfidenceBreakdown(zeroPrice);
       expect(breakdown.items).toBe(true);
@@ -210,7 +210,7 @@ describe('confidenceCheck', () => {
 
     it('handles item with empty name as invalid', () => {
       const transaction = createTransaction({
-        items: [{ name: '', price: 100, qty: 1 }],
+        items: [{ name: '', totalPrice: 100, qty: 1 }],
       });
       const breakdown = getConfidenceBreakdown(transaction);
       expect(breakdown.items).toBe(false);
@@ -218,7 +218,7 @@ describe('confidenceCheck', () => {
 
     it('handles item with whitespace-only name as invalid', () => {
       const transaction = createTransaction({
-        items: [{ name: '   ', price: 100, qty: 1 }],
+        items: [{ name: '   ', totalPrice: 100, qty: 1 }],
       });
       const breakdown = getConfidenceBreakdown(transaction);
       expect(breakdown.items).toBe(false);

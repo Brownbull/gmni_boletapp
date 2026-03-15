@@ -232,7 +232,7 @@ describe('TestCaseFile Schema', () => {
         date: '2025-12-11',
         total: 1000,
         category: 'Test',
-        items: [{ name: 'Item 1', price: 500 }],
+        items: [{ name: 'Item 1', totalPrice: 500 }],
         model: 'gemini-1.5-flash',
         modelVersion: '1.5',
         extractedAt: '2025-12-11T00:00:00Z',
@@ -272,7 +272,7 @@ describe('TestCaseFile Schema', () => {
     it('should accept item corrections by index', () => {
       const corrections = {
         items: {
-          '0': { price: 1000 },
+          '0': { totalPrice: 1000 },
           '2': { name: 'Corrected Name', delete: true },
         },
       };
@@ -284,8 +284,8 @@ describe('TestCaseFile Schema', () => {
     it('should accept addItems array', () => {
       const corrections = {
         addItems: [
-          { name: 'Missing Item', price: 500 },
-          { name: 'Another Missing', price: 750, category: 'Test' },
+          { name: 'Missing Item', totalPrice: 500 },
+          { name: 'Another Missing', totalPrice: 750, category: 'Test' },
         ],
       };
 

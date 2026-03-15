@@ -50,7 +50,7 @@ function createMockTransaction(overrides: Partial<Transaction> = {}): Transactio
     merchant: 'Test Merchant',
     category: 'Supermarket',
     total: 15000,
-    items: [{ name: 'Test Item', price: 15000, qty: 1 }],
+    items: [{ name: 'Test Item', totalPrice: 15000, qty: 1 }],
     currency: 'CLP',
     ...overrides,
   };

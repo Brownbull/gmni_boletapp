@@ -198,6 +198,7 @@ interface MonthlyItemRow {
   transactionTotal: number;
   itemName: string;
   itemQty: number;
+  itemUnitPrice: number;
   itemPrice: number;
   itemCategory: string;
   itemSubcategory: string;
@@ -213,6 +214,7 @@ const MONTHLY_ITEM_COLUMNS: Column<MonthlyItemRow>[] = [
   { key: 'transactionTotal', header: 'Transaction Total' },
   { key: 'itemName', header: 'Item Name' },
   { key: 'itemQty', header: 'Qty' },
+  { key: 'itemUnitPrice', header: 'Unit Price' },
   { key: 'itemPrice', header: 'Item Price' },
   { key: 'itemCategory', header: 'Item Category' },
   { key: 'itemSubcategory', header: 'Item Subcategory' },
@@ -322,7 +324,8 @@ export function downloadMonthlyTransactions(
           ...baseRow,
           itemName: item.name,
           itemQty: item.qty || 1,
-          itemPrice: item.price,
+          itemUnitPrice: item.unitPrice ?? item.totalPrice,
+          itemPrice: item.totalPrice,
           itemCategory: item.category || '',
           itemSubcategory: item.subcategory || '',
         });
@@ -333,6 +336,7 @@ export function downloadMonthlyTransactions(
         ...baseRow,
         itemName: '',
         itemQty: 0,
+        itemUnitPrice: 0,
         itemPrice: 0,
         itemCategory: '',
         itemSubcategory: '',

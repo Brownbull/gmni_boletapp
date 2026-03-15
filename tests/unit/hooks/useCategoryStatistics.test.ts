@@ -33,9 +33,9 @@ const mockTransactions: Transaction[] = [
     total: 15000,
     category: 'Supermarket',
     items: [
-      { name: 'Apples', price: 5000, qty: 1, category: 'Frutas y Verduras' },
-      { name: 'Bread', price: 3000, qty: 1, category: 'Panadería' },
-      { name: 'Milk', price: 7000, qty: 1, category: 'Lácteos y Huevos' },
+      { name: 'Apples', totalPrice: 5000, qty: 1, category: 'Frutas y Verduras' },
+      { name: 'Bread', totalPrice: 3000, qty: 1, category: 'Panadería' },
+      { name: 'Milk', totalPrice: 7000, qty: 1, category: 'Lácteos y Huevos' },
     ],
   }),
   createTransaction({
@@ -44,9 +44,9 @@ const mockTransactions: Transaction[] = [
     total: 25000,
     category: 'Supermarket',
     items: [
-      { name: 'Chicken', price: 12000, qty: 1, category: 'Carnes y Mariscos' },
-      { name: 'Rice', price: 8000, qty: 1, category: 'Despensa' },
-      { name: 'Cheese', price: 5000, qty: 1, category: 'Lácteos y Huevos' },
+      { name: 'Chicken', totalPrice: 12000, qty: 1, category: 'Carnes y Mariscos' },
+      { name: 'Rice', totalPrice: 8000, qty: 1, category: 'Despensa' },
+      { name: 'Cheese', totalPrice: 5000, qty: 1, category: 'Lácteos y Huevos' },
     ],
   }),
   createTransaction({
@@ -55,8 +55,8 @@ const mockTransactions: Transaction[] = [
     total: 8000,
     category: 'Restaurant',
     items: [
-      { name: 'Burger', price: 5000, qty: 1, category: 'Comida Preparada' },
-      { name: 'Fries', price: 3000, qty: 1, category: 'Comida Preparada' },
+      { name: 'Burger', totalPrice: 5000, qty: 1, category: 'Comida Preparada' },
+      { name: 'Fries', totalPrice: 3000, qty: 1, category: 'Comida Preparada' },
     ],
   }),
   createTransaction({
@@ -65,8 +65,8 @@ const mockTransactions: Transaction[] = [
     total: 20000,
     category: 'Supermarket',
     items: [
-      { name: 'Beef', price: 15000, qty: 1, category: 'Carnes y Mariscos' },
-      { name: 'Vegetables', price: 5000, qty: 1, category: 'Frutas y Verduras' },
+      { name: 'Beef', totalPrice: 15000, qty: 1, category: 'Carnes y Mariscos' },
+      { name: 'Vegetables', totalPrice: 5000, qty: 1, category: 'Frutas y Verduras' },
     ],
   }),
 ];
@@ -270,8 +270,8 @@ describe('useCategoryStatistics', () => {
           total: 5000,
           category: 'Supermarket',
           items: [
-            { name: 'Free Sample', price: 0, qty: 1, category: 'Otro' },
-            { name: 'Paid Item', price: 5000, qty: 1, category: 'Otro' },
+            { name: 'Free Sample', totalPrice: 0, qty: 1, category: 'Otro' },
+            { name: 'Paid Item', totalPrice: 5000, qty: 1, category: 'Otro' },
           ],
         }),
       ];
@@ -328,7 +328,7 @@ describe('useCategoryStatistics', () => {
           id: 'tx-single',
           total: 10000,
           category: 'Supermarket',
-          items: [{ name: 'Item', price: 10000, qty: 1, category: 'Otro' }],
+          items: [{ name: 'Item', totalPrice: 10000, qty: 1, category: 'Otro' }],
         }),
       ];
 

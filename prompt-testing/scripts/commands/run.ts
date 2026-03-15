@@ -794,7 +794,7 @@ function getGroundTruth(testCase: TestCaseFile): {
   date: string;
   total: number;
   category: string;
-  items: Array<{ name: string; price: number; category?: string }>;
+  items: Array<{ name: string; totalPrice: number; unitPrice?: number; category?: string }>;
 } {
   const ai = testCase.aiExtraction;
   const corrections = testCase.corrections;
@@ -808,7 +808,8 @@ function getGroundTruth(testCase: TestCaseFile): {
     category: ai?.category ?? '',
     items: baseItems.map((item) => ({
       name: item.name,
-      price: item.price,
+      totalPrice: item.totalPrice,
+      unitPrice: item.unitPrice,
       category: item.category,
     })),
   };
@@ -830,7 +831,7 @@ function getGroundTruth(testCase: TestCaseFile): {
             result.items[index] = { ...result.items[index], name: '__DELETE__' };
           } else {
             if (correction.name !== undefined) result.items[index].name = correction.name;
-            if (correction.price !== undefined) result.items[index].price = correction.price;
+            if (correction.totalPrice !== undefined) result.items[index].totalPrice = correction.totalPrice;
             if (correction.category !== undefined) result.items[index].category = correction.category;
           }
         }
@@ -888,7 +889,7 @@ function compareResults(
     const actualItem = actual.items[i];
 
     if (expectedItem && actualItem) {
-      const priceMatch = Math.abs(expectedItem.price - actualItem.price) < 0.01;
+      const priceMatch = Math.abs(expectedItem.totalPrice - actualItem.totalPrice) < 0.01;
       if (priceMatch) {
         priceMatchCount++;
       }
@@ -898,8 +899,8 @@ function compareResults(
         actualName: actualItem.name,
         nameSimilarity: simpleSimilarity(expectedItem.name, actualItem.name),
         nameMatch: true,
-        expectedPrice: expectedItem.price,
-        actualPrice: actualItem.price,
+        expectedPrice: expectedItem.totalPrice,
+        actualPrice: actualItem.totalPrice,
         priceMatch,
         match: priceMatch,
       });
@@ -911,7 +912,7 @@ function compareResults(
         actualName: '',
         nameSimilarity: 0,
         nameMatch: false,
-        expectedPrice: expectedItem.price,
+        expectedPrice: expectedItem.totalPrice,
         actualPrice: 0,
         priceMatch: false,
         match: false,

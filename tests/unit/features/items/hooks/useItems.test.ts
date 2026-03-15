@@ -33,8 +33,8 @@ const createMockTransaction = (overrides?: Partial<Transaction>): Transaction =>
     total: 10000,
     category: 'Supermarket',
     items: [
-        { name: 'Milk', price: 3000, category: 'Dairy & Eggs' },
-        { name: 'Bread', price: 2000, category: 'Bakery' },
+        { name: 'Milk', totalPrice: 3000, category: 'Dairy & Eggs' },
+        { name: 'Bread', totalPrice: 2000, category: 'Bakery' },
     ],
     ...overrides,
 });
@@ -51,9 +51,9 @@ const mockTransactions: Transaction[] = [
         country: 'Chile',
         currency: 'CLP',
         items: [
-            { name: 'Milk', price: 3000, category: 'Dairy & Eggs' },
-            { name: 'Bread', price: 2000, category: 'Bakery' },
-            { name: 'Apples', price: 5000, category: 'Produce', qty: 5 },
+            { name: 'Milk', totalPrice: 3000, category: 'Dairy & Eggs' },
+            { name: 'Bread', totalPrice: 2000, category: 'Bakery' },
+            { name: 'Apples', totalPrice: 5000, category: 'Produce', qty: 5 },
         ],
     }),
     createMockTransaction({
@@ -64,8 +64,8 @@ const mockTransactions: Transaction[] = [
         category: 'Supermarket',
         city: 'Viña del Mar',
         items: [
-            { name: 'Chicken', price: 6000, category: 'Meat & Seafood' },
-            { name: 'Rice', price: 2000, category: 'Pantry' },
+            { name: 'Chicken', totalPrice: 6000, category: 'Meat & Seafood' },
+            { name: 'Rice', totalPrice: 2000, category: 'Pantry' },
         ],
     }),
     createMockTransaction({
@@ -76,8 +76,8 @@ const mockTransactions: Transaction[] = [
         category: 'Supermarket',
         city: 'Santiago',
         items: [
-            { name: 'Milk', price: 3000, category: 'Dairy & Eggs' },
-            { name: 'Cookies', price: 1000, category: 'Snacks' },
+            { name: 'Milk', totalPrice: 3000, category: 'Dairy & Eggs' },
+            { name: 'Cookies', totalPrice: 1000, category: 'Snacks' },
         ],
     }),
 ];
@@ -314,13 +314,13 @@ describe('sorting functions', () => {
         it('sorts by price descending (highest first)', () => {
             const sorted = sortItemsByPrice(allItems, 'desc');
 
-            expect(sorted[0].price).toBeGreaterThanOrEqual(sorted[sorted.length - 1].price);
+            expect(sorted[0].totalPrice).toBeGreaterThanOrEqual(sorted[sorted.length - 1].totalPrice);
         });
 
         it('sorts by price ascending (lowest first)', () => {
             const sorted = sortItemsByPrice(allItems, 'asc');
 
-            expect(sorted[0].price).toBeLessThanOrEqual(sorted[sorted.length - 1].price);
+            expect(sorted[0].totalPrice).toBeLessThanOrEqual(sorted[sorted.length - 1].totalPrice);
         });
     });
 

@@ -456,7 +456,7 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
 
       const parsedItems = (result.items || []).map(i => ({
         ...i,
-        price: parseStrictNumber(i.price),
+        totalPrice: parseStrictNumber(i.totalPrice),
         qty: (i as any).quantity ?? i.qty ?? 1,
       }));
 

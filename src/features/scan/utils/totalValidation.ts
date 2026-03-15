@@ -50,9 +50,9 @@ export function calculateItemsSum(items: TransactionItem[]): number {
     return 0;
   }
 
-  // Price is already the line total (qty × unit price), so just sum prices
+  // totalPrice is already the line total (qty × unit price), so just sum prices
   return items.reduce((sum, item) => {
-    const price = typeof item.price === 'number' ? item.price : 0;
+    const price = typeof item.totalPrice === 'number' ? item.totalPrice : 0;
     return sum + price;
   }, 0);
 }

@@ -309,7 +309,7 @@ describe('migrateCategories Cloud Function', () => {
         const userDoc = { id: 'user1' };
         const txDoc = makeDocSnapshot('tx1', {
             category: 'Clothing', // Legacy V3
-            items: [{ name: 'Shirt', category: 'Clothing', price: 100 }],
+            items: [{ name: 'Shirt', category: 'Clothing', totalPrice: 100 }],
         });
 
         mockCollection.mockImplementation((path: string) => {
@@ -356,7 +356,7 @@ describe('migrateCategories Cloud Function', () => {
         const txDoc = makeDocSnapshot('tx1', {
             category: 'Supermarket', // Already V4
             items: [
-                { name: 'Apple', category: 'Produce', price: 500 }, // Already V4
+                { name: 'Apple', category: 'Produce', totalPrice: 500 }, // Already V4
             ],
         });
 
@@ -384,7 +384,7 @@ describe('migrateCategories Cloud Function', () => {
                     name: 'Bread',
                     category: 'Bakery',
                     subcategory: 'Bread',
-                    price: 1500,
+                    totalPrice: 1500,
                     qty: 2,
                     categorySource: 'scan',
                 },
@@ -410,7 +410,7 @@ describe('migrateCategories Cloud Function', () => {
                         name: 'Bread',
                         category: 'BreadPastry', // Migrated
                         subcategory: 'Bread', // Preserved
-                        price: 1500, // Preserved
+                        totalPrice: 1500, // Preserved
                         qty: 2, // Preserved
                         categorySource: 'scan', // Preserved
                     }),
@@ -469,9 +469,9 @@ describe('migrateCategories Cloud Function', () => {
         const txDoc = makeDocSnapshot('tx1', {
             category: 'Clothing', // Legacy store -> ClothingStore
             items: [
-                { name: 'Apple', category: 'Produce', price: 500 }, // Already V4
-                { name: 'Bread', category: 'Bakery', price: 1000 }, // Legacy -> BreadPastry
-                { name: 'Milk', category: 'DairyEggs', price: 800 }, // Already V4
+                { name: 'Apple', category: 'Produce', totalPrice: 500 }, // Already V4
+                { name: 'Bread', category: 'Bakery', totalPrice: 1000 }, // Legacy -> BreadPastry
+                { name: 'Milk', category: 'DairyEggs', totalPrice: 800 }, // Already V4
             ],
         });
 

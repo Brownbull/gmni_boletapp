@@ -367,11 +367,17 @@ development_status:
   18-10a-transaction-matching-logic: drafted           # 5 pts - Matching algorithm (fuzzy merchant+amount+date), merge logic, re-import protection, unit tests (DEPENDS: 18-4)
   18-10b-transaction-matching-ui: drafted              # 5 pts - Matching review UI, manual search, amount conflict dialog, store+save (DEPENDS: 18-10a)
   18-6-transaction-editor-new-fields: drafted          # 5 pts - chargeType, installments, recurrence, cardHolder editing in editor (DEPENDS: 18-2)
+  # Scan quality fixes (2026-03-13, pre-credit-card-scanning):
+  TD-18-7-hide-default-time-sentinel: done               # 1 pt  - Hide 04:04 sentinel time in TransactionCard/QuickSaveCard (V2)
+  TD-18-8-rename-item-price-to-totalprice: done         # 3 pts - Rename TransactionItem.price → totalPrice across 33 files (V1+V2, unblocks 18-8)
+  18-8-item-price-extraction: done                     # 5 pts - Add unitPrice + prompt disambiguation + derivation logic (V1+V2, absorbs 18-12) (DEPENDS: TD-18-8)
+  TD-18-6-fuzzy-duplicate-detection: done              # 3 pts - Lowercase containment matching for merchant names (V2) (DEPENDS: TD-18-7)
+  TD-18-5-scan-complete-modal-save-ux: done             # 2 pts - Fix modal close-before-save flash in TransactionEditorScanStatus (V5)
+  TD-18-4-scan-retry-fix: done                         # 5 pts - Backend auto-retry + client retry preserves images + credit handling (V5)
   # Independent (end of epic):
   18-7-receipttype-fix: backlog                        # 2 pts - Re-enable receipt type selection in scan UI (currently dead parameter)
-  18-8-single-scan-prompt-spike: drafted               # 2 pts - Improve quantity/unit price/total calculation in receipt extraction (DEPENDS: 18-12)
   18-9-admin-endpoint-security: backlog                # 3 pts - Secure admin endpoints (adminCleanup, adminSendTest, adminTestWebPush) with Firebase Auth — evaluate Auth callable vs App Check
-  18-12-item-fields-enrichment-analysis: drafted       # 3 pts - Analyze unitPrice/quantity/totalPrice schema + prompt + backward compatibility (DEPENDS: TD-18-2)
+  18-12-item-fields-enrichment-analysis: absorbed      # absorbed-by: 18-8 (2026-03-13) — analysis folded into implementation
   18-11-statement-e2e: drafted                         # 3 pts - E2E tests: on-demand smoke + staging consent/password/matching/reimport (DEPENDS: 18-10b)
 
   epic-18-retrospective: optional

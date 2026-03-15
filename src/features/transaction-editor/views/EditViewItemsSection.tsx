@@ -4,7 +4,7 @@
  * staggered animation, and the Add Item button.
  */
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Trash2, Plus, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trash2, Plus, Check, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
 import { CategoryBadge } from '@features/transaction-editor/components/CategoryBadge';
 import { CategoryCombobox } from '@features/transaction-editor/components/CategoryCombobox';
 import { ItemViewToggle, type ItemViewMode } from '@/components/items/ItemViewToggle';
@@ -17,7 +17,7 @@ import { getItemCategoryGroup, getItemGroupColors } from '@/config/categoryColor
 import { normalizeItemCategory } from '@/utils/categoryNormalizer';
 import { sanitizeInput, sanitizeNumericInput } from '@/utils/sanitize';
 
-type ItemEditableField = 'name' | 'price' | 'category' | 'subcategory';
+type ItemEditableField = 'name' | 'totalPrice' | 'unitPrice' | 'category' | 'subcategory';
 
 function getItemContainerConfig(
     i: number, shouldAnimate: boolean, played: boolean, testIdPrefix: string
@@ -94,8 +94,8 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
             .sort(([a], [b]) => a.localeCompare(b))
             .map(([groupKey, items]) => ({
                 groupKey,
-                items: items.sort((a, b) => b.item.price - a.item.price),
-                total: items.reduce((sum, { item }) => sum + item.price, 0),
+                items: items.sort((a, b) => b.item.totalPrice - a.item.totalPrice),
+                total: items.reduce((sum, { item }) => sum + item.totalPrice, 0),
             }));
     }, [currentTransaction.items]);
 
@@ -111,14 +111,15 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
     const handleAddItem = () => {
         onUpdateTransaction({
             ...currentTransaction,
-            items: [...currentTransaction.items, { name: '', price: 0, category: 'Other', subcategory: '' }],
+            items: [...currentTransaction.items, { name: '', totalPrice: 0, category: 'Other', subcategory: '' }],
         });
         onSetEditingItemIndex(currentTransaction.items.length);
     };
 
     const handleUpdateItem = (index: number, field: ItemEditableField, value: string | number) => {
         const newItems = [...currentTransaction.items];
-        newItems[index] = { ...newItems[index], [field]: field === 'price' ? parseStrictNumber(value) : value };
+        const isNumeric = field === 'totalPrice' || field === 'unitPrice';
+        newItems[index] = { ...newItems[index], [field]: isNumeric ? parseStrictNumber(value) : value };
         onUpdateTransaction({ ...currentTransaction, items: newItems });
     };
 
@@ -178,7 +179,10 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
                                                 {editingItemIndex === i ? (
                                                     <div className="p-3 rounded-lg space-y-2" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
                                                         <input className="w-full p-2 border rounded-lg text-sm" style={inputStyle} value={item.name} onChange={e => handleUpdateItem(i, 'name', sanitizeInput(e.target.value, { maxLength: 100 }))} placeholder={t('itemName')} autoFocus />
-                                                        <input type="number" className="w-full p-2 border rounded-lg text-sm" style={inputStyle} value={item.price} onChange={e => handleUpdateItem(i, 'price', sanitizeNumericInput(e.target.value))} placeholder={t('price')} />
+                                                        <div className="flex gap-2">
+                                                            <input type="number" className="flex-1 p-2 border rounded-lg text-sm" style={inputStyle} value={item.totalPrice} onChange={e => handleUpdateItem(i, 'totalPrice', sanitizeNumericInput(e.target.value))} placeholder={t('price')} />
+                                                            {(item.qty ?? 1) > 1 && <input type="number" className="w-28 p-2 border rounded-lg text-sm" style={inputStyle} value={item.unitPrice ?? ''} onChange={e => handleUpdateItem(i, 'unitPrice', sanitizeNumericInput(e.target.value))} placeholder={t('unitPrice')} />}
+                                                        </div>
                                                         <CategoryCombobox value={(item.category as string) || ''} onChange={(value) => handleUpdateItem(i, 'category', value)} language={language} theme={theme as 'light' | 'dark'} placeholder={t('itemCat')} ariaLabel={t('itemCat')} />
                                                         <input className="w-full p-2 border rounded-lg text-sm" style={inputStyle} value={item.subcategory || ''} onChange={e => handleUpdateItem(i, 'subcategory', sanitizeInput(e.target.value, { maxLength: 50 }))} placeholder={t('itemSubcat')} />
                                                         <div className="flex justify-end gap-2 pt-1">
@@ -191,16 +195,16 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
                                                         <div className="flex justify-between items-start gap-2 mb-1">
                                                             <div className="flex items-center gap-1 flex-1 min-w-0">
                                                                 <span className="text-xs font-medium truncate" style={{ color: 'var(--text-primary)' }} title={item.name}>{item.name}</span>
-                                                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="2" style={{ opacity: 0.6, flexShrink: 0 }}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                                                                <Pencil size={10} strokeWidth={2} style={{ color: 'var(--text-tertiary)', opacity: 0.6, flexShrink: 0 }} />
                                                             </div>
-                                                            <span className="text-xs font-semibold flex-shrink-0" style={{ color: 'var(--text-primary)' }}>{formatCurrency(item.price, displayCurrency)}</span>
+                                                            <span className="text-xs font-semibold flex-shrink-0" style={{ color: 'var(--text-primary)' }}>{formatCurrency(item.totalPrice, displayCurrency)}</span>
                                                         </div>
                                                         <div className="flex justify-between items-center">
                                                             <div className="flex flex-wrap items-center gap-1">
                                                                 <CategoryBadge category={(item.category as string) || 'Other'} lang={language} mini />
                                                                 {item.subcategory && <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-tertiary)' }}>{item.subcategory}</span>}
                                                             </div>
-                                                            {(item.qty ?? 1) > 1 && <span className="text-xs font-medium flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>x{Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}</span>}
+                                                            {(item.qty ?? 1) > 1 && <span className="text-xs font-medium flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>{item.unitPrice ? `${formatCurrency(item.unitPrice, displayCurrency)} x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}` : `x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}`}</span>}
                                                         </div>
                                                     </div>
                                                 )}
@@ -232,7 +236,8 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
                                                         <input className="flex-1 p-2 border rounded-lg text-sm" style={inputStyle} value={item.name} onChange={e => handleUpdateItem(i, 'name', sanitizeInput(e.target.value, { maxLength: 100 }))} placeholder={t('itemName')} autoFocus />
                                                     </div>
                                                     <div className="flex items-center gap-2 pl-7">
-                                                        <input type="number" step="0.01" className="w-24 p-2 border rounded-lg text-sm" style={inputStyle} value={item.price} onChange={e => handleUpdateItem(i, 'price', sanitizeNumericInput(e.target.value))} placeholder={t('price')} />
+                                                        <input type="number" step="0.01" className="w-24 p-2 border rounded-lg text-sm" style={inputStyle} value={item.totalPrice} onChange={e => handleUpdateItem(i, 'totalPrice', sanitizeNumericInput(e.target.value))} placeholder={t('price')} />
+                                                        {(item.qty ?? 1) > 1 && <input type="number" className="w-20 p-2 border rounded-lg text-sm" style={inputStyle} value={item.unitPrice ?? ''} onChange={e => handleUpdateItem(i, 'unitPrice', sanitizeNumericInput(e.target.value))} placeholder={t('unitPrice')} />}
                                                         <CategoryBadge category={(item.category as string) || 'Other'} lang={language} mini />
                                                         <div className="flex-1" />
                                                         <button onClick={() => handleDeleteItem(i)} className="min-w-8 min-h-8 p-1 rounded-lg flex items-center justify-center" style={{ color: 'var(--error)', backgroundColor: isDark ? 'rgba(248, 113, 113, 0.1)' : 'rgba(239, 68, 68, 0.1)' }} aria-label={t('deleteItem')}><Trash2 size={14} strokeWidth={2} /></button>
@@ -246,14 +251,14 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
                                                         <div className="flex items-center justify-between gap-2">
                                                             <div className="flex items-center gap-1 min-w-0 flex-1">
                                                                 <span className="text-xs font-medium truncate" style={{ color: 'var(--text-primary)' }} title={item.name}>{item.name}</span>
-                                                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="2" style={{ opacity: 0.6, flexShrink: 0 }}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                                                                <Pencil size={10} strokeWidth={2} style={{ color: 'var(--text-tertiary)', opacity: 0.6, flexShrink: 0 }} />
                                                             </div>
-                                                            <span className="text-xs font-semibold flex-shrink-0" style={{ color: 'var(--text-primary)' }}>{formatCurrency(item.price, displayCurrency)}</span>
+                                                            <span className="text-xs font-semibold flex-shrink-0" style={{ color: 'var(--text-primary)' }}>{formatCurrency(item.totalPrice, displayCurrency)}</span>
                                                         </div>
                                                         <div className="flex items-center gap-1 mt-0.5">
                                                             <CategoryBadge category={(item.category as string) || 'Other'} lang={language} mini />
                                                             {item.subcategory && <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-tertiary)' }}>{item.subcategory}</span>}
-                                                            {(item.qty ?? 1) > 1 && <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>x{Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}</span>}
+                                                            {(item.qty ?? 1) > 1 && <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>{item.unitPrice ? `${formatCurrency(item.unitPrice, displayCurrency)} x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}` : `x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}`}</span>}
                                                         </div>
                                                     </div>
                                                 </div>

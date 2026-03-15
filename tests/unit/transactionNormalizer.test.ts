@@ -139,7 +139,7 @@ describe('transactionNormalizer', () => {
           date: '2025-12-13',
           total: 999,
           category: 'Restaurant',
-          items: [{ name: 'Item', price: 10 }],
+          items: [{ name: 'Item', totalPrice: 10 }],
           imageUrls: ['http://example.com/img.jpg'],
           thumbnailUrl: 'http://example.com/thumb.jpg',
           currency: 'USD',

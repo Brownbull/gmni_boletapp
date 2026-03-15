@@ -11,13 +11,15 @@ import type { ItemCategory, CategorySource, MerchantSource } from '../../../../s
  */
 export interface TransactionItem {
     name: string;
-    price: number;
+    totalPrice: number;
     /** Story 9.2: Item category using ItemCategory type */
     category?: ItemCategory | string;
     subcategory?: string;
     categorySource?: CategorySource;
     /** Story 9.15: Source of subcategory assignment */
     subcategorySource?: CategorySource;
+    /** Story 18-8: Price per single unit */
+    unitPrice?: number;
     /** Story 14.15b: Item quantity (default 1) */
     qty?: number;
 }

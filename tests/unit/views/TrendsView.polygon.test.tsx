@@ -88,7 +88,7 @@ const mockTransactionsWithCategories: Transaction[] = [
     merchant: 'Supermarket A',
     category: 'Supermarket',
     total: 50000,
-    items: [{ name: 'Groceries', price: 50000, category: 'Fresh Food', subcategory: 'Produce' }],
+    items: [{ name: 'Groceries', totalPrice: 50000, category: 'Fresh Food', subcategory: 'Produce' }],
   },
   {
     id: 't2',
@@ -96,7 +96,7 @@ const mockTransactionsWithCategories: Transaction[] = [
     merchant: 'Restaurant B',
     category: 'Restaurant',
     total: 30000,
-    items: [{ name: 'Dinner', price: 30000, category: 'Food', subcategory: 'Meals' }],
+    items: [{ name: 'Dinner', totalPrice: 30000, category: 'Food', subcategory: 'Meals' }],
   },
   {
     id: 't3',
@@ -104,7 +104,7 @@ const mockTransactionsWithCategories: Transaction[] = [
     merchant: 'Pharmacy C',
     category: 'Pharmacy',
     total: 20000,
-    items: [{ name: 'Medicine', price: 20000, category: 'Health', subcategory: 'OTC' }],
+    items: [{ name: 'Medicine', totalPrice: 20000, category: 'Health', subcategory: 'OTC' }],
   },
 ];
 
@@ -456,7 +456,7 @@ describe('TrendsView Explora - Empty States', () => {
       merchant: 'Store',
       category: 'Supermarket',
       total: 100,
-      items: [{ name: 'Item', price: 100, category: 'Food', subcategory: 'Food' }],
+      items: [{ name: 'Item', totalPrice: 100, category: 'Food', subcategory: 'Food' }],
     }];
 
     expect(() => renderTrendsView(singleCategory)).not.toThrow();
@@ -484,7 +484,7 @@ describe('TrendsView Explora - Story 14.13.2: Period Comparison', () => {
       merchant: 'Supermarket A',
       category: 'Supermarket',
       total: 50000, // Higher than previous month
-      items: [{ name: 'Groceries', price: 50000, category: 'Fresh Food', subcategory: 'Produce' }],
+      items: [{ name: 'Groceries', totalPrice: 50000, category: 'Fresh Food', subcategory: 'Produce' }],
     },
     {
       id: 't2',
@@ -492,7 +492,7 @@ describe('TrendsView Explora - Story 14.13.2: Period Comparison', () => {
       merchant: 'Restaurant B',
       category: 'Restaurant',
       total: 20000, // Lower than previous month
-      items: [{ name: 'Dinner', price: 20000, category: 'Food', subcategory: 'Meals' }],
+      items: [{ name: 'Dinner', totalPrice: 20000, category: 'Food', subcategory: 'Meals' }],
     },
     // Previous month
     {
@@ -501,7 +501,7 @@ describe('TrendsView Explora - Story 14.13.2: Period Comparison', () => {
       merchant: 'Supermarket A',
       category: 'Supermarket',
       total: 40000, // Previous month value
-      items: [{ name: 'Groceries', price: 40000, category: 'Fresh Food', subcategory: 'Produce' }],
+      items: [{ name: 'Groceries', totalPrice: 40000, category: 'Fresh Food', subcategory: 'Produce' }],
     },
     {
       id: 't4',
@@ -509,7 +509,7 @@ describe('TrendsView Explora - Story 14.13.2: Period Comparison', () => {
       merchant: 'Restaurant B',
       category: 'Restaurant',
       total: 30000, // Previous month value (higher)
-      items: [{ name: 'Lunch', price: 30000, category: 'Food', subcategory: 'Meals' }],
+      items: [{ name: 'Lunch', totalPrice: 30000, category: 'Food', subcategory: 'Meals' }],
     },
   ];
 
@@ -554,7 +554,7 @@ describe('TrendsView Explora - Story 14.13.2: Period Comparison', () => {
         merchant: 'New Pharmacy',
         category: 'Pharmacy',
         total: 15000,
-        items: [{ name: 'Medicine', price: 15000, category: 'Health', subcategory: 'OTC' }],
+        items: [{ name: 'Medicine', totalPrice: 15000, category: 'Health', subcategory: 'OTC' }],
       },
     ];
 
