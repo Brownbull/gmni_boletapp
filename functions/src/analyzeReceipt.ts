@@ -3,6 +3,7 @@ import * as functions from 'firebase-functions'
 import * as admin from 'firebase-admin'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { base64ToBuffer, resizeAndCompress, generateThumbnail } from './imageProcessing'
+import { withRetry, isTransientGeminiError, GEMINI_RETRY_DELAY_MS } from './utils/retryHelper'
 import { uploadReceiptImages } from './storageService'
 import { buildPrompt, getActivePrompt, RECEIPT_TYPES } from './prompts'
 import type { ReceiptType } from './prompts'
@@ -542,11 +543,14 @@ export const analyzeReceipt = functions.https.onCall(
         // date is auto-generated to today's date
       })
 
-      // Call Gemini API with optimized images
-      const result = await model.generateContent([
-        { text: prompt },
-        ...imageParts
-      ])
+      // Call Gemini API with optimized images (TD-18-4: auto-retry on transient errors)
+      // ACCEPTED RISK: retry consumes 2 Gemini API calls per 1 rate-limit slot.
+      // At maxRetries=1 this is a fixed 2x multiplier, acceptable at current traffic (<100 scans/day).
+      const result = await withRetry(
+        () => model.generateContent([{ text: prompt }, ...imageParts]),
+        isTransientGeminiError,
+        { maxRetries: 1, delayMs: GEMINI_RETRY_DELAY_MS }
+      )
 
       const response = result.response
       const text = response.text()

@@ -77,3 +77,5 @@
 | 2026-03-14 | TD-18-6 | review | boletapp-dev | ✓ done | none |
 | 2026-03-14 | TD-18-5 | none | boletapp-dev | ✓ done | none |
 | 2026-03-15 | TD-18-5 | review | boletapp-dev | ✓ done | ⚑ scope-bundling (126 files in 2-point commit) |
+| 2026-03-15 | TD-18-4 | none | boletapp-dev | ✓ done | Backend auto-retry (withRetry + isTransientGeminiError, 18 tests). Client retry button: stash images from workflow store before reset, credit check, re-trigger processScan. Ref-indirection pattern for App.tsx hook ordering. Self-review APPROVE 8/10, 3 fixes applied (removed unnecessary useRef, named constant, comment). E2E deferred (staging). | none |
+| 2026-03-15 | TD-18-4 | review | boletapp-dev | ✓ done | none |

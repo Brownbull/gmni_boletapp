@@ -138,6 +138,14 @@
 - **Stage:** PROD — Test coverage gap for public API
 - **Estimated effort:** 1 point (add 3-4 simple tests)
 
+### [PROD] Missing Test for Credit Deduction During Retry Path
+
+- **Source:** TD-18-4-scan-retry-fix review (2026-03-15)
+- **Finding:** AC-9 states "credit re-reserved on retry" but no test asserts that `deductUserCredits` is called when `processScan` is triggered via the retry handler. `processScan` handles its own credit lifecycle, so the behavior is correct, but no test coverage verifies the deduction fires on the retry code path specifically.
+- **Files:** `tests/unit/features/scan/hooks/useScanHandlers.errorRecovery.test.ts`, `src/features/scan/handlers/processScan/processScan.ts`
+- **Stage:** PROD — Test coverage gap for financial operation
+- **Estimated effort:** 1-2 points (integration test asserting deductUserCredits called on retry path)
+
 ---
 
 ## SCALE Backlog
@@ -149,6 +157,14 @@
 - **Files:** `src/services/duplicateDetectionService.ts`
 - **Stage:** SCALE — Only relevant at high transaction volume with pathological data patterns
 - **Estimated effort:** 1 point (add early-exit or warning if group size > 20)
+
+### [SCALE] Imprecise Transient Error Keyword Matching in retryHelper
+
+- **Source:** TD-18-4-scan-retry-fix review (2026-03-15)
+- **Finding:** `TRANSIENT_KEYWORDS` in `retryHelper.ts` uses substring matching (`msg.includes(keyword)`). The keyword `enotfound` could false-positive on error messages containing "not found" in other contexts (e.g., "not found in response body"). A word-boundary regex or code-based check (`error.code === 'ENOTFOUND'`) would be more precise.
+- **Files:** `functions/src/utils/retryHelper.ts`
+- **Stage:** SCALE — Only relevant at high error volume where false-positive retries waste Gemini API calls
+- **Estimated effort:** 1 point (switch to regex or error.code check for network error keywords)
 
 ### [SCALE] Guard Violation Logging in Production
 
