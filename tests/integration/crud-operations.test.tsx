@@ -54,8 +54,8 @@ describe('Transaction CRUD Operations', () => {
       category: 'Supermarket',
       total: 45.99,
       items: [
-        { name: 'Test Item 1', qty: 2, price: 10.50 },
-        { name: 'Test Item 2', qty: 1, price: 24.99 }
+        { name: 'Test Item 1', qty: 2, totalPrice: 10.50 },
+        { name: 'Test Item 2', qty: 1, totalPrice: 24.99 }
       ]
     };
 
@@ -89,9 +89,9 @@ describe('Transaction CRUD Operations', () => {
       category: 'Supermarket',
       total: 87.43,
       items: [
-        { name: 'Organic Milk', qty: 2, price: 6.99 },
-        { name: 'Fresh Vegetables', qty: 1, price: 12.50 },
-        { name: 'Chicken Breast', qty: 2, price: 15.99 }
+        { name: 'Organic Milk', qty: 2, totalPrice: 6.99 },
+        { name: 'Fresh Vegetables', qty: 1, totalPrice: 12.50 },
+        { name: 'Chicken Breast', qty: 2, totalPrice: 15.99 }
       ]
     };
 

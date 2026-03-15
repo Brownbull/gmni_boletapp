@@ -60,7 +60,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
         it('should apply category mappings to transaction from Gemini', () => {
             // Simulate Gemini response
             const geminiTransaction = createMockGeminiTransaction('UBER', 'Other', [
-                { name: 'Ride to airport', price: 50 },
+                { name: 'Ride to airport', totalPrice: 50 },
             ]);
 
             // User's learned mappings
@@ -76,7 +76,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
 
         it('should return original transaction when no mappings exist', () => {
             const geminiTransaction = createMockGeminiTransaction('WALMART', 'Other', [
-                { name: 'Groceries', price: 100 },
+                { name: 'Groceries', totalPrice: 100 },
             ]);
 
             const { transaction: result, appliedMappingIds } = applyCategoryMappings(
@@ -90,7 +90,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
 
         it('should return original transaction when no matches found', () => {
             const geminiTransaction = createMockGeminiTransaction('UNKNOWN STORE', 'Other', [
-                { name: 'Random Item', price: 25 },
+                { name: 'Random Item', totalPrice: 25 },
             ]);
 
             const userMappings = [
@@ -111,7 +111,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
     describe('AC#2: Merchant name is matched for store-level category override', () => {
         it('should match merchant name exactly', () => {
             const geminiTransaction = createMockGeminiTransaction('Walmart', 'Other', [
-                { name: 'Groceries', price: 100 },
+                { name: 'Groceries', totalPrice: 100 },
             ]);
 
             const userMappings = [
@@ -129,7 +129,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
 
         it('should match merchant name case-insensitively', () => {
             const geminiTransaction = createMockGeminiTransaction('UBER EATS', 'Restaurant', [
-                { name: 'Food delivery', price: 30 },
+                { name: 'Food delivery', totalPrice: 30 },
             ]);
 
             const userMappings = [
@@ -143,7 +143,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
 
         it('should fuzzy match merchant names within threshold', () => {
             const geminiTransaction = createMockGeminiTransaction('UBER', 'Other', [
-                { name: 'Trip', price: 25 },
+                { name: 'Trip', totalPrice: 25 },
             ]);
 
             // "uber" should fuzzy match "uber eats" within threshold
@@ -161,9 +161,9 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
     describe('AC#3: Individual items are matched for item-level category override', () => {
         it('should apply category to matching items', () => {
             const geminiTransaction = createMockGeminiTransaction('Some Store', 'Other', [
-                { name: 'Milk', price: 5 },
-                { name: 'Bread', price: 3 },
-                { name: 'Unknown Item', price: 10 },
+                { name: 'Milk', totalPrice: 5 },
+                { name: 'Bread', totalPrice: 3 },
+                { name: 'Unknown Item', totalPrice: 10 },
             ]);
 
             const userMappings = [
@@ -185,7 +185,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
 
         it('should preserve existing item categories when no match found', () => {
             const geminiTransaction = createMockGeminiTransaction('Store', 'Other', [
-                { name: 'Special Item', price: 50, category: 'Electronics' },
+                { name: 'Special Item', totalPrice: 50, category: 'Electronics' },
             ]);
 
             const userMappings = [
@@ -199,7 +199,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
 
         it('should match item names case-insensitively', () => {
             const geminiTransaction = createMockGeminiTransaction('Store', 'Other', [
-                { name: 'LECHE DESCREMADA', price: 5 },
+                { name: 'LECHE DESCREMADA', totalPrice: 5 },
             ]);
 
             const userMappings = [
@@ -220,7 +220,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
         it('should apply mapping with confidence exactly at threshold', () => {
             // User mapping with confidence that results in > 0.7 after fuzzy matching
             const geminiTransaction = createMockGeminiTransaction('Uber', 'Other', [
-                { name: 'Ride', price: 25 },
+                { name: 'Ride', totalPrice: 25 },
             ]);
 
             // High confidence mapping (1.0 * (1 - ~0) > 0.7)
@@ -239,7 +239,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
 
         it('should NOT apply mapping with low confidence', () => {
             const geminiTransaction = createMockGeminiTransaction('Uber', 'Other', [
-                { name: 'Ride', price: 25 },
+                { name: 'Ride', totalPrice: 25 },
             ]);
 
             // Low confidence mapping (0.3 * (1 - 0) = 0.3 < 0.7)
@@ -258,7 +258,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
 
         it('should NOT apply mapping when fuzzy match degrades confidence below threshold', () => {
             const geminiTransaction = createMockGeminiTransaction('Store', 'Other', [
-                { name: 'xyz', price: 10 },
+                { name: 'xyz', totalPrice: 10 },
             ]);
 
             // Even high confidence mapping won't apply if fuzzy match score is poor
@@ -277,7 +277,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
 
         it('should apply both merchant and item mappings with sufficient confidence', () => {
             const geminiTransaction = createMockGeminiTransaction('Walmart', 'Other', [
-                { name: 'Milk', price: 5 },
+                { name: 'Milk', totalPrice: 5 },
             ]);
 
             const userMappings = [
@@ -299,7 +299,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
     describe('AC#5: Mapping usage count is incremented when mapping is applied', () => {
         it('should return applied mapping IDs for usage tracking', () => {
             const geminiTransaction = createMockGeminiTransaction('Uber', 'Other', [
-                { name: 'Ride', price: 25 },
+                { name: 'Ride', totalPrice: 25 },
             ]);
 
             const userMappings = [
@@ -313,8 +313,8 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
 
         it('should return multiple mapping IDs when multiple mappings applied', () => {
             const geminiTransaction = createMockGeminiTransaction('Walmart', 'Other', [
-                { name: 'Milk', price: 5 },
-                { name: 'Bread', price: 3 },
+                { name: 'Milk', totalPrice: 5 },
+                { name: 'Bread', totalPrice: 3 },
             ]);
 
             const userMappings = [
@@ -333,8 +333,8 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
 
         it('should not duplicate mapping IDs when same mapping applies multiple times', () => {
             const geminiTransaction = createMockGeminiTransaction('Store', 'Other', [
-                { name: 'Milk', price: 5 },
-                { name: 'milk', price: 8 },  // Same item, different case
+                { name: 'Milk', totalPrice: 5 },
+                { name: 'milk', totalPrice: 8 },  // Same item, different case
             ]);
 
             // Same mapping should match both items
@@ -350,7 +350,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
 
         it('should return empty array when no mappings applied', () => {
             const geminiTransaction = createMockGeminiTransaction('Unknown', 'Other', [
-                { name: 'Unknown Item', price: 10 },
+                { name: 'Unknown Item', totalPrice: 10 },
             ]);
 
             const userMappings = [
@@ -364,7 +364,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
 
         it('should handle mappings without IDs gracefully', () => {
             const geminiTransaction = createMockGeminiTransaction('Uber', 'Other', [
-                { name: 'Ride', price: 25 },
+                { name: 'Ride', totalPrice: 25 },
             ]);
 
             // Create mapping manually without ID (edge case)
@@ -401,8 +401,8 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
                 total: 75,
                 category: 'Other', // Gemini's default/guess
                 items: [
-                    { name: 'Trip to downtown', price: 25 },
-                    { name: 'Trip to airport', price: 50 },
+                    { name: 'Trip to downtown', totalPrice: 25 },
+                    { name: 'Trip to airport', totalPrice: 50 },
                 ],
             };
 
@@ -447,10 +447,10 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
                 total: 150,
                 category: 'Other',
                 items: [
-                    { name: 'Milk', price: 10 },
-                    { name: 'Rotisserie Chicken', price: 15 },
-                    { name: 'Electronics Cable', price: 25 },
-                    { name: 'Random Thing', price: 100 },
+                    { name: 'Milk', totalPrice: 10 },
+                    { name: 'Rotisserie Chicken', totalPrice: 15 },
+                    { name: 'Electronics Cable', totalPrice: 25 },
+                    { name: 'Random Thing', totalPrice: 100 },
                 ],
             };
 
@@ -515,7 +515,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
 
         it('should handle special characters in merchant/item names', () => {
             const geminiTransaction = createMockGeminiTransaction('Café & Bar #1', 'Other', [
-                { name: "McDonald's Big Mac®", price: 15 },
+                { name: "McDonald's Big Mac®", totalPrice: 15 },
             ]);
 
             const userMappings = [
@@ -531,7 +531,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
 
         it('should not mutate original transaction', () => {
             const originalTransaction = createMockGeminiTransaction('UBER', 'Other', [
-                { name: 'Ride', price: 25 },
+                { name: 'Ride', totalPrice: 25 },
             ]);
             const originalCategory = originalTransaction.category;
 
@@ -552,7 +552,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
 
         it('should handle null/undefined mappings gracefully', () => {
             const geminiTransaction = createMockGeminiTransaction('Store', 'Other', [
-                { name: 'Item', price: 10 },
+                { name: 'Item', totalPrice: 10 },
             ]);
 
             // @ts-expect-error - Testing null handling
@@ -568,7 +568,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
     describe('categorySource Tracking - Visual Indicator for Learned Categories', () => {
         it('should set categorySource to "learned" when category is changed by mapping', () => {
             const geminiTransaction = createMockGeminiTransaction('Store', 'Other', [
-                { name: 'Milk', price: 5 },
+                { name: 'Milk', totalPrice: 5 },
             ]);
             // Item has no category initially (or 'Other')
             geminiTransaction.items[0].category = undefined;
@@ -585,7 +585,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
 
         it('should NOT set categorySource when learned category matches original scan category', () => {
             const geminiTransaction = createMockGeminiTransaction('Store', 'Other', [
-                { name: 'Milk', price: 5 },
+                { name: 'Milk', totalPrice: 5 },
             ]);
             // Item already has the same category that mapping would apply
             geminiTransaction.items[0].category = 'Bakery';
@@ -603,7 +603,7 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
 
         it('should preserve existing categorySource when no mapping matches', () => {
             const geminiTransaction = createMockGeminiTransaction('Store', 'Other', [
-                { name: 'Unknown Item', price: 10, category: 'Electronics' },
+                { name: 'Unknown Item', totalPrice: 10, category: 'Electronics' },
             ]);
 
             const userMappings = [
@@ -619,9 +619,9 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
 
         it('should set categorySource="learned" only for items whose category was changed', () => {
             const geminiTransaction = createMockGeminiTransaction('Store', 'Other', [
-                { name: 'Milk', price: 5 },                    // Will be matched → learned
-                { name: 'Bread', price: 3, category: 'Bakery' }, // Will match but same category
-                { name: 'Random', price: 10 },                  // No match → unchanged
+                { name: 'Milk', totalPrice: 5 },                    // Will be matched → learned
+                { name: 'Bread', totalPrice: 3, category: 'Bakery' }, // Will match but same category
+                { name: 'Random', totalPrice: 10 },                  // No match → unchanged
             ]);
 
             const userMappings = [

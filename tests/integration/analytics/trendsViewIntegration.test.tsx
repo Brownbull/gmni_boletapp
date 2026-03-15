@@ -102,8 +102,8 @@ const mockTransactions: Transaction[] = [
     alias: 'Super A',
     total: 50000,
     items: [
-      { name: 'Milk', price: 2000, category: 'Fresh Food', subcategory: 'Dairy' },
-      { name: 'Bread', price: 1500, category: 'Fresh Food', subcategory: 'Bakery' },
+      { name: 'Milk', totalPrice: 2000, category: 'Fresh Food', subcategory: 'Dairy' },
+      { name: 'Bread', totalPrice: 1500, category: 'Fresh Food', subcategory: 'Bakery' },
     ],
   },
   {
@@ -114,7 +114,7 @@ const mockTransactions: Transaction[] = [
     alias: 'Resto B',
     total: 30000,
     items: [
-      { name: 'Lunch', price: 15000, category: 'Food', subcategory: 'Meals' },
+      { name: 'Lunch', totalPrice: 15000, category: 'Food', subcategory: 'Meals' },
     ],
   },
   {
@@ -124,7 +124,7 @@ const mockTransactions: Transaction[] = [
     category: 'Pharmacy',
     total: 20000,
     items: [
-      { name: 'Medicine', price: 15000, category: 'Health', subcategory: 'OTC' },
+      { name: 'Medicine', totalPrice: 15000, category: 'Health', subcategory: 'OTC' },
     ],
   },
   {
@@ -135,7 +135,7 @@ const mockTransactions: Transaction[] = [
     alias: 'Super E',
     total: 60000,
     items: [
-      { name: 'Rice', price: 5000, category: 'Pantry', subcategory: 'Staples' },
+      { name: 'Rice', totalPrice: 5000, category: 'Pantry', subcategory: 'Staples' },
     ],
   },
   {
@@ -146,7 +146,7 @@ const mockTransactions: Transaction[] = [
     alias: 'Resto F',
     total: 35000,
     items: [
-      { name: 'Dinner', price: 25000, category: 'Food', subcategory: 'Meals' },
+      { name: 'Dinner', totalPrice: 25000, category: 'Food', subcategory: 'Meals' },
     ],
   },
   // Previous month transaction
@@ -157,7 +157,7 @@ const mockTransactions: Transaction[] = [
     category: 'Supermarket',
     total: 55000,
     items: [
-      { name: 'Groceries', price: 40000, category: 'Fresh Food', subcategory: 'Produce' },
+      { name: 'Groceries', totalPrice: 40000, category: 'Fresh Food', subcategory: 'Produce' },
     ],
   },
 ];
@@ -617,7 +617,7 @@ describe.skip('TrendsView Integration - Edge Cases', () => {
         merchant: 'Store A',
         category: 'Supermarket',
         total: 100,
-        items: [{ name: 'Item', price: 100, category: 'Food', subcategory: 'Food' }],
+        items: [{ name: 'Item', totalPrice: 100, category: 'Food', subcategory: 'Food' }],
       },
     ];
 
