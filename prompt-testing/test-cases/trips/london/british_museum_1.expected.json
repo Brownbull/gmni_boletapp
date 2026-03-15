@@ -22,28 +22,28 @@
     "items": [
       {
         "name": "MASTERPIECES OF THE eac",
-        "price": 1899,
+        "totalPrice": 1899,
         "quantity": 1,
         "category": "Books & Media",
         "subcategory": null
       },
       {
         "name": "The Cat in Ancient E eac",
-        "price": 500,
+        "totalPrice": 500,
         "quantity": 1,
         "category": "Books & Media",
         "subcategory": null
       },
       {
         "name": "T/CARD HOLDER: ROSETT eac",
-        "price": 299,
+        "totalPrice": 299,
         "quantity": 1,
         "category": "Other",
         "subcategory": null
       },
       {
         "name": "K/RING:ROSETTA STONE eac",
-        "price": 299,
+        "totalPrice": 299,
         "quantity": 1,
         "category": "Jewelry",
         "subcategory": null

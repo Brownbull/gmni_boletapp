@@ -50,8 +50,8 @@ function createTransaction(overrides: Partial<Transaction> = {}): Transaction {
     category: 'Supermarket',
     total: 100,
     items: [
-      { name: 'Item 1', price: 50, category: 'Produce' },
-      { name: 'Item 2', price: 50, category: 'Dairy & Eggs' },
+      { name: 'Item 1', totalPrice: 50, category: 'Produce' },
+      { name: 'Item 2', totalPrice: 50, category: 'Dairy & Eggs' },
     ],
     ...overrides,
   };

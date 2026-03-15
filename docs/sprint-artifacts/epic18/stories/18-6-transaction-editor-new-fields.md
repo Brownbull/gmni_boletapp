@@ -1,6 +1,6 @@
 # Story 18-6: Transaction Editor — New Fields
 
-## Status: backlog
+## Status: drafted
 
 ## Intent
 **Epic Handle:** "One statement in, many verified transactions out"

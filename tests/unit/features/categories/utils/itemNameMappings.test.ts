@@ -25,9 +25,9 @@ function createMockTransaction(overrides: Partial<Transaction> = {}): Transactio
     category: 'groceries',
     total: 100,
     items: [
-      { name: 'ITEM A', price: 50, category: 'food' },
-      { name: 'ITEM B', price: 30, category: 'beverages' },
-      { name: 'ITEM C', price: 20, category: 'snacks' },
+      { name: 'ITEM A', totalPrice: 50, category: 'food' },
+      { name: 'ITEM B', totalPrice: 30, category: 'beverages' },
+      { name: 'ITEM C', totalPrice: 20, category: 'snacks' },
     ],
     ...overrides,
   };
@@ -286,7 +286,7 @@ describe('applyItemNameMappings', () => {
 
     it('handles transaction with single item', () => {
       const transaction = createMockTransaction({
-        items: [{ name: 'SINGLE ITEM', price: 100, category: 'food' }],
+        items: [{ name: 'SINGLE ITEM', totalPrice: 100, category: 'food' }],
       });
       const findItemNameMatch = createMockFindItemNameMatch({
         'SINGLE ITEM': { targetItemName: 'Renamed Item', confidence: 0.9, id: 'mapping-1' },
@@ -303,7 +303,7 @@ describe('applyItemNameMappings', () => {
         items: [
           {
             name: 'ITEM A',
-            price: 50,
+            totalPrice: 50,
             qty: 3,
             category: 'food',
             subcategory: 'canned',
@@ -320,7 +320,7 @@ describe('applyItemNameMappings', () => {
 
       const updatedItem = result.transaction.items[0];
       expect(updatedItem.name).toBe('New Name');
-      expect(updatedItem.price).toBe(50);
+      expect(updatedItem.totalPrice).toBe(50);
       expect(updatedItem.qty).toBe(3);
       expect(updatedItem.category).toBe('food');
       expect(updatedItem.subcategory).toBe('canned');

@@ -98,7 +98,7 @@ export function useDerivedItems(
                     contentHash += name.charCodeAt(i);
                 }
                 // Include price (multiplied to make it significant)
-                contentHash += Math.floor((item.price || 0) * 100);
+                contentHash += Math.floor((item.totalPrice || 0) * 100);
             }
         }
 

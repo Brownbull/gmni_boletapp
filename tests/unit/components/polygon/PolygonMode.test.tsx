@@ -172,9 +172,9 @@ describe('PolygonWithModeToggle', () => {
       category: 'Supermarket',
       total: 100000,
       items: [
-        { name: 'Apples', price: 30000, category: 'Produce' },
-        { name: 'Bread', price: 20000, category: 'Bakery' },
-        { name: 'Milk', price: 50000, category: 'Dairy & Eggs' },
+        { name: 'Apples', totalPrice: 30000, category: 'Produce' },
+        { name: 'Bread', totalPrice: 20000, category: 'Bakery' },
+        { name: 'Milk', totalPrice: 50000, category: 'Dairy & Eggs' },
       ],
     },
     {
@@ -184,7 +184,7 @@ describe('PolygonWithModeToggle', () => {
       category: 'Restaurant',
       total: 75000,
       items: [
-        { name: 'Lunch', price: 75000, category: 'Service' },
+        { name: 'Lunch', totalPrice: 75000, category: 'Service' },
       ],
     },
     {
@@ -194,7 +194,7 @@ describe('PolygonWithModeToggle', () => {
       category: 'GasStation',
       total: 50000,
       items: [
-        { name: 'Fuel', price: 50000, category: 'Automotive' },
+        { name: 'Fuel', totalPrice: 50000, category: 'Automotive' },
       ],
     },
   ];

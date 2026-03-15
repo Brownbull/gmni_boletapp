@@ -22,7 +22,7 @@ const createMockTransaction = (overrides: Partial<Transaction> = {}): Transactio
     merchant: 'Test Store',
     category: 'Supermercado',
     total: 100,
-    items: [{ name: 'Test Item', price: 100 }],
+    items: [{ name: 'Test Item', totalPrice: 100 }],
     ...overrides,
 });
 

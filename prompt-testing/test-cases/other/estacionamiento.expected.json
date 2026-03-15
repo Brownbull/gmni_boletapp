@@ -22,7 +22,7 @@
     "items": [
       {
         "name": "ESTACIONAMIENTOS",
-        "price": 860,
+        "totalPrice": 860,
         "quantity": 1,
         "category": "Service",
         "subcategory": null

@@ -70,8 +70,8 @@ function makeTransaction(overrides: Partial<Transaction> = {}): Transaction {
     total: 15,
     category: 'Groceries',
     items: [
-      { name: 'Apple', price: 5, category: 'Produce' },
-      { name: 'Steak', price: 10, category: 'Meat' },
+      { name: 'Apple', totalPrice: 5, category: 'Produce' },
+      { name: 'Steak', totalPrice: 10, category: 'Meat' },
     ],
     ...overrides,
   };
@@ -115,7 +115,7 @@ describe('EditViewItemsSection', () => {
       const tx = props.currentTransaction;
       expect(props.onUpdateTransaction).toHaveBeenCalledWith({
         ...tx,
-        items: [...tx.items, { name: '', price: 0, category: 'Other', subcategory: '' }],
+        items: [...tx.items, { name: '', totalPrice: 0, category: 'Other', subcategory: '' }],
       });
       expect(props.onSetEditingItemIndex).toHaveBeenCalledWith(tx.items.length);
     });
@@ -145,7 +145,7 @@ describe('EditViewItemsSection', () => {
       expect(parseStrictNumber).toHaveBeenCalledWith('12.5');
       expect(props.onUpdateTransaction).toHaveBeenCalledWith(
         expect.objectContaining({
-          items: expect.arrayContaining([expect.objectContaining({ price: 12.5 })]),
+          items: expect.arrayContaining([expect.objectContaining({ totalPrice: 12.5 })]),
         })
       );
     });
@@ -201,9 +201,9 @@ describe('EditViewItemsSection', () => {
     it('itemsByGroup — items with same category appear under one group header', () => {
       const tx = makeTransaction({
         items: [
-          { name: 'Apple', price: 5, category: 'Produce' },
-          { name: 'Banana', price: 3, category: 'Produce' },
-          { name: 'Cola', price: 2, category: 'Beverages' },
+          { name: 'Apple', totalPrice: 5, category: 'Produce' },
+          { name: 'Banana', totalPrice: 3, category: 'Produce' },
+          { name: 'Cola', totalPrice: 2, category: 'Beverages' },
         ],
       });
       const { container } = render(<EditViewItemsSection {...makeProps()} currentTransaction={tx} />);
@@ -216,9 +216,9 @@ describe('EditViewItemsSection', () => {
     it('itemsByGroup — groups sorted alphabetically; items within group sorted by price desc', () => {
       const tx = makeTransaction({
         items: [
-          { name: 'Apple', price: 5, category: 'Produce' },
-          { name: 'Mango', price: 10, category: 'Produce' },
-          { name: 'Cola', price: 2, category: 'Beverages' },
+          { name: 'Apple', totalPrice: 5, category: 'Produce' },
+          { name: 'Mango', totalPrice: 10, category: 'Produce' },
+          { name: 'Cola', totalPrice: 2, category: 'Beverages' },
         ],
       });
       const { container } = render(<EditViewItemsSection {...makeProps()} currentTransaction={tx} />);

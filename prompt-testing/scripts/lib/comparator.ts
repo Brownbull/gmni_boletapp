@@ -223,7 +223,7 @@ export function compareItemsCount(
  *
  * @example
  * compareItemPrices(
- *   [{ name: "Milk", price: 1990 }],
+ *   [{ name: "Milk", totalPrice: 1990 }],
  *   [{ name: "MILK", price: 1990 }]
  * )
  * // { accuracy: 100, matchCount: 1, totalCount: 1, details: [...] }
@@ -254,7 +254,7 @@ export function compareItemPrices(
         actualName: '',
         nameSimilarity: 0,
         nameMatch: false,
-        expectedPrice: expected.price,
+        expectedPrice: expected.totalPrice,
         actualPrice: 0,
         priceMatch: false,
         match: false,
@@ -275,7 +275,7 @@ export function compareItemPrices(
         actualName: '',
         nameSimilarity: 0,
         nameMatch: false,
-        expectedPrice: expected.price,
+        expectedPrice: expected.totalPrice,
         actualPrice: 0,
         priceMatch: false,
         match: false,
@@ -288,7 +288,7 @@ export function compareItemPrices(
     usedActualIndices.add(actualIdx);
 
     // Compare prices (exact match)
-    const priceMatch = expected.price === actual.price;
+    const priceMatch = expected.totalPrice === actual.totalPrice;
     const nameMatch = bestMatch.similarity >= 0.6; // Lower threshold for item names
 
     if (priceMatch) {
@@ -301,8 +301,8 @@ export function compareItemPrices(
       actualName: actual.name,
       nameSimilarity: bestMatch.similarity,
       nameMatch,
-      expectedPrice: expected.price,
-      actualPrice: actual.price,
+      expectedPrice: expected.totalPrice,
+      actualPrice: actual.totalPrice,
       priceMatch,
       match: priceMatch && nameMatch,
     });

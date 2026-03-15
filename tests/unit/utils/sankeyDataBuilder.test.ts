@@ -28,17 +28,17 @@ import type { Transaction } from '../../../src/types/transaction';
  */
 function createTransaction(
     storeCategory: string,
-    items: Array<{ name: string; price: number; category: string }>
+    items: Array<{ name: string; totalPrice: number; category: string }>
 ): Transaction {
     return {
         id: `tx-${Math.random().toString(36).substr(2, 9)}`,
         date: '2026-01-11',
         merchant: 'Test Merchant',
         category: storeCategory as any,
-        total: items.reduce((sum, item) => sum + item.price, 0),
+        total: items.reduce((sum, item) => sum + item.totalPrice, 0),
         items: items.map(item => ({
             name: item.name,
-            price: item.price,
+            totalPrice: item.totalPrice,
             category: item.category,
         })),
     };
@@ -51,24 +51,24 @@ function createSampleTransactions(): Transaction[] {
     return [
         // Supermarket transactions (70% of total)
         createTransaction('Supermarket', [
-            { name: 'Apples', price: 5000, category: 'Produce' },
-            { name: 'Milk', price: 3000, category: 'DairyEggs' },
-            { name: 'Bread', price: 2000, category: 'BreadPastry' },
+            { name: 'Apples', totalPrice: 5000, category: 'Produce' },
+            { name: 'Milk', totalPrice: 3000, category: 'DairyEggs' },
+            { name: 'Bread', totalPrice: 2000, category: 'BreadPastry' },
         ]),
         createTransaction('Supermarket', [
-            { name: 'Chicken', price: 8000, category: 'MeatSeafood' },
-            { name: 'Rice', price: 4000, category: 'Pantry' },
+            { name: 'Chicken', totalPrice: 8000, category: 'MeatSeafood' },
+            { name: 'Rice', totalPrice: 4000, category: 'Pantry' },
         ]),
         createTransaction('Supermarket', [
-            { name: 'Oranges', price: 3000, category: 'Produce' },
-            { name: 'Cheese', price: 5000, category: 'DairyEggs' },
+            { name: 'Oranges', totalPrice: 3000, category: 'Produce' },
+            { name: 'Cheese', totalPrice: 5000, category: 'DairyEggs' },
         ]),
         // Restaurant transactions (30% of total)
         createTransaction('Restaurant', [
-            { name: 'Lunch', price: 12000, category: 'PreparedFood' },
+            { name: 'Lunch', totalPrice: 12000, category: 'PreparedFood' },
         ]),
         createTransaction('Restaurant', [
-            { name: 'Dinner', price: 18000, category: 'PreparedFood' },
+            { name: 'Dinner', totalPrice: 18000, category: 'PreparedFood' },
         ]),
     ];
 }
@@ -80,27 +80,27 @@ function createDiverseTransactions(): Transaction[] {
     return [
         // Large category (40%)
         createTransaction('Supermarket', [
-            { name: 'Groceries', price: 40000, category: 'Pantry' },
+            { name: 'Groceries', totalPrice: 40000, category: 'Pantry' },
         ]),
         // Medium category (25%)
         createTransaction('Restaurant', [
-            { name: 'Dining', price: 25000, category: 'PreparedFood' },
+            { name: 'Dining', totalPrice: 25000, category: 'PreparedFood' },
         ]),
         // Small category (15%)
         createTransaction('Pharmacy', [
-            { name: 'Medicine', price: 15000, category: 'Medications' },
+            { name: 'Medicine', totalPrice: 15000, category: 'Medications' },
         ]),
         // Very small category (8%)
         createTransaction('GasStation', [
-            { name: 'Gas', price: 8000, category: 'CarAccessories' },
+            { name: 'Gas', totalPrice: 8000, category: 'CarAccessories' },
         ]),
         // Tiny category (7%)
         createTransaction('Bakery', [
-            { name: 'Pastries', price: 7000, category: 'BreadPastry' },
+            { name: 'Pastries', totalPrice: 7000, category: 'BreadPastry' },
         ]),
         // Very tiny category (5%)
         createTransaction('Butcher', [
-            { name: 'Meat', price: 5000, category: 'MeatSeafood' },
+            { name: 'Meat', totalPrice: 5000, category: 'MeatSeafood' },
         ]),
     ];
 }
@@ -237,7 +237,7 @@ describe('buildSankeyData - 2-level mode', () => {
         it('calculates correct flow values', () => {
             const transactions = [
                 createTransaction('Supermarket', [
-                    { name: 'Apples', price: 5000, category: 'Produce' },
+                    { name: 'Apples', totalPrice: 5000, category: 'Produce' },
                 ]),
             ];
             const data = buildSankeyData(transactions, '2-level');
@@ -253,10 +253,10 @@ describe('buildSankeyData - 2-level mode', () => {
         it('aggregates values from multiple transactions', () => {
             const transactions = [
                 createTransaction('Supermarket', [
-                    { name: 'Apples', price: 5000, category: 'Produce' },
+                    { name: 'Apples', totalPrice: 5000, category: 'Produce' },
                 ]),
                 createTransaction('Supermarket', [
-                    { name: 'Oranges', price: 3000, category: 'Produce' },
+                    { name: 'Oranges', totalPrice: 3000, category: 'Produce' },
                 ]),
             ];
             const data = buildSankeyData(transactions, '2-level');
@@ -365,7 +365,7 @@ describe('buildSankeyData - 2-level mode', () => {
                     category: 'Supermarket' as any,
                     total: 1000,
                     items: [
-                        { name: 'Unknown', price: 1000 }, // No category
+                        { name: 'Unknown', totalPrice: 1000 }, // No category
                     ],
                 },
             ];
@@ -377,8 +377,8 @@ describe('buildSankeyData - 2-level mode', () => {
         it('skips items with zero or negative price', () => {
             const transactions = [
                 createTransaction('Supermarket', [
-                    { name: 'Free Item', price: 0, category: 'Produce' },
-                    { name: 'Refund', price: -100, category: 'Produce' },
+                    { name: 'Free Item', totalPrice: 0, category: 'Produce' },
+                    { name: 'Refund', totalPrice: -100, category: 'Produce' },
                 ]),
             ];
             const data = buildSankeyData(transactions, '2-level');
@@ -389,7 +389,7 @@ describe('buildSankeyData - 2-level mode', () => {
         it('handles single category correctly', () => {
             const transactions = [
                 createTransaction('Supermarket', [
-                    { name: 'Apples', price: 5000, category: 'Produce' },
+                    { name: 'Apples', totalPrice: 5000, category: 'Produce' },
                 ]),
             ];
             const data = buildSankeyData(transactions, '2-level');
@@ -480,10 +480,10 @@ describe('buildSankeyData - link dedup via Map', () => {
         // Two different store categories both route to Produce
         const transactions = [
             createTransaction('Supermarket', [
-                { name: 'Apples', price: 5000, category: 'Produce' },
+                { name: 'Apples', totalPrice: 5000, category: 'Produce' },
             ]),
             createTransaction('Restaurant', [
-                { name: 'Salad Greens', price: 3000, category: 'Produce' },
+                { name: 'Salad Greens', totalPrice: 3000, category: 'Produce' },
             ]),
         ];
         const data = buildSankeyData(transactions, '2-level');
@@ -503,10 +503,10 @@ describe('buildSankeyData - link dedup via Map', () => {
         // Two transactions from same store category to same item category
         const transactions = [
             createTransaction('Supermarket', [
-                { name: 'Apples', price: 5000, category: 'Produce' },
+                { name: 'Apples', totalPrice: 5000, category: 'Produce' },
             ]),
             createTransaction('Supermarket', [
-                { name: 'Oranges', price: 3000, category: 'Produce' },
+                { name: 'Oranges', totalPrice: 3000, category: 'Produce' },
             ]),
         ];
         const data = buildSankeyData(transactions, '2-level');

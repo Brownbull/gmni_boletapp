@@ -382,7 +382,7 @@ function getCategoryChildren(
           const group = item.category || 'Other';
           const existing = groupTotals.get(group) || { total: 0, count: 0 };
           groupTotals.set(group, {
-            total: existing.total + item.price,
+            total: existing.total + item.totalPrice,
             count: existing.count + 1,
           });
         });
@@ -424,7 +424,7 @@ function getCategoryChildren(
             const subcategory = item.subcategory || 'Other';
             const existing = subcategoryTotals.get(subcategory) || { total: 0, count: 0 };
             subcategoryTotals.set(subcategory, {
-              total: existing.total + item.price,
+              total: existing.total + item.totalPrice,
               count: existing.count + 1,
             });
           });
@@ -436,7 +436,7 @@ function getCategoryChildren(
         tx.items
           .filter(item => item.category === currentGroup)
           .forEach(item => {
-            filteredTotal += item.price;
+            filteredTotal += item.totalPrice;
           });
       });
 

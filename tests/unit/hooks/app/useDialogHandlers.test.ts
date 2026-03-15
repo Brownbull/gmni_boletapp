@@ -44,7 +44,7 @@ describe('useDialogHandlers', () => {
         date: '2026-01-22',
         total: 1500,
         category: 'Supermarket',
-        items: [{ name: 'Item 1', price: 1500 }],
+        items: [{ name: 'Item 1', totalPrice: 1500 }],
         country: 'Chile',
         city: 'Santiago',
         currency: 'CLP',

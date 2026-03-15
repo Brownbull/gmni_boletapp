@@ -22,21 +22,21 @@
     "items": [
       {
         "name": "LAMINA HIDROGEL",
-        "price": 5990,
+        "totalPrice": 5990,
         "quantity": 1,
         "category": "Electronics",
         "subcategory": null
       },
       {
         "name": "Lamina Hidrogel Anti Espla",
-        "price": 7990,
+        "totalPrice": 7990,
         "quantity": 1,
         "category": "Electronics",
         "subcategory": null
       },
       {
         "name": "CABLE EXTENSION USB 1.8 M",
-        "price": 3500,
+        "totalPrice": 3500,
         "quantity": 3,
         "category": "Electronics",
         "subcategory": null

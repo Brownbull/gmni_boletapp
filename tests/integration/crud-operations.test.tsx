@@ -108,7 +108,7 @@ describe('Transaction CRUD Operations', () => {
     expect(data.items).toHaveLength(3);
     expect(data.items[0].name).toBe('Organic Milk');
     expect(data.items[0].qty).toBe(2);
-    expect(data.items[0].price).toBe(6.99);
+    expect(data.items[0].totalPrice).toBe(6.99);
   });
 
   /**

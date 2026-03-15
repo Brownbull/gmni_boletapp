@@ -44,6 +44,6 @@ export const createMockTransaction = (overrides: Partial<Transaction> = {}): Tra
     total: 5000,
     currency: 'CLP',
     date: '2026-02-25',
-    items: [{ name: 'Item 1', price: 5000, qty: 1, category: 'Food' }],
+    items: [{ name: 'Item 1', totalPrice: 5000, qty: 1, category: 'Food' }],
     ...overrides,
 } as Transaction);

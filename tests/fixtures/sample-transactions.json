@@ -14,16 +14,16 @@
     "promptVersion": "2.6.0",
     "merchantSource": "scan",
     "items": [
-      { "name": "Organic Milk 1 Gal", "qty": 2, "price": 6.99, "category": "dairy", "categorySource": "scan" },
-      { "name": "Whole Wheat Bread", "qty": 1, "price": 3.49, "category": "bakery", "categorySource": "scan" },
-      { "name": "Chicken Breast 2lb", "qty": 1, "price": 12.99, "category": "meat", "categorySource": "scan" },
-      { "name": "Bananas 1 bunch", "qty": 1, "price": 1.89, "category": "produce", "categorySource": "scan" },
-      { "name": "Pasta Sauce", "qty": 2, "price": 4.29, "category": "pantry", "categorySource": "scan" },
-      { "name": "Spaghetti 16oz", "qty": 2, "price": 1.99, "category": "pantry", "categorySource": "scan" },
-      { "name": "Cheddar Cheese 8oz", "qty": 1, "price": 5.49, "category": "dairy", "categorySource": "scan" },
-      { "name": "Orange Juice 64oz", "qty": 1, "price": 4.99, "category": "beverages", "categorySource": "scan" },
-      { "name": "Eggs Large Dozen", "qty": 1, "price": 4.29, "category": "dairy", "categorySource": "scan" },
-      { "name": "Greek Yogurt 4pk", "qty": 1, "price": 6.99, "category": "dairy", "categorySource": "scan" }
+      { "name": "Organic Milk 1 Gal", "qty": 2, "totalPrice": 6.99, "category": "dairy", "categorySource": "scan" },
+      { "name": "Whole Wheat Bread", "qty": 1, "totalPrice": 3.49, "category": "bakery", "categorySource": "scan" },
+      { "name": "Chicken Breast 2lb", "qty": 1, "totalPrice": 12.99, "category": "meat", "categorySource": "scan" },
+      { "name": "Bananas 1 bunch", "qty": 1, "totalPrice": 1.89, "category": "produce", "categorySource": "scan" },
+      { "name": "Pasta Sauce", "qty": 2, "totalPrice": 4.29, "category": "pantry", "categorySource": "scan" },
+      { "name": "Spaghetti 16oz", "qty": 2, "totalPrice": 1.99, "category": "pantry", "categorySource": "scan" },
+      { "name": "Cheddar Cheese 8oz", "qty": 1, "totalPrice": 5.49, "category": "dairy", "categorySource": "scan" },
+      { "name": "Orange Juice 64oz", "qty": 1, "totalPrice": 4.99, "category": "beverages", "categorySource": "scan" },
+      { "name": "Eggs Large Dozen", "qty": 1, "totalPrice": 4.29, "category": "dairy", "categorySource": "scan" },
+      { "name": "Greek Yogurt 4pk", "qty": 1, "totalPrice": 6.99, "category": "dairy", "categorySource": "scan" }
     ],
     "periods": {
       "day": "2026-01-28",
@@ -48,8 +48,8 @@
     "promptVersion": "2.6.0",
     "merchantSource": "scan",
     "items": [
-      { "name": "Burrito Bowl", "qty": 1, "price": 11.95, "category": "food", "categorySource": "scan" },
-      { "name": "Chips & Guacamole", "qty": 1, "price": 3.92, "category": "food", "categorySource": "scan" }
+      { "name": "Burrito Bowl", "qty": 1, "totalPrice": 11.95, "category": "food", "categorySource": "scan" },
+      { "name": "Chips & Guacamole", "qty": 1, "totalPrice": 3.92, "category": "food", "categorySource": "scan" }
     ],
     "periods": {
       "day": "2026-01-27",
@@ -74,7 +74,7 @@
     "promptVersion": "2.6.0",
     "merchantSource": "scan",
     "items": [
-      { "name": "Regular Unleaded 15.24 gal", "qty": 1, "price": 48.72, "category": "fuel", "categorySource": "scan" }
+      { "name": "Regular Unleaded 15.24 gal", "qty": 1, "totalPrice": 48.72, "category": "fuel", "categorySource": "scan" }
     ],
     "periods": {
       "day": "2026-01-26",
@@ -100,14 +100,14 @@
     "promptVersion": "2.6.0",
     "merchantSource": "scan",
     "items": [
-      { "name": "Coffee Beans 2lb", "qty": 1, "price": 18.99, "category": "beverages", "categorySource": "scan" },
-      { "name": "Almond Milk 64oz", "qty": 2, "price": 5.49, "category": "dairy", "categorySource": "scan" },
-      { "name": "Avocados 6ct", "qty": 1, "price": 6.99, "category": "produce", "categorySource": "scan" },
-      { "name": "Salmon Fillet 1lb", "qty": 2, "price": 14.99, "category": "seafood", "categorySource": "scan" },
-      { "name": "Mixed Greens 5oz", "qty": 2, "price": 4.99, "category": "produce", "categorySource": "scan" },
-      { "name": "Olive Oil 500ml", "qty": 1, "price": 12.99, "category": "pantry", "categorySource": "scan" },
-      { "name": "Cherry Tomatoes", "qty": 1, "price": 4.49, "category": "produce", "categorySource": "scan" },
-      { "name": "Parmesan Cheese", "qty": 1, "price": 8.99, "category": "dairy", "categorySource": "scan" }
+      { "name": "Coffee Beans 2lb", "qty": 1, "totalPrice": 18.99, "category": "beverages", "categorySource": "scan" },
+      { "name": "Almond Milk 64oz", "qty": 2, "totalPrice": 5.49, "category": "dairy", "categorySource": "scan" },
+      { "name": "Avocados 6ct", "qty": 1, "totalPrice": 6.99, "category": "produce", "categorySource": "scan" },
+      { "name": "Salmon Fillet 1lb", "qty": 2, "totalPrice": 14.99, "category": "seafood", "categorySource": "scan" },
+      { "name": "Mixed Greens 5oz", "qty": 2, "totalPrice": 4.99, "category": "produce", "categorySource": "scan" },
+      { "name": "Olive Oil 500ml", "qty": 1, "totalPrice": 12.99, "category": "pantry", "categorySource": "scan" },
+      { "name": "Cherry Tomatoes", "qty": 1, "totalPrice": 4.49, "category": "produce", "categorySource": "scan" },
+      { "name": "Parmesan Cheese", "qty": 1, "totalPrice": 8.99, "category": "dairy", "categorySource": "scan" }
     ],
     "periods": {
       "day": "2026-01-25",
@@ -132,8 +132,8 @@
     "promptVersion": "2.6.0",
     "merchantSource": "scan",
     "items": [
-      { "name": "Grande Latte", "qty": 1, "price": 5.95, "category": "beverages", "categorySource": "scan" },
-      { "name": "Blueberry Muffin", "qty": 1, "price": 3.45, "category": "bakery", "categorySource": "scan" }
+      { "name": "Grande Latte", "qty": 1, "totalPrice": 5.95, "category": "beverages", "categorySource": "scan" },
+      { "name": "Blueberry Muffin", "qty": 1, "totalPrice": 3.45, "category": "bakery", "categorySource": "scan" }
     ],
     "periods": {
       "day": "2026-01-24",
@@ -158,15 +158,15 @@
     "promptVersion": "2.6.0",
     "merchantSource": "scan",
     "items": [
-      { "name": "Laundry Detergent", "qty": 1, "price": 14.99, "category": "household", "categorySource": "scan" },
-      { "name": "Paper Towels 6pk", "qty": 1, "price": 12.99, "category": "household", "categorySource": "scan" },
-      { "name": "Shampoo", "qty": 2, "price": 8.99, "category": "personal_care", "categorySource": "scan" },
-      { "name": "Toothpaste 3pk", "qty": 1, "price": 9.99, "category": "personal_care", "categorySource": "scan" },
-      { "name": "Hand Soap 3pk", "qty": 1, "price": 7.49, "category": "personal_care", "categorySource": "scan" },
-      { "name": "Trash Bags 50ct", "qty": 1, "price": 11.99, "category": "household", "categorySource": "scan" },
-      { "name": "Dish Soap", "qty": 1, "price": 4.99, "category": "household", "categorySource": "scan" },
-      { "name": "T-Shirt", "qty": 2, "price": 14.99, "category": "clothing", "categorySource": "scan" },
-      { "name": "Socks 6pk", "qty": 1, "price": 12.99, "category": "clothing", "categorySource": "scan" }
+      { "name": "Laundry Detergent", "qty": 1, "totalPrice": 14.99, "category": "household", "categorySource": "scan" },
+      { "name": "Paper Towels 6pk", "qty": 1, "totalPrice": 12.99, "category": "household", "categorySource": "scan" },
+      { "name": "Shampoo", "qty": 2, "totalPrice": 8.99, "category": "personal_care", "categorySource": "scan" },
+      { "name": "Toothpaste 3pk", "qty": 1, "totalPrice": 9.99, "category": "personal_care", "categorySource": "scan" },
+      { "name": "Hand Soap 3pk", "qty": 1, "totalPrice": 7.49, "category": "personal_care", "categorySource": "scan" },
+      { "name": "Trash Bags 50ct", "qty": 1, "totalPrice": 11.99, "category": "household", "categorySource": "scan" },
+      { "name": "Dish Soap", "qty": 1, "totalPrice": 4.99, "category": "household", "categorySource": "scan" },
+      { "name": "T-Shirt", "qty": 2, "totalPrice": 14.99, "category": "clothing", "categorySource": "scan" },
+      { "name": "Socks 6pk", "qty": 1, "totalPrice": 12.99, "category": "clothing", "categorySource": "scan" }
     ],
     "periods": {
       "day": "2026-01-22",
@@ -192,16 +192,16 @@
     "promptVersion": "2.6.0",
     "merchantSource": "scan",
     "items": [
-      { "name": "Kirkland Olive Oil 2L", "qty": 1, "price": 19.99, "category": "pantry", "categorySource": "scan" },
-      { "name": "Rotisserie Chicken", "qty": 1, "price": 4.99, "category": "prepared_foods", "categorySource": "scan" },
-      { "name": "Ground Beef 4lb", "qty": 1, "price": 22.99, "category": "meat", "categorySource": "scan" },
-      { "name": "Toilet Paper 30pk", "qty": 1, "price": 28.99, "category": "household", "categorySource": "scan" },
-      { "name": "Mixed Nuts 2.5lb", "qty": 1, "price": 18.99, "category": "snacks", "categorySource": "scan" },
-      { "name": "Kirkland Water 40pk", "qty": 1, "price": 5.99, "category": "beverages", "categorySource": "scan" },
-      { "name": "Bananas 3lb", "qty": 1, "price": 1.99, "category": "produce", "categorySource": "scan" },
-      { "name": "Apples 5lb bag", "qty": 1, "price": 8.99, "category": "produce", "categorySource": "scan" },
-      { "name": "Milk 2 Gal", "qty": 1, "price": 6.49, "category": "dairy", "categorySource": "scan" },
-      { "name": "Batteries AA 48pk", "qty": 1, "price": 16.99, "category": "electronics", "categorySource": "scan" }
+      { "name": "Kirkland Olive Oil 2L", "qty": 1, "totalPrice": 19.99, "category": "pantry", "categorySource": "scan" },
+      { "name": "Rotisserie Chicken", "qty": 1, "totalPrice": 4.99, "category": "prepared_foods", "categorySource": "scan" },
+      { "name": "Ground Beef 4lb", "qty": 1, "totalPrice": 22.99, "category": "meat", "categorySource": "scan" },
+      { "name": "Toilet Paper 30pk", "qty": 1, "totalPrice": 28.99, "category": "household", "categorySource": "scan" },
+      { "name": "Mixed Nuts 2.5lb", "qty": 1, "totalPrice": 18.99, "category": "snacks", "categorySource": "scan" },
+      { "name": "Kirkland Water 40pk", "qty": 1, "totalPrice": 5.99, "category": "beverages", "categorySource": "scan" },
+      { "name": "Bananas 3lb", "qty": 1, "totalPrice": 1.99, "category": "produce", "categorySource": "scan" },
+      { "name": "Apples 5lb bag", "qty": 1, "totalPrice": 8.99, "category": "produce", "categorySource": "scan" },
+      { "name": "Milk 2 Gal", "qty": 1, "totalPrice": 6.49, "category": "dairy", "categorySource": "scan" },
+      { "name": "Batteries AA 48pk", "qty": 1, "totalPrice": 16.99, "category": "electronics", "categorySource": "scan" }
     ],
     "periods": {
       "day": "2026-01-20",
@@ -226,10 +226,10 @@
     "promptVersion": "2.6.0",
     "merchantSource": "scan",
     "items": [
-      { "name": "Ibuprofen 200ct", "qty": 1, "price": 12.99, "category": "health", "categorySource": "scan" },
-      { "name": "Vitamins D3", "qty": 1, "price": 14.99, "category": "health", "categorySource": "scan" },
-      { "name": "Band-Aids 100ct", "qty": 1, "price": 8.99, "category": "health", "categorySource": "scan" },
-      { "name": "Lip Balm 3pk", "qty": 1, "price": 5.99, "category": "personal_care", "categorySource": "scan" }
+      { "name": "Ibuprofen 200ct", "qty": 1, "totalPrice": 12.99, "category": "health", "categorySource": "scan" },
+      { "name": "Vitamins D3", "qty": 1, "totalPrice": 14.99, "category": "health", "categorySource": "scan" },
+      { "name": "Band-Aids 100ct", "qty": 1, "totalPrice": 8.99, "category": "health", "categorySource": "scan" },
+      { "name": "Lip Balm 3pk", "qty": 1, "totalPrice": 5.99, "category": "personal_care", "categorySource": "scan" }
     ],
     "periods": {
       "day": "2026-01-18",
@@ -255,13 +255,13 @@
     "promptVersion": "2.6.0",
     "merchantSource": "scan",
     "items": [
-      { "name": "Organic Spinach 5oz", "qty": 2, "price": 5.99, "category": "produce", "categorySource": "scan" },
-      { "name": "Grass-Fed Beef 1lb", "qty": 1, "price": 15.99, "category": "meat", "categorySource": "scan" },
-      { "name": "Kombucha 4pk", "qty": 1, "price": 12.99, "category": "beverages", "categorySource": "scan" },
-      { "name": "Almond Butter 16oz", "qty": 1, "price": 11.99, "category": "pantry", "categorySource": "scan" },
-      { "name": "Organic Eggs Dozen", "qty": 1, "price": 7.99, "category": "dairy", "categorySource": "scan" },
-      { "name": "Sourdough Bread", "qty": 1, "price": 6.49, "category": "bakery", "categorySource": "scan" },
-      { "name": "Hummus 10oz", "qty": 2, "price": 5.99, "category": "deli", "categorySource": "scan" }
+      { "name": "Organic Spinach 5oz", "qty": 2, "totalPrice": 5.99, "category": "produce", "categorySource": "scan" },
+      { "name": "Grass-Fed Beef 1lb", "qty": 1, "totalPrice": 15.99, "category": "meat", "categorySource": "scan" },
+      { "name": "Kombucha 4pk", "qty": 1, "totalPrice": 12.99, "category": "beverages", "categorySource": "scan" },
+      { "name": "Almond Butter 16oz", "qty": 1, "totalPrice": 11.99, "category": "pantry", "categorySource": "scan" },
+      { "name": "Organic Eggs Dozen", "qty": 1, "totalPrice": 7.99, "category": "dairy", "categorySource": "scan" },
+      { "name": "Sourdough Bread", "qty": 1, "totalPrice": 6.49, "category": "bakery", "categorySource": "scan" },
+      { "name": "Hummus 10oz", "qty": 2, "totalPrice": 5.99, "category": "deli", "categorySource": "scan" }
     ],
     "periods": {
       "day": "2026-01-15",
@@ -285,7 +285,7 @@
     "promptVersion": "2.6.0",
     "merchantSource": "scan",
     "items": [
-      { "name": "Monthly Subscription - Standard", "qty": 1, "price": 15.99, "category": "subscription", "categorySource": "scan" }
+      { "name": "Monthly Subscription - Standard", "qty": 1, "totalPrice": 15.99, "category": "subscription", "categorySource": "scan" }
     ],
     "periods": {
       "day": "2026-01-12",

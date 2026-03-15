@@ -67,11 +67,15 @@ export type Metadata = z.infer<typeof MetadataSchema>;
 
 /**
  * Item extracted by AI from receipt.
+ * Story 18-8: Added unitPrice, renamed price → totalPrice.
  */
 export const AIExtractionItemSchema = z.object({
   name: z.string(),
-  price: z.number(),
+  unitPrice: z.number().optional(),
+  totalPrice: z.number(),
+  quantity: z.number().optional(),
   category: z.string().optional(),
+  subcategory: z.string().nullable().optional(),
 });
 export type AIExtractionItem = z.infer<typeof AIExtractionItemSchema>;
 
@@ -134,8 +138,11 @@ export const ItemCorrectionSchema = z.object({
   /** Corrected name (only if AI got it wrong) */
   name: z.string().optional(),
 
-  /** Corrected price (only if AI got it wrong) */
-  price: z.number().optional(),
+  /** Corrected totalPrice (only if AI got it wrong) */
+  totalPrice: z.number().optional(),
+
+  /** Corrected unitPrice (only if AI got it wrong) */
+  unitPrice: z.number().optional(),
 
   /** Corrected category (only if AI got it wrong) */
   category: z.string().optional(),
@@ -150,7 +157,8 @@ export type ItemCorrection = z.infer<typeof ItemCorrectionSchema>;
  */
 export const AddItemSchema = z.object({
   name: z.string(),
-  price: z.number(),
+  totalPrice: z.number(),
+  unitPrice: z.number().optional(),
   category: z.string().optional(),
 });
 export type AddItem = z.infer<typeof AddItemSchema>;

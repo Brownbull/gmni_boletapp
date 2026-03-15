@@ -240,8 +240,8 @@ describe('computeRadarChartData', () => {
           date: '2026-01-10',
           total: 500,
           items: [
-            { name: 'Milk', price: 300, category: 'DairyEggs' },
-            { name: 'Apple', price: 200, category: 'Produce' },
+            { name: 'Milk', totalPrice: 300, category: 'DairyEggs' },
+            { name: 'Apple', totalPrice: 200, category: 'Produce' },
           ],
         }),
       ];
@@ -258,8 +258,8 @@ describe('computeRadarChartData', () => {
           date: '2026-01-10',
           total: 500,
           items: [
-            { name: 'Apple', price: 200, category: 'Produce' },
-            { name: 'Steak', price: 300, category: 'MeatSeafood' },
+            { name: 'Apple', totalPrice: 200, category: 'Produce' },
+            { name: 'Steak', totalPrice: 300, category: 'MeatSeafood' },
           ],
         }),
       ];
@@ -288,8 +288,8 @@ describe('computeRadarChartData', () => {
           date: '2026-01-10',
           total: 500,
           items: [
-            { name: 'Apple', price: 300, category: 'Produce' },
-            { name: 'Mystery', price: 200, category: 'UnmappedItem' },
+            { name: 'Apple', totalPrice: 300, category: 'Produce' },
+            { name: 'Mystery', totalPrice: 200, category: 'UnmappedItem' },
           ],
         }),
       ];
@@ -463,8 +463,8 @@ describe('computeBumpChartData', () => {
           date: '2026-04-01',
           total: 500,
           items: [
-            { name: 'Milk', price: 300, category: 'DairyEggs' },
-            { name: 'Apple', price: 200, category: 'Produce' },
+            { name: 'Milk', totalPrice: 300, category: 'DairyEggs' },
+            { name: 'Apple', totalPrice: 200, category: 'Produce' },
           ],
         }),
       ];
@@ -481,8 +481,8 @@ describe('computeBumpChartData', () => {
           date: '2026-04-01',
           total: 500,
           items: [
-            { name: 'Apple', price: 200, category: 'Produce' },
-            { name: 'Steak', price: 300, category: 'MeatSeafood' },
+            { name: 'Apple', totalPrice: 200, category: 'Produce' },
+            { name: 'Steak', totalPrice: 300, category: 'MeatSeafood' },
           ],
         }),
       ];
@@ -511,8 +511,8 @@ describe('computeBumpChartData', () => {
           date: '2026-04-01',
           total: 500,
           items: [
-            { name: 'Apple', price: 300, category: 'Produce' },
-            { name: 'Mystery', price: 200, category: 'UnmappedItem' },
+            { name: 'Apple', totalPrice: 300, category: 'Produce' },
+            { name: 'Mystery', totalPrice: 200, category: 'UnmappedItem' },
           ],
         }),
       ];

@@ -48,7 +48,7 @@ vi.mock('../../../../../src/services/gemini', () => ({
     date: '2026-01-28',
     total: 1000,
     category: 'Supermarket',
-    items: [{ name: 'Item 1', price: 500, qty: 1 }, { name: 'Item 2', price: 500, qty: 1 }],
+    items: [{ name: 'Item 1', totalPrice: 500, qty: 1 }, { name: 'Item 2', totalPrice: 500, qty: 1 }],
     currency: 'CLP',
     time: '12:00',
     country: 'CL',
@@ -75,7 +75,7 @@ function createMockTransaction(overrides: Partial<Transaction> = {}): Transactio
     merchant: 'Test Merchant',
     category: 'Supermarket',
     total: 1000,
-    items: [{ name: 'Test Item', price: 1000, qty: 1 }],
+    items: [{ name: 'Test Item', totalPrice: 1000, qty: 1 }],
     currency: 'CLP',
     ...overrides,
   };

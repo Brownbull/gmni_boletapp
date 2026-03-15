@@ -367,7 +367,7 @@ export const BatchReviewCard: React.FC<BatchReviewCardProps> = ({
                     </span>
                   )}
                   <span style={{ color: 'var(--text-secondary)' }}>
-                    {formatCurrency(item.price || 0, displayCurrency)}
+                    {formatCurrency(item.totalPrice || 0, displayCurrency)}
                   </span>
                 </div>
               </div>

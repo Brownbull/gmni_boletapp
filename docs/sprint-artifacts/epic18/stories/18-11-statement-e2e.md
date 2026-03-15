@@ -1,6 +1,6 @@
 # Story 18-11: Statement Scanning E2E Tests
 
-## Status: backlog
+## Status: drafted
 
 ## Intent
 **Epic Handle:** "One statement in, many verified transactions out"

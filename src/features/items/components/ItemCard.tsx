@@ -108,7 +108,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
     const categoryEmoji = getItemCategoryEmoji(normalizedCategory);
 
     // Format display values
-    const displayPrice = formatCurrency(item.price, item.currency || defaultCurrency);
+    const displayPrice = formatCurrency(item.totalPrice, item.currency || defaultCurrency);
     const displayMerchant = item.merchantAlias || item.merchantName;
 
     // Format date display (short format for cards)

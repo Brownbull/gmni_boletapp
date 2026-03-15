@@ -70,8 +70,8 @@ function makeTransaction(overrides: Partial<Transaction> = {}): Transaction {
     total: 15,
     category: 'Groceries',
     items: [
-      { name: 'Apple', price: 5, category: 'Produce' },
-      { name: 'Steak', price: 10, category: 'Meat' },
+      { name: 'Apple', totalPrice: 5, category: 'Produce' },
+      { name: 'Steak', totalPrice: 10, category: 'Meat' },
     ],
     ...overrides,
   };
@@ -119,7 +119,7 @@ describe('EditViewItemsSection', () => {
       expect(props.onSetEditingItemIndex).toHaveBeenCalledWith(0);
       expect(props.onUpdateTransaction).toHaveBeenCalledWith({
         ...tx,
-        items: [{ name: '', price: 0, category: 'Other', subcategory: '' }],
+        items: [{ name: '', totalPrice: 0, category: 'Other', subcategory: '' }],
       });
     });
 
@@ -127,8 +127,8 @@ describe('EditViewItemsSection', () => {
     it('toggleGroupCollapse — collapsing group A does not affect group B', () => {
       const tx = makeTransaction({
         items: [
-          { name: 'Apple', price: 5, category: 'Produce' },
-          { name: 'Cola', price: 2, category: 'Beverages' },
+          { name: 'Apple', totalPrice: 5, category: 'Produce' },
+          { name: 'Cola', totalPrice: 2, category: 'Beverages' },
         ],
       });
       const { container } = render(<EditViewItemsSection {...makeProps()} currentTransaction={tx} />);
@@ -150,7 +150,7 @@ describe('EditViewItemsSection', () => {
     // TD-15b-6 AC4: delete last item — ItemViewToggle no longer rendered after rerender with empty items
     it('handleDeleteItem on last item — ItemViewToggle absent after parent re-renders with empty items', () => {
       const props = makeProps();
-      const tx = makeTransaction({ items: [{ name: 'Solo', price: 5, category: 'Other' }] });
+      const tx = makeTransaction({ items: [{ name: 'Solo', totalPrice: 5, category: 'Other' }] });
       const { rerender } = render(
         <EditViewItemsSection {...props} currentTransaction={tx} editingItemIndex={0} />
       );

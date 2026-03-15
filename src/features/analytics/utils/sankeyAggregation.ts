@@ -73,9 +73,9 @@ export function aggregateTransactions(transactions: Transaction[]): FlowAggregat
             const itemGroup = ITEM_CATEGORY_GROUPS[itemCategoryKey];
             if (!itemGroup) continue;
 
-            // TransactionItem uses price — non-number rejected by typeof, NaN/0/negative by !(> 0)
-            if (typeof item.price !== 'number' || !(item.price > 0)) continue;
-            const amount = item.price;
+            // TransactionItem uses totalPrice — non-number rejected by typeof, NaN/0/negative by !(> 0)
+            if (typeof item.totalPrice !== 'number' || !(item.totalPrice > 0)) continue;
+            const amount = item.totalPrice;
 
             // Aggregate store groups
             const sgAgg = agg.storeGroups.get(storeGroup) || { value: 0, count: 0 };

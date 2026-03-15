@@ -22,196 +22,196 @@
     "items": [
       {
         "name": "ACORN STRACH NOODLE 12OZ",
-        "price": 429,
+        "totalPrice": 429,
         "quantity": 1,
         "category": "Pantry",
         "subcategory": null
       },
       {
         "name": "HALAL CHICKEN DRUMSTICK CUT",
-        "price": 399,
+        "totalPrice": 399,
         "quantity": 1,
         "category": "Meat & Seafood",
         "subcategory": null
       },
       {
         "name": "HALAL CHICKEN DRUMSTICK CUT",
-        "price": 516,
+        "totalPrice": 516,
         "quantity": 1,
         "category": "Meat & Seafood",
         "subcategory": null
       },
       {
         "name": "MILKFISH",
-        "price": 2713,
+        "totalPrice": 2713,
         "quantity": 1,
         "category": "Meat & Seafood",
         "subcategory": null
       },
       {
         "name": "CARROTS LBS BAG",
-        "price": 549,
+        "totalPrice": 549,
         "quantity": 1,
         "category": "Produce",
         "subcategory": null
       },
       {
         "name": "CHINA SHITAKE MUSHROOM LBS",
-        "price": 690,
+        "totalPrice": 690,
         "quantity": 1,
         "category": "Produce",
         "subcategory": null
       },
       {
         "name": "DAIKON RADISH (JAPANESES) LBS",
-        "price": 213,
+        "totalPrice": 213,
         "quantity": 1,
         "category": "Produce",
         "subcategory": null
       },
       {
         "name": "SEEDLESS CUCUMBER 1EA",
-        "price": 99,
+        "totalPrice": 99,
         "quantity": 1,
         "category": "Produce",
         "subcategory": null
       },
       {
         "name": "BEEF NECK BONE 1LB",
-        "price": 1175,
+        "totalPrice": 1175,
         "quantity": 1,
         "category": "Meat & Seafood",
         "subcategory": null
       },
       {
         "name": "CUBANELLE PEPPER 1LB",
-        "price": 41,
+        "totalPrice": 41,
         "quantity": 1,
         "category": "Produce",
         "subcategory": null
       },
       {
         "name": "RED BELL PEPPER 1LB",
-        "price": 67,
+        "totalPrice": 67,
         "quantity": 1,
         "category": "Produce",
         "subcategory": null
       },
       {
         "name": "SUN GOLD KIWIETLSI 1EA",
-        "price": 499,
+        "totalPrice": 499,
         "quantity": 1,
         "category": "Produce",
         "subcategory": null
       },
       {
         "name": "EXCELLENT PANCIT CANTON 8OZ",
-        "price": 299,
+        "totalPrice": 299,
         "quantity": 1,
         "category": "Pantry",
         "subcategory": null
       },
       {
         "name": "EXCELLENT PANCIT CANTON 8OZ",
-        "price": 299,
+        "totalPrice": 299,
         "quantity": 1,
         "category": "Pantry",
         "subcategory": null
       },
       {
         "name": "BOY BAWANG CORNINK GARLIC 3.",
-        "price": 179,
+        "totalPrice": 179,
         "quantity": 1,
         "category": "Snacks",
         "subcategory": null
       },
       {
         "name": "DING DONG SNACK MIX HOTS",
-        "price": 149,
+        "totalPrice": 149,
         "quantity": 1,
         "category": "Snacks",
         "subcategory": null
       },
       {
         "name": "MARGARINE 250G",
-        "price": 349,
+        "totalPrice": 349,
         "quantity": 1,
         "category": "Dairy & Eggs",
         "subcategory": null
       },
       {
         "name": "COCONUT MILK 13.5OZ",
-        "price": 249,
+        "totalPrice": 249,
         "quantity": 1,
         "category": "Pantry",
         "subcategory": null
       },
       {
         "name": "TUNA SPREAD 470ML",
-        "price": 649,
+        "totalPrice": 649,
         "quantity": 1,
         "category": "Pantry",
         "subcategory": null
       },
       {
         "name": "COCONUT MILK 13.6OZ",
-        "price": 249,
+        "totalPrice": 249,
         "quantity": 1,
         "category": "Pantry",
         "subcategory": null
       },
       {
         "name": "MAYONNAISE 12OZ",
-        "price": 649,
+        "totalPrice": 649,
         "quantity": 1,
         "category": "Pantry",
         "subcategory": null
       },
       {
         "name": "TAMARIND SOUP BASE MIX 1.4OZ",
-        "price": 149,
+        "totalPrice": 149,
         "quantity": 1,
         "category": "Pantry",
         "subcategory": null
       },
       {
         "name": "TAMARIND SOUP BASE MIX 1.4OZ",
-        "price": 149,
+        "totalPrice": 149,
         "quantity": 1,
         "category": "Pantry",
         "subcategory": null
       },
       {
         "name": "JACK & JILL PIATTOS CHEE",
-        "price": 199,
+        "totalPrice": 199,
         "quantity": 1,
         "category": "Snacks",
         "subcategory": null
       },
       {
         "name": "PRAWN CRACKER 3.562OZ",
-        "price": 249,
+        "totalPrice": 249,
         "quantity": 1,
         "category": "Snacks",
         "subcategory": null
       },
       {
         "name": "AUN CRACKER SPICY 2.12OZ",
-        "price": 149,
+        "totalPrice": 149,
         "quantity": 1,
         "category": "Snacks",
         "subcategory": null
       },
       {
         "name": "PRAWN CRACKER REGULAR 2.12OZ",
-        "price": 149,
+        "totalPrice": 149,
         "quantity": 1,
         "category": "Snacks",
         "subcategory": null
       },
       {
         "name": "TARO SESAME MOCHI 7.4OZ",
-        "price": 249,
+        "totalPrice": 249,
         "quantity": 1,
         "category": "Snacks",
         "subcategory": null

@@ -67,9 +67,9 @@ export function reconcileItemsTotal(
   receiptTotal: number,
   lang: 'en' | 'es'
 ): ReconcileResult {
-  // Calculate items sum (price is already line total, not unit price)
+  // Calculate items sum (totalPrice is already line total, not unit price)
   const itemsSum = items.reduce((sum, item) => {
-    const price = typeof item.price === 'number' ? item.price : 0;
+    const price = typeof item.totalPrice === 'number' ? item.totalPrice : 0;
     return sum + price;
   }, 0);
 
@@ -92,7 +92,7 @@ export function reconcileItemsTotal(
   // Add adjustment item
   const adjustmentItem: TransactionItem = {
     name: adjustmentName,
-    price: difference,
+    totalPrice: difference,
     qty: 1,
     category: 'Other',
   };

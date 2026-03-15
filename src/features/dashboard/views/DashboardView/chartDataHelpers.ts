@@ -141,15 +141,15 @@ export function computeRadarChartData(
         currMonthTx.forEach(tx => {
             (tx.items || []).forEach(item => {
                 const cat = normalizeItemCategory(item.category || 'Other');
-                currTotals[cat] = (currTotals[cat] || 0) + item.price;
-                totalCurrMonth += item.price;
+                currTotals[cat] = (currTotals[cat] || 0) + item.totalPrice;
+                totalCurrMonth += item.totalPrice;
             });
         });
         prevMonthTx.forEach(tx => {
             (tx.items || []).forEach(item => {
                 const cat = normalizeItemCategory(item.category || 'Other');
-                prevTotals[cat] = (prevTotals[cat] || 0) + item.price;
-                totalPrevMonth += item.price;
+                prevTotals[cat] = (prevTotals[cat] || 0) + item.totalPrice;
+                totalPrevMonth += item.totalPrice;
             });
         });
     } else if (treemapViewMode === 'item-groups') {
@@ -158,8 +158,8 @@ export function computeRadarChartData(
                 const cat = normalizeItemCategory(item.category || 'Other');
                 const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
                 const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'otros-item';
-                currTotals[group] = (currTotals[group] || 0) + item.price;
-                totalCurrMonth += item.price;
+                currTotals[group] = (currTotals[group] || 0) + item.totalPrice;
+                totalCurrMonth += item.totalPrice;
             });
         });
         prevMonthTx.forEach(tx => {
@@ -167,8 +167,8 @@ export function computeRadarChartData(
                 const cat = normalizeItemCategory(item.category || 'Other');
                 const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
                 const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'otros-item';
-                prevTotals[group] = (prevTotals[group] || 0) + item.price;
-                totalPrevMonth += item.price;
+                prevTotals[group] = (prevTotals[group] || 0) + item.totalPrice;
+                totalPrevMonth += item.totalPrice;
             });
         });
     }
@@ -362,7 +362,7 @@ export function computeBumpChartData(
             monthTx.forEach(tx => {
                 (tx.items || []).forEach(item => {
                     const cat = normalizeItemCategory(item.category || 'Other');
-                    totals[cat] = (totals[cat] || 0) + item.price;
+                    totals[cat] = (totals[cat] || 0) + item.totalPrice;
                 });
             });
         } else if (treemapViewMode === 'item-groups') {
@@ -371,7 +371,7 @@ export function computeBumpChartData(
                     const cat = normalizeItemCategory(item.category || 'Other');
                     const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
                     const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'otros-item';
-                    totals[group] = (totals[group] || 0) + item.price;
+                    totals[group] = (totals[group] || 0) + item.totalPrice;
                 });
             });
         }

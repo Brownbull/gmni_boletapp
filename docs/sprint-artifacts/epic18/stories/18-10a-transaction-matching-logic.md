@@ -1,6 +1,6 @@
 # Story 18-10a: Transaction Matching + Merge Logic
 
-## Status: backlog
+## Status: drafted
 
 ## Intent
 **Epic Handle:** "One statement in, many verified transactions out"

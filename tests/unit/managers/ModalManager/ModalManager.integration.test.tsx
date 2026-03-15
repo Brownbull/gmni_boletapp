@@ -181,8 +181,8 @@ describe('ModalManager Integration', () => {
             category: 'Supermercado',
             total: 50.00,
             items: [
-              { name: 'Item 1', price: 25.00 },
-              { name: 'Item 2', price: 25.00 },
+              { name: 'Item 1', totalPrice: 25.00 },
+              { name: 'Item 2', totalPrice: 25.00 },
             ],
           },
           {

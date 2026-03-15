@@ -17,7 +17,7 @@ function makeItem(overrides: Partial<FlattenedItem> = {}): FlattenedItem {
     return {
         id: 'item-1',
         name: 'Milk',
-        price: 1000,
+        totalPrice: 1000,
         qty: 1,
         category: 'Dairy',
         subcategory: 'Milk',

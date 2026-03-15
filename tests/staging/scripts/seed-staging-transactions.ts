@@ -72,7 +72,7 @@ type ItemCategory =
 interface TransactionItem {
     name: string;
     qty?: number;
-    price: number;
+    totalPrice: number;
     category: ItemCategory;
 }
 
@@ -289,7 +289,7 @@ function generateItemsForTransaction(
     const itemTemplates = ITEM_TEMPLATES_BY_CATEGORY[category];
     if (!itemTemplates || itemTemplates.length === 0) {
         // Fallback: single generic item
-        return [{ name: 'Producto', price: targetTotal, category: 'OtherItem', qty: 1 }];
+        return [{ name: 'Producto', totalPrice: targetTotal, category: 'OtherItem', qty: 1 }];
     }
 
     // Determine number of items (1-5, weighted toward 2-3)
@@ -310,17 +310,17 @@ function generateItemsForTransaction(
         const template = selectedTemplates[i];
         const isLast = i === selectedTemplates.length - 1;
 
-        let price: number;
+        let totalPrice: number;
         if (isLast) {
             // Last item gets the remaining amount (ensures total matches)
-            price = Math.max(template.minPrice, remainingTotal);
+            totalPrice = Math.max(template.minPrice, remainingTotal);
         } else {
             // Random price within template range, but not more than remaining
             const maxAllowed = Math.min(template.maxPrice, remainingTotal - (selectedTemplates.length - i - 1) * 1000);
-            price = Math.floor(
+            totalPrice = Math.floor(
                 Math.random() * (maxAllowed - template.minPrice) + template.minPrice
             );
-            price = Math.max(template.minPrice, Math.min(price, remainingTotal - 1000));
+            totalPrice = Math.max(template.minPrice, Math.min(totalPrice, remainingTotal - 1000));
         }
 
         // Random quantity (1-3, usually 1)
@@ -328,12 +328,12 @@ function generateItemsForTransaction(
 
         items.push({
             name: template.name,
-            price: Math.round(price / qty), // Price per unit
+            totalPrice: Math.round(totalPrice / qty), // Price per unit
             category: template.category,
             qty,
         });
 
-        remainingTotal -= price;
+        remainingTotal -= totalPrice;
     }
 
     return items;
@@ -356,7 +356,7 @@ function generateTransaction(template: TransactionTemplate, daysAgo: number) {
     const items = generateItemsForTransaction(template.category, amount);
 
     // Recalculate total based on actual items (sum of price * qty)
-    const actualTotal = items.reduce((sum, item) => sum + (item.price * (item.qty || 1)), 0);
+    const actualTotal = items.reduce((sum, item) => sum + (item.totalPrice * (item.qty || 1)), 0);
 
     return {
         // Use correct field names matching Transaction type

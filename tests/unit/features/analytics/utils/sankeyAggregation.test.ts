@@ -13,17 +13,17 @@ import type { Transaction } from '@/types/transaction';
 
 function createTransaction(
     storeCategory: string,
-    items: Array<{ name: string; price: number; category: string }>
+    items: Array<{ name: string; totalPrice: number; category: string }>
 ): Transaction {
     return {
         id: `tx-${Math.random().toString(36).substr(2, 9)}`,
         date: '2026-01-11',
         merchant: 'Test Merchant',
         category: storeCategory as never,
-        total: items.reduce((sum, item) => sum + item.price, 0),
+        total: items.reduce((sum, item) => sum + item.totalPrice, 0),
         items: items.map(item => ({
             name: item.name,
-            price: item.price,
+            totalPrice: item.totalPrice,
             category: item.category,
         })),
     };
@@ -81,7 +81,7 @@ describe('aggregateTransactions', () => {
             merchant: 'Test',
             category: '' as never,
             total: 1000,
-            items: [{ name: 'Item', price: 1000, category: 'Produce' }],
+            items: [{ name: 'Item', totalPrice: 1000, category: 'Produce' }],
         };
         const result = aggregateTransactions([tx]);
 
@@ -90,9 +90,9 @@ describe('aggregateTransactions', () => {
 
     it('skips items with zero or negative price', () => {
         const tx = createTransaction('Supermarket', [
-            { name: 'Free', price: 0, category: 'Produce' },
-            { name: 'Refund', price: -500, category: 'Produce' },
-            { name: 'Valid', price: 1000, category: 'Produce' },
+            { name: 'Free', totalPrice: 0, category: 'Produce' },
+            { name: 'Refund', totalPrice: -500, category: 'Produce' },
+            { name: 'Valid', totalPrice: 1000, category: 'Produce' },
         ]);
         const result = aggregateTransactions([tx]);
 
@@ -104,7 +104,7 @@ describe('aggregateTransactions', () => {
 
     it('aggregates a single transaction with one item correctly', () => {
         const tx = createTransaction('Supermarket', [
-            { name: 'Apples', price: 5000, category: 'Produce' },
+            { name: 'Apples', totalPrice: 5000, category: 'Produce' },
         ]);
         const result = aggregateTransactions([tx]);
 
@@ -129,10 +129,10 @@ describe('aggregateTransactions', () => {
 
     it('accumulates values across multiple transactions with same store category', () => {
         const tx1 = createTransaction('Supermarket', [
-            { name: 'Apples', price: 3000, category: 'Produce' },
+            { name: 'Apples', totalPrice: 3000, category: 'Produce' },
         ]);
         const tx2 = createTransaction('Supermarket', [
-            { name: 'Oranges', price: 2000, category: 'Produce' },
+            { name: 'Oranges', totalPrice: 2000, category: 'Produce' },
         ]);
         const result = aggregateTransactions([tx1, tx2]);
 
@@ -143,10 +143,10 @@ describe('aggregateTransactions', () => {
 
     it('accumulates item categories across different transactions', () => {
         const tx1 = createTransaction('Supermarket', [
-            { name: 'Apples', price: 3000, category: 'Produce' },
+            { name: 'Apples', totalPrice: 3000, category: 'Produce' },
         ]);
         const tx2 = createTransaction('Restaurant', [
-            { name: 'Salad', price: 4000, category: 'Produce' },
+            { name: 'Salad', totalPrice: 4000, category: 'Produce' },
         ]);
         const result = aggregateTransactions([tx1, tx2]);
 
@@ -157,7 +157,7 @@ describe('aggregateTransactions', () => {
 
     it('creates flow link keys with arrow separator', () => {
         const tx = createTransaction('Supermarket', [
-            { name: 'Apples', price: 5000, category: 'Produce' },
+            { name: 'Apples', totalPrice: 5000, category: 'Produce' },
         ]);
         const result = aggregateTransactions([tx]);
 
@@ -169,9 +169,9 @@ describe('aggregateTransactions', () => {
 
     it('counts per item not per transaction', () => {
         const tx = createTransaction('Supermarket', [
-            { name: 'Apples', price: 3000, category: 'Produce' },
-            { name: 'Milk', price: 2000, category: 'DairyEggs' },
-            { name: 'Oranges', price: 1000, category: 'Produce' },
+            { name: 'Apples', totalPrice: 3000, category: 'Produce' },
+            { name: 'Milk', totalPrice: 2000, category: 'DairyEggs' },
+            { name: 'Oranges', totalPrice: 1000, category: 'Produce' },
         ]);
         const result = aggregateTransactions([tx]);
 
@@ -182,8 +182,8 @@ describe('aggregateTransactions', () => {
 
     it('skips items with NaN price (typeof guard)', () => {
         const tx = createTransaction('Supermarket', [
-            { name: 'Bad Price', price: NaN, category: 'Produce' },
-            { name: 'Valid', price: 1000, category: 'Produce' },
+            { name: 'Bad Price', totalPrice: NaN, category: 'Produce' },
+            { name: 'Valid', totalPrice: 1000, category: 'Produce' },
         ]);
         const result = aggregateTransactions([tx]);
 
@@ -194,8 +194,8 @@ describe('aggregateTransactions', () => {
 
     it('skips items with string price (typeof guard)', () => {
         const tx = createTransaction('Supermarket', [
-            { name: 'String Price', price: '1000' as unknown as number, category: 'Produce' },
-            { name: 'Valid', price: 2000, category: 'Produce' },
+            { name: 'String Price', totalPrice: '1000' as unknown as number, category: 'Produce' },
+            { name: 'Valid', totalPrice: 2000, category: 'Produce' },
         ]);
         const result = aggregateTransactions([tx]);
 
@@ -212,8 +212,8 @@ describe('aggregateTransactions', () => {
             category: 'Supermarket' as never,
             total: 5000,
             items: [
-                { name: 'Valid', price: 3000, category: 'Produce' },
-                { name: 'NoCategory', price: 2000, category: '' },
+                { name: 'Valid', totalPrice: 3000, category: 'Produce' },
+                { name: 'NoCategory', totalPrice: 2000, category: '' },
             ],
         };
         const result = aggregateTransactions([tx]);

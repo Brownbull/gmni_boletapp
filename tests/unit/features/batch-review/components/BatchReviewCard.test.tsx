@@ -31,8 +31,8 @@ describe('BatchReviewCard', () => {
     currency: 'USD',
     date: '2026-01-26',
     items: [
-      { name: 'Item 1', price: 5000 }, // $50.00
-      { name: 'Item 2', price: 5000 }, // $50.00
+      { name: 'Item 1', totalPrice: 5000 }, // $50.00
+      { name: 'Item 2', totalPrice: 5000 }, // $50.00
     ],
     storeCategory: 'grocery',
     category: 'groceries',
@@ -242,13 +242,13 @@ describe('BatchReviewCard', () => {
       transaction: {
         ...mockTransaction,
         items: [
-          { name: 'Item 1', price: 10 },
-          { name: 'Item 2', price: 10 },
-          { name: 'Item 3', price: 10 },
-          { name: 'Item 4', price: 10 },
-          { name: 'Item 5', price: 10 },
-          { name: 'Item 6', price: 10 },
-          { name: 'Item 7', price: 10 },
+          { name: 'Item 1', totalPrice: 10 },
+          { name: 'Item 2', totalPrice: 10 },
+          { name: 'Item 3', totalPrice: 10 },
+          { name: 'Item 4', totalPrice: 10 },
+          { name: 'Item 5', totalPrice: 10 },
+          { name: 'Item 6', totalPrice: 10 },
+          { name: 'Item 7', totalPrice: 10 },
         ],
       },
     };

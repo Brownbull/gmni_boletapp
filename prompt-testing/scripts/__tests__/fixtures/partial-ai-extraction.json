@@ -13,8 +13,8 @@
     "total": 15990,
     "category": "Health",
     "items": [
-      { "name": "Ibuprofeno 400mg", "price": 5990 },
-      { "name": "Vitamina C 1000mg", "price": 9990 }
+      { "name": "Ibuprofeno 400mg", "totalPrice": 5990 },
+      { "name": "Vitamina C 1000mg", "totalPrice": 9990 }
     ],
     "model": "gemini-1.5-flash",
     "modelVersion": "1.5-flash-latest",
@@ -23,10 +23,10 @@
   "corrections": {
     "total": 15980,
     "items": {
-      "0": { "price": 5980, "name": "Ibuprofeno 400mg x 20" }
+      "0": { "totalPrice": 5980, "name": "Ibuprofeno 400mg x 20" }
     },
     "addItems": [
-      { "name": "Bolsa Plastica", "price": 100 }
+      { "name": "Bolsa Plastica", "totalPrice": 100 }
     ],
     "correctedAt": "2025-12-11T12:30:00Z"
   }

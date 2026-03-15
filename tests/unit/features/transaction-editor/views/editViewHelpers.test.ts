@@ -22,8 +22,8 @@ describe('editViewHelpers', () => {
         { name: 'Bread', category: 'Bakery', subcategory: 'Loaves' },
       ];
       const currentItems: TransactionItem[] = [
-        { name: 'Apple', price: 100, category: 'Produce', subcategory: 'Fruits' },
-        { name: 'Bread', price: 200, category: 'Bakery', subcategory: 'Loaves' },
+        { name: 'Apple', totalPrice: 100, category: 'Produce', subcategory: 'Fruits' },
+        { name: 'Bread', totalPrice: 200, category: 'Bakery', subcategory: 'Loaves' },
       ];
 
       const result = findAllChangedItemGroups(originalItems, currentItems);
@@ -36,8 +36,8 @@ describe('editViewHelpers', () => {
         { name: 'Bread', category: 'Bakery', subcategory: 'Loaves' },
       ];
       const currentItems: TransactionItem[] = [
-        { name: 'Apple', price: 100, category: 'Snacks', subcategory: 'Fruits' },
-        { name: 'Bread', price: 200, category: 'Bakery', subcategory: 'Loaves' },
+        { name: 'Apple', totalPrice: 100, category: 'Snacks', subcategory: 'Fruits' },
+        { name: 'Bread', totalPrice: 200, category: 'Bakery', subcategory: 'Loaves' },
       ];
 
       const result = findAllChangedItemGroups(originalItems, currentItems);
@@ -50,8 +50,8 @@ describe('editViewHelpers', () => {
         { name: 'Bread', category: 'Bakery', subcategory: '' },
       ];
       const currentItems: TransactionItem[] = [
-        { name: 'Apple', price: 100, category: 'Snacks' },
-        { name: 'Bread', price: 200, category: 'Dairy' },
+        { name: 'Apple', totalPrice: 100, category: 'Snacks' },
+        { name: 'Bread', totalPrice: 200, category: 'Dairy' },
       ];
 
       const result = findAllChangedItemGroups(originalItems, currentItems);
@@ -65,8 +65,8 @@ describe('editViewHelpers', () => {
         { name: 'Apple', category: 'Produce', subcategory: '' },
       ];
       const currentItems: TransactionItem[] = [
-        { name: 'Apple', price: 100, category: 'Produce' },
-        { name: 'NewItem', price: 50, category: 'Snacks' },
+        { name: 'Apple', totalPrice: 100, category: 'Produce' },
+        { name: 'NewItem', totalPrice: 50, category: 'Snacks' },
       ];
 
       const result = findAllChangedItemGroups(originalItems, currentItems);
@@ -78,7 +78,7 @@ describe('editViewHelpers', () => {
         { name: '', category: 'Produce', subcategory: '' },
       ];
       const currentItems: TransactionItem[] = [
-        { name: '', price: 100, category: 'Snacks' },
+        { name: '', totalPrice: 100, category: 'Snacks' },
       ];
 
       const result = findAllChangedItemGroups(originalItems, currentItems);
@@ -90,7 +90,7 @@ describe('editViewHelpers', () => {
         { name: 'Apple', category: 'Produce', subcategory: '' },
       ];
       const currentItems: TransactionItem[] = [
-        { name: 'Apple', price: 100, category: '' },
+        { name: 'Apple', totalPrice: 100, category: '' },
       ];
 
       const result = findAllChangedItemGroups(originalItems, currentItems);
@@ -110,8 +110,8 @@ describe('editViewHelpers', () => {
         { name: 'Bread', category: 'Bakery', subcategory: 'Loaves' },
       ];
       const currentItems: TransactionItem[] = [
-        { name: 'Apple', price: 100, category: 'Produce', subcategory: 'Fruits' },
-        { name: 'Bread', price: 200, category: 'Bakery', subcategory: 'Loaves' },
+        { name: 'Apple', totalPrice: 100, category: 'Produce', subcategory: 'Fruits' },
+        { name: 'Bread', totalPrice: 200, category: 'Bakery', subcategory: 'Loaves' },
       ];
 
       const result = findAllChangedSubcategories(originalItems, currentItems);
@@ -124,8 +124,8 @@ describe('editViewHelpers', () => {
         { name: 'Bread', category: 'Bakery', subcategory: 'Loaves' },
       ];
       const currentItems: TransactionItem[] = [
-        { name: 'Apple', price: 100, category: 'Produce', subcategory: 'Organic' },
-        { name: 'Bread', price: 200, category: 'Bakery', subcategory: 'Loaves' },
+        { name: 'Apple', totalPrice: 100, category: 'Produce', subcategory: 'Organic' },
+        { name: 'Bread', totalPrice: 200, category: 'Bakery', subcategory: 'Loaves' },
       ];
 
       const result = findAllChangedSubcategories(originalItems, currentItems);
@@ -137,8 +137,8 @@ describe('editViewHelpers', () => {
         { name: 'Apple', category: 'Produce', subcategory: 'Fruits' },
       ];
       const currentItems: TransactionItem[] = [
-        { name: 'Apple', price: 100, category: 'Produce', subcategory: 'Fruits' },
-        { name: 'NewItem', price: 50, category: 'Snacks', subcategory: 'Chips' },
+        { name: 'Apple', totalPrice: 100, category: 'Produce', subcategory: 'Fruits' },
+        { name: 'NewItem', totalPrice: 50, category: 'Snacks', subcategory: 'Chips' },
       ];
 
       const result = findAllChangedSubcategories(originalItems, currentItems);
@@ -150,7 +150,7 @@ describe('editViewHelpers', () => {
         { name: '', category: 'Produce', subcategory: 'Fruits' },
       ];
       const currentItems: TransactionItem[] = [
-        { name: '', price: 100, category: 'Produce', subcategory: 'Organic' },
+        { name: '', totalPrice: 100, category: 'Produce', subcategory: 'Organic' },
       ];
 
       const result = findAllChangedSubcategories(originalItems, currentItems);
@@ -162,7 +162,7 @@ describe('editViewHelpers', () => {
         { name: 'Apple', category: 'Produce', subcategory: 'Fruits' },
       ];
       const currentItems: TransactionItem[] = [
-        { name: 'Apple', price: 100, category: 'Produce', subcategory: '' },
+        { name: 'Apple', totalPrice: 100, category: 'Produce', subcategory: '' },
       ];
 
       const result = findAllChangedSubcategories(originalItems, currentItems);

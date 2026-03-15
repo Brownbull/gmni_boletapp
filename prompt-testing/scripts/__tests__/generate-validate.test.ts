@@ -43,7 +43,7 @@ function createValidExpectedJson(testId: string, storeType: string): object {
       date: '2025-12-11',
       total: 10000,
       category: 'Test',
-      items: [{ name: 'Test Item', price: 10000 }],
+      items: [{ name: 'Test Item', totalPrice: 10000 }],
       model: 'gemini-2.0-flash',
       modelVersion: 'latest',
       extractedAt: new Date().toISOString(),
@@ -478,7 +478,7 @@ describe('Generated File Structure', () => {
         date: string;
         total: number;
         category: string;
-        items: Array<{ name: string; price: number }>;
+        items: Array<{ name: string; totalPrice: number }>;
         model: string;
         modelVersion: string;
         extractedAt: string;

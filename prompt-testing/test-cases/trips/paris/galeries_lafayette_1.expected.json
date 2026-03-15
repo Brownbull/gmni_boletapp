@@ -23,35 +23,35 @@
     "items": [
       {
         "name": "45G CHIPS TRUFFE ETE",
-        "price": 1170,
+        "totalPrice": 1170,
         "quantity": 3,
         "category": "Snacks",
         "subcategory": "Chips"
       },
       {
         "name": "90G TABLETTE RAFFAELLO",
-        "price": 759,
+        "totalPrice": 759,
         "quantity": 3,
         "category": "Snacks",
         "subcategory": "Chocolate"
       },
       {
         "name": "BTE OVALE VIOLETTE",
-        "price": 360,
+        "totalPrice": 360,
         "quantity": 1,
         "category": "Other",
         "subcategory": null
       },
       {
         "name": "75G NAPOS 5 GOUTS",
-        "price": 1380,
+        "totalPrice": 1380,
         "quantity": 2,
         "category": "Snacks",
         "subcategory": null
       },
       {
         "name": "7X70G BAGUETTE MAGIQ 7 TERRIN",
-        "price": 3780,
+        "totalPrice": 3780,
         "quantity": 2,
         "category": "Bakery",
         "subcategory": "Baguette"
