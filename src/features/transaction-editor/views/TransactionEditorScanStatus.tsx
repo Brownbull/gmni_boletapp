@@ -9,8 +9,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
-import { ProcessingOverlay } from '@features/scan/components';
-import { ScanCompleteModal } from '@features/scan/components';
+import { ProcessingOverlay, ScanCompleteModal } from '@features/scan/components';
 import { useWorkflowIsProcessing as useScanIsProcessing, useWorkflowActiveDialog as useScanActiveDialog } from '@shared/stores';
 import { DIALOG_TYPES } from '@shared/types/scanWorkflow';
 import type { Transaction } from '@/types/transaction';
@@ -81,7 +80,12 @@ export function TransactionEditorScanStatus({
 
   const handleScanCompleteSave = async () => {
     setIsSavingFromModal(true);
-    await onSaveWithLearning();
+    try {
+      await onSaveWithLearning();
+    } catch {
+      // Error display handled by onSaveWithLearning (toast). Reset modal state for retry.
+      setIsSavingFromModal(false);
+    }
   };
 
   const handleScanCompleteEdit = () => {

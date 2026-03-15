@@ -199,3 +199,11 @@
 - **Finding:** Existing `expected.json` files in `prompt-testing/test-cases/` were generated with old V4 prompt (Spanish groups, no unitPrice). After deploying the updated Cloud Function, regenerate with `--force` to capture new prompt behavior.
 - **Files:** `prompt-testing/test-cases/**/*.expected.json`
 - **Estimated effort:** 1 point (scripted, but needs manual review of diffs)
+
+### [PROD] Remove dead `isSaving` prop from TransactionEditorScanStatusProps
+
+- **Source:** TD-18-5 review (2026-03-15)
+- **Finding:** `isSaving` prop is accepted in the public interface but deliberately discarded (`_isSaving`). The prop creates a misleading contract — callers in `TransactionEditorViewInternal.tsx` pass a value they believe is used. Should either remove from interface + call site or mark `@deprecated`.
+- **Files:** `src/features/transaction-editor/views/TransactionEditorScanStatus.tsx`, `src/features/transaction-editor/views/TransactionEditorViewInternal.tsx`
+- **Stage:** PROD — compile-time hygiene, not a runtime risk
+- **Estimated effort:** 1 point (2 files, remove prop from interface + call site)

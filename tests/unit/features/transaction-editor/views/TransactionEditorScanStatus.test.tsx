@@ -155,6 +155,29 @@ describe('TransactionEditorScanStatus', () => {
       resolveSave();
       await waitFor(() => expect(onSaveWithLearning).toHaveBeenCalledTimes(1));
     });
+
+    it('resets spinner when save fails (error recovery)', async () => {
+      const onSaveWithLearning = vi.fn().mockRejectedValue(new Error('network error'));
+      const props = buildProps({ scanButtonState: 'idle', onSaveWithLearning });
+      const { rerender } = render(<TransactionEditorScanStatus {...props} />);
+
+      // Trigger modal
+      rerender(<TransactionEditorScanStatus {...props} scanButtonState="complete" />);
+
+      // Click save — it will reject
+      fireEvent.click(screen.getByTestId('save-btn'));
+
+      // After rejection, isSaving should be reset to false via finally block
+      await waitFor(() =>
+        expect(screen.getByTestId('scan-complete-modal')).toHaveAttribute(
+          'data-is-saving',
+          'false'
+        )
+      );
+
+      // Spinner should be gone
+      expect(screen.queryByTestId('spinner')).not.toBeInTheDocument();
+    });
   });
 
   describe('Task 2.2 — edit path: modal closes, save is NOT called', () => {
