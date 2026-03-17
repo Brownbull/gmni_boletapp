@@ -206,4 +206,23 @@ describe('queueReceiptScan', () => {
     expect(mockTransaction.update).not.toHaveBeenCalled()
     expect(mockTransaction.set).not.toHaveBeenCalled()
   })
+
+  // --- Rate Limiting ---
+
+  it('rejects when rate limit is exceeded', async () => {
+    // Use same userId for all calls to trigger rate limit
+    const ctx = makeCallContext()
+
+    // Make 10 successful requests
+    for (let i = 0; i < 10; i++) {
+      mockCredits(50)
+      await wrappedFn(makeCallData({ scanId: `550e8400-e29b-41d4-a716-44665544000${i}` }), ctx)
+    }
+
+    // 11th request should fail with rate limit
+    mockCredits(50)
+    await expect(
+      wrappedFn(makeCallData({ scanId: '550e8400-e29b-41d4-a716-446655440099' }), ctx)
+    ).rejects.toMatchObject({ code: 'resource-exhausted' })
+  })
 })

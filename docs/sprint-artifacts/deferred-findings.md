@@ -166,6 +166,14 @@
 - **Stage:** SCALE — Only relevant at high error volume where false-positive retries waste Gemini API calls
 - **Estimated effort:** 1 point (switch to regex or error.code check for network error keywords)
 
+### [SCALE] Redundant imageUrls Storage in Pending Scan Results
+
+- **Source:** 18-13a-resilient-scan-backend review (2026-03-17)
+- **Finding:** `imageUrls` stored both at doc root (`pending_scans/{scanId}.imageUrls`) and inside `result.imageUrls`. Client reads from `result`; root field is never updated post-creation. Redundant storage and potential consistency drift.
+- **Files:** `functions/src/processReceiptScan.ts`
+- **Stage:** SCALE — Minor storage waste, no functional impact
+- **Estimated effort:** 0.5 points (omit from result write, client reads from root)
+
 ### [SCALE] Guard Violation Logging in Production
 
 - **Source:** TD-18-3-scan-dialog-autodismiss-credit-leak review (2026-03-13)
@@ -239,3 +247,27 @@
 - **Files:** `src/features/scan/hooks/useScanHandlers.ts`
 - **Stage:** PROD — Code hygiene, no runtime impact
 - **Estimated effort:** 1 point (replace with proper logging or remove)
+
+### [PROD] cleanupPendingScans Phase 1 Not Paginated (Capped at 500)
+
+- **Source:** 18-13a-resilient-scan-backend review (2026-03-17)
+- **Finding:** Phase 1 (auto-fail stale processing scans) uses `.limit(BATCH_SIZE)` but no pagination loop, unlike Phase 2. If >500 scans are stale simultaneously (e.g., after an outage), extras wait for the next cleanup cycle. Each stale doc also runs a sequential transaction — performance bottleneck.
+- **Files:** `functions/src/cleanupPendingScans.ts`
+- **Stage:** PROD — Resilience under outage recovery, not feature-breaking
+- **Estimated effort:** 1 point (wrap Phase 1 in same loop pattern as Phase 2)
+
+### [PROD] APP_ID Hardcoded String Duplicated Across 5 Cloud Function Files
+
+- **Source:** 18-13a-resilient-scan-backend review (2026-03-17)
+- **Finding:** `const APP_ID = 'boletapp-d609f'` duplicated in queueReceiptScan, processReceiptScan, onPendingScanDeleted, cleanupPendingScans, and cleanupStaleFcmTokens. A typo in one file silently writes credits to the wrong Firestore path.
+- **Files:** `functions/src/queueReceiptScan.ts`, `functions/src/processReceiptScan.ts`, `functions/src/onPendingScanDeleted.ts`, `functions/src/cleanupPendingScans.ts`, `functions/src/cleanupStaleFcmTokens.ts`
+- **Stage:** PROD — DRY violation with silent-failure risk
+- **Estimated effort:** 1 point (extract to functions/src/constants.ts, update 5 imports)
+
+### [PROD] AC-2 Spec Path Mismatch with Implementation (Docs Errata)
+
+- **Source:** 18-13a-resilient-scan-backend review (2026-03-17)
+- **Finding:** Story AC-2 specifies `pending_scans/{userId}/{scanId}` but implementation uses flat `pending_scans/{scanId}` with userId as a field. The flat collection is architecturally correct (enables cross-user queries for cleanup, avoids collectionGroup index collision). Spec text needs errata update.
+- **Files:** `docs/sprint-artifacts/epic18/stories/18-13a-resilient-scan-backend.md`
+- **Stage:** PROD — Documentation accuracy
+- **Estimated effort:** 0.5 points (update AC-2 text)

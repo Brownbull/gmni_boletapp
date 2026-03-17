@@ -1,5 +1,8 @@
 // Mock firebase-admin BEFORE any imports
 const mockDocUpdate = jest.fn()
+const mockDocGet = jest.fn().mockResolvedValue({
+  data: () => ({ status: 'processing', creditDeducted: true }),
+})
 const mockTransaction = {
   get: jest.fn(),
   update: jest.fn(),
@@ -21,7 +24,7 @@ jest.mock('firebase-admin', () => ({
   initializeApp: jest.fn(),
   firestore: Object.assign(
     jest.fn(() => ({
-      doc: jest.fn(() => ({ update: mockDocUpdate, path: 'pending_scans/test-scan' })),
+      doc: jest.fn(() => ({ update: mockDocUpdate, get: mockDocGet, path: 'pending_scans/test-scan' })),
       runTransaction: mockRunTransaction,
     })),
     {
@@ -125,11 +128,13 @@ describe('processReceiptScan', () => {
     mockGeminiSuccess()
     mockFetch.mockResolvedValue({
       ok: true,
+      headers: { get: () => '100' },
       arrayBuffer: () => Promise.resolve(new ArrayBuffer(100)),
     })
+    mockBucketFile.getMetadata.mockResolvedValue([{ size: 1024 }])
     mockTransaction.get.mockResolvedValue({
       exists: true,
-      data: () => ({ remaining: 5, used: 3 }),
+      data: () => ({ remaining: 5, used: 3, creditDeducted: true, status: 'processing' }),
     })
   })
 
@@ -205,10 +210,14 @@ describe('processReceiptScan', () => {
     })
   })
 
-  it('calls Gemini with retry', async () => {
+  it('calls Gemini with retry and processes response', async () => {
     const snap = makeFakeSnapshot(makeSnapshotData())
     await handler(snap, makeEventContext())
-    expect(mockGenerateContent).toHaveBeenCalled()
+    expect(mockGenerateContent).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ text: 'test prompt' }),
+      ])
+    )
   })
 
   it('fails when image exceeds size limit', async () => {
@@ -220,5 +229,47 @@ describe('processReceiptScan', () => {
       expect.anything(),
       expect.objectContaining({ status: 'failed', creditDeducted: false })
     )
+  })
+
+  it('fails when Gemini returns malformed JSON', async () => {
+    mockGenerateContent.mockResolvedValue({
+      response: { text: () => 'not valid json {{{' },
+    })
+    const snap = makeFakeSnapshot(makeSnapshotData())
+    await handler(snap, makeEventContext())
+
+    expect(mockRunTransaction).toHaveBeenCalled()
+    expect(mockTransaction.update).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ status: 'failed', creditDeducted: false })
+    )
+  })
+
+  it('fails when fetch returns non-OK response', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      headers: { get: () => null },
+    })
+    const snap = makeFakeSnapshot(makeSnapshotData())
+    await handler(snap, makeEventContext())
+
+    expect(mockRunTransaction).toHaveBeenCalled()
+    expect(mockTransaction.update).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ status: 'failed', creditDeducted: false })
+    )
+  })
+
+  it('skips processing when scan status is not processing (idempotency)', async () => {
+    mockDocGet.mockResolvedValueOnce({
+      data: () => ({ status: 'completed', creditDeducted: false }),
+    })
+    const snap = makeFakeSnapshot(makeSnapshotData())
+    await handler(snap, makeEventContext())
+
+    // Should not call Gemini or update doc
+    expect(mockGenerateContent).not.toHaveBeenCalled()
+    expect(mockDocUpdate).not.toHaveBeenCalled()
   })
 })

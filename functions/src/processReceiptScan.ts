@@ -70,7 +70,15 @@ async function fetchImageFromUrl(url: string): Promise<Buffer> {
     console.error(`fetchImageFromUrl: upstream error ${response.status} for URL hostname ${new URL(url).hostname}`)
     throw new Error('Failed to fetch image from Storage')
   }
+  // OOM prevention: reject oversized responses before buffering
+  const contentLength = Number(response.headers.get('content-length') || 0)
+  if (contentLength > MAX_IMAGE_SIZE_BYTES) {
+    throw new Error(`Image exceeds size limit: ${(contentLength / (1024 * 1024)).toFixed(1)}MB`)
+  }
   const arrayBuffer = await response.arrayBuffer()
+  if (arrayBuffer.byteLength > MAX_IMAGE_SIZE_BYTES) {
+    throw new Error(`Image exceeds size limit: ${(arrayBuffer.byteLength / (1024 * 1024)).toFixed(1)}MB`)
+  }
   return Buffer.from(arrayBuffer)
 }
 
@@ -80,7 +88,9 @@ function generateTransactionId(): string {
 
 /**
  * Coerce Gemini string-typed numeric values to actual numbers.
- * Strips Chilean thousands separators (dots/commas).
+ * CLP-only: strips Chilean thousands separators (dots and commas).
+ * For multi-currency support (USD/EUR), revisit before enabling non-CLP prompts
+ * — dot is the decimal separator in those currencies.
  */
 function parseGeminiNumber(value: unknown): unknown {
   if (typeof value !== 'string') return value
@@ -147,6 +157,14 @@ export const processReceiptScan = functions
     const db = admin.firestore()
     const docRef = db.doc(`pending_scans/${scanId}`)
 
+    // Idempotency guard: Cloud Functions may re-deliver events
+    const currentSnap = await docRef.get()
+    const currentData = currentSnap.data()
+    if (currentData?.status !== 'processing') {
+      console.log(`processReceiptScan: scan ${scanId} already ${currentData?.status}, skipping`)
+      return
+    }
+
     try {
       // 1. Validate imageUrls against ALLOWED_URL_ORIGINS (SSRF prevention)
       for (const url of data.imageUrls) {
@@ -167,6 +185,8 @@ export const processReceiptScan = functions
           if (size > MAX_IMAGE_SIZE_BYTES) {
             throw new Error(`Image exceeds size limit: ${(size / (1024 * 1024)).toFixed(1)}MB`)
           }
+        } else {
+          console.warn(`processReceiptScan: could not extract storage path from URL, skipping metadata size check`)
         }
       }
 
@@ -234,6 +254,8 @@ export const processReceiptScan = functions
       // Upload thumbnail to pending scan storage path
       const thumbnailPath = `pending_scans/${userId}/${scanId}/thumbnail.jpg`
       const thumbnailFile = bucket.file(thumbnailPath)
+      // public: true matches existing receipt image pattern (storageService.ts uploadImage/uploadThumbnail).
+      // URLs are unguessable (contain userId+scanId). Project-wide signed URL migration tracked separately.
       await thumbnailFile.save(thumbnailResult.buffer, {
         contentType: 'image/jpeg',
         metadata: { cacheControl: 'public, max-age=31536000' },
@@ -266,14 +288,21 @@ export const processReceiptScan = functions
       const creditsRef = db.doc(`artifacts/${APP_ID}/users/${userId}/credits/balance`)
 
       await db.runTransaction(async (transaction) => {
-        // Refund 1 credit
-        const creditsSnap = await transaction.get(creditsRef)
-        const credits = creditsSnap.data()
-        transaction.update(creditsRef, {
-          remaining: (credits?.remaining ?? 0) + 1,
-          used: Math.max(0, (credits?.used ?? 0) - 1),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        })
+        // Check creditDeducted flag before refunding — prevents double-refund
+        // if cleanup/delete fires concurrently
+        const docSnap = await transaction.get(docRef)
+        const docData = docSnap.data()
+        const shouldRefund = docData?.creditDeducted === true
+
+        if (shouldRefund) {
+          const creditsSnap = await transaction.get(creditsRef)
+          const credits = creditsSnap.data()
+          transaction.update(creditsRef, {
+            remaining: (credits?.remaining ?? 0) + 1,
+            used: Math.max(0, (credits?.used ?? 0) - 1),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          })
+        }
 
         // Update pending doc: status=failed + creditDeducted=false in SAME write
         transaction.update(docRef, {

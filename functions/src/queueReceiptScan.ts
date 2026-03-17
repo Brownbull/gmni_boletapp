@@ -33,7 +33,7 @@ const ALLOWED_URL_ORIGINS: readonly string[] = [
   'storage.googleapis.com',
 ]
 
-// UUID v4 format validation (prevents path-traversal in scanId)
+// UUID v1-v5 format validation (prevents path-traversal in scanId)
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 // Rate limiting (in-memory, same accepted-risk pattern as analyzeReceipt)
@@ -142,7 +142,7 @@ export const queueReceiptScan = functions.https.onCall(
       if (!RECEIPT_TYPES.includes(data.receiptType)) {
         throw new functions.https.HttpsError(
           'invalid-argument',
-          `Invalid receiptType: ${data.receiptType}`
+          'Invalid receiptType'
         )
       }
     }

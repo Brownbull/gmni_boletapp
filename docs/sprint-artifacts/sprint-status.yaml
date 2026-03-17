@@ -377,7 +377,7 @@ development_status:
   TD-18-9-quicksave-dismiss-stuck: done                # 1 pt  - Fix QuickSaveCard stuck after save — missing dismissScanDialog() on success path (V5)
   # Scan reliability (added 2026-03-16 — mobile network drops lose scan results):
   18-13-resilient-scan-delivery: split                   # 13 pts - SPLIT into 18-13a + 18-13b (parent story retained as reference)
-  18-13a-resilient-scan-backend: review                    # 7 pts - Backend: types, rules, queueReceiptScan, processReceiptScan, onPendingScanDeleted, cleanupPendingScans (DEPENDS: TD-18-4)
+  18-13a-resilient-scan-backend: done                      # 7 pts - Backend: types, rules, queueReceiptScan, processReceiptScan, onPendingScanDeleted, cleanupPendingScans (DEPENDS: TD-18-4)
   # Hotfixes bundled with 18-13a (2026-03-17, no separate story):
   HF-18-v4-prompt-promotion: done                        # 0 pts - HOTFIX: Promote V4 prompt to production (fixes qty>1 price bug — V3 price=unitPrice remapped to totalPrice) | deployed: 2026-03-17
   HF-18-recent-scans-cache: done                         # 0 pts - HOTFIX: Recent scans carousel stuck on stale Firestore cache (fromCache:true) — derive from main tx list | deployed: 2026-03-17
