@@ -30,6 +30,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePaginatedTransactions } from '@/hooks/usePaginatedTransactions';
 import { useRecentScans } from '@/hooks/useRecentScans';
 import { mergeTransactionsWithRecentScans } from '@/utils/transactionMerge';
+import { toMillis } from '@/utils/timestamp';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 // Story 15-7c: Theme settings from Zustand store (ThemeContext removed)
 import { useThemeSettings, useNavigationActions } from '@/shared/stores';
@@ -183,10 +184,17 @@ export function useDashboardViewData(): UseDashboardViewDataReturn {
         [paginatedTransactions, rawRecentScans]
     );
 
-    // Recent scans
+    // Recent scans — derive from merged transactions sorted by createdAt.
+    // The separate Firestore listener (useRecentScans) suffers from offline cache staleness
+    // (orderBy+limit queries can get "stuck" on cached data). Deriving from the main
+    // transaction list avoids this because the main listener syncs correctly.
     const recentScans = useMemo(() => {
-        return rawRecentScans || [];
-    }, [rawRecentScans]);
+        const allTxs = transactionsWithRecentScans || [];
+        // Re-sort needed: mergeTransactionsWithRecentScans may disrupt createdAt order
+        return [...allTxs]
+            .sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt))
+            .slice(0, 10);
+    }, [transactionsWithRecentScans]);
 
     // === Navigation Actions (Story 14e-25d) ===
     const { setView } = useNavigationActions();

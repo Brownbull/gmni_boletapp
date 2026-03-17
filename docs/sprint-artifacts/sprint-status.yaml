@@ -378,6 +378,9 @@ development_status:
   # Scan reliability (added 2026-03-16 — mobile network drops lose scan results):
   18-13-resilient-scan-delivery: split                   # 13 pts - SPLIT into 18-13a + 18-13b (parent story retained as reference)
   18-13a-resilient-scan-backend: review                    # 7 pts - Backend: types, rules, queueReceiptScan, processReceiptScan, onPendingScanDeleted, cleanupPendingScans (DEPENDS: TD-18-4)
+  # Hotfixes bundled with 18-13a (2026-03-17, no separate story):
+  HF-18-v4-prompt-promotion: done                        # 0 pts - HOTFIX: Promote V4 prompt to production (fixes qty>1 price bug — V3 price=unitPrice remapped to totalPrice) | deployed: 2026-03-17
+  HF-18-recent-scans-cache: done                         # 0 pts - HOTFIX: Recent scans carousel stuck on stale Firestore cache (fromCache:true) — derive from main tx list | deployed: 2026-03-17
   18-13b-resilient-scan-client: ready-for-dev            # 6 pts - Client: image upload, callable wrapper, Firestore listener, scan lock, pending detection, resolution (DEPENDS: 18-13a deployed)
   # Independent (end of epic):
   18-7-receipttype-fix: backlog                        # 2 pts - Re-enable receipt type selection in scan UI (currently dead parameter)

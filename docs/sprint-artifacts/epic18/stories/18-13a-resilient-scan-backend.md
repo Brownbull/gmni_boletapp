@@ -165,6 +165,30 @@ Phase 3 — Process (separate function, triggered by Firestore):
 - Firestore rules: create/update blocked for client — prevents result spoofing
 - `cleanupPendingScans` must NOT be HTTP-exposed — `pubsub.schedule()` only
 
+## Bundled Hotfixes (no separate story — tracked here)
+
+Three production issues discovered and fixed during 18-13a development session (2026-03-17):
+
+### Hotfix 1: V4 Prompt Promotion — qty>1 price derivation bug
+- **Symptom:** Scanning a receipt with qty=8, unit price $1,550, total $12,400 → app showed unitPrice=194 (1550/8) instead of 1,550
+- **Root cause:** Production used V3 prompt where `price` = unit price. Cloud Function remap (`price → totalPrice`) changed semantics — V3's unit price became V4's line total. When qty > 1, `deriveItemsPrices` divided again: 1550/8 = 194
+- **Fix:** Promoted V4 prompt to `PRODUCTION_PROMPT` in `prompt-testing/prompts/index.ts` (one-line change). V4 has explicit `unitPrice`/`totalPrice` disambiguation with PRICE LOGIC section
+- **Verification:** `/scan-test generate edge-cases/edgeqtytotal` confirmed V4 returns correct `{ unitPrice: 1550, totalPrice: 12400, quantity: 8 }`
+- **Files:** `prompt-testing/prompts/index.ts` (PRODUCTION_PROMPT = PROMPT_V4)
+- **Deployed:** 2026-03-17, `firebase deploy --only functions`
+
+### Hotfix 2: Recent scans carousel stuck on stale cached data
+- **Symptom:** Dashboard "Últimos Escaneados" carousel showed March 6 scans while "Ver todos" showed today's scans
+- **Root cause:** `subscribeToRecentScans` Firestore `onSnapshot` with `orderBy('createdAt', 'desc'), limit(10)` was stuck on offline cache (`fromCache: true`, never synced to server). Known Firestore SDK issue — offline persistence cache satisfies `limit()` queries from stale local data without server round-trip
+- **Fix:** Derive `recentScans` from the main transaction list (already synced correctly via `usePaginatedTransactions`) instead of the separate stuck listener. Client-side sort by `createdAt desc, slice(0, 10)` — same approach that `RecentScansView` ("Ver todos") already uses successfully
+- **Files:** `src/features/dashboard/views/DashboardView/useDashboardViewData.ts` (derive from merged transactions)
+- **Deployed:** 2026-03-17, `firebase deploy --only hosting`
+
+### Hotfix 3: `/scan-test` command created
+- **What:** Claude Code slash command for prompt testing infrastructure. Handles staging auth, credentials, and all test:scan subcommands
+- **Files:** `.claude/commands/scan-test.md`, `CLAUDE.md` (Commands section updated)
+- **Not deployed** (developer tooling only)
+
 ## ECC Analysis Summary
 - **Risk Level:** HIGH
 - **Classification:** COMPLEX (split from parent 18-13)
