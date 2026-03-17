@@ -120,6 +120,36 @@ export async function uploadReceiptImages(
 }
 
 /**
+ * Delete all images associated with a pending scan (Story 18-13a).
+ * Called by onPendingScanDeleted trigger for cascade cleanup.
+ *
+ * @param userId - User's Firebase Auth UID
+ * @param scanId - Pending scan document ID
+ */
+export async function deletePendingScanImages(
+  userId: string,
+  scanId: string
+): Promise<void> {
+  const bucket = admin.storage().bucket()
+  const folderPath = `pending_scans/${userId}/${scanId}/`
+
+  try {
+    const [files] = await bucket.getFiles({ prefix: folderPath })
+
+    if (files.length === 0) {
+      return
+    }
+
+    await Promise.all(files.map(file => file.delete()))
+
+    console.log(`Deleted ${files.length} pending scan images for scan ${scanId}`)
+  } catch (error) {
+    // Log but don't throw — orphaned images are acceptable
+    console.error(`Failed to delete pending scan images for scan ${scanId}:`, error)
+  }
+}
+
+/**
  * Delete all images associated with a transaction
  * Used for cascade delete when transaction is deleted
  *

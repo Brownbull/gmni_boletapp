@@ -158,6 +158,60 @@ export { adminTestWebPush } from './webPushService'
 export { getVapidPublicKey } from './webPushService'
 
 // =============================================================================
+// FEATURE: Async Scan Pipeline (Story 18-13a)
+// Queue-based scan processing: client creates pending doc, Firestore trigger
+// does heavy Gemini work, cleanup handles expiry and cascade deletes.
+// =============================================================================
+
+/**
+ * queueReceiptScan - HTTPS Callable (FEATURE)
+ *
+ * Accepts a scan request, deducts credit atomically, creates a pending scan
+ * document, and returns { scanId } immediately (<1s). Heavy processing
+ * happens asynchronously in processReceiptScan.
+ *
+ * - Authentication: Required (Firebase Auth)
+ * - Rate Limit: 10 requests/minute/user
+ * - Idempotent: existing pending doc returns scanId without re-deducting
+ */
+export { queueReceiptScan } from './queueReceiptScan'
+
+/**
+ * processReceiptScan - Firestore Trigger (FEATURE)
+ *
+ * Fires on pending_scans/{scanId} onCreate. Fetches images from Storage,
+ * calls Gemini with retry, generates thumbnail, updates doc with result.
+ * On failure: atomic credit refund + status=failed.
+ *
+ * - Trigger: Firestore onCreate
+ * - Timeout: 300s | Memory: 1GB
+ * - Dependencies: imageProcessing.ts, storageService.ts, retryHelper.ts, prompts/
+ */
+export { processReceiptScan } from './processReceiptScan'
+
+/**
+ * onPendingScanDeleted - Firestore Trigger (FEATURE)
+ *
+ * Fires on pending_scans/{scanId} onDelete. Refunds credit if
+ * creditDeducted=true (processor didn't handle it). Deletes Storage images.
+ *
+ * - Trigger: Firestore onDelete
+ * - Dependencies: storageService.ts
+ */
+export { onPendingScanDeleted } from './onPendingScanDeleted'
+
+/**
+ * cleanupPendingScans - Scheduled Function (MAINTENANCE)
+ *
+ * Runs hourly. Auto-fails stale processing scans (past deadline with
+ * credit refund). Deletes expired scans (>24h) in batched loop.
+ *
+ * - Schedule: Every 60 minutes
+ * - Batch: 500 ops per delete batch
+ */
+export { cleanupPendingScans } from './cleanupPendingScans'
+
+// =============================================================================
 // ADMIN: One-Time Category Migration (Story 17-5)
 // Batch-migrates all transaction category fields from V1/V2/V3 to V4.
 // Idempotent, chunked at 500, dry-run by default.

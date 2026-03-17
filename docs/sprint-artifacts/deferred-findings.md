@@ -223,3 +223,19 @@
 - **Files:** `src/features/transaction-editor/views/TransactionEditorScanStatus.tsx`, `src/features/transaction-editor/views/TransactionEditorViewInternal.tsx`
 - **Stage:** PROD — compile-time hygiene, not a runtime risk
 - **Estimated effort:** 1 point (2 files, remove prop from interface + call site)
+
+### [PROD] Missing dismissScanDialog Tests in useScanHandlers (Blocked by File Size)
+
+- **Source:** TD-18-9-quicksave-dismiss-stuck review (2026-03-17)
+- **Finding:** `handleQuickSaveComplete` and `handleQuickSaveCancel` now call `dismissScanDialog()` (TD-18-9 fix) but no handler-level test asserts this. Cannot add tests because `useScanHandlers.test.ts` is 1278 lines (800-line hook blocks edits). Requires test file split first.
+- **Files:** `tests/unit/features/scan/hooks/useScanHandlers.test.ts`
+- **Stage:** PROD — Test coverage gap for dialog dismiss path
+- **Estimated effort:** 2 points (split test file into focused suites, then add dismiss assertions)
+
+### [PROD] Pre-existing console.warn in useScanHandlers Catch Blocks
+
+- **Source:** TD-18-9-quicksave-dismiss-stuck review (2026-03-17)
+- **Finding:** Three `console.warn` calls in fire-and-forget catch blocks (insight recording L359, transaction tracking L365, merchant scan L379). Violates project no-console rule. Pre-existing, not introduced by TD-18-9.
+- **Files:** `src/features/scan/hooks/useScanHandlers.ts`
+- **Stage:** PROD — Code hygiene, no runtime impact
+- **Estimated effort:** 1 point (replace with proper logging or remove)

@@ -374,6 +374,11 @@ development_status:
   TD-18-6-fuzzy-duplicate-detection: done              # 3 pts - Lowercase containment matching for merchant names (V2) (DEPENDS: TD-18-7)
   TD-18-5-scan-complete-modal-save-ux: done             # 2 pts - Fix modal close-before-save flash in TransactionEditorScanStatus (V5)
   TD-18-4-scan-retry-fix: done                         # 5 pts - Backend auto-retry + client retry preserves images + credit handling (V5)
+  TD-18-9-quicksave-dismiss-stuck: done                # 1 pt  - Fix QuickSaveCard stuck after save — missing dismissScanDialog() on success path (V5)
+  # Scan reliability (added 2026-03-16 — mobile network drops lose scan results):
+  18-13-resilient-scan-delivery: split                   # 13 pts - SPLIT into 18-13a + 18-13b (parent story retained as reference)
+  18-13a-resilient-scan-backend: review                    # 7 pts - Backend: types, rules, queueReceiptScan, processReceiptScan, onPendingScanDeleted, cleanupPendingScans (DEPENDS: TD-18-4)
+  18-13b-resilient-scan-client: ready-for-dev            # 6 pts - Client: image upload, callable wrapper, Firestore listener, scan lock, pending detection, resolution (DEPENDS: 18-13a deployed)
   # Independent (end of epic):
   18-7-receipttype-fix: backlog                        # 2 pts - Re-enable receipt type selection in scan UI (currently dead parameter)
   18-9-admin-endpoint-security: backlog                # 3 pts - Secure admin endpoints (adminCleanup, adminSendTest, adminTestWebPush) with Firebase Auth — evaluate Auth callable vs App Check
