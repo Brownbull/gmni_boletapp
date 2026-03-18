@@ -382,7 +382,7 @@ development_status:
   HF-18-v4-prompt-promotion: done                        # 0 pts - HOTFIX: Promote V4 prompt to production (fixes qty>1 price bug — V3 price=unitPrice remapped to totalPrice) | deployed: 2026-03-17
   HF-18-recent-scans-cache: done                         # 0 pts - HOTFIX: Recent scans carousel stuck on stale Firestore cache (fromCache:true) — derive from main tx list | deployed: 2026-03-17
   18-13b-resilient-scan-client: done                     # 6 pts - Client: image upload, callable wrapper, Firestore listener, scan lock, pending detection, resolution (DEPENDS: 18-13a deployed)
-  TD-18-10-pending-scan-upload-tests: ready-for-dev      # 2 pts - Unit tests for pendingScanUpload.ts (uploadScanImages + copyPendingToReceipts) (Source: 18-13b review)
+  TD-18-10-pending-scan-upload-tests: review      # 2 pts - Unit tests for pendingScanUpload.ts (uploadScanImages + copyPendingToReceipts) (Source: 18-13b review)
   TD-18-11-gemini-model-timeout-fix: done                   # 3 pts - CRITICAL: Switch gemini-2.5-flash → gemini-2.5-flash-lite (non-thinking) + increase client timeout 30s→60s (production scans timing out at 36s)
   TD-18-12-18-13b-review-quick-fixes: done          # 1 pt - Quick fixes from TD-18-11 review: getState() pattern, dead prop, SSoT drift, dead mock, stale comment (Source: TD-18-11 review)
   # Independent (end of epic):
