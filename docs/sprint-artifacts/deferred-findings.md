@@ -166,6 +166,14 @@
 - **Stage:** SCALE — Only relevant at high error volume where false-positive retries waste Gemini API calls
 - **Estimated effort:** 1 point (switch to regex or error.code check for network error keywords)
 
+### [SCALE] Redundant imageUrls Storage in Pending Scan Results
+
+- **Source:** 18-13a-resilient-scan-backend review (2026-03-17)
+- **Finding:** `imageUrls` stored both at doc root (`pending_scans/{scanId}.imageUrls`) and inside `result.imageUrls`. Client reads from `result`; root field is never updated post-creation. Redundant storage and potential consistency drift.
+- **Files:** `functions/src/processReceiptScan.ts`
+- **Stage:** SCALE — Minor storage waste, no functional impact
+- **Estimated effort:** 0.5 points (omit from result write, client reads from root)
+
 ### [SCALE] Guard Violation Logging in Production
 
 - **Source:** TD-18-3-scan-dialog-autodismiss-credit-leak review (2026-03-13)
@@ -223,3 +231,99 @@
 - **Files:** `src/features/transaction-editor/views/TransactionEditorScanStatus.tsx`, `src/features/transaction-editor/views/TransactionEditorViewInternal.tsx`
 - **Stage:** PROD — compile-time hygiene, not a runtime risk
 - **Estimated effort:** 1 point (2 files, remove prop from interface + call site)
+
+### [PROD] Missing dismissScanDialog Tests in useScanHandlers (Blocked by File Size)
+
+- **Source:** TD-18-9-quicksave-dismiss-stuck review (2026-03-17)
+- **Finding:** `handleQuickSaveComplete` and `handleQuickSaveCancel` now call `dismissScanDialog()` (TD-18-9 fix) but no handler-level test asserts this. Cannot add tests because `useScanHandlers.test.ts` is 1278 lines (800-line hook blocks edits). Requires test file split first.
+- **Files:** `tests/unit/features/scan/hooks/useScanHandlers.test.ts`
+- **Stage:** PROD — Test coverage gap for dialog dismiss path
+- **Estimated effort:** 2 points (split test file into focused suites, then add dismiss assertions)
+
+### [PROD] Pre-existing console.warn in useScanHandlers Catch Blocks
+
+- **Source:** TD-18-9-quicksave-dismiss-stuck review (2026-03-17)
+- **Finding:** Three `console.warn` calls in fire-and-forget catch blocks (insight recording L359, transaction tracking L365, merchant scan L379). Violates project no-console rule. Pre-existing, not introduced by TD-18-9.
+- **Files:** `src/features/scan/hooks/useScanHandlers.ts`
+- **Stage:** PROD — Code hygiene, no runtime impact
+- **Estimated effort:** 1 point (replace with proper logging or remove)
+
+### [PROD] cleanupPendingScans Phase 1 Not Paginated (Capped at 500)
+
+- **Source:** 18-13a-resilient-scan-backend review (2026-03-17)
+- **Finding:** Phase 1 (auto-fail stale processing scans) uses `.limit(BATCH_SIZE)` but no pagination loop, unlike Phase 2. If >500 scans are stale simultaneously (e.g., after an outage), extras wait for the next cleanup cycle. Each stale doc also runs a sequential transaction — performance bottleneck.
+- **Files:** `functions/src/cleanupPendingScans.ts`
+- **Stage:** PROD — Resilience under outage recovery, not feature-breaking
+- **Estimated effort:** 1 point (wrap Phase 1 in same loop pattern as Phase 2)
+
+### [PROD] APP_ID Hardcoded String Duplicated Across 5 Cloud Function Files
+
+- **Source:** 18-13a-resilient-scan-backend review (2026-03-17)
+- **Finding:** `const APP_ID = 'boletapp-d609f'` duplicated in queueReceiptScan, processReceiptScan, onPendingScanDeleted, cleanupPendingScans, and cleanupStaleFcmTokens. A typo in one file silently writes credits to the wrong Firestore path.
+- **Files:** `functions/src/queueReceiptScan.ts`, `functions/src/processReceiptScan.ts`, `functions/src/onPendingScanDeleted.ts`, `functions/src/cleanupPendingScans.ts`, `functions/src/cleanupStaleFcmTokens.ts`
+- **Stage:** PROD — DRY violation with silent-failure risk
+- **Estimated effort:** 1 point (extract to functions/src/constants.ts, update 5 imports)
+
+### [PROD] AC-2 Spec Path Mismatch with Implementation (Docs Errata)
+
+- **Source:** 18-13a-resilient-scan-backend review (2026-03-17)
+- **Finding:** Story AC-2 specifies `pending_scans/{userId}/{scanId}` but implementation uses flat `pending_scans/{scanId}` with userId as a field. The flat collection is architecturally correct (enables cross-user queries for cleanup, avoids collectionGroup index collision). Spec text needs errata update.
+- **Files:** `docs/sprint-artifacts/epic18/stories/18-13a-resilient-scan-backend.md`
+- **Stage:** PROD — Documentation accuracy
+- **Estimated effort:** 0.5 points (update AC-2 text)
+
+### [PROD] No Timeout on Image Upload in pendingScanUpload
+
+- **Source:** 18-13b-resilient-scan-client review (2026-03-17)
+- **Finding:** `uploadBytesResumable` in `uploadScanImages` has no per-image timeout. On poor mobile connections, uploads can hang indefinitely, holding the scan lock and blocking the user. Needs `Promise.race` with timeout and upload task cancellation.
+- **Files:** `src/features/scan/services/pendingScanUpload.ts`
+- **Stage:** PROD — Resilience for poor network conditions, not feature-breaking
+- **Estimated effort:** 2 points (wrap each upload in timeout, cancel upload task, aggregate error handling)
+
+### [PROD] Serial Image Fetch in copyPendingToReceipts
+
+- **Source:** TD-18-11 review (2026-03-17) — 18-13b bundled changes
+- **Finding:** `copyPendingToReceipts` downloads each image sequentially with `await` inside a `for` loop — O(n) serial fetches instead of `Promise.all`. For 2-3 image receipts, this is 2-3x slower than necessary. The parallel pattern already exists in `uploadScanImages` in the same file.
+- **Files:** `src/features/scan/services/pendingScanUpload.ts`
+- **Stage:** PROD — Performance optimization, not feature-breaking
+- **Estimated effort:** 1 point (refactor to Promise.all with mapped array)
+
+### [PROD] vi.clearAllMocks vs vi.resetAllMocks in useScanInitiation tests
+
+- **Source:** TD-18-12-18-13b-review-quick-fixes review (2026-03-18)
+- **Finding:** `useScanInitiation.test.ts` uses `vi.clearAllMocks()` in `beforeEach` instead of `vi.resetAllMocks()`. `clearAllMocks` only clears call history, not implementations — so module-level mocks (`mockQueueReceiptScan`, `mockUploadScanImages`, `analyzeReceipt`) retain resolved values across tests. Changing to `resetAllMocks` requires restoring mock implementations in `beforeEach` for all module-level mocks.
+- **Files:** `tests/unit/features/scan/hooks/useScanInitiation.test.ts`
+- **Stage:** PROD — Test hygiene, prevents mock state leakage between tests
+- **Estimated effort:** 1 point (move mock implementations to beforeEach, change to resetAllMocks)
+
+### [PROD] Per-image file size limit in pendingScanUpload
+
+- **Source:** TD-18-10 review (2026-03-18)
+- **Finding:** `base64ToBlob` decodes arbitrarily large base64 payloads with `atob()` + `Uint8Array` allocation. No `MAX_IMAGE_BYTES` guard prevents client-side memory DoS from oversized images. Add size check before creating the byte array.
+- **Files:** `src/features/scan/services/pendingScanUpload.ts`
+- **Stage:** PROD — Defense against client-side DoS via oversized uploads
+- **Estimated effort:** 1 point (add MAX_IMAGE_BYTES const + guard in base64ToBlob)
+
+### [PROD] Storage path input validation (defense-in-depth)
+
+- **Source:** TD-18-10 review (2026-03-18)
+- **Finding:** `uploadScanImages` and `copyPendingToReceipts` interpolate `userId`/`scanId`/`transactionId` into Storage paths without validation. While these IDs come from Firebase Auth/UUID (safe sources), the service functions accept raw strings. Validate IDs against `/^[a-zA-Z0-9_-]+$/` for defense-in-depth.
+- **Files:** `src/features/scan/services/pendingScanUpload.ts`
+- **Stage:** PROD — Defense-in-depth for Storage path construction
+- **Estimated effort:** 1 point (add ID validation regex + guard)
+
+### [PROD] Tighten STORAGE_URL_PATTERN hostname validation
+
+- **Source:** TD-18-10 review (2026-03-18)
+- **Finding:** `STORAGE_URL_PATTERN` regex only checks domain prefix (`^https://firebasestorage.googleapis.com/`). Use `new URL()` with explicit hostname check for robustness against crafted redirect URLs.
+- **Files:** `src/features/scan/services/pendingScanUpload.ts`
+- **Stage:** PROD — Hardened SSRF prevention at URL validation boundary
+- **Estimated effort:** 1 point (replace regex with URL parser + hostname check)
+
+### [PROD] Check response.ok after fetch in copyPendingToReceipts
+
+- **Source:** TD-18-10 review (2026-03-18)
+- **Finding:** `copyPendingToReceipts` calls `fetch()` without checking `response.ok`. A 4xx/5xx response silently produces a non-image blob that gets re-uploaded as corrupted data.
+- **Files:** `src/features/scan/services/pendingScanUpload.ts`
+- **Stage:** PROD — Data integrity for image copy pipeline
+- **Estimated effort:** 1 point (add response.ok check + error throw)

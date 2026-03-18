@@ -26,7 +26,7 @@ export type ReceiptType =
 // Type definition for Cloud Function request
 interface AnalyzeReceiptRequest {
     images: string[];
-    currency: string;
+    currency?: string;  // Optional for V3 (auto-detects from receipt)
     /** Story 9.8: Optional hint for store/receipt type (defaults to 'auto') */
     receiptType?: ReceiptType;
     /** Story 14.15b: If true, images are URLs from Firebase Storage (for re-scan) */
@@ -98,5 +98,70 @@ export async function analyzeReceipt(
 
         // Generic error fallback
         throw new Error('Failed to analyze receipt. Please try again or enter manually.');
+    }
+}
+
+// =============================================================================
+// Story 18-13b: Async scan pipeline — queue callable
+// =============================================================================
+
+/** Request for the queueReceiptScan callable */
+export interface QueueReceiptScanRequest {
+    scanId: string;
+    imageUrls: string[];
+    currency?: string;  // Optional for V3 (auto-detects from receipt)
+    receiptType?: ReceiptType;
+}
+
+/** Response from the queueReceiptScan callable */
+export interface QueueReceiptScanResponse {
+    scanId: string;
+    processingDeadline: string;
+}
+
+/**
+ * Queue a receipt scan for async processing via the 2-function pipeline.
+ * Returns immediately with { scanId, processingDeadline }. The actual
+ * Gemini processing happens server-side via a Firestore onCreate trigger.
+ *
+ * @param request - scanId, imageUrls (Storage URLs), currency, optional receiptType
+ * @returns Promise with scanId and processingDeadline ISO string
+ * @throws Error if validation fails, credits insufficient, or user not authenticated
+ */
+export async function queueReceiptScan(
+    request: QueueReceiptScanRequest
+): Promise<QueueReceiptScanResponse> {
+    try {
+        const queueFn = httpsCallable<QueueReceiptScanRequest, QueueReceiptScanResponse>(
+            functions,
+            'queueReceiptScan'
+        );
+
+        const result = await queueFn(request);
+        return result.data;
+    } catch (error: unknown) {
+        console.error('Error calling queueReceiptScan Cloud Function:', error);
+
+        if (error && typeof error === 'object' && 'code' in error) {
+            const functionsError = error as { code: string; message?: string };
+
+            if (functionsError.code === 'unauthenticated') {
+                throw new Error('You must be logged in to scan receipts.');
+            }
+
+            if (functionsError.code === 'invalid-argument') {
+                throw new Error('Invalid scan request. Please try again.');
+            }
+
+            if (functionsError.code === 'resource-exhausted') {
+                throw new Error('Too many requests. Please wait a moment and try again.');
+            }
+
+            if (functionsError.message) {
+                throw new Error(functionsError.message);
+            }
+        }
+
+        throw new Error('Failed to queue receipt scan. Please try again.');
     }
 }

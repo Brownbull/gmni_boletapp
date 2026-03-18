@@ -273,6 +273,9 @@ export function subscribeToRecentScans(
             toMillis(b.createdAt) - toMillis(a.createdAt)
         );
 
+        // Emits on every server-confirmed snapshot.
+        // Offline cache staleness for this query is handled at the consumer layer
+        // (see useDashboardViewData: recentScans derived from main transaction list).
         callback(sortedTxs);
     }, (error) => {
         // Log errors - likely missing index

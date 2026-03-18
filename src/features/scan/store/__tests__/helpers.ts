@@ -80,5 +80,9 @@ export function getStateOnly(): typeof initialScanState {
     overlayError: fullState.overlayError,
     processingHistory: fullState.processingHistory,
     processingStartedAt: fullState.processingStartedAt,
+    // Pending scan state (Story 18-13b)
+    pendingScanId: fullState.pendingScanId,
+    pendingScanDeadline: fullState.pendingScanDeadline,
+    pendingScanStatus: fullState.pendingScanStatus,
   };
 }

@@ -71,6 +71,17 @@ service cloud.firestore {
 
 
     // ============================================================================
+    // Pending Scans - Async scan pipeline (Story 18-13a)
+    // Admin SDK only for create/update (prevents result spoofing)
+    // Flat collection: pending_scans/{scanId} with userId field
+    // ============================================================================
+    match /pending_scans/{scanId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create, update: if false;
+    }
+
+    // ============================================================================
     // Default Deny - All other paths
     // ============================================================================
     match /{document=**} {

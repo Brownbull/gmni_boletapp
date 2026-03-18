@@ -30,6 +30,7 @@ import type {
 import type { Transaction } from '@/types/transaction';
 import type { BatchReceipt } from '@/types/batchReceipt';
 import type { ScanDialogResultMap, ScanErrorType } from './slices/types';
+import type { FirestoreScanStatus } from '@/types/pendingScan';
 
 // =============================================================================
 // Phase & Mode Selectors (AC1)
@@ -252,6 +253,14 @@ export const useImageCount = () => useScanWorkflowStore((s) => s.images.length);
 export const useResultCount = () => useScanStore((s) => s.results.length);
 
 // =============================================================================
+// Pending Scan Selectors (Story 18-13b)
+// =============================================================================
+
+export const usePendingScanId = () => useScanStore((s) => s.pendingScanId);
+export const usePendingScanStatus = () => useScanStore((s) => s.pendingScanStatus);
+export const usePendingScanDeadline = () => useScanStore((s) => s.pendingScanDeadline);
+
+// =============================================================================
 // Actions Hook (AC5)
 // =============================================================================
 
@@ -333,6 +342,11 @@ export const useScanActions = () =>
       resetOverlay: s.resetOverlay,
       retryOverlay: s.retryOverlay,
       pushProcessingTime: s.pushProcessingTime,
+
+      // Pending scan actions (Story 18-13b)
+      setPendingScan: s.setPendingScan,
+      clearPendingScan: s.clearPendingScan,
+      setPendingScanStatus: s.setPendingScanStatus,
     }))
   );
 
@@ -436,6 +450,13 @@ export const scanActions = {
   resetOverlay: () => useScanStore.getState().resetOverlay(),
   retryOverlay: () => useScanStore.getState().retryOverlay(),
   pushProcessingTime: (seconds: number) => useScanStore.getState().pushProcessingTime(seconds),
+
+  // Pending scan actions (Story 18-13b)
+  setPendingScan: (scanId: string, deadline: number) =>
+    useScanStore.getState().setPendingScan(scanId, deadline),
+  clearPendingScan: () => useScanStore.getState().clearPendingScan(),
+  setPendingScanStatus: (status: FirestoreScanStatus) =>
+    useScanStore.getState().setPendingScanStatus(status),
 } as const;
 
 // Export the type for scanActions

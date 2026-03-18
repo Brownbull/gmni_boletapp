@@ -181,7 +181,7 @@ describe('analyzeReceipt Cloud Function', () => {
       await expect(wrapped(data, context)).rejects.toThrow('images array is required')
     })
 
-    it('should reject missing currency', async () => {
+    it('should accept missing currency (V3 auto-detects)', async () => {
       const data = {
         images: ['data:image/jpeg;base64,/9j/4AAQSkZJRg==']
       } as any
@@ -193,7 +193,7 @@ describe('analyzeReceipt Cloud Function', () => {
         }
       }
 
-      await expect(wrapped(data, context)).rejects.toThrow('currency string is required')
+      await expect(wrapped(data, context)).resolves.toBeDefined()
     })
 
     it('should reject invalid currency type', async () => {
@@ -209,7 +209,7 @@ describe('analyzeReceipt Cloud Function', () => {
         }
       }
 
-      await expect(wrapped(data, context)).rejects.toThrow('currency string is required')
+      await expect(wrapped(data, context)).rejects.toThrow('currency must be a string if provided')
     })
   })
 
@@ -598,7 +598,10 @@ describe('analyzeReceipt Cloud Function', () => {
       await wrapped(data, context)
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Receipt analyzed for user test-user-114')
+        expect.stringContaining('Receipt analyzed: transaction')
+      )
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('user test-us')
       )
 
       consoleSpy.mockRestore()
