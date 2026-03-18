@@ -279,3 +279,11 @@
 - **Files:** `src/features/scan/services/pendingScanUpload.ts`
 - **Stage:** PROD — Resilience for poor network conditions, not feature-breaking
 - **Estimated effort:** 2 points (wrap each upload in timeout, cancel upload task, aggregate error handling)
+
+### [PROD] Serial Image Fetch in copyPendingToReceipts
+
+- **Source:** TD-18-11 review (2026-03-17) — 18-13b bundled changes
+- **Finding:** `copyPendingToReceipts` downloads each image sequentially with `await` inside a `for` loop — O(n) serial fetches instead of `Promise.all`. For 2-3 image receipts, this is 2-3x slower than necessary. The parallel pattern already exists in `uploadScanImages` in the same file.
+- **Files:** `src/features/scan/services/pendingScanUpload.ts`
+- **Stage:** PROD — Performance optimization, not feature-breaking
+- **Estimated effort:** 1 point (refactor to Promise.all with mapped array)
