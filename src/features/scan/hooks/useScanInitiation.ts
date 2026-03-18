@@ -136,9 +136,6 @@ export interface ScanInitiationProps {
   /** Add user credits (for refunds) */
   addUserCredits: (amount: number) => Promise<void>;
 
-  /** Process scan callback (calls processScan handler) */
-  processScan: (images?: string[]) => Promise<void>;
-
   /** Reconcile items total helper */
   reconcileItemsTotal: (
     items: any[],
@@ -214,7 +211,6 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
     setIsRescanning,
     deductUserCredits,
     addUserCredits,
-    // processScan: no longer called directly — async pipeline (Story 18-13b)
     reconcileItemsTotal,
     t,
     fileInputRef,
@@ -229,6 +225,12 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
     setBatchEditingIndex: setBatchEditingIndexContext,
     // Story 14e-34a: Use setImages from store (single source of truth)
     setImages: setBatchImages,
+    // Story 18-13b: Async scan pipeline actions (previously via getState())
+    startOverlayUpload,
+    setOverlayProgress,
+    startOverlayProcessing,
+    setOverlayError,
+    setPendingScan,
   } = useScanStore();
   const { setView, navigateToView } = useNavigationStore();
 
@@ -327,7 +329,7 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
    * Flow:
    * 1. Single scan mode + multiple files: Only use first image, show toast
    * 2. Batch mode + multiple files: Show batch preview (or limit toast)
-   * 3. Single file: Navigate to editor and auto-trigger processScan
+   * 3. Single file: Navigate to editor and start async scan pipeline (upload → queue → Firestore listener)
    *
    * @param e - File input change event
    */
@@ -392,7 +394,6 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
     if (fileInputRef.current) fileInputRef.current.value = '';
 
     // Start async scan pipeline
-    const { startOverlayUpload, setOverlayProgress, startOverlayProcessing, setOverlayError, setPendingScan } = useScanStore.getState();
     const scanId = crypto.randomUUID();
 
     startOverlayUpload();
@@ -419,7 +420,6 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
       const deadlineMs = new Date(response.processingDeadline).getTime();
       setPendingScan(scanId, deadlineMs);
     } catch (error: unknown) {
-      console.error('Async scan pipeline error:', error);
       const errorInfo = getErrorInfo(classifyError(error));
       const errorMsg = t(errorInfo.messageKey) || t('scanError');
       setOverlayError('api', errorMsg);
@@ -440,6 +440,11 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
     setShowBatchPreview,
     setToastMessage,
     fileInputRef,
+    startOverlayUpload,
+    setOverlayProgress,
+    startOverlayProcessing,
+    setOverlayError,
+    setPendingScan,
   ]);
 
   // =========================================================================

@@ -103,6 +103,17 @@ describe('uploadScanImages', () => {
       .rejects.toThrow('Invalid data URL: missing MIME type');
   });
 
+  // AC-5: accepts allowlisted MIME type (image/webp)
+  it('accepts image/webp as a valid MIME type', async () => {
+    const task = makeUploadTask('success');
+    mockUploadBytesResumable.mockReturnValue(task);
+
+    const webpDataUrl = 'data:image/webp;base64,' + btoa('fake-webp-bytes');
+    const result = await uploadScanImages('user-1', 'scan-1', [webpDataUrl]);
+
+    expect(result).toHaveLength(1);
+  });
+
   // AC-1: success path with progress callback assertions
   it('uploads images and reports progress via callback', async () => {
     const task = makeUploadTask('success');
@@ -115,6 +126,8 @@ describe('uploadScanImages', () => {
     expect(result[0]).toBe('https://firebasestorage.googleapis.com/download/img.jpg');
     expect(mockRef).toHaveBeenCalledWith({ name: 'mock-storage' }, 'users/user-1/scans/scan-1/image_0.jpg');
     expect(mockRef).toHaveBeenCalledWith({ name: 'mock-storage' }, 'users/user-1/scans/scan-1/image_1.jpg');
+    // Intermediate progress: first image at 100% = 50% total, then both at 100%
+    expect(onProgress).toHaveBeenCalledWith(50);
     expect(onProgress).toHaveBeenCalledWith(100);
   });
 
@@ -127,6 +140,7 @@ describe('uploadScanImages', () => {
     await uploadScanImages('user-1', 'scan-1', [VALID_JPEG_DATA_URL], onProgress);
 
     expect(onProgress).toHaveBeenCalledWith(100);
+    expect(onProgress).toHaveBeenCalledTimes(1);
   });
 
   // AC-2: upload failure returns meaningful error
@@ -161,6 +175,8 @@ describe('copyPendingToReceipts', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockRef.mockReturnValue('storage-ref');
+    // copyPendingToReceipts awaits uploadBytesResumable (UploadTask is thenable);
+    // no .on() access needed in this code path, so Promise.resolve suffices
     mockUploadBytesResumable.mockResolvedValue(undefined);
     mockGetDownloadURL.mockResolvedValue('https://firebasestorage.googleapis.com/v0/b/bucket/o/receipt.jpg');
     global.fetch = vi.fn().mockResolvedValue({
@@ -202,6 +218,7 @@ describe('copyPendingToReceipts', () => {
 
     expect(result).toHaveLength(2);
     expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(global.fetch).toHaveBeenCalledWith(VALID_STORAGE_URL);
     expect(mockRef).toHaveBeenCalledWith({ name: 'mock-storage' }, 'receipts/user-1/tx-1/image_0.jpg');
     expect(mockRef).toHaveBeenCalledWith({ name: 'mock-storage' }, 'receipts/user-1/tx-1/image_1.jpg');
     expect(onProgress).toHaveBeenCalledWith(50);

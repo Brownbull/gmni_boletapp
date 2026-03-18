@@ -295,3 +295,35 @@
 - **Files:** `tests/unit/features/scan/hooks/useScanInitiation.test.ts`
 - **Stage:** PROD — Test hygiene, prevents mock state leakage between tests
 - **Estimated effort:** 1 point (move mock implementations to beforeEach, change to resetAllMocks)
+
+### [PROD] Per-image file size limit in pendingScanUpload
+
+- **Source:** TD-18-10 review (2026-03-18)
+- **Finding:** `base64ToBlob` decodes arbitrarily large base64 payloads with `atob()` + `Uint8Array` allocation. No `MAX_IMAGE_BYTES` guard prevents client-side memory DoS from oversized images. Add size check before creating the byte array.
+- **Files:** `src/features/scan/services/pendingScanUpload.ts`
+- **Stage:** PROD — Defense against client-side DoS via oversized uploads
+- **Estimated effort:** 1 point (add MAX_IMAGE_BYTES const + guard in base64ToBlob)
+
+### [PROD] Storage path input validation (defense-in-depth)
+
+- **Source:** TD-18-10 review (2026-03-18)
+- **Finding:** `uploadScanImages` and `copyPendingToReceipts` interpolate `userId`/`scanId`/`transactionId` into Storage paths without validation. While these IDs come from Firebase Auth/UUID (safe sources), the service functions accept raw strings. Validate IDs against `/^[a-zA-Z0-9_-]+$/` for defense-in-depth.
+- **Files:** `src/features/scan/services/pendingScanUpload.ts`
+- **Stage:** PROD — Defense-in-depth for Storage path construction
+- **Estimated effort:** 1 point (add ID validation regex + guard)
+
+### [PROD] Tighten STORAGE_URL_PATTERN hostname validation
+
+- **Source:** TD-18-10 review (2026-03-18)
+- **Finding:** `STORAGE_URL_PATTERN` regex only checks domain prefix (`^https://firebasestorage.googleapis.com/`). Use `new URL()` with explicit hostname check for robustness against crafted redirect URLs.
+- **Files:** `src/features/scan/services/pendingScanUpload.ts`
+- **Stage:** PROD — Hardened SSRF prevention at URL validation boundary
+- **Estimated effort:** 1 point (replace regex with URL parser + hostname check)
+
+### [PROD] Check response.ok after fetch in copyPendingToReceipts
+
+- **Source:** TD-18-10 review (2026-03-18)
+- **Finding:** `copyPendingToReceipts` calls `fetch()` without checking `response.ok`. A 4xx/5xx response silently produces a non-image blob that gets re-uploaded as corrupted data.
+- **Files:** `src/features/scan/services/pendingScanUpload.ts`
+- **Stage:** PROD — Data integrity for image copy pipeline
+- **Estimated effort:** 1 point (add response.ok check + error throw)
