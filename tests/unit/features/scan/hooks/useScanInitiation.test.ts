@@ -33,15 +33,33 @@ const { mockScanStoreActions, mockNavigationStoreActions } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../../../../src/features/scan/store/useScanStore', () => ({
-  useScanStore: () => mockScanStoreActions,
-}));
+// Must use vi.hoisted for useScanStore mock since vi.mock is hoisted
+const { mockStoreGetState } = vi.hoisted(() => {
+  const getStateFn = vi.fn().mockReturnValue({
+    dismissDialog: vi.fn(),
+    setBatchEditingIndex: vi.fn(),
+    setImages: vi.fn(),
+    startOverlayUpload: vi.fn(),
+    setOverlayProgress: vi.fn(),
+    startOverlayProcessing: vi.fn(),
+    setOverlayError: vi.fn(),
+    setPendingScan: vi.fn(),
+  });
+  return { mockStoreGetState: getStateFn };
+});
+
+vi.mock('../../../../../src/features/scan/store/useScanStore', () => {
+  const storeFn = () => mockScanStoreActions;
+  storeFn.getState = mockStoreGetState;
+  return { useScanStore: storeFn };
+});
 
 vi.mock('../../../../../src/shared/stores/useNavigationStore', () => ({
   useNavigationStore: () => mockNavigationStoreActions,
 }));
 
-// Mock analyzeReceipt
+// Mock analyzeReceipt + queueReceiptScan
+const mockQueueReceiptScan = vi.fn().mockResolvedValue({ scanId: 'mock-scan-id', processingDeadline: new Date(Date.now() + 300000).toISOString() });
 vi.mock('../../../../../src/services/gemini', () => ({
   analyzeReceipt: vi.fn().mockResolvedValue({
     merchant: 'Test Merchant',
@@ -56,6 +74,13 @@ vi.mock('../../../../../src/services/gemini', () => ({
     receiptType: 'supermarket',
     promptVersion: 'v3',
   }),
+  queueReceiptScan: (...args: unknown[]) => mockQueueReceiptScan(...args),
+}));
+
+// Mock pendingScanUpload
+const mockUploadScanImages = vi.fn().mockResolvedValue(['https://storage.example.com/image_0.jpg']);
+vi.mock('../../../../../src/features/scan/services/pendingScanUpload', () => ({
+  uploadScanImages: (...args: unknown[]) => mockUploadScanImages(...args),
 }));
 
 // Mock validation utils
@@ -116,6 +141,7 @@ function createDefaultProps(overrides: Partial<ScanInitiationProps> = {}): ScanI
     defaultCurrency: 'CLP',
     userCredits: { remaining: 10, used: 0, superRemaining: 5, superUsed: 0 },
     lang: 'en',
+    userId: 'test-user-123',
     setTransactionEditorMode: vi.fn(),
     setCurrentTransaction: vi.fn(),
     setScanImages: vi.fn(),
@@ -359,7 +385,7 @@ describe('useScanInitiation', () => {
       expect(props.setScanImages).not.toHaveBeenCalled();
     });
 
-    it('should process single file in single scan mode and trigger auto-scan', async () => {
+    it('should process single file in single scan mode via async pipeline', async () => {
       vi.useFakeTimers();
       const props = createDefaultProps({
         scanState: createMockScanState({ mode: 'single' }),
@@ -370,14 +396,16 @@ describe('useScanInitiation', () => {
 
       await act(async () => {
         result.current.handleFileSelect(event);
-        // Flush microtask queue for FileReader mock
+        // Flush microtask queue for FileReader mock + async pipeline
         await vi.runAllTimersAsync();
       });
 
       expect(props.setScanImages).toHaveBeenCalled();
       expect(mockNavigationStoreActions.setView).toHaveBeenCalledWith('transaction-editor');
       expect(props.setTransactionEditorMode).toHaveBeenCalledWith('new');
-      expect(props.processScan).toHaveBeenCalled();
+      // Story 18-13b: async pipeline replaces sync processScan for single scans
+      expect(mockUploadScanImages).toHaveBeenCalled();
+      expect(mockQueueReceiptScan).toHaveBeenCalled();
 
       vi.useRealTimers();
     });

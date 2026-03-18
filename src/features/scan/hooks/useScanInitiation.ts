@@ -19,9 +19,11 @@ import type { ScanState } from '../types/scanStateMachine';
 import { DIALOG_TYPES } from '../types/scanStateMachine';
 import { MAX_BATCH_IMAGES } from '../components';
 import { DEFAULT_CURRENCY } from '@/utils/currency';
-import { analyzeReceipt } from '@/services/gemini';
+// analyzeReceipt: sync path (handleRescan only) | queueReceiptScan: async pipeline (handleFileSelect)
+import { analyzeReceipt, queueReceiptScan } from '@/services/gemini';
 import { getSafeDate, parseStrictNumber } from '@/utils/validation';
 import { classifyError, getErrorInfo } from '@/utils/errorHandler';
+import { uploadScanImages } from '../services/pendingScanUpload';
 
 // Store imports
 import { useScanStore } from '../store/useScanStore';
@@ -85,6 +87,9 @@ export interface ScanInitiationProps {
 
   /** Current language */
   lang: 'en' | 'es';
+
+  /** Story 18-13b: Firebase Auth user ID (for async scan pipeline) */
+  userId: string;
 
   // =========================================================================
   // Actions
@@ -194,6 +199,7 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
     defaultCurrency,
     userCredits,
     lang,
+    userId,
     setTransactionEditorMode,
     setCurrentTransaction,
     setScanImages,
@@ -208,7 +214,7 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
     setIsRescanning,
     deductUserCredits,
     addUserCredits,
-    processScan,
+    // processScan: no longer called directly — async pipeline (Story 18-13b)
     reconcileItemsTotal,
     t,
     fileInputRef,
@@ -376,22 +382,56 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
       return;
     }
 
-    // Single image - go to transaction editor
+    // Single image — async pipeline (Story 18-13b)
+    // Upload to Storage, queue for server-side processing, listen for result via Firestore.
     const updatedImages = [...scanImages, ...newImages];
     setScanImages(updatedImages);
     setView('transaction-editor');
     setTransactionEditorMode('new');
     setSkipScanCompleteModal(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
-    // Auto-trigger scan processing - pass images directly to avoid stale closure
-    // The setTimeout allows the view to update before processing starts
-    setTimeout(() => {
-      processScan(updatedImages);
-    }, 100);
+
+    // Start async scan pipeline
+    const { startOverlayUpload, setOverlayProgress, startOverlayProcessing, setOverlayError, setPendingScan } = useScanStore.getState();
+    const scanId = crypto.randomUUID();
+
+    startOverlayUpload();
+
+    try {
+      // Upload images to Firebase Storage with real progress
+      const imageUrls = await uploadScanImages(
+        userId,
+        scanId,
+        updatedImages,
+        (pct) => setOverlayProgress(pct)
+      );
+
+      // Queue for server-side processing (deducts credit server-side)
+      startOverlayProcessing();
+      const response = await queueReceiptScan({
+        scanId,
+        imageUrls,
+        currency: defaultCurrency || DEFAULT_CURRENCY,
+        receiptType: scanState.storeType !== 'auto' ? scanState.storeType as ReceiptType | undefined : undefined,
+      });
+
+      // Store pending scan — usePendingScan listener picks this up
+      const deadlineMs = new Date(response.processingDeadline).getTime();
+      setPendingScan(scanId, deadlineMs);
+    } catch (error: unknown) {
+      console.error('Async scan pipeline error:', error);
+      const errorInfo = getErrorInfo(classifyError(error));
+      const errorMsg = t(errorInfo.messageKey) || t('scanError');
+      setOverlayError('api', errorMsg);
+      setToastMessage({ text: errorMsg, type: errorInfo.toastType });
+    }
   }, [
     scanState.mode,
+    scanState.storeType,
     scanImages,
     t,
+    userId,
+    defaultCurrency,
     setScanImages,
     setView,
     setTransactionEditorMode,
@@ -399,7 +439,6 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
     setBatchImages,
     setShowBatchPreview,
     setToastMessage,
-    processScan,
     fileInputRef,
   ]);
 

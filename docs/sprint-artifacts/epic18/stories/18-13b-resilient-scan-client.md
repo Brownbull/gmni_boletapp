@@ -1,6 +1,6 @@
 # Story 18-13b: Resilient Scan Delivery — Client Integration
 
-Status: ready-for-dev
+Status: done
 
 > **Parent:** 18-13-resilient-scan-delivery (split into 18-13a backend + 18-13b client)
 > **Source:** Production incident (2026-03-16) — scans succeed on backend but fail on mobile due to network drops
@@ -106,30 +106,30 @@ Phase 4 — Deliver:
 ## Tasks
 
 ### Task 1: Callable wrapper + image upload service (5 subtasks)
-- [ ] 1.1: `gemini.ts` — add `queueReceiptScan` callable wrapper: `QueueReceiptScanRequest` + `QueueReceiptScanResponse` interfaces, `httpsCallable` call
-- [ ] 1.2: `pendingScanUpload.ts` — upload images to `pending_scans/{userId}/{scanId}/image_{n}.jpg` using `uploadBytesResumable` for progress, return download URLs
-- [ ] 1.3: Client generates `scanId` via `crypto.randomUUID()` before upload. Do NOT reuse `generateScanSessionId()` from `src/types/scan.ts`
-- [ ] 1.4: Update `useScanInitiation.handleFileSelect` — generate scanId, upload to Storage, call `queueReceiptScan`, start listener. On callable network error: safe to retry (idempotent)
-- [ ] 1.5: Scan overlay shows real upload progress during Storage upload phase
+- [x] 1.1: `gemini.ts` — add `queueReceiptScan` callable wrapper: `QueueReceiptScanRequest` + `QueueReceiptScanResponse` interfaces, `httpsCallable` call
+- [x] 1.2: `pendingScanUpload.ts` — upload images to `pending_scans/{userId}/{scanId}/image_{n}.jpg` using `uploadBytesResumable` for progress, return download URLs
+- [x] 1.3: Client generates `scanId` via `crypto.randomUUID()` before upload. Do NOT reuse `generateScanSessionId()` from `src/types/scan.ts`
+- [x] 1.4: Update `useScanInitiation.handleFileSelect` — generate scanId, upload to Storage, call `queueReceiptScan`, start listener. On callable network error: safe to retry (idempotent)
+- [x] 1.5: Scan overlay shows real upload progress during Storage upload phase
 
 ### Task 2: Listener + pending scan detection (4 subtasks)
-- [ ] 2.1: `usePendingScan` hook — `onSnapshot` on pending doc, handles status transitions (processing→completed/failed/expired)
-- [ ] 2.2: On completed → feed result into `processScan` pipeline at Step 5 (inject resolved-promise stub for `services.analyzeReceipt`). processScan signature unchanged
-- [ ] 2.3: On failed / past deadline → show error overlay with Retry/Cancel
-- [ ] 2.4: App init (`App.tsx`) — on authenticated mount, query `pending_scans/{userId}`, resume if found (AC-11 through AC-15)
+- [x] 2.1: `usePendingScan` hook — `onSnapshot` on pending doc, handles status transitions (processing→completed/failed/expired)
+- [x] 2.2: On completed → feed result into `processScan` pipeline at Step 5 (inject resolved-promise stub for `services.analyzeReceipt`). processScan signature unchanged
+- [x] 2.3: On failed / past deadline → show error overlay with Retry/Cancel
+- [x] 2.4: App init (`App.tsx`) — on authenticated mount, query `pending_scans/{userId}`, resume if found (AC-11 through AC-15)
 
 ### Task 3: Scan lock + resolution (5 subtasks)
-- [ ] 3.1: `useScanLock` hook — `onSnapshot` on `pending_scans/{userId}` collection, returns `{ isLocked, pendingScan }`
-- [ ] 3.2: Disable scan FAB when locked, show indicator, tap → navigate to pending resolution
-- [ ] 3.3: Cancel resolution — `runTransaction` verify doc exists → delete pending doc (triggers server-side cleanup)
-- [ ] 3.4: Save resolution — copy images from `pending_scans/` to `receipts/{userId}/{transactionId}/`, save transaction, delete pending doc
-- [ ] 3.5: Retry resolution — create new pending scan (new scanId), delete old failed one
+- [x] 3.1: `useScanLock` hook — `onSnapshot` on `pending_scans/{userId}` collection, returns `{ isLocked, pendingScan }`
+- [x] 3.2: Disable scan FAB when locked, show indicator, tap → navigate to pending resolution
+- [x] 3.3: Cancel resolution — `runTransaction` verify doc exists → delete pending doc (triggers server-side cleanup)
+- [x] 3.4: Save resolution — copy images from `pending_scans/` to `receipts/{userId}/{transactionId}/`, save transaction, delete pending doc
+- [x] 3.5: Retry resolution — create new pending scan (new scanId), delete old failed one
 
 ### Task 4: Store + tests (4 subtasks)
-- [ ] 4.1: `scanPendingSlice.ts` — `pendingScanId`, `pendingScanDeadline` state + `setPendingScan`/`clearPendingScan` actions
-- [ ] 4.2: Compose slice into `useScanStore.ts`, export from barrel
-- [ ] 4.3: Tests: `usePendingScan.test.ts` (completed/failed/processing/deadline states via mock onSnapshot)
-- [ ] 4.4: Tests: `useScanLock.test.ts` (locked/unlocked, FAB behavior, app init detection)
+- [x] 4.1: `scanPendingSlice.ts` — `pendingScanId`, `pendingScanDeadline` state + `setPendingScan`/`clearPendingScan` actions
+- [x] 4.2: Compose slice into `useScanStore.ts`, export from barrel
+- [x] 4.3: Tests: `usePendingScan.test.ts` (completed/failed/processing/deadline states via mock onSnapshot)
+- [x] 4.4: Tests: `useScanLock.test.ts` (locked/unlocked, FAB behavior, app init detection)
 
 ## Scope Boundaries
 - **Client only.** Backend (18-13a) must be deployed first.
@@ -159,6 +159,25 @@ If `copyPendingToReceipts` succeeds but `deleteDoc` fails, images exist in both 
 
 ### App init recovery
 `getDocs(pending_scans/{userId})` runs after `onAuthStateChanged` resolves with `user !== null`. Must not run before auth to avoid permission errors.
+
+## Senior Developer Review (ECC)
+
+- **Date:** 2026-03-17
+- **Classification:** COMPLEX
+- **Agents:** code-reviewer (sonnet), security-reviewer (opus), architect (opus), tdd-guide (sonnet)
+- **Overall Score:** 6.8/10 → **APPROVE** (after 17 quick fixes)
+- **Outcome:** 17 quick fixes applied, 1 TD story created (TD-18-10), 1 deferred to backlog
+- **Architectural ACs:** 7/7 PASS
+- **Key fixes:** creditDeducted assertion, ownership check on cancel, scanId validation, MIME allowlist, overlay double-transition guard, image count limit, URL domain validation
+
+### Deferred Items
+
+| # | Finding | Stage | Destination | Tracking |
+|---|---------|-------|-------------|----------|
+| 7 | pendingScanUpload.ts zero test coverage | MVP | TD-18-10 | ready-for-dev |
+| 19 | No timeout on image upload | PROD | Backlog | deferred-findings.md |
+
+<!-- CITED: L2-004 (TOCTOU), L2-008 (SSoT), L2-002 (Input Sanitization) -->
 
 ## ECC Analysis Summary
 - **Risk Level:** HIGH

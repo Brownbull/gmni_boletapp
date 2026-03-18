@@ -48,13 +48,17 @@ import { type SessionAction } from './components/session';
 import { BatchUploadPreview, BatchProcessingOverlay } from '@features/scan/components';
 import { NavigationBlocker } from './components/NavigationBlocker';
 import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
-import { PROCESSING_TIMEOUT_MS } from '@features/scan/store';
+import { PROCESSING_TIMEOUT_MS, useScanStore } from '@features/scan/store';
 import {
     hasActiveTransactionConflict as hasActiveTransactionConflictUtil,
     processScan as processScanHandler,
     useScanInitiation,
 } from '@features/scan';
 import type { ScanInitiationProps } from '@features/scan';
+import { usePendingScan, useScanLock } from '@features/scan/hooks';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import type { ScanResult } from '@features/scan/handlers/processScan/types';
+import type { FirestorePendingScan } from '@/types/pendingScan';
 import type { TrustPromptEligibility } from './types/trust';
 import { analyticsActions } from '@features/analytics/stores/useAnalyticsStore';
 import { getQuarterFromMonth } from '@features/analytics/utils/analyticsHelpers';
@@ -547,6 +551,102 @@ function App() {
         }
     }, [user?.uid, restoreScanState]);
 
+    // Story 18-13b: Pending scan detection + resolution hooks
+    /** Fallback deadline when processingDeadline is missing from Firestore doc (5 minutes) */
+    const PENDING_SCAN_FALLBACK_DEADLINE_MS = 5 * 60 * 1000;
+    const pendingScanId = useScanStore((s) => s.pendingScanId);
+
+    const handlePendingScanCompleted = useCallback((result: ScanResult, imageUrls: string[]) => {
+        // Feed result into processScan at Step 5 via asyncResult bypass
+        processScanHandler({
+            scan: {
+                images: imageUrls,
+                currency: userPreferences.defaultCurrency || DEFAULT_CURRENCY,
+                storeType: 'auto',
+                defaultCountry,
+                defaultCity,
+            },
+            user: {
+                userId: user?.uid || '',
+                creditsRemaining: 999, // Bypass credit check — already deducted server-side
+                defaultCurrency: userPreferences.defaultCurrency || DEFAULT_CURRENCY,
+                transactions,
+            },
+            mapping: {
+                mappings,
+                applyCategoryMappings,
+                findMerchantMatch,
+                findItemNameMatch,
+                incrementMappingUsage: (mappingId: string) => {
+                    if (user && services) {
+                        incrementMappingUsage(services.db, user.uid, services.appId, mappingId).catch(() => {});
+                    }
+                },
+                incrementMerchantMappingUsage: (mappingId: string) => {
+                    if (user && services) {
+                        incrementMerchantMappingUsage(services.db, user.uid, services.appId, mappingId).catch(() => {});
+                    }
+                },
+                incrementItemNameMappingUsage: (mappingId: string) => {
+                    if (user && services) {
+                        incrementItemNameMappingUsage(services.db, user.uid, services.appId, mappingId).catch(() => {});
+                    }
+                },
+            },
+            ui: { setToastMessage },
+            scanOverlay,
+            services: {
+                analyzeReceipt,
+                deductUserCredits: async () => true, // No-op — credit already deducted server-side
+                addUserCredits: async () => {},
+                getCitiesForCountry,
+            },
+            t,
+            lang: lang as 'en' | 'es',
+            asyncResult: result,
+        });
+    }, [user?.uid, userPreferences.defaultCurrency, defaultCountry, defaultCity, transactions, mappings, applyCategoryMappings, findMerchantMatch, findItemNameMatch, scanOverlay, t, lang, setToastMessage, getCitiesForCountry, services]);
+
+    // Story 18-13b: Side-effect subscriptions — Firestore listeners update scan store state.
+    // cancelPendingScan will be wired to ScanOverlay cancel button.
+    // isLocked will be wired to Nav FAB disabled state.
+    const { cancelPendingScan: _cancelPendingScan } = usePendingScan({
+        scanId: pendingScanId,
+        userId: user?.uid || '',
+        onCompleted: handlePendingScanCompleted,
+        t,
+    });
+
+    const { isLocked: _isScanLocked } = useScanLock(user?.uid ?? null);
+
+    // Story 18-13b: Detect pending scans on app init (after auth)
+    useEffect(() => {
+        if (!user?.uid) return;
+
+        const detectPendingScans = async () => {
+            if (!db) return;
+            try {
+                const q = query(
+                    collection(db, 'pending_scans'),
+                    where('userId', '==', user.uid)
+                );
+                const snapshot = await getDocs(q);
+
+                if (!snapshot.empty) {
+                    const firstDoc = snapshot.docs[0];
+                    const data = firstDoc.data() as FirestorePendingScan;
+                    const deadlineMs = data.processingDeadline?.toMillis?.() ?? Date.now() + PENDING_SCAN_FALLBACK_DEADLINE_MS;
+
+                    useScanStore.getState().setPendingScan(firstDoc.id, deadlineMs);
+                }
+            } catch (error) {
+                console.error('Failed to detect pending scans:', error);
+            }
+        };
+
+        detectPendingScans();
+    }, [user?.uid]);
+
     // Persist scan state to storage (primary persistence mechanism)
     const scanStateInitializedRef = useRef(false);
     useEffect(() => {
@@ -902,6 +1002,7 @@ function App() {
         defaultCurrency: userPreferences.defaultCurrency || DEFAULT_CURRENCY,
         userCredits,
         lang: lang as 'en' | 'es',
+        userId: user?.uid || '',
         // Actions
         setTransactionEditorMode,
         setCurrentTransaction,
@@ -931,6 +1032,7 @@ function App() {
         userPreferences.defaultCurrency,
         userCredits,
         lang,
+        user?.uid,
         setTransactionEditorMode,
         setCurrentTransaction,
         setScanImages,

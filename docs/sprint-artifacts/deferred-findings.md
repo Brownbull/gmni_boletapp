@@ -271,3 +271,11 @@
 - **Files:** `docs/sprint-artifacts/epic18/stories/18-13a-resilient-scan-backend.md`
 - **Stage:** PROD — Documentation accuracy
 - **Estimated effort:** 0.5 points (update AC-2 text)
+
+### [PROD] No Timeout on Image Upload in pendingScanUpload
+
+- **Source:** 18-13b-resilient-scan-client review (2026-03-17)
+- **Finding:** `uploadBytesResumable` in `uploadScanImages` has no per-image timeout. On poor mobile connections, uploads can hang indefinitely, holding the scan lock and blocking the user. Needs `Promise.race` with timeout and upload task cancellation.
+- **Files:** `src/features/scan/services/pendingScanUpload.ts`
+- **Stage:** PROD — Resilience for poor network conditions, not feature-breaking
+- **Estimated effort:** 2 points (wrap each upload in timeout, cancel upload task, aggregate error handling)
