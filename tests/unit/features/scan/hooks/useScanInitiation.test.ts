@@ -26,6 +26,12 @@ const { mockScanStoreActions, mockNavigationStoreActions } = vi.hoisted(() => ({
     setBatchEditingIndex: vi.fn(),
     // Story 14e-34a: Add setImages for single source of truth
     setImages: vi.fn(),
+    // Story 18-13b: Async scan pipeline actions (moved from getState to hook-level)
+    startOverlayUpload: vi.fn(),
+    setOverlayProgress: vi.fn(),
+    startOverlayProcessing: vi.fn(),
+    setOverlayError: vi.fn(),
+    setPendingScan: vi.fn(),
   },
   mockNavigationStoreActions: {
     setView: vi.fn(),
@@ -33,26 +39,9 @@ const { mockScanStoreActions, mockNavigationStoreActions } = vi.hoisted(() => ({
   },
 }));
 
-// Must use vi.hoisted for useScanStore mock since vi.mock is hoisted
-const { mockStoreGetState } = vi.hoisted(() => {
-  const getStateFn = vi.fn().mockReturnValue({
-    dismissDialog: vi.fn(),
-    setBatchEditingIndex: vi.fn(),
-    setImages: vi.fn(),
-    startOverlayUpload: vi.fn(),
-    setOverlayProgress: vi.fn(),
-    startOverlayProcessing: vi.fn(),
-    setOverlayError: vi.fn(),
-    setPendingScan: vi.fn(),
-  });
-  return { mockStoreGetState: getStateFn };
-});
-
-vi.mock('../../../../../src/features/scan/store/useScanStore', () => {
-  const storeFn = () => mockScanStoreActions;
-  storeFn.getState = mockStoreGetState;
-  return { useScanStore: storeFn };
-});
+vi.mock('../../../../../src/features/scan/store/useScanStore', () => ({
+  useScanStore: () => mockScanStoreActions,
+}));
 
 vi.mock('../../../../../src/shared/stores/useNavigationStore', () => ({
   useNavigationStore: () => mockNavigationStoreActions,
@@ -156,7 +145,6 @@ function createDefaultProps(overrides: Partial<ScanInitiationProps> = {}): ScanI
     setIsRescanning: vi.fn(),
     deductUserCredits: vi.fn().mockResolvedValue(true),
     addUserCredits: vi.fn().mockResolvedValue(undefined),
-    processScan: vi.fn().mockResolvedValue(undefined),
     reconcileItemsTotal: vi.fn((items, _total, _lang) => ({ items, hasDiscrepancy: false })),
     t: vi.fn((key) => key),
     fileInputRef: createMockFileInputRef(),
@@ -404,8 +392,38 @@ describe('useScanInitiation', () => {
       expect(mockNavigationStoreActions.setView).toHaveBeenCalledWith('transaction-editor');
       expect(props.setTransactionEditorMode).toHaveBeenCalledWith('new');
       // Story 18-13b: async pipeline replaces sync processScan for single scans
+      expect(mockScanStoreActions.startOverlayUpload).toHaveBeenCalled();
       expect(mockUploadScanImages).toHaveBeenCalled();
+      expect(mockScanStoreActions.startOverlayProcessing).toHaveBeenCalled();
       expect(mockQueueReceiptScan).toHaveBeenCalled();
+      expect(mockScanStoreActions.setPendingScan).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.any(Number)
+      );
+
+      vi.useRealTimers();
+    });
+
+    it('should show overlay error when async pipeline upload fails', async () => {
+      vi.useFakeTimers();
+      mockUploadScanImages.mockRejectedValueOnce(new Error('Storage quota exceeded'));
+      const props = createDefaultProps({
+        scanState: createMockScanState({ mode: 'single' }),
+      });
+      const { result } = renderHook(() => useScanInitiation(props));
+
+      const event = createMockFileEvent([createMockFile('receipt.jpg')]);
+
+      await act(async () => {
+        result.current.handleFileSelect(event);
+        await vi.runAllTimersAsync();
+      });
+
+      expect(mockScanStoreActions.startOverlayUpload).toHaveBeenCalled();
+      expect(mockScanStoreActions.setOverlayError).toHaveBeenCalledWith('api', expect.any(String));
+      expect(props.setToastMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ type: expect.any(String) })
+      );
 
       vi.useRealTimers();
     });
@@ -437,8 +455,6 @@ describe('useScanInitiation', () => {
       expect(props.setScanImages).toHaveBeenCalled();
       // Should navigate to transaction editor
       expect(mockNavigationStoreActions.setView).toHaveBeenCalledWith('transaction-editor');
-      // Should NOT auto-trigger processScan (user selected multiple, let them review)
-      expect(props.processScan).not.toHaveBeenCalled();
 
       vi.useRealTimers();
     });

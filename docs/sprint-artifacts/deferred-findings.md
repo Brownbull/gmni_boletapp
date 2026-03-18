@@ -287,3 +287,11 @@
 - **Files:** `src/features/scan/services/pendingScanUpload.ts`
 - **Stage:** PROD — Performance optimization, not feature-breaking
 - **Estimated effort:** 1 point (refactor to Promise.all with mapped array)
+
+### [PROD] vi.clearAllMocks vs vi.resetAllMocks in useScanInitiation tests
+
+- **Source:** TD-18-12-18-13b-review-quick-fixes review (2026-03-18)
+- **Finding:** `useScanInitiation.test.ts` uses `vi.clearAllMocks()` in `beforeEach` instead of `vi.resetAllMocks()`. `clearAllMocks` only clears call history, not implementations — so module-level mocks (`mockQueueReceiptScan`, `mockUploadScanImages`, `analyzeReceipt`) retain resolved values across tests. Changing to `resetAllMocks` requires restoring mock implementations in `beforeEach` for all module-level mocks.
+- **Files:** `tests/unit/features/scan/hooks/useScanInitiation.test.ts`
+- **Stage:** PROD — Test hygiene, prevents mock state leakage between tests
+- **Estimated effort:** 1 point (move mock implementations to beforeEach, change to resetAllMocks)
