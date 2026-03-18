@@ -15,8 +15,8 @@
 export { useScanStore, initialScanState } from './useScanStore';
 
 // Scan constants (Story 16-2: migrated from hooks/useScanState)
-/** Processing timeout in milliseconds (30 seconds) */
-export const PROCESSING_TIMEOUT_MS = 30000;
+/** Processing timeout in milliseconds (TD-18-11: increased from 30s to 60s for cold start margin) */
+export const PROCESSING_TIMEOUT_MS = 60000;
 /** Ready state display duration in milliseconds (500ms checkmark) */
 export const READY_DISPLAY_MS = 500;
 
@@ -57,6 +57,9 @@ export { useCanNavigateFreely, useCanSave, useCurrentView } from './selectors';
 
 // Count selectors
 export { useImageCount, useResultCount } from './selectors';
+
+// Pending scan selectors (Story 18-13b)
+export { usePendingScanId, usePendingScanStatus, usePendingScanDeadline } from './selectors';
 
 // Image selectors (Story 14e-34a)
 export { useScanImages } from './selectors';

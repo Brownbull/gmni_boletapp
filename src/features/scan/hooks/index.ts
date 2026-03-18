@@ -22,3 +22,9 @@ export type {
 // Story 15b-1i: Scan handlers
 export { useScanHandlers } from './useScanHandlers';
 export type { UseScanHandlersProps, UseScanHandlersResult } from './useScanHandlers';
+
+// Story 18-13b: Pending scan hooks
+export { usePendingScan } from './usePendingScan';
+export type { UsePendingScanProps, UsePendingScanReturn } from './usePendingScan';
+export { useScanLock } from './useScanLock';
+export type { ScanLockState } from './useScanLock';

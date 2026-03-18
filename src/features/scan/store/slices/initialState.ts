@@ -7,7 +7,7 @@
  */
 
 import type { ScanState } from '../../types/scanStateMachine';
-import type { ScanFullStore, ScanOverlayState, ScanErrorType } from './types';
+import type { ScanFullStore, ScanOverlayState, ScanErrorType, ScanPendingSlice } from './types';
 
 // Fields moved to useScanWorkflowStore (Story 16-6)
 type WorkflowFields = 'images' | 'batchProgress' | 'batchReceipts' | 'batchEditingIndex';
@@ -25,7 +25,7 @@ interface ScanUIState {
   processingStartedAt: number | null;
 }
 
-export const initialScanState: ScanStoreState & ScanUIState = {
+export const initialScanState: ScanStoreState & ScanUIState & Omit<ScanPendingSlice, 'setPendingScan' | 'clearPendingScan' | 'setPendingScanStatus'> = {
   // Core state
   phase: 'idle',
   mode: 'single',
@@ -69,6 +69,11 @@ export const initialScanState: ScanStoreState & ScanUIState = {
   overlayError: null,
   processingHistory: [],
   processingStartedAt: null,
+
+  // Pending scan state (Story 18-13b)
+  pendingScanId: null,
+  pendingScanDeadline: null,
+  pendingScanStatus: null,
 };
 
 // Compile-time check: ensure initialScanState covers all state keys.

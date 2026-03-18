@@ -84,7 +84,8 @@ function checkRateLimit(userId: string): boolean {
 }
 
 // Gemini model allowlist (Story 15b-5a: configurable via GEMINI_MODEL env var)
-const ALLOWED_GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']
+// TD-18-11: Added gemini-2.5-flash-lite (non-thinking replacement for 2.0-flash, 1.5x faster)
+const ALLOWED_GEMINI_MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']
 
 // Image validation constants
 const MAX_IMAGE_SIZE_MB = 10
@@ -469,6 +470,12 @@ export const analyzeReceipt = functions.https.onCall(
     const transactionId = generateTransactionId()
 
     try {
+      // TD-18-11: Validate model config early (fail-fast before image processing)
+      const geminiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite'
+      if (!ALLOWED_GEMINI_MODELS.includes(geminiModel)) {
+        throw new functions.https.HttpsError('internal', 'Invalid GEMINI_MODEL configuration. Contact administrator.')
+      }
+
       // =========================================================================
       // STEP 1: Pre-process images BEFORE Gemini API call
       // =========================================================================
@@ -514,11 +521,6 @@ export const analyzeReceipt = functions.https.onCall(
       // STEP 2: Call Gemini API with optimized images
       // =========================================================================
       const genAI = getGenAI()
-      // Story 15b-5a: Configurable model via env var, default to gemini-2.5-flash (stable GA)
-      const geminiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
-      if (!ALLOWED_GEMINI_MODELS.includes(geminiModel)) {
-        throw new functions.https.HttpsError('internal', 'Invalid GEMINI_MODEL configuration. Contact administrator.')
-      }
       const model = genAI.getGenerativeModel(
         { model: geminiModel },
         { apiVersion: 'v1' }
@@ -578,8 +580,8 @@ export const analyzeReceipt = functions.https.onCall(
       }
       const parsed = coerced as GeminiAnalysisResult
 
-      // Log successful analysis (helpful for monitoring)
-      console.log(`Receipt analyzed: transaction ${transactionId}`)
+      // Log successful analysis (helpful for monitoring — partial userId for audit correlation)
+      console.log(`Receipt analyzed: transaction ${transactionId} user ${userId.slice(0, 8)}…`)
 
       // =========================================================================
       // STEP 3: Store pre-processed images (reuse buffers - no double processing)

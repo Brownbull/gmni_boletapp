@@ -283,9 +283,10 @@ export function useScanHandlers(
      * Handle quick save completion (called after success animation).
      */
     const handleQuickSaveComplete = useCallback(() => {
+        dismissScanDialog();
         setScanImages([]);
         setView('dashboard');
-    }, [setScanImages, setView]);
+    }, [dismissScanDialog, setScanImages, setView]);
 
     /**
      * Handle quick save button click.
@@ -432,10 +433,11 @@ export function useScanHandlers(
      * Returns to dashboard.
      */
     const handleQuickSaveCancel = useCallback((_dialogData?: QuickSaveDialogData) => {
+        dismissScanDialog();
         setCurrentTransaction(null);
         setScanImages([]);
         setView('dashboard');
-    }, [setCurrentTransaction, setScanImages, setView]);
+    }, [dismissScanDialog, setCurrentTransaction, setScanImages, setView]);
 
     // =========================================================================
     // Currency Mismatch Handlers

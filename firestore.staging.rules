@@ -115,6 +115,14 @@ service cloud.firestore {
       allow read, write: if isAllowedStagingUser() && request.auth.uid == userId;
     }
 
+    // --- Pending scans (async scan pipeline, Story 18-13a) ---
+    // Admin SDK only for create/update. Client can read/delete own scans.
+    match /pending_scans/{scanId} {
+      allow read: if isAllowedStagingUser() && request.auth.uid == resource.data.userId;
+      allow delete: if isAllowedStagingUser() && request.auth.uid == resource.data.userId;
+      allow create, update: if false;
+    }
+
     // ============================================================================
     // GUSTIFY RULES
     // Source: gustify/firestore.staging.rules

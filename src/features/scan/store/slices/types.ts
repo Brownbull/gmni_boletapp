@@ -14,6 +14,7 @@ import type {
 } from '../../types/scanStateMachine';
 import type { Transaction } from '@/types/transaction';
 import type { BatchReceipt } from '@/types/batchReceipt';
+import type { FirestoreScanStatus } from '@/types/pendingScan';
 
 // =============================================================================
 // Core Slice
@@ -176,6 +177,22 @@ export interface ScanUISlice {
 }
 
 // =============================================================================
+// Pending Slice (Story 18-13b)
+// =============================================================================
+
+export interface ScanPendingSlice {
+  // State
+  pendingScanId: string | null;
+  pendingScanDeadline: number | null;
+  pendingScanStatus: FirestoreScanStatus | null;
+
+  // Actions
+  setPendingScan: (scanId: string, deadline: number) => void;
+  clearPendingScan: () => void;
+  setPendingScanStatus: (status: FirestoreScanStatus) => void;
+}
+
+// =============================================================================
 // Combined Store Type
 // =============================================================================
 
@@ -184,11 +201,13 @@ export type ScanFullStoreInternal = ScanCoreSliceInternal &
   ScanBatchSlice &
   ScanCreditSlice &
   ScanDialogSlice &
-  ScanUISlice;
+  ScanUISlice &
+  ScanPendingSlice;
 
 // Public store type hides _guardPhase from consumers
 export type ScanFullStore = ScanCoreSlice &
   ScanBatchSlice &
   ScanCreditSlice &
   ScanDialogSlice &
-  ScanUISlice;
+  ScanUISlice &
+  ScanPendingSlice;
