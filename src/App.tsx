@@ -1018,7 +1018,6 @@ function App() {
         setIsRescanning,
         deductUserCredits,
         addUserCredits,
-        processScan,
         reconcileItemsTotal,
         t,
         // Refs
@@ -1047,7 +1046,6 @@ function App() {
         setIsRescanning,
         deductUserCredits,
         addUserCredits,
-        processScan,
         reconcileItemsTotal,
         t,
         fileInputRef,

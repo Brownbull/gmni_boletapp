@@ -575,6 +575,14 @@ export interface ProcessScanParams {
   prefersReducedMotion?: boolean;
   /** Processing timeout in ms (default: 120000) */
   processingTimeoutMs?: number;
+  /**
+   * Story 18-13b: Pre-resolved scan result from async pipeline.
+   * When set, skips Steps 1-4 (image validation, credit check, credit deduction, Gemini call)
+   * and enters at Step 5 with this result. Used by usePendingScan hook when the backend
+   * has already completed processing and delivered the result via Firestore.
+   * Credit was already deducted server-side — no client credit manipulation needed.
+   */
+  asyncResult?: ScanResult;
 }
 
 /**

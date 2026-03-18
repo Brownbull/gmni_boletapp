@@ -14,7 +14,6 @@ const mockOnSnapshot = vi.fn();
 const mockDeleteDoc = vi.fn();
 const mockRunTransaction = vi.fn();
 const mockDoc = vi.fn();
-const mockGetDoc = vi.fn();
 
 vi.mock('firebase/firestore', () => ({
   doc: (...args: unknown[]) => mockDoc(...args),
@@ -58,7 +57,7 @@ describe('usePendingScan', () => {
     mockOnSnapshot.mockReturnValue(unsubscribeMock);
     mockRunTransaction.mockImplementation(async (_db: unknown, fn: (tx: unknown) => Promise<void>) => {
       const txMock = {
-        get: mockGetDoc.mockResolvedValue({ exists: () => true }),
+        get: vi.fn().mockResolvedValue({ exists: () => true }),
         delete: vi.fn(),
       };
       return fn(txMock);

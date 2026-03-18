@@ -22,6 +22,7 @@ import { createScanBatchSlice } from './slices/scanBatchSlice';
 import { createScanCreditSlice } from './slices/scanCreditSlice';
 import { createScanDialogSlice } from './slices/scanDialogSlice';
 import { createScanUISlice } from './slices/scanUISlice';
+import { createScanPendingSlice } from './slices/scanPendingSlice';
 
 export { initialScanState } from './slices/initialState';
 
@@ -35,6 +36,7 @@ const _useScanStore = create<ScanFullStoreInternal>()(
       ...createScanCreditSlice(...args),
       ...createScanDialogSlice(...args),
       ...createScanUISlice(...args),
+      ...createScanPendingSlice(...args),
     }),
     {
       name: 'scan-store',
