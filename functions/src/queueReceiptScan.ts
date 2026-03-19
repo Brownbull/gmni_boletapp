@@ -31,6 +31,7 @@ const PROCESSING_DEADLINE_MS = 5 * 60 * 1000
 const ALLOWED_URL_ORIGINS: readonly string[] = [
   'firebasestorage.googleapis.com',
   'storage.googleapis.com',
+  'boletapp-d609f.firebasestorage.app',
 ]
 
 // UUID v1-v5 format validation (prevents path-traversal in scanId)

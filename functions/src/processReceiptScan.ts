@@ -43,6 +43,7 @@ const ALLOWED_GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1
 const ALLOWED_URL_ORIGINS: readonly string[] = [
   'firebasestorage.googleapis.com',
   'storage.googleapis.com',
+  'boletapp-d609f.firebasestorage.app',
 ]
 
 /** Max image size in bytes (10MB) */
