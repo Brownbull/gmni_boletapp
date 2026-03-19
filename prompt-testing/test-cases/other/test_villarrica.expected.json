@@ -52,5 +52,8 @@
     "promptVersion": "3.1.0",
     "extractedAt": "2026-01-07T00:43:57.915Z"
   },
-  "corrections": {}
+  "corrections": {
+    "category": "ElectronicsStore",
+    "reviewNotes": "Electronics is not a valid store category; ElectronicsStore is the canonical STORE_CATEGORIES key"
+  }
 }

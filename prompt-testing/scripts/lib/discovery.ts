@@ -9,9 +9,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { CONFIG, isValidStoreType } from '../config';
-import type { StoreType } from '../types';
-
+import { CONFIG } from '../config';
 // ============================================================================
 // Types
 // ============================================================================
@@ -23,14 +21,28 @@ export interface TestCase {
   /** Unique test ID (e.g., "jumbo-001") */
   testId: string;
 
-  /** Store type from directory (e.g., "supermarket") */
-  storeType: StoreType;
+  /** Category from directory path (e.g., "supermarket", "trips/US") */
+  storeType: string;
 
   /** Absolute path to the image file */
   imagePath: string;
 
   /** Absolute path to the expected.json file */
   expectedPath: string;
+}
+
+/**
+ * Summary info for a test category (directory).
+ */
+export interface CategoryInfo {
+  /** Relative path from testDataDir (e.g., "trips/US") */
+  path: string;
+
+  /** Number of images that have an expected.json baseline */
+  withBaseline: number;
+
+  /** Total number of image files in the directory */
+  totalImages: number;
 }
 
 /**
@@ -91,20 +103,15 @@ export function discoverTestCases(options: DiscoveryOptions): TestCase[] {
     throw new Error(`Test data directory not found: ${testDataDir}`);
   }
 
-  // Validate store type if provided
-  if (options.type && !isValidStoreType(options.type)) {
-    throw new Error(
-      `Invalid store type: ${options.type}. ` +
-      `Valid types: ${CONFIG.validStoreTypes.join(', ')}`
-    );
-  }
-
   const testCases: TestCase[] = [];
 
-  // Get store type directories to scan
+  // Get category directories to scan (recursive)
+  const allCategories = getAllCategoryDirs(testDataDir);
   const storeTypeDirs = options.type
-    ? [options.type]
-    : getSubdirectories(testDataDir);
+    ? allCategories.filter(cat =>
+        cat === options.type || cat.startsWith(options.type + '/')
+      )
+    : allCategories;
 
   for (const storeType of storeTypeDirs) {
     const storeDir = path.join(testDataDir, storeType);
@@ -147,7 +154,7 @@ export function discoverTestCases(options: DiscoveryOptions): TestCase[] {
 
       testCases.push({
         testId,
-        storeType: storeType as StoreType,
+        storeType,
         imagePath: path.resolve(imagePath),
         expectedPath: path.resolve(expectedPath),
       });
@@ -165,16 +172,60 @@ export function discoverTestCases(options: DiscoveryOptions): TestCase[] {
 }
 
 /**
- * Get subdirectories of a directory.
+ * Recursively find all category directories (directories containing images).
+ * Returns relative paths from baseDir (e.g., "supermarket", "trips/US").
  */
-function getSubdirectories(dir: string): string[] {
+function getAllCategoryDirs(baseDir: string, prefix = ''): string[] {
+  const dirs: string[] = [];
   try {
-    return fs.readdirSync(dir, { withFileTypes: true })
-      .filter(dirent => dirent.isDirectory())
-      .map(dirent => dirent.name);
+    const fullPath = prefix ? path.join(baseDir, prefix) : baseDir;
+    const entries = fs.readdirSync(fullPath, { withFileTypes: true });
+
+    const hasImages = entries.some(
+      (e) => e.isFile() && IMAGE_EXTENSIONS.includes(path.extname(e.name).toLowerCase())
+    );
+
+    if (hasImages && prefix) {
+      dirs.push(prefix);
+    }
+
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const childPrefix = prefix ? `${prefix}/${entry.name}` : entry.name;
+        dirs.push(...getAllCategoryDirs(baseDir, childPrefix));
+      }
+    }
   } catch {
-    return [];
+    // directory not readable, skip
   }
+  return dirs;
+}
+
+/**
+ * Discover all categories with image counts (with and without baselines).
+ * Used for the --categories summary display.
+ */
+export function discoverAllCategories(testDataDir?: string): CategoryInfo[] {
+  const baseDir = testDataDir || CONFIG.testDataDir;
+  const categories = getAllCategoryDirs(baseDir);
+
+  return categories.map((cat) => {
+    const catDir = path.join(baseDir, cat);
+    const files = fs.readdirSync(catDir);
+    const images = files.filter((f) =>
+      IMAGE_EXTENSIONS.includes(path.extname(f).toLowerCase())
+    );
+    const withBaseline = images.filter((img) => {
+      const testId = path.basename(img, path.extname(img));
+      return fs.existsSync(path.join(catDir, `${testId}.expected.json`));
+    }).length;
+
+    return {
+      path: cat,
+      withBaseline,
+      totalImages: images.length,
+    };
+  });
 }
 
 /**
