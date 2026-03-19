@@ -31,7 +31,7 @@
 - [ ] Feature branch pushed to origin
 - [ ] PR created to develop with `gh pr create --base develop`
 - [ ] CI checks passing (`gh pr checks --watch`)
-- [ ] PR squash-merged to develop (`gh pr merge --squash --delete-branch`)
+- [ ] PR merged to develop (`gh pr merge --merge --delete-branch`)
 - [ ] Feature branch auto-deleted
 
 ### Production Branch (Step 2/2)
