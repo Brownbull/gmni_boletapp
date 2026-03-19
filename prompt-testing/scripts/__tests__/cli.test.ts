@@ -167,12 +167,11 @@ describe('CLI Discovery', () => {
       expect(testCases).toHaveLength(0);
     });
 
-    it('should throw error for invalid store type', () => {
+    it('should return empty array for non-existent category path', () => {
       createMockTestData([{ storeType: 'supermarket', testId: 'test-001' }]);
 
-      expect(() => {
-        discoverTestCases({ folder: TEST_DATA_DIR, type: 'invalid_type' });
-      }).toThrow('Invalid store type');
+      const result = discoverTestCases({ folder: TEST_DATA_DIR, type: 'nonexistent_type' });
+      expect(result).toHaveLength(0);
     });
 
     it('should sort results by store type then testId', () => {

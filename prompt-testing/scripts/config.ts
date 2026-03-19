@@ -50,6 +50,12 @@ export const CONFIG = {
   defaultLimit: 5,
 
   /**
+   * Hard cap on tests per run.
+   * Prevents accidental expensive runs.
+   */
+  maxTestsPerRun: 20,
+
+  /**
    * Default prompt identifier to use.
    */
   defaultPrompt: 'ACTIVE_PROMPT',

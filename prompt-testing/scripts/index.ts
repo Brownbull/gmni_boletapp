@@ -15,6 +15,7 @@
 
 import { Command } from 'commander';
 import { runCommand } from './commands/run';
+import { categoriesCommand } from './commands/categories';
 import { generateCommand } from './commands/generate';
 import { validateCommand } from './commands/validate';
 import { analyzeCommand } from './commands/analyze';
@@ -26,12 +27,19 @@ program
   .description('Receipt scan testing harness for evaluating and improving scan accuracy')
   .version('1.0.0');
 
+// Categories command - Show available test categories
+program
+  .command('categories')
+  .description('Show available test categories with image counts and baseline coverage')
+  .option('--folder <path>', 'Custom test data folder')
+  .action(categoriesCommand);
+
 // Run command - Execute scan tests
 program
   .command('run')
   .description('Run scan tests against Cloud Function')
   .option('--image <filename>', 'Run single test by image filename')
-  .option('--type <storetype>', 'Filter by store type (supermarket, pharmacy, restaurant, gas_station, convenience, other)')
+  .option('--type <category>', 'Filter by category path (e.g., supermarket, trips/US, trips)')
   .option('--limit <n>', 'Maximum tests to run (default: 5, use "all" for no limit)', '5')
   .option('--verbose', 'Show detailed per-test output with field comparisons')
   .option('--dry-run', 'Show what would run without making API calls')
