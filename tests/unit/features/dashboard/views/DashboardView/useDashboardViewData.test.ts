@@ -234,10 +234,13 @@ describe('useDashboardViewData', () => {
             expect(result.current.transactions).toHaveLength(3);
         });
 
-        it('returns recentScans as separate property', () => {
+        it('returns recentScans derived from all transactions sorted by createdAt', () => {
             const { result } = renderHook(() => useDashboardViewData());
 
-            expect(result.current.recentScans).toHaveLength(1);
+            // After HF-18-recent-scans, recentScans is derived from the full
+            // merged transaction list (top 10 by createdAt), not a separate listener
+            expect(result.current.recentScans).toHaveLength(4);
+            // scan-1 has the most recent date so it should still be first
             expect(result.current.recentScans[0].id).toBe('scan-1');
         });
     });

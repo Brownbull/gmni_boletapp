@@ -60,5 +60,9 @@
     "promptVersion": "3.0.0",
     "extractedAt": "2026-01-06T19:52:32.447Z"
   },
-  "corrections": {}
+  "corrections": {
+    "category": "Hardware",
+    "merchant": "Dobler R Construccion & Hogar",
+    "reviewNotes": "HomeGoods→Hardware: sells construction tools (spatulas, machete). Merchant name corrected from truncated 'DOBLE R'"
+  }
 }

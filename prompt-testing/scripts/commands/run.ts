@@ -20,9 +20,10 @@
  */
 
 import chalk from 'chalk';
-import { CONFIG, EXIT_CODES, isValidStoreType } from '../config';
+import { CONFIG, EXIT_CODES } from '../config';
 import {
   discoverTestCases,
+  discoverAllCategories,
   loadImageBuffer,
   loadExpectedJson,
   type TestCase,
@@ -45,7 +46,8 @@ import {
 import { saveResults, ensureGitKeep } from '../lib/result-writer';
 import { validateTestCase, type TestCaseFile } from '../lib/schema';
 import type { RunOptions, TestResult, TestRunSummary, FieldResults } from '../types';
-import { getPrompt, listPrompts, type PromptConfig } from '../../prompts';
+import { listPrompts } from '../../prompts';
+import { runComparisonMode } from './run-comparison';
 
 // ============================================================================
 // Types
@@ -63,37 +65,6 @@ interface ParsedOptions {
   outputMode: OutputMode;
   prompt?: string;
   compare?: [string, string];
-}
-
-/**
- * Summary for A/B comparison between two prompts.
- */
-interface ComparisonSummary {
-  promptA: {
-    id: string;
-    name: string;
-    passedTests: number;
-    accuracy: number;
-  };
-  promptB: {
-    id: string;
-    name: string;
-    passedTests: number;
-    accuracy: number;
-  };
-  winner: 'A' | 'B' | 'tie';
-  improvementPct: number;
-  perField: {
-    total: { promptA: number; promptB: number; better: 'A' | 'B' | 'tie' };
-    date: { promptA: number; promptB: number; better: 'A' | 'B' | 'tie' };
-    merchant: { promptA: number; promptB: number; better: 'A' | 'B' | 'tie' };
-    itemsCount: { promptA: number; promptB: number; better: 'A' | 'B' | 'tie' };
-    itemPrices: { promptA: number; promptB: number; better: 'A' | 'B' | 'tie' };
-  };
-  perStoreType: Record<
-    string,
-    { promptA: number; promptB: number; better: 'A' | 'B' | 'tie' }
-  >;
 }
 
 // ============================================================================
@@ -115,7 +86,7 @@ export async function runCommand(options: RunOptions): Promise<void> {
 
     // A/B Comparison Mode (AC4, AC5, AC6 from Story 8.7)
     if (parsedOptions.compare) {
-      await runComparisonMode(parsedOptions);
+      await runComparisonMode(parsedOptions, generateSummary);
       return;
     }
 
@@ -140,6 +111,11 @@ export async function runCommand(options: RunOptions): Promise<void> {
       log.info(`Using prompt: ${parsedOptions.prompt}`);
     }
 
+    // Show category summary before running (helps user decide scope)
+    if (parsedOptions.outputMode !== 'quiet' && parsedOptions.outputMode !== 'json') {
+      displayCategorySummary(parsedOptions.folder);
+    }
+
     // Discover test cases
     if (parsedOptions.outputMode !== 'quiet' && parsedOptions.outputMode !== 'json') {
       log.info('Discovering test cases...');
@@ -155,22 +131,26 @@ export async function runCommand(options: RunOptions): Promise<void> {
         console.log(JSON.stringify({ error: 'No test cases found', testCount: 0 }));
       } else {
         log.warn('No test cases found.');
-        log.dim('Ensure test-data/receipts/ contains images with matching .expected.json files.');
+        log.dim('Ensure test-cases/ contains images with matching .expected.json files.');
         log.dim('Use npm run test:scan:generate to create expected.json from images.');
       }
       process.exit(EXIT_CODES.ERROR);
     }
 
-    // Apply limit
+    // Apply limit (respect maxTestsPerRun hard cap)
+    const maxLimit = CONFIG.maxTestsPerRun;
     const effectiveLimit =
       parsedOptions.limit === 'all'
-        ? testCases.length
-        : Math.min(parsedOptions.limit, testCases.length);
+        ? Math.min(testCases.length, maxLimit)
+        : Math.min(parsedOptions.limit, testCases.length, maxLimit);
 
     const selectedCases = testCases.slice(0, effectiveLimit);
 
     if (parsedOptions.outputMode !== 'quiet' && parsedOptions.outputMode !== 'json') {
-      log.info(`Found ${testCases.length} test case(s), running ${selectedCases.length}`);
+      log.info(`Found ${testCases.length} test case(s), running ${selectedCases.length} (max ${maxLimit}/run)`);
+      if (testCases.length > maxLimit && parsedOptions.limit === 'all') {
+        log.warn(`Capped at ${maxLimit} tests. Use --type to target specific categories.`);
+      }
     }
 
     // Dry run mode - just show the plan
@@ -232,6 +212,55 @@ export async function runCommand(options: RunOptions): Promise<void> {
 }
 
 // ============================================================================
+// Category Summary Display
+// ============================================================================
+
+/**
+ * Display category summary table before running tests.
+ * Shows available categories, baseline counts, and total images.
+ */
+function displayCategorySummary(folder?: string): void {
+  const categories = discoverAllCategories(folder);
+  if (categories.length === 0) return;
+
+  const totalBaseline = categories.reduce((sum, c) => sum + c.withBaseline, 0);
+  const totalImages = categories.reduce((sum, c) => sum + c.totalImages, 0);
+
+  console.log('');
+  const catCol = 22;
+  const numCol = 10;
+  console.log(
+    '  ' +
+    chalk.dim('Category'.padEnd(catCol)) +
+    chalk.dim('Testable'.padStart(numCol)) +
+    chalk.dim('Images'.padStart(numCol))
+  );
+  console.log('  ' + chalk.dim('─'.repeat(catCol + numCol * 2)));
+
+  for (const cat of categories) {
+    const testable = String(cat.withBaseline).padStart(numCol);
+    const total = String(cat.totalImages).padStart(numCol);
+    const catName = cat.path.padEnd(catCol);
+
+    if (cat.withBaseline === 0) {
+      console.log('  ' + chalk.dim(catName + testable + total));
+    } else {
+      console.log('  ' + catName + chalk.green(testable) + total);
+    }
+  }
+
+  console.log('  ' + chalk.dim('─'.repeat(catCol + numCol * 2)));
+  console.log(
+    '  ' +
+    chalk.bold('Total'.padEnd(catCol)) +
+    chalk.bold(String(totalBaseline).padStart(numCol)) +
+    String(totalImages).padStart(numCol)
+  );
+  console.log(chalk.dim(`  ~$${CONFIG.estimatedCostPerScan}/test | Max ${CONFIG.maxTestsPerRun}/run`));
+  console.log('');
+}
+
+// ============================================================================
 // Option Parsing
 // ============================================================================
 
@@ -254,14 +283,6 @@ function parseOptions(options: RunOptions): ParsedOptions {
       }
       limit = parsed;
     }
-  }
-
-  // Validate store type
-  if (options.type && !isValidStoreType(options.type)) {
-    throw new Error(
-      `Invalid store type: ${options.type}. ` +
-        `Valid types: ${CONFIG.validStoreTypes.join(', ')}`
-    );
   }
 
   // Determine output mode (AC6)
@@ -322,380 +343,6 @@ function parseOptions(options: RunOptions): ParsedOptions {
     prompt,
     compare,
   };
-}
-
-// ============================================================================
-// A/B Comparison Mode (Story 8.7 - AC4, AC5, AC6)
-// ============================================================================
-
-/**
- * Run A/B comparison between two prompts.
- *
- * Runs the same test cases with both prompts and generates a
- * side-by-side comparison report.
- */
-async function runComparisonMode(options: ParsedOptions): Promise<void> {
-  const [promptAId, promptBId] = options.compare!;
-
-  console.log(chalk.bold('\n🔬 A/B Prompt Comparison'));
-  console.log('━'.repeat(50));
-  console.log(`  Prompt A: ${chalk.cyan(promptAId)}`);
-  console.log(`  Prompt B: ${chalk.cyan(promptBId)}`);
-  console.log('━'.repeat(50));
-
-  // Discover test cases
-  log.info('Discovering test cases...');
-  const testCases = discoverTestCases({
-    image: options.image,
-    type: options.type,
-    folder: options.folder,
-  });
-
-  if (testCases.length === 0) {
-    log.warn('No test cases found.');
-    process.exit(EXIT_CODES.ERROR);
-  }
-
-  // Apply limit
-  const effectiveLimit =
-    options.limit === 'all'
-      ? testCases.length
-      : Math.min(options.limit, testCases.length);
-
-  const selectedCases = testCases.slice(0, effectiveLimit);
-  log.info(`Running ${selectedCases.length} test(s) with BOTH prompts`);
-  log.dim(`  Estimated cost: $${(selectedCases.length * 2 * CONFIG.estimatedCostPerScan).toFixed(2)}`);
-
-  // Dry run mode
-  if (options.dryRun) {
-    console.log(chalk.yellow('\nDry Run - No API calls will be made'));
-    displayDryRunPlan(selectedCases, options.outputMode);
-    process.exit(EXIT_CODES.SUCCESS);
-  }
-
-  // Authenticate
-  log.info('Authenticating...');
-  await authenticateUser();
-  log.success('Authenticated');
-
-  console.log('');
-
-  // Run tests with Prompt A
-  console.log(chalk.bold(`\n📋 Running with Prompt A (${promptAId})`));
-  console.log('─'.repeat(40));
-  const startTimeA = Date.now();
-  const resultsA = await runTestsWithPrompt(selectedCases, promptAId, options);
-  const endTimeA = Date.now();
-  const summaryA = generateSummary(resultsA, startTimeA, endTimeA, promptAId);
-
-  // Brief pause between test runs
-  await sleep(1000);
-
-  // Run tests with Prompt B
-  console.log(chalk.bold(`\n📋 Running with Prompt B (${promptBId})`));
-  console.log('─'.repeat(40));
-  const startTimeB = Date.now();
-  const resultsB = await runTestsWithPrompt(selectedCases, promptBId, options);
-  const endTimeB = Date.now();
-  const summaryB = generateSummary(resultsB, startTimeB, endTimeB, promptBId);
-
-  // Generate comparison
-  const comparison = generateComparison(summaryA, summaryB, promptAId, promptBId);
-
-  // Display comparison report (AC6)
-  displayComparisonReport(comparison, summaryA, summaryB);
-
-  // Save both result files
-  const filepathA = saveResults(resultsA, summaryA, promptAId);
-  const filepathB = saveResults(resultsB, summaryB, promptBId);
-
-  console.log('');
-  log.success(`Results saved:`);
-  log.dim(`  Prompt A: ${filepathA}`);
-  log.dim(`  Prompt B: ${filepathB}`);
-
-  // Sign out
-  await signOutUser();
-
-  // Exit code based on whether any tests failed
-  const totalFailures = summaryA.failedTests + summaryB.failedTests;
-  const exitCode = totalFailures > 0 ? EXIT_CODES.TEST_FAILURE : EXIT_CODES.SUCCESS;
-  process.exit(exitCode);
-}
-
-/**
- * Run tests with a specific prompt.
- */
-async function runTestsWithPrompt(
-  testCases: TestCase[],
-  promptId: string,
-  options: ParsedOptions
-): Promise<TestResult[]> {
-  const results: TestResult[] = [];
-
-  for (let i = 0; i < testCases.length; i++) {
-    const testCase = testCases[i];
-    const testId = `${testCase.storeType}/${testCase.testId}`;
-
-    // Report progress
-    reportProgress(i + 1, testCases.length, testId, 'running', options.outputMode);
-
-    const result = await runSingleTestWithPrompt(testCase, promptId);
-    results.push(result);
-
-    // Update progress with result
-    const status = result.error ? 'error' : result.passed ? 'pass' : 'fail';
-
-    if (options.outputMode !== 'json' && options.outputMode !== 'quiet') {
-      process.stdout.write('\x1b[1A\x1b[2K');
-    }
-    reportProgress(i + 1, testCases.length, testId, status, options.outputMode);
-  }
-
-  return results;
-}
-
-/**
- * Run a single test with a specific prompt.
- */
-async function runSingleTestWithPrompt(
-  testCase: TestCase,
-  promptId: string
-): Promise<TestResult> {
-  const startTime = Date.now();
-  const testId = `${testCase.storeType}/${testCase.testId}`;
-
-  try {
-    // Load expected data
-    const expectedData = loadExpectedJson(testCase.expectedPath);
-    const expected = validateTestCase(expectedData);
-
-    // Load and scan image with specific prompt
-    const imageBuffer = loadImageBuffer(testCase.imagePath);
-
-    // Note: The scanner doesn't directly support prompt selection yet.
-    // For now, we pass promptId for tracking. Full prompt selection would
-    // require Cloud Function changes to accept a prompt parameter.
-    const actual = await scanReceipt(imageBuffer);
-
-    // Compare results
-    const fields = compareResults(expected, actual);
-    const score = calculateScore(fields);
-    const passed = score >= 70;
-
-    return {
-      testId,
-      passed,
-      score,
-      fields,
-      apiCost: CONFIG.estimatedCostPerScan,
-      duration: Date.now() - startTime,
-      storeType: testCase.storeType,
-      promptVersion: promptId,
-    };
-  } catch (error) {
-    return {
-      testId,
-      passed: false,
-      score: 0,
-      fields: getEmptyFields(),
-      apiCost: CONFIG.estimatedCostPerScan,
-      duration: Date.now() - startTime,
-      error: error instanceof Error ? error.message : String(error),
-      storeType: testCase.storeType,
-      promptVersion: promptId,
-    };
-  }
-}
-
-/**
- * Generate comparison summary between two prompt runs.
- */
-function generateComparison(
-  summaryA: TestRunSummary,
-  summaryB: TestRunSummary,
-  promptAId: string,
-  promptBId: string
-): ComparisonSummary {
-  const promptAConfig = getPrompt(promptAId);
-  const promptBConfig = getPrompt(promptBId);
-
-  // Determine winner
-  const accA = summaryA.overallAccuracy;
-  const accB = summaryB.overallAccuracy;
-  let winner: 'A' | 'B' | 'tie' = 'tie';
-  if (Math.abs(accA - accB) < 0.01) {
-    winner = 'tie';
-  } else if (accA > accB) {
-    winner = 'A';
-  } else {
-    winner = 'B';
-  }
-
-  const improvementPct = accB - accA; // Positive means B is better
-
-  // Compare per-field
-  const perField = {
-    total: compareField(summaryA.byField.total, summaryB.byField.total),
-    date: compareField(summaryA.byField.date, summaryB.byField.date),
-    merchant: compareField(summaryA.byField.merchant, summaryB.byField.merchant),
-    itemsCount: compareField(summaryA.byField.itemsCount, summaryB.byField.itemsCount),
-    itemPrices: compareField(summaryA.byField.itemPrices, summaryB.byField.itemPrices),
-  };
-
-  // Compare per-store-type
-  const allStoreTypes = new Set([
-    ...Object.keys(summaryA.byStoreType),
-    ...Object.keys(summaryB.byStoreType),
-  ]);
-
-  const perStoreType: Record<
-    string,
-    { promptA: number; promptB: number; better: 'A' | 'B' | 'tie' }
-  > = {};
-
-  for (const storeType of allStoreTypes) {
-    const accA = summaryA.byStoreType[storeType]?.accuracy ?? 0;
-    const accB = summaryB.byStoreType[storeType]?.accuracy ?? 0;
-    perStoreType[storeType] = compareField(accA, accB);
-  }
-
-  return {
-    promptA: {
-      id: promptAId,
-      name: promptAConfig.name,
-      passedTests: summaryA.passedTests,
-      accuracy: accA,
-    },
-    promptB: {
-      id: promptBId,
-      name: promptBConfig.name,
-      passedTests: summaryB.passedTests,
-      accuracy: accB,
-    },
-    winner,
-    improvementPct,
-    perField,
-    perStoreType,
-  };
-}
-
-/**
- * Compare two field accuracy values.
- */
-function compareField(
-  accA: number,
-  accB: number
-): { promptA: number; promptB: number; better: 'A' | 'B' | 'tie' } {
-  let better: 'A' | 'B' | 'tie' = 'tie';
-  if (Math.abs(accA - accB) < 0.01) {
-    better = 'tie';
-  } else if (accA > accB) {
-    better = 'A';
-  } else {
-    better = 'B';
-  }
-  return { promptA: accA, promptB: accB, better };
-}
-
-/**
- * Display A/B comparison report.
- */
-function displayComparisonReport(
-  comparison: ComparisonSummary,
-  summaryA: TestRunSummary,
-  summaryB: TestRunSummary
-): void {
-  console.log('');
-  console.log(chalk.bold('\n═══════════════════════════════════════════════════════'));
-  console.log(chalk.bold('                    COMPARISON REPORT'));
-  console.log(chalk.bold('═══════════════════════════════════════════════════════\n'));
-
-  // Winner announcement
-  if (comparison.winner === 'tie') {
-    console.log(chalk.yellow('  🤝 Result: TIE - Both prompts performed equally'));
-  } else {
-    const winnerPrompt = comparison.winner === 'A' ? comparison.promptA : comparison.promptB;
-    const winnerColor = comparison.winner === 'A' ? chalk.cyan : chalk.magenta;
-    console.log(winnerColor(`  🏆 Winner: ${winnerPrompt.name} (${winnerPrompt.id})`));
-    console.log(chalk.dim(`     Improvement: ${comparison.improvementPct > 0 ? '+' : ''}${comparison.improvementPct.toFixed(1)}% accuracy`));
-  }
-
-  // Overall accuracy comparison
-  console.log('');
-  console.log(chalk.bold('Overall Accuracy:'));
-  console.log('─'.repeat(50));
-  console.log(`  Prompt A (${comparison.promptA.id}): ${formatAccuracyColored(comparison.promptA.accuracy)}%  (${comparison.promptA.passedTests}/${summaryA.totalTests} passed)`);
-  console.log(`  Prompt B (${comparison.promptB.id}): ${formatAccuracyColored(comparison.promptB.accuracy)}%  (${comparison.promptB.passedTests}/${summaryB.totalTests} passed)`);
-
-  // Per-field comparison
-  console.log('');
-  console.log(chalk.bold('Per-Field Comparison:'));
-  console.log('─'.repeat(50));
-  console.log('  Field          Prompt A    Prompt B    Better');
-  console.log('  ' + '─'.repeat(46));
-
-  const fields = ['total', 'date', 'merchant', 'itemsCount', 'itemPrices'] as const;
-  for (const field of fields) {
-    const data = comparison.perField[field];
-    const betterIndicator = getBetterIndicator(data.better);
-    const fieldName = (field + ':').padEnd(14);
-    const accA = data.promptA.toFixed(0).padStart(7) + '%';
-    const accB = data.promptB.toFixed(0).padStart(7) + '%';
-    console.log(`  ${fieldName} ${accA}     ${accB}     ${betterIndicator}`);
-  }
-
-  // Per-store-type comparison (if multiple store types)
-  const storeTypes = Object.keys(comparison.perStoreType);
-  if (storeTypes.length > 1) {
-    console.log('');
-    console.log(chalk.bold('Per-Store-Type Comparison:'));
-    console.log('─'.repeat(50));
-    console.log('  Store Type     Prompt A    Prompt B    Better');
-    console.log('  ' + '─'.repeat(46));
-
-    for (const storeType of storeTypes) {
-      const data = comparison.perStoreType[storeType];
-      const betterIndicator = getBetterIndicator(data.better);
-      const typeName = (storeType + ':').padEnd(14);
-      const accA = data.promptA.toFixed(0).padStart(7) + '%';
-      const accB = data.promptB.toFixed(0).padStart(7) + '%';
-      console.log(`  ${typeName} ${accA}     ${accB}     ${betterIndicator}`);
-    }
-  }
-
-  console.log('');
-  console.log('═'.repeat(55));
-}
-
-/**
- * Format accuracy with color based on value.
- */
-function formatAccuracyColored(accuracy: number): string {
-  if (accuracy >= 90) return chalk.green(accuracy.toFixed(1));
-  if (accuracy >= 70) return chalk.yellow(accuracy.toFixed(1));
-  return chalk.red(accuracy.toFixed(1));
-}
-
-/**
- * Get indicator for which prompt is better.
- */
-function getBetterIndicator(better: 'A' | 'B' | 'tie'): string {
-  switch (better) {
-    case 'A':
-      return chalk.cyan('← A');
-    case 'B':
-      return chalk.magenta('B →');
-    case 'tie':
-      return chalk.dim('tie');
-  }
-}
-
-/**
- * Sleep utility for pacing API calls.
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // ============================================================================
@@ -827,7 +474,6 @@ function getGroundTruth(testCase: TestCaseFile): {
         const index = parseInt(indexStr, 10);
         if (index >= 0 && index < result.items.length) {
           if (correction.delete) {
-            // Mark for deletion (we'll filter later)
             result.items[index] = { ...result.items[index], name: '__DELETE__' };
           } else {
             if (correction.name !== undefined) result.items[index].name = correction.name;
@@ -836,13 +482,17 @@ function getGroundTruth(testCase: TestCaseFile): {
           }
         }
       }
-      // Remove deleted items
       result.items = result.items.filter((item) => item.name !== '__DELETE__');
     }
 
     // Add missing items
     if (corrections.addItems) {
-      result.items.push(...corrections.addItems);
+      result.items.push(...corrections.addItems.map(item => ({
+        name: item.name,
+        totalPrice: item.totalPrice,
+        unitPrice: item.unitPrice,
+        category: item.category,
+      })));
     }
   }
 
@@ -851,71 +501,67 @@ function getGroundTruth(testCase: TestCaseFile): {
 
 /**
  * Compare actual scan result against expected (ground truth).
- * Basic comparison - full implementation in Story 8.4.
  */
 function compareResults(
   expected: TestCaseFile,
-  actual: { merchant: string; date: string; total: number; category?: string; items: Array<{ name: string; price: number }> }
+  actual: { merchant: string; date: string; total: number; category?: string; items: Array<{ name: string; totalPrice: number }> }
 ): FieldResults {
   const groundTruth = getGroundTruth(expected);
 
-  // Total comparison (exact match)
   const totalMatch = Math.abs(groundTruth.total - actual.total) < 0.01;
-
-  // Date comparison (exact match)
   const dateMatch = groundTruth.date === actual.date;
-
-  // Merchant comparison (basic - fuzzy matching in Story 8.4)
   const merchantSimilarity = simpleSimilarity(groundTruth.merchant, actual.merchant);
   const merchantMatch = merchantSimilarity >= (expected.thresholds?.merchantSimilarity ?? 0.8);
-
-  // Category comparison (case-insensitive exact match)
   const expectedCategory = groundTruth.category || 'Other';
   const actualCategory = actual.category || 'Other';
   const categoryMatch = expectedCategory.toLowerCase() === actualCategory.toLowerCase();
 
-  // Items count (within tolerance)
   const expectedCount = groundTruth.items.length;
   const actualCount = actual.items.length;
   const tolerance = CONFIG.thresholds.itemsCount.tolerance ?? 1;
   const countMatch = Math.abs(expectedCount - actualCount) <= tolerance;
 
-  // Item prices (basic comparison)
+  // Name-matched item comparison: match expected items to actual items by
+  // name similarity (greedy best-match), then compare prices on matched pairs.
+  // This avoids false negatives when the AI returns items in a different order.
   let priceMatchCount = 0;
   const itemDetails = [];
+  const usedActualIndices = new Set<number>();
 
-  for (let i = 0; i < Math.max(expectedCount, actualCount); i++) {
+  for (let i = 0; i < expectedCount; i++) {
     const expectedItem = groundTruth.items[i];
-    const actualItem = actual.items[i];
+    let bestMatch = -1;
+    let bestSimilarity = 0;
 
-    if (expectedItem && actualItem) {
-      const priceMatch = Math.abs(expectedItem.totalPrice - actualItem.totalPrice) < 0.01;
-      if (priceMatch) {
-        priceMatchCount++;
+    // Find best matching actual item by name
+    for (let j = 0; j < actualCount; j++) {
+      if (usedActualIndices.has(j)) continue;
+      const sim = simpleSimilarity(expectedItem.name, actual.items[j].name);
+      if (sim > bestSimilarity) {
+        bestSimilarity = sim;
+        bestMatch = j;
       }
+    }
+
+    const NAME_MATCH_THRESHOLD = 0.4;
+    if (bestMatch >= 0 && bestSimilarity >= NAME_MATCH_THRESHOLD) {
+      usedActualIndices.add(bestMatch);
+      const actualItem = actual.items[bestMatch];
+      const priceMatch = Math.abs(expectedItem.totalPrice - actualItem.totalPrice) < 0.01;
+      if (priceMatch) priceMatchCount++;
       itemDetails.push({
-        index: i,
-        expectedName: expectedItem.name,
-        actualName: actualItem.name,
-        nameSimilarity: simpleSimilarity(expectedItem.name, actualItem.name),
-        nameMatch: true,
-        expectedPrice: expectedItem.totalPrice,
-        actualPrice: actualItem.totalPrice,
-        priceMatch,
-        match: priceMatch,
+        index: i, expectedName: expectedItem.name, actualName: actualItem.name,
+        nameSimilarity: bestSimilarity, nameMatch: bestSimilarity >= NAME_MATCH_THRESHOLD,
+        expectedPrice: expectedItem.totalPrice, actualPrice: actualItem.totalPrice,
+        priceMatch, match: priceMatch,
       });
-    } else if (expectedItem) {
-      // Missing actual item
+    } else {
+      // No matching actual item found
       itemDetails.push({
-        index: i,
-        expectedName: expectedItem.name,
-        actualName: '',
-        nameSimilarity: 0,
-        nameMatch: false,
-        expectedPrice: expectedItem.totalPrice,
-        actualPrice: 0,
-        priceMatch: false,
-        match: false,
+        index: i, expectedName: expectedItem.name, actualName: '',
+        nameSimilarity: 0, nameMatch: false,
+        expectedPrice: expectedItem.totalPrice, actualPrice: 0,
+        priceMatch: false, match: false,
       });
     }
   }
@@ -923,46 +569,17 @@ function compareResults(
   const priceAccuracy = expectedCount > 0 ? (priceMatchCount / expectedCount) * 100 : 100;
 
   return {
-    total: {
-      expected: groundTruth.total,
-      actual: actual.total,
-      match: totalMatch,
-      difference: actual.total - groundTruth.total,
-    },
-    date: {
-      expected: groundTruth.date,
-      actual: actual.date,
-      match: dateMatch,
-    },
-    merchant: {
-      expected: groundTruth.merchant,
-      actual: actual.merchant,
-      similarity: merchantSimilarity,
-      match: merchantMatch,
-    },
-    category: {
-      expected: expectedCategory,
-      actual: actualCategory,
-      match: categoryMatch,
-    },
-    itemsCount: {
-      expected: expectedCount,
-      actual: actualCount,
-      match: countMatch,
-      tolerance,
-    },
-    itemPrices: {
-      accuracy: priceAccuracy,
-      details: itemDetails,
-      matchCount: priceMatchCount,
-      totalCount: expectedCount,
-    },
+    total: { expected: groundTruth.total, actual: actual.total, match: totalMatch, difference: actual.total - groundTruth.total },
+    date: { expected: groundTruth.date, actual: actual.date, match: dateMatch },
+    merchant: { expected: groundTruth.merchant, actual: actual.merchant, similarity: merchantSimilarity, match: merchantMatch },
+    category: { expected: expectedCategory, actual: actualCategory, match: categoryMatch },
+    itemsCount: { expected: expectedCount, actual: actualCount, match: countMatch, tolerance },
+    itemPrices: { accuracy: priceAccuracy, details: itemDetails, matchCount: priceMatchCount, totalCount: expectedCount },
   };
 }
 
 /**
  * Simple string similarity (Dice coefficient).
- * Full fuzzy matching in Story 8.4.
  */
 function simpleSimilarity(a: string, b: string): number {
   const aLower = a.toLowerCase().trim();
@@ -971,7 +588,6 @@ function simpleSimilarity(a: string, b: string): number {
   if (aLower === bLower) return 1;
   if (aLower.length === 0 || bLower.length === 0) return 0;
 
-  // Simple character overlap
   const aChars = aLower.split('');
   const bSet = new Set(bLower.split(''));
   const uniqueIntersection = new Set(aChars.filter((c) => bSet.has(c))).size;
@@ -1025,11 +641,9 @@ function generateSummary(
   const failed = results.filter((r) => !r.passed && !r.error).length;
   const errored = results.filter((r) => r.error !== undefined).length;
 
-  // Calculate overall accuracy
   const totalScore = results.reduce((sum, r) => sum + r.score, 0);
   const overallAccuracy = results.length > 0 ? totalScore / results.length : 0;
 
-  // By store type (AC3)
   const byStoreType: Record<string, { total: number; passed: number; accuracy: number }> = {};
   for (const result of results) {
     if (!byStoreType[result.storeType]) {
@@ -1038,13 +652,11 @@ function generateSummary(
     byStoreType[result.storeType].total++;
     if (result.passed) byStoreType[result.storeType].passed++;
   }
-  // Calculate accuracy per store type
   for (const storeType of Object.keys(byStoreType)) {
     const st = byStoreType[storeType];
     st.accuracy = st.total > 0 ? (st.passed / st.total) * 100 : 0;
   }
 
-  // By field (AC2)
   const byField = {
     total: calculateFieldAccuracy(results, (r) => r.fields.total.match),
     date: calculateFieldAccuracy(results, (r) => r.fields.date.match),

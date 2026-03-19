@@ -38,5 +38,8 @@
     "promptVersion": "3.1.0",
     "extractedAt": "2026-01-06T23:59:36.031Z"
   },
-  "corrections": {}
+  "corrections": {
+    "category": "Transport",
+    "reviewNotes": "Parking falls under Transport in canonical STORE_CATEGORIES taxonomy"
+  }
 }
