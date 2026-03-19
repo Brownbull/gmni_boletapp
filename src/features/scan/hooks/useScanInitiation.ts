@@ -360,6 +360,12 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
       return;
     }
 
+    // Single image → show feedback immediately before base64 conversion
+    // This prevents the "dead zone" where nothing visually happens
+    if (files.length === 1) {
+      startOverlayUpload();
+    }
+
     const newImages = await Promise.all(
       files.map(
         f =>
@@ -385,7 +391,7 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
     }
 
     // Single image — async pipeline (Story 18-13b)
-    // Upload to Storage, queue for server-side processing, listen for result via Firestore.
+
     const updatedImages = [...scanImages, ...newImages];
     setScanImages(updatedImages);
     setView('transaction-editor');
@@ -395,8 +401,6 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
 
     // Start async scan pipeline
     const scanId = crypto.randomUUID();
-
-    startOverlayUpload();
 
     try {
       // Upload images to Firebase Storage with real progress
