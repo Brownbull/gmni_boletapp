@@ -344,10 +344,10 @@ development_status:
   epic-17-retrospective: optional
 
   # ============================================================================
-  # Epic 18: Credit Card Statement Scanning (~43 points, 12 stories)
+  # Epic 18: Credit Card Statement Scanning (~47 points, 12 stories)
   # "One statement in, many verified transactions out"
-  # Complete flow: PDF upload → AI extraction → transform → match → merge → verified
-  # Architecture Plan V4: memory/epic18-architecture-plan-v4.md
+  # Complete flow: PDF upload → async pipeline → transform → match → merge → verified
+  # Architecture Plan V5: memory/epic18-architecture-plan-v5.md (supersedes V4)
   # KDBP values: V5 primary (friction reduction), V1/V2 via matching, V3 consent
   # FRs: FR-1.6, FR-1.7 | NFRs: NFR-1.2, NFR-5.1
   # ============================================================================
@@ -362,11 +362,11 @@ development_status:
   # Critical path (sequential):
   18-5-statement-prompt-v2: drafted                    # 3 pts - Fix categories (mixed lang), add cardHolder flag, location hints (DEPENDS: 18-1)
   18-2-transaction-type-extensions: drafted             # 5 pts - chargeType, installments, recurrenceFrequency, source, cardHolder, sourceDocumentUrl + statementVerified/At/ImportId on Transaction (DEPENDS: 18-5)
-  18-3-statement-transformer-infra: drafted             # 5 pts - StatementTransaction→Transaction transformer (amount>0 filter) + PDF storage + password support (DEPENDS: 18-1, 18-2)
-  18-4-statement-ui-consent: drafted                   # 5 pts - Upload flow, consent modal (V3), password prompt, processing, review/edit view, save (DEPENDS: 18-3)
+  18-3-statement-async-backend: drafted                  # 8 pts - Async pipeline (queue+process CFs) + backend transformer + PDF storage + credit deduction (DEPENDS: 18-5, 18-2)
+  18-4-statement-ui-consent: drafted                   # 5 pts - Async client: Storage upload, Firestore listener, consent, review (DEPENDS: 18-3)
   18-10a-transaction-matching-logic: drafted           # 5 pts - Matching algorithm (fuzzy merchant+amount+date), merge logic, re-import protection, unit tests (DEPENDS: 18-4)
   18-10b-transaction-matching-ui: drafted              # 5 pts - Matching review UI, manual search, amount conflict dialog, store+save (DEPENDS: 18-10a)
-  18-6-transaction-editor-new-fields: drafted          # 5 pts - chargeType, installments, recurrence, cardHolder editing in editor (DEPENDS: 18-2)
+  18-6-transaction-editor-new-fields: drafted          # 5 pts - chargeType, installments, recurrence, cardHolder + hard lock mode for verified txns (DEPENDS: 18-2)
   # Scan quality fixes (2026-03-13, pre-credit-card-scanning):
   TD-18-7-hide-default-time-sentinel: done               # 1 pt  - Hide 04:04 sentinel time in TransactionCard/QuickSaveCard (V2)
   TD-18-8-rename-item-price-to-totalprice: done         # 3 pts - Rename TransactionItem.price → totalPrice across 33 files (V1+V2, unblocks 18-8)
@@ -385,11 +385,15 @@ development_status:
   TD-18-10-pending-scan-upload-tests: done         # 2 pts - Unit tests for pendingScanUpload.ts (uploadScanImages + copyPendingToReceipts) (Source: 18-13b review)
   TD-18-11-gemini-model-timeout-fix: done                   # 3 pts - CRITICAL: Switch gemini-2.5-flash → gemini-2.5-flash-lite (non-thinking) + increase client timeout 30s→60s (production scans timing out at 36s)
   TD-18-12-18-13b-review-quick-fixes: done          # 1 pt - Quick fixes from TD-18-11 review: getState() pattern, dead prop, SSoT drift, dead mock, stale comment (Source: TD-18-11 review)
+  # Item editor field gaps (2026-03-19 analysis):
+  TD-18-13-item-qty-unitprice-editor: done               # 3 pts - Always show qty + derived unitPrice in item editor; add qty to Original view; derive on save (DEPENDS: none)
+  TD-18-14-decimal-qty-support: ready                  # 2 pts - Allow decimal qty up to 3 places (0.633 kg); update input, display, derivation (DEPENDS: TD-18-13)
+  TD-18-15-item-editor-qty-test-coverage: ready-for-dev # 2 pts - Test coverage for qty input/unitPrice display interactions (Source: TD-18-13 review)
   # Independent (end of epic):
-  18-7-receipttype-fix: backlog                        # 2 pts - Re-enable receipt type selection in scan UI (currently dead parameter)
-  18-9-admin-endpoint-security: backlog                # 3 pts - Secure admin endpoints (adminCleanup, adminSendTest, adminTestWebPush) with Firebase Auth — evaluate Auth callable vs App Check
+  18-7-receipttype-fix: drafted                        # 2 pts - Remove dead receiptType parameter from pipeline + type (replaced by source field) (DEPENDS: 18-2)
+  18-9-admin-endpoint-security: drafted                # 3 pts - Replace hardcoded secret with Firebase Auth middleware on 3 admin HTTP endpoints
   18-12-item-fields-enrichment-analysis: absorbed      # absorbed-by: 18-8 (2026-03-13) — analysis folded into implementation
-  18-11-statement-e2e: drafted                         # 3 pts - E2E tests: on-demand smoke + staging consent/password/matching/reimport (DEPENDS: 18-10b)
+  18-11-statement-e2e: drafted                         # 5 pts - E2E tests: smoke + consent/password/matching/lock/reimport/credit/async-resilience (DEPENDS: 18-10b, 18-6)
 
   epic-18-retrospective: optional
 
@@ -407,32 +411,33 @@ development_status:
   # Affects ALL transactions (receipts, statements, manual)
 
   # ============================================================================
-  # Epic 19: Shared Groups (~42 points, 10 stories)
+  # Epic 19: Shared Groups (~57 points, 10 stories) — reviewed 2026-03-19
   # "Pin your receipts to the shared board"
-  # Copy & bucket groups, 50 members, 5 admins, 30-day deletion window
+  # Copy & bucket groups, max 5 groups/user, 50 members, 5 admins, 60-day deletion
+  # UX: Group context switcher dropdown + auto-copy toggle + batch assign
   # FRs: FR-7.1-FR-7.8 | NFRs: NFR-2.4
   # ============================================================================
   epic-19: backlog
 
-  # Chain A: model -> CRUD -> UI -> feed -> analytics
-  19-1-group-data-model: ready-for-dev                 # 5 pts - Firestore collection + security rules + types
-  19-2-group-crud-cloud-functions: ready-for-dev       # 5 pts - createGroup, manageGroupMember, transferGroupAdmin, deleteGroup (DEPENDS: 19-1)
-  19-5-group-list-ui: ready-for-dev                    # 5 pts - Group feature scaffold + list + detail + store (DEPENDS: 19-2)
-  19-6-group-transaction-feed: ready-for-dev           # 5 pts - Transaction feed + post-to-group UI (DEPENDS: 19-3, 19-5)
-  19-8-group-analytics: ready-for-dev                  # 5 pts - Client-side group analytics (DEPENDS: 19-6)
+  # Chain A: model -> CRUD -> context switcher -> auto-copy/feed -> analytics
+  19-1-group-data-model: ready-for-dev                 # 5 pts - Firestore collection + rules + types + indexes + constants (60-day window)
+  19-2-group-crud-cloud-functions: ready-for-dev       # 8 pts - create/manage/transfer/delete/updateGroup CFs + memberProfiles + limits (DEPENDS: 19-1)
+  19-5-group-context-switcher: ready-for-dev           # 8 pts - REWRITE: context switcher dropdown, group view mode, auto-copy store, leave group (DEPENDS: 19-1, 19-2)
+  19-6-auto-copy-and-feed: ready-for-dev               # 8 pts - REWRITE: auto-copy handler, batch "Add to Group", group transaction feed (DEPENDS: 19-3, 19-4, 19-5)
+  19-8-group-analytics: ready-for-dev                  # 5 pts - Client-side group analytics in group view context (DEPENDS: 19-5, 19-6)
 
   # Chain B: model -> post -> delete
-  19-3-post-to-group: ready-for-dev                    # 3 pts - postToGroup Cloud Function — copy & bucket (DEPENDS: 19-1)
-  19-4-group-admin-deletion: ready-for-dev             # 3 pts - deleteGroupTransaction with 30-day window (DEPENDS: 19-3)
+  19-3-post-to-group: ready-for-dev                    # 5 pts - postToGroup + batchPostToGroup CFs + duplicate check (DEPENDS: 19-1)
+  19-4-group-admin-deletion: ready-for-dev             # 3 pts - deleteGroupTransaction with 60-day window, admin-only (DEPENDS: 19-3)
 
   # Chain C: CRUD -> invites
-  19-7-group-invite-links: ready-for-dev               # 5 pts - createInvite + redeemInvite + UI (DEPENDS: 19-2)
+  19-7-group-invite-links: ready-for-dev               # 5 pts - createInvite + redeemInvite + rate limiting + idempotent checks (DEPENDS: 19-2)
 
-  # Chain D: CRUD -> admin panel
-  19-9-group-admin-panel: ready-for-dev                # 3 pts - Admin management UI (DEPENDS: 19-2)
+  # Chain D: CRUD -> admin panel + settings
+  19-9-group-admin-panel: ready-for-dev                # 5 pts - Admin panel + group settings (name/icon/color) + data loss warning (DEPENDS: 19-2, 19-5)
 
   # E2E
-  19-10-group-e2e: ready-for-dev                       # 3 pts - Multi-user E2E test (DEPENDS: 19-6)
+  19-10-group-e2e: ready-for-dev                       # 5 pts - Multi-user E2E: switcher, auto-copy, batch assign, analytics (DEPENDS: all 19-*)
 
   epic-19-retrospective: optional
 

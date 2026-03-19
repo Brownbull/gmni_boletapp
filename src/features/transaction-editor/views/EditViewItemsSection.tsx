@@ -16,8 +16,9 @@ import { translateItemCategoryGroup, getItemCategoryGroupEmoji } from '@/utils/c
 import { getItemCategoryGroup, getItemGroupColors } from '@/config/categoryColors';
 import { normalizeItemCategory } from '@/utils/categoryNormalizer';
 import { sanitizeInput, sanitizeNumericInput } from '@/utils/sanitize';
+import { deriveItemPrices } from '@entities/transaction/utils/itemPriceDerivation';
 
-type ItemEditableField = 'name' | 'totalPrice' | 'unitPrice' | 'category' | 'subcategory';
+type ItemEditableField = 'name' | 'totalPrice' | 'unitPrice' | 'qty' | 'category' | 'subcategory';
 
 function getItemContainerConfig(
     i: number, shouldAnimate: boolean, played: boolean, testIdPrefix: string
@@ -111,14 +112,14 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
     const handleAddItem = () => {
         onUpdateTransaction({
             ...currentTransaction,
-            items: [...currentTransaction.items, { name: '', totalPrice: 0, category: 'Other', subcategory: '' }],
+            items: [...currentTransaction.items, { name: '', totalPrice: 0, qty: 1, category: 'Other', subcategory: '' }],
         });
         onSetEditingItemIndex(currentTransaction.items.length);
     };
 
     const handleUpdateItem = (index: number, field: ItemEditableField, value: string | number) => {
         const newItems = [...currentTransaction.items];
-        const isNumeric = field === 'totalPrice' || field === 'unitPrice';
+        const isNumeric = field === 'totalPrice' || field === 'unitPrice' || field === 'qty';
         newItems[index] = { ...newItems[index], [field]: isNumeric ? parseStrictNumber(value) : value };
         onUpdateTransaction({ ...currentTransaction, items: newItems });
     };
@@ -170,6 +171,7 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
                             {!isCollapsed && (
                                 <div className="p-2 space-y-1.5">
                                     {groupItems.map(({ item, originalIndex: i }) => {
+                                        const derivedUnitPrice = deriveItemPrices(item).unitPrice;
                                         const isVisible = !shouldAnimate || i < animatedItems.length;
                                         const { ItemContainer, containerProps } = getItemContainerConfig(i, shouldAnimate, animationPlayedRef.current, 'edit-view-item');
                                         if (!isVisible) return null;
@@ -179,9 +181,10 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
                                                 {editingItemIndex === i ? (
                                                     <div className="p-3 rounded-lg space-y-2" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
                                                         <input className="w-full p-2 border rounded-lg text-sm" style={inputStyle} value={item.name} onChange={e => handleUpdateItem(i, 'name', sanitizeInput(e.target.value, { maxLength: 100 }))} placeholder={t('itemName')} autoFocus />
-                                                        <div className="flex gap-2">
+                                                        <div className="flex gap-2 items-center">
                                                             <input type="number" className="flex-1 p-2 border rounded-lg text-sm" style={inputStyle} value={item.totalPrice} onChange={e => handleUpdateItem(i, 'totalPrice', sanitizeNumericInput(e.target.value))} placeholder={t('price')} />
-                                                            {(item.qty ?? 1) > 1 && <input type="number" className="w-28 p-2 border rounded-lg text-sm" style={inputStyle} value={item.unitPrice ?? ''} onChange={e => handleUpdateItem(i, 'unitPrice', sanitizeNumericInput(e.target.value))} placeholder={t('unitPrice')} />}
+                                                            <input type="text" inputMode="numeric" pattern="[0-9]*" className="w-16 min-h-10 p-2 border rounded-lg text-sm text-center" style={inputStyle} defaultValue={item.qty ?? 1} key={`qty-grouped-${i}`} onFocus={e => e.target.select()} onChange={e => { const cleaned = e.target.value.replace(/[^0-9]/g, ''); if (cleaned !== e.target.value) e.target.value = cleaned; }} onBlur={e => { const val = parseInt(e.target.value, 10); if (!isNaN(val) && val >= 1) { handleUpdateItem(i, 'qty', val); e.target.value = String(val); } else { handleUpdateItem(i, 'qty', 1); e.target.value = '1'; } }} onKeyDown={e => { if ('.,eE-+'.includes(e.key)) e.preventDefault(); if (e.key === 'Enter') e.currentTarget.blur(); }} placeholder={t('qty')} />
+                                                            <span className="w-20 text-xs text-right truncate" style={{ color: 'var(--text-tertiary)' }}>{t('unitPrice')}: {derivedUnitPrice}</span>
                                                         </div>
                                                         <CategoryCombobox value={(item.category as string) || ''} onChange={(value) => handleUpdateItem(i, 'category', value)} language={language} theme={theme as 'light' | 'dark'} placeholder={t('itemCat')} ariaLabel={t('itemCat')} />
                                                         <input className="w-full p-2 border rounded-lg text-sm" style={inputStyle} value={item.subcategory || ''} onChange={e => handleUpdateItem(i, 'subcategory', sanitizeInput(e.target.value, { maxLength: 50 }))} placeholder={t('itemSubcat')} />
@@ -222,6 +225,7 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
                     <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-light)' }}>
                         <div className="divide-y" style={{ borderColor: 'var(--border-light)' }}>
                             {currentTransaction.items.map((item, i) => {
+                                const derivedUnitPrice = deriveItemPrices(item).unitPrice;
                                 const isVisible = !shouldAnimate || i < animatedItems.length;
                                 const { ItemContainer, containerProps } = getItemContainerConfig(i, shouldAnimate, animationPlayedRef.current, 'edit-view-item-original');
                                 if (!isVisible) return null;
@@ -237,7 +241,8 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
                                                     </div>
                                                     <div className="flex items-center gap-2 pl-7">
                                                         <input type="number" step="0.01" className="w-24 p-2 border rounded-lg text-sm" style={inputStyle} value={item.totalPrice} onChange={e => handleUpdateItem(i, 'totalPrice', sanitizeNumericInput(e.target.value))} placeholder={t('price')} />
-                                                        {(item.qty ?? 1) > 1 && <input type="number" className="w-20 p-2 border rounded-lg text-sm" style={inputStyle} value={item.unitPrice ?? ''} onChange={e => handleUpdateItem(i, 'unitPrice', sanitizeNumericInput(e.target.value))} placeholder={t('unitPrice')} />}
+                                                        <input type="text" inputMode="numeric" pattern="[0-9]*" className="w-14 min-h-10 p-2 border rounded-lg text-sm text-center" style={inputStyle} defaultValue={item.qty ?? 1} key={`qty-original-${i}`} onFocus={e => e.target.select()} onChange={e => { const cleaned = e.target.value.replace(/[^0-9]/g, ''); if (cleaned !== e.target.value) e.target.value = cleaned; }} onBlur={e => { const val = parseInt(e.target.value, 10); if (!isNaN(val) && val >= 1) { handleUpdateItem(i, 'qty', val); e.target.value = String(val); } else { handleUpdateItem(i, 'qty', 1); e.target.value = '1'; } }} onKeyDown={e => { if ('.,eE-+'.includes(e.key)) e.preventDefault(); if (e.key === 'Enter') e.currentTarget.blur(); }} placeholder={t('qty')} />
+                                                        <span className="w-14 text-xs text-right truncate" style={{ color: 'var(--text-tertiary)' }} aria-label={`${t('unitPrice')}: ${derivedUnitPrice}`}>{t('unitPrice')}: {derivedUnitPrice}</span>
                                                         <CategoryBadge category={(item.category as string) || 'Other'} lang={language} mini />
                                                         <div className="flex-1" />
                                                         <button onClick={() => handleDeleteItem(i)} className="min-w-8 min-h-8 p-1 rounded-lg flex items-center justify-center" style={{ color: 'var(--error)', backgroundColor: isDark ? 'rgba(248, 113, 113, 0.1)' : 'rgba(239, 68, 68, 0.1)' }} aria-label={t('deleteItem')}><Trash2 size={14} strokeWidth={2} /></button>

@@ -94,3 +94,5 @@
 | 2026-03-18 | TD-18-12 | review | boletapp-dev | ✓ done | APPROVE 8.1/10. SIMPLE: 2 agents (code+tdd). 3 quick fixes (Pick→Omit SSoT, store-action assertions, error-path test). 1 PROD to backlog (clearAllMocks→resetAllMocks). | none |
 | 2026-03-18 | TD-18-10 | none | boletapp-dev | ✓ done | 15 unit tests for pendingScanUpload.ts: uploadScanImages (success+progress+failure+empty+limit+MIME+malformed URL+getDownloadURL failure), copyPendingToReceipts (success+progress+URL validation+empty+mixed invalid+fetch error). 228 lines (under 300L limit). All 9 ACs met. $11.01. | none |
 | 2026-03-18 | TD-18-10 | review | boletapp-dev | ✓ done | APPROVE 8.2/10. COMPLEX: 4 agents (code+security+architect+tdd). 6 quick fixes (mock comment, progress assertion, console.error removal, intermediate progress, webp test, fetch URL assertion). 4 PROD to backlog (file size limit, path validation, URL hardening, response.ok). | none |
+| 2026-03-19 | TD-18-13 | dev | boletapp-dev | ✓ done | none |
+| 2026-03-19 | TD-18-13 | review | boletapp-dev | ✓ done | ⚑ ssot-inline-derivation (4x formula duplication fixed → deriveItemPrices import) |
