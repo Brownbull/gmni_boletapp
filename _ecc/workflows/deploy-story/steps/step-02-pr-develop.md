@@ -1,14 +1,14 @@
-# Step 02: PR to develop (squash merge)
+# Step 02: PR to develop (merge commit)
 
-Create PR from feature branch to develop, wait for CI, squash merge.
+Create PR from feature branch to develop, wait for CI, merge.
 
-<step n="2" goal="Create PR to develop (squash merge)">
+<step n="2" goal="Create PR to develop (merge commit)">
 
   <action>Run `git fetch origin`</action>
   <action>Run `git push -u origin {{current_branch}}`</action>
 
   <output>**Step 1/2: PR to develop**
-    Creating PR: {{current_branch}} -> develop (squash merge)
+    Creating PR: {{current_branch}} -> develop (merge commit)
     This integrates your feature into the development branch.</output>
 
   <ask>Proceed with PR to develop? [Y/N]</ask>
@@ -43,9 +43,9 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"`</action>
     <action>EXIT workflow</action>
   </check>
 
-  <output>**CI Checks Passed** — Squash-merging PR to develop...</output>
+  <output>**CI Checks Passed** — Merging PR to develop...</output>
 
-  <action>Run `gh pr merge {{develop_pr_url}} --squash --delete-branch`</action>
+  <action>Run `gh pr merge {{develop_pr_url}} --merge --delete-branch`</action>
 
   <check if="merge fails">
     <output>**MERGE FAILED**
@@ -53,7 +53,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"`</action>
     <action>EXIT workflow</action>
   </check>
 
-  <output>**Merged to develop (squash)**
+  <output>**Merged to develop**
     Feature branch {{current_branch}} auto-deleted.
     CI validates on push to develop.</output>
 </step>

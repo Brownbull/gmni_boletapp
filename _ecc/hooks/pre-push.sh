@@ -11,7 +11,7 @@ while read local_ref local_sha remote_ref remote_sha; do
     if [ "$branch" = "$pb" ]; then
       echo "[HOOK] Direct push to '$branch' blocked."
       echo "  Use a PR workflow: gh pr create && gh pr merge"
-      echo "  Or merge via: gh pr merge --squash --auto <PR_NUMBER>"
+      echo "  Or merge via: gh pr merge --merge --auto <PR_NUMBER>"
       exit 1
     fi
   done
