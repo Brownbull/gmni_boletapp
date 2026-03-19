@@ -31,6 +31,7 @@ const PROCESSING_DEADLINE_MS = 5 * 60 * 1000
 const ALLOWED_URL_ORIGINS: readonly string[] = [
   'firebasestorage.googleapis.com',
   'storage.googleapis.com',
+  'boletapp-d609f.firebasestorage.app',
 ]
 
 // UUID v1-v5 format validation (prevents path-traversal in scanId)
@@ -86,6 +87,7 @@ function validateImageUrl(url: string): void {
 interface QueueReceiptScanRequest {
   scanId: string
   imageUrls: string[]
+  currency?: string
   receiptType?: ReceiptType
 }
 
@@ -103,17 +105,35 @@ export const queueReceiptScan = functions.https.onCall(
       throw new functions.https.HttpsError('unauthenticated', 'Authentication required')
     }
     const userId = context.auth.uid
+    functions.logger.info('queueReceiptScan: auth OK', { userId })
 
     // 2. Rate limit
     if (checkRateLimit(userId)) {
+      functions.logger.warn('queueReceiptScan: rate limit exceeded', { userId })
       throw new functions.https.HttpsError(
         'resource-exhausted',
         'Rate limit exceeded. Please wait before scanning again.'
       )
     }
 
+    // Log incoming data shape for debugging (no PII/URLs)
+    functions.logger.info('queueReceiptScan: validating request', {
+      hasScanId: !!data.scanId,
+      scanIdType: typeof data.scanId,
+      imageUrlsIsArray: Array.isArray(data.imageUrls),
+      imageUrlsLength: Array.isArray(data.imageUrls) ? data.imageUrls.length : 'N/A',
+      receiptType: data.receiptType,
+      currency: data.currency,
+      dataKeys: Object.keys(data),
+    })
+
     // 3. Validate scanId (UUID format — reject path-traversal)
     if (!data.scanId || typeof data.scanId !== 'string' || !UUID_REGEX.test(data.scanId)) {
+      functions.logger.error('queueReceiptScan: invalid scanId', {
+        scanId: data.scanId,
+        type: typeof data.scanId,
+        matchesUuid: typeof data.scanId === 'string' ? UUID_REGEX.test(data.scanId) : false,
+      })
       throw new functions.https.HttpsError(
         'invalid-argument',
         'scanId must be a valid UUID v4'
@@ -122,6 +142,10 @@ export const queueReceiptScan = functions.https.onCall(
 
     // 4. Validate imageUrls
     if (!Array.isArray(data.imageUrls) || data.imageUrls.length === 0) {
+      functions.logger.error('queueReceiptScan: invalid imageUrls', {
+        isArray: Array.isArray(data.imageUrls),
+        length: Array.isArray(data.imageUrls) ? data.imageUrls.length : 'N/A',
+      })
       throw new functions.https.HttpsError(
         'invalid-argument',
         'imageUrls must be a non-empty array'
@@ -134,18 +158,34 @@ export const queueReceiptScan = functions.https.onCall(
       )
     }
     for (const url of data.imageUrls) {
-      validateImageUrl(url)
+      try {
+        validateImageUrl(url)
+      } catch (e) {
+        const hostname = (() => { try { return new URL(url).hostname } catch { return 'invalid-url' } })()
+        functions.logger.error('queueReceiptScan: URL validation failed', {
+          hostname,
+          protocol: (() => { try { return new URL(url).protocol } catch { return 'unknown' } })(),
+          allowedOrigins: ALLOWED_URL_ORIGINS,
+          error: e instanceof Error ? e.message : String(e),
+        })
+        throw e
+      }
     }
 
-    // 5. Validate receiptType if provided
-    if (data.receiptType !== undefined) {
+    // 5. Validate receiptType if provided (client may send null or undefined)
+    if (data.receiptType != null) {
       if (!RECEIPT_TYPES.includes(data.receiptType)) {
+        functions.logger.error('queueReceiptScan: invalid receiptType', {
+          receiptType: data.receiptType,
+          validTypes: RECEIPT_TYPES.slice(0, 5).join(', ') + '...',
+        })
         throw new functions.https.HttpsError(
           'invalid-argument',
           'Invalid receiptType'
         )
       }
     }
+    functions.logger.info('queueReceiptScan: all validations passed')
 
     // 6. Atomic: idempotency check + credit deduction + doc creation
     const db = admin.firestore()
@@ -189,7 +229,7 @@ export const queueReceiptScan = functions.https.onCall(
         createdAt: admin.firestore.Timestamp.fromMillis(now),
         processingDeadline: admin.firestore.Timestamp.fromMillis(now + PROCESSING_DEADLINE_MS),
         creditDeducted: true,
-        ...(data.receiptType !== undefined && { receiptType: data.receiptType }),
+        ...(data.receiptType != null && { receiptType: data.receiptType }),
       })
     })
 
