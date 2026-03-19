@@ -267,24 +267,31 @@ function coerceGeminiNumericFields(raw: Record<string, unknown>): Record<string,
   result['total'] = parseGeminiNumber(result['total'])
 
   if (Array.isArray(result['items'])) {
-    result['items'] = (result['items'] as unknown[]).map((item) => {
-      if (typeof item !== 'object' || item === null) return item
-      const i = { ...(item as Record<string, unknown>) }
-      // Defense-in-depth: remap legacy 'price' field if Gemini returns old schema
-      if (!('totalPrice' in i) && 'price' in i) {
-        i['totalPrice'] = i['price']
-        delete i['price']
-      }
-      i['totalPrice'] = parseGeminiNumber(i['totalPrice'])
-      if ('unitPrice' in i) {
-        const coerced = parseGeminiNumber(i['unitPrice'])
-        i['unitPrice'] = (typeof coerced === 'number' && Number.isFinite(coerced)) ? coerced : undefined
-      }
-      if ('quantity' in i) {
-        i['quantity'] = parseGeminiNumber(i['quantity'])
-      }
-      return i
-    })
+    result['items'] = (result['items'] as unknown[])
+      .map((item) => {
+        if (typeof item !== 'object' || item === null) return item
+        const i = { ...(item as Record<string, unknown>) }
+        // Defense-in-depth: remap legacy 'price' field if Gemini returns old schema
+        if (!('totalPrice' in i) && 'price' in i) {
+          i['totalPrice'] = i['price']
+          delete i['price']
+        }
+        i['totalPrice'] = parseGeminiNumber(i['totalPrice'])
+        if ('unitPrice' in i) {
+          const coerced = parseGeminiNumber(i['unitPrice'])
+          i['unitPrice'] = (typeof coerced === 'number' && Number.isFinite(coerced)) ? coerced : undefined
+        }
+        if ('quantity' in i) {
+          i['quantity'] = parseGeminiNumber(i['quantity'])
+        }
+        return i
+      })
+      .filter((item) => {
+        if (typeof item !== 'object' || item === null) return true
+        const i = item as Record<string, unknown>
+        const price = i['totalPrice'] ?? i['unitPrice'] ?? 0
+        return typeof price === 'number' && price !== 0
+      })
   }
 
   if (typeof result['metadata'] === 'object' && result['metadata'] !== null) {
@@ -432,7 +439,8 @@ export const analyzeReceipt = functions.https.onCall(
 
     // Currency is optional for V3 (auto-detects from receipt)
     // For V1/V2 prompts, currency should be provided but we'll allow fallback
-    if (data.currency !== undefined && typeof data.currency !== 'string') {
+    // Note: Firebase callable serializes undefined → null over JSON. Use != null.
+    if (data.currency != null && typeof data.currency !== 'string') {
       throw new functions.https.HttpsError(
         'invalid-argument',
         'currency must be a string if provided'
@@ -440,7 +448,8 @@ export const analyzeReceipt = functions.https.onCall(
     }
 
     // TD-15b-37 AC2: Validate receiptType against known values before any processing
-    if (data.receiptType !== undefined &&
+    // Note: Firebase callable serializes undefined → null over JSON. Use != null.
+    if (data.receiptType != null &&
         !(RECEIPT_TYPES as readonly string[]).includes(data.receiptType)) {
       throw new functions.https.HttpsError(
         'invalid-argument',

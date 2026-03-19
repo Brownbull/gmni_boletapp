@@ -105,13 +105,18 @@ function coerceGeminiNumericFields(obj: Record<string, unknown>): Record<string,
   const coerced = { ...obj }
   if ('total' in coerced) coerced.total = parseGeminiNumber(coerced.total)
   if ('items' in coerced && Array.isArray(coerced.items)) {
-    coerced.items = coerced.items.map((item: Record<string, unknown>) => {
-      const coercedItem = { ...item }
-      if ('totalPrice' in coercedItem) coercedItem.totalPrice = parseGeminiNumber(coercedItem.totalPrice)
-      if ('unitPrice' in coercedItem) coercedItem.unitPrice = parseGeminiNumber(coercedItem.unitPrice)
-      if ('qty' in coercedItem) coercedItem.qty = parseGeminiNumber(coercedItem.qty)
-      return coercedItem
-    })
+    coerced.items = coerced.items
+      .map((item: Record<string, unknown>) => {
+        const coercedItem = { ...item }
+        if ('totalPrice' in coercedItem) coercedItem.totalPrice = parseGeminiNumber(coercedItem.totalPrice)
+        if ('unitPrice' in coercedItem) coercedItem.unitPrice = parseGeminiNumber(coercedItem.unitPrice)
+        if ('qty' in coercedItem) coercedItem.qty = parseGeminiNumber(coercedItem.qty)
+        return coercedItem
+      })
+      .filter((item: Record<string, unknown>) => {
+        const price = item.totalPrice ?? item.unitPrice ?? 0
+        return typeof price === 'number' && price !== 0
+      })
   }
   return coerced
 }
