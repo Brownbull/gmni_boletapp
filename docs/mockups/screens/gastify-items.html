@@ -1,0 +1,1686 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Items (Productos) — Gastify (Production Design System)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Baloo+2:wght@700&display=swap" rel="stylesheet">
+  <style>
+    /* ══════════════════════════════════════════
+       GASTIFY — PRODUCTION DESIGN SYSTEM
+       Themes: Normal / Professional / Mono
+       Modes: Light / Dark
+       Screen: Items (Product Catalog)
+       ══════════════════════════════════════════ */
+
+    /* ── Normal Light (default) ── */
+    :root {
+      --bg: #f5f0e8;
+      --surface: #fff;
+      --primary: #4a7c59;
+      --text: #2d3a4a;
+      --secondary: #4a5568;
+      --accent: #e8a87c;
+      --border: #e3bba1;
+      --bg-tertiary: #f1dbb6;
+      --secondary-color: #5b8fa8;
+      --primary-rgb: 74, 124, 89;
+      --nav-bg: #4a5568;
+      --shadow: rgba(74, 124, 89, 0.12);
+      --shadow-lg: rgba(74, 124, 89, 0.18);
+      --skeleton-base: #f1dbb6;
+      --skeleton-shine: #f5f0e8;
+      --frame-bg: #1a1a2e;
+      --status-bar-text: #fff;
+      --fab-gradient-from: #4a7c59;
+      --fab-gradient-to: #3d6b4b;
+      --warning: #d97706;
+      --warning-bg: rgba(217, 119, 6, 0.12);
+      --cat-alimentacion: #4a7c59;
+      --cat-panaderia: #c9944a;
+      --cat-lacteos: #5b8fa8;
+      --cat-carnes: #b85b5b;
+    }
+
+    /* ── Normal Dark ── */
+    [data-theme="normal"][data-mode="dark"] {
+      --bg: #1a2420;
+      --surface: #243028;
+      --primary: #6b9e7a;
+      --text: #e8e4dc;
+      --secondary: #b8c4a8;
+      --border: #3d4d42;
+      --bg-tertiary: #2d3a30;
+      --secondary-color: #7ab5cc;
+      --primary-rgb: 107, 158, 122;
+      --nav-bg: #1e2a22;
+      --shadow: rgba(0,0,0,0.3);
+      --shadow-lg: rgba(0,0,0,0.4);
+      --skeleton-base: #2d3a30;
+      --skeleton-shine: #3d4d42;
+      --frame-bg: #0a0f0c;
+      --status-bar-text: #e8e4dc;
+      --accent: #d4a574;
+      --fab-gradient-from: #6b9e7a;
+      --fab-gradient-to: #5a8a68;
+      --warning: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.15);
+      --cat-alimentacion: #6b9e7a;
+      --cat-panaderia: #d4a574;
+      --cat-lacteos: #7ab5cc;
+      --cat-carnes: #d48a8a;
+    }
+
+    /* ── Professional Light ── */
+    [data-theme="professional"][data-mode="light"] {
+      --bg: #f8fafc;
+      --surface: #fff;
+      --primary: #2563eb;
+      --text: #0f172a;
+      --secondary: #64748b;
+      --accent: #3b82f6;
+      --border: #e2e8f0;
+      --bg-tertiary: #f1f5f9;
+      --secondary-color: #0ea5e9;
+      --primary-rgb: 37, 99, 235;
+      --nav-bg: #1e293b;
+      --shadow: rgba(37, 99, 235, 0.08);
+      --shadow-lg: rgba(37, 99, 235, 0.12);
+      --skeleton-base: #f1f5f9;
+      --skeleton-shine: #f8fafc;
+      --frame-bg: #1e293b;
+      --status-bar-text: #fff;
+      --fab-gradient-from: #2563eb;
+      --fab-gradient-to: #1d4ed8;
+      --warning: #d97706;
+      --warning-bg: rgba(217, 119, 6, 0.08);
+      --cat-alimentacion: #2563eb;
+      --cat-panaderia: #f59e0b;
+      --cat-lacteos: #0ea5e9;
+      --cat-carnes: #ef4444;
+    }
+
+    /* ── Professional Dark ── */
+    [data-theme="professional"][data-mode="dark"] {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --primary: #3b82f6;
+      --text: #f1f5f9;
+      --secondary: #94a3b8;
+      --accent: #60a5fa;
+      --border: #334155;
+      --bg-tertiary: #1e293b;
+      --secondary-color: #38bdf8;
+      --primary-rgb: 59, 130, 246;
+      --nav-bg: #0f172a;
+      --shadow: rgba(0,0,0,0.3);
+      --shadow-lg: rgba(0,0,0,0.4);
+      --skeleton-base: #1e293b;
+      --skeleton-shine: #334155;
+      --frame-bg: #020617;
+      --status-bar-text: #f1f5f9;
+      --fab-gradient-from: #3b82f6;
+      --fab-gradient-to: #2563eb;
+      --warning: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      --cat-alimentacion: #3b82f6;
+      --cat-panaderia: #fbbf24;
+      --cat-lacteos: #38bdf8;
+      --cat-carnes: #f87171;
+    }
+
+    /* ── Mono Light ── */
+    [data-theme="mono"][data-mode="light"] {
+      --bg: #fafafa;
+      --surface: #fff;
+      --primary: #18181b;
+      --text: #18181b;
+      --secondary: #71717a;
+      --accent: #52525b;
+      --border: #e4e4e7;
+      --bg-tertiary: #f4f4f5;
+      --secondary-color: #3f3f46;
+      --primary-rgb: 24, 24, 27;
+      --nav-bg: #27272a;
+      --shadow: rgba(0,0,0,0.06);
+      --shadow-lg: rgba(0,0,0,0.1);
+      --skeleton-base: #f4f4f5;
+      --skeleton-shine: #fafafa;
+      --frame-bg: #18181b;
+      --status-bar-text: #fff;
+      --fab-gradient-from: #18181b;
+      --fab-gradient-to: #27272a;
+      --warning: #52525b;
+      --warning-bg: rgba(82, 82, 91, 0.08);
+      --cat-alimentacion: #18181b;
+      --cat-panaderia: #52525b;
+      --cat-lacteos: #3f3f46;
+      --cat-carnes: #71717a;
+    }
+
+    /* ── Mono Dark ── */
+    [data-theme="mono"][data-mode="dark"] {
+      --bg: #09090b;
+      --surface: #18181b;
+      --primary: #a1a1aa;
+      --text: #fafafa;
+      --secondary: #a1a1aa;
+      --accent: #71717a;
+      --border: #27272a;
+      --bg-tertiary: #18181b;
+      --secondary-color: #71717a;
+      --primary-rgb: 63, 63, 70;
+      --nav-bg: #09090b;
+      --shadow: rgba(0,0,0,0.4);
+      --shadow-lg: rgba(0,0,0,0.5);
+      --skeleton-base: #18181b;
+      --skeleton-shine: #27272a;
+      --frame-bg: #000;
+      --status-bar-text: #fafafa;
+      --fab-gradient-from: #3f3f46;
+      --fab-gradient-to: #27272a;
+      --warning: #a1a1aa;
+      --warning-bg: rgba(161, 161, 170, 0.1);
+      --cat-alimentacion: #a1a1aa;
+      --cat-panaderia: #71717a;
+      --cat-lacteos: #71717a;
+      --cat-carnes: #a1a1aa;
+    }
+
+    /* ══════════════════════════════════════════
+       BASE STYLES
+       ══════════════════════════════════════════ */
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #1a1a2e;
+      font-family: 'Outfit', 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      gap: 40px;
+      color: var(--text);
+    }
+
+    /* ══════════════════════════════════════════
+       CONTROLS (outside phone frame)
+       ══════════════════════════════════════════ */
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+      max-width: 520px;
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .theme-tabs {
+      display: flex;
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 2px;
+    }
+
+    .theme-tab {
+      padding: 8px 20px;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.5);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      font-size: 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .theme-tab:hover {
+      color: rgba(255,255,255,0.8);
+    }
+
+    .theme-tab.active {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+
+    .mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: rgba(255,255,255,0.7);
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .toggle-switch {
+      width: 44px;
+      height: 24px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 12px;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.2s;
+    }
+
+    .toggle-switch.dark {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.2s;
+    }
+
+    .toggle-switch.dark::after {
+      transform: translateX(20px);
+    }
+
+    .variant-tabs {
+      display: flex;
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 2px;
+    }
+
+    .variant-tab {
+      padding: 6px 16px;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.5);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      font-size: 13px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .variant-tab:hover {
+      color: rgba(255,255,255,0.8);
+    }
+
+    .variant-tab.active {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+
+    /* ══════════════════════════════════════════
+       PHONE FRAME
+       ══════════════════════════════════════════ */
+
+    .phone-frame {
+      width: 360px;
+      height: 860px;
+      background: var(--frame-bg);
+      border-radius: 44px;
+      padding: 12px;
+      position: relative;
+      box-shadow: 0 25px 80px rgba(0,0,0,0.4), inset 0 0 0 2px rgba(255,255,255,0.08);
+    }
+
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      border-radius: 34px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Notch ── */
+    .phone-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 28px;
+      background: var(--frame-bg);
+      border-radius: 0 0 20px 20px;
+      z-index: 100;
+    }
+
+    /* ── Status Bar ── */
+    .status-bar {
+      height: 48px;
+      padding: 14px 24px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      position: relative;
+      z-index: 99;
+      flex-shrink: 0;
+      background: var(--bg);
+    }
+
+    .status-bar-left {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .status-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-bar-right svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* ── Home Indicator ── */
+    .home-indicator {
+      position: absolute;
+      bottom: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: var(--secondary);
+      border-radius: 3px;
+      opacity: 0.3;
+      z-index: 100;
+    }
+
+    /* ══════════════════════════════════════════
+       TOP HEADER
+       ══════════════════════════════════════════ */
+
+    .top-header {
+      height: 56px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      background: var(--bg);
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s;
+      background: transparent;
+      border: none;
+    }
+
+    .back-btn:hover {
+      background: rgba(var(--primary-rgb), 0.08);
+    }
+
+    .back-btn svg {
+      width: 22px;
+      height: 22px;
+      stroke: var(--text);
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .header-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--text);
+    }
+
+    .avatar-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    .avatar-circle:hover {
+      transform: scale(1.05);
+    }
+
+    .avatar-circle span {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    /* ══════════════════════════════════════════
+       SCROLLABLE CONTENT
+       ══════════════════════════════════════════ */
+
+    .scroll-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 12px 100px;
+    }
+
+    .scroll-content::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* ══════════════════════════════════════════
+       SEARCH BAR
+       ══════════════════════════════════════════ */
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 10px 16px;
+      margin-bottom: 12px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .search-bar.focused {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12);
+    }
+
+    .search-bar svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--secondary);
+      stroke-width: 2;
+      fill: none;
+      flex-shrink: 0;
+    }
+
+    .search-bar .search-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--secondary);
+      flex: 1;
+    }
+
+    .search-bar .search-text.has-value {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .search-results-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--primary);
+      margin-bottom: 8px;
+      padding-left: 4px;
+    }
+
+    /* ══════════════════════════════════════════
+       CONTROLS ROW (sort, count, export, dupes)
+       ══════════════════════════════════════════ */
+
+    .items-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 6px;
+    }
+
+    .sort-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+      min-height: 32px;
+    }
+
+    .sort-btn:hover {
+      border-color: var(--primary);
+    }
+
+    .sort-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--secondary);
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .sort-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--secondary);
+      white-space: nowrap;
+    }
+
+    .item-count {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--secondary);
+      white-space: nowrap;
+    }
+
+    .controls-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      position: relative;
+    }
+
+    .icon-btn:hover {
+      border-color: var(--primary);
+    }
+
+    .icon-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--secondary);
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .icon-btn.warning-btn svg {
+      stroke: var(--warning);
+    }
+
+    .dupe-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      background: var(--warning);
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 9px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      line-height: 1;
+    }
+
+    /* ══════════════════════════════════════════
+       TEMPORAL BREADCRUMB
+       ══════════════════════════════════════════ */
+
+    .temporal-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .breadcrumb-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 5px 12px 5px 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .breadcrumb-chip:hover {
+      border-color: var(--primary);
+    }
+
+    .breadcrumb-chip svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--primary);
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .breadcrumb-chip span {
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .breadcrumb-chip .chevron {
+      width: 12px;
+      height: 12px;
+      stroke: var(--secondary);
+      margin-left: 2px;
+    }
+
+    /* ══════════════════════════════════════════
+       AGGREGATED ITEM CARD
+       ══════════════════════════════════════════ */
+
+    .item-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 4px var(--shadow);
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    .item-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px var(--shadow-lg);
+    }
+
+    .item-cat-circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .item-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .item-name {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .item-pills {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    .item-pill {
+      background: var(--bg-tertiary);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--secondary);
+      white-space: nowrap;
+    }
+
+    .item-total {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text);
+      white-space: nowrap;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .item-total-label {
+      font-size: 9px;
+      font-weight: 400;
+      color: var(--secondary);
+      display: block;
+      margin-top: 1px;
+    }
+
+    /* ══════════════════════════════════════════
+       FLAT ITEM CARD (Duplicate mode)
+       ══════════════════════════════════════════ */
+
+    .flat-item-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+      box-shadow: 0 1px 3px var(--shadow);
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .flat-item-card:hover {
+      transform: translateY(-1px);
+    }
+
+    .flat-item-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .flat-item-name {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .flat-item-meta {
+      display: flex;
+      gap: 4px;
+      margin-top: 3px;
+      align-items: center;
+    }
+
+    .flat-item-pill {
+      background: var(--bg-tertiary);
+      border-radius: 999px;
+      padding: 1px 7px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 9px;
+      font-weight: 500;
+      color: var(--secondary);
+      white-space: nowrap;
+    }
+
+    .qty-badge {
+      background: rgba(var(--primary-rgb), 0.12);
+      color: var(--primary);
+      border-radius: 999px;
+      padding: 1px 7px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 9px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .flat-item-price {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--text);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ══════════════════════════════════════════
+       PAGINATION
+       ══════════════════════════════════════════ */
+
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 4px 8px;
+      gap: 8px;
+    }
+
+    .page-info {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--secondary);
+      white-space: nowrap;
+    }
+
+    .page-size-select {
+      display: flex;
+      gap: 2px;
+      background: var(--bg-tertiary);
+      border-radius: 6px;
+      padding: 2px;
+    }
+
+    .page-size-btn {
+      padding: 3px 8px;
+      border: none;
+      background: transparent;
+      font-family: 'Outfit', sans-serif;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--secondary);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .page-size-btn.active {
+      background: var(--surface);
+      color: var(--text);
+      font-weight: 600;
+      box-shadow: 0 1px 2px var(--shadow);
+    }
+
+    .page-nav-btns {
+      display: flex;
+      gap: 4px;
+    }
+
+    .page-nav-btn {
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 6px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      min-height: 28px;
+    }
+
+    .page-nav-btn:hover:not(:disabled) {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .page-nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* ══════════════════════════════════════════
+       BOTTOM NAVIGATION
+       ══════════════════════════════════════════ */
+
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      padding-bottom: 8px;
+      background: var(--nav-bg);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      z-index: 50;
+      border-radius: 0 0 34px 34px;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer;
+      padding: 6px 0 4px;
+      position: relative;
+      width: 56px;
+    }
+
+    .nav-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke-width: 2;
+    }
+
+    .nav-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 10px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .nav-item.active .nav-label {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .nav-item.active .nav-icon svg {
+      stroke: var(--primary);
+    }
+
+    .nav-item:not(.active) .nav-icon svg {
+      stroke: rgba(255,255,255,0.45);
+    }
+
+    /* ── FAB ── */
+    .fab-wrapper {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 56px;
+    }
+
+    .fab {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--fab-gradient-from), var(--fab-gradient-to));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: -36px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      border: none;
+    }
+
+    .fab:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+
+    .fab svg {
+      width: 24px;
+      height: 24px;
+      stroke: #fff;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .fab-badges {
+      position: absolute;
+      top: -30px;
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .fab-badge {
+      border-radius: 999px;
+      padding: 2px 7px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .fab-badge.super {
+      background: #fbbf24;
+      color: #78350f;
+    }
+
+    .fab-badge.normal {
+      background: var(--bg-tertiary);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .fab-spacer-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 10px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.5);
+      margin-top: 4px;
+    }
+
+    /* ══════════════════════════════════════════
+       EMPTY STATE
+       ══════════════════════════════════════════ */
+
+    .empty-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px 32px;
+      gap: 16px;
+    }
+
+    .empty-icon-area {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: rgba(var(--primary-rgb), 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .empty-icon-area svg {
+      width: 48px;
+      height: 48px;
+      stroke: var(--primary);
+      stroke-width: 1.5;
+      fill: none;
+    }
+
+    .empty-heading {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--text);
+    }
+
+    .empty-subtitle {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 400;
+      font-size: 13px;
+      color: var(--secondary);
+      line-height: 1.5;
+      max-width: 240px;
+    }
+
+    /* ══════════════════════════════════════════
+       VARIANT VISIBILITY
+       ══════════════════════════════════════════ */
+
+    .hero-state { display: block; }
+    .duplicate-state { display: none; }
+    .empty-state { display: none; }
+    .search-state { display: none; }
+
+    body.variant-hero .hero-state { display: block; }
+    body.variant-hero .duplicate-state { display: none; }
+    body.variant-hero .empty-state { display: none; }
+    body.variant-hero .search-state { display: none; }
+    body.variant-hero .search-bar-default { display: flex; }
+    body.variant-hero .search-bar-active { display: none; }
+
+    body.variant-duplicate .hero-state { display: none; }
+    body.variant-duplicate .duplicate-state { display: block; }
+    body.variant-duplicate .empty-state { display: none; }
+    body.variant-duplicate .search-state { display: none; }
+    body.variant-duplicate .search-bar-default { display: flex; }
+    body.variant-duplicate .search-bar-active { display: none; }
+    body.variant-duplicate .items-controls { display: flex; }
+
+    body.variant-empty .hero-state { display: none; }
+    body.variant-empty .duplicate-state { display: none; }
+    body.variant-empty .empty-state { display: flex; }
+    body.variant-empty .search-state { display: none; }
+    body.variant-empty .controls-bar { display: none; }
+    body.variant-empty .search-bar-default { display: none; }
+    body.variant-empty .search-bar-active { display: none; }
+    body.variant-empty .temporal-breadcrumb { display: none; }
+    body.variant-empty .items-controls { display: none; }
+    body.variant-empty .pagination { display: none; }
+
+    body.variant-search .hero-state { display: none; }
+    body.variant-search .duplicate-state { display: none; }
+    body.variant-search .empty-state { display: none; }
+    body.variant-search .search-state { display: block; }
+    body.variant-search .search-bar-default { display: none; }
+    body.variant-search .search-bar-active { display: flex; }
+    body.variant-search .pagination { display: none; }
+
+    /* ══════════════════════════════════════════
+       RESPONSIVE
+       ══════════════════════════════════════════ */
+
+    @media (max-width: 460px) {
+      .phone-frame {
+        width: 100%;
+        border-radius: 0;
+        padding: 0;
+      }
+      .phone-screen {
+        border-radius: 0;
+      }
+      .phone-notch { display: none; }
+      .bottom-nav { border-radius: 0; }
+    }
+  </style>
+</head>
+<body data-theme="normal" data-mode="light">
+
+  <!-- ════════════════════════════════════════
+       CONTROLS (outside phone frame)
+       ════════════════════════════════════════ -->
+  <div class="controls">
+    <div class="controls-row">
+      <div class="theme-tabs">
+        <button class="theme-tab active" data-theme-val="normal">Normal</button>
+        <button class="theme-tab" data-theme-val="professional">Professional</button>
+        <button class="theme-tab" data-theme-val="mono">Mono</button>
+      </div>
+      <div class="mode-toggle">
+        <span>Light</span>
+        <div class="toggle-switch" id="modeToggle"></div>
+        <span>Dark</span>
+      </div>
+    </div>
+    <div class="controls-row">
+      <div class="variant-tabs">
+        <button class="variant-tab active" data-variant="hero">Aggregated</button>
+        <button class="variant-tab" data-variant="duplicate">Duplicates</button>
+        <button class="variant-tab" data-variant="empty">Empty</button>
+        <button class="variant-tab" data-variant="search">Search</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       PHONE FRAME
+       ════════════════════════════════════════ -->
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <span class="status-bar-left">9:41</span>
+        <div class="status-bar-right">
+          <!-- Signal -->
+          <svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="11" width="2.5" height="4" rx="0.5"/><rect x="5" y="8" width="2.5" height="7" rx="0.5"/><rect x="9" y="5" width="2.5" height="10" rx="0.5"/><rect x="13" y="1" width="2.5" height="14" rx="0.5"/></svg>
+          <!-- WiFi -->
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 12.5a1.25 1.25 0 110 2.5 1.25 1.25 0 010-2.5zM8 8.5c2.07 0 3.94.84 5.3 2.2l-1.42 1.42A5.48 5.48 0 008 10.5c-1.52 0-2.9.62-3.88 1.62L2.7 10.7A7.47 7.47 0 018 8.5zM8 4.5c3.18 0 6.07 1.29 8.16 3.38l-1.42 1.42A9.47 9.47 0 008 6.5c-2.62 0-5 1.06-6.74 2.8L-.16 7.88A11.47 11.47 0 018 4.5z"/></svg>
+          <!-- Battery -->
+          <svg viewBox="0 0 24 12" fill="currentColor"><rect x="0" y="0" width="20" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="2" width="14" height="8" rx="1"/><rect x="21" y="3.5" width="2.5" height="5" rx="1"/></svg>
+        </div>
+      </div>
+
+      <!-- Top Header -->
+      <div class="top-header">
+        <button class="back-btn" aria-label="Volver">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <span class="header-title">Productos</span>
+        <div class="avatar-circle"><span>MF</span></div>
+      </div>
+
+      <!-- Scrollable Content -->
+      <div class="scroll-content">
+
+        <!-- Search Bar (default / inactive) -->
+        <div class="search-bar search-bar-default">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <span class="search-text">Buscar productos...</span>
+        </div>
+
+        <!-- Search Bar (active / focused) -->
+        <div class="search-bar search-bar-active focused" style="display:none">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <span class="search-text has-value">leche</span>
+        </div>
+
+        <!-- Controls Row -->
+        <div class="items-controls">
+          <button class="sort-btn">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <polyline points="19 12 12 19 5 12"/>
+            </svg>
+            <span class="sort-label">Nombre &#8593;</span>
+          </button>
+          <span class="item-count">47 productos</span>
+          <div class="controls-right">
+            <button class="icon-btn" aria-label="Exportar CSV" title="Exportar CSV">
+              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </button>
+            <button class="icon-btn warning-btn" aria-label="Duplicados" title="5 posibles duplicados">
+              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              <span class="dupe-badge">5</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Temporal Breadcrumb -->
+        <div class="temporal-breadcrumb">
+          <div class="breadcrumb-chip">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <span>Marzo 2026</span>
+            <svg class="chevron" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- ═══ HERO STATE: Aggregated Item Cards ═══ -->
+        <div class="hero-state">
+
+          <!-- Item 1: Leche Entera -->
+          <div class="item-card">
+            <div class="item-cat-circle" style="background: rgba(var(--primary-rgb), 0.12)">
+              &#x1F95B;
+            </div>
+            <div class="item-body">
+              <div class="item-name">Leche Entera 1L</div>
+              <div class="item-pills">
+                <span class="item-pill">Lider</span>
+                <span class="item-pill">12 compras</span>
+                <span class="item-pill">$2.390 avg</span>
+              </div>
+            </div>
+            <div class="item-total">
+              $28.680
+              <span class="item-total-label">total</span>
+            </div>
+          </div>
+
+          <!-- Item 2: Pan Molde Integral -->
+          <div class="item-card">
+            <div class="item-cat-circle" style="background: var(--warning-bg)">
+              &#x1F35E;
+            </div>
+            <div class="item-body">
+              <div class="item-name">Pan Molde Integral</div>
+              <div class="item-pills">
+                <span class="item-pill">Lider</span>
+                <span class="item-pill">8 compras</span>
+                <span class="item-pill">$1.890 avg</span>
+              </div>
+            </div>
+            <div class="item-total">
+              $15.120
+              <span class="item-total-label">total</span>
+            </div>
+          </div>
+
+          <!-- Item 3: Queso Gouda -->
+          <div class="item-card">
+            <div class="item-cat-circle" style="background: rgba(91, 143, 168, 0.12)">
+              &#x1F9C0;
+            </div>
+            <div class="item-body">
+              <div class="item-name">Queso Gouda Laminado</div>
+              <div class="item-pills">
+                <span class="item-pill">Jumbo</span>
+                <span class="item-pill">5 compras</span>
+                <span class="item-pill">$3.490 avg</span>
+              </div>
+            </div>
+            <div class="item-total">
+              $17.450
+              <span class="item-total-label">total</span>
+            </div>
+          </div>
+
+          <!-- Item 4: Pechuga de Pollo -->
+          <div class="item-card">
+            <div class="item-cat-circle" style="background: rgba(184, 91, 91, 0.12)">
+              &#x1F357;
+            </div>
+            <div class="item-body">
+              <div class="item-name">Pechuga de Pollo</div>
+              <div class="item-pills">
+                <span class="item-pill">Santa Isabel</span>
+                <span class="item-pill">4 compras</span>
+                <span class="item-pill">$5.990 avg</span>
+              </div>
+            </div>
+            <div class="item-total">
+              $23.960
+              <span class="item-total-label">total</span>
+            </div>
+          </div>
+
+        </div><!-- /hero-state -->
+
+        <!-- ═══ DUPLICATE STATE: Flat individual item list ═══ -->
+        <div class="duplicate-state">
+
+          <div class="flat-item-card">
+            <div class="item-cat-circle" style="background: rgba(var(--primary-rgb), 0.12); width:32px; height:32px; font-size:14px">
+              &#x1F95B;
+            </div>
+            <div class="flat-item-body">
+              <div class="flat-item-name">Leche Entera 1L</div>
+              <div class="flat-item-meta">
+                <span class="flat-item-pill">Lider</span>
+                <span class="flat-item-pill">20 mar</span>
+              </div>
+            </div>
+            <span class="flat-item-price">$2.390</span>
+          </div>
+
+          <div class="flat-item-card">
+            <div class="item-cat-circle" style="background: rgba(var(--primary-rgb), 0.12); width:32px; height:32px; font-size:14px">
+              &#x1F95B;
+            </div>
+            <div class="flat-item-body">
+              <div class="flat-item-name">Leche Entera 1L</div>
+              <div class="flat-item-meta">
+                <span class="flat-item-pill">Lider</span>
+                <span class="flat-item-pill">18 mar</span>
+                <span class="qty-badge">x2</span>
+              </div>
+            </div>
+            <span class="flat-item-price">$4.780</span>
+          </div>
+
+          <div class="flat-item-card">
+            <div class="item-cat-circle" style="background: var(--warning-bg); width:32px; height:32px; font-size:14px">
+              &#x1F35E;
+            </div>
+            <div class="flat-item-body">
+              <div class="flat-item-name">Pan Molde Integral</div>
+              <div class="flat-item-meta">
+                <span class="flat-item-pill">Lider</span>
+                <span class="flat-item-pill">19 mar</span>
+              </div>
+            </div>
+            <span class="flat-item-price">$1.890</span>
+          </div>
+
+          <div class="flat-item-card">
+            <div class="item-cat-circle" style="background: var(--warning-bg); width:32px; height:32px; font-size:14px">
+              &#x1F35E;
+            </div>
+            <div class="flat-item-body">
+              <div class="flat-item-name">Pan Molde Integral</div>
+              <div class="flat-item-meta">
+                <span class="flat-item-pill">Jumbo</span>
+                <span class="flat-item-pill">17 mar</span>
+              </div>
+            </div>
+            <span class="flat-item-price">$1.990</span>
+          </div>
+
+          <div class="flat-item-card">
+            <div class="item-cat-circle" style="background: rgba(91, 143, 168, 0.12); width:32px; height:32px; font-size:14px">
+              &#x1F9C0;
+            </div>
+            <div class="flat-item-body">
+              <div class="flat-item-name">Queso Gouda Laminado</div>
+              <div class="flat-item-meta">
+                <span class="flat-item-pill">Jumbo</span>
+                <span class="flat-item-pill">16 mar</span>
+              </div>
+            </div>
+            <span class="flat-item-price">$3.490</span>
+          </div>
+
+          <div class="flat-item-card">
+            <div class="item-cat-circle" style="background: rgba(184, 91, 91, 0.12); width:32px; height:32px; font-size:14px">
+              &#x1F357;
+            </div>
+            <div class="flat-item-body">
+              <div class="flat-item-name">Pechuga de Pollo</div>
+              <div class="flat-item-meta">
+                <span class="flat-item-pill">Santa Isabel</span>
+                <span class="flat-item-pill">15 mar</span>
+                <span class="qty-badge">x3</span>
+              </div>
+            </div>
+            <span class="flat-item-price">$17.970</span>
+          </div>
+
+        </div><!-- /duplicate-state -->
+
+        <!-- ═══ EMPTY STATE ═══ -->
+        <div class="empty-state">
+          <div class="empty-icon-area">
+            <!-- Lightbulb icon -->
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="9" y1="18" x2="15" y2="18"/>
+              <line x1="10" y1="22" x2="14" y2="22"/>
+              <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/>
+            </svg>
+          </div>
+          <h2 class="empty-heading">Agrega gastos para ver tus productos</h2>
+          <p class="empty-subtitle">Escanea boletas y tus productos apareceran aqui</p>
+        </div>
+
+        <!-- ═══ SEARCH STATE: Filtered results ═══ -->
+        <div class="search-state">
+
+          <div class="search-results-label">2 resultados para "leche"</div>
+
+          <div class="item-card">
+            <div class="item-cat-circle" style="background: rgba(var(--primary-rgb), 0.12)">
+              &#x1F95B;
+            </div>
+            <div class="item-body">
+              <div class="item-name">Leche Entera 1L</div>
+              <div class="item-pills">
+                <span class="item-pill">Lider</span>
+                <span class="item-pill">12 compras</span>
+                <span class="item-pill">$2.390 avg</span>
+              </div>
+            </div>
+            <div class="item-total">
+              $28.680
+              <span class="item-total-label">total</span>
+            </div>
+          </div>
+
+          <div class="item-card">
+            <div class="item-cat-circle" style="background: rgba(var(--primary-rgb), 0.12)">
+              &#x1F95B;
+            </div>
+            <div class="item-body">
+              <div class="item-name">Leche Descremada 1L</div>
+              <div class="item-pills">
+                <span class="item-pill">Jumbo</span>
+                <span class="item-pill">6 compras</span>
+                <span class="item-pill">$2.190 avg</span>
+              </div>
+            </div>
+            <div class="item-total">
+              $13.140
+              <span class="item-total-label">total</span>
+            </div>
+          </div>
+
+        </div><!-- /search-state -->
+
+        <!-- Pagination -->
+        <div class="pagination">
+          <span class="page-info">Pagina 1 de 3</span>
+          <div class="page-size-select">
+            <button class="page-size-btn active">10</button>
+            <button class="page-size-btn">25</button>
+            <button class="page-size-btn">50</button>
+          </div>
+          <div class="page-nav-btns">
+            <button class="page-nav-btn" disabled>Anterior</button>
+            <button class="page-nav-btn">Siguiente</button>
+          </div>
+        </div>
+
+      </div><!-- /scroll-content -->
+
+      <!-- Bottom Navigation (no tab active) -->
+      <div class="bottom-nav">
+        <!-- Home -->
+        <div class="nav-item">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
+          <span class="nav-label">Inicio</span>
+        </div>
+        <!-- Trends -->
+        <div class="nav-item">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+          </div>
+          <span class="nav-label">Tendencias</span>
+        </div>
+        <!-- FAB (center) -->
+        <div class="fab-wrapper">
+          <div class="fab-badges">
+            <span class="fab-badge super">3</span>
+            <span class="fab-badge normal">12</span>
+          </div>
+          <button class="fab">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </button>
+          <span class="fab-spacer-label" style="visibility:hidden">Escanear</span>
+        </div>
+        <!-- Reports -->
+        <div class="nav-item">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+          </div>
+          <span class="nav-label">Reportes</span>
+        </div>
+        <!-- Alerts -->
+        <div class="nav-item">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </div>
+          <span class="nav-label">Alertas</span>
+        </div>
+      </div>
+
+      <!-- Home Indicator -->
+      <div class="home-indicator"></div>
+
+    </div><!-- /phone-screen -->
+  </div><!-- /phone-frame -->
+
+  <!-- ════════════════════════════════════════
+       JAVASCRIPT — Theme / Mode / Variant
+       ════════════════════════════════════════ -->
+  <script>
+    (function() {
+      const body = document.body;
+      const themeTabs = document.querySelectorAll('.theme-tab');
+      const modeToggle = document.getElementById('modeToggle');
+      const variantTabs = document.querySelectorAll('.variant-tab');
+
+      let currentTheme = 'normal';
+      let currentMode = 'light';
+
+      function applyTheme() {
+        body.setAttribute('data-theme', currentTheme);
+        body.setAttribute('data-mode', currentMode);
+      }
+
+      // Theme tabs
+      themeTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          themeTabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          currentTheme = tab.dataset.themeVal;
+          applyTheme();
+        });
+      });
+
+      // Mode toggle
+      modeToggle.addEventListener('click', () => {
+        currentMode = currentMode === 'light' ? 'dark' : 'light';
+        modeToggle.classList.toggle('dark', currentMode === 'dark');
+        applyTheme();
+      });
+
+      // Variant tabs
+      variantTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          variantTabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          body.classList.remove('variant-hero', 'variant-duplicate', 'variant-empty', 'variant-search');
+          const variant = tab.dataset.variant;
+          body.classList.add('variant-' + variant);
+        });
+      });
+
+      // Initial state
+      body.classList.add('variant-hero');
+      applyTheme();
+    })();
+  </script>
+</body>
+</html>
