@@ -37,14 +37,14 @@ else
 fi
 
 # Test 2: Contains app root div
-if echo "${BODY}" | grep -q 'id="root"'; then
+if printf '%s' "${BODY}" | grep -q 'id="root"'; then
     pass "App root div found"
 else
     fail "App root div not found in response"
 fi
 
 # Test 3: Contains script tags (Vite build output)
-if echo "${BODY}" | grep -q '<script'; then
+if printf '%s' "${BODY}" | grep -q '<script'; then
     pass "Script tags present"
 else
     fail "No script tags found — build may have failed"
