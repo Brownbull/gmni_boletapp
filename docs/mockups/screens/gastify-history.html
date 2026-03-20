@@ -1,0 +1,1922 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>History — Gastify (Production Design System)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Baloo+2:wght@700&display=swap" rel="stylesheet">
+  <style>
+    /* ══════════════════════════════════════════
+       GASTIFY — PRODUCTION DESIGN SYSTEM
+       Themes: Normal / Professional / Mono
+       Modes: Light / Dark
+       Screen: History (Transacciones)
+       ══════════════════════════════════════════ */
+
+    /* ── Normal Light (default) ── */
+    :root {
+      --bg: #f5f0e8;
+      --surface: #fff;
+      --primary: #4a7c59;
+      --text: #2d3a4a;
+      --secondary: #4a5568;
+      --accent: #e8a87c;
+      --border: #e3bba1;
+      --bg-tertiary: #f1dbb6;
+      --secondary-color: #5b8fa8;
+      --primary-rgb: 74, 124, 89;
+      --nav-bg: #4a5568;
+      --shadow: rgba(74, 124, 89, 0.12);
+      --shadow-lg: rgba(74, 124, 89, 0.18);
+      --skeleton-base: #f1dbb6;
+      --skeleton-shine: #f5f0e8;
+      --progress-track: #e3bba1;
+      --indicator-inactive: #e3bba1;
+      --treemap-text: #fff;
+      --frame-bg: #1a1a2e;
+      --status-bar-text: #fff;
+      --fab-gradient-from: #4a7c59;
+      --fab-gradient-to: #3d6b4b;
+      --recent-indicator: #d4a574;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --cat-alimentacion: #4a7c59;
+      --cat-restaurantes: #5b8fa8;
+      --cat-transporte: #c9944a;
+      --cat-salud: #5b7fb8;
+      --cat-otros: #8b7ea8;
+    }
+
+    /* ── Normal Dark ── */
+    [data-theme="normal"][data-mode="dark"] {
+      --bg: #1a2420;
+      --surface: #243028;
+      --primary: #6b9e7a;
+      --text: #e8e4dc;
+      --secondary: #b8c4a8;
+      --border: #3d4d42;
+      --bg-tertiary: #2d3a30;
+      --secondary-color: #7ab5cc;
+      --primary-rgb: 107, 158, 122;
+      --nav-bg: #1e2a22;
+      --shadow: rgba(0,0,0,0.3);
+      --shadow-lg: rgba(0,0,0,0.4);
+      --skeleton-base: #2d3a30;
+      --skeleton-shine: #3d4d42;
+      --progress-track: #3d4d42;
+      --indicator-inactive: #3d4d42;
+      --frame-bg: #0a0f0c;
+      --status-bar-text: #e8e4dc;
+      --accent: #d4a574;
+      --fab-gradient-from: #6b9e7a;
+      --fab-gradient-to: #5a8a68;
+      --recent-indicator: #d4a574;
+      --warning: #fbbf24;
+      --error: #f87171;
+      --cat-alimentacion: #6b9e7a;
+      --cat-restaurantes: #7ab5cc;
+      --cat-transporte: #d4a574;
+      --cat-salud: #7a9fd4;
+      --cat-otros: #a89bcf;
+    }
+
+    /* ── Professional Light ── */
+    [data-theme="professional"][data-mode="light"] {
+      --bg: #f8fafc;
+      --surface: #fff;
+      --primary: #2563eb;
+      --text: #0f172a;
+      --secondary: #64748b;
+      --accent: #3b82f6;
+      --border: #e2e8f0;
+      --bg-tertiary: #f1f5f9;
+      --secondary-color: #0ea5e9;
+      --primary-rgb: 37, 99, 235;
+      --nav-bg: #1e293b;
+      --shadow: rgba(37, 99, 235, 0.08);
+      --shadow-lg: rgba(37, 99, 235, 0.12);
+      --skeleton-base: #f1f5f9;
+      --skeleton-shine: #f8fafc;
+      --progress-track: #e2e8f0;
+      --indicator-inactive: #e2e8f0;
+      --frame-bg: #1e293b;
+      --status-bar-text: #fff;
+      --fab-gradient-from: #2563eb;
+      --fab-gradient-to: #1d4ed8;
+      --recent-indicator: #3b82f6;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --cat-alimentacion: #2563eb;
+      --cat-restaurantes: #0ea5e9;
+      --cat-transporte: #f59e0b;
+      --cat-salud: #6366f1;
+      --cat-otros: #8b5cf6;
+    }
+
+    /* ── Professional Dark ── */
+    [data-theme="professional"][data-mode="dark"] {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --primary: #3b82f6;
+      --text: #f1f5f9;
+      --secondary: #94a3b8;
+      --accent: #60a5fa;
+      --border: #334155;
+      --bg-tertiary: #1e293b;
+      --secondary-color: #38bdf8;
+      --primary-rgb: 59, 130, 246;
+      --nav-bg: #0f172a;
+      --shadow: rgba(0,0,0,0.3);
+      --shadow-lg: rgba(0,0,0,0.4);
+      --skeleton-base: #1e293b;
+      --skeleton-shine: #334155;
+      --progress-track: #334155;
+      --indicator-inactive: #334155;
+      --frame-bg: #020617;
+      --status-bar-text: #f1f5f9;
+      --fab-gradient-from: #3b82f6;
+      --fab-gradient-to: #2563eb;
+      --recent-indicator: #60a5fa;
+      --warning: #fbbf24;
+      --error: #f87171;
+      --cat-alimentacion: #3b82f6;
+      --cat-restaurantes: #38bdf8;
+      --cat-transporte: #fbbf24;
+      --cat-salud: #818cf8;
+      --cat-otros: #a78bfa;
+    }
+
+    /* ── Mono Light ── */
+    [data-theme="mono"][data-mode="light"] {
+      --bg: #fafafa;
+      --surface: #fff;
+      --primary: #18181b;
+      --text: #18181b;
+      --secondary: #71717a;
+      --accent: #52525b;
+      --border: #e4e4e7;
+      --bg-tertiary: #f4f4f5;
+      --secondary-color: #3f3f46;
+      --primary-rgb: 24, 24, 27;
+      --nav-bg: #27272a;
+      --shadow: rgba(0,0,0,0.06);
+      --shadow-lg: rgba(0,0,0,0.1);
+      --skeleton-base: #f4f4f5;
+      --skeleton-shine: #fafafa;
+      --progress-track: #e4e4e7;
+      --indicator-inactive: #e4e4e7;
+      --frame-bg: #18181b;
+      --status-bar-text: #fff;
+      --fab-gradient-from: #18181b;
+      --fab-gradient-to: #27272a;
+      --recent-indicator: #52525b;
+      --warning: #a1a1aa;
+      --error: #71717a;
+      --cat-alimentacion: #18181b;
+      --cat-restaurantes: #3f3f46;
+      --cat-transporte: #52525b;
+      --cat-salud: #71717a;
+      --cat-otros: #a1a1aa;
+    }
+
+    /* ── Mono Dark ── */
+    [data-theme="mono"][data-mode="dark"] {
+      --bg: #09090b;
+      --surface: #18181b;
+      --primary: #a1a1aa;
+      --text: #fafafa;
+      --secondary: #a1a1aa;
+      --accent: #71717a;
+      --border: #27272a;
+      --bg-tertiary: #18181b;
+      --secondary-color: #71717a;
+      --primary-rgb: 63, 63, 70;
+      --nav-bg: #09090b;
+      --shadow: rgba(0,0,0,0.4);
+      --shadow-lg: rgba(0,0,0,0.5);
+      --skeleton-base: #18181b;
+      --skeleton-shine: #27272a;
+      --progress-track: #27272a;
+      --indicator-inactive: #27272a;
+      --frame-bg: #000;
+      --status-bar-text: #fafafa;
+      --fab-gradient-from: #3f3f46;
+      --fab-gradient-to: #27272a;
+      --recent-indicator: #71717a;
+      --warning: #71717a;
+      --error: #a1a1aa;
+      --cat-alimentacion: #a1a1aa;
+      --cat-restaurantes: #71717a;
+      --cat-transporte: #52525b;
+      --cat-salud: #a1a1aa;
+      --cat-otros: #71717a;
+    }
+
+    /* ══════════════════════════════════════════
+       BASE STYLES
+       ══════════════════════════════════════════ */
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #1a1a2e;
+      font-family: 'Outfit', 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      gap: 40px;
+      color: var(--text);
+    }
+
+    /* ══════════════════════════════════════════
+       CONTROLS (outside phone frame)
+       ══════════════════════════════════════════ */
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+      max-width: 520px;
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .theme-tabs {
+      display: flex;
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 2px;
+    }
+
+    .theme-tab {
+      padding: 8px 20px;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.5);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      font-size: 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .theme-tab:hover {
+      color: rgba(255,255,255,0.8);
+    }
+
+    .theme-tab.active {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+
+    .mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: rgba(255,255,255,0.7);
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .toggle-switch {
+      width: 44px;
+      height: 24px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 12px;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.2s;
+    }
+
+    .toggle-switch.dark {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.2s;
+    }
+
+    .toggle-switch.dark::after {
+      transform: translateX(20px);
+    }
+
+    .variant-tabs {
+      display: flex;
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 2px;
+    }
+
+    .variant-tab {
+      padding: 6px 16px;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.5);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      font-size: 13px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .variant-tab:hover {
+      color: rgba(255,255,255,0.8);
+    }
+
+    .variant-tab.active {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+
+    /* ══════════════════════════════════════════
+       PHONE FRAME
+       ══════════════════════════════════════════ */
+
+    .phone-frame {
+      width: 360px;
+      height: 860px;
+      background: var(--frame-bg);
+      border-radius: 44px;
+      padding: 12px;
+      position: relative;
+      box-shadow: 0 25px 80px rgba(0,0,0,0.4), inset 0 0 0 2px rgba(255,255,255,0.08);
+    }
+
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      border-radius: 34px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Notch ── */
+    .phone-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 28px;
+      background: var(--frame-bg);
+      border-radius: 0 0 20px 20px;
+      z-index: 100;
+    }
+
+    /* ── Status Bar ── */
+    .status-bar {
+      height: 48px;
+      padding: 14px 24px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      position: relative;
+      z-index: 99;
+      flex-shrink: 0;
+      background: var(--bg);
+    }
+
+    .status-bar-left {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .status-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-bar-right svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* ── Home Indicator ── */
+    .home-indicator {
+      position: absolute;
+      bottom: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: var(--secondary);
+      border-radius: 3px;
+      opacity: 0.3;
+      z-index: 100;
+    }
+
+    /* ══════════════════════════════════════════
+       TOP HEADER
+       ══════════════════════════════════════════ */
+
+    .top-header {
+      height: 56px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      background: var(--bg);
+    }
+
+    .header-left {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: background 0.15s;
+    }
+
+    .header-left:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .header-left svg {
+      width: 28px;
+      height: 28px;
+      stroke: var(--text);
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .header-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 20px;
+      color: var(--text);
+    }
+
+    .avatar-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    .avatar-circle:hover {
+      transform: scale(1.05);
+    }
+
+    .avatar-circle span {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    /* ══════════════════════════════════════════
+       SCROLLABLE CONTENT
+       ══════════════════════════════════════════ */
+
+    .scroll-content {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 80px;
+    }
+
+    .scroll-content::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* ══════════════════════════════════════════
+       SEARCH BAR
+       ══════════════════════════════════════════ */
+
+    .search-bar {
+      margin: 0 16px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .search-bar svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--secondary);
+      stroke-width: 2;
+      fill: none;
+      flex-shrink: 0;
+    }
+
+    .search-bar input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--text);
+      outline: none;
+    }
+
+    .search-bar input::placeholder {
+      color: var(--secondary);
+      opacity: 0.7;
+    }
+
+    /* ══════════════════════════════════════════
+       CONTROLS ROW (Sort, Export, Duplicate)
+       ══════════════════════════════════════════ */
+
+    .controls-row-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      margin-bottom: 10px;
+    }
+
+    .controls-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .icon-btn:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--primary);
+    }
+
+    .icon-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--secondary);
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .icon-btn:hover svg {
+      stroke: var(--primary);
+    }
+
+    .dup-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .dup-toggle.active {
+      border-color: var(--warning);
+      background: rgba(245, 158, 11, 0.08);
+    }
+
+    .dup-toggle svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--secondary);
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .dup-toggle.active svg {
+      stroke: var(--warning);
+    }
+
+    .dup-badge {
+      background: var(--warning);
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 1px 7px;
+      line-height: 1.4;
+    }
+
+    /* ══════════════════════════════════════════
+       FILTER CHIPS ROW
+       ══════════════════════════════════════════ */
+
+    .filter-chips-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px;
+      margin-bottom: 14px;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+    }
+
+    .filter-chips-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .filter-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--primary);
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      flex-shrink: 0;
+    }
+
+    .filter-chip:hover {
+      opacity: 0.9;
+    }
+
+    .filter-chip .chip-x {
+      width: 14px;
+      height: 14px;
+      stroke: #fff;
+      stroke-width: 2.5;
+      fill: none;
+      opacity: 0.8;
+    }
+
+    .clear-filters {
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--primary);
+      cursor: pointer;
+      white-space: nowrap;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .clear-filters:hover {
+      text-decoration: underline;
+    }
+
+    /* ══════════════════════════════════════════
+       DATE GROUP HEADERS
+       ══════════════════════════════════════════ */
+
+    .date-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      background: var(--bg-tertiary);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .date-header-label {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .date-header-total {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--secondary);
+    }
+
+    /* ══════════════════════════════════════════
+       TRANSACTION CARD
+       ══════════════════════════════════════════ */
+
+    .txn-card {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .txn-card:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .txn-card:last-child {
+      border-bottom: none;
+    }
+
+    /* ── Selection checkbox ── */
+    .txn-checkbox {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+
+    .txn-checkbox.checked {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .txn-checkbox.checked svg {
+      display: block;
+    }
+
+    .txn-checkbox svg {
+      width: 14px;
+      height: 14px;
+      stroke: #fff;
+      stroke-width: 3;
+      fill: none;
+      display: none;
+    }
+
+    /* ── Thumbnail ── */
+    .txn-thumb {
+      width: 40px;
+      height: 46px;
+      border-radius: 8px;
+      background: var(--bg-tertiary);
+      position: relative;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .txn-thumb-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      align-items: center;
+    }
+
+    .txn-thumb-line {
+      height: 2px;
+      background: var(--border);
+      border-radius: 1px;
+    }
+
+    .txn-thumb-line:nth-child(1) { width: 22px; }
+    .txn-thumb-line:nth-child(2) { width: 18px; }
+    .txn-thumb-line:nth-child(3) { width: 24px; }
+    .txn-thumb-line:nth-child(4) { width: 16px; }
+
+    .txn-cat-badge {
+      position: absolute;
+      bottom: -4px;
+      right: -4px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      border: 2px solid var(--surface);
+    }
+
+    /* ── Body ── */
+    .txn-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .txn-merchant {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .txn-pills {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    .txn-pill {
+      background: var(--bg-tertiary);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--secondary);
+      white-space: nowrap;
+    }
+
+    /* ── Amount ── */
+    .txn-amount {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text);
+      white-space: nowrap;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    /* ══════════════════════════════════════════
+       PAGINATION
+       ══════════════════════════════════════════ */
+
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 16px 16px 8px;
+    }
+
+    .pagination-info {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--secondary);
+    }
+
+    .pagination-btns {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .pagination-btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .pagination-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .pagination-btn.disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .pagination-sep {
+      color: var(--border);
+      font-size: 14px;
+    }
+
+    /* ══════════════════════════════════════════
+       BOTTOM NAVIGATION
+       ══════════════════════════════════════════ */
+
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      padding-bottom: 8px;
+      background: var(--nav-bg);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      z-index: 50;
+      border-radius: 0 0 34px 34px;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer;
+      padding: 6px 0 4px;
+      position: relative;
+      width: 56px;
+    }
+
+    .nav-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .nav-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke-width: 2;
+    }
+
+    .nav-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 10px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .nav-item.active .nav-label {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .nav-item.active .nav-icon svg {
+      stroke: var(--primary);
+    }
+
+    .nav-item:not(.active) .nav-icon svg {
+      stroke: rgba(255,255,255,0.45);
+    }
+
+    /* ── FAB ── */
+    .fab-wrapper {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 56px;
+    }
+
+    .fab {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--fab-gradient-from), var(--fab-gradient-to));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: -36px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      border: none;
+    }
+
+    .fab:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+
+    .fab svg {
+      width: 24px;
+      height: 24px;
+      stroke: #fff;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .fab-badges {
+      position: absolute;
+      top: -30px;
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+      padding: 0 0;
+    }
+
+    .fab-badge {
+      border-radius: 999px;
+      padding: 2px 7px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .fab-badge.super {
+      background: #fbbf24;
+      color: #78350f;
+    }
+
+    .fab-badge.normal {
+      background: var(--bg-tertiary);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .fab-spacer-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 10px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.5);
+      margin-top: 4px;
+    }
+
+    /* ── Alert badge ── */
+    .alert-dot {
+      position: absolute;
+      top: 2px;
+      right: 12px;
+      width: 8px;
+      height: 8px;
+      background: #ef4444;
+      border-radius: 50%;
+      border: 1.5px solid var(--nav-bg);
+    }
+
+    /* ══════════════════════════════════════════
+       SELECTION BAR (bottom overlay)
+       ══════════════════════════════════════════ */
+
+    .selection-bar {
+      display: none;
+      position: absolute;
+      bottom: 72px;
+      left: 8px;
+      right: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 16px;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 -4px 20px var(--shadow-lg);
+      z-index: 55;
+    }
+
+    .selection-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .selection-count {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .selection-all {
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--primary);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .selection-all:hover {
+      text-decoration: underline;
+    }
+
+    .selection-delete {
+      padding: 8px 18px;
+      border-radius: 10px;
+      border: none;
+      background: var(--error);
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .selection-delete:hover {
+      opacity: 0.9;
+    }
+
+    /* ══════════════════════════════════════════
+       EMPTY STATE (no transactions)
+       ══════════════════════════════════════════ */
+
+    .empty-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px 32px;
+      gap: 16px;
+      flex: 1;
+    }
+
+    .empty-icon-area {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: rgba(var(--primary-rgb), 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .empty-icon-area svg {
+      width: 56px;
+      height: 56px;
+      stroke: var(--primary);
+      stroke-width: 1.5;
+      fill: none;
+    }
+
+    .empty-heading {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 20px;
+      color: var(--text);
+    }
+
+    .empty-subtitle {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 400;
+      font-size: 14px;
+      color: var(--secondary);
+      line-height: 1.5;
+      max-width: 260px;
+    }
+
+    .empty-cta {
+      margin-top: 12px;
+      padding: 12px 28px;
+      border-radius: 12px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .empty-cta:hover {
+      opacity: 0.9;
+    }
+
+    .empty-link {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--primary);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .empty-link:hover {
+      text-decoration: underline;
+    }
+
+    /* ══════════════════════════════════════════
+       VARIANT VISIBILITY
+       ══════════════════════════════════════════ */
+
+    /* Hero = default (populated, filters active) */
+    .hero-content { display: block; }
+    .empty-no-txn { display: none; }
+    .empty-filtered { display: none; }
+    .selection-mode-content { display: none; }
+
+    /* Empty: no transactions */
+    body.variant-empty .hero-content { display: none; }
+    body.variant-empty .empty-no-txn { display: flex; }
+    body.variant-empty .filter-chips-row,
+    body.variant-empty .controls-row-inner { display: none; }
+
+    /* Empty: filtered */
+    body.variant-filtered .hero-content { display: none; }
+    body.variant-filtered .empty-filtered { display: flex; }
+
+    /* Selection mode */
+    body.variant-selection .hero-content { display: none; }
+    body.variant-selection .selection-mode-content { display: block; }
+    body.variant-selection .selection-bar { display: flex; }
+    body.variant-selection .txn-checkbox { display: flex; }
+    body.variant-selection .filter-chips-row { display: none; }
+    body.variant-selection .controls-row-inner { display: none; }
+
+  </style>
+</head>
+<body data-theme="normal" data-mode="light">
+
+  <!-- ════════════════════════════════════════
+       CONTROLS (outside phone frame)
+       ════════════════════════════════════════ -->
+  <div class="controls">
+    <div class="controls-row">
+      <div class="theme-tabs">
+        <button class="theme-tab active" data-theme-val="normal">Normal</button>
+        <button class="theme-tab" data-theme-val="professional">Professional</button>
+        <button class="theme-tab" data-theme-val="mono">Mono</button>
+      </div>
+      <div class="mode-toggle">
+        <span>Light</span>
+        <div class="toggle-switch" id="modeToggle"></div>
+        <span>Dark</span>
+      </div>
+    </div>
+    <div class="controls-row">
+      <div class="variant-tabs">
+        <button class="variant-tab active" data-variant="hero">Hero</button>
+        <button class="variant-tab" data-variant="empty">Empty</button>
+        <button class="variant-tab" data-variant="filtered">Filtered</button>
+        <button class="variant-tab" data-variant="selection">Selection</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       PHONE FRAME
+       ════════════════════════════════════════ -->
+  <div class="phone-frame">
+    <div class="phone-screen">
+
+      <!-- Notch -->
+      <div class="phone-notch"></div>
+
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <span class="status-bar-left">9:41</span>
+        <div class="status-bar-right">
+          <!-- Signal -->
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <rect x="1" y="14" width="4" height="8" rx="1"/>
+            <rect x="7" y="10" width="4" height="12" rx="1"/>
+            <rect x="13" y="6" width="4" height="16" rx="1"/>
+            <rect x="19" y="2" width="4" height="20" rx="1"/>
+          </svg>
+          <!-- Wifi -->
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <path d="M12 18l-1.4-1.4a2 2 0 0 1 2.8 0L12 18zM8.5 14.5l-1.4-1.4a8 8 0 0 1 9.8 0l-1.4 1.4a6 6 0 0 0-7 0zM5 11l-1.4-1.4a14 14 0 0 1 16.8 0L19 11a12 12 0 0 0-14 0z"/>
+          </svg>
+          <!-- Battery -->
+          <svg viewBox="0 0 28 14" fill="currentColor" stroke="none">
+            <rect x="0" y="1" width="23" height="12" rx="2.5" stroke="currentColor" stroke-width="1.2" fill="none"/>
+            <rect x="24" y="4" width="2.5" height="5" rx="1"/>
+            <rect x="2" y="3" width="17" height="8" rx="1"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Top Header -->
+      <div class="top-header">
+        <div class="header-left">
+          <!-- ChevronLeft 28px -->
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </div>
+        <span class="header-title">Transacciones</span>
+        <div class="avatar-circle">
+          <span>GA</span>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════
+           HERO VARIANT (populated + filters)
+           ═══════════════════════════════════ -->
+      <div class="scroll-content hero-content">
+
+        <!-- Search Bar -->
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" placeholder="Buscar transacciones..." disabled>
+        </div>
+
+        <!-- Controls Row -->
+        <div class="controls-row-inner">
+          <div class="controls-left">
+            <!-- Sort -->
+            <button class="icon-btn" title="Ordenar">
+              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <polyline points="19 12 12 19 5 12"/>
+              </svg>
+            </button>
+            <!-- Export -->
+            <button class="icon-btn" title="Exportar CSV">
+              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </button>
+          </div>
+          <!-- Duplicate filter toggle -->
+          <div class="dup-toggle active">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span class="dup-badge">3</span>
+          </div>
+        </div>
+
+        <!-- Filter Chips -->
+        <div class="filter-chips-row">
+          <div class="filter-chip">
+            Marzo 2026
+            <svg class="chip-x" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </div>
+          <div class="filter-chip">
+            Alimentacion
+            <svg class="chip-x" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </div>
+          <a class="clear-filters">Limpiar todo</a>
+        </div>
+
+        <!-- ═══ DATE GROUP: Hoy ═══ -->
+        <div class="date-header">
+          <span class="date-header-label">Hoy</span>
+          <span class="date-header-total">$58.120</span>
+        </div>
+
+        <!-- Transaction 1: Supermercado Lider -->
+        <div class="txn-card">
+          <div class="txn-thumb">
+            <div class="txn-thumb-lines">
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+            </div>
+            <div class="txn-cat-badge" style="background:var(--cat-alimentacion)">&#x1F6D2;</div>
+          </div>
+          <div class="txn-body">
+            <div class="txn-merchant" style="color:var(--cat-alimentacion)">Supermercado Lider</div>
+            <div class="txn-pills">
+              <span class="txn-pill">14:30</span>
+              <span class="txn-pill">Santiago</span>
+            </div>
+          </div>
+          <span class="txn-amount">$45.230</span>
+        </div>
+
+        <!-- Transaction 2: Farmacia Cruz Verde -->
+        <div class="txn-card">
+          <div class="txn-thumb">
+            <div class="txn-thumb-lines">
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+            </div>
+            <div class="txn-cat-badge" style="background:var(--cat-salud)">&#x1F48A;</div>
+          </div>
+          <div class="txn-body">
+            <div class="txn-merchant" style="color:var(--cat-salud)">Farmacia Cruz Verde</div>
+            <div class="txn-pills">
+              <span class="txn-pill">10:15</span>
+            </div>
+          </div>
+          <span class="txn-amount">$12.890</span>
+        </div>
+
+        <!-- ═══ DATE GROUP: Ayer ═══ -->
+        <div class="date-header">
+          <span class="date-header-label">Ayer</span>
+          <span class="date-header-total">$35.000</span>
+        </div>
+
+        <!-- Transaction 3: Shell Providencia -->
+        <div class="txn-card">
+          <div class="txn-thumb">
+            <div class="txn-thumb-lines">
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+            </div>
+            <div class="txn-cat-badge" style="background:var(--cat-transporte)">&#x26FD;</div>
+          </div>
+          <div class="txn-body">
+            <div class="txn-merchant" style="color:var(--cat-transporte)">Shell Providencia</div>
+            <div class="txn-pills">
+              <span class="txn-pill">09:00</span>
+              <span class="txn-pill">Providencia</span>
+            </div>
+          </div>
+          <span class="txn-amount">$35.000</span>
+        </div>
+
+        <!-- ═══ DATE GROUP: 18 Mar ═══ -->
+        <div class="date-header">
+          <span class="date-header-label">18 Mar</span>
+          <span class="date-header-total">$67.450</span>
+        </div>
+
+        <!-- Transaction 4: Restaurante El Patron -->
+        <div class="txn-card">
+          <div class="txn-thumb">
+            <div class="txn-thumb-lines">
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+            </div>
+            <div class="txn-cat-badge" style="background:var(--cat-restaurantes)">&#x1F37D;&#xFE0F;</div>
+          </div>
+          <div class="txn-body">
+            <div class="txn-merchant" style="color:var(--cat-restaurantes)">Restaurante El Patron</div>
+            <div class="txn-pills">
+              <span class="txn-pill">20:30</span>
+            </div>
+          </div>
+          <span class="txn-amount">$42.500</span>
+        </div>
+
+        <!-- Transaction 5: Uber -->
+        <div class="txn-card">
+          <div class="txn-thumb">
+            <div class="txn-thumb-lines">
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+            </div>
+            <div class="txn-cat-badge" style="background:var(--cat-otros)">&#x1F697;</div>
+          </div>
+          <div class="txn-body">
+            <div class="txn-merchant" style="color:var(--cat-otros)">Uber</div>
+            <div class="txn-pills">
+              <span class="txn-pill">18:15</span>
+            </div>
+          </div>
+          <span class="txn-amount">$24.950</span>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+          <span class="pagination-info">Pagina 1 de 5</span>
+          <div class="pagination-btns">
+            <button class="pagination-btn disabled">&lt; Anterior</button>
+            <span class="pagination-sep">|</span>
+            <button class="pagination-btn">Siguiente &gt;</button>
+          </div>
+        </div>
+
+      </div><!-- /scroll-content hero-content -->
+
+      <!-- ═══════════════════════════════════
+           EMPTY VARIANT: No transactions
+           ═══════════════════════════════════ -->
+      <div class="empty-state empty-no-txn">
+        <div class="empty-icon-area">
+          <!-- Receipt icon -->
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/>
+            <line x1="8" y1="6" x2="16" y2="6"/>
+            <line x1="8" y1="10" x2="16" y2="10"/>
+            <line x1="8" y1="14" x2="12" y2="14"/>
+          </svg>
+        </div>
+        <span class="empty-heading">No tienes transacciones</span>
+        <span class="empty-subtitle">Escanea tu primera boleta para comenzar a rastrear tus gastos</span>
+        <button class="empty-cta">Escanear Boleta</button>
+      </div>
+
+      <!-- ═══════════════════════════════════
+           EMPTY VARIANT: Filtered (no results)
+           ═══════════════════════════════════ -->
+      <div class="scroll-content empty-filtered" style="display:none">
+        <!-- Search Bar (shown in filtered state too) -->
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" value="farmacia ahumada" disabled style="font-family:'Outfit',sans-serif;font-size:14px;color:var(--text)">
+        </div>
+
+        <!-- Controls Row (visible) -->
+        <div class="controls-row-inner">
+          <div class="controls-left">
+            <button class="icon-btn" title="Ordenar">
+              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <polyline points="19 12 12 19 5 12"/>
+              </svg>
+            </button>
+            <button class="icon-btn" title="Exportar CSV">
+              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </button>
+          </div>
+          <div class="dup-toggle">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Filter Chips (visible) -->
+        <div class="filter-chips-row">
+          <div class="filter-chip">
+            Marzo 2026
+            <svg class="chip-x" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </div>
+          <a class="clear-filters">Limpiar todo</a>
+        </div>
+
+        <!-- Empty filtered content -->
+        <div class="empty-state" style="display:flex;padding-top:40px">
+          <div class="empty-icon-area">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </div>
+          <span class="empty-heading">Sin resultados para estos filtros</span>
+          <span class="empty-subtitle">Intenta con otros filtros o limpia la busqueda</span>
+          <a class="empty-link">Limpiar filtros</a>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════
+           SELECTION VARIANT
+           ═══════════════════════════════════ -->
+      <div class="scroll-content selection-mode-content" style="display:none">
+
+        <!-- Search Bar -->
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" placeholder="Buscar transacciones..." disabled>
+        </div>
+
+        <!-- ═══ DATE GROUP: Hoy ═══ -->
+        <div class="date-header">
+          <span class="date-header-label">Hoy</span>
+          <span class="date-header-total">$58.120</span>
+        </div>
+
+        <!-- Transaction 1: selected -->
+        <div class="txn-card">
+          <div class="txn-checkbox checked" style="display:flex">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" style="display:block">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div class="txn-thumb">
+            <div class="txn-thumb-lines">
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+            </div>
+            <div class="txn-cat-badge" style="background:var(--cat-alimentacion)">&#x1F6D2;</div>
+          </div>
+          <div class="txn-body">
+            <div class="txn-merchant" style="color:var(--cat-alimentacion)">Supermercado Lider</div>
+            <div class="txn-pills">
+              <span class="txn-pill">14:30</span>
+              <span class="txn-pill">Santiago</span>
+            </div>
+          </div>
+          <span class="txn-amount">$45.230</span>
+        </div>
+
+        <!-- Transaction 2: not selected -->
+        <div class="txn-card">
+          <div class="txn-checkbox" style="display:flex">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div class="txn-thumb">
+            <div class="txn-thumb-lines">
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+            </div>
+            <div class="txn-cat-badge" style="background:var(--cat-salud)">&#x1F48A;</div>
+          </div>
+          <div class="txn-body">
+            <div class="txn-merchant" style="color:var(--cat-salud)">Farmacia Cruz Verde</div>
+            <div class="txn-pills">
+              <span class="txn-pill">10:15</span>
+            </div>
+          </div>
+          <span class="txn-amount">$12.890</span>
+        </div>
+
+        <!-- ═══ DATE GROUP: Ayer ═══ -->
+        <div class="date-header">
+          <span class="date-header-label">Ayer</span>
+          <span class="date-header-total">$35.000</span>
+        </div>
+
+        <!-- Transaction 3: selected -->
+        <div class="txn-card">
+          <div class="txn-checkbox checked" style="display:flex">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" style="display:block">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div class="txn-thumb">
+            <div class="txn-thumb-lines">
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+            </div>
+            <div class="txn-cat-badge" style="background:var(--cat-transporte)">&#x26FD;</div>
+          </div>
+          <div class="txn-body">
+            <div class="txn-merchant" style="color:var(--cat-transporte)">Shell Providencia</div>
+            <div class="txn-pills">
+              <span class="txn-pill">09:00</span>
+              <span class="txn-pill">Providencia</span>
+            </div>
+          </div>
+          <span class="txn-amount">$35.000</span>
+        </div>
+
+        <!-- ═══ DATE GROUP: 18 Mar ═══ -->
+        <div class="date-header">
+          <span class="date-header-label">18 Mar</span>
+          <span class="date-header-total">$67.450</span>
+        </div>
+
+        <!-- Transaction 4: selected -->
+        <div class="txn-card">
+          <div class="txn-checkbox checked" style="display:flex">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" style="display:block">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div class="txn-thumb">
+            <div class="txn-thumb-lines">
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+            </div>
+            <div class="txn-cat-badge" style="background:var(--cat-restaurantes)">&#x1F37D;&#xFE0F;</div>
+          </div>
+          <div class="txn-body">
+            <div class="txn-merchant" style="color:var(--cat-restaurantes)">Restaurante El Patron</div>
+            <div class="txn-pills">
+              <span class="txn-pill">20:30</span>
+            </div>
+          </div>
+          <span class="txn-amount">$42.500</span>
+        </div>
+
+        <!-- Transaction 5: not selected -->
+        <div class="txn-card">
+          <div class="txn-checkbox" style="display:flex">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div class="txn-thumb">
+            <div class="txn-thumb-lines">
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+            </div>
+            <div class="txn-cat-badge" style="background:var(--cat-otros)">&#x1F697;</div>
+          </div>
+          <div class="txn-body">
+            <div class="txn-merchant" style="color:var(--cat-otros)">Uber</div>
+            <div class="txn-pills">
+              <span class="txn-pill">18:15</span>
+            </div>
+          </div>
+          <span class="txn-amount">$24.950</span>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+          <span class="pagination-info">Pagina 1 de 5</span>
+          <div class="pagination-btns">
+            <button class="pagination-btn disabled">&lt; Anterior</button>
+            <span class="pagination-sep">|</span>
+            <button class="pagination-btn">Siguiente &gt;</button>
+          </div>
+        </div>
+
+      </div><!-- /scroll-content selection-mode-content -->
+
+      <!-- Selection Bar (shown in selection variant) -->
+      <div class="selection-bar">
+        <div class="selection-info">
+          <span class="selection-count">3 seleccionados</span>
+          <a class="selection-all">Seleccionar todo</a>
+        </div>
+        <button class="selection-delete">Eliminar</button>
+      </div>
+
+      <!-- Bottom Navigation (no tab active — History accessed via Profile Dropdown) -->
+      <div class="bottom-nav">
+        <!-- Home -->
+        <div class="nav-item">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
+          <span class="nav-label">Inicio</span>
+        </div>
+        <!-- Trends -->
+        <div class="nav-item">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+          </div>
+          <span class="nav-label">Tendencias</span>
+        </div>
+        <!-- FAB (center) -->
+        <div class="fab-wrapper">
+          <div class="fab-badges">
+            <span class="fab-badge super">3</span>
+            <span class="fab-badge normal">12</span>
+          </div>
+          <button class="fab">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </button>
+          <span class="fab-spacer-label" style="visibility:hidden">Escanear</span>
+        </div>
+        <!-- Reports -->
+        <div class="nav-item">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+          </div>
+          <span class="nav-label">Reportes</span>
+        </div>
+        <!-- Alerts -->
+        <div class="nav-item">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </div>
+          <span class="nav-label">Alertas</span>
+          <div class="alert-dot"></div>
+        </div>
+      </div>
+
+      <!-- Home Indicator -->
+      <div class="home-indicator"></div>
+
+    </div><!-- /phone-screen -->
+  </div><!-- /phone-frame -->
+
+  <!-- ════════════════════════════════════════
+       JAVASCRIPT — Theme / Mode / Variant
+       ════════════════════════════════════════ -->
+  <script>
+    (function() {
+      const body = document.body;
+      const themeTabs = document.querySelectorAll('.theme-tab');
+      const modeToggle = document.getElementById('modeToggle');
+      const variantTabs = document.querySelectorAll('.variant-tab');
+
+      let currentTheme = 'normal';
+      let currentMode = 'light';
+
+      function applyTheme() {
+        body.setAttribute('data-theme', currentTheme);
+        body.setAttribute('data-mode', currentMode);
+      }
+
+      // Theme tabs
+      themeTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          themeTabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          currentTheme = tab.dataset.themeVal;
+          applyTheme();
+        });
+      });
+
+      // Mode toggle
+      modeToggle.addEventListener('click', () => {
+        currentMode = currentMode === 'light' ? 'dark' : 'light';
+        modeToggle.classList.toggle('dark', currentMode === 'dark');
+        applyTheme();
+      });
+
+      // Variant tabs
+      variantTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          variantTabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          body.classList.remove('variant-empty', 'variant-filtered', 'variant-selection');
+          const variant = tab.dataset.variant;
+          if (variant !== 'hero') {
+            body.classList.add('variant-' + variant);
+          }
+        });
+      });
+
+      // Initial apply
+      applyTheme();
+    })();
+  </script>
+</body>
+</html>
