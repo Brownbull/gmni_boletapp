@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GASTIFY — Dashboard Mockup (Bauhaus)</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /* ── RESET ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ── VARIABLES ── */
+  :root {
+    --bg: #F0F0F0;
+    --fg: #121212;
+    --red: #D02020;
+    --blue: #1040C0;
+    --yellow: #F0C020;
+    --muted: #E0E0E0;
+    --white: #FFFFFF;
+    --card-bg: #FFFFFF;
+    --border-w: 4px;
+    --shadow-sm: 4px 4px 0px var(--fg);
+    --shadow-md: 6px 6px 0px var(--fg);
+    --shadow-lg: 8px 8px 0px var(--fg);
+    --font: 'Outfit', sans-serif;
+  }
+
+  .dark {
+    --bg: #121212;
+    --fg: #FFFFFF;
+    --muted: #2a2a2a;
+    --card-bg: #1a1a1a;
+    --shadow-sm: 4px 4px 0px rgba(255,255,255,0.35);
+    --shadow-md: 6px 6px 0px rgba(255,255,255,0.35);
+    --shadow-lg: 8px 8px 0px rgba(255,255,255,0.35);
+  }
+
+  body {
+    font-family: var(--font);
+    background: #888;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 12px 80px;
+    min-height: 100vh;
+    gap: 32px;
+  }
+
+  /* ── CONTROLS ── */
+  .controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .controls button {
+    font-family: var(--font);
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 8px 20px;
+    border: 3px solid #121212;
+    cursor: pointer;
+    transition: all 200ms ease-out;
+    background: #F0F0F0;
+    color: #121212;
+  }
+  .controls button:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0px #121212; }
+  .controls button.active { background: #F0C020; }
+
+  /* ── PHONE FRAME ── */
+  .phone-frame {
+    width: 420px;
+    max-width: 100%;
+    background: var(--fg);
+    border-radius: 0;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Notch */
+  .phone-notch {
+    width: 160px;
+    height: 28px;
+    background: var(--fg);
+    border-radius: 9999px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 50;
+  }
+
+  /* Status bar */
+  .status-bar {
+    background: var(--fg);
+    color: var(--bg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 20px 2px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .status-bar .time { font-weight: 800; }
+  .status-icons { display: flex; gap: 5px; align-items: center; }
+  .status-icons span { font-size: 11px; }
+
+  /* Screen area */
+  .phone-screen {
+    background: var(--bg);
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 780px;
+    position: relative;
+  }
+
+  /* Home indicator */
+  .home-indicator {
+    background: var(--fg);
+    display: flex;
+    justify-content: center;
+    padding: 8px 0 6px;
+  }
+  .home-indicator .bar {
+    width: 120px;
+    height: 5px;
+    background: var(--bg);
+    border-radius: 9999px;
+  }
+
+  /* ── DOT GRID PATTERN ── */
+  .dot-grid {
+    background-image: radial-gradient(circle, var(--fg) 1px, transparent 1px);
+    background-size: 20px 20px;
+    opacity: 0.04;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── HEADER ── */
+  .app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: var(--card-bg);
+    border-bottom: var(--border-w) solid var(--fg);
+    position: relative;
+    z-index: 10;
+  }
+  .logo-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-shapes {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .shape-circle { width: 12px; height: 12px; border-radius: 9999px; }
+  .shape-square { width: 12px; height: 12px; border-radius: 0; }
+  .shape-triangle {
+    width: 0; height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-bottom: 12px solid var(--yellow);
+  }
+  .logo-text {
+    font-size: 22px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.04em;
+    color: var(--fg);
+    line-height: 1;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .credit-badge {
+    font-size: 12px;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    border: 2px solid var(--fg);
+    box-shadow: var(--shadow-sm);
+    color: var(--white);
+    line-height: 1.2;
+  }
+  .credit-badge.blue { background: var(--blue); }
+  .credit-badge.red { background: var(--red); }
+  .avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 9999px;
+    border: 2px solid var(--fg);
+    background: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--fg);
+  }
+
+  /* ── CAROUSEL CARD ── */
+  .carousel-section {
+    padding: 16px;
+    position: relative;
+    z-index: 1;
+  }
+  .carousel-card {
+    background: var(--card-bg);
+    border: var(--border-w) solid var(--fg);
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+  }
+  .carousel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-bottom: 3px solid var(--fg);
+  }
+  .carousel-title {
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--fg);
+  }
+  .view-toggles {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .view-toggle {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--fg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: transparent;
+    transition: background 200ms ease-out;
+  }
+  .view-toggle.circle { border-radius: 9999px; }
+  .view-toggle.square { border-radius: 0; }
+  .view-toggle.active { background: var(--yellow); }
+  .view-toggle .tri-inner {
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 9px solid var(--fg);
+  }
+
+  /* Treemap */
+  .treemap-container {
+    padding: 14px;
+  }
+  .treemap-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 3px;
+  }
+  .treemap-cell {
+    padding: 12px 10px;
+    border: var(--border-w) solid var(--fg);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .treemap-cell.alimentacion {
+    grid-column: 1 / -1;
+    background: var(--red);
+    color: var(--white);
+    min-height: 90px;
+  }
+  .treemap-cell.restaurantes {
+    background: var(--blue);
+    color: var(--white);
+    min-height: 80px;
+  }
+  .treemap-cell.transporte {
+    background: var(--yellow);
+    color: var(--fg);
+    min-height: 80px;
+  }
+  .treemap-cell.salud {
+    background: var(--card-bg);
+    color: var(--fg);
+    border-width: var(--border-w);
+  }
+  .treemap-cell.otros {
+    background: var(--muted);
+    color: var(--fg);
+  }
+  .treemap-label {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .treemap-pct {
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .treemap-amount {
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0.85;
+  }
+
+  /* Corner decorations */
+  .deco-circle {
+    position: absolute;
+    width: 8px; height: 8px;
+    border-radius: 9999px;
+    background: var(--red);
+  }
+  .deco-square {
+    position: absolute;
+    width: 8px; height: 8px;
+    border-radius: 0;
+    background: var(--blue);
+  }
+  .deco-triangle {
+    position: absolute;
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 8px solid var(--yellow);
+  }
+
+  /* Carousel footer */
+  .carousel-footer {
+    padding: 12px 14px;
+    border-top: 3px solid var(--fg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .total-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--fg);
+  }
+  .total-amount {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    color: var(--fg);
+    line-height: 1;
+  }
+  .progress-bar-wrap {
+    flex: 1;
+    max-width: 120px;
+    height: 14px;
+    border: 2px solid var(--fg);
+    background: var(--muted);
+    position: relative;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--red);
+    width: 72%;
+  }
+
+  /* ── RECIENTES SECTION ── */
+  .recientes-section {
+    padding: 0 16px 16px;
+    position: relative;
+    z-index: 1;
+  }
+  .section-header {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--fg);
+    padding-bottom: 8px;
+    border-bottom: var(--border-w) solid var(--fg);
+    margin-bottom: 12px;
+  }
+  .transaction-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .transaction-card {
+    background: var(--card-bg);
+    border: var(--border-w) solid var(--fg);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: stretch;
+    position: relative;
+    overflow: hidden;
+    transition: transform 200ms ease-out, box-shadow 200ms ease-out;
+    cursor: pointer;
+  }
+  .transaction-card:active {
+    transform: translate(4px, 4px);
+    box-shadow: none;
+  }
+  .tx-accent {
+    width: 6px;
+    flex-shrink: 0;
+  }
+  .tx-accent.red { background: var(--red); }
+  .tx-accent.blue { background: var(--blue); }
+  .tx-accent.yellow { background: var(--yellow); }
+  .tx-body {
+    flex: 1;
+    padding: 12px 12px 12px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .tx-info {}
+  .tx-name {
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--fg);
+    line-height: 1.2;
+  }
+  .tx-date {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--fg);
+    opacity: 0.55;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .tx-amount {
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--fg);
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+  /* Corner deco on cards */
+  .transaction-card .deco-circle { top: 4px; right: 4px; }
+  .transaction-card .deco-square { top: 4px; right: 4px; }
+  .transaction-card .deco-triangle { top: 3px; right: 3px; }
+
+  .ver-todo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    cursor: pointer;
+    justify-content: flex-end;
+  }
+  .ver-todo-text {
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--fg);
+  }
+  .ver-todo-arrow {
+    width: 26px;
+    height: 26px;
+    border-radius: 9999px;
+    border: 2px solid var(--fg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 900;
+    color: var(--fg);
+    background: transparent;
+    transition: background 200ms ease-out;
+  }
+  .ver-todo:hover .ver-todo-arrow { background: var(--yellow); }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 10px 8px 8px;
+    background: var(--card-bg);
+    border-top: var(--border-w) solid var(--fg);
+    position: relative;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    position: relative;
+  }
+  .nav-icon-wrap {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--fg);
+    transition: background 200ms ease-out;
+  }
+  .nav-icon-wrap.circle { border-radius: 9999px; }
+  .nav-icon-wrap.square { border-radius: 0; }
+  .nav-icon-wrap.active { background: var(--yellow); }
+  .nav-icon-wrap svg {
+    width: 18px;
+    height: 18px;
+    stroke: var(--fg);
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: square;
+    stroke-linejoin: miter;
+  }
+  .nav-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--fg);
+  }
+  /* FAB */
+  .fab {
+    width: 56px;
+    height: 56px;
+    border-radius: 9999px;
+    background: var(--red);
+    border: var(--border-w) solid var(--fg);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 200ms ease-out, box-shadow 200ms ease-out;
+    margin-top: -28px;
+    z-index: 20;
+    position: relative;
+  }
+  .fab:active {
+    transform: translate(4px, 4px);
+    box-shadow: none;
+  }
+  .fab svg {
+    width: 26px;
+    height: 26px;
+    stroke: var(--white);
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: square;
+  }
+  /* Decorative tiny shapes between nav items */
+  .nav-deco {
+    position: absolute;
+    bottom: 6px;
+  }
+  .nav-deco-1 { left: 22%; }
+  .nav-deco-2 { left: 50%; transform: translateX(-50%); }
+  .nav-deco-3 { right: 22%; }
+
+  /* ── STATES ── */
+  .state { display: none; }
+  .state.active { display: block; }
+
+  /* Empty state */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 32px;
+    text-align: center;
+    gap: 24px;
+  }
+  .empty-composition {
+    position: relative;
+    width: 160px;
+    height: 160px;
+  }
+  .empty-circle {
+    width: 100px; height: 100px;
+    border-radius: 9999px;
+    border: var(--border-w) solid var(--fg);
+    background: var(--red);
+    opacity: 0.7;
+    position: absolute;
+    top: 0; left: 0;
+  }
+  .empty-square {
+    width: 90px; height: 90px;
+    border: var(--border-w) solid var(--fg);
+    background: var(--blue);
+    opacity: 0.7;
+    position: absolute;
+    top: 40px; left: 50px;
+  }
+  .empty-triangle-wrap {
+    position: absolute;
+    bottom: 0; left: 30px;
+    opacity: 0.7;
+  }
+  .empty-triangle-shape {
+    width: 0; height: 0;
+    border-left: 45px solid transparent;
+    border-right: 45px solid transparent;
+    border-bottom: 80px solid var(--yellow);
+  }
+  .empty-triangle-border {
+    width: 0; height: 0;
+    border-left: 49px solid transparent;
+    border-right: 49px solid transparent;
+    border-bottom: 86px solid var(--fg);
+    position: absolute;
+    bottom: -3px; left: -4px;
+    z-index: -1;
+  }
+  .empty-text {
+    font-size: 18px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--fg);
+    line-height: 1.3;
+  }
+  .empty-sub {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--fg);
+    opacity: 0.5;
+    text-transform: uppercase;
+  }
+
+  /* Loading state */
+  .loading-state {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .skeleton-block {
+    border: var(--border-w) solid var(--fg);
+    background-image: radial-gradient(circle, var(--fg) 1.5px, transparent 1.5px);
+    background-size: 14px 14px;
+    opacity: 0.08;
+    position: relative;
+    overflow: hidden;
+  }
+  .skeleton-block::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, var(--bg) 50%, transparent 100%);
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .skeleton-hero { height: 220px; }
+  .skeleton-bar { height: 16px; width: 50%; }
+  .skeleton-card { height: 64px; }
+
+  /* ── GEOMETRIC OVERLAYS ── */
+  .geo-overlay {
+    position: absolute;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .geo-overlay.circle-tl {
+    width: 60px; height: 60px;
+    border-radius: 9999px;
+    border: 3px solid var(--red);
+    opacity: 0.1;
+    top: -20px; left: -20px;
+  }
+  .geo-overlay.square-br {
+    width: 40px; height: 40px;
+    border: 3px solid var(--blue);
+    opacity: 0.12;
+    bottom: -10px; right: -10px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="active" onclick="setState('hero')">POBLADO</button>
+  <button onclick="setState('empty')">VACIO</button>
+  <button onclick="setState('loading')">CARGANDO</button>
+  <button onclick="toggleDark()">MODO OSCURO</button>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- PHONE FRAME                            -->
+<!-- ═══════════════════════════════════════ -->
+<div class="phone-frame" id="phoneFrame">
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span class="time">9:41</span>
+    <div class="phone-notch"></div>
+    <div class="status-icons">
+      <span>&#9679;&#9679;&#9679;&#9679;</span>
+      <span>&#9681;</span>
+    </div>
+  </div>
+
+  <!-- Screen -->
+  <div class="phone-screen">
+    <div class="dot-grid"></div>
+
+    <!-- ── HEADER ── -->
+    <div class="app-header">
+      <div class="logo-group">
+        <div class="logo-shapes">
+          <div class="shape-circle" style="background:var(--red);"></div>
+          <div class="shape-square" style="background:var(--blue);"></div>
+          <div class="shape-triangle"></div>
+        </div>
+        <span class="logo-text">GASTIFY</span>
+      </div>
+      <div class="header-right">
+        <span class="credit-badge blue">12</span>
+        <span class="credit-badge red">3</span>
+        <div class="avatar">G</div>
+      </div>
+    </div>
+
+    <!-- ═══════ STATE: HERO (Populated) ═══════ -->
+    <div class="state active" id="state-hero">
+
+      <!-- Carousel Card -->
+      <div class="carousel-section">
+        <div class="carousel-card">
+          <!-- Corner decos -->
+          <div class="deco-circle" style="top:6px;right:6px;"></div>
+          <div class="deco-square" style="bottom:6px;left:6px;"></div>
+          <div class="deco-triangle" style="bottom:8px;right:8px;"></div>
+          <!-- Geo overlays -->
+          <div class="geo-overlay circle-tl"></div>
+          <div class="geo-overlay square-br"></div>
+
+          <div class="carousel-header">
+            <span class="carousel-title">MARZO 2026</span>
+            <div class="view-toggles">
+              <div class="view-toggle circle active"><div style="width:8px;height:8px;border-radius:9999px;background:var(--fg);"></div></div>
+              <div class="view-toggle square"><div style="width:8px;height:8px;background:var(--fg);"></div></div>
+              <div class="view-toggle square"><div class="tri-inner"></div></div>
+            </div>
+          </div>
+
+          <!-- ESTE MES Slide — Treemap -->
+          <div class="treemap-container">
+            <div class="treemap-grid">
+              <div class="treemap-cell alimentacion">
+                <div class="treemap-label"><span>&#128722;</span> ALIMENTACION</div>
+                <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px;">
+                  <span class="treemap-pct">45%</span>
+                  <span class="treemap-amount">$234.500</span>
+                </div>
+              </div>
+              <div class="treemap-cell restaurantes">
+                <div class="treemap-label"><span>&#127869;</span> RESTAURANTES</div>
+                <div style="margin-top:4px;">
+                  <span class="treemap-pct" style="font-size:22px;">22%</span>
+                  <div class="treemap-amount">$115.000</div>
+                </div>
+              </div>
+              <div class="treemap-cell transporte">
+                <div class="treemap-label"><span>&#128663;</span> TRANSPORTE</div>
+                <div style="margin-top:4px;">
+                  <span class="treemap-pct" style="font-size:22px;">15%</span>
+                  <div class="treemap-amount">$78.000</div>
+                </div>
+              </div>
+              <div class="treemap-cell salud">
+                <div class="treemap-label"><span>&#128138;</span> SALUD</div>
+                <div style="margin-top:4px;">
+                  <span class="treemap-pct" style="font-size:20px;">10%</span>
+                  <div class="treemap-amount">$52.300</div>
+                </div>
+              </div>
+              <div class="treemap-cell otros">
+                <div class="treemap-label"><span>&#128230;</span> OTROS</div>
+                <div style="margin-top:4px;">
+                  <span class="treemap-pct" style="font-size:20px;">8%</span>
+                  <div class="treemap-amount">$41.800</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="carousel-footer">
+            <div>
+              <div class="total-label">TOTAL DEL MES</div>
+              <div class="total-amount">$521.600</div>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar-fill"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recientes -->
+      <div class="recientes-section">
+        <div class="section-header">ULTIMOS ESCANEADOS</div>
+        <div class="transaction-list">
+          <!-- Card 1 -->
+          <div class="transaction-card">
+            <div class="deco-circle" style="top:4px;right:4px;"></div>
+            <div class="tx-accent red"></div>
+            <div class="tx-body">
+              <div class="tx-info">
+                <div class="tx-name">SUPERMERCADO LIDER</div>
+                <div class="tx-date">HOY</div>
+              </div>
+              <div class="tx-amount">$45.230</div>
+            </div>
+          </div>
+          <!-- Card 2 -->
+          <div class="transaction-card">
+            <div class="deco-square" style="top:4px;right:4px;background:var(--blue);"></div>
+            <div class="tx-accent blue"></div>
+            <div class="tx-body">
+              <div class="tx-info">
+                <div class="tx-name">FARMACIA CRUZ VERDE</div>
+                <div class="tx-date">AYER</div>
+              </div>
+              <div class="tx-amount">$12.890</div>
+            </div>
+          </div>
+          <!-- Card 3 -->
+          <div class="transaction-card">
+            <div class="deco-triangle" style="top:3px;right:3px;"></div>
+            <div class="tx-accent yellow"></div>
+            <div class="tx-body">
+              <div class="tx-info">
+                <div class="tx-name">SHELL PROVIDENCIA</div>
+                <div class="tx-date">18 MAR</div>
+              </div>
+              <div class="tx-amount">$35.000</div>
+            </div>
+          </div>
+        </div>
+        <div class="ver-todo">
+          <span class="ver-todo-text">VER TODO</span>
+          <div class="ver-todo-arrow">&rarr;</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ STATE: EMPTY ═══════ -->
+    <div class="state" id="state-empty">
+      <div class="empty-state">
+        <div class="empty-composition">
+          <div class="empty-circle"></div>
+          <div class="empty-square"></div>
+          <div class="empty-triangle-wrap">
+            <div class="empty-triangle-border"></div>
+            <div class="empty-triangle-shape"></div>
+          </div>
+        </div>
+        <div class="empty-text">ESCANEA TU<br>PRIMERA BOLETA</div>
+        <div class="empty-sub">PRESIONA EL BOTON ROJO PARA COMENZAR</div>
+      </div>
+    </div>
+
+    <!-- ═══════ STATE: LOADING ═══════ -->
+    <div class="state" id="state-loading">
+      <div class="loading-state">
+        <div class="skeleton-block skeleton-hero"></div>
+        <div class="skeleton-block skeleton-bar"></div>
+        <div class="skeleton-block skeleton-card"></div>
+        <div class="skeleton-block skeleton-card"></div>
+        <div class="skeleton-block skeleton-card"></div>
+      </div>
+    </div>
+  </div><!-- /phone-screen -->
+
+  <!-- ── BOTTOM NAV ── -->
+  <div class="bottom-nav">
+    <!-- Decorative tiny shapes -->
+    <div class="nav-deco nav-deco-1"><div style="width:4px;height:4px;border-radius:9999px;background:var(--red);"></div></div>
+    <div class="nav-deco nav-deco-2"><div style="width:4px;height:4px;background:var(--blue);"></div></div>
+    <div class="nav-deco nav-deco-3"><div style="width:0;height:0;border-left:3px solid transparent;border-right:3px solid transparent;border-bottom:4px solid var(--yellow);"></div></div>
+
+    <!-- Home -->
+    <div class="nav-item">
+      <div class="nav-icon-wrap circle active">
+        <svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>
+      </div>
+      <span class="nav-label">INICIO</span>
+    </div>
+
+    <!-- Reports -->
+    <div class="nav-item">
+      <div class="nav-icon-wrap square">
+        <svg viewBox="0 0 24 24"><rect x="4" y="14" width="4" height="6"/><rect x="10" y="8" width="4" height="12"/><rect x="16" y="4" width="4" height="16"/></svg>
+      </div>
+      <span class="nav-label">REPORTES</span>
+    </div>
+
+    <!-- FAB (Camera) -->
+    <div class="nav-item">
+      <div class="fab">
+        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="nav-item">
+      <div class="nav-icon-wrap circle">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      </div>
+      <span class="nav-label">HISTORIAL</span>
+    </div>
+
+    <!-- Settings -->
+    <div class="nav-item">
+      <div class="nav-icon-wrap square">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </div>
+      <span class="nav-label">AJUSTES</span>
+    </div>
+  </div>
+
+  <!-- Home Indicator -->
+  <div class="home-indicator">
+    <div class="bar"></div>
+  </div>
+</div><!-- /phone-frame -->
+
+<script>
+  function setState(state) {
+    document.querySelectorAll('.state').forEach(el => el.classList.remove('active'));
+    document.getElementById('state-' + state).classList.add('active');
+    document.querySelectorAll('.controls button').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+  }
+
+  function toggleDark() {
+    document.getElementById('phoneFrame').classList.toggle('dark');
+    const btn = event.target;
+    btn.classList.toggle('active');
+    if (document.getElementById('phoneFrame').classList.contains('dark')) {
+      btn.textContent = 'MODO CLARO';
+    } else {
+      btn.textContent = 'MODO OSCURO';
+    }
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard &mdash; Gastify (Organic Style)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,800&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ══════════════════════════════════════════
+       ORGANIC / NATURAL DESIGN SYSTEM
+       Philosophy: Wabi-sabi, warmth, softness
+       ══════════════════════════════════════════ */
+
+    :root {
+      /* Light mode (default) */
+      --bg: #FDFCF8;
+      --fg: #2C2C24;
+      --primary: #5D7052;
+      --primary-light: #6d8462;
+      --secondary: #C18C5D;
+      --accent: #E6DCCD;
+      --muted: #F0EBE5;
+      --border: #DED8CF;
+      --destructive: #A85448;
+      --surface: #FFFFFF;
+      --surface-elevated: #FEFDFB;
+      --text-secondary: #6B6B5F;
+      --text-tertiary: #9A9A8E;
+      --shadow-moss: rgba(93,112,82,0.15);
+      --shadow-moss-lg: rgba(93,112,82,0.20);
+      --grain-opacity: 0.035;
+      --frame-bg: #1a1a2e;
+      --status-bar-text: #fff;
+      --card-bg: #FFFFFF;
+      --nav-bg: rgba(253,252,248,0.95);
+      --badge-green-bg: rgba(93,112,82,0.12);
+      --badge-green-text: #5D7052;
+      --badge-violet-bg: rgba(139,92,246,0.12);
+      --badge-violet-text: #7C3AED;
+      --skeleton-base: #F0EBE5;
+      --skeleton-shine: #FDFCF8;
+      --treemap-cell-text: #FFFFFF;
+      --progress-track: #F0EBE5;
+      --indicator-inactive: #DED8CF;
+      --overlay-bg: rgba(0,0,0,0.03);
+    }
+
+    [data-theme="dark"] {
+      --bg: #0f172a;
+      --fg: #e2e8f0;
+      --primary: #7d9e6e;
+      --primary-light: #8fb07e;
+      --secondary: #d4a574;
+      --accent: #2d3548;
+      --muted: #1e293b;
+      --border: #334155;
+      --destructive: #ef6b5b;
+      --surface: #1e293b;
+      --surface-elevated: #253347;
+      --text-secondary: #94a3b8;
+      --text-tertiary: #64748b;
+      --shadow-moss: rgba(0,0,0,0.3);
+      --shadow-moss-lg: rgba(0,0,0,0.4);
+      --grain-opacity: 0.02;
+      --frame-bg: #0a0a1a;
+      --status-bar-text: #e2e8f0;
+      --card-bg: #1e293b;
+      --nav-bg: rgba(15,23,42,0.95);
+      --badge-green-bg: rgba(125,158,110,0.2);
+      --badge-green-text: #8fb07e;
+      --badge-violet-bg: rgba(139,92,246,0.2);
+      --badge-violet-text: #a78bfa;
+      --skeleton-base: #253347;
+      --skeleton-shine: #334155;
+      --treemap-cell-text: #FFFFFF;
+      --progress-track: #253347;
+      --indicator-inactive: #334155;
+      --overlay-bg: rgba(0,0,0,0.1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--frame-bg);
+      font-family: 'Nunito', 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      gap: 60px;
+      color: var(--fg);
+    }
+
+    h1, h2, h3, h4 {
+      font-family: 'Fraunces', Georgia, serif;
+    }
+
+    /* ── Page Header (outside phone) ── */
+    .page-header {
+      text-align: center;
+      color: #e0e0e0;
+      max-width: 700px;
+    }
+    .page-header .brand {
+      font-size: 12px;
+      color: #7d9e6e;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .page-header h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #f0ebe3;
+      margin-bottom: 10px;
+    }
+    .page-header h1 span {
+      background: linear-gradient(135deg, #C18C5D, #5D7052);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .page-header .subtitle {
+      font-size: 14px;
+      color: #9a9ab0;
+      line-height: 1.6;
+    }
+
+    /* ── Theme Toggle ── */
+    .theme-toggle {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 1000;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      color: var(--fg);
+      cursor: pointer;
+      box-shadow: 0 2px 8px var(--shadow-moss);
+      transition: all 0.3s;
+    }
+    .theme-toggle:hover {
+      transform: scale(1.05);
+    }
+
+    /* ── Section Label (outside phone) ── */
+    .section-label {
+      color: #9a9ab0;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: -40px;
+    }
+
+    /* ══════════════════════════════════════════
+       PHONE FRAME
+       ══════════════════════════════════════════ */
+    .phone-frame {
+      position: relative;
+      width: 420px;
+      max-width: 100%;
+      background: var(--frame-bg);
+      border-radius: 52px;
+      padding: 14px;
+      box-shadow:
+        0 0 0 2px #2a2a3e,
+        0 20px 60px rgba(0,0,0,0.5),
+        inset 0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    .phone-inner {
+      background: var(--bg);
+      border-radius: 40px;
+      overflow: hidden;
+      position: relative;
+      min-height: 780px;
+    }
+
+    /* Paper grain texture */
+    .phone-inner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E");
+      opacity: var(--grain-opacity);
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Notch */
+    .notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 30px;
+      background: var(--frame-bg);
+      border-radius: 0 0 20px 20px;
+      z-index: 20;
+    }
+    .notch::before {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 10px;
+      background: #2a2a3e;
+      border-radius: 50%;
+    }
+
+    /* Status bar */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 28px 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--fg);
+      position: relative;
+      z-index: 5;
+      height: 36px;
+    }
+    .status-bar .time { margin-left: 4px; }
+    .status-bar .icons {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      margin-right: 4px;
+    }
+    .status-bar .icons svg { width: 15px; height: 15px; }
+
+    /* Home indicator */
+    .home-indicator {
+      display: flex;
+      justify-content: center;
+      padding: 8px 0 10px;
+    }
+    .home-indicator-bar {
+      width: 134px;
+      height: 5px;
+      background: var(--text-tertiary);
+      border-radius: 999px;
+      opacity: 0.4;
+    }
+
+    /* ── Screen Content ── */
+    .screen-content {
+      padding: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ══════════════════════════════════════════
+       APP HEADER
+       ══════════════════════════════════════════ */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 20px 12px;
+    }
+
+    .app-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-circle {
+      width: 32px;
+      height: 32px;
+      background: var(--primary);
+      border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-family: 'Fraunces', serif;
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .wordmark {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 20px;
+      color: var(--fg);
+    }
+
+    .app-header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .credit-badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .credit-badge.normal {
+      background: var(--badge-green-bg);
+      color: var(--badge-green-text);
+    }
+    .credit-badge.super {
+      background: var(--badge-violet-bg);
+      color: var(--badge-violet-text);
+    }
+
+    .avatar-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+      background: linear-gradient(135deg, var(--secondary), var(--primary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    /* ══════════════════════════════════════════
+       MAIN CAROUSEL CARD
+       ══════════════════════════════════════════ */
+    .carousel-card {
+      margin: 0 16px 16px;
+      background: var(--card-bg);
+      border-radius: 24px;
+      box-shadow: 0 4px 20px -2px var(--shadow-moss);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .carousel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px 10px;
+    }
+
+    .month-nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .month-nav button {
+      background: none;
+      border: none;
+      color: var(--text-tertiary);
+      font-size: 16px;
+      cursor: pointer;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+    .month-nav button:hover {
+      background: var(--muted);
+      color: var(--fg);
+    }
+    .month-nav .month-label {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--fg);
+    }
+    .month-nav .month-label .dim {
+      color: var(--text-tertiary);
+      font-weight: 400;
+    }
+
+    .view-toggles {
+      display: flex;
+      gap: 2px;
+      background: var(--muted);
+      border-radius: 12px;
+      padding: 3px;
+    }
+    .view-toggle-btn {
+      background: none;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 10px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      line-height: 1;
+    }
+    .view-toggle-btn.active {
+      background: var(--card-bg);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    /* ── Treemap ── */
+    .treemap-container {
+      padding: 0 14px;
+    }
+
+    .treemap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto auto;
+      gap: 6px;
+      min-height: 220px;
+    }
+
+    .treemap-cell {
+      border-radius: 18px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s;
+      cursor: pointer;
+    }
+    .treemap-cell:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px -4px rgba(0,0,0,0.2);
+    }
+
+    /* Organic blob overlay on each cell */
+    .treemap-cell::after {
+      content: '';
+      position: absolute;
+      bottom: -20px;
+      right: -20px;
+      width: 80px;
+      height: 80px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    }
+
+    .treemap-cell .cell-icon {
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+    .treemap-cell .cell-name {
+      font-family: 'Nunito', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--treemap-cell-text);
+      opacity: 0.9;
+    }
+    .treemap-cell .cell-amount {
+      font-family: 'Fraunces', serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--treemap-cell-text);
+      margin-top: auto;
+    }
+    .treemap-cell .cell-meta {
+      font-size: 10px;
+      color: var(--treemap-cell-text);
+      opacity: 0.7;
+      display: flex;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    /* Cell 1: Alimentacion - large, spans full width first row */
+    .cell-alimentacion {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, #5D7052, #4a5d42);
+      min-height: 100px;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+    .cell-alimentacion .cell-right {
+      margin-left: auto;
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    /* Cell 2: Restaurantes */
+    .cell-restaurantes {
+      background: linear-gradient(135deg, #C18C5D, #a87a50);
+      min-height: 90px;
+    }
+
+    /* Cell 3: Transporte */
+    .cell-transporte {
+      background: linear-gradient(135deg, #6B8FA3, #5a7d91);
+      min-height: 90px;
+    }
+
+    /* Cell 4: Salud */
+    .cell-salud {
+      background: linear-gradient(135deg, #8B7BA8, #7a6b96);
+    }
+
+    /* Cell 5: Otros */
+    .cell-otros {
+      background: linear-gradient(135deg, #9A8B7A, #8a7c6c);
+    }
+
+    /* ── Carousel Footer ── */
+    .carousel-footer {
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .carousel-footer .total-label {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+    }
+    .carousel-footer .total-amount {
+      font-family: 'Fraunces', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--fg);
+    }
+
+    .progress-bar-container {
+      flex: 1;
+      margin: 0 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .progress-bar-track {
+      height: 6px;
+      background: var(--progress-track);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 60%;
+      background: linear-gradient(90deg, var(--primary), var(--primary-light));
+      border-radius: 999px;
+      transition: width 0.6s ease;
+    }
+    .progress-bar-label {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      text-align: center;
+    }
+
+    /* ── Carousel Indicator ── */
+    .carousel-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 0 16px 14px;
+      justify-content: center;
+    }
+    .carousel-indicator .dot {
+      height: 6px;
+      border-radius: 999px;
+      transition: all 0.3s;
+    }
+    .carousel-indicator .dot.active {
+      width: 24px;
+      background: var(--primary);
+    }
+    .carousel-indicator .dot.inactive {
+      width: 12px;
+      background: var(--indicator-inactive);
+    }
+
+    /* ══════════════════════════════════════════
+       RECIENTES SECTION
+       ══════════════════════════════════════════ */
+    .recientes-section {
+      padding: 0 16px 14px;
+    }
+    .recientes-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .recientes-header h3 {
+      font-family: 'Fraunces', serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--fg);
+    }
+    .recientes-indicator {
+      display: flex;
+      gap: 3px;
+    }
+    .recientes-indicator .r-dot {
+      height: 4px;
+      border-radius: 999px;
+    }
+    .recientes-indicator .r-dot.active {
+      width: 16px;
+      background: var(--primary);
+    }
+    .recientes-indicator .r-dot.inactive {
+      width: 8px;
+      background: var(--indicator-inactive);
+    }
+
+    /* ── Transaction Card ── */
+    .txn-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      margin-bottom: 8px;
+      box-shadow: 0 2px 10px -2px var(--shadow-moss);
+      transition: transform 0.3s, box-shadow 0.3s;
+      cursor: pointer;
+    }
+    .txn-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px -4px var(--shadow-moss-lg);
+    }
+
+    .txn-icon-container {
+      width: 42px;
+      height: 42px;
+      border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .txn-icon-container.cat-grocery { background: rgba(93,112,82,0.10); }
+    .txn-icon-container.cat-health { background: rgba(139,123,168,0.10); }
+    .txn-icon-container.cat-fuel { background: rgba(107,143,163,0.10); }
+
+    .txn-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .txn-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--fg);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .txn-meta {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-top: 2px;
+    }
+    .txn-meta .dot-sep {
+      width: 3px;
+      height: 3px;
+      background: var(--text-tertiary);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .txn-amount {
+      font-family: 'Fraunces', serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--fg);
+      white-space: nowrap;
+    }
+
+    .ver-todo {
+      display: block;
+      text-align: center;
+      padding: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .ver-todo:hover { opacity: 0.7; }
+
+    /* ══════════════════════════════════════════
+       BOTTOM NAVIGATION
+       ══════════════════════════════════════════ */
+    .bottom-nav {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      padding: 6px 12px 0;
+      background: var(--nav-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
+      position: relative;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 6px 10px 4px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-decoration: none;
+      transition: color 0.2s;
+      cursor: pointer;
+      min-width: 52px;
+    }
+    .nav-item.active {
+      color: var(--primary);
+    }
+    .nav-item svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .fab-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: -26px;
+    }
+    .fab {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px -2px var(--shadow-moss-lg);
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+      border: 3px solid var(--bg);
+    }
+    .fab:hover {
+      transform: scale(1.08);
+      box-shadow: 0 8px 28px -4px var(--shadow-moss-lg);
+    }
+    .fab svg {
+      width: 26px;
+      height: 26px;
+      stroke: #fff;
+      stroke-width: 2.2;
+      fill: none;
+    }
+
+    .fab-badges {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+    }
+    .fab-badge {
+      padding: 1px 5px;
+      border-radius: 999px;
+      font-size: 9px;
+      font-weight: 700;
+    }
+    .fab-badge.normal {
+      background: var(--badge-green-bg);
+      color: var(--badge-green-text);
+    }
+    .fab-badge.super {
+      background: var(--badge-violet-bg);
+      color: var(--badge-violet-text);
+    }
+
+    /* ══════════════════════════════════════════
+       EMPTY STATE
+       ══════════════════════════════════════════ */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 30px 20px;
+      min-height: 480px;
+    }
+
+    .empty-illustration {
+      width: 160px;
+      height: 160px;
+      margin-bottom: 24px;
+      position: relative;
+    }
+    .empty-blob-1 {
+      position: absolute;
+      width: 140px;
+      height: 130px;
+      background: var(--muted);
+      border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+      top: 10px;
+      left: 10px;
+    }
+    .empty-blob-2 {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      background: rgba(93,112,82,0.12);
+      border-radius: 30% 70% 60% 40% / 40% 60% 30% 70%;
+      top: 30px;
+      left: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+    }
+    .empty-leaf {
+      position: absolute;
+      bottom: 10px;
+      right: 15px;
+      width: 40px;
+      height: 40px;
+      background: rgba(93,112,82,0.18);
+      border-radius: 70% 30% 60% 40% / 30% 70% 40% 60%;
+      transform: rotate(-20deg);
+    }
+
+    .empty-title {
+      font-family: 'Fraunces', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--fg);
+      margin-bottom: 10px;
+    }
+    .empty-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 24px;
+      max-width: 260px;
+    }
+    .empty-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 28px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+      box-shadow: 0 4px 16px -2px var(--shadow-moss);
+    }
+    .empty-cta:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 24px -4px var(--shadow-moss-lg);
+    }
+    .empty-cta svg {
+      width: 20px;
+      height: 20px;
+      stroke: #fff;
+      stroke-width: 2.2;
+      fill: none;
+    }
+
+    /* ══════════════════════════════════════════
+       LOADING SKELETON
+       ══════════════════════════════════════════ */
+    @keyframes skeleton-pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    .skeleton {
+      background: linear-gradient(110deg, var(--skeleton-base) 30%, var(--skeleton-shine) 50%, var(--skeleton-base) 70%);
+      background-size: 200% 100%;
+      animation: skeleton-shimmer 1.8s ease-in-out infinite;
+      border-radius: 12px;
+    }
+
+    @keyframes skeleton-shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .skel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 20px 12px;
+    }
+    .skel-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .skel-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    }
+    .skel-wordmark {
+      width: 80px;
+      height: 18px;
+      border-radius: 8px;
+    }
+    .skel-header-right {
+      display: flex;
+      gap: 6px;
+    }
+    .skel-badge {
+      width: 28px;
+      height: 18px;
+      border-radius: 999px;
+    }
+    .skel-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    }
+
+    .skel-card {
+      margin: 0 16px 16px;
+      border-radius: 24px;
+      border: 1px solid var(--border);
+      padding: 16px;
+      background: var(--card-bg);
+    }
+    .skel-card-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .skel-month { width: 140px; height: 16px; border-radius: 8px; }
+    .skel-toggles { width: 100px; height: 28px; border-radius: 10px; }
+
+    .skel-treemap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .skel-tree-big {
+      grid-column: 1 / -1;
+      height: 90px;
+      border-radius: 18px;
+    }
+    .skel-tree-med { height: 80px; border-radius: 18px; }
+    .skel-tree-sm { height: 60px; border-radius: 18px; }
+
+    .skel-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .skel-label { width: 80px; height: 12px; border-radius: 6px; }
+    .skel-bar { flex: 1; height: 6px; margin: 0 14px; border-radius: 999px; }
+    .skel-total { width: 90px; height: 20px; border-radius: 8px; }
+
+    .skel-section-title {
+      width: 160px;
+      height: 16px;
+      border-radius: 8px;
+      margin: 0 16px 12px;
+    }
+
+    .skel-txn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      margin: 0 16px 8px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+    }
+    .skel-txn-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+      flex-shrink: 0;
+    }
+    .skel-txn-lines {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .skel-txn-line1 { width: 65%; height: 13px; border-radius: 6px; }
+    .skel-txn-line2 { width: 45%; height: 10px; border-radius: 5px; }
+    .skel-txn-amount {
+      width: 60px;
+      height: 16px;
+      border-radius: 8px;
+    }
+
+    /* ══════════════════════════════════════════
+       RESPONSIVE
+       ══════════════════════════════════════════ */
+    @media (max-width: 480px) {
+      body { padding: 10px; gap: 30px; }
+      .phone-frame {
+        border-radius: 0;
+        padding: 0;
+        box-shadow: none;
+        width: 100%;
+      }
+      .phone-inner { border-radius: 0; }
+      .notch { display: none; }
+      .status-bar { display: none; }
+      .page-header { display: none; }
+      .section-label { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Theme Toggle -->
+  <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Oscuro</button>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="brand">Gastify &middot; Organic Style</div>
+    <h1>Dashboard &mdash; <span>Home Screen</span></h1>
+    <p class="subtitle">
+      Pantalla principal con treemap de gastos, transacciones recientes y navegacion.
+      Estilo organico: formas blob, grano de papel, sombras suaves, colores calidos.
+    </p>
+  </div>
+
+  <!-- ════════════════════════════════════════════════
+       STATE 1: HERO (Populated Dashboard)
+       ════════════════════════════════════════════════ -->
+  <p class="section-label">Estado 1 &mdash; Dashboard Poblado</p>
+
+  <div class="phone-frame">
+    <div class="phone-inner">
+      <div class="notch"></div>
+
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="icons">
+          <!-- Signal -->
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <rect x="1" y="16" width="4" height="6" rx="1"/>
+            <rect x="7" y="12" width="4" height="10" rx="1"/>
+            <rect x="13" y="7" width="4" height="15" rx="1"/>
+            <rect x="19" y="2" width="4" height="20" rx="1"/>
+          </svg>
+          <!-- WiFi -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+            <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+            <circle cx="12" cy="20" r="1" fill="currentColor"/>
+          </svg>
+          <!-- Battery -->
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <rect x="1" y="6" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+            <rect x="3" y="8" width="12" height="8" rx="1"/>
+            <rect x="21" y="10" width="2" height="4" rx="0.5"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="screen-content">
+        <!-- App Header -->
+        <div class="app-header">
+          <div class="app-header-left">
+            <div class="logo-circle">G</div>
+            <span class="wordmark">Gastify</span>
+          </div>
+          <div class="app-header-right">
+            <span class="credit-badge normal">12</span>
+            <span class="credit-badge super">3</span>
+            <div class="avatar-circle">GA</div>
+          </div>
+        </div>
+
+        <!-- Main Carousel Card -->
+        <div class="carousel-card">
+          <!-- Carousel Header -->
+          <div class="carousel-header">
+            <div class="month-nav">
+              <button>&lsaquo;</button>
+              <span class="month-label"><span class="dim">Febrero</span> &nbsp;<strong>Marzo 2026</strong></span>
+              <button>&rsaquo;</button>
+            </div>
+            <div class="view-toggles">
+              <button class="view-toggle-btn active" title="Tienda">🏬</button>
+              <button class="view-toggle-btn" title="Categoria">🛒</button>
+              <button class="view-toggle-btn" title="Producto">📦</button>
+              <button class="view-toggle-btn" title="Etiqueta">🏷️</button>
+            </div>
+          </div>
+
+          <!-- Treemap -->
+          <div class="treemap-container">
+            <div class="treemap">
+              <!-- Alimentacion: largest, full width -->
+              <div class="treemap-cell cell-alimentacion">
+                <div>
+                  <span class="cell-icon">🛒</span>
+                  <span class="cell-name">Alimentacion</span>
+                  <div class="cell-meta"><span>45%</span><span>12 txns</span></div>
+                </div>
+                <div class="cell-right">
+                  <span class="cell-amount">$234.500</span>
+                </div>
+              </div>
+
+              <!-- Restaurantes -->
+              <div class="treemap-cell cell-restaurantes">
+                <span class="cell-icon">🍽️</span>
+                <span class="cell-name">Restaurantes</span>
+                <span class="cell-amount">$115.000</span>
+                <div class="cell-meta"><span>22%</span><span>8 txns</span></div>
+              </div>
+
+              <!-- Transporte -->
+              <div class="treemap-cell cell-transporte">
+                <span class="cell-icon">🚗</span>
+                <span class="cell-name">Transporte</span>
+                <span class="cell-amount">$78.000</span>
+                <div class="cell-meta"><span>15%</span><span>5 txns</span></div>
+              </div>
+
+              <!-- Salud -->
+              <div class="treemap-cell cell-salud">
+                <span class="cell-icon">💊</span>
+                <span class="cell-name">Salud</span>
+                <span class="cell-amount">$52.300</span>
+                <div class="cell-meta"><span>10%</span><span>3 txns</span></div>
+              </div>
+
+              <!-- Otros -->
+              <div class="treemap-cell cell-otros">
+                <span class="cell-icon">📦</span>
+                <span class="cell-name">Otros</span>
+                <span class="cell-amount">$41.800</span>
+                <div class="cell-meta"><span>8%</span><span>4 txns</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="carousel-footer">
+            <span class="total-label">Total del mes</span>
+            <div class="progress-bar-container">
+              <div class="progress-bar-track">
+                <div class="progress-bar-fill"></div>
+              </div>
+              <span class="progress-bar-label">60% de Marzo</span>
+            </div>
+            <span class="total-amount">$521.600</span>
+          </div>
+
+          <!-- Carousel Indicator (3 segments) -->
+          <div class="carousel-indicator">
+            <span class="dot active"></span>
+            <span class="dot inactive"></span>
+            <span class="dot inactive"></span>
+          </div>
+        </div>
+
+        <!-- Recientes Section -->
+        <div class="recientes-section">
+          <div class="recientes-header">
+            <h3>Ultimos Escaneados</h3>
+            <div class="recientes-indicator">
+              <span class="r-dot active"></span>
+              <span class="r-dot inactive"></span>
+            </div>
+          </div>
+
+          <!-- Transaction 1 -->
+          <div class="txn-card">
+            <div class="txn-icon-container cat-grocery">🛒</div>
+            <div class="txn-info">
+              <div class="txn-name">Supermercado Lider</div>
+              <div class="txn-meta">
+                <span>Hoy, 14:30</span>
+                <span class="dot-sep"></span>
+                <span>Santiago</span>
+              </div>
+            </div>
+            <div class="txn-amount">$45.230</div>
+          </div>
+
+          <!-- Transaction 2 -->
+          <div class="txn-card">
+            <div class="txn-icon-container cat-health">💊</div>
+            <div class="txn-info">
+              <div class="txn-name">Farmacia Cruz Verde</div>
+              <div class="txn-meta">
+                <span>Ayer, 10:15</span>
+                <span class="dot-sep"></span>
+                <span>Santiago</span>
+              </div>
+            </div>
+            <div class="txn-amount">$12.890</div>
+          </div>
+
+          <!-- Transaction 3 -->
+          <div class="txn-card">
+            <div class="txn-icon-container cat-fuel">⛽</div>
+            <div class="txn-info">
+              <div class="txn-name">Shell Providencia</div>
+              <div class="txn-meta">
+                <span>18 mar, 09:00</span>
+                <span class="dot-sep"></span>
+                <span>Providencia</span>
+              </div>
+            </div>
+            <div class="txn-amount">$35.000</div>
+          </div>
+
+          <a href="#" class="ver-todo" onclick="return false">Ver todo &rarr;</a>
+        </div>
+      </div>
+
+      <!-- Bottom Navigation -->
+      <div class="bottom-nav">
+        <div class="nav-item active">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Home</span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="12" x2="15" y2="15"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49"/></svg>
+          <span>Trends</span>
+        </div>
+        <div class="fab-container">
+          <div class="fab">
+            <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </div>
+          <div class="fab-badges">
+            <span class="fab-badge normal">12</span>
+            <span class="fab-badge super">3</span>
+          </div>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span>Reports</span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span>Alerts</span>
+        </div>
+      </div>
+
+      <div class="home-indicator">
+        <div class="home-indicator-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════
+       STATE 2: EMPTY STATE
+       ════════════════════════════════════════════════ -->
+  <p class="section-label">Estado 2 &mdash; Estado Vacio (Nuevo Usuario)</p>
+
+  <div class="phone-frame">
+    <div class="phone-inner">
+      <div class="notch"></div>
+
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="icons">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <rect x="1" y="16" width="4" height="6" rx="1"/>
+            <rect x="7" y="12" width="4" height="10" rx="1"/>
+            <rect x="13" y="7" width="4" height="15" rx="1"/>
+            <rect x="19" y="2" width="4" height="20" rx="1"/>
+          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+            <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+            <circle cx="12" cy="20" r="1" fill="currentColor"/>
+          </svg>
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <rect x="1" y="6" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+            <rect x="3" y="8" width="12" height="8" rx="1"/>
+            <rect x="21" y="10" width="2" height="4" rx="0.5"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="screen-content">
+        <!-- App Header (same) -->
+        <div class="app-header">
+          <div class="app-header-left">
+            <div class="logo-circle">G</div>
+            <span class="wordmark">Gastify</span>
+          </div>
+          <div class="app-header-right">
+            <span class="credit-badge normal">5</span>
+            <span class="credit-badge super">1</span>
+            <div class="avatar-circle">NU</div>
+          </div>
+        </div>
+
+        <!-- Empty State Content -->
+        <div class="empty-state">
+          <div class="empty-illustration">
+            <div class="empty-blob-1"></div>
+            <div class="empty-blob-2">📷</div>
+            <div class="empty-leaf"></div>
+          </div>
+          <h2 class="empty-title">Bienvenido a Gastify</h2>
+          <p class="empty-desc">
+            Escanea tu primera boleta para comenzar a organizar tus gastos de forma inteligente.
+          </p>
+          <button class="empty-cta">
+            <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Escanear Boleta
+          </button>
+        </div>
+      </div>
+
+      <!-- Bottom Navigation -->
+      <div class="bottom-nav">
+        <div class="nav-item active">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Home</span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="12" x2="15" y2="15"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49"/></svg>
+          <span>Trends</span>
+        </div>
+        <div class="fab-container">
+          <div class="fab">
+            <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </div>
+          <div class="fab-badges">
+            <span class="fab-badge normal">5</span>
+            <span class="fab-badge super">1</span>
+          </div>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span>Reports</span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span>Alerts</span>
+        </div>
+      </div>
+
+      <div class="home-indicator">
+        <div class="home-indicator-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════
+       STATE 3: LOADING SKELETON
+       ════════════════════════════════════════════════ -->
+  <p class="section-label">Estado 3 &mdash; Esqueleto de Carga</p>
+
+  <div class="phone-frame">
+    <div class="phone-inner">
+      <div class="notch"></div>
+
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="icons">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <rect x="1" y="16" width="4" height="6" rx="1"/>
+            <rect x="7" y="12" width="4" height="10" rx="1"/>
+            <rect x="13" y="7" width="4" height="15" rx="1"/>
+            <rect x="19" y="2" width="4" height="20" rx="1"/>
+          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+            <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+            <circle cx="12" cy="20" r="1" fill="currentColor"/>
+          </svg>
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <rect x="1" y="6" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+            <rect x="3" y="8" width="12" height="8" rx="1"/>
+            <rect x="21" y="10" width="2" height="4" rx="0.5"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="screen-content">
+        <!-- Skeleton Header -->
+        <div class="skel-header">
+          <div class="skel-header-left">
+            <div class="skeleton skel-logo"></div>
+            <div class="skeleton skel-wordmark"></div>
+          </div>
+          <div class="skel-header-right">
+            <div class="skeleton skel-badge"></div>
+            <div class="skeleton skel-badge"></div>
+            <div class="skeleton skel-avatar"></div>
+          </div>
+        </div>
+
+        <!-- Skeleton Carousel Card -->
+        <div class="skel-card">
+          <div class="skel-card-header">
+            <div class="skeleton skel-month"></div>
+            <div class="skeleton skel-toggles"></div>
+          </div>
+          <div class="skel-treemap">
+            <div class="skeleton skel-tree-big"></div>
+            <div class="skeleton skel-tree-med"></div>
+            <div class="skeleton skel-tree-med"></div>
+            <div class="skeleton skel-tree-sm"></div>
+            <div class="skeleton skel-tree-sm"></div>
+          </div>
+          <div class="skel-footer">
+            <div class="skeleton skel-label"></div>
+            <div class="skeleton skel-bar"></div>
+            <div class="skeleton skel-total"></div>
+          </div>
+        </div>
+
+        <!-- Skeleton Section Title -->
+        <div class="skeleton skel-section-title"></div>
+
+        <!-- Skeleton Transaction Cards -->
+        <div class="skel-txn">
+          <div class="skeleton skel-txn-icon"></div>
+          <div class="skel-txn-lines">
+            <div class="skeleton skel-txn-line1"></div>
+            <div class="skeleton skel-txn-line2"></div>
+          </div>
+          <div class="skeleton skel-txn-amount"></div>
+        </div>
+        <div class="skel-txn">
+          <div class="skeleton skel-txn-icon"></div>
+          <div class="skel-txn-lines">
+            <div class="skeleton skel-txn-line1"></div>
+            <div class="skeleton skel-txn-line2"></div>
+          </div>
+          <div class="skeleton skel-txn-amount"></div>
+        </div>
+        <div class="skel-txn">
+          <div class="skeleton skel-txn-icon"></div>
+          <div class="skel-txn-lines">
+            <div class="skeleton skel-txn-line1"></div>
+            <div class="skeleton skel-txn-line2"></div>
+          </div>
+          <div class="skeleton skel-txn-amount"></div>
+        </div>
+
+        <!-- Spacer to push nav down -->
+        <div style="height: 50px;"></div>
+      </div>
+
+      <!-- Bottom Navigation (skeleton version still shows nav) -->
+      <div class="bottom-nav">
+        <div class="nav-item active">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Home</span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="12" x2="15" y2="15"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49"/></svg>
+          <span>Trends</span>
+        </div>
+        <div class="fab-container">
+          <div class="fab">
+            <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </div>
+          <div class="fab-badges">
+            <span class="fab-badge normal">12</span>
+            <span class="fab-badge super">3</span>
+          </div>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span>Reports</span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span>Alerts</span>
+        </div>
+      </div>
+
+      <div class="home-indicator">
+        <div class="home-indicator-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Theme Toggle Script -->
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      const btn = document.getElementById('themeBtn');
+      if (html.getAttribute('data-theme') === 'dark') {
+        html.removeAttribute('data-theme');
+        btn.textContent = '🌙 Oscuro';
+      } else {
+        html.setAttribute('data-theme', 'dark');
+        btn.textContent = '☀️ Claro';
+      }
+    }
+  </script>
+
+</body>
+</html>

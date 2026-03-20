@@ -119,7 +119,7 @@ describe('EditViewItemsSection', () => {
       expect(props.onSetEditingItemIndex).toHaveBeenCalledWith(0);
       expect(props.onUpdateTransaction).toHaveBeenCalledWith({
         ...tx,
-        items: [{ name: '', totalPrice: 0, category: 'Other', subcategory: '' }],
+        items: [{ name: '', totalPrice: 0, qty: 1, category: 'Other', subcategory: '' }],
       });
     });
 

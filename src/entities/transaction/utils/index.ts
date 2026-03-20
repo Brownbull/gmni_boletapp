@@ -41,3 +41,11 @@ export {
     validateItemPriceConsistency,
     PRICE_TOLERANCE,
 } from './itemPriceDerivation';
+
+// Story TD-18-14: Quantity display and input utilities (decimal support)
+export {
+    formatQty,
+    shouldShowQty,
+    sanitizeQtyInput,
+    clampQtyOnBlur,
+} from './qtyUtils';

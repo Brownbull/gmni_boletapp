@@ -6,8 +6,12 @@
 **Epic Handle:** "One statement in, many verified transactions out"
 **Story Handle:** "Give the editor new knobs — chargeType, installments, recurrence, and cardHolder all need to be editable"
 
+## Architecture Reference
+- **V5 Plan:** `docs/architecture/proposals/implemented/EPIC-18-CREDIT-CARD-STATEMENT-SCANNING.md`
+- **Lock mechanism:** statementVerified=true → hard lock (all fields disabled, explicit unlock required)
+
 ## Story
-As a user, I want to view and edit the new transaction fields (chargeType, installments, recurrenceFrequency, cardHolder) in the transaction editor, so that I can correct AI-extracted data or manually enrich any transaction.
+As a user, I want to view and edit the new transaction fields (chargeType, installments, recurrenceFrequency, cardHolder) in the transaction editor, with statement-verified transactions fully locked until I explicitly unlock them, so that I can correct AI-extracted data or manually enrich any transaction while protecting verified data.
 
 ## Acceptance Criteria
 
@@ -17,9 +21,10 @@ As a user, I want to view and edit the new transaction fields (chargeType, insta
 - **AC-3:** RecurrenceFrequency dropdown: weekly/biweekly/monthly/quarterly/semiannual/yearly, available for ALL transactions
 - **AC-4:** RecurrenceFrequency can coexist with installments (e.g., monthly installment 3/12)
 - **AC-5:** CardHolder section: type selector (titular/additional) + name input (shown for additional only)
-- **AC-6:** StatementVerified badge: read-only indicator shown when statementVerified=true (not editable)
-- **AC-7:** Source badge: read-only indicator showing receipt_scan/statement_scan/manual (not editable)
-- **AC-8:** All new fields in "Advanced" section of editor, collapsed by default
+- **AC-6:** **Hard lock mode:** when statementVerified=true, ALL editor fields are disabled with banner "Verified against credit card statement on {date}"
+- **AC-7:** **Explicit unlock:** "Unlock and Break Verification" button with confirmation dialog — resets statementVerified/At/ImportId to null
+- **AC-8:** Source badge: read-only indicator showing receipt_scan/statement_scan/manual (always visible, not editable)
+- **AC-9:** All new fields in "Advanced" section of editor, collapsed by default
 
 ### Architectural
 - **AC-ARCH-1:** New field components in `src/features/transaction-editor/components/`
@@ -57,14 +62,15 @@ As a user, I want to view and edit the new transaction fields (chargeType, insta
 - [ ] 4.1: Create CardHolderSection: type radio (titular/additional) + name text input (conditional)
 - [ ] 4.2: Name input shown only when type='additional'
 
-### Task 5: Read-Only Badges (2 subtasks)
-- [ ] 5.1: Create StatementVerifiedBadge: green checkmark when statementVerified=true, hidden otherwise
-- [ ] 5.2: Source badge: small pill showing "Receipt" / "Statement" / "Manual"
+### Task 5: Hard Lock Mode (3 subtasks)
+- [ ] 5.1: Detect statementVerified=true → disable ALL form fields, show lock banner with verification date
+- [ ] 5.2: "Unlock and Break Verification" button — confirmation dialog: "This will break the statement verification. You'll need to re-match this transaction."
+- [ ] 5.3: On unlock confirm: reset statementVerified=false, statementVerifiedAt=null, statementImportId=null, re-enable all fields
 
-### Task 6: Integration + Layout (3 subtasks)
-- [ ] 6.1: Add "Advanced" collapsible section to TransactionEditorView
-- [ ] 6.2: Place new fields in Advanced section: chargeType, installments, recurrence, cardHolder
-- [ ] 6.3: Place badges (verified, source) in header area of editor, always visible
+### Task 6: Source Badge + Integration (3 subtasks)
+- [ ] 6.1: Source badge: small pill showing "Receipt" / "Statement" / "Manual" (always visible in header, read-only)
+- [ ] 6.2: Add "Advanced" collapsible section to TransactionEditorView, place new fields inside
+- [ ] 6.3: Place lock banner + source badge in header area, always visible regardless of collapsed state
 
 ### Task 7: Tests (2 subtasks)
 - [ ] 7.1: Unit tests for each new component (render, select, form binding)
