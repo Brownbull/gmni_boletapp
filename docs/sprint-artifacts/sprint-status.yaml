@@ -388,7 +388,8 @@ development_status:
   # Item editor field gaps (2026-03-19 analysis):
   TD-18-13-item-qty-unitprice-editor: done               # 3 pts - Always show qty + derived unitPrice in item editor; add qty to Original view; derive on save (DEPENDS: none)
   TD-18-14-decimal-qty-support: done                    # 2 pts - Allow decimal qty up to 3 places (0.633 kg); update input, display, derivation (DEPENDS: TD-18-13)
-  TD-18-15-item-editor-qty-test-coverage: ready-for-dev # 2 pts - Test coverage for qty input/unitPrice display interactions (Source: TD-18-13 review)
+  TD-18-15-item-editor-qty-test-coverage: done # 2 pts - Test coverage for qty input/unitPrice display interactions (Source: TD-18-13 review)
+  TD-18-16-qty-test-strengthening: ready-for-dev # 1 pt - Strengthen AC-8 assertion + qty=undefined edge case (Source: TD-18-15 review)
   # Independent (end of epic):
   18-7-receipttype-fix: drafted                        # 2 pts - Remove dead receiptType parameter from pipeline + type (replaced by source field) (DEPENDS: 18-2)
   18-9-admin-endpoint-security: drafted                # 3 pts - Replace hardcoded secret with Firebase Auth middleware on 3 admin HTTP endpoints

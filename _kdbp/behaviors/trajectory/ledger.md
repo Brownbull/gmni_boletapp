@@ -97,3 +97,5 @@
 | 2026-03-19 | TD-18-13 | dev | boletapp-dev | ✓ done | none |
 | 2026-03-19 | TD-18-13 | review | boletapp-dev | ✓ done | ⚑ ssot-inline-derivation (4x formula duplication fixed → deriveItemPrices import) |
 | 2026-03-19 | TD-18-14 | dev | boletapp-dev | ✓ done | none |
+| 2026-03-19 | TD-18-15 | dev | boletapp-dev | ✓ done | none |
+| 2026-03-19 | TD-18-15 | review | boletapp-dev | ✓ done | none |

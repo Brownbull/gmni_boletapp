@@ -351,3 +351,19 @@
 - **Files:** `src/features/transaction-editor/views/EditViewItemsSection.tsx`, `src/features/transaction-editor/views/TransactionEditorView/EditorItemsSection.tsx`
 - **Stage:** PROD — DRY violation, maintenance risk
 - **Estimated effort:** 1 point (extract shared helper, update 4 call sites)
+
+### [PROD] TransactionEditorView handleFinalSave Guard Branch Test
+
+- **Source:** TD-18-15 review (2026-03-19)
+- **Finding:** AC-8 test only covers the happy path (items present). The `if (!transaction) return` early exit guard in handleFinalSave has no test coverage. Minor gap — guard is trivial but untested.
+- **Files:** `tests/unit/features/transaction-editor/views/TransactionEditorViewInternal.test.tsx`
+- **Stage:** PROD — test completeness for guard branches
+- **Estimated effort:** 0.5 points (add one test case with null transaction)
+
+### [PROD] parseStrictNumber Mock Accuracy in Qty Tests
+
+- **Source:** TD-18-15 review (2026-03-19)
+- **Finding:** `makeProps().parseStrictNumber` is stubbed as `parseFloat(String(val)) || 0` but the real implementation uses strict integer parsing for CLP. Stub is never asserted against currently but could mislead future price-related tests in the same file.
+- **Files:** `src/features/transaction-editor/views/EditViewItemsSection.qty.test.tsx`
+- **Stage:** PROD — mock accuracy for future test reliability
+- **Estimated effort:** 0.5 points (align stub with real implementation)
