@@ -4,7 +4,7 @@
 
 ## Intent
 **Epic Handle:** "Pin your receipts to the shared board"
-**Story Handle:** "This story builds the shared board by running the first full house meeting -- create group, invite, post, view, manage"
+**Story Handle:** "Run the first full house meeting — create group, invite, auto-copy, view, manage, analytics"
 
 ## Story
 As a user, I want the complete shared groups flow to work end-to-end, so that I can rely on it for household expense tracking.
@@ -12,10 +12,10 @@ As a user, I want the complete shared groups flow to work end-to-end, so that I 
 ## Acceptance Criteria
 
 ### Functional
-- **AC-1:** Given the full flow (create group -> invite member -> post transaction -> view feed -> admin delete), when completed, then all operations work correctly
-- **AC-2:** Given group analytics, when transactions are posted, then analytics update immediately
+- **AC-1:** Given the full flow (create group → generate invite → member redeems invite → enable auto-copy → save transaction → view group feed → admin delete → view analytics), when completed, then all operations work correctly
+- **AC-2:** Given group analytics, when transactions are posted, then analytics show correct totals by category, member, and monthly trend
 - **AC-3:** Given E2E test covers the happy path, when run on staging, then the test passes
-- **AC-4:** Given E2E test data, when tests complete, then all test groups and transactions are cleaned up
+- **AC-4:** Given E2E test data, when tests complete, then all test groups, invites, and transactions are cleaned up
 
 ### Architectural
 - **AC-ARCH-PATTERN-1:** E2E follows `tests/e2e/E2E-TEST-CONVENTIONS.md`
@@ -33,25 +33,28 @@ As a user, I want the complete shared groups flow to work end-to-end, so that I 
 
 ### Task 1: Multi-User E2E Setup (2 subtasks)
 - [ ] 1.1: Configure 2 staging test users (admin account + member account)
-- [ ] 1.2: Create group test helper: createGroup, inviteMember, postTransaction, deleteGroup
+- [ ] 1.2: Create group test helper: createGroup, generateInvite, redeemInvite, enableAutoCopy, saveTransaction, deleteGroupTransaction, deleteGroup
 
-### Task 2: E2E Happy Path (4 subtasks)
-- [ ] 2.1: Test: admin creates group, generates invite link
-- [ ] 2.2: Test: member redeems invite, joins group
-- [ ] 2.3: Test: member posts personal transaction to group, appears in feed
-- [ ] 2.4: Test: admin deletes a recent group transaction
+### Task 2: E2E Happy Path (6 subtasks)
+- [ ] 2.1: Test: admin opens group switcher dropdown, creates group (name, icon, color)
+- [ ] 2.2: Test: admin generates invite link from admin panel
+- [ ] 2.3: Test: member redeems invite code, joins group, group appears in member's switcher dropdown
+- [ ] 2.4: Test: member enables auto-copy toggle for group in dropdown, saves a personal transaction, transaction appears in group feed when switching to group view
+- [ ] 2.5: Test: admin switches to group view, sees posted transaction in feed with member's name
+- [ ] 2.6: Test: navigate to Analytics in group view — verify totals show correct values by category and member contribution
 
-### Task 3: Edge Cases (2 subtasks)
-- [ ] 3.1: Test: 30-day immutability -- verify old transaction cannot be deleted (may need mock/fixture)
-- [ ] 3.2: Test: non-member cannot see group data
+### Task 3: Edge Cases (3 subtasks)
+- [ ] 3.1: Test: batch select transactions on Home screen and "Add to Group" — verify transactions appear in group feed
+- [ ] 3.2: Test: admin deletes a recent (< 60-day) group transaction — verify removal from feed
+- [ ] 3.3: Test: non-member cannot see group in their switcher dropdown
 
 ### Task 4: Cleanup and Verification (1 subtask)
-- [ ] 4.1: afterAll: delete test group and all test data
+- [ ] 4.1: afterAll: delete test group (which cascades all transactions) and clean up all test data
 
 ## Sizing
-- **Points:** 3 (MEDIUM)
+- **Points:** 5 (MEDIUM)
 - **Tasks:** 4
-- **Subtasks:** 9
+- **Subtasks:** 12
 - **Files:** ~2
 
 ## Dependencies
@@ -63,6 +66,8 @@ As a user, I want the complete shared groups flow to work end-to-end, so that I 
 
 ## Dev Notes
 - Multi-user E2E: Playwright can use multiple browser contexts with different auth states
-- E2E tests run serially (shared staging data) -- this test may take 60-90s due to multi-user operations
+- E2E tests run serially (shared staging data) — this test may take 90-120s due to multi-user operations and context switching
 - Test data naming: `E2E-Group-{timestamp}` for easy cleanup identification
-- The 30-day immutability test may require creating a fixture transaction with a backdated postedAt -- or mocking the clock. Evaluate during implementation.
+- The 60-day immutability test would require backdated fixtures — defer to manual QA rather than E2E automation
+- Group context switcher is the primary navigation mechanism — E2E must test dropdown open/close, group view switching, and return to personal view
+- Auto-copy E2E flow: enable toggle → save transaction → switch to group view → verify transaction appears. This tests the full integration path.

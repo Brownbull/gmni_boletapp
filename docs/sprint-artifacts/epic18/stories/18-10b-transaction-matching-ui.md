@@ -6,6 +6,11 @@
 **Epic Handle:** "One statement in, many verified transactions out"
 **Story Handle:** "Build the courtroom — where the user sees the evidence and makes the call on every match"
 
+## Architecture Reference
+- **V5 Plan:** `docs/architecture/proposals/implemented/EPIC-18-CREDIT-CARD-STATEMENT-SCANNING.md`
+- **Atomicity:** Use Firestore writeBatch for save operations (mixed updates + creates)
+- **Virtualization:** Required for 80+ transaction matching review on mobile
+
 ## Story
 As a user, I want to see proposed matches between my statement transactions and existing app transactions, and approve matches, reject them to create new transactions, or manually search and pick matches, so that my spending history is reconciled with explicit confirmation on every action.
 
@@ -44,7 +49,7 @@ As a user, I want to see proposed matches between my statement transactions and 
 ## Tasks
 
 ### Task 1: Matching Review UI (4 subtasks)
-- [ ] 1.1: Create MatchingReviewView: list of statement transactions with match proposals
+- [ ] 1.1: Create MatchingReviewView: virtualized list (react-window) of statement transactions with match proposals (supports 80+ cards on mobile)
 - [ ] 1.2: Create MatchCard: shows statement txn + proposed match side-by-side, confidence badge
 - [ ] 1.3: Three action buttons per card: Approve, Reject + Create New, Manual Pick
 - [ ] 1.4: Summary header: X matched, Y unmatched, Z new — with "Save All" action
@@ -57,9 +62,10 @@ As a user, I want to see proposed matches between my statement transactions and 
 - [ ] 3.1: Create AmountConflictDialog: show receipt total vs statement amount, user picks which to keep
 - [ ] 3.2: Register in ModalManager
 
-### Task 4: Store + Save (2 subtasks)
+### Task 4: Store + Save (3 subtasks)
 - [ ] 4.1: Extend useStatementScanStore: add matching phase, matchResults[], user decisions
-- [ ] 4.2: Save flow: batch update matched transactions + batch create new transactions (500 chunk limit)
+- [ ] 4.2: Save flow using Firestore writeBatch for atomicity: batch update matched transactions + batch create new transactions (500 chunk limit per batch)
+- [ ] 4.3: Error handling: if batch fails, show error toast with retry option — no partial state (writeBatch is atomic)
 
 ## Sizing
 - **Points:** 5 (MEDIUM)

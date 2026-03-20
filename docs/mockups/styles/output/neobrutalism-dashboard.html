@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GASTIFY - Neo-Brutalism Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700;900&display=swap" rel="stylesheet">
+<style>
+/* ========== RESET & BASE ========== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #FFFDF5;
+  --fg: #000000;
+  --accent: #FF6B6B;
+  --secondary: #FFD93D;
+  --muted: #C4B5FD;
+  --white: #FFFFFF;
+  --card-bg: #FFFFFF;
+  --nav-bg: #FFFDF5;
+  --shadow-color: #000000;
+  --border-color: #000000;
+  --text-secondary: #333333;
+}
+
+[data-theme="dark"] {
+  --bg: #121212;
+  --fg: #FFFFFF;
+  --card-bg: #1a1a1a;
+  --nav-bg: #121212;
+  --shadow-color: #444444;
+  --border-color: #FFFFFF;
+  --text-secondary: #cccccc;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  background: #1a1a1a;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 20px 10px;
+  position: relative;
+}
+
+/* ========== HALFTONE OUTER BG ========== */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: radial-gradient(circle, #333 1px, transparent 1px);
+  background-size: 12px 12px;
+  opacity: 0.4;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ========== CONTROLS ========== */
+.controls {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1000;
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.control-btn {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 900;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 8px 14px;
+  border: 3px solid #fff;
+  background: #000;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.1s linear, box-shadow 0.1s linear;
+  box-shadow: 3px 3px 0px #fff;
+}
+
+.control-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: none;
+}
+
+.control-btn.active {
+  background: var(--accent);
+  color: #000;
+  border-color: #000;
+  box-shadow: 3px 3px 0px #000;
+}
+
+/* ========== PHONE FRAME ========== */
+.phone-frame {
+  width: 420px;
+  max-width: 100%;
+  background: var(--bg);
+  border: 5px solid #000;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  min-height: 820px;
+}
+
+[data-theme="dark"] .phone-frame {
+  border-color: #fff;
+}
+
+/* Notch */
+.notch {
+  width: 160px;
+  height: 28px;
+  background: #000;
+  border-radius: 0 0 20px 20px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 10;
+}
+
+[data-theme="dark"] .notch {
+  background: #fff;
+}
+
+/* Status bar */
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 18px 2px;
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--fg);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.status-bar-left {
+  font-weight: 900;
+}
+
+.status-bar-right {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 10px;
+}
+
+.battery {
+  width: 22px;
+  height: 10px;
+  border: 2px solid var(--fg);
+  position: relative;
+  display: inline-block;
+}
+
+.battery::after {
+  content: '';
+  position: absolute;
+  right: -5px;
+  top: 2px;
+  width: 3px;
+  height: 4px;
+  background: var(--fg);
+}
+
+.battery-fill {
+  width: 70%;
+  height: 100%;
+  background: var(--fg);
+}
+
+/* Home indicator */
+.home-indicator {
+  width: 134px;
+  height: 5px;
+  background: var(--fg);
+  margin: 10px auto 6px;
+}
+
+/* ========== SCREEN CONTENT ========== */
+.screen-content {
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ========== TOP HEADER ========== */
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--secondary);
+  border-bottom: 4px solid var(--border-color);
+}
+
+.logo-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  width: 42px;
+  height: 42px;
+  background: var(--accent);
+  border: 4px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--border-color);
+  line-height: 1;
+}
+
+.logo-text {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  text-transform: uppercase;
+  color: var(--border-color);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.credit-badges {
+  display: flex;
+  gap: 4px;
+}
+
+.credit-badge {
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 900;
+  border: 2px solid var(--border-color);
+  border-radius: 999px;
+  line-height: 1.2;
+}
+
+.credit-badge.red {
+  background: var(--accent);
+  color: #000;
+}
+
+.credit-badge.violet {
+  background: var(--muted);
+  color: #000;
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border: 4px solid var(--border-color);
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 900;
+  color: #000;
+  overflow: hidden;
+}
+
+.avatar-inner {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--muted) 0%, var(--accent) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #000;
+}
+
+/* ========== MAIN CAROUSEL CARD ========== */
+.carousel-card {
+  margin: 14px 12px;
+  background: var(--card-bg);
+  border: 4px solid var(--border-color);
+  box-shadow: 8px 8px 0px var(--shadow-color);
+  position: relative;
+}
+
+.carousel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 4px solid var(--border-color);
+}
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.month-arrow {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border-color);
+  background: var(--card-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+  color: var(--fg);
+  transition: transform 0.1s linear, box-shadow 0.1s linear;
+  box-shadow: 2px 2px 0px var(--shadow-color);
+}
+
+.month-arrow:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.month-label {
+  font-size: 15px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.5px;
+  color: var(--fg);
+}
+
+.view-toggles {
+  display: flex;
+  gap: 0;
+}
+
+.view-toggle {
+  padding: 5px 10px;
+  border: 3px solid var(--border-color);
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 900;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  color: var(--fg);
+  background: var(--card-bg);
+  transition: background 0.1s linear;
+}
+
+.view-toggle:first-child {
+  border-right: none;
+}
+
+.view-toggle.active {
+  background: var(--secondary);
+  color: #000;
+}
+
+/* Slide label */
+.slide-label {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.slide-label::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border: 2px solid var(--border-color);
+  display: inline-block;
+}
+
+/* ========== TREEMAP ========== */
+.treemap {
+  padding: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 6px;
+}
+
+.treemap-item {
+  border: 4px solid var(--border-color);
+  padding: 10px;
+  position: relative;
+  transition: transform 0.1s linear;
+}
+
+.treemap-item:active {
+  transform: scale(0.97);
+}
+
+.treemap-item.large {
+  grid-column: 1 / 2;
+  grid-row: 1 / 3;
+  min-height: 110px;
+}
+
+.treemap-item.medium {
+  min-height: 52px;
+}
+
+.treemap-item.small {
+  min-height: 48px;
+}
+
+.treemap-item.alimentacion {
+  background: var(--secondary);
+}
+
+.treemap-item.restaurantes {
+  background: var(--accent);
+}
+
+.treemap-item.transporte {
+  background: var(--muted);
+}
+
+.treemap-item.salud {
+  background: var(--white);
+}
+
+[data-theme="dark"] .treemap-item.salud {
+  background: var(--card-bg);
+}
+
+.treemap-item.otros {
+  background: var(--bg);
+}
+
+.treemap-emoji {
+  font-size: 18px;
+  margin-bottom: 2px;
+}
+
+.treemap-name {
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #000;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.treemap-item.restaurantes .treemap-name {
+  color: #fff;
+}
+
+[data-theme="dark"] .treemap-name {
+  color: #000;
+}
+
+[data-theme="dark"] .treemap-item.salud .treemap-name {
+  color: var(--fg);
+}
+
+.treemap-pct {
+  font-size: 22px;
+  font-weight: 900;
+  color: #000;
+  line-height: 1;
+}
+
+.treemap-item.restaurantes .treemap-pct {
+  color: #fff;
+}
+
+.treemap-item.large .treemap-pct {
+  font-size: 32px;
+}
+
+[data-theme="dark"] .treemap-pct {
+  color: #000;
+}
+
+[data-theme="dark"] .treemap-item.salud .treemap-pct {
+  color: var(--fg);
+}
+
+.treemap-amount {
+  font-size: 10px;
+  font-weight: 700;
+  color: #000;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+.treemap-item.restaurantes .treemap-amount {
+  color: #fff;
+  opacity: 0.85;
+}
+
+[data-theme="dark"] .treemap-amount {
+  color: #000;
+}
+
+[data-theme="dark"] .treemap-item.salud .treemap-amount {
+  color: var(--fg);
+  opacity: 0.7;
+}
+
+/* ========== CAROUSEL FOOTER ========== */
+.carousel-footer {
+  padding: 12px;
+  border-top: 4px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+.total-section {
+  flex: 1;
+}
+
+.total-label {
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.total-amount {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -2px;
+  line-height: 1;
+  color: var(--fg);
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 14px;
+  border: 3px solid var(--border-color);
+  margin-top: 8px;
+  background: var(--card-bg);
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  width: 60%;
+  transition: width 0.3s linear;
+}
+
+/* Sticker badge */
+.sticker-badge {
+  position: absolute;
+  top: -14px;
+  right: 14px;
+  background: var(--secondary);
+  border: 4px solid var(--border-color);
+  padding: 6px 14px;
+  font-size: 18px;
+  font-weight: 900;
+  color: #000;
+  transform: rotate(3deg);
+  box-shadow: 3px 3px 0px var(--shadow-color);
+  z-index: 5;
+  line-height: 1;
+}
+
+/* ========== RECIENTES SECTION ========== */
+.recientes-section {
+  padding: 16px 12px 6px;
+}
+
+.section-header {
+  margin-bottom: 12px;
+  position: relative;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--fg);
+  display: inline-block;
+  padding-bottom: 4px;
+}
+
+.section-title-underline {
+  height: 5px;
+  width: 100%;
+  background: var(--accent);
+  border: 2px solid var(--border-color);
+  margin-top: 2px;
+}
+
+/* ========== TRANSACTION CARDS ========== */
+.transaction-card {
+  border: 4px solid var(--border-color);
+  box-shadow: 6px 6px 0px var(--shadow-color);
+  margin-bottom: 12px;
+  background: var(--card-bg);
+  display: flex;
+  align-items: stretch;
+  transition: transform 0.15s linear, box-shadow 0.15s linear;
+  cursor: pointer;
+  position: relative;
+}
+
+.transaction-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0px var(--shadow-color);
+}
+
+.transaction-card:active {
+  transform: translate(4px, 4px);
+  box-shadow: 2px 2px 0px var(--shadow-color);
+}
+
+.transaction-card:nth-child(1) {
+  transform: rotate(0.8deg);
+}
+
+.transaction-card:nth-child(1):hover {
+  transform: rotate(0.8deg) translate(-2px, -2px);
+}
+
+.transaction-card:nth-child(2) {
+  transform: rotate(-0.6deg);
+}
+
+.transaction-card:nth-child(2):hover {
+  transform: rotate(-0.6deg) translate(-2px, -2px);
+}
+
+.transaction-card:nth-child(3) {
+  transform: rotate(0deg);
+}
+
+.tx-accent-strip {
+  width: 10px;
+  min-height: 100%;
+  flex-shrink: 0;
+}
+
+.tx-accent-strip.yellow { background: var(--secondary); }
+.tx-accent-strip.violet { background: var(--muted); }
+.tx-accent-strip.red { background: var(--accent); }
+
+.tx-body {
+  flex: 1;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tx-info {
+  flex: 1;
+}
+
+.tx-name {
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.3px;
+  color: var(--fg);
+  line-height: 1.1;
+}
+
+.tx-date {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  margin-top: 3px;
+}
+
+.tx-amount {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--fg);
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* ========== BOTTOM NAV ========== */
+.bottom-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 8px 10px 4px;
+  background: var(--nav-bg);
+  border-top: 4px solid var(--border-color);
+  position: relative;
+}
+
+.nav-item {
+  width: 44px;
+  height: 44px;
+  border: 3px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: transparent;
+  transition: transform 0.1s linear, box-shadow 0.1s linear;
+  box-shadow: 3px 3px 0px var(--shadow-color);
+  position: relative;
+}
+
+.nav-item:active {
+  transform: translate(3px, 3px);
+  box-shadow: none;
+}
+
+.nav-item.active {
+  background: var(--secondary);
+}
+
+.nav-item svg {
+  width: 22px;
+  height: 22px;
+  stroke: var(--fg);
+  stroke-width: 2.5;
+  fill: none;
+}
+
+.nav-item.active svg {
+  stroke: #000;
+}
+
+.fab-btn {
+  width: 58px;
+  height: 58px;
+  background: var(--accent);
+  border: 4px solid var(--border-color);
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 4px 4px 0px var(--shadow-color);
+  transition: transform 0.1s linear, box-shadow 0.1s linear;
+  margin-top: -20px;
+  position: relative;
+  z-index: 5;
+}
+
+.fab-btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
+
+.fab-btn svg {
+  width: 28px;
+  height: 28px;
+  stroke: #000;
+  stroke-width: 3;
+  fill: none;
+}
+
+/* ========== EMPTY STATE ========== */
+.state-empty {
+  display: none;
+}
+
+.state-empty .empty-content {
+  padding: 40px 20px;
+  text-align: center;
+  position: relative;
+}
+
+.empty-title {
+  font-size: 28px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -1px;
+  line-height: 1.05;
+  color: transparent;
+  -webkit-text-stroke: 3px var(--fg);
+  paint-order: stroke fill;
+  margin-bottom: 16px;
+}
+
+.empty-subtitle {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-secondary);
+  margin-bottom: 30px;
+}
+
+.empty-arrow {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(30px) rotate(15deg);
+}
+
+.empty-arrow svg {
+  width: 80px;
+  height: 80px;
+  stroke: var(--accent);
+  stroke-width: 4;
+  fill: none;
+}
+
+/* ========== LOADING STATE ========== */
+.state-loading {
+  display: none;
+}
+
+.loading-block {
+  margin: 10px 12px;
+  border: 4px solid var(--border-color);
+  height: 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.loading-block.tall {
+  height: 180px;
+}
+
+.loading-block.medium {
+  height: 100px;
+}
+
+.loading-halftone {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: radial-gradient(circle, var(--border-color) 1.2px, transparent 1.2px);
+  background-size: 8px 8px;
+  opacity: 0.15;
+  animation: halftone-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes halftone-pulse {
+  0%, 100% { opacity: 0.08; }
+  50% { opacity: 0.22; }
+}
+
+/* ========== GRID TEXTURE OVERLAY ========== */
+.grid-texture {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image:
+    linear-gradient(var(--border-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.phone-frame > .grid-texture {
+  z-index: 0;
+}
+
+.screen-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* ========== NOISE TEXTURE (CSS only) ========== */
+.noise-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px 128px;
+}
+
+/* ========== STATE MANAGEMENT ========== */
+.state-hero,
+.state-empty,
+.state-loading {
+  display: none;
+}
+
+.state-hero.visible {
+  display: block;
+}
+
+.state-empty.visible {
+  display: block;
+}
+
+.state-loading.visible {
+  display: block;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 440px) {
+  .phone-frame {
+    border-left: none;
+    border-right: none;
+  }
+  body {
+    padding: 0;
+    background: var(--bg);
+  }
+  body::before {
+    display: none;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="control-btn active" onclick="showState('hero')">HERO</button>
+  <button class="control-btn" onclick="showState('empty')">EMPTY</button>
+  <button class="control-btn" onclick="showState('loading')">LOADING</button>
+  <button class="control-btn" onclick="toggleTheme()" id="theme-btn">DARK</button>
+</div>
+
+<!-- Phone Frame -->
+<div class="phone-frame" id="phone">
+  <div class="grid-texture"></div>
+  <div class="noise-overlay"></div>
+
+  <!-- Notch -->
+  <div class="notch"></div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span class="status-bar-left">9:41</span>
+    <div class="status-bar-right">
+      <span>5G</span>
+      <span>
+        <span class="battery"><span class="battery-fill"></span></span>
+      </span>
+    </div>
+  </div>
+
+  <!-- Screen Content -->
+  <div class="screen-content">
+
+    <!-- Top Header -->
+    <div class="top-header">
+      <div class="logo-group">
+        <div class="logo-icon">G</div>
+        <span class="logo-text">GASTIFY</span>
+      </div>
+      <div class="header-right">
+        <div class="credit-badges">
+          <span class="credit-badge red">12</span>
+          <span class="credit-badge violet">3</span>
+        </div>
+        <div class="avatar">
+          <div class="avatar-inner">GK</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== STATE: HERO (populated) ====== -->
+    <div class="state-hero visible" id="state-hero">
+
+      <!-- Carousel Card -->
+      <div class="carousel-card">
+        <div class="carousel-header">
+          <div class="month-nav">
+            <button class="month-arrow">&lt;</button>
+            <span class="month-label">MARZO 2026</span>
+            <button class="month-arrow">&gt;</button>
+          </div>
+          <div class="view-toggles">
+            <button class="view-toggle active">MES</button>
+            <button class="view-toggle">ANO</button>
+          </div>
+        </div>
+
+        <div class="slide-label">ESTE MES</div>
+
+        <!-- Treemap -->
+        <div class="treemap">
+          <!-- Alimentacion - largest, spans 2 rows -->
+          <div class="treemap-item large alimentacion">
+            <div class="treemap-emoji">&#x1F6D2;</div>
+            <div class="treemap-name">ALIMENTACION</div>
+            <div class="treemap-pct">45%</div>
+            <div class="treemap-amount">$234.500</div>
+          </div>
+
+          <!-- Restaurantes -->
+          <div class="treemap-item medium restaurantes">
+            <div class="treemap-emoji">&#x1F37D;&#xFE0F;</div>
+            <div class="treemap-name">RESTAURANTES</div>
+            <div class="treemap-pct">22%</div>
+            <div class="treemap-amount">$115.000</div>
+          </div>
+
+          <!-- Transporte -->
+          <div class="treemap-item medium transporte">
+            <div class="treemap-emoji">&#x1F697;</div>
+            <div class="treemap-name">TRANSPORTE</div>
+            <div class="treemap-pct">15%</div>
+            <div class="treemap-amount">$78.000</div>
+          </div>
+
+          <!-- Salud -->
+          <div class="treemap-item small salud">
+            <div class="treemap-emoji">&#x1F48A;</div>
+            <div class="treemap-name">SALUD</div>
+            <div class="treemap-pct">10%</div>
+            <div class="treemap-amount">$52.300</div>
+          </div>
+
+          <!-- Otros -->
+          <div class="treemap-item small otros">
+            <div class="treemap-emoji">&#x1F4E6;</div>
+            <div class="treemap-name">OTROS</div>
+            <div class="treemap-pct">8%</div>
+            <div class="treemap-amount">$41.800</div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="carousel-footer">
+          <div class="sticker-badge">60%</div>
+          <div class="total-section">
+            <div class="total-label">TOTAL DEL MES</div>
+            <div class="total-amount">$521.600</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recientes Section -->
+      <div class="recientes-section">
+        <div class="section-header">
+          <div class="section-title">ULTIMOS ESCANEADOS</div>
+          <div class="section-title-underline"></div>
+        </div>
+
+        <!-- Transaction Cards -->
+        <div class="transaction-card">
+          <div class="tx-accent-strip yellow"></div>
+          <div class="tx-body">
+            <div class="tx-info">
+              <div class="tx-name">SUPERMERCADO LIDER</div>
+              <div class="tx-date">HOY</div>
+            </div>
+            <div class="tx-amount">$45.230</div>
+          </div>
+        </div>
+
+        <div class="transaction-card">
+          <div class="tx-accent-strip violet"></div>
+          <div class="tx-body">
+            <div class="tx-info">
+              <div class="tx-name">FARMACIA CRUZ VERDE</div>
+              <div class="tx-date">AYER</div>
+            </div>
+            <div class="tx-amount">$12.890</div>
+          </div>
+        </div>
+
+        <div class="transaction-card">
+          <div class="tx-accent-strip red"></div>
+          <div class="tx-body">
+            <div class="tx-info">
+              <div class="tx-name">SHELL PROVIDENCIA</div>
+              <div class="tx-date">18 MAR</div>
+            </div>
+            <div class="tx-amount">$35.000</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== STATE: EMPTY ====== -->
+    <div class="state-empty" id="state-empty">
+      <div class="empty-content">
+        <div style="margin-top: 60px;"></div>
+        <div class="empty-title">ESCANEA TU PRIMERA BOLETA</div>
+        <div class="empty-subtitle">APUNTA LA CAMARA Y LISTO</div>
+        <div style="margin: 30px auto; width: 80px; height: 80px; border: 4px solid var(--border-color); display: flex; align-items: center; justify-content: center; transform: rotate(-3deg); box-shadow: 6px 6px 0px var(--shadow-color); background: var(--secondary);">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--border-color)" stroke-width="3" stroke-linecap="square">
+            <rect x="2" y="6" width="20" height="14" rx="0"/>
+            <circle cx="12" cy="13" r="4"/>
+            <path d="M7 2h10"/>
+          </svg>
+        </div>
+        <div class="empty-arrow">
+          <svg viewBox="0 0 80 80" fill="none">
+            <path d="M10 10 C 20 40, 40 60, 55 65" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" fill="none"/>
+            <path d="M45 60 L55 65 L48 55" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+        </div>
+        <div style="margin-top: 40px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--text-secondary);">
+          PRESIONA EL BOTON ROJO
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== STATE: LOADING ====== -->
+    <div class="state-loading" id="state-loading">
+      <div style="padding-top: 10px;"></div>
+      <div class="loading-block tall">
+        <div class="loading-halftone"></div>
+      </div>
+      <div class="loading-block medium">
+        <div class="loading-halftone" style="animation-delay: 0.2s;"></div>
+      </div>
+      <div class="loading-block">
+        <div class="loading-halftone" style="animation-delay: 0.4s;"></div>
+      </div>
+      <div class="loading-block">
+        <div class="loading-halftone" style="animation-delay: 0.6s;"></div>
+      </div>
+      <div class="loading-block">
+        <div class="loading-halftone" style="animation-delay: 0.8s;"></div>
+      </div>
+    </div>
+
+    <!-- Spacer for bottom nav -->
+    <div style="height: 70px;"></div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="bottom-nav" style="position: sticky; bottom: 0; z-index: 10;">
+    <div class="nav-item active">
+      <!-- Home icon -->
+      <svg viewBox="0 0 24 24" stroke-linecap="square" stroke-linejoin="miter">
+        <path d="M3 12L12 3l9 9"/>
+        <path d="M5 10v10h14V10"/>
+      </svg>
+    </div>
+    <div class="nav-item">
+      <!-- Chart icon -->
+      <svg viewBox="0 0 24 24" stroke-linecap="square" stroke-linejoin="miter">
+        <rect x="3" y="12" width="4" height="9"/>
+        <rect x="10" y="6" width="4" height="15"/>
+        <rect x="17" y="3" width="4" height="18"/>
+      </svg>
+    </div>
+    <div class="fab-btn">
+      <!-- Camera icon -->
+      <svg viewBox="0 0 24 24" stroke-linecap="square" stroke-linejoin="miter">
+        <rect x="2" y="6" width="20" height="15" rx="0"/>
+        <circle cx="12" cy="14" r="4"/>
+        <path d="M8 6l1-3h6l1 3"/>
+      </svg>
+    </div>
+    <div class="nav-item">
+      <!-- Clock/history icon -->
+      <svg viewBox="0 0 24 24" stroke-linecap="square" stroke-linejoin="miter">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M12 7v5l3 3"/>
+      </svg>
+    </div>
+    <div class="nav-item">
+      <!-- Settings icon -->
+      <svg viewBox="0 0 24 24" stroke-linecap="square" stroke-linejoin="miter">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Home Indicator -->
+  <div class="home-indicator"></div>
+</div>
+
+<script>
+function showState(state) {
+  document.querySelectorAll('.state-hero, .state-empty, .state-loading').forEach(el => {
+    el.classList.remove('visible');
+  });
+  document.getElementById('state-' + state).classList.add('visible');
+
+  document.querySelectorAll('.control-btn').forEach(btn => {
+    if (btn.id !== 'theme-btn') {
+      btn.classList.remove('active');
+    }
+  });
+  event.target.classList.add('active');
+}
+
+function toggleTheme() {
+  const phone = document.getElementById('phone');
+  const btn = document.getElementById('theme-btn');
+  if (phone.hasAttribute('data-theme')) {
+    phone.removeAttribute('data-theme');
+    btn.textContent = 'DARK';
+  } else {
+    phone.setAttribute('data-theme', 'dark');
+    btn.textContent = 'LIGHT';
+  }
+}
+</script>
+
+</body>
+</html>

@@ -21,8 +21,12 @@ As a developer, I want to iterate the statement extraction prompt to fix known V
 
 ### Architectural
 - **AC-ARCH-1:** Prompt lives in `prompt-testing/prompts/statement/v2-statement-extraction.ts`
-- **AC-ARCH-2:** Test results documented per bank in `scripts/statement-scan-spike/results/`
+- **AC-ARCH-2:** Test results documented per bank in `prompt-testing/results/statement/v2/`
 - **AC-ARCH-3:** Cloud Function `analyzeStatement.ts` updated to use V2 prompt as default
+
+## Architecture Reference
+- **V5 Plan:** `docs/architecture/proposals/implemented/EPIC-18-CREDIT-CARD-STATEMENT-SCANNING.md`
+- **Note:** This is the STATEMENT prompt V2 (distinct from receipt prompt V4 — separate lineages)
 
 ## File Specification
 
@@ -30,11 +34,11 @@ As a developer, I want to iterate the statement extraction prompt to fix known V
 |----------------|------------|--------|
 | V2 prompt | `prompt-testing/prompts/statement/v2-statement-extraction.ts` | NEW |
 | Prompt index | `prompt-testing/prompts/statement/index.ts` | MODIFY |
-| Test runner script | `scripts/statement-scan-spike/run-test-suite.sh` | MODIFY |
+| Test CLI | `prompt-testing/scripts/statement/index.ts` | MODIFY (--password flag) |
+| Scanner lib | `prompt-testing/scripts/statement/lib/scanner.ts` | MODIFY (password param) |
 | Cloud Function | `functions/src/analyzeStatement.ts` | MODIFY (prompt version) |
-| Test results | `scripts/statement-scan-spike/results/v2/` | NEW (directory) |
+| Test results | `prompt-testing/results/statement/v2/` | NEW (directory) |
 | Edwards credentials | `prompt-testing/test-cases/CreditCard/edwards/credentials.json` | NEW |
-| Password support | `scripts/statement-scan-spike/analyze-statement.ts` | MODIFY (--password flag) |
 
 ## Tasks
 
