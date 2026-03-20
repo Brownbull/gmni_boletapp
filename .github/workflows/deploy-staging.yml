@@ -74,6 +74,20 @@ jobs:
         run: |
           echo "{\"sha\":\"${{ github.sha }}\",\"ref\":\"${{ github.ref }}\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > public/version.json
 
+      - name: Create .env.staging
+        if: inputs.component == 'all' || inputs.component == 'hosting'
+        run: |
+          printf '%s\n' \
+            'VITE_FIREBASE_API_KEY=AIzaSyCRyXcNjvVhWItbuQZr51gA5FIgBtYDrqs' \
+            'VITE_FIREBASE_AUTH_DOMAIN=boletapp-staging.firebaseapp.com' \
+            'VITE_FIREBASE_PROJECT_ID=boletapp-staging' \
+            'VITE_FIREBASE_STORAGE_BUCKET=boletapp-staging.firebasestorage.app' \
+            'VITE_FIREBASE_MESSAGING_SENDER_ID=660389690821' \
+            'VITE_FIREBASE_APP_ID=1:660389690821:web:44df423653740399e39fac' \
+            'VITE_E2E_MODE=production' \
+            'VITE_ENABLE_TEST_LOGIN=true' \
+            > .env.staging
+
       - name: Build for staging
         if: inputs.component == 'all' || inputs.component == 'hosting'
         run: npm run build:staging
