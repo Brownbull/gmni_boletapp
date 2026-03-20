@@ -76,14 +76,21 @@ jobs:
 
       - name: Create .env.staging
         if: inputs.component == 'all' || inputs.component == 'hosting'
+        env:
+          STAGING_API_KEY: ${{ secrets.STAGING_FIREBASE_API_KEY }}
+          STAGING_AUTH_DOMAIN: ${{ secrets.STAGING_FIREBASE_AUTH_DOMAIN }}
+          STAGING_PROJECT_ID: ${{ secrets.STAGING_FIREBASE_PROJECT_ID }}
+          STAGING_STORAGE_BUCKET: ${{ secrets.STAGING_FIREBASE_STORAGE_BUCKET }}
+          STAGING_MESSAGING_SENDER_ID: ${{ secrets.STAGING_FIREBASE_MESSAGING_SENDER_ID }}
+          STAGING_APP_ID: ${{ secrets.STAGING_FIREBASE_APP_ID }}
         run: |
           printf '%s\n' \
-            'VITE_FIREBASE_API_KEY=AIzaSyCRyXcNjvVhWItbuQZr51gA5FIgBtYDrqs' \
-            'VITE_FIREBASE_AUTH_DOMAIN=boletapp-staging.firebaseapp.com' \
-            'VITE_FIREBASE_PROJECT_ID=boletapp-staging' \
-            'VITE_FIREBASE_STORAGE_BUCKET=boletapp-staging.firebasestorage.app' \
-            'VITE_FIREBASE_MESSAGING_SENDER_ID=660389690821' \
-            'VITE_FIREBASE_APP_ID=1:660389690821:web:44df423653740399e39fac' \
+            "VITE_FIREBASE_API_KEY=${STAGING_API_KEY}" \
+            "VITE_FIREBASE_AUTH_DOMAIN=${STAGING_AUTH_DOMAIN}" \
+            "VITE_FIREBASE_PROJECT_ID=${STAGING_PROJECT_ID}" \
+            "VITE_FIREBASE_STORAGE_BUCKET=${STAGING_STORAGE_BUCKET}" \
+            "VITE_FIREBASE_MESSAGING_SENDER_ID=${STAGING_MESSAGING_SENDER_ID}" \
+            "VITE_FIREBASE_APP_ID=${STAGING_APP_ID}" \
             'VITE_E2E_MODE=production' \
             'VITE_ENABLE_TEST_LOGIN=true' \
             > .env.staging
