@@ -28,6 +28,8 @@ import { getItemGroupColors } from '@/config/categoryColors';
 import type { Transaction, TransactionItem } from '@/types/transaction';
 import type { Language } from '@/utils/translations';
 import { sanitizeInput } from '@/utils/sanitize';
+import { deriveItemPrices } from '@entities/transaction/utils/itemPriceDerivation';
+import { formatQty, shouldShowQty, sanitizeQtyInput, clampQtyOnBlur } from '@entities/transaction/utils/qtyUtils';
 import type { SuggestionData } from './useCrossStoreSuggestions';
 
 // ============================================================================
@@ -346,6 +348,7 @@ function GroupedItemEditView({
   onDoneEditing,
   onShowCategoryOverlay,
 }: GroupedItemEditViewProps) {
+  const derivedUnitPrice = deriveItemPrices(item).unitPrice;
   return (
     <div
       className="p-2.5 rounded-lg space-y-1.5"
@@ -360,12 +363,12 @@ function GroupedItemEditView({
         placeholder={t('itemName')}
         autoFocus
       />
-      {/* Price + unitPrice - Story 14.24 + 18-8 */}
-      <div className="flex gap-1.5">
+      {/* Price + derived unitPrice - Story 14.24 + 18-8 + TD-18-13 */}
+      <div className="flex gap-1.5 items-center">
         <input
           type="text"
           inputMode="decimal"
-          className={`${(item.qty ?? 1) > 1 ? 'flex-1' : 'w-full'} px-2 py-1.5 border rounded-lg text-xs`}
+          className="flex-1 px-2 py-1.5 border rounded-lg text-xs"
           style={inputStyle}
           defaultValue={item.totalPrice || ''}
           key={`totalPrice-${i}`}
@@ -384,7 +387,7 @@ function GroupedItemEditView({
             const val = parseFloat(e.target.value);
             if (!isNaN(val) && val >= 0) {
               onUpdateItem(i, 'totalPrice', val);
-              e.target.value = val % 1 === 0 ? String(val) : String(val);
+              e.target.value = String(val);
             } else {
               onUpdateItem(i, 'totalPrice', 0);
               e.target.value = '0';
@@ -393,25 +396,14 @@ function GroupedItemEditView({
           onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
           placeholder={t('price')}
         />
-        {(item.qty ?? 1) > 1 && (
-          <input
-            type="text"
-            inputMode="decimal"
-            className="w-24 px-2 py-1.5 border rounded-lg text-xs"
-            style={inputStyle}
-            defaultValue={item.unitPrice ?? ''}
-            key={`unitPrice-${i}`}
-            onFocus={e => e.target.select()}
-            onBlur={e => {
-              const val = parseFloat(e.target.value);
-              if (!isNaN(val) && val >= 0) {
-                onUpdateItem(i, 'unitPrice', val);
-              }
-            }}
-            onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-            placeholder={t('unitPrice')}
-          />
-        )}
+        <span
+          className="w-24 px-2 py-1.5 text-xs text-right truncate"
+          style={{ color: 'var(--text-tertiary)' }}
+          aria-label={`${t('unitPrice')}: ${derivedUnitPrice}`}
+          title={t('unitPrice')}
+        >
+          {t('unitPrice')}: {derivedUnitPrice}
+        </span>
       </div>
       {/* Story 14.24: Category pill and quantity in same row */}
       <div className="flex items-center gap-2">
@@ -428,37 +420,32 @@ function GroupedItemEditView({
             type="item"
           />
         </button>
-        {/* Integer-only quantity field */}
+        {/* Quantity field (decimal supported) — TD-18-14 */}
         <input
           type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          className="w-14 px-2 py-1.5 border rounded-lg text-xs text-center"
+          inputMode="decimal"
+          className="w-16 min-h-10 px-2 py-1.5 border rounded-lg text-xs text-center"
           style={inputStyle}
           defaultValue={item.qty ?? 1}
           key={`qty-${i}`}
+          aria-label={t('qty')}
           onFocus={e => e.target.select()}
           onChange={e => {
-            const cleaned = e.target.value.replace(/[^0-9]/g, '');
+            const cleaned = sanitizeQtyInput(e.target.value);
             if (cleaned !== e.target.value) e.target.value = cleaned;
           }}
           onBlur={e => {
-            const val = parseInt(e.target.value, 10);
-            if (!isNaN(val) && val >= 1) {
-              onUpdateItem(i, 'qty', val);
-              e.target.value = String(val);
-            } else {
-              onUpdateItem(i, 'qty', 1);
-              e.target.value = '1';
-            }
+            const val = clampQtyOnBlur(e.target.value);
+            onUpdateItem(i, 'qty', val);
+            e.target.value = String(val);
           }}
           onKeyDown={e => {
-            if (e.key === '.' || e.key === ',' || e.key === 'e' || e.key === 'E' || e.key === '-' || e.key === '+') {
+            if (e.key === 'e' || e.key === 'E' || e.key === '-' || e.key === '+') {
               e.preventDefault();
             }
             if (e.key === 'Enter') e.currentTarget.blur();
           }}
-          placeholder={lang === 'es' ? 'Cant.' : 'Qty'}
+          placeholder={t('qty')}
         />
       </div>
       {/* Subcategory */}
@@ -578,14 +565,14 @@ function ItemDisplayRow({
             </span>
           )}
         </div>
-        {(item.qty ?? 1) > 1 && (
+        {shouldShowQty(item.qty) && (
           <span
             className="text-xs font-medium flex-shrink-0"
             style={{ color: 'var(--text-tertiary)' }}
           >
             {item.unitPrice
-              ? `${formatCurrency(item.unitPrice, displayCurrency)} x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}`
-              : `x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}`}
+              ? `${formatCurrency(item.unitPrice, displayCurrency)} x${formatQty(item.qty)}`
+              : `x${formatQty(item.qty)}`}
           </span>
         )}
       </div>
@@ -622,6 +609,7 @@ function OriginalItemEditView({
   onDoneEditing,
   onShowCategoryOverlay,
 }: OriginalItemEditViewProps) {
+  const derivedUnitPrice = deriveItemPrices(item).unitPrice;
   return (
     <div className="space-y-1.5">
       <div className="flex items-center gap-2">
@@ -666,22 +654,37 @@ function OriginalItemEditView({
           }}
           placeholder={t('itemPrice')}
         />
-        {(item.qty ?? 1) > 1 && (
-          <input
-            type="text"
-            inputMode="decimal"
-            className="w-20 px-2 py-1.5 border rounded-lg text-xs"
-            style={inputStyle}
-            defaultValue={item.unitPrice ?? ''}
-            key={`unitPrice-original-${i}`}
-            onFocus={e => e.target.select()}
-            onBlur={e => {
-              const val = parseFloat(e.target.value);
-              if (!isNaN(val) && val >= 0) onUpdateItem(i, 'unitPrice', val);
-            }}
-            placeholder={t('unitPrice')}
-          />
-        )}
+        {/* TD-18-14: qty input (decimal supported) */}
+        <input
+          type="text"
+          inputMode="decimal"
+          className="w-16 min-h-10 px-1.5 py-1.5 border rounded-lg text-xs text-center"
+          style={inputStyle}
+          defaultValue={item.qty ?? 1}
+          key={`qty-original-${i}`}
+          aria-label={t('qty')}
+          onFocus={e => e.target.select()}
+          onChange={e => {
+            const cleaned = sanitizeQtyInput(e.target.value);
+            if (cleaned !== e.target.value) e.target.value = cleaned;
+          }}
+          onBlur={e => {
+            const val = clampQtyOnBlur(e.target.value);
+            onUpdateItem(i, 'qty', val);
+            e.target.value = String(val);
+          }}
+          onKeyDown={e => {
+            if (e.key === 'e' || e.key === 'E' || e.key === '-' || e.key === '+') {
+              e.preventDefault();
+            }
+            if (e.key === 'Enter') e.currentTarget.blur();
+          }}
+          placeholder={t('qty')}
+        />
+        {/* TD-18-13: derived unitPrice (read-only) */}
+        <span className="w-16 text-xs text-right truncate" style={{ color: 'var(--text-tertiary)' }} aria-label={`${t('unitPrice')}: ${derivedUnitPrice}`}>
+          {t('unitPrice')}: {derivedUnitPrice}
+        </span>
         <button
           onClick={onShowCategoryOverlay}
           className="px-2 py-1 rounded-lg text-xs"
@@ -774,14 +777,14 @@ function OriginalItemDisplayRow({
               {item.subcategory}
             </span>
           )}
-          {(item.qty ?? 1) > 1 && (
+          {shouldShowQty(item.qty) && (
             <span
               className="text-xs font-medium"
               style={{ color: 'var(--text-tertiary)' }}
             >
               {item.unitPrice
-                ? `${formatCurrency(item.unitPrice, displayCurrency)} x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}`
-                : `x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}`}
+                ? `${formatCurrency(item.unitPrice, displayCurrency)} x${formatQty(item.qty)}`
+                : `x${formatQty(item.qty)}`}
             </span>
           )}
         </div>

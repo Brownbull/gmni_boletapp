@@ -327,3 +327,43 @@
 - **Files:** `src/features/scan/services/pendingScanUpload.ts`
 - **Stage:** PROD — Data integrity for image copy pipeline
 - **Estimated effort:** 1 point (add response.ok check + error throw)
+
+### [PROD] Controlled vs Uncontrolled Mismatch in Item Editor totalPrice Inputs
+
+- **Source:** TD-18-13 review (2026-03-19), updated repeat review (2026-03-19)
+- **Finding:** `EditViewItemsSection.tsx` uses controlled totalPrice input (`value` + `onChange`) while `EditorItemsSection.tsx` uses uncontrolled (`defaultValue` + `onBlur`). Qty mismatch was resolved in TD-18-13 repeat review (both now uncontrolled). totalPrice mismatch remains. Causes behavioral inconsistency: controlled inputs update state on every keystroke; uncontrolled only on blur.
+- **Files:** `src/features/transaction-editor/views/EditViewItemsSection.tsx`, `src/features/transaction-editor/views/TransactionEditorView/EditorItemsSection.tsx`
+- **Stage:** PROD — UX consistency, not feature-breaking
+- **Estimated effort:** 2 points (standardize totalPrice inputs to uncontrolled pattern)
+
+### [PROD] Structural Layout Difference Between Grouped and Original Edit Views
+
+- **Source:** TD-18-13 repeat review (2026-03-19)
+- **Finding:** In `EditorItemsSection.tsx`, `GroupedItemEditView` places the unitPrice span in the price row (between totalPrice and category/qty), while `OriginalItemEditView` places it in the action row (between qty and category button). Different visual structure for the same fields creates inconsistent user experience between the two view modes.
+- **Files:** `src/features/transaction-editor/views/TransactionEditorView/EditorItemsSection.tsx`
+- **Stage:** PROD — UX consistency, not feature-breaking
+- **Estimated effort:** 2 points (align layout structure between both edit views)
+
+### [PROD] Duplicate Qty Validation Logic Across 4 Input Locations
+
+- **Source:** TD-18-13 review (2026-03-19)
+- **Finding:** Integer-only qty validation (`replace(/[^0-9]/g, '')` + `parseInt` + fallback-to-1) duplicated in 4 places across 2 files. `EditorItemsSection.tsx` additionally blocks keys via `onKeyDown`; `EditViewItemsSection.tsx` does not. Should extract to a shared `parseQtyInput()` helper.
+- **Files:** `src/features/transaction-editor/views/EditViewItemsSection.tsx`, `src/features/transaction-editor/views/TransactionEditorView/EditorItemsSection.tsx`
+- **Stage:** PROD — DRY violation, maintenance risk
+- **Estimated effort:** 1 point (extract shared helper, update 4 call sites)
+
+### [PROD] TransactionEditorView handleFinalSave Guard Branch Test
+
+- **Source:** TD-18-15 review (2026-03-19)
+- **Finding:** AC-8 test only covers the happy path (items present). The `if (!transaction) return` early exit guard in handleFinalSave has no test coverage. Minor gap — guard is trivial but untested.
+- **Files:** `tests/unit/features/transaction-editor/views/TransactionEditorViewInternal.test.tsx`
+- **Stage:** PROD — test completeness for guard branches
+- **Estimated effort:** 0.5 points (add one test case with null transaction)
+
+### [PROD] parseStrictNumber Mock Accuracy in Qty Tests
+
+- **Source:** TD-18-15 review (2026-03-19)
+- **Finding:** `makeProps().parseStrictNumber` is stubbed as `parseFloat(String(val)) || 0` but the real implementation uses strict integer parsing for CLP. Stub is never asserted against currently but could mislead future price-related tests in the same file.
+- **Files:** `src/features/transaction-editor/views/EditViewItemsSection.qty.test.tsx`
+- **Stage:** PROD — mock accuracy for future test reliability
+- **Estimated effort:** 0.5 points (align stub with real implementation)

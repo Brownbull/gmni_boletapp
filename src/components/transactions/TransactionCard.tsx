@@ -25,6 +25,7 @@ import { useLocationDisplay } from '../../hooks/useLocations';
 import type { ForeignLocationDisplayFormat } from '@/types/preferences';
 import { DEFAULT_CURRENCY } from '../../utils/currency';
 import { DEFAULT_TIME } from '../../entities/transaction/utils';
+import { formatQty, shouldShowQty } from '@entities/transaction/utils/qtyUtils';
 import type { Language } from '../../types/settings';
 
 
@@ -528,11 +529,11 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
                 className="flex justify-between items-center py-1 text-xs"
               >
                 <span style={{ color: 'var(--text-secondary)' }}>{item.name}</span>
-                {/* Story 14.15b: Show quantity if > 1 */}
+                {/* TD-18-14: Show quantity when != 1 (including decimals) */}
                 <div className="flex items-center gap-1">
-                  {(item.qty ?? 1) > 1 && (
+                  {shouldShowQty(item.qty) && (
                     <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
-                      x{item.qty}
+                      x{formatQty(item.qty)}
                     </span>
                   )}
                   <span

@@ -11,6 +11,7 @@ import { useStaggeredReveal } from '@/hooks/useStaggeredReveal';
 import { useModalActions } from '@managers/ModalManager';
 import { useToast } from '@/shared/hooks';
 import { hasItemWithPrice } from '@/utils/transactionValidation';
+import { deriveItemsPrices } from '@entities/transaction/utils/itemPriceDerivation';
 import { sanitizeMerchantName, sanitizeItemName, sanitizeLocation, sanitizeSubcategory } from '@/utils/sanitize';
 import { normalizeItemCategory } from '@/utils/categoryNormalizer';
 import { getItemCategoryGroup } from '@/config/categoryColors';
@@ -151,13 +152,14 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
 
   const handleAddItem = () => {
     if (!transaction) return;
-    onUpdateTransaction({ ...transaction, items: [...transaction.items, { name: '', totalPrice: 0, category: 'Other', subcategory: '' }] });
+    onUpdateTransaction({ ...transaction, items: [...transaction.items, { name: '', totalPrice: 0, qty: 1, category: 'Other', subcategory: '' }] });
     setEditingItemIndex(transaction.items.length);
   };
   const handleUpdateItem = (index: number, field: string, value: unknown) => {
     if (!transaction) return;
     const newItems = [...transaction.items];
-    newItems[index] = { ...newItems[index], [field]: value };
+    const safeValue = field === 'qty' ? Math.min(Math.max(1, Number(value) || 1), 9999) : value;
+    newItems[index] = { ...newItems[index], [field]: safeValue };
     onUpdateTransaction({ ...transaction, items: newItems });
   };
   const handleDeleteItem = (index: number) => {
@@ -174,9 +176,9 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
       alias: sanitizeMerchantName(transaction.alias || ''),
       city: sanitizeLocation(transaction.city || ''), country: sanitizeLocation(transaction.country || ''),
       total: calculatedTotal,
-      items: transaction.items.map(item => ({
+      items: deriveItemsPrices(transaction.items.map(item => ({
         ...item, name: sanitizeItemName(item.name), subcategory: item.subcategory ? sanitizeSubcategory(item.subcategory) : undefined,
-      })),
+      }))),
     });
   };
 

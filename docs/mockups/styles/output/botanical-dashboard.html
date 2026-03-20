@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gastify - Botanical Dashboard Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ===== CSS RESET & BASE ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F9F8F4;
+    --bg-card: #FFFFFF;
+    --fg: #2D3A31;
+    --fg-muted: #5A6B5E;
+    --primary: #8C9A84;
+    --primary-light: rgba(140, 154, 132, 0.12);
+    --secondary: #DCCFC2;
+    --secondary-light: rgba(220, 207, 194, 0.25);
+    --border: #E6E2DA;
+    --interactive: #C27B66;
+    --interactive-light: rgba(194, 123, 102, 0.12);
+    --stone-light: rgba(230, 226, 218, 0.4);
+    --shadow-sm: 0 4px 6px rgba(45,58,49,0.05);
+    --shadow-md: 0 20px 40px rgba(45,58,49,0.05);
+    --shadow-lg: 0 8px 32px rgba(45,58,49,0.08);
+    --frame: #2D3A31;
+    --font-serif: 'Playfair Display', Georgia, serif;
+    --font-sans: 'Source Sans 3', 'Source Sans Pro', system-ui, sans-serif;
+    --radius-card: 1.5rem;
+    --radius-full: 9999px;
+  }
+
+  [data-theme="dark"] {
+    --bg: #1a2420;
+    --bg-card: #243530;
+    --fg: #e2e8e0;
+    --fg-muted: #9aab9e;
+    --primary: #8C9A84;
+    --primary-light: rgba(140, 154, 132, 0.18);
+    --secondary: #3d4a42;
+    --secondary-light: rgba(220, 207, 194, 0.08);
+    --border: #354840;
+    --interactive: #C27B66;
+    --interactive-light: rgba(194, 123, 102, 0.18);
+    --stone-light: rgba(53, 72, 64, 0.5);
+    --shadow-sm: 0 4px 6px rgba(0,0,0,0.15);
+    --shadow-md: 0 20px 40px rgba(0,0,0,0.15);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.2);
+    --frame: #141c18;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: #e8e6e0;
+    color: var(--fg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  [data-theme="dark"] body {
+    background: #0d1410;
+  }
+
+  /* ===== CONTROLS BAR ===== */
+  .controls-bar {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .controls-bar button {
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    padding: 0.5rem 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    background: var(--bg-card);
+    color: var(--fg);
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .controls-bar button:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+  }
+
+  .controls-bar button.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+
+  /* ===== PHONE FRAME ===== */
+  .phone-frame {
+    width: 420px;
+    max-width: 100%;
+    background: var(--frame);
+    border-radius: 3rem;
+    padding: 0.75rem;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
+    position: relative;
+  }
+
+  .phone-screen {
+    background: var(--bg);
+    border-radius: 2.4rem;
+    overflow: hidden;
+    position: relative;
+    min-height: 820px;
+  }
+
+  /* Paper grain texture overlay */
+  .phone-screen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0.015;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-size: 128px 128px;
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1.5rem 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--fg-muted);
+  }
+
+  .status-bar-left { font-weight: 600; font-size: 0.8125rem; color: var(--fg); }
+
+  .status-icons { display: flex; gap: 0.35rem; align-items: center; }
+
+  .notch {
+    width: 120px;
+    height: 28px;
+    background: var(--frame);
+    border-radius: 0 0 1.25rem 1.25rem;
+    margin: 0 auto;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* ===== SCREEN CONTENT ===== */
+  .screen-content {
+    padding: 0 1.25rem 6rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===== HEADER ===== */
+  .app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0 1rem;
+  }
+
+  .app-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  .app-brand-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    background: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: var(--primary);
+    border: 1px solid var(--border);
+  }
+
+  .app-brand-name {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: var(--fg);
+    letter-spacing: -0.01em;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .credit-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: var(--font-sans);
+  }
+
+  .credit-pill.sage {
+    background: var(--primary-light);
+    color: var(--primary);
+  }
+
+  .credit-pill.terracotta {
+    background: var(--interactive-light);
+    color: var(--interactive);
+  }
+
+  .credit-pill svg { width: 12px; height: 12px; }
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-full);
+    border: 1.5px solid var(--border);
+    background: var(--secondary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .avatar svg { width: 18px; height: 18px; color: var(--fg-muted); }
+
+  /* ===== CAROUSEL CARD ===== */
+  .carousel-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: box-shadow 0.5s ease-out;
+  }
+
+  .carousel-card:hover {
+    box-shadow: var(--shadow-lg);
+  }
+
+  .carousel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem 0.75rem;
+  }
+
+  .month-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .month-nav-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border);
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--fg-muted);
+    transition: all 0.3s ease;
+  }
+
+  .month-nav-btn:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+    border-color: var(--primary);
+  }
+
+  .month-nav-btn svg { width: 14px; height: 14px; stroke-width: 1.5; }
+
+  .month-label {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--fg);
+  }
+
+  .view-toggles {
+    display: flex;
+    gap: 0.25rem;
+    background: var(--stone-light);
+    border-radius: var(--radius-full);
+    padding: 0.2rem;
+  }
+
+  .view-toggle-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-full);
+    border: none;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--fg-muted);
+    transition: all 0.3s ease;
+  }
+
+  .view-toggle-btn.active {
+    background: var(--bg-card);
+    color: var(--primary);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .view-toggle-btn svg { width: 14px; height: 14px; stroke-width: 1.5; }
+
+  /* ===== TREEMAP ===== */
+  .treemap {
+    padding: 0 1rem 0.75rem;
+  }
+
+  .treemap-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 0.5rem;
+  }
+
+  .treemap-cell {
+    border-radius: 1.25rem;
+    padding: 0.875rem 1rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.5s ease-out, box-shadow 0.5s ease-out;
+    cursor: default;
+  }
+
+  .treemap-cell:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .treemap-cell.alimentacion {
+    grid-column: 1 / -1;
+    background: var(--primary-light);
+    border: 1px solid rgba(140, 154, 132, 0.2);
+  }
+
+  .treemap-cell.restaurantes {
+    background: var(--secondary-light);
+    border: 1px solid rgba(220, 207, 194, 0.3);
+  }
+
+  .treemap-cell.transporte {
+    background: var(--stone-light);
+    border: 1px solid var(--border);
+  }
+
+  .treemap-cell.salud {
+    background: var(--interactive-light);
+    border: 1px solid rgba(194, 123, 102, 0.2);
+  }
+
+  .treemap-cell.otros {
+    background: rgba(249, 248, 244, 0.6);
+    border: 1px solid var(--border);
+  }
+
+  [data-theme="dark"] .treemap-cell.otros {
+    background: rgba(36, 53, 48, 0.4);
+  }
+
+  .treemap-cell-header {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .treemap-cell-emoji {
+    font-size: 0.875rem;
+    line-height: 1;
+  }
+
+  .treemap-cell-name {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--fg);
+  }
+
+  .treemap-cell-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .treemap-cell-pct {
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--fg-muted);
+  }
+
+  .treemap-cell-amount {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: var(--fg);
+  }
+
+  .treemap-cell.alimentacion .treemap-cell-amount {
+    font-size: 1.125rem;
+  }
+
+  /* ===== CAROUSEL FOOTER ===== */
+  .carousel-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .carousel-footer-label {
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: var(--fg-muted);
+  }
+
+  .carousel-footer-total {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 1.375rem;
+    color: var(--fg);
+  }
+
+  /* Carousel indicator */
+  .carousel-indicator {
+    display: flex;
+    gap: 0.375rem;
+    justify-content: center;
+    padding: 0.625rem 0 1rem;
+  }
+
+  .carousel-dot {
+    height: 3px;
+    border-radius: var(--radius-full);
+    transition: all 0.5s ease-out;
+  }
+
+  .carousel-dot.active {
+    width: 2rem;
+    background: var(--primary);
+  }
+
+  .carousel-dot.inactive {
+    width: 1rem;
+    background: var(--border);
+  }
+
+  /* ===== RECIENTES SECTION ===== */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.875rem;
+  }
+
+  .section-title {
+    font-family: var(--font-serif);
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--fg);
+  }
+
+  .section-title em {
+    font-style: italic;
+    font-weight: 700;
+  }
+
+  .section-link {
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--primary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: color 0.3s ease;
+  }
+
+  .section-link:hover {
+    color: var(--interactive);
+  }
+
+  .section-link svg { width: 14px; height: 14px; stroke-width: 1.5; }
+
+  /* ===== TRANSACTION CARDS ===== */
+  .tx-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+  }
+
+  .tx-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    padding: 0.875rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: transform 0.5s ease-out, box-shadow 0.5s ease-out;
+    cursor: default;
+  }
+
+  .tx-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .tx-card:nth-child(2) {
+    transform: translateY(0.5rem);
+  }
+
+  .tx-card:nth-child(2):hover {
+    transform: translateY(calc(0.5rem - 2px));
+  }
+
+  .tx-icon-wrap {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.125rem;
+  }
+
+  .tx-icon-wrap.grocery { background: var(--primary-light); }
+  .tx-icon-wrap.health { background: var(--interactive-light); }
+  .tx-icon-wrap.fuel { background: var(--secondary-light); }
+
+  .tx-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .tx-name {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--fg);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tx-date {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--fg-muted);
+    margin-top: 0.125rem;
+  }
+
+  .tx-amount {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 0.9375rem;
+    color: var(--fg);
+    white-space: nowrap;
+  }
+
+  /* ===== BOTTOM NAV ===== */
+  .bottom-nav {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    padding: 0.5rem 0.5rem 1.25rem;
+    z-index: 50;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(249, 248, 244, 0.85);
+  }
+
+  [data-theme="dark"] .bottom-nav {
+    background: rgba(26, 36, 32, 0.85);
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0.25rem 0;
+  }
+
+  .nav-icon-wrap {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+  }
+
+  .nav-item.active .nav-icon-wrap {
+    background: var(--primary-light);
+  }
+
+  .nav-icon-wrap svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 1.5;
+    color: var(--border);
+    transition: color 0.3s ease;
+  }
+
+  .nav-item.active .nav-icon-wrap svg {
+    color: var(--fg);
+  }
+
+  .nav-label {
+    font-family: var(--font-sans);
+    font-size: 0.625rem;
+    font-weight: 500;
+    color: var(--border);
+    transition: color 0.3s ease;
+  }
+
+  .nav-item.active .nav-label {
+    color: var(--fg);
+    font-weight: 600;
+  }
+
+  /* FAB */
+  .fab {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-full);
+    background: var(--primary);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(140, 154, 132, 0.35);
+    margin-bottom: 0.5rem;
+    transition: transform 0.5s ease-out, box-shadow 0.5s ease-out;
+  }
+
+  .fab:hover {
+    transform: scale(1.08);
+    box-shadow: 0 8px 28px rgba(140, 154, 132, 0.45);
+  }
+
+  .fab svg {
+    width: 24px;
+    height: 24px;
+    color: #fff;
+    stroke-width: 1.5;
+  }
+
+  /* Home indicator */
+  .home-indicator {
+    width: 120px;
+    height: 4px;
+    background: var(--fg-muted);
+    border-radius: var(--radius-full);
+    margin: 0.5rem auto 0;
+    opacity: 0.3;
+  }
+
+  /* ===== EMPTY STATE ===== */
+  .empty-state {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 3rem 2rem 2rem;
+    gap: 1.25rem;
+  }
+
+  .empty-state.visible { display: flex; }
+
+  .empty-illustration {
+    width: 160px;
+    height: 160px;
+    position: relative;
+  }
+
+  .empty-illustration svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .empty-title {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: var(--fg);
+    line-height: 1.4;
+  }
+
+  .empty-subtitle {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    color: var(--fg-muted);
+    max-width: 240px;
+    line-height: 1.5;
+  }
+
+  .empty-cta {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 0.75rem 2rem;
+    border-radius: var(--radius-full);
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: all 0.5s ease-out;
+    box-shadow: var(--shadow-sm);
+    margin-top: 0.5rem;
+  }
+
+  .empty-cta:hover {
+    transform: scale(1.04);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* ===== LOADING STATE ===== */
+  .loading-state {
+    display: none;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0.5rem 0;
+  }
+
+  .loading-state.visible { display: flex; }
+
+  @keyframes skeletonPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+  }
+
+  .skeleton {
+    background: var(--stone-light);
+    border-radius: var(--radius-card);
+    animation: skeletonPulse 2s ease-in-out infinite;
+  }
+
+  .skeleton-carousel {
+    height: 260px;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--border);
+  }
+
+  .skeleton-section-title {
+    height: 20px;
+    width: 180px;
+    border-radius: var(--radius-full);
+    margin-top: 0.5rem;
+  }
+
+  .skeleton-card {
+    height: 64px;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--border);
+  }
+
+  .skeleton-card:nth-child(2) { animation-delay: 0.3s; }
+  .skeleton-card:nth-child(3) { animation-delay: 0.6s; }
+
+  /* ===== STATE VISIBILITY ===== */
+  .state-hero, .state-empty, .state-loading { display: none; }
+  .state-hero.visible, .state-empty.visible, .state-loading.visible { display: block; }
+
+  /* ===== MISC ===== */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== CONTROLS ===== -->
+<div class="controls-bar" id="controls">
+  <button class="active" data-state="hero" onclick="switchState('hero')">Populated</button>
+  <button data-state="empty" onclick="switchState('empty')">Empty</button>
+  <button data-state="loading" onclick="switchState('loading')">Loading</button>
+  <button id="themeToggle" onclick="toggleTheme()">Dark Mode</button>
+</div>
+
+<!-- ===== PHONE FRAME ===== -->
+<div class="phone-frame">
+  <div class="phone-screen">
+
+    <!-- Notch -->
+    <div class="notch"></div>
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <span class="status-bar-left">9:41</span>
+      <div class="status-icons">
+        <!-- Signal -->
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+          <rect x="0" y="8" width="3" height="4" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="4.5" y="5" width="3" height="7" rx="0.5" fill="currentColor" opacity="0.5"/>
+          <rect x="9" y="2" width="3" height="10" rx="0.5" fill="currentColor" opacity="0.7"/>
+          <rect x="13.5" y="0" width="2.5" height="12" rx="0.5" fill="currentColor"/>
+        </svg>
+        <!-- Wifi -->
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+          <path d="M8 10.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" fill="currentColor"/>
+          <path d="M4.5 8.5C5.5 7.2 6.7 6.5 8 6.5s2.5.7 3.5 2" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+          <path d="M2 5.5C3.8 3.5 5.8 2.5 8 2.5s4.2 1 6 3" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+        </svg>
+        <!-- Battery -->
+        <svg width="24" height="12" viewBox="0 0 24 12" fill="none">
+          <rect x="0.5" y="0.5" width="20" height="11" rx="2" stroke="currentColor" fill="none"/>
+          <rect x="2" y="2" width="14" height="8" rx="1" fill="currentColor" opacity="0.8"/>
+          <rect x="21.5" y="3.5" width="2" height="5" rx="1" fill="currentColor" opacity="0.4"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- ===== SCREEN CONTENT ===== -->
+    <div class="screen-content">
+
+      <!-- HEADER -->
+      <header class="app-header">
+        <div class="app-brand">
+          <div class="app-brand-icon">G</div>
+          <span class="app-brand-name">Gastify</span>
+        </div>
+        <div class="header-right">
+          <span class="credit-pill sage">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M6 12h12"/></svg>
+            12
+          </span>
+          <span class="credit-pill terracotta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+            3
+          </span>
+          <div class="avatar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+        </div>
+      </header>
+
+      <!-- ==================== HERO STATE ==================== -->
+      <div class="state-hero visible" id="stateHero">
+
+        <!-- CAROUSEL CARD -->
+        <div class="carousel-card">
+          <div class="carousel-header">
+            <div class="month-nav">
+              <button class="month-nav-btn" aria-label="Mes anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <span class="month-label">Marzo 2026</span>
+              <button class="month-nav-btn" aria-label="Mes siguiente">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+            </div>
+            <div class="view-toggles">
+              <button class="view-toggle-btn active" aria-label="Vista mapa">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="4" rx="1"/><rect x="14" y="10" width="7" height="11" rx="1"/><rect x="3" y="13" width="7" height="8" rx="1"/></svg>
+              </button>
+              <button class="view-toggle-btn" aria-label="Vista lista">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              </button>
+              <button class="view-toggle-btn" aria-label="Vista grafico">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Treemap -->
+          <div class="treemap">
+            <div class="treemap-grid">
+              <!-- Alimentacion - spans full width -->
+              <div class="treemap-cell alimentacion">
+                <div class="treemap-cell-header">
+                  <span class="treemap-cell-emoji">&#x1F6D2;</span>
+                  <span class="treemap-cell-name">Alimentacion</span>
+                </div>
+                <div class="treemap-cell-row">
+                  <span class="treemap-cell-pct">45%</span>
+                  <span class="treemap-cell-amount">$234.500</span>
+                </div>
+              </div>
+              <!-- Restaurantes -->
+              <div class="treemap-cell restaurantes">
+                <div class="treemap-cell-header">
+                  <span class="treemap-cell-emoji">&#x1F37D;&#xFE0F;</span>
+                  <span class="treemap-cell-name">Restaurantes</span>
+                </div>
+                <div class="treemap-cell-row">
+                  <span class="treemap-cell-pct">22%</span>
+                  <span class="treemap-cell-amount">$115.000</span>
+                </div>
+              </div>
+              <!-- Transporte -->
+              <div class="treemap-cell transporte">
+                <div class="treemap-cell-header">
+                  <span class="treemap-cell-emoji">&#x1F697;</span>
+                  <span class="treemap-cell-name">Transporte</span>
+                </div>
+                <div class="treemap-cell-row">
+                  <span class="treemap-cell-pct">15%</span>
+                  <span class="treemap-cell-amount">$78.000</span>
+                </div>
+              </div>
+              <!-- Salud -->
+              <div class="treemap-cell salud">
+                <div class="treemap-cell-header">
+                  <span class="treemap-cell-emoji">&#x1F48A;</span>
+                  <span class="treemap-cell-name">Salud</span>
+                </div>
+                <div class="treemap-cell-row">
+                  <span class="treemap-cell-pct">10%</span>
+                  <span class="treemap-cell-amount">$52.300</span>
+                </div>
+              </div>
+              <!-- Otros -->
+              <div class="treemap-cell otros">
+                <div class="treemap-cell-header">
+                  <span class="treemap-cell-emoji">&#x1F4E6;</span>
+                  <span class="treemap-cell-name">Otros</span>
+                </div>
+                <div class="treemap-cell-row">
+                  <span class="treemap-cell-pct">8%</span>
+                  <span class="treemap-cell-amount">$41.800</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="carousel-footer">
+            <span class="carousel-footer-label">Total del mes</span>
+            <span class="carousel-footer-total">$521.600</span>
+          </div>
+
+          <!-- Indicator -->
+          <div class="carousel-indicator">
+            <span class="carousel-dot active"></span>
+            <span class="carousel-dot inactive"></span>
+            <span class="carousel-dot inactive"></span>
+          </div>
+        </div>
+
+        <!-- RECIENTES SECTION -->
+        <div class="section-header">
+          <h2 class="section-title"><em>Ultimos</em> Escaneados</h2>
+          <a href="#" class="section-link">
+            Ver todo
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+
+        <div class="tx-list">
+          <!-- Card 1 -->
+          <div class="tx-card">
+            <div class="tx-icon-wrap grocery">&#x1F6D2;</div>
+            <div class="tx-info">
+              <div class="tx-name">Supermercado Lider</div>
+              <div class="tx-date">Hoy, 14:30</div>
+            </div>
+            <div class="tx-amount">$45.230</div>
+          </div>
+          <!-- Card 2 (staggered) -->
+          <div class="tx-card">
+            <div class="tx-icon-wrap health">&#x1F48A;</div>
+            <div class="tx-info">
+              <div class="tx-name">Farmacia Cruz Verde</div>
+              <div class="tx-date">Ayer, 10:15</div>
+            </div>
+            <div class="tx-amount">$12.890</div>
+          </div>
+          <!-- Card 3 -->
+          <div class="tx-card">
+            <div class="tx-icon-wrap fuel">&#x26FD;</div>
+            <div class="tx-info">
+              <div class="tx-name">Shell Providencia</div>
+              <div class="tx-date">18 mar, 09:00</div>
+            </div>
+            <div class="tx-amount">$35.000</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== EMPTY STATE ==================== -->
+      <div class="state-empty" id="stateEmpty">
+        <div class="empty-state visible">
+          <!-- Botanical illustration -->
+          <div class="empty-illustration">
+            <svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Pot -->
+              <path d="M55 120 h50 l-5 30 h-40 z" fill="var(--secondary)" stroke="var(--border)" stroke-width="1"/>
+              <path d="M50 115 h60 v8 h-60 z" rx="3" fill="var(--secondary)" stroke="var(--border)" stroke-width="1"/>
+              <!-- Stem -->
+              <path d="M80 115 Q78 90 80 70 Q82 50 78 35" stroke="var(--primary)" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <!-- Leaves -->
+              <path d="M78 85 Q60 75 50 60 Q65 65 78 78" fill="var(--primary)" opacity="0.3" stroke="var(--primary)" stroke-width="1"/>
+              <path d="M80 70 Q100 55 110 42 Q98 58 82 68" fill="var(--primary)" opacity="0.25" stroke="var(--primary)" stroke-width="1"/>
+              <path d="M79 55 Q58 42 52 28 Q65 38 79 50" fill="var(--primary)" opacity="0.2" stroke="var(--primary)" stroke-width="1"/>
+              <path d="M78 40 Q95 25 108 20 Q96 32 80 38" fill="var(--primary)" opacity="0.18" stroke="var(--primary)" stroke-width="1"/>
+              <!-- Small flower -->
+              <circle cx="78" cy="32" r="5" fill="var(--interactive)" opacity="0.4"/>
+              <circle cx="78" cy="32" r="2.5" fill="var(--interactive)" opacity="0.6"/>
+              <!-- Dots / pollen -->
+              <circle cx="65" cy="50" r="1.5" fill="var(--primary)" opacity="0.15"/>
+              <circle cx="95" cy="45" r="1" fill="var(--primary)" opacity="0.12"/>
+              <circle cx="72" cy="38" r="1" fill="var(--interactive)" opacity="0.2"/>
+              <!-- Soil line -->
+              <path d="M58 120 Q68 117 80 118 Q92 119 102 120" stroke="var(--fg-muted)" stroke-width="0.75" fill="none" opacity="0.3"/>
+            </svg>
+          </div>
+          <h2 class="empty-title">Escanea tu primera<br>boleta</h2>
+          <p class="empty-subtitle">Toma una foto de tu boleta y Gastify la organiza automaticamente</p>
+          <button class="empty-cta">
+            Escanear boleta
+          </button>
+        </div>
+      </div>
+
+      <!-- ==================== LOADING STATE ==================== -->
+      <div class="state-loading" id="stateLoading">
+        <div class="loading-state visible">
+          <div class="skeleton skeleton-carousel"></div>
+          <div class="skeleton skeleton-section-title"></div>
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+        </div>
+      </div>
+
+    </div><!-- .screen-content -->
+
+    <!-- ===== BOTTOM NAV ===== -->
+    <div class="bottom-nav">
+      <!-- Home (active) -->
+      <div class="nav-item active">
+        <div class="nav-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <span class="nav-label">Inicio</span>
+      </div>
+      <!-- History -->
+      <div class="nav-item">
+        <div class="nav-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <span class="nav-label">Historial</span>
+      </div>
+      <!-- FAB -->
+      <div class="nav-item" style="padding: 0;">
+        <button class="fab" aria-label="Escanear">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </button>
+      </div>
+      <!-- Stats -->
+      <div class="nav-item">
+        <div class="nav-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        </div>
+        <span class="nav-label">Stats</span>
+      </div>
+      <!-- Settings -->
+      <div class="nav-item">
+        <div class="nav-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </div>
+        <span class="nav-label">Ajustes</span>
+      </div>
+    </div>
+
+    <!-- Home indicator -->
+    <div class="home-indicator" style="position: absolute; bottom: 0.375rem; left: 50%; transform: translateX(-50%); z-index: 60;"></div>
+
+  </div><!-- .phone-screen -->
+</div><!-- .phone-frame -->
+
+<script>
+  // State switcher
+  function switchState(state) {
+    document.getElementById('stateHero').classList.toggle('visible', state === 'hero');
+    document.getElementById('stateEmpty').classList.toggle('visible', state === 'empty');
+    document.getElementById('stateLoading').classList.toggle('visible', state === 'loading');
+
+    document.querySelectorAll('.controls-bar button[data-state]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.state === state);
+    });
+  }
+
+  // Theme toggle
+  function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', isDark ? '' : 'dark');
+    document.getElementById('themeToggle').textContent = isDark ? 'Dark Mode' : 'Light Mode';
+  }
+</script>
+
+</body>
+</html>

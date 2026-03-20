@@ -23,6 +23,10 @@ As a developer, I want to extend the Transaction type with new fields (chargeTyp
 - **AC-ARCH-2:** New types follow existing pattern: optional fields, no nested objects
 - **AC-ARCH-3:** Translation strings added for all new field labels and enum values
 
+## Architecture Reference
+- **V5 Plan:** `docs/architecture/proposals/implemented/EPIC-18-CREDIT-CARD-STATEMENT-SCANNING.md`
+- **Firestore rules (MVP-1):** New fields must be validated in hasValidFieldBounds
+
 ## File Specification
 
 | File/Component | EXACT Path | Status |
@@ -32,6 +36,7 @@ As a developer, I want to extend the Transaction type with new fields (chargeTyp
 | Categories barrel | `shared/schema/index.ts` | MODIFY (export chargeTypes) |
 | Translations | `src/utils/translations.ts` | MODIFY |
 | ChargeType display util | `src/entities/transaction/utils/chargeTypeUtils.ts` | NEW |
+| Firestore rules | `firestore.rules` | MODIFY (validate new fields in hasValidFieldBounds) |
 
 ## Tasks
 
@@ -53,15 +58,19 @@ As a developer, I want to extend the Transaction type with new fields (chargeTyp
 - [ ] 4.1: Add ES/EN translations for all chargeType values, installment labels, recurrence options, source labels
 - [ ] 4.2: Add translations for statementVerified status labels ("Verificado por estado de cuenta" / "Statement verified")
 
-### Task 5: Tests (2 subtasks)
-- [ ] 5.1: Unit tests for chargeTypeUtils (labels, icons, mapping)
-- [ ] 5.2: Unit tests for installment formatting (edge cases: undefined, 1/1 omit, 0/6)
+### Task 5: Firestore Rules — New Field Validation (2 subtasks)
+- [ ] 5.1: Add chargeType enum validation to hasValidFieldBounds: `data.chargeType in ['purchase','interest','fee','insurance','transfer','adjustment','other']`
+- [ ] 5.2: Add source, cardHolderType enum validation + installmentCurrent/installmentTotal number bounds (0-999)
+
+### Task 6: Tests (2 subtasks)
+- [ ] 6.1: Unit tests for chargeTypeUtils (labels, icons, mapping)
+- [ ] 6.2: Unit tests for installment formatting (edge cases: undefined, 1/1 omit, 0/6)
 
 ## Sizing
 - **Points:** 5 (MEDIUM)
-- **Tasks:** 5
-- **Subtasks:** 12
-- **Files:** ~5
+- **Tasks:** 6
+- **Subtasks:** 14
+- **Files:** ~6
 
 ## Dependencies
 - 18-5 prompt v2 (should be done first so we know which fields the prompt produces)
