@@ -16,6 +16,7 @@ on:
       - 'LICENSE'
       - '.gitignore'
       - '.vscode/**'
+      - 'scripts/**'
   pull_request:
     branches: [main, staging, develop]
     paths:
@@ -28,6 +29,7 @@ on:
       - 'LICENSE'
       - '.gitignore'
       - '.vscode/**'
+      - 'scripts/**'
 
 jobs:
   # Provide the same "test" job name that branch protection requires
