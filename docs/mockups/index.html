@@ -97,6 +97,7 @@
     .matrix { border: 2px solid rgba(255,255,255,0.08); border-radius: var(--radius); overflow: hidden; margin-bottom: 1rem; }
     .matrix-header { display: grid; grid-template-columns: 1fr 48px 48px 48px 48px 56px; background: rgba(255,255,255,0.06); padding: 0.6rem 1rem; border-bottom: 2px solid rgba(255,255,255,0.08); }
     .matrix-row { display: grid; grid-template-columns: 1fr 48px 48px 48px 48px 56px; padding: 0.65rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.04); text-decoration: none; color: var(--text); transition: background 0.1s; }
+    a.matrix-row:hover { background: rgba(74, 124, 89, 0.08); }
     .matrix-row--not-started { opacity: 0.5; }
     .matrix-row--section { background: rgba(255,255,255,0.03); border-bottom: 2px solid rgba(255,255,255,0.06); }
     .matrix-cell { display: flex; align-items: center; }
@@ -175,8 +176,8 @@
       <div class="decisions-grid">
         <div class="decision-card">
           <div class="decision-card__label">Style</div>
-          <div class="decision-card__value decision-card__value--tbd">TBD</div>
-          <div class="decision-card__date">Phase 1 &mdash; 6 candidates</div>
+          <div class="decision-card__value">Production</div>
+          <div class="decision-card__date">Decided 2026-03-20</div>
         </div>
         <div class="decision-card">
           <div class="decision-card__label">Logo</div>
@@ -304,138 +305,138 @@
           <div class="matrix-cell matrix-cell--label" style="color:var(--primary-light);font-size:0.75rem;">NAV TAB SCREENS</div>
           <div class="matrix-cell"></div><div class="matrix-cell"></div><div class="matrix-cell"></div><div class="matrix-cell"></div><div class="matrix-cell"></div>
         </div>
-        <div class="matrix-row matrix-row--not-started">
+        <a class="matrix-row" href="screens/gastify-dashboard.html">
           <div class="matrix-cell matrix-cell--label">Dashboard</div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--done"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
           <div class="matrix-cell matrix-cell--states"><span class="card__tag card__tag--done" style="font-size:0.6rem;">LIVE</span></div>
-        </div>
-        <div class="matrix-row matrix-row--not-started">
+        </a>
+        <a class="matrix-row" href="screens/gastify-trends.html">
           <div class="matrix-cell matrix-cell--label">Trends</div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--done"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
           <div class="matrix-cell matrix-cell--states"><span class="card__tag card__tag--done" style="font-size:0.6rem;">LIVE</span></div>
-        </div>
-        <div class="matrix-row matrix-row--not-started">
+        </a>
+        <a class="matrix-row" href="screens/gastify-reports.html">
           <div class="matrix-cell matrix-cell--label">Reports</div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--done"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
           <div class="matrix-cell matrix-cell--states"><span class="card__tag card__tag--done" style="font-size:0.6rem;">LIVE</span></div>
-        </div>
-        <div class="matrix-row matrix-row--not-started">
+        </a>
+        <a class="matrix-row" href="screens/gastify-alerts.html">
           <div class="matrix-cell matrix-cell--label">Alerts</div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--done"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
           <div class="matrix-cell matrix-cell--states"><span class="card__tag card__tag--done" style="font-size:0.6rem;">LIVE</span></div>
-        </div>
+        </a>
 
         <!-- Secondary Screens -->
         <div class="matrix-row matrix-row--section">
           <div class="matrix-cell matrix-cell--label" style="color:var(--secondary);font-size:0.75rem;">SECONDARY SCREENS</div>
           <div class="matrix-cell"></div><div class="matrix-cell"></div><div class="matrix-cell"></div><div class="matrix-cell"></div><div class="matrix-cell"></div>
         </div>
-        <div class="matrix-row matrix-row--not-started">
+        <a class="matrix-row" href="screens/gastify-login.html">
           <div class="matrix-cell matrix-cell--label">Login</div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--done"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
           <div class="matrix-cell matrix-cell--states"><span class="card__tag card__tag--done" style="font-size:0.6rem;">LIVE</span></div>
-        </div>
-        <div class="matrix-row matrix-row--not-started">
+        </a>
+        <a class="matrix-row" href="screens/gastify-history.html">
           <div class="matrix-cell matrix-cell--label">History</div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--done"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
           <div class="matrix-cell matrix-cell--states"><span class="card__tag card__tag--done" style="font-size:0.6rem;">LIVE</span></div>
-        </div>
-        <div class="matrix-row matrix-row--not-started">
+        </a>
+        <a class="matrix-row" href="screens/gastify-items.html">
           <div class="matrix-cell matrix-cell--label">Items</div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--done"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
           <div class="matrix-cell matrix-cell--states"><span class="card__tag card__tag--done" style="font-size:0.6rem;">LIVE</span></div>
-        </div>
-        <div class="matrix-row matrix-row--not-started">
+        </a>
+        <a class="matrix-row" href="screens/gastify-insights.html">
           <div class="matrix-cell matrix-cell--label">Insights</div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--done"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
           <div class="matrix-cell matrix-cell--states"><span class="card__tag card__tag--pending" style="font-size:0.6rem;">DEV</span></div>
-        </div>
-        <div class="matrix-row matrix-row--not-started">
+        </a>
+        <a class="matrix-row" href="screens/gastify-settings.html">
           <div class="matrix-cell matrix-cell--label">Settings (9 subviews)</div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--done"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
           <div class="matrix-cell matrix-cell--states"><span class="card__tag card__tag--done" style="font-size:0.6rem;">LIVE</span></div>
-        </div>
+        </a>
 
         <!-- Transaction & Scan -->
         <div class="matrix-row matrix-row--section">
           <div class="matrix-cell matrix-cell--label" style="color:var(--accent);font-size:0.75rem;">TRANSACTION &amp; SCAN</div>
           <div class="matrix-cell"></div><div class="matrix-cell"></div><div class="matrix-cell"></div><div class="matrix-cell"></div><div class="matrix-cell"></div>
         </div>
-        <div class="matrix-row matrix-row--not-started">
+        <a class="matrix-row" href="screens/gastify-transaction-editor.html">
           <div class="matrix-cell matrix-cell--label">Transaction Editor</div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--done"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
           <div class="matrix-cell matrix-cell--states"><span class="card__tag card__tag--done" style="font-size:0.6rem;">LIVE</span></div>
-        </div>
-        <div class="matrix-row matrix-row--not-started">
+        </a>
+        <a class="matrix-row" href="screens/gastify-quicksave-card.html">
           <div class="matrix-cell matrix-cell--label">QuickSave Card</div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--done"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
           <div class="matrix-cell matrix-cell--states"><span class="card__tag card__tag--done" style="font-size:0.6rem;">LIVE</span></div>
-        </div>
-        <div class="matrix-row matrix-row--not-started">
+        </a>
+        <a class="matrix-row" href="screens/gastify-single-scan-states.html">
           <div class="matrix-cell matrix-cell--label">Single Scan States</div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--done"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
           <div class="matrix-cell matrix-cell--states"><span class="card__tag card__tag--done" style="font-size:0.6rem;">LIVE</span></div>
-        </div>
-        <div class="matrix-row matrix-row--not-started">
+        </a>
+        <a class="matrix-row" href="screens/gastify-batch-capture.html">
           <div class="matrix-cell matrix-cell--label">Batch Capture</div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--done"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
           <div class="matrix-cell matrix-cell--states"><span class="card__tag card__tag--done" style="font-size:0.6rem;">LIVE</span></div>
-        </div>
-        <div class="matrix-row matrix-row--not-started">
+        </a>
+        <a class="matrix-row" href="screens/gastify-batch-review.html">
           <div class="matrix-cell matrix-cell--label">Batch Review</div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--done"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
           <div class="matrix-cell matrix-cell--states"><span class="card__tag card__tag--done" style="font-size:0.6rem;">LIVE</span></div>
-        </div>
-        <div class="matrix-row matrix-row--not-started">
+        </a>
+        <a class="matrix-row" href="screens/gastify-scan-mode-selector.html">
           <div class="matrix-cell matrix-cell--label">Scan Mode Selector</div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
-          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--not-started"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--done"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
+          <div class="matrix-cell matrix-cell--pass"><span class="dot dot--pending"></span></div>
           <div class="matrix-cell matrix-cell--states"><span class="card__tag card__tag--done" style="font-size:0.6rem;">LIVE</span></div>
-        </div>
+        </a>
 
         <!-- Epic 18 -->
         <div class="matrix-row matrix-row--section">
@@ -520,8 +521,8 @@
         </div>
       </div>
       <div class="progress-summary">
-        <div class="progress-bar"><div class="progress-fill" style="width:0%;"></div></div>
-        <span class="progress-label">0 / 192 passes (48 screens &times; 4 passes)</span>
+        <div class="progress-bar"><div class="progress-fill" style="width:8%;"></div></div>
+        <span class="progress-label">15 / 192 passes (15 screens at P1, 33 not started)</span>
       </div>
     </section>
 
