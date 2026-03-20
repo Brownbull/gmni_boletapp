@@ -99,3 +99,5 @@
 | 2026-03-19 | TD-18-14 | dev | boletapp-dev | ✓ done | none |
 | 2026-03-19 | TD-18-15 | dev | boletapp-dev | ✓ done | none |
 | 2026-03-19 | TD-18-15 | review | boletapp-dev | ✓ done | none |
+| 2026-03-19 | TD-18-16 | dev | boletapp-dev | ✓ done | none |
+| 2026-03-19 | TD-18-16 | review | boletapp-dev | ✓ done | none |

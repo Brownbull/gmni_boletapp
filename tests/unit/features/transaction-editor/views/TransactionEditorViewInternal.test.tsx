@@ -95,8 +95,18 @@ vi.mock('@features/transaction-editor/views/TransactionEditorView/useEditorLearn
   },
 }));
 
-// Spy on deriveItemsPrices — passthrough implementation
-const deriveItemsPricesSpy = vi.fn((items: unknown[]) => items);
+// Spy on deriveItemsPrices — mirrors real logic: unitPrice = Math.round(totalPrice / qty)
+const deriveItemsPricesSpy = vi.fn(
+  (items: Array<Record<string, unknown>>) =>
+    items.map(item => {
+      const qty = typeof item.qty === 'number' && item.qty > 0 ? item.qty : 1;
+      return {
+        ...item,
+        qty,
+        unitPrice: Math.round((item.totalPrice as number) / qty),
+      };
+    }),
+);
 vi.mock('@entities/transaction/utils/itemPriceDerivation', () => ({
   deriveItemsPrices: (...args: unknown[]) => deriveItemsPricesSpy(...args),
 }));
@@ -172,5 +182,13 @@ describe('TransactionEditorView — handleFinalSave', () => {
       ]),
     );
     expect(props.onSave).toHaveBeenCalledOnce();
+    expect(props.onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        items: expect.arrayContaining([
+          expect.objectContaining({ name: 'Apple', unitPrice: 5, qty: 1 }),
+          expect.objectContaining({ name: 'Steak', unitPrice: 10, qty: 1 }),
+        ]),
+      }),
+    );
   });
 });

@@ -130,6 +130,20 @@ describe('EditViewItemsSection — qty and unitPrice', () => {
       );
     });
 
+    // AC-2 (TD-18-16): qty=undefined renders input with default value 1
+    it('renders qty input with default value 1 when item has qty=undefined', () => {
+      const tx = makeTransaction({
+        items: [{ name: 'Milk', totalPrice: 3, category: 'Dairy' }],
+      });
+      render(<EditViewItemsSection {...makeProps()} currentTransaction={tx} editingItemIndex={0} />);
+
+      const qtyInput = screen.getByPlaceholderText('qty') as HTMLInputElement;
+      expect(qtyInput).toBeInTheDocument();
+      // Asserts defaultValue (not value) — component uses uncontrolled input (defaultValue={item.qty ?? 1}).
+      // If refactored to controlled, switch to .value instead.
+      expect(qtyInput.defaultValue).toBe('1');
+    });
+
     // AC-4: totalPrice with qty > 1 shows correct derived unitPrice
     it('shows correct derived unitPrice for item with qty > 1', () => {
       const tx = makeTransaction({
