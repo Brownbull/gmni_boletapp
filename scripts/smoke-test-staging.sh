@@ -26,10 +26,10 @@ FAILURES=0
 echo "Smoke testing: ${STAGING_URL}"
 echo "---"
 
-# Test 1: HTTP 200 (single fetch reused for Tests 2-3)
-RESPONSE=$(curl -s -w "\n%{http_code}" "${STAGING_URL}")
-STATUS="${RESPONSE##*$'\n'}"
-BODY="${RESPONSE%$'\n'*}"
+# Test 1: HTTP 200 (save body to temp file to avoid shell variable issues)
+TMPFILE=$(mktemp)
+trap 'rm -f "${TMPFILE}"' EXIT
+STATUS=$(curl -s -o "${TMPFILE}" -w "%{http_code}" "${STAGING_URL}")
 if [ "${STATUS}" = "200" ]; then
     pass "HTTP status: ${STATUS}"
 else
@@ -37,14 +37,14 @@ else
 fi
 
 # Test 2: Contains app root div
-if printf '%s' "${BODY}" | grep -q 'id="root"'; then
+if grep -q 'id="root"' "${TMPFILE}"; then
     pass "App root div found"
 else
     fail "App root div not found in response"
 fi
 
 # Test 3: Contains script tags (Vite build output)
-if printf '%s' "${BODY}" | grep -q '<script'; then
+if grep -q '<script' "${TMPFILE}"; then
     pass "Script tags present"
 else
     fail "No script tags found — build may have failed"
