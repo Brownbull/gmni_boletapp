@@ -143,6 +143,49 @@ describe('deriveItemPrices', () => {
       expect(result.unitPrice).toBe(2000); // 3000 / 1.5
     });
   });
+
+  // TD-18-14: Decimal qty scenarios (weight-based items)
+  describe('decimal qty (TD-18-14)', () => {
+    it('AC-6: derives unitPrice from decimal qty', () => {
+      // 0.633 kg at $4,999 → unitPrice = Math.round(4999 / 0.633) = 7899
+      const item = makeItem({ totalPrice: 4999, qty: 0.633 });
+      const result = deriveItemPrices(item);
+      expect(result.unitPrice).toBe(Math.round(4999 / 0.633));
+    });
+
+    it('AC-7: unitPrice is integer for CLP', () => {
+      const item = makeItem({ totalPrice: 5000, qty: 0.633 });
+      const result = deriveItemPrices(item);
+      expect(Number.isInteger(result.unitPrice)).toBe(true);
+      expect(result.unitPrice).toBe(7899); // Math.round(5000 / 0.633)
+    });
+
+    it('AC-8: handles very small qty (0.001)', () => {
+      const item = makeItem({ totalPrice: 100, qty: 0.001 });
+      const result = deriveItemPrices(item);
+      expect(result.unitPrice).toBe(100000); // 100 / 0.001
+    });
+
+    it('derives totalPrice from unitPrice * decimal qty', () => {
+      const item = makeItem({ totalPrice: 0, unitPrice: 2000, qty: 0.5 });
+      const result = deriveItemPrices(item);
+      expect(result.totalPrice).toBe(1000); // Math.round(2000 * 0.5)
+    });
+
+    it('handles 3-decimal-place qty', () => {
+      const item = makeItem({ totalPrice: 7899, qty: 0.633 });
+      const result = deriveItemPrices(item);
+      expect(result.qty).toBe(0.633);
+      expect(result.unitPrice).toBe(Math.round(7899 / 0.633));
+    });
+
+    it('recalculates unitPrice when inconsistent with decimal qty', () => {
+      // unitPrice * qty = 5000 * 0.5 = 2500, totalPrice = 3000, deviation = 16.7% > 5%
+      const item = makeItem({ totalPrice: 3000, unitPrice: 5000, qty: 0.5 });
+      const result = deriveItemPrices(item);
+      expect(result.unitPrice).toBe(6000); // recalculated: 3000 / 0.5
+    });
+  });
 });
 
 describe('deriveItemsPrices', () => {

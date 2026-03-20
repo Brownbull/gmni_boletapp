@@ -50,6 +50,7 @@ import type { Language } from '@/utils/translations';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
 import { useScanActiveDialog, useScanActions } from '@features/scan/store';
 import { DIALOG_TYPES } from '@shared/types/scanWorkflow';
+import { formatQty, shouldShowQty } from '@entities/transaction/utils/qtyUtils';
 import { DEFAULT_TIME } from '@entities/transaction/utils';
 import { useIsForeignLocation } from '@/hooks/useIsForeignLocation';
 import { useLocationDisplay } from '@/hooks/useLocations';
@@ -450,13 +451,13 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
                     >
                       {item.name}
                     </span>
-                    {/* Story 18-8: Show unitPrice x qty when qty > 1 */}
+                    {/* TD-18-14: Show unitPrice x qty when qty != 1 (including decimals) */}
                     <div className="flex items-center gap-1 ml-2">
-                      {(item.qty ?? 1) > 1 && (
+                      {shouldShowQty(item.qty) && (
                         <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
                           {item.unitPrice
-                            ? `${formatCurrency(item.unitPrice, displayCurrency)} x${item.qty}`
-                            : `x${item.qty}`}
+                            ? `${formatCurrency(item.unitPrice, displayCurrency)} x${formatQty(item.qty)}`
+                            : `x${formatQty(item.qty)}`}
                         </span>
                       )}
                       <span

@@ -17,6 +17,7 @@ import { getItemCategoryGroup, getItemGroupColors } from '@/config/categoryColor
 import { normalizeItemCategory } from '@/utils/categoryNormalizer';
 import { sanitizeInput, sanitizeNumericInput } from '@/utils/sanitize';
 import { deriveItemPrices } from '@entities/transaction/utils/itemPriceDerivation';
+import { formatQty, shouldShowQty, sanitizeQtyInput, clampQtyOnBlur } from '@entities/transaction/utils/qtyUtils';
 
 type ItemEditableField = 'name' | 'totalPrice' | 'unitPrice' | 'qty' | 'category' | 'subcategory';
 
@@ -119,8 +120,10 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
 
     const handleUpdateItem = (index: number, field: ItemEditableField, value: string | number) => {
         const newItems = [...currentTransaction.items];
-        const isNumeric = field === 'totalPrice' || field === 'unitPrice' || field === 'qty';
-        newItems[index] = { ...newItems[index], [field]: isNumeric ? parseStrictNumber(value) : value };
+        const isPrice = field === 'totalPrice' || field === 'unitPrice';
+        // TD-18-14: qty is always a number from clampQtyOnBlur; prices use parseStrictNumber (integer CLP)
+        const parsedValue = isPrice ? parseStrictNumber(value) : field === 'qty' ? (typeof value === 'number' ? value : clampQtyOnBlur(String(value))) : value;
+        newItems[index] = { ...newItems[index], [field]: parsedValue };
         onUpdateTransaction({ ...currentTransaction, items: newItems });
     };
 
@@ -183,8 +186,8 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
                                                         <input className="w-full p-2 border rounded-lg text-sm" style={inputStyle} value={item.name} onChange={e => handleUpdateItem(i, 'name', sanitizeInput(e.target.value, { maxLength: 100 }))} placeholder={t('itemName')} autoFocus />
                                                         <div className="flex gap-2 items-center">
                                                             <input type="number" className="flex-1 p-2 border rounded-lg text-sm" style={inputStyle} value={item.totalPrice} onChange={e => handleUpdateItem(i, 'totalPrice', sanitizeNumericInput(e.target.value))} placeholder={t('price')} />
-                                                            <input type="text" inputMode="numeric" pattern="[0-9]*" className="w-16 min-h-10 p-2 border rounded-lg text-sm text-center" style={inputStyle} defaultValue={item.qty ?? 1} key={`qty-grouped-${i}`} onFocus={e => e.target.select()} onChange={e => { const cleaned = e.target.value.replace(/[^0-9]/g, ''); if (cleaned !== e.target.value) e.target.value = cleaned; }} onBlur={e => { const val = parseInt(e.target.value, 10); if (!isNaN(val) && val >= 1) { handleUpdateItem(i, 'qty', val); e.target.value = String(val); } else { handleUpdateItem(i, 'qty', 1); e.target.value = '1'; } }} onKeyDown={e => { if ('.,eE-+'.includes(e.key)) e.preventDefault(); if (e.key === 'Enter') e.currentTarget.blur(); }} placeholder={t('qty')} />
-                                                            <span className="w-20 text-xs text-right truncate" style={{ color: 'var(--text-tertiary)' }}>{t('unitPrice')}: {derivedUnitPrice}</span>
+                                                            <input type="text" inputMode="decimal" className="w-16 min-h-10 p-2 border rounded-lg text-sm text-center" style={inputStyle} defaultValue={item.qty ?? 1} key={`qty-grouped-${i}`} onFocus={e => e.target.select()} onChange={e => { const cleaned = sanitizeQtyInput(e.target.value); if (cleaned !== e.target.value) e.target.value = cleaned; }} onBlur={e => { const val = clampQtyOnBlur(e.target.value); handleUpdateItem(i, 'qty', val); e.target.value = String(val); }} onKeyDown={e => { if ('eE-+'.includes(e.key)) e.preventDefault(); if (e.key === 'Enter') e.currentTarget.blur(); }} aria-label={t('qty')} placeholder={t('qty')} />
+                                                            <span className="w-20 text-xs text-right truncate" style={{ color: 'var(--text-tertiary)' }} aria-label={`${t('unitPrice')}: ${derivedUnitPrice}`}>{t('unitPrice')}: {derivedUnitPrice}</span>
                                                         </div>
                                                         <CategoryCombobox value={(item.category as string) || ''} onChange={(value) => handleUpdateItem(i, 'category', value)} language={language} theme={theme as 'light' | 'dark'} placeholder={t('itemCat')} ariaLabel={t('itemCat')} />
                                                         <input className="w-full p-2 border rounded-lg text-sm" style={inputStyle} value={item.subcategory || ''} onChange={e => handleUpdateItem(i, 'subcategory', sanitizeInput(e.target.value, { maxLength: 50 }))} placeholder={t('itemSubcat')} />
@@ -207,7 +210,7 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
                                                                 <CategoryBadge category={(item.category as string) || 'Other'} lang={language} mini />
                                                                 {item.subcategory && <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-tertiary)' }}>{item.subcategory}</span>}
                                                             </div>
-                                                            {(item.qty ?? 1) > 1 && <span className="text-xs font-medium flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>{item.unitPrice ? `${formatCurrency(item.unitPrice, displayCurrency)} x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}` : `x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}`}</span>}
+                                                            {shouldShowQty(item.qty) && <span className="text-xs font-medium flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>{item.unitPrice ? `${formatCurrency(item.unitPrice, displayCurrency)} x${formatQty(item.qty)}` : `x${formatQty(item.qty)}`}</span>}
                                                         </div>
                                                     </div>
                                                 )}
@@ -241,7 +244,7 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
                                                     </div>
                                                     <div className="flex items-center gap-2 pl-7">
                                                         <input type="number" step="0.01" className="w-24 p-2 border rounded-lg text-sm" style={inputStyle} value={item.totalPrice} onChange={e => handleUpdateItem(i, 'totalPrice', sanitizeNumericInput(e.target.value))} placeholder={t('price')} />
-                                                        <input type="text" inputMode="numeric" pattern="[0-9]*" className="w-14 min-h-10 p-2 border rounded-lg text-sm text-center" style={inputStyle} defaultValue={item.qty ?? 1} key={`qty-original-${i}`} onFocus={e => e.target.select()} onChange={e => { const cleaned = e.target.value.replace(/[^0-9]/g, ''); if (cleaned !== e.target.value) e.target.value = cleaned; }} onBlur={e => { const val = parseInt(e.target.value, 10); if (!isNaN(val) && val >= 1) { handleUpdateItem(i, 'qty', val); e.target.value = String(val); } else { handleUpdateItem(i, 'qty', 1); e.target.value = '1'; } }} onKeyDown={e => { if ('.,eE-+'.includes(e.key)) e.preventDefault(); if (e.key === 'Enter') e.currentTarget.blur(); }} placeholder={t('qty')} />
+                                                        <input type="text" inputMode="decimal" className="w-16 min-h-10 p-2 border rounded-lg text-sm text-center" style={inputStyle} defaultValue={item.qty ?? 1} key={`qty-original-${i}`} onFocus={e => e.target.select()} onChange={e => { const cleaned = sanitizeQtyInput(e.target.value); if (cleaned !== e.target.value) e.target.value = cleaned; }} onBlur={e => { const val = clampQtyOnBlur(e.target.value); handleUpdateItem(i, 'qty', val); e.target.value = String(val); }} onKeyDown={e => { if ('eE-+'.includes(e.key)) e.preventDefault(); if (e.key === 'Enter') e.currentTarget.blur(); }} aria-label={t('qty')} placeholder={t('qty')} />
                                                         <span className="w-14 text-xs text-right truncate" style={{ color: 'var(--text-tertiary)' }} aria-label={`${t('unitPrice')}: ${derivedUnitPrice}`}>{t('unitPrice')}: {derivedUnitPrice}</span>
                                                         <CategoryBadge category={(item.category as string) || 'Other'} lang={language} mini />
                                                         <div className="flex-1" />
@@ -263,7 +266,7 @@ export const EditViewItemsSection: React.FC<EditViewItemsSectionProps> = ({
                                                         <div className="flex items-center gap-1 mt-0.5">
                                                             <CategoryBadge category={(item.category as string) || 'Other'} lang={language} mini />
                                                             {item.subcategory && <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-tertiary)' }}>{item.subcategory}</span>}
-                                                            {(item.qty ?? 1) > 1 && <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>{item.unitPrice ? `${formatCurrency(item.unitPrice, displayCurrency)} x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}` : `x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}`}</span>}
+                                                            {shouldShowQty(item.qty) && <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>{item.unitPrice ? `${formatCurrency(item.unitPrice, displayCurrency)} x${formatQty(item.qty)}` : `x${formatQty(item.qty)}`}</span>}
                                                         </div>
                                                     </div>
                                                 </div>

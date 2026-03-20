@@ -40,6 +40,7 @@ import { getCategoryColorsAuto } from '@/config/categoryColors';
 import { formatCurrency } from '@/utils/currency';
 import type { Currency } from '@/types/settings';
 import type { BatchReceipt, BatchReceiptStatus } from '@/types/batchReceipt';
+import { formatQty, shouldShowQty } from '@entities/transaction/utils/qtyUtils';
 
 export interface BatchReviewCardProps {
   /** The receipt to display */
@@ -361,9 +362,9 @@ export const BatchReviewCard: React.FC<BatchReviewCardProps> = ({
                   {item.name}
                 </span>
                 <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                  {(item.qty ?? 1) > 1 && (
+                  {shouldShowQty(item.qty) && (
                     <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
-                      x{item.qty}
+                      x{formatQty(item.qty)}
                     </span>
                   )}
                   <span style={{ color: 'var(--text-secondary)' }}>

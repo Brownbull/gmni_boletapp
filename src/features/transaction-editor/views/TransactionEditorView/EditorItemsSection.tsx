@@ -29,6 +29,7 @@ import type { Transaction, TransactionItem } from '@/types/transaction';
 import type { Language } from '@/utils/translations';
 import { sanitizeInput } from '@/utils/sanitize';
 import { deriveItemPrices } from '@entities/transaction/utils/itemPriceDerivation';
+import { formatQty, shouldShowQty, sanitizeQtyInput, clampQtyOnBlur } from '@entities/transaction/utils/qtyUtils';
 import type { SuggestionData } from './useCrossStoreSuggestions';
 
 // ============================================================================
@@ -419,32 +420,27 @@ function GroupedItemEditView({
             type="item"
           />
         </button>
-        {/* Integer-only quantity field */}
+        {/* Quantity field (decimal supported) — TD-18-14 */}
         <input
           type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          className="w-14 min-h-10 px-2 py-1.5 border rounded-lg text-xs text-center"
+          inputMode="decimal"
+          className="w-16 min-h-10 px-2 py-1.5 border rounded-lg text-xs text-center"
           style={inputStyle}
           defaultValue={item.qty ?? 1}
           key={`qty-${i}`}
+          aria-label={t('qty')}
           onFocus={e => e.target.select()}
           onChange={e => {
-            const cleaned = e.target.value.replace(/[^0-9]/g, '');
+            const cleaned = sanitizeQtyInput(e.target.value);
             if (cleaned !== e.target.value) e.target.value = cleaned;
           }}
           onBlur={e => {
-            const val = parseInt(e.target.value, 10);
-            if (!isNaN(val) && val >= 1) {
-              onUpdateItem(i, 'qty', val);
-              e.target.value = String(val);
-            } else {
-              onUpdateItem(i, 'qty', 1);
-              e.target.value = '1';
-            }
+            const val = clampQtyOnBlur(e.target.value);
+            onUpdateItem(i, 'qty', val);
+            e.target.value = String(val);
           }}
           onKeyDown={e => {
-            if (e.key === '.' || e.key === ',' || e.key === 'e' || e.key === 'E' || e.key === '-' || e.key === '+') {
+            if (e.key === 'e' || e.key === 'E' || e.key === '-' || e.key === '+') {
               e.preventDefault();
             }
             if (e.key === 'Enter') e.currentTarget.blur();
@@ -569,14 +565,14 @@ function ItemDisplayRow({
             </span>
           )}
         </div>
-        {(item.qty ?? 1) > 1 && (
+        {shouldShowQty(item.qty) && (
           <span
             className="text-xs font-medium flex-shrink-0"
             style={{ color: 'var(--text-tertiary)' }}
           >
             {item.unitPrice
-              ? `${formatCurrency(item.unitPrice, displayCurrency)} x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}`
-              : `x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}`}
+              ? `${formatCurrency(item.unitPrice, displayCurrency)} x${formatQty(item.qty)}`
+              : `x${formatQty(item.qty)}`}
           </span>
         )}
       </div>
@@ -658,27 +654,29 @@ function OriginalItemEditView({
           }}
           placeholder={t('itemPrice')}
         />
-        {/* TD-18-13: qty input (always visible) */}
+        {/* TD-18-14: qty input (decimal supported) */}
         <input
           type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          className="w-12 min-h-10 px-1.5 py-1.5 border rounded-lg text-xs text-center"
+          inputMode="decimal"
+          className="w-16 min-h-10 px-1.5 py-1.5 border rounded-lg text-xs text-center"
           style={inputStyle}
           defaultValue={item.qty ?? 1}
           key={`qty-original-${i}`}
+          aria-label={t('qty')}
           onFocus={e => e.target.select()}
           onChange={e => {
-            const cleaned = e.target.value.replace(/[^0-9]/g, '');
+            const cleaned = sanitizeQtyInput(e.target.value);
             if (cleaned !== e.target.value) e.target.value = cleaned;
           }}
           onBlur={e => {
-            const val = parseInt(e.target.value, 10);
-            if (!isNaN(val) && val >= 1) { onUpdateItem(i, 'qty', val); e.target.value = String(val); }
-            else { onUpdateItem(i, 'qty', 1); e.target.value = '1'; }
+            const val = clampQtyOnBlur(e.target.value);
+            onUpdateItem(i, 'qty', val);
+            e.target.value = String(val);
           }}
           onKeyDown={e => {
-            if ('.,eE-+'.includes(e.key)) e.preventDefault();
+            if (e.key === 'e' || e.key === 'E' || e.key === '-' || e.key === '+') {
+              e.preventDefault();
+            }
             if (e.key === 'Enter') e.currentTarget.blur();
           }}
           placeholder={t('qty')}
@@ -779,14 +777,14 @@ function OriginalItemDisplayRow({
               {item.subcategory}
             </span>
           )}
-          {(item.qty ?? 1) > 1 && (
+          {shouldShowQty(item.qty) && (
             <span
               className="text-xs font-medium"
               style={{ color: 'var(--text-tertiary)' }}
             >
               {item.unitPrice
-                ? `${formatCurrency(item.unitPrice, displayCurrency)} x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}`
-                : `x${Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}`}
+                ? `${formatCurrency(item.unitPrice, displayCurrency)} x${formatQty(item.qty)}`
+                : `x${formatQty(item.qty)}`}
             </span>
           )}
         </div>
