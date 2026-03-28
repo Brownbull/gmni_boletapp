@@ -14,7 +14,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { doc, onSnapshot, runTransaction } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import type { FirestorePendingScan, FirestoreScanResult } from '@/types/pendingScan';
-import { scanActions } from '../store';
+import { scanActions, useScanStore } from '../store';
 import type { ScanResult } from '../handlers/processScan/types';
 
 /** Props for the usePendingScan hook */
@@ -96,9 +96,12 @@ export function usePendingScan(props: UsePendingScanProps): UsePendingScanReturn
       scanActions.setPendingScanStatus(data.status);
 
       if (data.status === 'completed' && data.result) {
-        // Guard against double-processing (onSnapshot can fire multiple times)
+        // Guard against double-processing: component-scoped ref + store-scoped field
         if (processedRef.current === scanId) return;
+        const storeState = useScanStore.getState();
+        if (storeState.processedScanId === scanId) return;
         processedRef.current = scanId;
+        scanActions.setProcessedScanId(scanId);
 
         // Verify credit was deducted server-side before processing result
         if (!data.creditDeducted) {

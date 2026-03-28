@@ -200,6 +200,19 @@ export const queueReceiptScan = functions.https.onCall(
         return
       }
 
+      // Max 1 active scan per user — prevent duplicate queueing
+      const activeScanQuery = db.collection('pending_scans')
+        .where('userId', '==', userId)
+        .where('status', '==', 'processing')
+        .limit(1)
+      const activeScans = await transaction.get(activeScanQuery)
+      if (!activeScans.empty) {
+        throw new functions.https.HttpsError(
+          'already-exists',
+          'A scan is already in progress. Please wait for it to complete.'
+        )
+      }
+
       // Read credits
       const creditsSnap = await transaction.get(creditsRef)
       const credits = creditsSnap.data()
