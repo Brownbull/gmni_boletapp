@@ -512,6 +512,17 @@ function App() {
                     return;
                 }
 
+                // Stale scan state (>1h old) — clear instead of restoring
+                if (storedState.startedAt && Date.now() - storedState.startedAt > 60 * 60 * 1000) {
+                    clearPersistedScanState(user.uid);
+                    return;
+                }
+
+                // Clear any persisted dialog state — dialogs should not survive app restart
+                if (storedState.activeDialog) {
+                    storedState.activeDialog = null;
+                }
+
                 // Error state with no content - just show toast and clear
                 if (storedState.phase === 'error' && storedState.images.length === 0 && storedState.results.length === 0) {
                     if (storedState.error) {
