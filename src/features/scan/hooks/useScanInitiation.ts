@@ -11,7 +11,7 @@
  * - src/features/batch-review/hooks/useBatchReviewHandlers.ts (pattern reference)
  */
 
-import { useCallback, useEffect, type RefObject } from 'react';
+import { useCallback, useEffect, useRef, type RefObject } from 'react';
 import type { Transaction } from '@/types/transaction';
 import type { SupportedCurrency } from '@/types/preferences';
 import type { ReceiptType } from '@/services/gemini';
@@ -234,6 +234,9 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
   } = useScanStore();
   const { setView, navigateToView } = useNavigationStore();
 
+  // Guard against duplicate scan queueing (re-entrant handleFileSelect)
+  const isQueueingRef = useRef(false);
+
   // TD-18-3: Register credit refund callback so store's reset/cancel can refund credits
   useEffect(() => {
     registerCreditRefundCallback(addUserCredits);
@@ -392,6 +395,10 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
 
     // Single image — async pipeline (Story 18-13b)
 
+    // Guard: prevent re-entrant scan queueing
+    if (isQueueingRef.current) return;
+    isQueueingRef.current = true;
+
     const updatedImages = [...scanImages, ...newImages];
     setScanImages(updatedImages);
     setView('transaction-editor');
@@ -428,6 +435,8 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
       const errorMsg = t(errorInfo.messageKey) || t('scanError');
       setOverlayError('api', errorMsg);
       setToastMessage({ text: errorMsg, type: errorInfo.toastType });
+    } finally {
+      isQueueingRef.current = false;
     }
   }, [
     scanState.mode,
@@ -469,6 +478,11 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
   const handleRescan = useCallback(async () => {
     if (!currentTransaction?.id || !currentTransaction.imageUrls?.length) {
       // Early return - expected when called without valid transaction context
+      return;
+    }
+    // Guard: block rescan while async scan is in progress
+    if (useScanStore.getState().pendingScanId) {
+      setToastMessage({ text: t('scanInProgress'), type: 'info' });
       return;
     }
     if (userCredits.remaining <= 0) {

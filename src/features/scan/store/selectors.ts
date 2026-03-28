@@ -457,6 +457,8 @@ export const scanActions = {
   clearPendingScan: () => useScanStore.getState().clearPendingScan(),
   setPendingScanStatus: (status: FirestoreScanStatus) =>
     useScanStore.getState().setPendingScanStatus(status),
+  setProcessedScanId: (scanId: string) =>
+    useScanStore.getState().setProcessedScanId(scanId),
 } as const;
 
 // Export the type for scanActions

@@ -103,6 +103,19 @@ function parseGeminiNumber(value: unknown): unknown {
 
 function coerceGeminiNumericFields(obj: Record<string, unknown>): Record<string, unknown> {
   const coerced = { ...obj }
+  // Coerce null/missing fields to safe defaults (Gemini sometimes returns null for unreadable fields)
+  if (coerced.date == null || typeof coerced.date !== 'string') {
+    coerced.date = new Date().toISOString().split('T')[0]
+  }
+  if (coerced.merchant == null || typeof coerced.merchant !== 'string') {
+    coerced.merchant = 'Unknown'
+  }
+  if (coerced.category == null || typeof coerced.category !== 'string') {
+    coerced.category = 'Other'
+  }
+  if (!Array.isArray(coerced.items)) {
+    coerced.items = []
+  }
   if ('total' in coerced) coerced.total = parseGeminiNumber(coerced.total)
   if ('items' in coerced && Array.isArray(coerced.items)) {
     coerced.items = coerced.items
@@ -118,6 +131,17 @@ function coerceGeminiNumericFields(obj: Record<string, unknown>): Record<string,
         return typeof price === 'number' && price !== 0
       })
   }
+
+  // Coerce null/NaN total: compute from items sum, fallback 0
+  if (typeof coerced.total !== 'number' || !Number.isFinite(coerced.total as number)) {
+    const items = (coerced.items ?? []) as Record<string, unknown>[]
+    const sum = items.reduce((acc: number, item: Record<string, unknown>) => {
+      const price = item.totalPrice
+      return acc + (typeof price === 'number' && Number.isFinite(price) ? price : 0)
+    }, 0)
+    coerced.total = sum
+  }
+
   return coerced
 }
 

@@ -480,7 +480,7 @@ describe('analyzeReceipt Cloud Function', () => {
       expect(result.items[0].totalPrice).toBe(1500)
     })
 
-    it('should reject empty string numeric fields', async () => {
+    it('should coerce empty string total to 0 via items sum fallback', async () => {
       const { GoogleGenerativeAI } = require('@google/generative-ai')
       GoogleGenerativeAI.mockImplementationOnce(() => ({
         getGenerativeModel: () => ({
@@ -504,9 +504,9 @@ describe('analyzeReceipt Cloud Function', () => {
       }
       const context = { auth: { uid: 'coercion-test-3', token: {} } }
 
-      await expect(wrapped(data, context)).rejects.toThrow(
-        'Receipt analysis returned unexpected format'
-      )
+      const result = await wrapped(data, context)
+      expect(result.total).toBe(0)
+      expect(result.merchant).toBe('Test Market')
     })
 
     it('should log diagnostic field info on validation failure', async () => {
@@ -517,13 +517,8 @@ describe('analyzeReceipt Cloud Function', () => {
         getGenerativeModel: () => ({
           generateContent: jest.fn().mockResolvedValue({
             response: {
-              text: () => JSON.stringify({
-                merchant: 'Test Market',
-                date: '2025-11-27',
-                total: 'N/A',
-                category: 'Supermarket',
-                items: []
-              })
+              // Return non-object (string) — cannot be coerced, root validation fails
+              text: () => '"just a string"'
             }
           })
         })
@@ -540,10 +535,7 @@ describe('analyzeReceipt Cloud Function', () => {
       )
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('field="total"')
-      )
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('value="NaN"')
+        expect.stringContaining('field="(root)"')
       )
 
       consoleSpy.mockRestore()

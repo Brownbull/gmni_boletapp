@@ -25,7 +25,7 @@ interface ScanUIState {
   processingStartedAt: number | null;
 }
 
-export const initialScanState: ScanStoreState & ScanUIState & Omit<ScanPendingSlice, 'setPendingScan' | 'clearPendingScan' | 'setPendingScanStatus'> = {
+export const initialScanState: ScanStoreState & ScanUIState & Omit<ScanPendingSlice, 'setPendingScan' | 'clearPendingScan' | 'setPendingScanStatus' | 'setProcessedScanId'> = {
   // Core state
   phase: 'idle',
   mode: 'single',
@@ -74,6 +74,7 @@ export const initialScanState: ScanStoreState & ScanUIState & Omit<ScanPendingSl
   pendingScanId: null,
   pendingScanDeadline: null,
   pendingScanStatus: null,
+  processedScanId: null,
 };
 
 // Compile-time check: ensure initialScanState covers all state keys.
