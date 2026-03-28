@@ -617,7 +617,7 @@ function App() {
         t,
     });
 
-    const { isLocked: _isScanLocked } = useScanLock(user?.uid ?? null);
+    const { isLocked: isScanLocked } = useScanLock(user?.uid ?? null);
 
     // Story 18-13b: Detect pending scans on app init (after auth)
     useEffect(() => {
@@ -1742,8 +1742,10 @@ function App() {
                     else if (scanState.phase === 'scanning' || scanState.results.length > 0) {
                         navigateToView('transaction-editor');
                     }
-                    // 4. No active scan - trigger new scan
-                    else {
+                    // 4. No active scan - trigger new scan (blocked if scan in progress)
+                    else if (isScanLocked) {
+                        setToastMessage({ text: t('scanInProgress'), type: 'info' });
+                    } else {
                         triggerScan();
                     }
                 }}

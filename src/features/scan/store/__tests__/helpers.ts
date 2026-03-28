@@ -84,5 +84,6 @@ export function getStateOnly(): typeof initialScanState {
     pendingScanId: fullState.pendingScanId,
     pendingScanDeadline: fullState.pendingScanDeadline,
     pendingScanStatus: fullState.pendingScanStatus,
+    processedScanId: fullState.processedScanId,
   };
 }

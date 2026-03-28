@@ -40,7 +40,10 @@ const { mockScanStoreActions, mockNavigationStoreActions } = vi.hoisted(() => ({
 }));
 
 vi.mock('../../../../../src/features/scan/store/useScanStore', () => ({
-  useScanStore: () => mockScanStoreActions,
+  useScanStore: Object.assign(
+    () => mockScanStoreActions,
+    { getState: () => ({ pendingScanId: null, processedScanId: null }) }
+  ),
 }));
 
 vi.mock('../../../../../src/shared/stores/useNavigationStore', () => ({

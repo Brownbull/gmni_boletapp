@@ -126,7 +126,7 @@ export interface ScanDialogSlice {
   activeDialog: ScanState['activeDialog'];
 
   // Actions
-  showDialog: (dialog: DialogState) => void;
+  showDialog: (dialog: DialogState) => boolean;
   resolveDialog: <T extends ScanDialogType>(type: T, result: ScanDialogResultMap[T]) => void;
   dismissDialog: () => void;
 }
@@ -185,11 +185,13 @@ export interface ScanPendingSlice {
   pendingScanId: string | null;
   pendingScanDeadline: number | null;
   pendingScanStatus: FirestoreScanStatus | null;
+  processedScanId: string | null;
 
   // Actions
   setPendingScan: (scanId: string, deadline: number) => void;
   clearPendingScan: () => void;
   setPendingScanStatus: (status: FirestoreScanStatus) => void;
+  setProcessedScanId: (scanId: string) => void;
 }
 
 // =============================================================================

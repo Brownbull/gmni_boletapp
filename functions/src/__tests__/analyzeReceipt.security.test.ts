@@ -136,7 +136,7 @@ describe('analyzeReceipt Security Hardening (TD-15b-36)', () => {
   })
 
   describe('AC3: Response Schema Validation', () => {
-    it('should reject Gemini response missing required fields', async () => {
+    it('should coerce missing required fields to safe defaults', async () => {
       const { GoogleGenerativeAI } = require('@google/generative-ai')
       GoogleGenerativeAI.mockImplementationOnce(() => ({
         getGenerativeModel: () => ({
@@ -156,12 +156,15 @@ describe('analyzeReceipt Security Hardening (TD-15b-36)', () => {
         currency: 'CLP'
       }
 
-      await expect(wrapped(data, authContext)).rejects.toThrow(
-        'Receipt analysis returned unexpected format'
-      )
+      const result = await wrapped(data, authContext)
+      expect(result.merchant).toBe('Test Market')
+      expect(result.date).toBe(new Date().toISOString().split('T')[0])
+      expect(result.category).toBe('Other')
+      expect(result.total).toBe(0)
+      expect(result.items).toEqual([])
     })
 
-    it('should reject Gemini response with wrong field types', async () => {
+    it('should coerce wrong field types to safe defaults', async () => {
       const { GoogleGenerativeAI } = require('@google/generative-ai')
       GoogleGenerativeAI.mockImplementationOnce(() => ({
         getGenerativeModel: () => ({
@@ -184,12 +187,12 @@ describe('analyzeReceipt Security Hardening (TD-15b-36)', () => {
         currency: 'CLP'
       }
 
-      await expect(wrapped(data, authContext)).rejects.toThrow(
-        'Receipt analysis returned unexpected format'
-      )
+      const result = await wrapped(data, authContext)
+      expect(result.total).toBe(0)
+      expect(result.merchant).toBe('Test Market')
     })
 
-    it('should reject Gemini response with invalid items', async () => {
+    it('should filter out items missing totalPrice instead of rejecting', async () => {
       const { GoogleGenerativeAI } = require('@google/generative-ai')
       GoogleGenerativeAI.mockImplementationOnce(() => ({
         getGenerativeModel: () => ({
@@ -202,6 +205,28 @@ describe('analyzeReceipt Security Hardening (TD-15b-36)', () => {
                 category: 'Supermarket',
                 items: [{ name: 'Milk' }] // missing totalPrice
               })
+            }
+          })
+        })
+      }))
+
+      const data = {
+        images: ['data:image/jpeg;base64,/9j/4AAQSkZJRg=='],
+        currency: 'CLP'
+      }
+
+      const result = await wrapped(data, authContext)
+      expect(result.total).toBe(15000)
+      expect(result.items).toEqual([])
+    })
+
+    it('should still reject non-object Gemini responses', async () => {
+      const { GoogleGenerativeAI } = require('@google/generative-ai')
+      GoogleGenerativeAI.mockImplementationOnce(() => ({
+        getGenerativeModel: () => ({
+          generateContent: jest.fn().mockResolvedValue({
+            response: {
+              text: () => '"just a string"'
             }
           })
         })

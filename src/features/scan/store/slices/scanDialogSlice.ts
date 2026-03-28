@@ -27,9 +27,20 @@ export const createScanDialogSlice: StateCreator<
   activeDialog: initialScanState.activeDialog,
 
   // Actions
-  showDialog: (dialog: DialogState) => {
+  showDialog: (dialog: DialogState): boolean => {
+    const current = get().activeDialog;
+    if (current !== null) {
+      logGuardViolation({
+        action: 'showDialog',
+        currentPhase: get().phase,
+        expectedPhase: get().phase,
+        detail: `blocked: '${dialog.type}' while '${current.type}' is active`,
+      });
+      return false;
+    }
     set({ activeDialog: dialog }, undefined, 'scan/showDialog');
     wf().setActiveDialog(dialog);
+    return true;
   },
 
   resolveDialog: (type, _result) => {

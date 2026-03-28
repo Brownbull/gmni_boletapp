@@ -22,6 +22,7 @@ export const createScanPendingSlice: StateCreator<
   pendingScanId: initialScanState.pendingScanId,
   pendingScanDeadline: initialScanState.pendingScanDeadline,
   pendingScanStatus: initialScanState.pendingScanStatus,
+  processedScanId: null,
 
   // Actions
   setPendingScan: (scanId: string, deadline: number) => {
@@ -29,6 +30,7 @@ export const createScanPendingSlice: StateCreator<
       pendingScanId: scanId,
       pendingScanDeadline: deadline,
       pendingScanStatus: 'processing' as FirestoreScanStatus,
+      processedScanId: null, // Clear on new scan
     }, undefined, 'scan/setPendingScan');
   },
 
@@ -38,6 +40,10 @@ export const createScanPendingSlice: StateCreator<
       pendingScanDeadline: initialScanState.pendingScanDeadline,
       pendingScanStatus: initialScanState.pendingScanStatus,
     }, undefined, 'scan/clearPendingScan');
+  },
+
+  setProcessedScanId: (scanId: string) => {
+    set({ processedScanId: scanId }, undefined, 'scan/setProcessedScanId');
   },
 
   setPendingScanStatus: (status: FirestoreScanStatus) => {

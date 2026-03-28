@@ -38,7 +38,9 @@ vi.mock('@features/scan/store', () => ({
     setPendingScanStatus: (...args: unknown[]) => mockSetPendingScanStatus(...args),
     setOverlayError: (...args: unknown[]) => mockSetOverlayError(...args),
     resetOverlay: (...args: unknown[]) => mockResetOverlay(...args),
+    setProcessedScanId: vi.fn(),
   },
+  useScanStore: { getState: () => ({ processedScanId: null }) },
 }));
 
 describe('usePendingScan', () => {
