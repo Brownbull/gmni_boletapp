@@ -45,6 +45,9 @@ export const onPendingScanDeleted = functions.firestore
       console.log(`onPendingScanDeleted: refunded credit for scan ${scanId}`)
     }
 
-    // Delete Storage images
-    await deletePendingScanImages(userId, scanId)
+    // Only delete Storage images for non-completed scans.
+    // Completed scans have thumbnailUrl referenced by saved transactions.
+    if (data.status !== 'completed') {
+      await deletePendingScanImages(userId, scanId)
+    }
   })
