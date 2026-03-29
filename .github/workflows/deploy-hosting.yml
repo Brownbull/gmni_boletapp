@@ -1,0 +1,79 @@
+# Auto-deploy Firebase Hosting (PWA) to production after tests pass on main.
+#
+# Triggers: after "Test Suite" workflow completes successfully on main.
+# Only deploys when src/, public/, or config files change (not docs-only).
+#
+# Auth: FIREBASE_SERVICE_ACCOUNT secret (same as functions deploy).
+
+name: Deploy Hosting
+
+on:
+  workflow_run:
+    workflows: ["Test Suite"]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy-hosting:
+    name: Deploy Hosting
+    runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if hosting files changed
+        id: hosting-changed
+        run: |
+          # For merge commits, diff against merge-base of both parents.
+          if git rev-parse HEAD^2 >/dev/null 2>&1; then
+            MERGE_BASE=$(git merge-base HEAD^1 HEAD^2)
+            CHANGED=$(git diff --name-only "$MERGE_BASE" HEAD -- src/ public/ index.html vite.config.ts tsconfig.json package.json)
+          else
+            CHANGED=$(git diff --name-only HEAD~1 HEAD -- src/ public/ index.html vite.config.ts tsconfig.json package.json)
+          fi
+          if [ -z "$CHANGED" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "No hosting changes detected — skipping deploy"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "Hosting changes detected:"
+            echo "$CHANGED"
+          fi
+
+      - name: Setup Node.js
+        if: steps.hosting-changed.outputs.skip != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        if: steps.hosting-changed.outputs.skip != 'true'
+        run: npm ci
+
+      - name: Build PWA
+        if: steps.hosting-changed.outputs.skip != 'true'
+        run: npm run build
+
+      - name: Authenticate to Google Cloud
+        if: steps.hosting-changed.outputs.skip != 'true'
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Deploy Hosting
+        if: steps.hosting-changed.outputs.skip != 'true'
+        run: |
+          npm install -g firebase-tools@13
+          firebase deploy --only hosting --project boletapp-d609f --non-interactive
+          echo "Hosting deployed successfully!"
+
+      - name: Skip notification
+        if: steps.hosting-changed.outputs.skip == 'true'
+        run: echo "No hosting changes — deploy skipped"
