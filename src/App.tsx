@@ -56,7 +56,8 @@ import {
 } from '@features/scan';
 import type { ScanInitiationProps } from '@features/scan';
 import { usePendingScan, useScanLock } from '@features/scan/hooks';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { useScanEventSubscription } from '@features/transaction-editor/hooks/useScanEventSubscription';
+import { collection, query, where, getDocs, doc as firestoreDoc, deleteDoc } from 'firebase/firestore';
 import type { ScanResult } from '@features/scan/handlers/processScan/types';
 import type { FirestorePendingScan } from '@/types/pendingScan';
 import type { TrustPromptEligibility } from './types/trust';
@@ -630,8 +631,11 @@ function App() {
 
     const { isLocked: isScanLocked } = useScanLock(user?.uid ?? null);
 
+    // Listen for scan:completed events and set transaction in editor
+    useScanEventSubscription();
+
     // Story 18-13b: Detect pending scans on app init (after auth)
-    // Only restores scans that are still actively processing (not completed/failed/expired)
+    // Handles all states: processing → restore listener, completed → deliver result, failed → clean up
     useEffect(() => {
         if (!user?.uid) return;
 
@@ -640,20 +644,53 @@ function App() {
             try {
                 const q = query(
                     collection(db, 'pending_scans'),
-                    where('userId', '==', user.uid),
-                    where('status', '==', 'processing')
+                    where('userId', '==', user.uid)
                 );
                 const snapshot = await getDocs(q);
+                if (snapshot.empty) return;
 
-                if (!snapshot.empty) {
-                    const firstDoc = snapshot.docs[0];
-                    const data = firstDoc.data() as FirestorePendingScan;
-                    const deadlineMs = data.processingDeadline?.toMillis?.() ?? Date.now() + PENDING_SCAN_FALLBACK_DEADLINE_MS;
+                for (const pendingDoc of snapshot.docs) {
+                    const data = pendingDoc.data() as FirestorePendingScan;
 
-                    // Skip if past deadline — cleanupPendingScans will handle it
-                    if (deadlineMs < Date.now()) return;
-
-                    useScanStore.getState().setPendingScan(firstDoc.id, deadlineMs);
+                    if (data.status === 'processing') {
+                        const deadlineMs = data.processingDeadline?.toMillis?.() ?? Date.now() + PENDING_SCAN_FALLBACK_DEADLINE_MS;
+                        if (deadlineMs > Date.now()) {
+                            // Still processing — restore listener
+                            useScanStore.getState().setPendingScan(pendingDoc.id, deadlineMs);
+                        }
+                        // Past deadline — cleanupPendingScans CF will handle
+                    } else if (data.status === 'completed' && data.result) {
+                        // Completed result not yet consumed — deliver it now
+                        const scanResult: ScanResult = {
+                            merchant: data.result.merchant,
+                            date: data.result.date,
+                            total: data.result.total,
+                            category: data.result.category,
+                            items: (data.result.items || []).map((item: Record<string, unknown>) => ({
+                                name: item.name as string,
+                                totalPrice: item.totalPrice as number,
+                                unitPrice: item.unitPrice as number | undefined,
+                                qty: item.qty as number | undefined,
+                                category: item.category as string | undefined,
+                                subcategory: item.subcategory as string | undefined,
+                            })),
+                            imageUrls: data.result.imageUrls || data.imageUrls,
+                            thumbnailUrl: data.result.thumbnailUrl,
+                            currency: data.result.currency,
+                            country: data.result.country,
+                            city: data.result.city,
+                            receiptType: data.result.receiptType,
+                            promptVersion: data.result.promptVersion,
+                            merchantSource: data.result.merchantSource,
+                        };
+                        handlePendingScanCompleted(scanResult, data.imageUrls);
+                        // Delete consumed doc
+                        await deleteDoc(firestoreDoc(db, 'pending_scans', pendingDoc.id));
+                        break; // Process one at a time
+                    } else if (data.status === 'failed') {
+                        // Failed — delete silently (credit already refunded server-side)
+                        await deleteDoc(firestoreDoc(db, 'pending_scans', pendingDoc.id));
+                    }
                 }
             } catch (error) {
                 console.error('Failed to detect pending scans:', error);
@@ -661,7 +698,7 @@ function App() {
         };
 
         detectPendingScans();
-    }, [user?.uid]);
+    }, [user?.uid, handlePendingScanCompleted]);
 
     // Persist scan state to storage (primary persistence mechanism)
     const scanStateInitializedRef = useRef(false);
@@ -1074,7 +1111,8 @@ function App() {
         handleNewTransaction,
         triggerScan,
         handleFileSelect,
-        handleRescan
+        handleRescan,
+        queueScanFromImages,
     } = scanInitiationHandlers;
 
     // Story 14e-39: Trust prompt handlers moved to CreditFeature
@@ -1164,7 +1202,7 @@ function App() {
         transactions,
         saveTransaction,
         deleteTransaction,
-        processScan,
+        processScan: queueScanFromImages,
         handleRescan,
         hasActiveTransactionConflict,
     }), [
@@ -1182,7 +1220,7 @@ function App() {
         transactions,
         saveTransaction,
         deleteTransaction,
-        processScan,
+        queueScanFromImages,
         handleRescan,
         hasActiveTransactionConflict,
     ]);

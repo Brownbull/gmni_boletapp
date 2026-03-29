@@ -24,6 +24,8 @@ import {
 import { getCategoryPillColors } from '@/config/categoryColors';
 import { getCategoryEmoji } from '@/utils/categoryEmoji';
 import type { ScanButtonState } from '@/shared/utils/scanHelpers';
+import { usePendingScanId } from '@features/scan/store';
+import { useOverlayState } from '@features/scan/store/selectors';
 
 // ============================================================================
 // Types
@@ -93,6 +95,10 @@ export function EditorScanThumbnail({
   onRescan,
   t,
 }: EditorScanThumbnailProps) {
+  const pendingScanId = usePendingScanId();
+  const overlayState = useOverlayState();
+  const isScanBusy = effectiveIsProcessing || !!pendingScanId || overlayState !== 'idle';
+
   return (
     <div
       className="flex flex-col items-center flex-shrink-0 gap-1.5"
@@ -188,8 +194,8 @@ export function EditorScanThumbnail({
         ) : scanButtonState === 'pending' && pendingImageUrl ? (
           /* PENDING STATE - Photo selected, ready to scan */
           <button
-            onClick={hasCredits && !effectiveIsProcessing ? onProcessScan : undefined}
-            disabled={!hasCredits || effectiveIsProcessing}
+            onClick={hasCredits && !isScanBusy ? onProcessScan : undefined}
+            disabled={!hasCredits || isScanBusy}
             className="w-full h-full rounded-xl overflow-hidden relative cursor-pointer"
             style={{
               border: '2px solid var(--success)',
@@ -229,7 +235,7 @@ export function EditorScanThumbnail({
                 }}
               >
                 <span className="text-xs font-semibold text-white relative z-10">
-                  {hasCredits ? t('scan') : t('noCredits')}
+                  {isScanBusy ? (t('scanning') || 'Escaneando...') : hasCredits ? t('scan') : t('noCredits')}
                 </span>
               </div>
             </div>
