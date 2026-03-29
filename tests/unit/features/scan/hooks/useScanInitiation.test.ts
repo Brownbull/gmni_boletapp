@@ -376,7 +376,7 @@ describe('useScanInitiation', () => {
       expect(props.setScanImages).not.toHaveBeenCalled();
     });
 
-    it('should process single file in single scan mode via async pipeline', async () => {
+    it('should load single file in editor without auto-starting scan', async () => {
       vi.useFakeTimers();
       const props = createDefaultProps({
         scanState: createMockScanState({ mode: 'single' }),
@@ -387,46 +387,16 @@ describe('useScanInitiation', () => {
 
       await act(async () => {
         result.current.handleFileSelect(event);
-        // Flush microtask queue for FileReader mock + async pipeline
         await vi.runAllTimersAsync();
       });
 
+      // Image loaded in editor
       expect(props.setScanImages).toHaveBeenCalled();
       expect(mockNavigationStoreActions.setView).toHaveBeenCalledWith('transaction-editor');
       expect(props.setTransactionEditorMode).toHaveBeenCalledWith('new');
-      // Story 18-13b: async pipeline replaces sync processScan for single scans
-      expect(mockScanStoreActions.startOverlayUpload).toHaveBeenCalled();
-      expect(mockUploadScanImages).toHaveBeenCalled();
-      expect(mockScanStoreActions.startOverlayProcessing).toHaveBeenCalled();
-      expect(mockQueueReceiptScan).toHaveBeenCalled();
-      expect(mockScanStoreActions.setPendingScan).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.any(Number)
-      );
-
-      vi.useRealTimers();
-    });
-
-    it('should show overlay error when async pipeline upload fails', async () => {
-      vi.useFakeTimers();
-      mockUploadScanImages.mockRejectedValueOnce(new Error('Storage quota exceeded'));
-      const props = createDefaultProps({
-        scanState: createMockScanState({ mode: 'single' }),
-      });
-      const { result } = renderHook(() => useScanInitiation(props));
-
-      const event = createMockFileEvent([createMockFile('receipt.jpg')]);
-
-      await act(async () => {
-        result.current.handleFileSelect(event);
-        await vi.runAllTimersAsync();
-      });
-
-      expect(mockScanStoreActions.startOverlayUpload).toHaveBeenCalled();
-      expect(mockScanStoreActions.setOverlayError).toHaveBeenCalledWith('api', expect.any(String));
-      expect(props.setToastMessage).toHaveBeenCalledWith(
-        expect.objectContaining({ type: expect.any(String) })
-      );
+      // No auto-scan — user must press "Escanear" button
+      expect(mockUploadScanImages).not.toHaveBeenCalled();
+      expect(mockQueueReceiptScan).not.toHaveBeenCalled();
 
       vi.useRealTimers();
     });

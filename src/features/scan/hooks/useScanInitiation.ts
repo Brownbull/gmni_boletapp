@@ -392,11 +392,7 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
       return;
     }
 
-    // Single image — async pipeline (Story 18-13b)
-
-    // Guard: prevent re-entrant scan queueing
-    if (isQueueingRef.current) return;
-    isQueueingRef.current = true;
+    // Single image — load in editor, user presses "Escanear" to start async scan
 
     const updatedImages = [...scanImages, ...newImages];
     setScanImages(updatedImages);
@@ -404,52 +400,6 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
     setTransactionEditorMode('new');
     setSkipScanCompleteModal(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
-
-    // Show upload overlay AFTER setScanImages (startSingle resets overlay to idle)
-    startOverlayUpload();
-
-    // Start async scan pipeline
-    const scanId = crypto.randomUUID();
-
-    try {
-      // Upload images to Firebase Storage with real progress
-      const imageUrls = await uploadScanImages(
-        userId,
-        scanId,
-        updatedImages,
-        (pct) => setOverlayProgress(pct)
-      );
-
-      // Transition phase to 'scanning' — AFTER upload (images now in store, setTimeout resolved)
-      // Required for: overlay visibility (ScanFeature:446) + processSuccess guard (scanCoreSlice:208)
-      startOverlayProcessing();
-      useScanStore.getState().processStart('normal', 1);
-      const response = await queueReceiptScan({
-        scanId,
-        imageUrls,
-        currency: defaultCurrency || DEFAULT_CURRENCY,
-        receiptType: scanState.storeType !== 'auto' ? scanState.storeType as ReceiptType | undefined : undefined,
-      });
-
-      // Store pending scan — usePendingScan listener picks this up
-      const deadlineMs = new Date(response.processingDeadline).getTime();
-      setPendingScan(scanId, deadlineMs);
-    } catch (error: unknown) {
-      // If server says scan already in progress, restore the existing one
-      const firebaseError = error as { code?: string };
-      if (firebaseError.code === 'functions/already-exists') {
-        setToastMessage({ text: t('scanInProgress'), type: 'info' });
-        // Trigger detectPendingScans by clearing overlay — app init effect will find it
-        useScanStore.getState().resetOverlay();
-        return;
-      }
-      const errorInfo = getErrorInfo(classifyError(error));
-      const errorMsg = t(errorInfo.messageKey) || t('scanError');
-      setOverlayError('api', errorMsg);
-      setToastMessage({ text: errorMsg, type: errorInfo.toastType });
-    } finally {
-      isQueueingRef.current = false;
-    }
   }, [
     scanState.mode,
     scanState.storeType,
