@@ -54,7 +54,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.hosting-changed.outputs.skip != 'true'
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Build PWA
         if: steps.hosting-changed.outputs.skip != 'true'
