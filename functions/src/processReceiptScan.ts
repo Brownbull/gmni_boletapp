@@ -121,9 +121,17 @@ function coerceGeminiNumericFields(obj: Record<string, unknown>): Record<string,
     coerced.items = coerced.items
       .map((item: Record<string, unknown>) => {
         const coercedItem = { ...item }
+        // Remap legacy 'price' field if Gemini returns old schema
+        if (!('totalPrice' in coercedItem) && 'price' in coercedItem) {
+          coercedItem.totalPrice = coercedItem.price
+          delete coercedItem.price
+        }
         if ('totalPrice' in coercedItem) coercedItem.totalPrice = parseGeminiNumber(coercedItem.totalPrice)
         if ('unitPrice' in coercedItem) coercedItem.unitPrice = parseGeminiNumber(coercedItem.unitPrice)
         if ('qty' in coercedItem) coercedItem.qty = parseGeminiNumber(coercedItem.qty)
+        if ('quantity' in coercedItem && !('qty' in coercedItem)) {
+          coercedItem.qty = parseGeminiNumber(coercedItem.quantity)
+        }
         return coercedItem
       })
       .filter((item: Record<string, unknown>) => {
