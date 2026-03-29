@@ -10,6 +10,7 @@ import { AdvancedScanOptions } from '@features/transaction-editor/components/Adv
 import { ReceiptType } from '@/services/gemini';
 import type { SupportedCurrency } from '@/types/preferences';
 import { usePendingScanId } from '@features/scan/store';
+import { useOverlayState } from '@features/scan/store/selectors';
 
 interface EditViewScanSectionProps {
     currentTransaction: { id?: string; imageUrls?: string[] };
@@ -46,8 +47,9 @@ export const EditViewScanSection: React.FC<EditViewScanSectionProps> = ({
 }) => {
     const hasImages = currentTransaction.imageUrls && currentTransaction.imageUrls.length > 0;
     const pendingScanId = usePendingScanId();
+    const overlayState = useOverlayState();
     const [isQueuing, setIsQueuing] = useState(false);
-    const isScanBusy = isAnalyzing || isQueuing || !!pendingScanId;
+    const isScanBusy = isAnalyzing || isQueuing || !!pendingScanId || overlayState !== 'idle';
 
     const handleProcessScanClick = useCallback(async () => {
         if (!onProcessScan || isScanBusy) return;

@@ -25,6 +25,7 @@ import { getCategoryPillColors } from '@/config/categoryColors';
 import { getCategoryEmoji } from '@/utils/categoryEmoji';
 import type { ScanButtonState } from '@/shared/utils/scanHelpers';
 import { usePendingScanId } from '@features/scan/store';
+import { useOverlayState } from '@features/scan/store/selectors';
 
 // ============================================================================
 // Types
@@ -95,7 +96,8 @@ export function EditorScanThumbnail({
   t,
 }: EditorScanThumbnailProps) {
   const pendingScanId = usePendingScanId();
-  const isScanBusy = effectiveIsProcessing || !!pendingScanId;
+  const overlayState = useOverlayState();
+  const isScanBusy = effectiveIsProcessing || !!pendingScanId || overlayState !== 'idle';
 
   return (
     <div

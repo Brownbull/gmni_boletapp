@@ -287,9 +287,14 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
       navigator.vibrate(50);
     }
 
-    // Show warning if items total didn't match receipt total
-    if (hasDiscrepancy) {
-      ui.setToastMessage({ text: t('discrepancyWarning'), type: 'info' });
+    // Show warning only for significant discrepancies (>5% of total)
+    // Use parsedItems (before reconciliation) — reconciledItems includes adjustment item
+    if (hasDiscrepancy && finalTotal > 0) {
+      const originalItemsSum = parsedItems.reduce((sum, i) => sum + (i.totalPrice || 0), 0);
+      const discrepancyPct = Math.abs(finalTotal - originalItemsSum) / finalTotal;
+      if (discrepancyPct > 0.05) {
+        ui.setToastMessage({ text: t('discrepancyWarning'), type: 'info' });
+      }
     }
 
     // ========================================================================
