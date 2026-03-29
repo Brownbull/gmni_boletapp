@@ -300,8 +300,8 @@ export const processReceiptScan = functions
       const transactionId = generateTransactionId()
       const thumbnailResult = await generateThumbnail(fullSizeBuffers[0])
 
-      // Upload thumbnail to pending scan storage path
-      const thumbnailPath = `pending_scans/${userId}/${scanId}/thumbnail.jpg`
+      // Upload thumbnail to permanent receipts path (not pending_scans/ which gets cleaned up)
+      const thumbnailPath = `users/${userId}/receipts/${transactionId}/thumbnail.jpg`
       const thumbnailFile = bucket.file(thumbnailPath)
       // public: true matches existing receipt image pattern (storageService.ts uploadImage/uploadThumbnail).
       // URLs are unguessable (contain userId+scanId). Project-wide signed URL migration tracked separately.
