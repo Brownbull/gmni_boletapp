@@ -121,9 +121,17 @@ function coerceGeminiNumericFields(obj: Record<string, unknown>): Record<string,
     coerced.items = coerced.items
       .map((item: Record<string, unknown>) => {
         const coercedItem = { ...item }
+        // Remap legacy 'price' field if Gemini returns old schema
+        if (!('totalPrice' in coercedItem) && 'price' in coercedItem) {
+          coercedItem.totalPrice = coercedItem.price
+          delete coercedItem.price
+        }
         if ('totalPrice' in coercedItem) coercedItem.totalPrice = parseGeminiNumber(coercedItem.totalPrice)
         if ('unitPrice' in coercedItem) coercedItem.unitPrice = parseGeminiNumber(coercedItem.unitPrice)
         if ('qty' in coercedItem) coercedItem.qty = parseGeminiNumber(coercedItem.qty)
+        if ('quantity' in coercedItem && !('qty' in coercedItem)) {
+          coercedItem.qty = parseGeminiNumber(coercedItem.quantity)
+        }
         return coercedItem
       })
       .filter((item: Record<string, unknown>) => {
@@ -265,9 +273,20 @@ export const processReceiptScan = functions
         .trim()
 
       const rawParsed: unknown = JSON.parse(cleanedText)
+      // Log raw Gemini items count for debugging empty items issue
+      const rawObj = rawParsed as Record<string, unknown>
+      const rawItems = Array.isArray(rawObj?.items) ? rawObj.items : []
+      console.log(`processReceiptScan: Gemini returned ${rawItems.length} raw items for scan ${scanId}`)
+      if (rawItems.length > 0) {
+        console.log(`processReceiptScan: first item sample: ${JSON.stringify(rawItems[0])}`)
+      }
       const coerced = typeof rawParsed === 'object' && rawParsed !== null
         ? coerceGeminiNumericFields(rawParsed as Record<string, unknown>)
         : rawParsed
+      const coercedItems = Array.isArray((coerced as Record<string, unknown>)?.items) ? (coerced as Record<string, unknown>).items as unknown[] : []
+      if (rawItems.length > 0 && coercedItems.length === 0) {
+        console.warn(`processReceiptScan: all ${rawItems.length} items filtered by coercion for scan ${scanId}`)
+      }
       const diagnostic = validateGeminiResult(coerced)
       if (!diagnostic.valid) {
         console.error(
