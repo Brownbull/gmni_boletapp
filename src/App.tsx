@@ -1107,7 +1107,8 @@ function App() {
         handleNewTransaction,
         triggerScan,
         handleFileSelect,
-        handleRescan
+        handleRescan,
+        queueScanFromImages,
     } = scanInitiationHandlers;
 
     // Story 14e-39: Trust prompt handlers moved to CreditFeature
@@ -1197,7 +1198,7 @@ function App() {
         transactions,
         saveTransaction,
         deleteTransaction,
-        processScan,
+        processScan: queueScanFromImages,
         handleRescan,
         hasActiveTransactionConflict,
     }), [
@@ -1215,7 +1216,7 @@ function App() {
         transactions,
         saveTransaction,
         deleteTransaction,
-        processScan,
+        queueScanFromImages,
         handleRescan,
         hasActiveTransactionConflict,
     ]);

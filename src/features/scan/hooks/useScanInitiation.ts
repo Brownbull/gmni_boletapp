@@ -167,6 +167,9 @@ export interface ScanInitiationHandlers {
   /** Rescan existing transaction with stored images */
   handleRescan: () => Promise<void>;
 
+  /** Queue async scan from images already in store (editor Process Scan button) */
+  queueScanFromImages: () => Promise<void>;
+
   /** Legacy trigger scan (backward compat) */
   triggerScan: () => void;
 }
@@ -582,6 +585,55 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
   ]);
 
   // =========================================================================
+  // queueScanFromImages — starts async pipeline for images already in store
+  // =========================================================================
+
+  /**
+   * Queue scan from images already loaded in the scan store.
+   * Used by editor's "Process Scan" button (images added via photo picker).
+   * Same async pipeline as handleFileSelect but without file input handling.
+   */
+  const queueScanFromImages = useCallback(async () => {
+    const images = scanImages;
+
+    if (!images || images.length === 0) return;
+    if (isQueueingRef.current) return;
+    isQueueingRef.current = true;
+
+    startOverlayUpload();
+    const scanId = crypto.randomUUID();
+
+    try {
+      const imageUrls = await uploadScanImages(
+        userId,
+        scanId,
+        images,
+        (pct) => setOverlayProgress(pct)
+      );
+
+      startOverlayProcessing();
+      const response = await queueReceiptScan({
+        scanId,
+        imageUrls,
+        currency: defaultCurrency || DEFAULT_CURRENCY,
+        receiptType: scanState.storeType !== 'auto' ? scanState.storeType as ReceiptType | undefined : undefined,
+      });
+
+      const deadlineMs = new Date(response.processingDeadline).getTime();
+      setPendingScan(scanId, deadlineMs);
+    } catch (error: unknown) {
+      const errorInfo = getErrorInfo(classifyError(error));
+      const errorMsg = t(errorInfo.messageKey) || t('scanError');
+      setOverlayError('api', errorMsg);
+      setToastMessage({ text: errorMsg, type: errorInfo.toastType });
+    } finally {
+      isQueueingRef.current = false;
+    }
+  }, [scanImages, userId, defaultCurrency, scanState.storeType, t,
+    startOverlayUpload, setOverlayProgress, startOverlayProcessing,
+    setOverlayError, setPendingScan, setToastMessage]);
+
+  // =========================================================================
   // triggerScan (legacy backward compat)
   // =========================================================================
 
@@ -601,6 +653,7 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
     handleNewTransaction,
     handleFileSelect,
     handleRescan,
+    queueScanFromImages,
     triggerScan,
   };
 }
