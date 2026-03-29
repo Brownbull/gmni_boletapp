@@ -434,6 +434,14 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
       const deadlineMs = new Date(response.processingDeadline).getTime();
       setPendingScan(scanId, deadlineMs);
     } catch (error: unknown) {
+      // If server says scan already in progress, restore the existing one
+      const firebaseError = error as { code?: string };
+      if (firebaseError.code === 'functions/already-exists') {
+        setToastMessage({ text: t('scanInProgress'), type: 'info' });
+        // Trigger detectPendingScans by clearing overlay — app init effect will find it
+        useScanStore.getState().resetOverlay();
+        return;
+      }
       const errorInfo = getErrorInfo(classifyError(error));
       const errorMsg = t(errorInfo.messageKey) || t('scanError');
       setOverlayError('api', errorMsg);
@@ -622,6 +630,12 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
       const deadlineMs = new Date(response.processingDeadline).getTime();
       setPendingScan(scanId, deadlineMs);
     } catch (error: unknown) {
+      const firebaseError = error as { code?: string };
+      if (firebaseError.code === 'functions/already-exists') {
+        setToastMessage({ text: t('scanInProgress'), type: 'info' });
+        useScanStore.getState().resetOverlay();
+        return;
+      }
       const errorInfo = getErrorInfo(classifyError(error));
       const errorMsg = t(errorInfo.messageKey) || t('scanError');
       setOverlayError('api', errorMsg);
