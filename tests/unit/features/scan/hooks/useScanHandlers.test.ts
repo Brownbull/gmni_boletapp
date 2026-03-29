@@ -248,7 +248,7 @@ describe('useScanHandlers', () => {
     });
 
     describe('handleScanOverlayRetry', () => {
-        it('should call retry on scan overlay', () => {
+        it('should reset overlay and navigate to dashboard with toast', () => {
             const props = createDefaultProps();
             const { result } = renderHook(() => useScanHandlers(props));
 
@@ -256,7 +256,7 @@ describe('useScanHandlers', () => {
                 result.current.handleScanOverlayRetry();
             });
 
-            expect(mockScanOverlay.retry).toHaveBeenCalled();
+            expect(mockScanOverlay.reset).toHaveBeenCalled();
         });
     });
 

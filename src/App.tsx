@@ -631,6 +631,7 @@ function App() {
     const { isLocked: isScanLocked } = useScanLock(user?.uid ?? null);
 
     // Story 18-13b: Detect pending scans on app init (after auth)
+    // Only restores scans that are still actively processing (not completed/failed/expired)
     useEffect(() => {
         if (!user?.uid) return;
 
@@ -639,7 +640,8 @@ function App() {
             try {
                 const q = query(
                     collection(db, 'pending_scans'),
-                    where('userId', '==', user.uid)
+                    where('userId', '==', user.uid),
+                    where('status', '==', 'processing')
                 );
                 const snapshot = await getDocs(q);
 
@@ -647,6 +649,9 @@ function App() {
                     const firstDoc = snapshot.docs[0];
                     const data = firstDoc.data() as FirestorePendingScan;
                     const deadlineMs = data.processingDeadline?.toMillis?.() ?? Date.now() + PENDING_SCAN_FALLBACK_DEADLINE_MS;
+
+                    // Skip if past deadline — cleanupPendingScans will handle it
+                    if (deadlineMs < Date.now()) return;
 
                     useScanStore.getState().setPendingScan(firstDoc.id, deadlineMs);
                 }
@@ -858,7 +863,7 @@ function App() {
             },
             scanOverlay,
             services: {
-                analyzeReceipt,
+                analyzeReceipt, // Only used by handleRescan (separate path)
                 deductUserCredits,
                 addUserCredits,
                 getCitiesForCountry,

@@ -19,7 +19,6 @@ import type {
   Transaction,
   TransactionItem,
   StoreCategory,
-  ReceiptType,
 } from './types';
 
 import {
@@ -63,9 +62,6 @@ import { navigationActions, insightActions } from '@shared/stores';
 // =============================================================================
 // Constants
 // =============================================================================
-
-/** Default processing timeout in milliseconds */
-const DEFAULT_PROCESSING_TIMEOUT_MS = 120000;
 
 // =============================================================================
 // Main Handler
@@ -116,84 +112,20 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
     lang,
     trustedAutoSave,
     prefersReducedMotion = false,
-    processingTimeoutMs = DEFAULT_PROCESSING_TIMEOUT_MS,
   } = params;
 
   // ==========================================================================
-  // Story 18-13b: Async pipeline bypass flag.
-  // When asyncResult is set, Steps 1-4 are skipped (credit already deducted
-  // server-side). Error handling also skips credit refund for async path.
+  // All scans go through async pipeline (queueReceiptScan → processReceiptScan).
+  // processScan only processes pre-resolved results from the Firestore listener.
+  // Sync path (analyzeReceipt) removed — was causing double scan calls.
   // ==========================================================================
-  const isAsyncPipeline = !!params.asyncResult;
-
-  if (!isAsyncPipeline) {
-    // ========================================================================
-    // Step 1: Validate Images
-    // ========================================================================
-
-    if (!scan.images || scan.images.length === 0) {
-      console.error('processScan called with no images');
-      scanActions.processError(t('noImagesToScan'));
-      return { success: false, error: 'No images to scan' };
-    }
-
-    // ========================================================================
-    // Step 2: Check Credits
-    // ========================================================================
-
-    if (user.creditsRemaining <= 0) {
-      scanActions.processError(t('noCreditsMessage'));
-      ui.setToastMessage({ text: t('noCreditsMessage'), type: 'info' });
-      return { success: false, error: 'No credits' };
-    }
-
-    // ========================================================================
-    // Step 3: Deduct Credit
-    // ========================================================================
-
-    const deducted = await services.deductUserCredits(1);
-    if (!deducted) {
-      scanActions.processError(t('noCreditsMessage'));
-      ui.setToastMessage({ text: t('noCreditsMessage'), type: 'info' });
-      return { success: false, error: 'Credit deduction failed' };
-    }
-  }
-
-  // Story 16-7: setCreditUsed moved to scan:completed subscriber in transaction-editor
-  // Story 18-13b: Skip overlay reset for async path — overlay already in correct state
-  if (!isAsyncPipeline) {
-    scanActions.processStart('normal', 1);
-    scanOverlay.startUpload();
-    scanOverlay.setProgress(100);
-    scanOverlay.startProcessing();
+  if (!params.asyncResult) {
+    console.warn('processScan called without asyncResult — sync path removed');
+    return { success: false, error: 'Async pipeline required' };
   }
 
   try {
-    // ========================================================================
-    // Step 4: Call Gemini OCR (skipped for async pipeline)
-    // ========================================================================
-
-    let result: ScanResult;
-
-    if (isAsyncPipeline) {
-      result = params.asyncResult!;
-    } else {
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(
-          () => reject(new Error('Request timed out. Please check your connection and try again.')),
-          processingTimeoutMs
-        );
-      });
-
-      result = await Promise.race([
-        services.analyzeReceipt(
-          scan.images,
-          scan.currency,
-          scan.storeType !== 'auto' ? (scan.storeType as ReceiptType) : undefined
-        ),
-        timeoutPromise,
-      ]);
-    }
+    const result: ScanResult = params.asyncResult;
 
     // ========================================================================
     // Step 5: Parse and Validate Basic Fields
@@ -464,11 +396,7 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
 
     scanOverlay.setError(errorCode === 'TIMEOUT_ERROR' ? 'timeout' : 'api', errorMessage);
 
-    // Restore credit on API error (skip for async — credit refund handled server-side)
-    if (!isAsyncPipeline) {
-      await services.addUserCredits(1);
-      ui.setToastMessage({ text: t('scanFailedCreditRefunded'), type: 'info' });
-    }
+    // Credit refund handled server-side (async pipeline only)
 
     return {
       success: false,
