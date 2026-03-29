@@ -3,12 +3,13 @@
  * Renders the scan receipt button, image grid, scan options, and process scan button.
  * NOTE: The wrapper condition `{!currentTransaction.id && onAddPhoto && (` stays in EditView.tsx.
  */
-import React from 'react';
-import { Camera, Plus, X } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Camera, Plus, X, Loader2 } from 'lucide-react';
 import { StoreTypeSelector } from '@features/transaction-editor/components/StoreTypeSelector';
 import { AdvancedScanOptions } from '@features/transaction-editor/components/AdvancedScanOptions';
 import { ReceiptType } from '@/services/gemini';
 import type { SupportedCurrency } from '@/types/preferences';
+import { usePendingScanId } from '@features/scan/store';
 
 interface EditViewScanSectionProps {
     currentTransaction: { id?: string; imageUrls?: string[] };
@@ -44,6 +45,19 @@ export const EditViewScanSection: React.FC<EditViewScanSectionProps> = ({
     theme,
 }) => {
     const hasImages = currentTransaction.imageUrls && currentTransaction.imageUrls.length > 0;
+    const pendingScanId = usePendingScanId();
+    const [isQueuing, setIsQueuing] = useState(false);
+    const isScanBusy = isAnalyzing || isQueuing || !!pendingScanId;
+
+    const handleProcessScanClick = useCallback(async () => {
+        if (!onProcessScan || isScanBusy) return;
+        setIsQueuing(true);
+        try {
+            await onProcessScan();
+        } finally {
+            setIsQueuing(false);
+        }
+    }, [onProcessScan, isScanBusy]);
 
     return (
         <div className="mb-4">
@@ -125,20 +139,25 @@ export const EditViewScanSection: React.FC<EditViewScanSectionProps> = ({
                         />
                     )}
 
-                    {/* Process Scan button - Story 9.10 AC#7: Disabled when no credits */}
-                    {onProcessScan && !isAnalyzing && (
+                    {/* Process Scan button - Story 9.10 AC#7: Disabled when no credits or scan in progress */}
+                    {onProcessScan && (
                         <button
-                            onClick={onProcessScan}
-                            disabled={!hasCredits}
+                            onClick={handleProcessScanClick}
+                            disabled={!hasCredits || isScanBusy}
                             className="w-full py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-opacity"
                             style={{
-                                backgroundColor: hasCredits ? 'var(--success)' : 'var(--secondary)',
-                                opacity: !hasCredits ? 0.7 : 1,
-                                cursor: hasCredits ? 'pointer' : 'not-allowed',
+                                backgroundColor: (!hasCredits || isScanBusy) ? 'var(--secondary)' : 'var(--success)',
+                                opacity: (!hasCredits || isScanBusy) ? 0.7 : 1,
+                                cursor: (!hasCredits || isScanBusy) ? 'not-allowed' : 'pointer',
                             }}
                             title={!hasCredits ? t('noCreditsMessage') : undefined}
                         >
-                            {!hasCredits ? (
+                            {isScanBusy ? (
+                                <>
+                                    <Loader2 size={20} className="animate-spin" />
+                                    {t('scanning') || 'Escaneando...'}
+                                </>
+                            ) : !hasCredits ? (
                                 <>
                                     <Camera size={20} />
                                     {t('noCreditsButton')}
