@@ -3,19 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>History — Gastify (Production Design System)</title>
+  <title>History (Compras) — Gastify (Production Design System)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Baloo+2:wght@700&display=swap" rel="stylesheet">
   <style>
-    /* ══════════════════════════════════════════
+    /* ======================================================
        GASTIFY — PRODUCTION DESIGN SYSTEM
        Themes: Normal / Professional / Mono
        Modes: Light / Dark
-       Screen: History (Transacciones)
-       ══════════════════════════════════════════ */
+       Screen: History (Compras)
+       Phone: 360x780 (Samsung S23)
+       ====================================================== */
 
-    /* ── Normal Light (default) ── */
+    /* -- Normal Light (default) -- */
     :root {
       --bg: #f5f0e8;
       --surface: #fff;
@@ -24,32 +25,28 @@
       --secondary: #4a5568;
       --accent: #e8a87c;
       --border: #e3bba1;
+      --border-medium: #d4a574;
       --bg-tertiary: #f1dbb6;
       --secondary-color: #5b8fa8;
+      --success: #7d9b5f;
+      --warning: #f59e0b;
+      --error: #ef4444;
       --primary-rgb: 74, 124, 89;
-      --nav-bg: #4a5568;
+      --nav-bg: #ffffff;
+      --nav-border: #e3bba1;
       --shadow: rgba(74, 124, 89, 0.12);
       --shadow-lg: rgba(74, 124, 89, 0.18);
-      --skeleton-base: #f1dbb6;
-      --skeleton-shine: #f5f0e8;
-      --progress-track: #e3bba1;
-      --indicator-inactive: #e3bba1;
-      --treemap-text: #fff;
       --frame-bg: #1a1a2e;
       --status-bar-text: #fff;
       --fab-gradient-from: #4a7c59;
       --fab-gradient-to: #3d6b4b;
-      --recent-indicator: #d4a574;
-      --warning: #f59e0b;
-      --error: #ef4444;
-      --cat-alimentacion: #4a7c59;
-      --cat-restaurantes: #5b8fa8;
-      --cat-transporte: #c9944a;
-      --cat-salud: #5b7fb8;
-      --cat-otros: #8b7ea8;
+      --cat-construccion: #4a7c59;
+      --cat-farmacia: #dc2626;
+      --cat-vet: #5b8fa8;
+      --cat-alimentos: #4a7c59;
     }
 
-    /* ── Normal Dark ── */
+    /* -- Normal Dark -- */
     [data-theme="normal"][data-mode="dark"] {
       --bg: #1a2420;
       --surface: #243028;
@@ -57,65 +54,59 @@
       --text: #e8e4dc;
       --secondary: #b8c4a8;
       --border: #3d4d42;
+      --border-medium: #4d5d52;
       --bg-tertiary: #2d3a30;
       --secondary-color: #7ab5cc;
+      --success: #9bbd7f;
       --primary-rgb: 107, 158, 122;
       --nav-bg: #1e2a22;
+      --nav-border: #3d4d42;
       --shadow: rgba(0,0,0,0.3);
       --shadow-lg: rgba(0,0,0,0.4);
-      --skeleton-base: #2d3a30;
-      --skeleton-shine: #3d4d42;
-      --progress-track: #3d4d42;
-      --indicator-inactive: #3d4d42;
       --frame-bg: #0a0f0c;
       --status-bar-text: #e8e4dc;
       --accent: #d4a574;
       --fab-gradient-from: #6b9e7a;
       --fab-gradient-to: #5a8a68;
-      --recent-indicator: #d4a574;
       --warning: #fbbf24;
       --error: #f87171;
-      --cat-alimentacion: #6b9e7a;
-      --cat-restaurantes: #7ab5cc;
-      --cat-transporte: #d4a574;
-      --cat-salud: #7a9fd4;
-      --cat-otros: #a89bcf;
+      --cat-construccion: #6b9e7a;
+      --cat-farmacia: #f87171;
+      --cat-vet: #7ab5cc;
+      --cat-alimentos: #6b9e7a;
     }
 
-    /* ── Professional Light ── */
+    /* -- Professional Light -- */
     [data-theme="professional"][data-mode="light"] {
       --bg: #f8fafc;
       --surface: #fff;
       --primary: #2563eb;
       --text: #0f172a;
-      --secondary: #64748b;
+      --secondary: #475569;
       --accent: #3b82f6;
       --border: #e2e8f0;
+      --border-medium: #cbd5e1;
       --bg-tertiary: #f1f5f9;
       --secondary-color: #0ea5e9;
+      --success: #16a34a;
       --primary-rgb: 37, 99, 235;
-      --nav-bg: #1e293b;
+      --nav-bg: #ffffff;
+      --nav-border: #e2e8f0;
       --shadow: rgba(37, 99, 235, 0.08);
       --shadow-lg: rgba(37, 99, 235, 0.12);
-      --skeleton-base: #f1f5f9;
-      --skeleton-shine: #f8fafc;
-      --progress-track: #e2e8f0;
-      --indicator-inactive: #e2e8f0;
       --frame-bg: #1e293b;
       --status-bar-text: #fff;
       --fab-gradient-from: #2563eb;
       --fab-gradient-to: #1d4ed8;
-      --recent-indicator: #3b82f6;
       --warning: #f59e0b;
       --error: #ef4444;
-      --cat-alimentacion: #2563eb;
-      --cat-restaurantes: #0ea5e9;
-      --cat-transporte: #f59e0b;
-      --cat-salud: #6366f1;
-      --cat-otros: #8b5cf6;
+      --cat-construccion: #2563eb;
+      --cat-farmacia: #dc2626;
+      --cat-vet: #7c3aed;
+      --cat-alimentos: #2563eb;
     }
 
-    /* ── Professional Dark ── */
+    /* -- Professional Dark -- */
     [data-theme="professional"][data-mode="dark"] {
       --bg: #0f172a;
       --surface: #1e293b;
@@ -124,64 +115,58 @@
       --secondary: #94a3b8;
       --accent: #60a5fa;
       --border: #334155;
+      --border-medium: #475569;
       --bg-tertiary: #1e293b;
       --secondary-color: #38bdf8;
+      --success: #22c55e;
       --primary-rgb: 59, 130, 246;
       --nav-bg: #0f172a;
+      --nav-border: #334155;
       --shadow: rgba(0,0,0,0.3);
       --shadow-lg: rgba(0,0,0,0.4);
-      --skeleton-base: #1e293b;
-      --skeleton-shine: #334155;
-      --progress-track: #334155;
-      --indicator-inactive: #334155;
       --frame-bg: #020617;
       --status-bar-text: #f1f5f9;
       --fab-gradient-from: #3b82f6;
       --fab-gradient-to: #2563eb;
-      --recent-indicator: #60a5fa;
       --warning: #fbbf24;
       --error: #f87171;
-      --cat-alimentacion: #3b82f6;
-      --cat-restaurantes: #38bdf8;
-      --cat-transporte: #fbbf24;
-      --cat-salud: #818cf8;
-      --cat-otros: #a78bfa;
+      --cat-construccion: #3b82f6;
+      --cat-farmacia: #f87171;
+      --cat-vet: #a78bfa;
+      --cat-alimentos: #3b82f6;
     }
 
-    /* ── Mono Light ── */
+    /* -- Mono Light -- */
     [data-theme="mono"][data-mode="light"] {
       --bg: #fafafa;
       --surface: #fff;
       --primary: #18181b;
       --text: #18181b;
-      --secondary: #71717a;
+      --secondary: #52525b;
       --accent: #52525b;
       --border: #e4e4e7;
+      --border-medium: #d4d4d8;
       --bg-tertiary: #f4f4f5;
       --secondary-color: #3f3f46;
+      --success: #52525b;
       --primary-rgb: 24, 24, 27;
-      --nav-bg: #27272a;
+      --nav-bg: #ffffff;
+      --nav-border: #e4e4e7;
       --shadow: rgba(0,0,0,0.06);
       --shadow-lg: rgba(0,0,0,0.1);
-      --skeleton-base: #f4f4f5;
-      --skeleton-shine: #fafafa;
-      --progress-track: #e4e4e7;
-      --indicator-inactive: #e4e4e7;
       --frame-bg: #18181b;
       --status-bar-text: #fff;
       --fab-gradient-from: #18181b;
       --fab-gradient-to: #27272a;
-      --recent-indicator: #52525b;
       --warning: #a1a1aa;
       --error: #71717a;
-      --cat-alimentacion: #18181b;
-      --cat-restaurantes: #3f3f46;
-      --cat-transporte: #52525b;
-      --cat-salud: #71717a;
-      --cat-otros: #a1a1aa;
+      --cat-construccion: #18181b;
+      --cat-farmacia: #3f3f46;
+      --cat-vet: #a1a1aa;
+      --cat-alimentos: #18181b;
     }
 
-    /* ── Mono Dark ── */
+    /* -- Mono Dark -- */
     [data-theme="mono"][data-mode="dark"] {
       --bg: #09090b;
       --surface: #18181b;
@@ -190,33 +175,30 @@
       --secondary: #a1a1aa;
       --accent: #71717a;
       --border: #27272a;
+      --border-medium: #3f3f46;
       --bg-tertiary: #18181b;
       --secondary-color: #71717a;
+      --success: #a1a1aa;
       --primary-rgb: 63, 63, 70;
       --nav-bg: #09090b;
+      --nav-border: #27272a;
       --shadow: rgba(0,0,0,0.4);
       --shadow-lg: rgba(0,0,0,0.5);
-      --skeleton-base: #18181b;
-      --skeleton-shine: #27272a;
-      --progress-track: #27272a;
-      --indicator-inactive: #27272a;
       --frame-bg: #000;
       --status-bar-text: #fafafa;
       --fab-gradient-from: #3f3f46;
       --fab-gradient-to: #27272a;
-      --recent-indicator: #71717a;
       --warning: #71717a;
       --error: #a1a1aa;
-      --cat-alimentacion: #a1a1aa;
-      --cat-restaurantes: #71717a;
-      --cat-transporte: #52525b;
-      --cat-salud: #a1a1aa;
-      --cat-otros: #71717a;
+      --cat-construccion: #a1a1aa;
+      --cat-farmacia: #71717a;
+      --cat-vet: #71717a;
+      --cat-alimentos: #a1a1aa;
     }
 
-    /* ══════════════════════════════════════════
+    /* ======================================================
        BASE STYLES
-       ══════════════════════════════════════════ */
+       ====================================================== */
 
     * {
       margin: 0;
@@ -232,19 +214,19 @@
       flex-direction: column;
       align-items: center;
       padding: 20px;
-      gap: 40px;
+      gap: 32px;
       color: var(--text);
     }
 
-    /* ══════════════════════════════════════════
+    /* ======================================================
        CONTROLS (outside phone frame)
-       ══════════════════════════════════════════ */
+       ====================================================== */
 
     .controls {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
       width: 100%;
       max-width: 520px;
     }
@@ -357,48 +339,48 @@
       color: #fff;
     }
 
-    /* ══════════════════════════════════════════
-       PHONE FRAME
-       ══════════════════════════════════════════ */
+    /* ======================================================
+       PHONE FRAME — 360x780 (Samsung S23)
+       ====================================================== */
 
     .phone-frame {
-      width: 360px;
-      height: 860px;
+      width: 384px;
+      height: 804px;
       background: var(--frame-bg);
-      border-radius: 44px;
+      border-radius: 40px;
       padding: 12px;
       position: relative;
       box-shadow: 0 25px 80px rgba(0,0,0,0.4), inset 0 0 0 2px rgba(255,255,255,0.08);
     }
 
     .phone-screen {
-      width: 100%;
-      height: 100%;
+      width: 360px;
+      height: 780px;
       background: var(--bg);
-      border-radius: 34px;
+      border-radius: 30px;
       overflow: hidden;
       position: relative;
       display: flex;
       flex-direction: column;
     }
 
-    /* ── Notch ── */
+    /* -- Notch -- */
     .phone-notch {
       position: absolute;
       top: 0;
       left: 50%;
       transform: translateX(-50%);
-      width: 150px;
-      height: 28px;
+      width: 120px;
+      height: 26px;
       background: var(--frame-bg);
-      border-radius: 0 0 20px 20px;
+      border-radius: 0 0 16px 16px;
       z-index: 100;
     }
 
-    /* ── Status Bar ── */
+    /* -- Status Bar -- */
     .status-bar {
-      height: 48px;
-      padding: 14px 24px 0;
+      height: 44px;
+      padding: 12px 20px 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -412,67 +394,68 @@
     }
 
     .status-bar-left {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
     }
 
     .status-bar-right {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
 
     .status-bar-right svg {
-      width: 16px;
-      height: 16px;
+      width: 14px;
+      height: 14px;
     }
 
-    /* ── Home Indicator ── */
+    /* -- Home Indicator -- */
     .home-indicator {
       position: absolute;
       bottom: 6px;
       left: 50%;
       transform: translateX(-50%);
-      width: 134px;
-      height: 5px;
+      width: 120px;
+      height: 4px;
       background: var(--secondary);
-      border-radius: 3px;
+      border-radius: 2px;
       opacity: 0.3;
       z-index: 100;
     }
 
-    /* ══════════════════════════════════════════
-       TOP HEADER
-       ══════════════════════════════════════════ */
+    /* ======================================================
+       TOP HEADER (single row)
+       ====================================================== */
 
     .top-header {
-      height: 56px;
-      padding: 0 16px;
+      height: 52px;
+      padding: 0 14px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 8px;
       flex-shrink: 0;
       background: var(--bg);
     }
 
-    .header-left {
-      width: 36px;
-      height: 36px;
+    .header-back {
+      width: 32px;
+      height: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       border-radius: 50%;
+      flex-shrink: 0;
       transition: background 0.15s;
     }
 
-    .header-left:hover {
+    .header-back:hover {
       background: var(--bg-tertiary);
     }
 
-    .header-left svg {
-      width: 28px;
-      height: 28px;
+    .header-back svg {
+      width: 22px;
+      height: 22px;
       stroke: var(--text);
       stroke-width: 2;
       fill: none;
@@ -481,13 +464,38 @@
     .header-title {
       font-family: 'Outfit', sans-serif;
       font-weight: 700;
-      font-size: 20px;
+      font-size: 18px;
       color: var(--text);
+      flex: 1;
+    }
+
+    .header-action {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 50%;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+
+    .header-action:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .header-action svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--secondary);
+      stroke-width: 2;
+      fill: none;
     }
 
     .avatar-circle {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       background: var(--bg-tertiary);
       display: flex;
@@ -495,6 +503,7 @@
       justify-content: center;
       cursor: pointer;
       transition: transform 0.15s;
+      flex-shrink: 0;
     }
 
     .avatar-circle:hover {
@@ -504,14 +513,14 @@
     .avatar-circle span {
       font-family: 'Outfit', sans-serif;
       font-weight: 600;
-      font-size: 13px;
+      font-size: 11px;
       color: var(--text);
       line-height: 1;
     }
 
-    /* ══════════════════════════════════════════
+    /* ======================================================
        SCROLLABLE CONTENT
-       ══════════════════════════════════════════ */
+       ====================================================== */
 
     .scroll-content {
       flex: 1;
@@ -523,24 +532,24 @@
       display: none;
     }
 
-    /* ══════════════════════════════════════════
+    /* ======================================================
        SEARCH BAR
-       ══════════════════════════════════════════ */
+       ====================================================== */
 
     .search-bar {
-      margin: 0 16px 12px;
+      margin: 4px 14px 10px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 999px;
-      padding: 10px 16px;
+      padding: 9px 14px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .search-bar svg {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
       stroke: var(--secondary);
       stroke-width: 2;
       fill: none;
@@ -552,7 +561,7 @@
       border: none;
       background: transparent;
       font-family: 'Outfit', sans-serif;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 400;
       color: var(--text);
       outline: none;
@@ -563,28 +572,106 @@
       opacity: 0.7;
     }
 
-    /* ══════════════════════════════════════════
-       CONTROLS ROW (Sort, Export, Duplicate)
-       ══════════════════════════════════════════ */
+    /* ======================================================
+       TEMPORAL BREADCRUMB PILLS
+       ====================================================== */
 
-    .controls-row-inner {
+    .temporal-breadcrumb {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
+      gap: 2px;
+      padding: 0 14px;
       margin-bottom: 10px;
     }
 
-    .controls-left {
+    .temporal-level {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--secondary);
+      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 999px;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .temporal-level:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .temporal-level.active {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .temporal-sep {
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      color: var(--secondary);
+      opacity: 0.5;
+      flex-shrink: 0;
+    }
+
+    /* ======================================================
+       RESULTS ROW
+       ====================================================== */
+
+    .results-row {
       display: flex;
       align-items: center;
+      padding: 0 14px;
+      margin-bottom: 8px;
       gap: 8px;
     }
 
-    .icon-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
+    .results-count {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--secondary);
+      white-space: nowrap;
+    }
+
+    .results-spacer {
+      flex: 1;
+    }
+
+    .sort-dropdown {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--secondary);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .sort-dropdown:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .sort-dropdown svg {
+      width: 12px;
+      height: 12px;
+      stroke: var(--secondary);
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .icon-btn-sm {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
       border: 1px solid var(--border);
       background: var(--surface);
       cursor: pointer;
@@ -592,75 +679,36 @@
       align-items: center;
       justify-content: center;
       transition: all 0.15s;
+      flex-shrink: 0;
     }
 
-    .icon-btn:hover {
+    .icon-btn-sm:hover {
       background: var(--bg-tertiary);
       border-color: var(--primary);
     }
 
-    .icon-btn svg {
-      width: 20px;
-      height: 20px;
+    .icon-btn-sm svg {
+      width: 16px;
+      height: 16px;
       stroke: var(--secondary);
       stroke-width: 2;
       fill: none;
     }
 
-    .icon-btn:hover svg {
+    .icon-btn-sm:hover svg {
       stroke: var(--primary);
     }
 
-    .dup-toggle {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .dup-toggle.active {
-      border-color: var(--warning);
-      background: rgba(245, 158, 11, 0.08);
-    }
-
-    .dup-toggle svg {
-      width: 18px;
-      height: 18px;
-      stroke: var(--secondary);
-      stroke-width: 2;
-      fill: none;
-    }
-
-    .dup-toggle.active svg {
-      stroke: var(--warning);
-    }
-
-    .dup-badge {
-      background: var(--warning);
-      color: #fff;
-      font-family: 'Outfit', sans-serif;
-      font-size: 11px;
-      font-weight: 700;
-      border-radius: 999px;
-      padding: 1px 7px;
-      line-height: 1.4;
-    }
-
-    /* ══════════════════════════════════════════
+    /* ======================================================
        FILTER CHIPS ROW
-       ══════════════════════════════════════════ */
+       ====================================================== */
 
     .filter-chips-row {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 0 16px;
-      margin-bottom: 14px;
+      gap: 6px;
+      padding: 0 14px;
+      margin-bottom: 10px;
       overflow-x: auto;
       flex-wrap: nowrap;
     }
@@ -669,16 +717,47 @@
       display: none;
     }
 
+    .clear-all-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+
+    .clear-all-btn:hover {
+      background: var(--error);
+      border-color: var(--error);
+    }
+
+    .clear-all-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--secondary);
+      stroke-width: 2.5;
+      fill: none;
+    }
+
+    .clear-all-btn:hover svg {
+      stroke: #fff;
+    }
+
     .filter-chip {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
+      gap: 5px;
+      padding: 5px 12px;
       border-radius: 999px;
       background: var(--primary);
       color: #fff;
       font-family: 'Outfit', sans-serif;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       white-space: nowrap;
       cursor: pointer;
@@ -691,39 +770,24 @@
     }
 
     .filter-chip .chip-x {
-      width: 14px;
-      height: 14px;
+      width: 12px;
+      height: 12px;
       stroke: #fff;
       stroke-width: 2.5;
       fill: none;
       opacity: 0.8;
     }
 
-    .clear-filters {
-      font-family: 'Outfit', sans-serif;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--primary);
-      cursor: pointer;
-      white-space: nowrap;
-      text-decoration: none;
-      flex-shrink: 0;
-    }
-
-    .clear-filters:hover {
-      text-decoration: underline;
-    }
-
-    /* ══════════════════════════════════════════
+    /* ======================================================
        DATE GROUP HEADERS
-       ══════════════════════════════════════════ */
+       ====================================================== */
 
     .date-header {
       display: flex;
-      align-items: center;
+      align-items: baseline;
       justify-content: space-between;
-      padding: 8px 16px;
-      background: var(--bg-tertiary);
+      padding: 10px 14px 6px;
+      background: var(--bg);
       position: sticky;
       top: 0;
       z-index: 10;
@@ -731,29 +795,31 @@
 
     .date-header-label {
       font-family: 'Outfit', sans-serif;
-      font-weight: 600;
+      font-weight: 700;
       font-size: 13px;
       color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
 
     .date-header-total {
       font-family: 'Outfit', sans-serif;
-      font-weight: 600;
-      font-size: 13px;
+      font-weight: 500;
+      font-size: 12px;
       color: var(--secondary);
     }
 
-    /* ══════════════════════════════════════════
+    /* ======================================================
        TRANSACTION CARD
-       ══════════════════════════════════════════ */
+       ====================================================== */
 
     .txn-card {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 12px 16px;
+      padding: 10px 14px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       cursor: pointer;
       transition: background 0.1s;
     }
@@ -766,10 +832,10 @@
       border-bottom: none;
     }
 
-    /* ── Selection checkbox ── */
+    /* -- Selection checkbox -- */
     .txn-checkbox {
-      width: 24px;
-      height: 24px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       border: 2px solid var(--border);
       display: none;
@@ -789,60 +855,62 @@
     }
 
     .txn-checkbox svg {
-      width: 14px;
-      height: 14px;
+      width: 12px;
+      height: 12px;
       stroke: #fff;
       stroke-width: 3;
       fill: none;
       display: none;
     }
 
-    /* ── Thumbnail ── */
+    /* -- Thumbnail (receipt photo placeholder) -- */
     .txn-thumb {
       width: 40px;
-      height: 46px;
-      border-radius: 8px;
+      height: 50px;
+      border-radius: 6px;
       background: var(--bg-tertiary);
       position: relative;
       flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: visible;
     }
 
-    .txn-thumb-lines {
+    .txn-thumb-inner {
       display: flex;
       flex-direction: column;
       gap: 3px;
       align-items: center;
+      opacity: 0.5;
     }
 
     .txn-thumb-line {
       height: 2px;
-      background: var(--border);
+      background: var(--border-medium);
       border-radius: 1px;
     }
 
-    .txn-thumb-line:nth-child(1) { width: 22px; }
-    .txn-thumb-line:nth-child(2) { width: 18px; }
-    .txn-thumb-line:nth-child(3) { width: 24px; }
-    .txn-thumb-line:nth-child(4) { width: 16px; }
+    .txn-thumb-line:nth-child(1) { width: 20px; }
+    .txn-thumb-line:nth-child(2) { width: 16px; }
+    .txn-thumb-line:nth-child(3) { width: 22px; }
+    .txn-thumb-line:nth-child(4) { width: 14px; }
 
     .txn-cat-badge {
       position: absolute;
-      bottom: -4px;
-      right: -4px;
-      width: 28px;
-      height: 28px;
+      bottom: -3px;
+      right: -3px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 13px;
+      font-size: 10px;
       border: 2px solid var(--surface);
     }
 
-    /* ── Body ── */
+    /* -- Body -- */
     .txn-body {
       flex: 1;
       min-width: 0;
@@ -851,16 +919,17 @@
     .txn-merchant {
       font-family: 'Outfit', sans-serif;
       font-weight: 600;
-      font-size: 14px;
+      font-size: 12px;
       line-height: 1.3;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      text-transform: uppercase;
     }
 
     .txn-pills {
       display: flex;
-      gap: 4px;
+      gap: 3px;
       margin-top: 4px;
       flex-wrap: wrap;
     }
@@ -868,107 +937,79 @@
     .txn-pill {
       background: var(--bg-tertiary);
       border-radius: 999px;
-      padding: 2px 8px;
+      padding: 2px 6px;
       font-family: 'Outfit', sans-serif;
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 500;
       color: var(--secondary);
       white-space: nowrap;
     }
 
-    /* ── Amount ── */
+    .txn-pill.item-count {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    /* -- Right side (amount + chevron) -- */
+    .txn-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
     .txn-amount {
       font-family: 'Outfit', sans-serif;
-      font-weight: 600;
-      font-size: 14px;
+      font-weight: 700;
+      font-size: 13px;
       color: var(--text);
       white-space: nowrap;
-      flex-shrink: 0;
-      text-align: right;
     }
 
-    /* ══════════════════════════════════════════
-       PAGINATION
-       ══════════════════════════════════════════ */
-
-    .pagination {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      padding: 16px 16px 8px;
-    }
-
-    .pagination-info {
-      font-family: 'Outfit', sans-serif;
-      font-size: 13px;
-      font-weight: 500;
+    .txn-chevron {
+      width: 14px;
+      height: 14px;
       color: var(--secondary);
-    }
-
-    .pagination-btns {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .pagination-btn {
-      padding: 6px 14px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      font-family: 'Outfit', sans-serif;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--secondary);
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .pagination-btn:hover {
-      border-color: var(--primary);
-      color: var(--primary);
-    }
-
-    .pagination-btn.disabled {
       opacity: 0.4;
-      pointer-events: none;
     }
 
-    .pagination-sep {
-      color: var(--border);
-      font-size: 14px;
+    .txn-chevron svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--secondary);
     }
 
-    /* ══════════════════════════════════════════
-       BOTTOM NAVIGATION
-       ══════════════════════════════════════════ */
+    /* ======================================================
+       BOTTOM NAVIGATION (matches dashboard exactly)
+       ====================================================== */
 
     .bottom-nav {
       position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
-      height: 64px;
-      padding-bottom: 8px;
+      height: 56px;
+      padding-bottom: 6px;
       background: var(--nav-bg);
-      border-top: 1px solid var(--border);
+      border-top: 1px solid var(--nav-border);
       display: flex;
       align-items: flex-end;
       justify-content: space-around;
       z-index: 50;
-      border-radius: 0 0 34px 34px;
+      border-radius: 0 0 30px 30px;
     }
 
     .nav-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2px;
+      gap: 1px;
       cursor: pointer;
-      padding: 6px 0 4px;
+      padding: 4px 0 2px;
       position: relative;
-      width: 56px;
+      width: 48px;
     }
 
     .nav-icon {
@@ -977,7 +1018,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
     }
 
     .nav-icon svg {
@@ -990,12 +1030,14 @@
       font-family: 'Outfit', sans-serif;
       font-size: 10px;
       font-weight: 500;
-      color: rgba(255,255,255,0.5);
+      color: var(--secondary);
+      opacity: 0.5;
     }
 
     .nav-item.active .nav-label {
       color: var(--primary);
       font-weight: 600;
+      opacity: 1;
     }
 
     .nav-item.active .nav-icon svg {
@@ -1003,16 +1045,17 @@
     }
 
     .nav-item:not(.active) .nav-icon svg {
-      stroke: rgba(255,255,255,0.45);
+      stroke: var(--secondary);
+      opacity: 0.45;
     }
 
-    /* ── FAB ── */
+    /* -- FAB -- */
     .fab-wrapper {
       position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
-      width: 56px;
+      width: 52px;
     }
 
     .fab {
@@ -1023,11 +1066,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-top: -36px;
+      margin-top: -28px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       cursor: pointer;
       transition: transform 0.15s, box-shadow 0.15s;
       border: none;
+      position: relative;
+      z-index: 2;
     }
 
     .fab:hover {
@@ -1043,69 +1088,64 @@
       fill: none;
     }
 
-    .fab-badges {
+    .fab-badge-left {
       position: absolute;
-      top: -30px;
-      display: flex;
-      width: 100%;
-      justify-content: space-between;
-      padding: 0 0;
-    }
-
-    .fab-badge {
+      top: -24px;
+      left: -6px;
+      background: var(--primary);
       border-radius: 999px;
-      padding: 2px 7px;
+      padding: 2px 6px;
       font-family: 'Outfit', sans-serif;
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 700;
+      color: #fff;
       line-height: 1.3;
+      z-index: 3;
+      white-space: nowrap;
     }
 
-    .fab-badge.super {
-      background: #fbbf24;
-      color: #78350f;
-    }
-
-    .fab-badge.normal {
+    .fab-badge-right {
+      position: absolute;
+      top: -24px;
+      right: -6px;
       background: var(--bg-tertiary);
-      color: var(--text);
       border: 1px solid var(--border);
-    }
-
-    .fab-spacer-label {
+      border-radius: 999px;
+      padding: 2px 5px;
       font-family: 'Outfit', sans-serif;
-      font-size: 10px;
-      font-weight: 500;
-      color: rgba(255,255,255,0.5);
-      margin-top: 4px;
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+      z-index: 3;
+      white-space: nowrap;
     }
 
-    /* ── Alert badge ── */
+    /* -- Alert dot -- */
     .alert-dot {
       position: absolute;
       top: 2px;
-      right: 12px;
-      width: 8px;
-      height: 8px;
+      right: 8px;
+      width: 6px;
+      height: 6px;
       background: #ef4444;
       border-radius: 50%;
-      border: 1.5px solid var(--nav-bg);
     }
 
-    /* ══════════════════════════════════════════
+    /* ======================================================
        SELECTION BAR (bottom overlay)
-       ══════════════════════════════════════════ */
+       ====================================================== */
 
     .selection-bar {
       display: none;
       position: absolute;
-      bottom: 72px;
+      bottom: 64px;
       left: 8px;
       right: 8px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 10px 16px;
+      padding: 10px 14px;
       align-items: center;
       justify-content: space-between;
       box-shadow: 0 -4px 20px var(--shadow-lg);
@@ -1120,14 +1160,14 @@
 
     .selection-count {
       font-family: 'Outfit', sans-serif;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--text);
     }
 
     .selection-all {
       font-family: 'Outfit', sans-serif;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 500;
       color: var(--primary);
       cursor: pointer;
@@ -1139,13 +1179,13 @@
     }
 
     .selection-delete {
-      padding: 8px 18px;
+      padding: 7px 16px;
       border-radius: 10px;
       border: none;
       background: var(--error);
       color: #fff;
       font-family: 'Outfit', sans-serif;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       transition: opacity 0.15s;
@@ -1155,9 +1195,9 @@
       opacity: 0.9;
     }
 
-    /* ══════════════════════════════════════════
-       EMPTY STATE (no transactions)
-       ══════════════════════════════════════════ */
+    /* ======================================================
+       EMPTY STATES
+       ====================================================== */
 
     .empty-state {
       display: none;
@@ -1165,14 +1205,14 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 60px 32px;
-      gap: 16px;
+      padding: 50px 28px;
+      gap: 14px;
       flex: 1;
     }
 
     .empty-icon-area {
-      width: 120px;
-      height: 120px;
+      width: 100px;
+      height: 100px;
       border-radius: 50%;
       background: rgba(var(--primary-rgb), 0.08);
       display: flex;
@@ -1182,8 +1222,8 @@
     }
 
     .empty-icon-area svg {
-      width: 56px;
-      height: 56px;
+      width: 44px;
+      height: 44px;
       stroke: var(--primary);
       stroke-width: 1.5;
       fill: none;
@@ -1192,28 +1232,28 @@
     .empty-heading {
       font-family: 'Outfit', sans-serif;
       font-weight: 700;
-      font-size: 20px;
+      font-size: 18px;
       color: var(--text);
     }
 
     .empty-subtitle {
       font-family: 'Outfit', sans-serif;
       font-weight: 400;
-      font-size: 14px;
+      font-size: 13px;
       color: var(--secondary);
       line-height: 1.5;
-      max-width: 260px;
+      max-width: 240px;
     }
 
     .empty-cta {
       margin-top: 12px;
-      padding: 12px 28px;
+      padding: 11px 24px;
       border-radius: 12px;
       border: none;
       background: var(--primary);
       color: #fff;
       font-family: 'Outfit', sans-serif;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 600;
       cursor: pointer;
       transition: opacity 0.15s;
@@ -1225,7 +1265,7 @@
 
     .empty-link {
       font-family: 'Outfit', sans-serif;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
       color: var(--primary);
       cursor: pointer;
@@ -1236,25 +1276,26 @@
       text-decoration: underline;
     }
 
-    /* ══════════════════════════════════════════
+    /* ======================================================
        VARIANT VISIBILITY
-       ══════════════════════════════════════════ */
+       ====================================================== */
 
-    /* Hero = default (populated, filters active) */
+    /* Hero = default */
     .hero-content { display: block; }
     .empty-no-txn { display: none; }
-    .empty-filtered { display: none; }
+    .empty-filtered-content { display: none; }
     .selection-mode-content { display: none; }
 
     /* Empty: no transactions */
     body.variant-empty .hero-content { display: none; }
     body.variant-empty .empty-no-txn { display: flex; }
     body.variant-empty .filter-chips-row,
-    body.variant-empty .controls-row-inner { display: none; }
+    body.variant-empty .results-row,
+    body.variant-empty .temporal-breadcrumb { display: none; }
 
-    /* Empty: filtered */
+    /* Filtered: no results */
     body.variant-filtered .hero-content { display: none; }
-    body.variant-filtered .empty-filtered { display: flex; }
+    body.variant-filtered .empty-filtered-content { display: block; }
 
     /* Selection mode */
     body.variant-selection .hero-content { display: none; }
@@ -1262,15 +1303,14 @@
     body.variant-selection .selection-bar { display: flex; }
     body.variant-selection .txn-checkbox { display: flex; }
     body.variant-selection .filter-chips-row { display: none; }
-    body.variant-selection .controls-row-inner { display: none; }
 
   </style>
 </head>
 <body data-theme="normal" data-mode="light">
 
-  <!-- ════════════════════════════════════════
+  <!-- ========================================
        CONTROLS (outside phone frame)
-       ════════════════════════════════════════ -->
+       ======================================== -->
   <div class="controls">
     <div class="controls-row">
       <div class="theme-tabs">
@@ -1294,56 +1334,54 @@
     </div>
   </div>
 
-  <!-- ════════════════════════════════════════
-       PHONE FRAME
-       ════════════════════════════════════════ -->
+  <!-- ========================================
+       PHONE FRAME (360x780)
+       ======================================== -->
   <div class="phone-frame">
+    <div class="phone-notch"></div>
     <div class="phone-screen">
-
-      <!-- Notch -->
-      <div class="phone-notch"></div>
 
       <!-- Status Bar -->
       <div class="status-bar">
         <span class="status-bar-left">9:41</span>
         <div class="status-bar-right">
-          <!-- Signal -->
-          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <rect x="1" y="14" width="4" height="8" rx="1"/>
-            <rect x="7" y="10" width="4" height="12" rx="1"/>
-            <rect x="13" y="6" width="4" height="16" rx="1"/>
-            <rect x="19" y="2" width="4" height="20" rx="1"/>
-          </svg>
-          <!-- Wifi -->
-          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <path d="M12 18l-1.4-1.4a2 2 0 0 1 2.8 0L12 18zM8.5 14.5l-1.4-1.4a8 8 0 0 1 9.8 0l-1.4 1.4a6 6 0 0 0-7 0zM5 11l-1.4-1.4a14 14 0 0 1 16.8 0L19 11a12 12 0 0 0-14 0z"/>
-          </svg>
-          <!-- Battery -->
-          <svg viewBox="0 0 28 14" fill="currentColor" stroke="none">
-            <rect x="0" y="1" width="23" height="12" rx="2.5" stroke="currentColor" stroke-width="1.2" fill="none"/>
-            <rect x="24" y="4" width="2.5" height="5" rx="1"/>
-            <rect x="2" y="3" width="17" height="8" rx="1"/>
-          </svg>
+          <svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="11" width="2.5" height="4" rx="0.5"/><rect x="5" y="8" width="2.5" height="7" rx="0.5"/><rect x="9" y="5" width="2.5" height="10" rx="0.5"/><rect x="13" y="1" width="2.5" height="14" rx="0.5"/></svg>
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 12.5a1.25 1.25 0 110 2.5 1.25 1.25 0 010-2.5zM8 8.5c2.07 0 3.94.84 5.3 2.2l-1.42 1.42A5.48 5.48 0 008 10.5c-1.52 0-2.9.62-3.88 1.62L2.7 10.7A7.47 7.47 0 018 8.5z"/></svg>
+          <svg viewBox="0 0 24 12" fill="currentColor"><rect x="0" y="0" width="20" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="2" width="14" height="8" rx="1"/><rect x="21" y="3.5" width="2.5" height="5" rx="1"/></svg>
         </div>
       </div>
 
-      <!-- Top Header -->
+      <!-- Top Header: back + "Compras" + calendar + filter + avatar -->
       <div class="top-header">
-        <div class="header-left">
-          <!-- ChevronLeft 28px -->
+        <div class="header-back">
           <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </div>
-        <span class="header-title">Transacciones</span>
+        <span class="header-title">Compras</span>
+        <!-- Calendar icon -->
+        <div class="header-action" title="Calendario">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </div>
+        <!-- Filter/funnel icon -->
+        <div class="header-action" title="Filtros">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+          </svg>
+        </div>
         <div class="avatar-circle">
-          <span>GA</span>
+          <span>GC</span>
         </div>
       </div>
 
-      <!-- ═══════════════════════════════════
-           HERO VARIANT (populated + filters)
-           ═══════════════════════════════════ -->
+      <!-- ===================================================
+           HERO VARIANT (populated with filters active)
+           =================================================== -->
       <div class="scroll-content hero-content">
 
         <!-- Search Bar -->
@@ -1355,193 +1393,264 @@
           <input type="text" placeholder="Buscar transacciones..." disabled>
         </div>
 
-        <!-- Controls Row -->
-        <div class="controls-row-inner">
-          <div class="controls-left">
-            <!-- Sort -->
-            <button class="icon-btn" title="Ordenar">
-              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <polyline points="19 12 12 19 5 12"/>
-              </svg>
-            </button>
-            <!-- Export -->
-            <button class="icon-btn" title="Exportar CSV">
-              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-            </button>
-          </div>
-          <!-- Duplicate filter toggle -->
-          <div class="dup-toggle active">
+        <!-- Temporal Breadcrumb Pills -->
+        <div class="temporal-breadcrumb">
+          <span class="temporal-level">2026</span>
+          <span class="temporal-sep">&#x203A;</span>
+          <span class="temporal-level">T1</span>
+          <span class="temporal-sep">&#x203A;</span>
+          <span class="temporal-level active">Mar</span>
+          <span class="temporal-sep">&#x203A;</span>
+          <span class="temporal-level">Sem</span>
+          <span class="temporal-sep">&#x203A;</span>
+          <span class="temporal-level">Dia</span>
+        </div>
+
+        <!-- Results Row -->
+        <div class="results-row">
+          <span class="results-count">9 compras</span>
+          <span class="results-spacer"></span>
+          <button class="sort-dropdown">
             <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <polyline points="19 12 12 19 5 12"/>
             </svg>
-            <span class="dup-badge">3</span>
-          </div>
+            Fecha
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <!-- Duplicate icon -->
+          <button class="icon-btn-sm" title="Duplicados">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </button>
+          <!-- Download icon -->
+          <button class="icon-btn-sm" title="Exportar">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </button>
         </div>
 
         <!-- Filter Chips -->
         <div class="filter-chips-row">
+          <button class="clear-all-btn" title="Limpiar todos">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
           <div class="filter-chip">
-            Marzo 2026
+            &#x1F4C5; 2026 &#x203A; mar
             <svg class="chip-x" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"/>
               <line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </div>
-          <div class="filter-chip">
-            Alimentacion
-            <svg class="chip-x" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </div>
-          <a class="clear-filters">Limpiar todo</a>
         </div>
 
-        <!-- ═══ DATE GROUP: Hoy ═══ -->
+        <!-- === DATE GROUP: 17 MAR === -->
         <div class="date-header">
-          <span class="date-header-label">Hoy</span>
-          <span class="date-header-total">$58.120</span>
+          <span class="date-header-label">17 Mar</span>
+          <span class="date-header-total">$9.920</span>
         </div>
 
-        <!-- Transaction 1: Supermercado Lider -->
+        <!-- Transaction: DOBLER CONSTRUCCION & HOGAR -->
         <div class="txn-card">
           <div class="txn-thumb">
-            <div class="txn-thumb-lines">
+            <div class="txn-thumb-inner">
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
             </div>
-            <div class="txn-cat-badge" style="background:var(--cat-alimentacion)">&#x1F6D2;</div>
+            <div class="txn-cat-badge" style="background:var(--cat-construccion)">&#x1F3E0;</div>
           </div>
           <div class="txn-body">
-            <div class="txn-merchant" style="color:var(--cat-alimentacion)">Supermercado Lider</div>
+            <div class="txn-merchant" style="color:var(--cat-construccion)">DOBLER CONSTRUCCION &amp; HOGAR</div>
             <div class="txn-pills">
-              <span class="txn-pill">14:30</span>
-              <span class="txn-pill">Santiago</span>
+              <span class="txn-pill">17/03/2026</span>
+              <span class="txn-pill">Villarrica</span>
+              <span class="txn-pill item-count">&#x2460; 1</span>
             </div>
           </div>
-          <span class="txn-amount">$45.230</span>
+          <div class="txn-right">
+            <span class="txn-amount">$9.920</span>
+            <div class="txn-chevron">
+              <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+          </div>
         </div>
 
-        <!-- Transaction 2: Farmacia Cruz Verde -->
-        <div class="txn-card">
-          <div class="txn-thumb">
-            <div class="txn-thumb-lines">
-              <div class="txn-thumb-line"></div>
-              <div class="txn-thumb-line"></div>
-              <div class="txn-thumb-line"></div>
-              <div class="txn-thumb-line"></div>
-            </div>
-            <div class="txn-cat-badge" style="background:var(--cat-salud)">&#x1F48A;</div>
-          </div>
-          <div class="txn-body">
-            <div class="txn-merchant" style="color:var(--cat-salud)">Farmacia Cruz Verde</div>
-            <div class="txn-pills">
-              <span class="txn-pill">10:15</span>
-            </div>
-          </div>
-          <span class="txn-amount">$12.890</span>
-        </div>
-
-        <!-- ═══ DATE GROUP: Ayer ═══ -->
+        <!-- === DATE GROUP: 16 MAR === -->
         <div class="date-header">
-          <span class="date-header-label">Ayer</span>
-          <span class="date-header-total">$35.000</span>
+          <span class="date-header-label">16 Mar</span>
+          <span class="date-header-total">$109.632</span>
         </div>
 
-        <!-- Transaction 3: Shell Providencia -->
+        <!-- Transaction: FARMACIAS CRUZ VERDE SPA -->
         <div class="txn-card">
           <div class="txn-thumb">
-            <div class="txn-thumb-lines">
+            <div class="txn-thumb-inner">
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
             </div>
-            <div class="txn-cat-badge" style="background:var(--cat-transporte)">&#x26FD;</div>
+            <div class="txn-cat-badge" style="background:var(--cat-farmacia)">&#x1F48A;</div>
           </div>
           <div class="txn-body">
-            <div class="txn-merchant" style="color:var(--cat-transporte)">Shell Providencia</div>
+            <div class="txn-merchant" style="color:var(--cat-farmacia)">FARMACIAS CRUZ VERDE SPA</div>
             <div class="txn-pills">
-              <span class="txn-pill">09:00</span>
-              <span class="txn-pill">Providencia</span>
+              <span class="txn-pill">16/03/2026</span>
+              <span class="txn-pill">18:31</span>
+              <span class="txn-pill">Villarrica</span>
+              <span class="txn-pill item-count">&#x2460; 1</span>
             </div>
           </div>
-          <span class="txn-amount">$35.000</span>
+          <div class="txn-right">
+            <span class="txn-amount">$28.832</span>
+            <div class="txn-chevron">
+              <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+          </div>
         </div>
 
-        <!-- ═══ DATE GROUP: 18 Mar ═══ -->
+        <!-- Transaction: VETERINARIA ARAUCANIA LIMITADA -->
+        <div class="txn-card">
+          <div class="txn-thumb">
+            <div class="txn-thumb-inner">
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+            </div>
+            <div class="txn-cat-badge" style="background:var(--cat-vet)">&#x1F43E;</div>
+          </div>
+          <div class="txn-body">
+            <div class="txn-merchant" style="color:var(--cat-vet)">VETERINARIA ARAUCANIA LIMITADA</div>
+            <div class="txn-pills">
+              <span class="txn-pill">16/03/2026</span>
+              <span class="txn-pill item-count">&#x2460; 1</span>
+            </div>
+          </div>
+          <div class="txn-right">
+            <span class="txn-amount">$12.400</span>
+            <div class="txn-chevron">
+              <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transaction: VETERINARIA CORRAL SUR LTDA -->
+        <div class="txn-card">
+          <div class="txn-thumb">
+            <div class="txn-thumb-inner">
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+            </div>
+            <div class="txn-cat-badge" style="background:var(--cat-vet)">&#x1F43E;</div>
+          </div>
+          <div class="txn-body">
+            <div class="txn-merchant" style="color:var(--cat-vet)">VETERINARIA CORRAL SUR LTDA</div>
+            <div class="txn-pills">
+              <span class="txn-pill">16/03/2026</span>
+              <span class="txn-pill item-count">&#x2461; 2</span>
+            </div>
+          </div>
+          <div class="txn-right">
+            <span class="txn-amount">$28.400</span>
+            <div class="txn-chevron">
+              <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transaction: Sociedad servicios vet CG ltda -->
+        <div class="txn-card">
+          <div class="txn-thumb">
+            <div class="txn-thumb-inner">
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+            </div>
+            <div class="txn-cat-badge" style="background:var(--cat-vet)">&#x1F43E;</div>
+          </div>
+          <div class="txn-body">
+            <div class="txn-merchant" style="color:var(--cat-vet)">SOCIEDAD SERVICIOS VET CG LTDA</div>
+            <div class="txn-pills">
+              <span class="txn-pill">16/03/2026</span>
+              <span class="txn-pill">17:54</span>
+              <span class="txn-pill item-count">&#x2460; 1</span>
+            </div>
+          </div>
+          <div class="txn-right">
+            <span class="txn-amount">$40.000</span>
+            <div class="txn-chevron">
+              <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- === DATE GROUP: 12 MAR === -->
         <div class="date-header">
-          <span class="date-header-label">18 Mar</span>
-          <span class="date-header-total">$67.450</span>
+          <span class="date-header-label">12 Mar</span>
+          <span class="date-header-total">$8.000</span>
         </div>
 
-        <!-- Transaction 4: Restaurante El Patron -->
+        <!-- Transaction: FABRICA DE CECINAS Y CHARCUTER... -->
         <div class="txn-card">
           <div class="txn-thumb">
-            <div class="txn-thumb-lines">
+            <div class="txn-thumb-inner">
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
             </div>
-            <div class="txn-cat-badge" style="background:var(--cat-restaurantes)">&#x1F37D;&#xFE0F;</div>
+            <div class="txn-cat-badge" style="background:var(--cat-alimentos)">&#x1F969;</div>
           </div>
           <div class="txn-body">
-            <div class="txn-merchant" style="color:var(--cat-restaurantes)">Restaurante El Patron</div>
+            <div class="txn-merchant" style="color:var(--cat-alimentos)">FABRICA DE CECINAS Y CHARCUTER...</div>
             <div class="txn-pills">
-              <span class="txn-pill">20:30</span>
+              <span class="txn-pill">12/03/2026</span>
+              <span class="txn-pill item-count">&#x2460; 1</span>
             </div>
           </div>
-          <span class="txn-amount">$42.500</span>
-        </div>
-
-        <!-- Transaction 5: Uber -->
-        <div class="txn-card">
-          <div class="txn-thumb">
-            <div class="txn-thumb-lines">
-              <div class="txn-thumb-line"></div>
-              <div class="txn-thumb-line"></div>
-              <div class="txn-thumb-line"></div>
-              <div class="txn-thumb-line"></div>
+          <div class="txn-right">
+            <span class="txn-amount">$8.000</span>
+            <div class="txn-chevron">
+              <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
             </div>
-            <div class="txn-cat-badge" style="background:var(--cat-otros)">&#x1F697;</div>
-          </div>
-          <div class="txn-body">
-            <div class="txn-merchant" style="color:var(--cat-otros)">Uber</div>
-            <div class="txn-pills">
-              <span class="txn-pill">18:15</span>
-            </div>
-          </div>
-          <span class="txn-amount">$24.950</span>
-        </div>
-
-        <!-- Pagination -->
-        <div class="pagination">
-          <span class="pagination-info">Pagina 1 de 5</span>
-          <div class="pagination-btns">
-            <button class="pagination-btn disabled">&lt; Anterior</button>
-            <span class="pagination-sep">|</span>
-            <button class="pagination-btn">Siguiente &gt;</button>
           </div>
         </div>
 
       </div><!-- /scroll-content hero-content -->
 
-      <!-- ═══════════════════════════════════
+      <!-- ===================================================
            EMPTY VARIANT: No transactions
-           ═══════════════════════════════════ -->
+           =================================================== -->
       <div class="empty-state empty-no-txn">
         <div class="empty-icon-area">
-          <!-- Receipt icon -->
           <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/>
             <line x1="8" y1="6" x2="16" y2="6"/>
@@ -1554,74 +1663,95 @@
         <button class="empty-cta">Escanear Boleta</button>
       </div>
 
-      <!-- ═══════════════════════════════════
-           EMPTY VARIANT: Filtered (no results)
-           ═══════════════════════════════════ -->
-      <div class="scroll-content empty-filtered" style="display:none">
-        <!-- Search Bar (shown in filtered state too) -->
+      <!-- ===================================================
+           FILTERED VARIANT: Search active, no results
+           =================================================== -->
+      <div class="scroll-content empty-filtered-content" style="display:none">
+        <!-- Search Bar (with active query) -->
         <div class="search-bar">
           <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"/>
             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
-          <input type="text" value="farmacia ahumada" disabled style="font-family:'Outfit',sans-serif;font-size:14px;color:var(--text)">
+          <input type="text" value="farmacia ahumada" disabled style="font-family:'Outfit',sans-serif;font-size:13px;color:var(--text)">
         </div>
 
-        <!-- Controls Row (visible) -->
-        <div class="controls-row-inner">
-          <div class="controls-left">
-            <button class="icon-btn" title="Ordenar">
-              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <polyline points="19 12 12 19 5 12"/>
-              </svg>
-            </button>
-            <button class="icon-btn" title="Exportar CSV">
-              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-            </button>
-          </div>
-          <div class="dup-toggle">
+        <!-- Temporal Breadcrumb (visible) -->
+        <div class="temporal-breadcrumb">
+          <span class="temporal-level">2026</span>
+          <span class="temporal-sep">&#x203A;</span>
+          <span class="temporal-level">T1</span>
+          <span class="temporal-sep">&#x203A;</span>
+          <span class="temporal-level active">Mar</span>
+          <span class="temporal-sep">&#x203A;</span>
+          <span class="temporal-level">Sem</span>
+          <span class="temporal-sep">&#x203A;</span>
+          <span class="temporal-level">Dia</span>
+        </div>
+
+        <!-- Results row showing 0 -->
+        <div class="results-row">
+          <span class="results-count">0 compras</span>
+          <span class="results-spacer"></span>
+          <button class="sort-dropdown">
             <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <polyline points="19 12 12 19 5 12"/>
             </svg>
-          </div>
+            Fecha
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <button class="icon-btn-sm" title="Duplicados">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </button>
+          <button class="icon-btn-sm" title="Exportar">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </button>
         </div>
 
         <!-- Filter Chips (visible) -->
         <div class="filter-chips-row">
+          <button class="clear-all-btn" title="Limpiar todos">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
           <div class="filter-chip">
-            Marzo 2026
+            &#x1F4C5; 2026 &#x203A; mar
             <svg class="chip-x" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"/>
               <line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </div>
-          <a class="clear-filters">Limpiar todo</a>
         </div>
 
         <!-- Empty filtered content -->
-        <div class="empty-state" style="display:flex;padding-top:40px">
+        <div class="empty-state" style="display:flex;padding-top:30px">
           <div class="empty-icon-area">
             <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="11" cy="11" r="8"/>
               <line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
           </div>
-          <span class="empty-heading">Sin resultados para estos filtros</span>
-          <span class="empty-subtitle">Intenta con otros filtros o limpia la busqueda</span>
+          <span class="empty-heading">Sin resultados</span>
+          <span class="empty-subtitle">No hay transacciones que coincidan con tu busqueda</span>
           <a class="empty-link">Limpiar filtros</a>
         </div>
       </div>
 
-      <!-- ═══════════════════════════════════
+      <!-- ===================================================
            SELECTION VARIANT
-           ═══════════════════════════════════ -->
+           =================================================== -->
       <div class="scroll-content selection-mode-content" style="display:none">
 
         <!-- Search Bar -->
@@ -1633,13 +1763,55 @@
           <input type="text" placeholder="Buscar transacciones..." disabled>
         </div>
 
-        <!-- ═══ DATE GROUP: Hoy ═══ -->
-        <div class="date-header">
-          <span class="date-header-label">Hoy</span>
-          <span class="date-header-total">$58.120</span>
+        <!-- Temporal Breadcrumb -->
+        <div class="temporal-breadcrumb">
+          <span class="temporal-level">2026</span>
+          <span class="temporal-sep">&#x203A;</span>
+          <span class="temporal-level">T1</span>
+          <span class="temporal-sep">&#x203A;</span>
+          <span class="temporal-level active">Mar</span>
+          <span class="temporal-sep">&#x203A;</span>
+          <span class="temporal-level">Sem</span>
+          <span class="temporal-sep">&#x203A;</span>
+          <span class="temporal-level">Dia</span>
         </div>
 
-        <!-- Transaction 1: selected -->
+        <!-- Results Row -->
+        <div class="results-row">
+          <span class="results-count">9 compras</span>
+          <span class="results-spacer"></span>
+          <button class="sort-dropdown">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <polyline points="19 12 12 19 5 12"/>
+            </svg>
+            Fecha
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <button class="icon-btn-sm" title="Duplicados">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </button>
+          <button class="icon-btn-sm" title="Exportar">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- === DATE GROUP: 17 MAR === -->
+        <div class="date-header">
+          <span class="date-header-label">17 Mar</span>
+          <span class="date-header-total">$9.920</span>
+        </div>
+
+        <!-- Transaction: DOBLER (selected) -->
         <div class="txn-card">
           <div class="txn-checkbox checked" style="display:flex">
             <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" style="display:block">
@@ -1647,25 +1819,74 @@
             </svg>
           </div>
           <div class="txn-thumb">
-            <div class="txn-thumb-lines">
+            <div class="txn-thumb-inner">
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
             </div>
-            <div class="txn-cat-badge" style="background:var(--cat-alimentacion)">&#x1F6D2;</div>
+            <div class="txn-cat-badge" style="background:var(--cat-construccion)">&#x1F3E0;</div>
           </div>
           <div class="txn-body">
-            <div class="txn-merchant" style="color:var(--cat-alimentacion)">Supermercado Lider</div>
+            <div class="txn-merchant" style="color:var(--cat-construccion)">DOBLER CONSTRUCCION &amp; HOGAR</div>
             <div class="txn-pills">
-              <span class="txn-pill">14:30</span>
-              <span class="txn-pill">Santiago</span>
+              <span class="txn-pill">17/03/2026</span>
+              <span class="txn-pill">Villarrica</span>
+              <span class="txn-pill item-count">&#x2460; 1</span>
             </div>
           </div>
-          <span class="txn-amount">$45.230</span>
+          <div class="txn-right">
+            <span class="txn-amount">$9.920</span>
+            <div class="txn-chevron">
+              <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+          </div>
         </div>
 
-        <!-- Transaction 2: not selected -->
+        <!-- === DATE GROUP: 16 MAR === -->
+        <div class="date-header">
+          <span class="date-header-label">16 Mar</span>
+          <span class="date-header-total">$109.632</span>
+        </div>
+
+        <!-- Transaction: FARMACIAS CRUZ VERDE (selected) -->
+        <div class="txn-card">
+          <div class="txn-checkbox checked" style="display:flex">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" style="display:block">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div class="txn-thumb">
+            <div class="txn-thumb-inner">
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+              <div class="txn-thumb-line"></div>
+            </div>
+            <div class="txn-cat-badge" style="background:var(--cat-farmacia)">&#x1F48A;</div>
+          </div>
+          <div class="txn-body">
+            <div class="txn-merchant" style="color:var(--cat-farmacia)">FARMACIAS CRUZ VERDE SPA</div>
+            <div class="txn-pills">
+              <span class="txn-pill">16/03/2026</span>
+              <span class="txn-pill">18:31</span>
+              <span class="txn-pill">Villarrica</span>
+              <span class="txn-pill item-count">&#x2460; 1</span>
+            </div>
+          </div>
+          <div class="txn-right">
+            <span class="txn-amount">$28.832</span>
+            <div class="txn-chevron">
+              <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transaction: VETERINARIA ARAUCANIA (not selected) -->
         <div class="txn-card">
           <div class="txn-checkbox" style="display:flex">
             <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
@@ -1673,30 +1894,32 @@
             </svg>
           </div>
           <div class="txn-thumb">
-            <div class="txn-thumb-lines">
+            <div class="txn-thumb-inner">
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
             </div>
-            <div class="txn-cat-badge" style="background:var(--cat-salud)">&#x1F48A;</div>
+            <div class="txn-cat-badge" style="background:var(--cat-vet)">&#x1F43E;</div>
           </div>
           <div class="txn-body">
-            <div class="txn-merchant" style="color:var(--cat-salud)">Farmacia Cruz Verde</div>
+            <div class="txn-merchant" style="color:var(--cat-vet)">VETERINARIA ARAUCANIA LIMITADA</div>
             <div class="txn-pills">
-              <span class="txn-pill">10:15</span>
+              <span class="txn-pill">16/03/2026</span>
+              <span class="txn-pill item-count">&#x2460; 1</span>
             </div>
           </div>
-          <span class="txn-amount">$12.890</span>
+          <div class="txn-right">
+            <span class="txn-amount">$12.400</span>
+            <div class="txn-chevron">
+              <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+          </div>
         </div>
 
-        <!-- ═══ DATE GROUP: Ayer ═══ -->
-        <div class="date-header">
-          <span class="date-header-label">Ayer</span>
-          <span class="date-header-total">$35.000</span>
-        </div>
-
-        <!-- Transaction 3: selected -->
+        <!-- Transaction: VETERINARIA CORRAL SUR (selected) -->
         <div class="txn-card">
           <div class="txn-checkbox checked" style="display:flex">
             <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" style="display:block">
@@ -1704,56 +1927,32 @@
             </svg>
           </div>
           <div class="txn-thumb">
-            <div class="txn-thumb-lines">
+            <div class="txn-thumb-inner">
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
             </div>
-            <div class="txn-cat-badge" style="background:var(--cat-transporte)">&#x26FD;</div>
+            <div class="txn-cat-badge" style="background:var(--cat-vet)">&#x1F43E;</div>
           </div>
           <div class="txn-body">
-            <div class="txn-merchant" style="color:var(--cat-transporte)">Shell Providencia</div>
+            <div class="txn-merchant" style="color:var(--cat-vet)">VETERINARIA CORRAL SUR LTDA</div>
             <div class="txn-pills">
-              <span class="txn-pill">09:00</span>
-              <span class="txn-pill">Providencia</span>
+              <span class="txn-pill">16/03/2026</span>
+              <span class="txn-pill item-count">&#x2461; 2</span>
             </div>
           </div>
-          <span class="txn-amount">$35.000</span>
-        </div>
-
-        <!-- ═══ DATE GROUP: 18 Mar ═══ -->
-        <div class="date-header">
-          <span class="date-header-label">18 Mar</span>
-          <span class="date-header-total">$67.450</span>
-        </div>
-
-        <!-- Transaction 4: selected -->
-        <div class="txn-card">
-          <div class="txn-checkbox checked" style="display:flex">
-            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" style="display:block">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-          </div>
-          <div class="txn-thumb">
-            <div class="txn-thumb-lines">
-              <div class="txn-thumb-line"></div>
-              <div class="txn-thumb-line"></div>
-              <div class="txn-thumb-line"></div>
-              <div class="txn-thumb-line"></div>
-            </div>
-            <div class="txn-cat-badge" style="background:var(--cat-restaurantes)">&#x1F37D;&#xFE0F;</div>
-          </div>
-          <div class="txn-body">
-            <div class="txn-merchant" style="color:var(--cat-restaurantes)">Restaurante El Patron</div>
-            <div class="txn-pills">
-              <span class="txn-pill">20:30</span>
+          <div class="txn-right">
+            <span class="txn-amount">$28.400</span>
+            <div class="txn-chevron">
+              <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
             </div>
           </div>
-          <span class="txn-amount">$42.500</span>
         </div>
 
-        <!-- Transaction 5: not selected -->
+        <!-- Transaction: Sociedad servicios vet (not selected) -->
         <div class="txn-card">
           <div class="txn-checkbox" style="display:flex">
             <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
@@ -1761,30 +1960,29 @@
             </svg>
           </div>
           <div class="txn-thumb">
-            <div class="txn-thumb-lines">
+            <div class="txn-thumb-inner">
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
             </div>
-            <div class="txn-cat-badge" style="background:var(--cat-otros)">&#x1F697;</div>
+            <div class="txn-cat-badge" style="background:var(--cat-vet)">&#x1F43E;</div>
           </div>
           <div class="txn-body">
-            <div class="txn-merchant" style="color:var(--cat-otros)">Uber</div>
+            <div class="txn-merchant" style="color:var(--cat-vet)">SOCIEDAD SERVICIOS VET CG LTDA</div>
             <div class="txn-pills">
-              <span class="txn-pill">18:15</span>
+              <span class="txn-pill">16/03/2026</span>
+              <span class="txn-pill">17:54</span>
+              <span class="txn-pill item-count">&#x2460; 1</span>
             </div>
           </div>
-          <span class="txn-amount">$24.950</span>
-        </div>
-
-        <!-- Pagination -->
-        <div class="pagination">
-          <span class="pagination-info">Pagina 1 de 5</span>
-          <div class="pagination-btns">
-            <button class="pagination-btn disabled">&lt; Anterior</button>
-            <span class="pagination-sep">|</span>
-            <button class="pagination-btn">Siguiente &gt;</button>
+          <div class="txn-right">
+            <span class="txn-amount">$40.000</span>
+            <div class="txn-chevron">
+              <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
           </div>
         </div>
 
@@ -1799,7 +1997,7 @@
         <button class="selection-delete">Eliminar</button>
       </div>
 
-      <!-- Bottom Navigation (no tab active — History accessed via Profile Dropdown) -->
+      <!-- Bottom Navigation (no tab active — History accessed via menu) -->
       <div class="bottom-nav">
         <!-- Home -->
         <div class="nav-item">
@@ -1811,32 +2009,7 @@
           </div>
           <span class="nav-label">Inicio</span>
         </div>
-        <!-- Trends -->
-        <div class="nav-item">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="16" x2="12" y2="12"/>
-              <line x1="12" y1="8" x2="12.01" y2="8"/>
-            </svg>
-          </div>
-          <span class="nav-label">Tendencias</span>
-        </div>
-        <!-- FAB (center) -->
-        <div class="fab-wrapper">
-          <div class="fab-badges">
-            <span class="fab-badge super">3</span>
-            <span class="fab-badge normal">12</span>
-          </div>
-          <button class="fab">
-            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-              <circle cx="12" cy="13" r="4"/>
-            </svg>
-          </button>
-          <span class="fab-spacer-label" style="visibility:hidden">Escanear</span>
-        </div>
-        <!-- Reports -->
+        <!-- BarChart3 -->
         <div class="nav-item">
           <div class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -1845,9 +2018,31 @@
               <line x1="6" y1="20" x2="6" y2="14"/>
             </svg>
           </div>
-          <span class="nav-label">Reportes</span>
+          <span class="nav-label" style="visibility:hidden;">_</span>
         </div>
-        <!-- Alerts -->
+        <!-- FAB (center) -->
+        <div class="fab-wrapper">
+          <span class="fab-badge-left">100</span>
+          <span class="fab-badge-right">1K</span>
+          <button class="fab">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </button>
+        </div>
+        <!-- Lightbulb -->
+        <div class="nav-item">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18h6"/>
+              <path d="M10 22h4"/>
+              <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/>
+            </svg>
+          </div>
+          <span class="nav-label" style="visibility:hidden;">_</span>
+        </div>
+        <!-- Bell -->
         <div class="nav-item">
           <div class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -1855,7 +2050,7 @@
               <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
           </div>
-          <span class="nav-label">Alertas</span>
+          <span class="nav-label" style="visibility:hidden;">_</span>
           <div class="alert-dot"></div>
         </div>
       </div>
@@ -1866,18 +2061,18 @@
     </div><!-- /phone-screen -->
   </div><!-- /phone-frame -->
 
-  <!-- ════════════════════════════════════════
+  <!-- ========================================
        JAVASCRIPT — Theme / Mode / Variant
-       ════════════════════════════════════════ -->
+       ======================================== -->
   <script>
     (function() {
-      const body = document.body;
-      const themeTabs = document.querySelectorAll('.theme-tab');
-      const modeToggle = document.getElementById('modeToggle');
-      const variantTabs = document.querySelectorAll('.variant-tab');
+      var body = document.body;
+      var themeTabs = document.querySelectorAll('.theme-tab');
+      var modeToggle = document.getElementById('modeToggle');
+      var variantTabs = document.querySelectorAll('.variant-tab');
 
-      let currentTheme = 'normal';
-      let currentMode = 'light';
+      var currentTheme = 'normal';
+      var currentMode = 'light';
 
       function applyTheme() {
         body.setAttribute('data-theme', currentTheme);
@@ -1885,9 +2080,9 @@
       }
 
       // Theme tabs
-      themeTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          themeTabs.forEach(t => t.classList.remove('active'));
+      themeTabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          themeTabs.forEach(function(t) { t.classList.remove('active'); });
           tab.classList.add('active');
           currentTheme = tab.dataset.themeVal;
           applyTheme();
@@ -1895,19 +2090,19 @@
       });
 
       // Mode toggle
-      modeToggle.addEventListener('click', () => {
+      modeToggle.addEventListener('click', function() {
         currentMode = currentMode === 'light' ? 'dark' : 'light';
         modeToggle.classList.toggle('dark', currentMode === 'dark');
         applyTheme();
       });
 
       // Variant tabs
-      variantTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          variantTabs.forEach(t => t.classList.remove('active'));
+      variantTabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          variantTabs.forEach(function(t) { t.classList.remove('active'); });
           tab.classList.add('active');
           body.classList.remove('variant-empty', 'variant-filtered', 'variant-selection');
-          const variant = tab.dataset.variant;
+          var variant = tab.dataset.variant;
           if (variant !== 'hero') {
             body.classList.add('variant-' + variant);
           }

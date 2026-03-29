@@ -6,6 +6,7 @@
  *
  * Story 14e-8c: Main handler integration
  * Story 14e-43: Updated to mock Zustand stores instead of UI callbacks
+ * Story 18-13b: Sync path removed — all tests pass asyncResult
  *
  * @module tests/unit/features/scan/handlers/processScan/processScan.test
  */
@@ -75,6 +76,21 @@ vi.mock('@shared/stores', () => ({
 // =============================================================================
 // Mock Factories
 // =============================================================================
+
+/** Default scan result used as asyncResult for all tests. */
+const defaultAsyncResult: ScanResult = {
+  merchant: 'Test Merchant',
+  date: '2025-01-20',
+  total: 10000,
+  category: 'Supermercado',
+  items: [
+    { name: 'Item 1', totalPrice: 5000, qty: 1 },
+    { name: 'Item 2', totalPrice: 5000, qty: 1 },
+  ],
+  currency: 'CLP',
+  country: 'Chile',
+  city: 'Santiago',
+};
 
 /**
  * Create mock scan dependencies with default values.
@@ -156,22 +172,8 @@ function createMockScanOverlay(
  * Create mock service dependencies.
  */
 function createMockServiceDeps(overrides: Partial<ServiceDependencies> = {}): ServiceDependencies {
-  const defaultScanResult: ScanResult = {
-    merchant: 'Test Merchant',
-    date: '2025-01-20',
-    total: 10000,
-    category: 'Supermercado',
-    items: [
-      { name: 'Item 1', totalPrice: 5000, qty: 1 },
-      { name: 'Item 2', totalPrice: 5000, qty: 1 },
-    ],
-    currency: 'CLP',
-    country: 'Chile',
-    city: 'Santiago',
-  };
-
   return {
-    analyzeReceipt: vi.fn().mockResolvedValue(defaultScanResult),
+    analyzeReceipt: vi.fn().mockResolvedValue(defaultAsyncResult),
     deductUserCredits: vi.fn().mockResolvedValue(true),
     addUserCredits: vi.fn().mockResolvedValue(undefined),
     getCitiesForCountry: vi.fn().mockReturnValue(['Santiago', 'Valparaíso']),
@@ -203,6 +205,7 @@ function createMockTrustedAutoSaveDeps(
 
 /**
  * Create full ProcessScanParams with all mocks.
+ * Story 18-13b: asyncResult is always provided (sync path removed).
  */
 function createMockParams(
   overrides: Partial<{
@@ -213,6 +216,7 @@ function createMockParams(
     scanOverlay: Partial<ScanOverlayController>;
     services: Partial<ServiceDependencies>;
     trustedAutoSave: Partial<TrustedAutoSaveDependencies> | null;
+    asyncResult: ScanResult;
   }> = {}
 ): ProcessScanParams {
   return {
@@ -230,6 +234,7 @@ function createMockParams(
         : createMockTrustedAutoSaveDeps(overrides.trustedAutoSave),
     prefersReducedMotion: true, // Disable haptics in tests
     processingTimeoutMs: 5000, // Short timeout for tests
+    asyncResult: overrides.asyncResult ?? defaultAsyncResult,
   };
 }
 
@@ -249,167 +254,19 @@ describe('processScan', () => {
   });
 
   // ===========================================================================
-  // Input Validation Tests
+  // Async Pipeline Guard Tests (replaces input validation + credit handling)
   // ===========================================================================
 
-  describe('input validation', () => {
-    it('should reject when no images provided', async () => {
-      const params = createMockParams({
-        scan: { images: [] },
-      });
-
-      const result = await processScan(params);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('No images to scan');
-      // Story 14e-43: Now uses store action instead of ui callback
-      expect(mockScanActions.processError).toHaveBeenCalledWith(expect.any(String));
-      expect(params.services.analyzeReceipt).not.toHaveBeenCalled();
-    });
-
-    it('should reject when images is undefined', async () => {
-      const params = createMockParams({
-        scan: { images: undefined as unknown as string[] },
-      });
-
-      const result = await processScan(params);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('No images to scan');
-    });
-  });
-
-  // ===========================================================================
-  // Credit Handling Tests
-  // ===========================================================================
-
-  describe('credit handling', () => {
-    it('should reject when no credits remaining', async () => {
-      const params = createMockParams({
-        user: { creditsRemaining: 0 },
-      });
-
-      const result = await processScan(params);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('No credits');
-      // Story 14e-43: Now uses store action instead of ui callback
-      expect(mockScanActions.processError).toHaveBeenCalled();
-      expect(params.ui.setToastMessage).toHaveBeenCalledWith({
-        text: 'noCreditsMessage',
-        type: 'info',
-      });
-      expect(params.services.deductUserCredits).not.toHaveBeenCalled();
-    });
-
-    it('should reject when credit deduction fails', async () => {
-      const params = createMockParams({
-        services: {
-          deductUserCredits: vi.fn().mockResolvedValue(false),
-        },
-      });
-
-      const result = await processScan(params);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Credit deduction failed');
-      expect(params.services.deductUserCredits).toHaveBeenCalledWith(1);
-    });
-
-    it('should refund credit on API error', async () => {
-      const params = createMockParams({
-        services: {
-          analyzeReceipt: vi.fn().mockRejectedValue(new Error('Network error')),
-          deductUserCredits: vi.fn().mockResolvedValue(true),
-          addUserCredits: vi.fn().mockResolvedValue(undefined),
-          getCitiesForCountry: vi.fn().mockReturnValue([]),
-        },
-      });
-
-      const result = await processScan(params);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('Network error');
-      expect(params.services.addUserCredits).toHaveBeenCalledWith(1);
-      expect(params.ui.setToastMessage).toHaveBeenCalledWith({
-        text: 'scanFailedCreditRefunded',
-        type: 'info',
-      });
-    });
-
-    it('should refund credit on timeout', async () => {
-      const params = createMockParams({
-        services: {
-          analyzeReceipt: vi
-            .fn()
-            .mockImplementation(
-              () => new Promise((resolve) => setTimeout(resolve, 10000))
-            ),
-          deductUserCredits: vi.fn().mockResolvedValue(true),
-          addUserCredits: vi.fn().mockResolvedValue(undefined),
-          getCitiesForCountry: vi.fn().mockReturnValue([]),
-        },
-      });
-
-      // Use short timeout
-      params.processingTimeoutMs = 100;
-
-      const result = await processScan(params);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('timed out');
-      expect(params.services.addUserCredits).toHaveBeenCalledWith(1);
-      expect(params.scanOverlay.setError).toHaveBeenCalledWith('timeout', expect.any(String));
-    });
-  });
-
-  // ===========================================================================
-  // Processing Flow Tests
-  // ===========================================================================
-
-  describe('processing flow', () => {
-    it('should start processing sequence on valid input', async () => {
+  describe('async pipeline guard', () => {
+    it('should reject when no asyncResult provided', async () => {
       const params = createMockParams();
+      // Remove asyncResult to simulate sync call
+      delete (params as Record<string, unknown>).asyncResult;
 
-      await processScan(params);
+      const result = await processScan(params);
 
-      // Story 16-7: setCreditUsed moved to scan:completed subscriber
-      expect(mockScanActions.processStart).toHaveBeenCalledWith('normal', 1);
-      expect(params.scanOverlay.startUpload).toHaveBeenCalled();
-      expect(params.scanOverlay.setProgress).toHaveBeenCalledWith(100);
-      expect(params.scanOverlay.startProcessing).toHaveBeenCalled();
-    });
-
-    it('should call analyzeReceipt with correct parameters', async () => {
-      const params = createMockParams({
-        scan: {
-          images: ['image1', 'image2'],
-          currency: 'USD',
-          storeType: 'Supermercado',
-        },
-      });
-
-      await processScan(params);
-
-      expect(params.services.analyzeReceipt).toHaveBeenCalledWith(
-        ['image1', 'image2'],
-        'USD',
-        'Supermercado'
-      );
-    });
-
-    it('should pass undefined for auto store type', async () => {
-      const params = createMockParams({
-        scan: { storeType: 'auto' },
-      });
-
-      await processScan(params);
-
-      expect(params.services.analyzeReceipt).toHaveBeenCalledWith(
-        expect.any(Array),
-        expect.any(String),
-        undefined
-      );
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Async pipeline required');
     });
   });
 
@@ -530,18 +387,13 @@ describe('processScan', () => {
     it('should fix future year dates', async () => {
       const futureYear = new Date().getFullYear() + 1;
       const params = createMockParams({
-        services: {
-          analyzeReceipt: vi.fn().mockResolvedValue({
-            merchant: 'Test',
-            date: `${futureYear}-01-20`,
-            total: 1000,
-            // Provide items that sum to total to pass validation
-            items: [{ name: 'Item', totalPrice: 1000, qty: 1 }],
-            currency: 'CLP',
-          }),
-          deductUserCredits: vi.fn().mockResolvedValue(true),
-          addUserCredits: vi.fn().mockResolvedValue(undefined),
-          getCitiesForCountry: vi.fn().mockReturnValue([]),
+        asyncResult: {
+          merchant: 'Test',
+          date: `${futureYear}-01-20`,
+          total: 1000,
+          // Provide items that sum to total to pass validation
+          items: [{ name: 'Item', totalPrice: 1000, qty: 1 }],
+          currency: 'CLP',
         },
         trustedAutoSave: null, // No trusted check needed
       });
@@ -647,13 +499,20 @@ describe('processScan', () => {
   // ===========================================================================
 
   describe('error handling', () => {
-    it('should dispatch error on API failure', async () => {
+    it('should dispatch error when asyncResult processing throws', async () => {
       const params = createMockParams({
-        services: {
-          analyzeReceipt: vi.fn().mockRejectedValue(new Error('API Error')),
-          deductUserCredits: vi.fn().mockResolvedValue(true),
-          addUserCredits: vi.fn().mockResolvedValue(undefined),
-          getCitiesForCountry: vi.fn().mockReturnValue([]),
+        asyncResult: {
+          merchant: 'Test',
+          date: '2025-01-20',
+          total: 10000,
+          items: [{ name: 'Item', totalPrice: 10000, qty: 1 }],
+          currency: 'CLP',
+        },
+        // Force an error in mapping step (applyCategoryMappings throws)
+        mapping: {
+          applyCategoryMappings: vi.fn().mockImplementation(() => {
+            throw new Error('API Error');
+          }),
         },
       });
 
@@ -663,23 +522,6 @@ describe('processScan', () => {
       // Story 14e-43: Now uses store action instead of ui callback
       expect(mockScanActions.processError).toHaveBeenCalledWith(expect.stringContaining('API Error'));
       expect(params.scanOverlay.setError).toHaveBeenCalledWith('api', expect.any(String));
-    });
-
-    it('should handle unknown error types', async () => {
-      const params = createMockParams({
-        services: {
-          analyzeReceipt: vi.fn().mockRejectedValue('string error'),
-          deductUserCredits: vi.fn().mockResolvedValue(true),
-          addUserCredits: vi.fn().mockResolvedValue(undefined),
-          getCitiesForCountry: vi.fn().mockReturnValue([]),
-        },
-      });
-
-      const result = await processScan(params);
-
-      expect(result.success).toBe(false);
-      // extractErrorMessage returns string errors as-is
-      expect(result.error).toContain('string error');
     });
   });
 
@@ -707,20 +549,15 @@ describe('processScan', () => {
 
     it('should include hasDiscrepancy flag when items dont match total', async () => {
       const params = createMockParams({
-        services: {
-          analyzeReceipt: vi.fn().mockResolvedValue({
-            merchant: 'Test',
-            date: '2025-01-20',
-            total: 15000, // Total doesn't match items sum (10000)
-            items: [
-              { name: 'Item 1', totalPrice: 5000, qty: 1 },
-              { name: 'Item 2', totalPrice: 5000, qty: 1 },
-            ],
-            currency: 'CLP',
-          }),
-          deductUserCredits: vi.fn().mockResolvedValue(true),
-          addUserCredits: vi.fn().mockResolvedValue(undefined),
-          getCitiesForCountry: vi.fn().mockReturnValue([]),
+        asyncResult: {
+          merchant: 'Test',
+          date: '2025-01-20',
+          total: 15000, // Total doesn't match items sum (10000)
+          items: [
+            { name: 'Item 1', totalPrice: 5000, qty: 1 },
+            { name: 'Item 2', totalPrice: 5000, qty: 1 },
+          ],
+          currency: 'CLP',
         },
         trustedAutoSave: null,
       });

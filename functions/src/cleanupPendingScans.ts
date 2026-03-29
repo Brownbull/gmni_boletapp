@@ -19,7 +19,8 @@ if (!admin.apps.length) {
 
 const APP_ID = 'boletapp-d609f'
 const BATCH_SIZE = 500
-const TTL_MS = 24 * 60 * 60 * 1000 // 24 hours
+const TTL_MS = 24 * 60 * 60 * 1000 // 24 hours (all docs)
+const RESOLVED_TTL_MS = 60 * 60 * 1000 // 1 hour (completed/failed docs)
 
 export const cleanupPendingScans = functions.pubsub
   .schedule('every 60 minutes')
@@ -63,7 +64,27 @@ export const cleanupPendingScans = functions.pubsub
       autoFailedCount++
     }
 
-    // Phase 2: Delete expired docs (older than 24h), paginated at BATCH_SIZE
+    // Phase 2: Delete resolved docs (completed/failed) older than 1 hour
+    const resolvedCutoff = admin.firestore.Timestamp.fromMillis(now - RESOLVED_TTL_MS)
+    let resolvedDeletedCount = 0
+    for (const status of ['completed', 'failed'] as const) {
+      const resolvedQuery = db.collection('pending_scans')
+        .where('status', '==', status)
+        .where('createdAt', '<', resolvedCutoff)
+        .limit(BATCH_SIZE)
+
+      const resolvedSnapshot = await resolvedQuery.get()
+      if (!resolvedSnapshot.empty) {
+        const batch = db.batch()
+        for (const doc of resolvedSnapshot.docs) {
+          batch.delete(doc.ref)
+        }
+        await batch.commit()
+        resolvedDeletedCount += resolvedSnapshot.size
+      }
+    }
+
+    // Phase 3: Delete all docs older than 24h (catch-all), paginated
     let hasMore = true
     while (hasMore) {
       const expiredQuery = db.collection('pending_scans')
@@ -91,6 +112,6 @@ export const cleanupPendingScans = functions.pubsub
     }
 
     console.log(
-      `cleanupPendingScans: auto-failed=${autoFailedCount}, deleted=${deletedCount}`
+      `cleanupPendingScans: auto-failed=${autoFailedCount}, resolved-deleted=${resolvedDeletedCount}, expired-deleted=${deletedCount}`
     )
   })

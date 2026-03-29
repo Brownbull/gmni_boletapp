@@ -6,228 +6,144 @@
   <title>Transaction Editor — Gastify (Production Design System)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Baloo+2:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    /* ══════════════════════════════════════════
+    /* ======================================================
        GASTIFY — PRODUCTION DESIGN SYSTEM
        Themes: Normal / Professional / Mono
        Modes: Light / Dark
-       Screen: Transaction Editor (Mi Compra)
-       ══════════════════════════════════════════ */
+       Screen: Transaction Editor (Mi Compra) — Full Screen
+       ====================================================== */
 
-    /* ── Normal Light (default) ── */
+    /* -- Normal Light (default) -- */
     :root {
       --bg: #f5f0e8;
-      --surface: #fff;
+      --surface: #ffffff;
       --primary: #4a7c59;
       --text: #2d3a4a;
-      --secondary: #4a5568;
+      --text-secondary: #4a5568;
       --accent: #e8a87c;
       --border: #e3bba1;
       --bg-tertiary: #f1dbb6;
-      --secondary-color: #5b8fa8;
-      --primary-rgb: 74, 124, 89;
-      --nav-bg: #4a5568;
-      --shadow: rgba(74, 124, 89, 0.12);
-      --shadow-lg: rgba(74, 124, 89, 0.18);
-      --skeleton-base: #f1dbb6;
-      --skeleton-shine: #f5f0e8;
-      --progress-track: #e3bba1;
-      --indicator-inactive: #e3bba1;
-      --frame-bg: #1a1a2e;
-      --status-bar-text: #fff;
-      --warning: #f59e0b;
       --error: #ef4444;
       --success: #7d9b5f;
-      --cat-alimentacion: #4a7c59;
-      --cat-hogar: #5b8fa8;
-      --cat-otros: #8b7ea8;
-      --badge-green-bg: rgba(74, 124, 89, 0.15);
-      --badge-green-text: #4a7c59;
-      --badge-violet-bg: rgba(139, 126, 168, 0.15);
-      --badge-violet-text: #8b7ea8;
-      --badge-success-bg: rgba(125, 155, 95, 0.12);
-      --badge-success-text: #7d9b5f;
+      --warning: #f59e0b;
+      --primary-rgb: 74, 124, 89;
+      --frame-bg: #1a1a2e;
+      --cat-carnes: #dc2626;
+      --cat-congelados: #2563eb;
+      --cat-lacteos: #d97706;
+      --cat-supermercado: #4a7c59;
     }
 
-    /* ── Normal Dark ── */
+    /* -- Normal Dark -- */
     [data-theme="normal"][data-mode="dark"] {
       --bg: #1a2420;
       --surface: #243028;
       --primary: #6b9e7a;
       --text: #e8e4dc;
-      --secondary: #b8c4a8;
+      --text-secondary: #b8c4a8;
       --border: #3d4d42;
-      --bg-tertiary: #2d3a30;
-      --secondary-color: #7ab5cc;
-      --primary-rgb: 107, 158, 122;
-      --nav-bg: #1e2a22;
-      --shadow: rgba(0,0,0,0.3);
-      --shadow-lg: rgba(0,0,0,0.4);
-      --skeleton-base: #2d3a30;
-      --skeleton-shine: #3d4d42;
-      --progress-track: #3d4d42;
-      --indicator-inactive: #3d4d42;
-      --frame-bg: #0a0f0c;
-      --status-bar-text: #e8e4dc;
-      --accent: #d4a574;
-      --warning: #fbbf24;
+      --bg-tertiary: #2d3d33;
       --error: #f87171;
       --success: #9bbd7a;
-      --cat-alimentacion: #6b9e7a;
-      --cat-hogar: #7ab5cc;
-      --cat-otros: #a89bcf;
-      --badge-green-bg: rgba(107, 158, 122, 0.2);
-      --badge-green-text: #6b9e7a;
-      --badge-violet-bg: rgba(168, 155, 207, 0.2);
-      --badge-violet-text: #a89bcf;
-      --badge-success-bg: rgba(155, 189, 122, 0.15);
-      --badge-success-text: #9bbd7a;
+      --warning: #fbbf24;
+      --accent: #d4a574;
+      --primary-rgb: 107, 158, 122;
+      --frame-bg: #0a0f0c;
+      --cat-carnes: #f87171;
+      --cat-congelados: #60a5fa;
+      --cat-lacteos: #fbbf24;
+      --cat-supermercado: #6b9e7a;
     }
 
-    /* ── Professional Light ── */
+    /* -- Professional Light -- */
     [data-theme="professional"][data-mode="light"] {
       --bg: #f8fafc;
-      --surface: #fff;
+      --surface: #ffffff;
       --primary: #2563eb;
       --text: #0f172a;
-      --secondary: #64748b;
+      --text-secondary: #64748b;
       --accent: #3b82f6;
       --border: #e2e8f0;
       --bg-tertiary: #f1f5f9;
-      --secondary-color: #0ea5e9;
-      --primary-rgb: 37, 99, 235;
-      --nav-bg: #1e293b;
-      --shadow: rgba(37, 99, 235, 0.08);
-      --shadow-lg: rgba(37, 99, 235, 0.12);
-      --skeleton-base: #f1f5f9;
-      --skeleton-shine: #f8fafc;
-      --progress-track: #e2e8f0;
-      --indicator-inactive: #e2e8f0;
-      --frame-bg: #1e293b;
-      --status-bar-text: #fff;
-      --warning: #f59e0b;
       --error: #ef4444;
       --success: #22c55e;
-      --cat-alimentacion: #2563eb;
-      --cat-hogar: #0ea5e9;
-      --cat-otros: #8b5cf6;
-      --badge-green-bg: rgba(37, 99, 235, 0.1);
-      --badge-green-text: #2563eb;
-      --badge-violet-bg: rgba(139, 92, 246, 0.1);
-      --badge-violet-text: #8b5cf6;
-      --badge-success-bg: rgba(34, 197, 94, 0.1);
-      --badge-success-text: #22c55e;
+      --warning: #f59e0b;
+      --primary-rgb: 37, 99, 235;
+      --frame-bg: #1e293b;
+      --cat-carnes: #dc2626;
+      --cat-congelados: #2563eb;
+      --cat-lacteos: #d97706;
+      --cat-supermercado: #2563eb;
     }
 
-    /* ── Professional Dark ── */
+    /* -- Professional Dark -- */
     [data-theme="professional"][data-mode="dark"] {
       --bg: #0f172a;
       --surface: #1e293b;
       --primary: #3b82f6;
       --text: #f1f5f9;
-      --secondary: #94a3b8;
+      --text-secondary: #94a3b8;
       --accent: #60a5fa;
       --border: #334155;
       --bg-tertiary: #1e293b;
-      --secondary-color: #38bdf8;
-      --primary-rgb: 59, 130, 246;
-      --nav-bg: #0f172a;
-      --shadow: rgba(0,0,0,0.3);
-      --shadow-lg: rgba(0,0,0,0.4);
-      --skeleton-base: #1e293b;
-      --skeleton-shine: #334155;
-      --progress-track: #334155;
-      --indicator-inactive: #334155;
-      --frame-bg: #020617;
-      --status-bar-text: #f1f5f9;
-      --warning: #fbbf24;
       --error: #f87171;
       --success: #4ade80;
-      --cat-alimentacion: #3b82f6;
-      --cat-hogar: #38bdf8;
-      --cat-otros: #a78bfa;
-      --badge-green-bg: rgba(59, 130, 246, 0.15);
-      --badge-green-text: #60a5fa;
-      --badge-violet-bg: rgba(167, 139, 250, 0.15);
-      --badge-violet-text: #a78bfa;
-      --badge-success-bg: rgba(74, 222, 128, 0.12);
-      --badge-success-text: #4ade80;
+      --warning: #fbbf24;
+      --primary-rgb: 59, 130, 246;
+      --frame-bg: #020617;
+      --cat-carnes: #f87171;
+      --cat-congelados: #60a5fa;
+      --cat-lacteos: #fbbf24;
+      --cat-supermercado: #3b82f6;
     }
 
-    /* ── Mono Light ── */
+    /* -- Mono Light -- */
     [data-theme="mono"][data-mode="light"] {
       --bg: #fafafa;
-      --surface: #fff;
+      --surface: #ffffff;
       --primary: #18181b;
       --text: #18181b;
-      --secondary: #71717a;
+      --text-secondary: #71717a;
       --accent: #52525b;
       --border: #e4e4e7;
       --bg-tertiary: #f4f4f5;
-      --secondary-color: #3f3f46;
-      --primary-rgb: 24, 24, 27;
-      --nav-bg: #27272a;
-      --shadow: rgba(0,0,0,0.06);
-      --shadow-lg: rgba(0,0,0,0.1);
-      --skeleton-base: #f4f4f5;
-      --skeleton-shine: #fafafa;
-      --progress-track: #e4e4e7;
-      --indicator-inactive: #e4e4e7;
-      --frame-bg: #18181b;
-      --status-bar-text: #fff;
-      --warning: #a1a1aa;
       --error: #71717a;
       --success: #52525b;
-      --cat-alimentacion: #18181b;
-      --cat-hogar: #3f3f46;
-      --cat-otros: #a1a1aa;
-      --badge-green-bg: rgba(24, 24, 27, 0.08);
-      --badge-green-text: #18181b;
-      --badge-violet-bg: rgba(161, 161, 170, 0.15);
-      --badge-violet-text: #71717a;
-      --badge-success-bg: rgba(82, 82, 91, 0.08);
-      --badge-success-text: #52525b;
+      --warning: #a1a1aa;
+      --primary-rgb: 24, 24, 27;
+      --frame-bg: #18181b;
+      --cat-carnes: #52525b;
+      --cat-congelados: #71717a;
+      --cat-lacteos: #a1a1aa;
+      --cat-supermercado: #18181b;
     }
 
-    /* ── Mono Dark ── */
+    /* -- Mono Dark -- */
     [data-theme="mono"][data-mode="dark"] {
       --bg: #09090b;
       --surface: #18181b;
-      --primary: #a1a1aa;
+      --primary: #3f3f46;
       --text: #fafafa;
-      --secondary: #a1a1aa;
+      --text-secondary: #a1a1aa;
       --accent: #71717a;
       --border: #27272a;
       --bg-tertiary: #18181b;
-      --secondary-color: #71717a;
-      --primary-rgb: 63, 63, 70;
-      --nav-bg: #09090b;
-      --shadow: rgba(0,0,0,0.4);
-      --shadow-lg: rgba(0,0,0,0.5);
-      --skeleton-base: #18181b;
-      --skeleton-shine: #27272a;
-      --progress-track: #27272a;
-      --indicator-inactive: #27272a;
-      --frame-bg: #000;
-      --status-bar-text: #fafafa;
-      --warning: #71717a;
       --error: #a1a1aa;
       --success: #71717a;
-      --cat-alimentacion: #a1a1aa;
-      --cat-hogar: #71717a;
-      --cat-otros: #52525b;
-      --badge-green-bg: rgba(161, 161, 170, 0.12);
-      --badge-green-text: #a1a1aa;
-      --badge-violet-bg: rgba(113, 113, 122, 0.15);
-      --badge-violet-text: #71717a;
-      --badge-success-bg: rgba(113, 113, 122, 0.1);
-      --badge-success-text: #71717a;
+      --warning: #71717a;
+      --primary-rgb: 63, 63, 70;
+      --frame-bg: #000000;
+      --cat-carnes: #a1a1aa;
+      --cat-congelados: #71717a;
+      --cat-lacteos: #71717a;
+      --cat-supermercado: #3f3f46;
     }
 
-    /* ══════════════════════════════════════════
+    /* ======================================================
        BASE STYLES
-       ══════════════════════════════════════════ */
+       ====================================================== */
 
     * {
       margin: 0;
@@ -243,19 +159,19 @@
       flex-direction: column;
       align-items: center;
       padding: 20px;
-      gap: 40px;
+      gap: 24px;
       color: var(--text);
     }
 
-    /* ══════════════════════════════════════════
+    /* ======================================================
        CONTROLS (outside phone frame)
-       ══════════════════════════════════════════ */
+       ====================================================== */
 
     .controls {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
       width: 100%;
       max-width: 520px;
     }
@@ -268,7 +184,7 @@
       justify-content: center;
     }
 
-    .theme-tabs {
+    .theme-tabs, .variant-tabs {
       display: flex;
       background: rgba(255,255,255,0.08);
       border-radius: 12px;
@@ -276,24 +192,24 @@
       gap: 2px;
     }
 
-    .theme-tab {
-      padding: 8px 20px;
+    .theme-tab, .variant-tab {
+      padding: 7px 18px;
       border: none;
       background: transparent;
       color: rgba(255,255,255,0.5);
       font-family: 'Outfit', sans-serif;
       font-weight: 500;
-      font-size: 14px;
+      font-size: 13px;
       border-radius: 10px;
       cursor: pointer;
       transition: all 0.2s ease;
     }
 
-    .theme-tab:hover {
+    .theme-tab:hover, .variant-tab:hover {
       color: rgba(255,255,255,0.8);
     }
 
-    .theme-tab.active {
+    .theme-tab.active, .variant-tab.active {
       background: rgba(255,255,255,0.15);
       color: #fff;
     }
@@ -338,43 +254,13 @@
       transform: translateX(20px);
     }
 
-    .variant-tabs {
-      display: flex;
-      background: rgba(255,255,255,0.08);
-      border-radius: 12px;
-      padding: 4px;
-      gap: 2px;
-    }
-
-    .variant-tab {
-      padding: 6px 16px;
-      border: none;
-      background: transparent;
-      color: rgba(255,255,255,0.5);
-      font-family: 'Outfit', sans-serif;
-      font-weight: 500;
-      font-size: 13px;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .variant-tab:hover {
-      color: rgba(255,255,255,0.8);
-    }
-
-    .variant-tab.active {
-      background: rgba(255,255,255,0.15);
-      color: #fff;
-    }
-
-    /* ══════════════════════════════════════════
+    /* ======================================================
        PHONE FRAME
-       ══════════════════════════════════════════ */
+       ====================================================== */
 
     .phone-frame {
       width: 360px;
-      height: 860px;
+      min-height: 780px;
       background: var(--frame-bg);
       border-radius: 44px;
       padding: 12px;
@@ -384,7 +270,7 @@
 
     .phone-screen {
       width: 100%;
-      height: 100%;
+      min-height: 756px;
       background: var(--bg);
       border-radius: 34px;
       overflow: hidden;
@@ -393,10 +279,10 @@
       flex-direction: column;
     }
 
-    /* ── Notch ── */
+    /* -- Notch -- */
     .phone-notch {
       position: absolute;
-      top: 0;
+      top: 12px;
       left: 50%;
       transform: translateX(-50%);
       width: 150px;
@@ -406,7 +292,7 @@
       z-index: 100;
     }
 
-    /* ── Status Bar ── */
+    /* -- Status Bar -- */
     .status-bar {
       height: 48px;
       padding: 14px 24px 0;
@@ -422,10 +308,7 @@
       background: var(--bg);
     }
 
-    .status-bar-left {
-      font-size: 14px;
-      font-weight: 700;
-    }
+    .status-bar-left { font-size: 14px; font-weight: 700; }
 
     .status-bar-right {
       display: flex;
@@ -433,32 +316,26 @@
       gap: 6px;
     }
 
-    .status-bar-right svg {
-      width: 16px;
-      height: 16px;
-    }
+    .status-bar-right svg { width: 16px; height: 16px; }
 
-    /* ── Home Indicator ── */
+    /* -- Home Indicator -- */
     .home-indicator {
-      position: absolute;
-      bottom: 6px;
-      left: 50%;
-      transform: translateX(-50%);
       width: 134px;
       height: 5px;
-      background: var(--secondary);
+      background: var(--text-secondary);
       border-radius: 3px;
       opacity: 0.3;
-      z-index: 100;
+      margin: 8px auto 6px;
+      flex-shrink: 0;
     }
 
-    /* ══════════════════════════════════════════
-       EDITOR HEADER (fixed, replaces top-header)
-       ══════════════════════════════════════════ */
+    /* ======================================================
+       EDITOR HEADER (single row, full-screen editor)
+       ====================================================== */
 
     .editor-header {
-      height: 56px;
-      padding: 0 16px;
+      height: 52px;
+      padding: 0 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -469,12 +346,12 @@
     .editor-header-left {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 2px;
     }
 
     .editor-back-btn {
-      width: 44px;
-      height: 44px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       border: none;
       background: transparent;
@@ -485,13 +362,11 @@
       transition: background 0.15s;
     }
 
-    .editor-back-btn:hover {
-      background: var(--bg-tertiary);
-    }
+    .editor-back-btn:hover { background: var(--bg-tertiary); }
 
     .editor-back-btn svg {
-      width: 24px;
-      height: 24px;
+      width: 22px;
+      height: 22px;
       stroke: var(--text);
       fill: none;
       stroke-width: 2;
@@ -502,42 +377,42 @@
     .editor-title {
       font-family: 'Outfit', sans-serif;
       font-weight: 700;
-      font-size: 18px;
+      font-size: 17px;
       color: var(--text);
     }
 
     .editor-header-right {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .credit-badge {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      min-width: 28px;
+      gap: 3px;
       height: 22px;
       border-radius: 9999px;
       padding: 0 8px;
       font-family: 'Outfit', sans-serif;
       font-weight: 700;
-      font-size: 12px;
+      font-size: 11px;
+      white-space: nowrap;
     }
 
-    .credit-badge.normal {
-      background: var(--badge-green-bg);
-      color: var(--badge-green-text);
+    .credit-badge.normal-credits {
+      background: rgba(var(--primary-rgb), 0.15);
+      color: var(--primary);
     }
 
-    .credit-badge.super {
-      background: var(--badge-violet-bg);
-      color: var(--badge-violet-text);
+    .credit-badge.super-credits {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
     }
 
-    .delete-btn {
-      width: 44px;
-      height: 44px;
+    .eye-btn, .delete-btn {
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       border: none;
       background: transparent;
@@ -548,149 +423,185 @@
       transition: background 0.15s;
     }
 
-    .delete-btn:hover {
-      background: rgba(239, 68, 68, 0.08);
+    .eye-btn:hover { background: var(--bg-tertiary); }
+    .delete-btn:hover { background: rgba(239, 68, 68, 0.08); }
+
+    .eye-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--text-secondary);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .delete-btn svg {
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
       stroke: var(--error);
       fill: none;
       stroke-width: 2;
       stroke-linecap: round;
       stroke-linejoin: round;
+      opacity: 0.7;
     }
 
-    /* ══════════════════════════════════════════
+    /* ======================================================
        SCROLLABLE CONTENT
-       ══════════════════════════════════════════ */
+       ====================================================== */
 
     .scroll-content {
       flex: 1;
       overflow-y: auto;
-      padding: 0 12px 24px;
+      padding: 0 12px 8px;
     }
 
-    .scroll-content::-webkit-scrollbar {
-      display: none;
-    }
+    .scroll-content::-webkit-scrollbar { display: none; }
 
-    /* ══════════════════════════════════════════
-       MAIN EDITOR CARD
-       ══════════════════════════════════════════ */
+    /* ======================================================
+       MERCHANT CARD (single rounded card)
+       ====================================================== */
 
-    .editor-card {
+    .merchant-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
-      box-shadow: 0 2px 8px var(--shadow);
-      overflow: hidden;
-      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.08);
+      padding: 14px;
+      margin-bottom: 10px;
     }
 
-    /* ── Metadata Row ── */
-    .metadata-row {
-      padding: 14px 14px 10px;
+    /* Row 1: Merchant name + edit + thumbnail */
+    .merchant-top-row {
       display: flex;
-      gap: 12px;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
     }
 
-    .metadata-info {
+    .merchant-details {
       flex: 1;
       min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
     }
 
-    .merchant-row {
+    .merchant-name-row {
       display: flex;
       align-items: center;
       gap: 6px;
+      margin-bottom: 6px;
     }
 
     .merchant-name {
       font-family: 'Outfit', sans-serif;
-      font-weight: 600;
-      font-size: 16px;
-      color: var(--primary);
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text);
+      text-transform: uppercase;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    .merchant-edit-icon svg {
-      width: 12px;
-      height: 12px;
-      stroke: var(--secondary);
+    .edit-icon {
+      flex-shrink: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+
+    .edit-icon svg {
+      width: 13px;
+      height: 13px;
+      stroke: var(--text-secondary);
       fill: none;
       stroke-width: 2;
       stroke-linecap: round;
       stroke-linejoin: round;
+    }
+
+    .edit-icon:hover svg { stroke: var(--primary); }
+
+    .receipt-thumbnail {
+      width: 56px;
+      height: 72px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--border) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .receipt-thumbnail svg {
+      width: 22px;
+      height: 22px;
+      stroke: var(--text-secondary);
+      fill: none;
+      stroke-width: 1.5;
+      opacity: 0.5;
+    }
+
+    .receipt-thumbnail-add {
+      width: 56px;
+      height: 72px;
+      border-radius: 8px;
+      border: 2px dashed var(--border);
+      background: var(--bg-tertiary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      flex-shrink: 0;
       cursor: pointer;
     }
 
-    .merchant-edit-icon svg:hover {
-      stroke: var(--primary);
+    .receipt-thumbnail-add svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--text-secondary);
+      fill: none;
+      stroke-width: 2;
     }
 
-    .badges-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
+    .receipt-thumbnail-add span {
+      font-family: 'Outfit', sans-serif;
+      font-size: 8px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
 
-    .category-pill {
+    /* Row 2: Category pill */
+    .merchant-category-pill {
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      padding: 2px 10px;
+      padding: 3px 10px;
       border-radius: 9999px;
-      background: var(--badge-green-bg);
       font-family: 'Outfit', sans-serif;
       font-size: 11px;
-      font-weight: 500;
-      color: var(--badge-green-text);
+      font-weight: 600;
+      color: #fff;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 180px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
     }
 
-    .learned-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--badge-success-text);
-      white-space: nowrap;
-    }
+    .merchant-category-pill.cat-supermercado { background: var(--cat-supermercado); }
+    .merchant-category-pill.cat-carnes { background: var(--cat-carnes); }
+    .merchant-category-pill.cat-congelados { background: var(--cat-congelados); }
+    .merchant-category-pill.cat-lacteos { background: var(--cat-lacteos); }
 
-    .learned-badge svg {
-      width: 12px;
-      height: 12px;
-      stroke: var(--badge-success-text);
-      fill: none;
-      stroke-width: 2.5;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    /* ── Info Tags Row ── */
-    .info-tags {
-      display: flex;
-      gap: 6px;
-      padding: 0 14px 10px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .info-tags::-webkit-scrollbar {
-      display: none;
-    }
-
-    .info-tag {
+    /* Row 3: Location pill */
+    .info-pill {
       display: inline-flex;
       align-items: center;
       gap: 4px;
@@ -700,121 +611,396 @@
       font-family: 'Outfit', sans-serif;
       font-size: 11px;
       font-weight: 500;
-      color: var(--secondary);
+      color: var(--text-secondary);
       white-space: nowrap;
-      flex-shrink: 0;
+      margin-right: 5px;
+      margin-bottom: 6px;
     }
 
-    /* ── Thumbnail ── */
-    .thumbnail {
-      width: 60px;
-      height: 80px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--border) 100%);
+    /* Row 4: Date + Time + Currency pills */
+    .merchant-pills-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    /* Rescan icon button (small, centered) */
+    .rescan-icon-btn {
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0;
-      cursor: pointer;
-      transition: transform 0.15s;
-      position: relative;
+      width: 100%;
+      padding: 2px 0;
     }
 
-    .thumbnail:hover {
-      transform: scale(1.03);
-    }
-
-    .thumbnail svg {
-      width: 24px;
-      height: 24px;
-      stroke: var(--secondary);
-      fill: none;
-      stroke-width: 1.5;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      opacity: 0.5;
-    }
-
-    /* ── Thumbnail: Add Photo variant ── */
-    .thumbnail-add {
-      width: 60px;
-      height: 80px;
-      border-radius: 8px;
-      border: 2px dashed var(--border);
+    .rescan-icon-btn button {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
       background: var(--bg-tertiary);
+      cursor: pointer;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 4px;
-      flex-shrink: 0;
-      cursor: pointer;
-      transition: border-color 0.15s;
+      transition: background 0.15s;
     }
 
-    .thumbnail-add:hover {
-      border-color: var(--primary);
+    .rescan-icon-btn button:hover {
+      background: rgba(var(--primary-rgb), 0.12);
     }
 
-    .thumbnail-add svg {
-      width: 20px;
-      height: 20px;
-      stroke: var(--secondary);
+    .rescan-icon-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-secondary);
       fill: none;
       stroke-width: 2;
       stroke-linecap: round;
       stroke-linejoin: round;
     }
 
-    .thumbnail-add span {
-      font-family: 'Outfit', sans-serif;
-      font-size: 8px;
-      font-weight: 500;
-      color: var(--secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
+    /* ======================================================
+       VIEW MODE TOGGLE (full-width segment)
+       ====================================================== */
+
+    .view-mode-toggle {
+      display: flex;
+      background: var(--bg-tertiary);
+      border-radius: 10px;
+      padding: 3px;
+      margin-bottom: 10px;
     }
 
-    /* ── Re-scan Button ── */
-    .rescan-btn {
-      margin: 0 14px 12px;
+    .view-mode-btn {
+      flex: 1;
+      padding: 8px 0;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .view-mode-btn.active {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(var(--primary-rgb), 0.25);
+    }
+
+    /* ======================================================
+       ITEM GROUPS (grouped mode)
+       ====================================================== */
+
+    .item-group {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(var(--primary-rgb), 0.06);
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    .item-group-header {
       padding: 10px 14px;
-      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.15s;
+      gap: 6px;
+    }
+
+    .item-group-header:hover {
+      background: rgba(var(--primary-rgb), 0.03);
+    }
+
+    .group-emoji {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .group-name {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .group-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      border-radius: 50%;
       background: var(--bg-tertiary);
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+      padding: 0 5px;
+    }
+
+    .group-total {
+      margin-left: auto;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .group-chevron {
+      width: 18px;
+      height: 18px;
+      stroke: var(--text-secondary);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+      transition: transform 0.2s;
+      margin-left: 4px;
+    }
+
+    .item-group.collapsed .group-chevron {
+      transform: rotate(180deg);
+    }
+
+    .item-group.collapsed .item-group-items {
+      display: none;
+    }
+
+    /* -- Item Rows -- */
+    .item-group-items {
+      border-top: 1px solid var(--border);
+    }
+
+    .item-row {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(var(--primary-rgb), 0.06);
+    }
+
+    .item-row:last-child { border-bottom: none; }
+
+    .item-top-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .item-name {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--text);
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .item-edit-icon {
+      flex-shrink: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+
+    .item-edit-icon svg {
+      width: 12px;
+      height: 12px;
+      stroke: var(--text-secondary);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .item-edit-icon:hover svg { stroke: var(--primary); }
+
+    .item-price {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .item-bottom-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .item-category-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      color: #fff;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .item-category-badge.cat-carnes { background: var(--cat-carnes); }
+    .item-category-badge.cat-congelados { background: var(--cat-congelados); }
+    .item-category-badge.cat-lacteos { background: var(--cat-lacteos); }
+    .item-category-badge.cat-supermercado { background: var(--cat-supermercado); }
+
+    .item-qty-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 7px;
+      border-radius: 9999px;
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+      font-family: 'Outfit', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      margin-left: auto;
+    }
+
+    /* ======================================================
+       ADD ITEM BUTTON
+       ====================================================== */
+
+    .add-item-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
       border: 1.5px dashed var(--border);
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 4px;
+      margin-bottom: 12px;
+    }
+
+    .add-item-btn:hover {
+      border-color: var(--primary);
+      background: rgba(var(--primary-rgb), 0.04);
+    }
+
+    .add-item-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-secondary);
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .add-item-btn span {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    /* ======================================================
+       TOTAL ROW
+       ====================================================== */
+
+    .total-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 4px;
+      margin-bottom: 12px;
+    }
+
+    .total-label {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    .total-amount {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      color: var(--primary);
+    }
+
+    /* ======================================================
+       SAVE BUTTON
+       ====================================================== */
+
+    .save-btn {
+      width: 100%;
+      height: 48px;
+      border-radius: 14px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
       cursor: pointer;
+      box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
       transition: all 0.15s;
+      margin-bottom: 8px;
     }
 
-    .rescan-btn:hover {
-      border-color: var(--primary);
-      background: rgba(var(--primary-rgb), 0.06);
+    .save-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(var(--primary-rgb), 0.35);
     }
 
-    .rescan-btn svg {
-      width: 16px;
-      height: 16px;
-      stroke: var(--secondary);
+    .save-btn:active { transform: translateY(0); }
+
+    .save-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: #fff;
       fill: none;
-      stroke-width: 2;
+      stroke-width: 2.5;
       stroke-linecap: round;
       stroke-linejoin: round;
     }
 
-    .rescan-btn span {
-      font-family: 'Outfit', sans-serif;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--secondary);
+    .save-btn.disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none;
     }
 
-    /* ── Scan Section (new from scan variant) ── */
+    .save-btn.disabled:hover { transform: none; }
+
+    /* ======================================================
+       SCAN SECTION (New Scan variant)
+       ====================================================== */
+
     .scan-section {
-      margin: 0 14px 12px;
+      margin: 0 0 10px;
       padding: 12px 14px;
       border-radius: 10px;
       background: rgba(var(--primary-rgb), 0.06);
@@ -844,7 +1030,7 @@
     }
 
     .scan-process-btn {
-      padding: 6px 14px;
+      padding: 7px 14px;
       border-radius: 8px;
       border: none;
       background: var(--primary);
@@ -854,352 +1040,18 @@
       font-weight: 600;
       cursor: pointer;
       white-space: nowrap;
-      transition: opacity 0.15s;
     }
 
-    .scan-process-btn:hover {
-      opacity: 0.9;
-    }
-
-    /* ══════════════════════════════════════════
-       ITEMS SECTION
-       ══════════════════════════════════════════ */
-
-    .items-section {
-      margin-bottom: 12px;
-    }
-
-    .items-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 4px;
-      margin-bottom: 10px;
-    }
-
-    .items-title {
-      font-family: 'Outfit', sans-serif;
-      font-weight: 600;
-      font-size: 15px;
-      color: var(--text);
-    }
-
-    .view-toggle {
-      display: flex;
-      background: var(--bg-tertiary);
-      border-radius: 8px;
-      padding: 2px;
-      gap: 2px;
-    }
-
-    .view-toggle-btn {
-      padding: 4px 12px;
-      border-radius: 6px;
-      border: none;
-      background: transparent;
-      font-family: 'Outfit', sans-serif;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--secondary);
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .view-toggle-btn.active {
-      background: var(--surface);
-      color: var(--text);
-      box-shadow: 0 1px 3px var(--shadow);
-    }
-
-    /* ── Category Group ── */
-    .category-group {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      box-shadow: 0 1px 4px var(--shadow);
-      margin-bottom: 8px;
-      overflow: hidden;
-    }
-
-    .category-group-header {
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-
-    .category-group-header:hover {
-      background: rgba(var(--primary-rgb), 0.03);
-    }
-
-    .category-group-label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-family: 'Outfit', sans-serif;
-      font-weight: 600;
-      font-size: 13px;
-      color: var(--text);
-    }
-
-    .category-group-label .emoji {
-      font-size: 14px;
-    }
-
-    .category-group-chevron {
-      width: 18px;
-      height: 18px;
-      stroke: var(--secondary);
-      fill: none;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      transition: transform 0.2s;
-    }
-
-    .category-group.collapsed .category-group-chevron {
-      transform: rotate(-90deg);
-    }
-
-    .category-group.collapsed .category-group-items,
-    .category-group.collapsed .category-group-footer {
-      display: none;
-    }
-
-    /* ── Item Row ── */
-    .category-group-items {
-      border-top: 1px solid var(--border);
-    }
-
-    .item-row {
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      border-bottom: 1px solid rgba(var(--primary-rgb), 0.06);
-    }
-
-    .item-row:last-child {
-      border-bottom: none;
-    }
-
-    .item-info {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .item-name {
-      font-family: 'Outfit', sans-serif;
-      font-weight: 500;
-      font-size: 13px;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .item-qty-detail {
-      font-family: 'Outfit', sans-serif;
-      font-weight: 400;
-      font-size: 11px;
-      color: var(--secondary);
-    }
-
-    .item-price {
-      font-family: 'Outfit', sans-serif;
-      font-weight: 600;
-      font-size: 13px;
-      color: var(--text);
-      white-space: nowrap;
-    }
-
-    .item-edit-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      transition: background 0.15s;
-    }
-
-    .item-edit-btn:hover {
-      background: var(--bg-tertiary);
-    }
-
-    .item-edit-btn svg {
-      width: 14px;
-      height: 14px;
-      stroke: var(--secondary);
-      fill: none;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    /* ── Category Group Footer (subtotal) ── */
-    .category-group-footer {
-      padding: 8px 14px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 6px;
-    }
-
-    .subtotal-label {
-      font-family: 'Outfit', sans-serif;
-      font-weight: 400;
-      font-size: 11px;
-      color: var(--secondary);
-    }
-
-    .subtotal-amount {
-      font-family: 'Outfit', sans-serif;
-      font-weight: 600;
-      font-size: 13px;
-      color: var(--text);
-    }
-
-    /* ── Add Item Button ── */
-    .add-item-btn {
-      width: 100%;
-      padding: 12px;
-      border-radius: 12px;
-      border: 1.5px dashed var(--border);
-      background: transparent;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      cursor: pointer;
-      transition: all 0.15s;
-      margin-top: 4px;
-    }
-
-    .add-item-btn:hover {
-      border-color: var(--primary);
-      background: rgba(var(--primary-rgb), 0.04);
-    }
-
-    .add-item-btn svg {
-      width: 18px;
-      height: 18px;
-      stroke: var(--secondary);
-      fill: none;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .add-item-btn span {
-      font-family: 'Outfit', sans-serif;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--secondary);
-    }
-
-    /* ══════════════════════════════════════════
-       TOTAL ROW
-       ══════════════════════════════════════════ */
-
-    .total-row {
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-
-    .total-label {
-      font-family: 'Outfit', sans-serif;
-      font-weight: 500;
-      font-size: 14px;
-      color: var(--text);
-    }
-
-    .total-amount {
-      font-family: 'Outfit', sans-serif;
-      font-weight: 700;
-      font-size: 18px;
-      color: var(--primary);
-    }
-
-    /* ══════════════════════════════════════════
-       SAVE BUTTON
-       ══════════════════════════════════════════ */
-
-    .save-btn {
-      width: 100%;
-      height: 48px;
-      border-radius: 14px;
-      border: none;
-      background: var(--primary);
-      color: #fff;
-      font-family: 'Outfit', sans-serif;
-      font-weight: 600;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
-      transition: all 0.15s;
-      margin-bottom: 8px;
-    }
-
-    .save-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 18px rgba(var(--primary-rgb), 0.35);
-    }
-
-    .save-btn:active {
-      transform: translateY(0);
-    }
-
-    .save-btn svg {
-      width: 20px;
-      height: 20px;
-      stroke: #fff;
-      fill: none;
-      stroke-width: 2.5;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .save-btn.disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    .save-btn.disabled:hover {
-      transform: none;
-    }
-
-    /* ══════════════════════════════════════════
+    /* ======================================================
        VALIDATION ERROR STATE
-       ══════════════════════════════════════════ */
+       ====================================================== */
 
     .merchant-input-error {
       border: 1.5px solid var(--error);
       border-radius: 8px;
       padding: 8px 12px;
       background: var(--surface);
-      margin: 0 14px 4px;
+      margin-bottom: 4px;
     }
 
     .merchant-input-error input {
@@ -1214,7 +1066,7 @@
     }
 
     .merchant-input-error input::placeholder {
-      color: var(--secondary);
+      color: var(--text-secondary);
       opacity: 0.6;
     }
 
@@ -1223,20 +1075,29 @@
       font-size: 11px;
       font-weight: 500;
       color: var(--error);
-      padding: 0 14px 10px;
+      margin-bottom: 8px;
     }
 
-    /* ── Qty Input (decimal qty variant) ── */
-    .qty-input-group {
-      display: flex;
-      align-items: center;
-      gap: 4px;
+    /* -- Decimal qty highlight -- */
+    .item-row.qty-highlight {
+      background: rgba(var(--primary-rgb), 0.04);
+      border-radius: 8px;
+      margin: 0 4px;
+      padding: 12px 10px;
+    }
+
+    .qty-detail-line {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-top: 2px;
     }
 
     .qty-input {
-      width: 40px;
-      height: 28px;
-      border-radius: 6px;
+      width: 36px;
+      height: 24px;
+      border-radius: 5px;
       border: 1px solid var(--border);
       background: var(--bg-tertiary);
       text-align: center;
@@ -1245,72 +1106,44 @@
       font-weight: 600;
       color: var(--text);
       outline: none;
-      transition: border-color 0.15s;
     }
 
-    .qty-input:focus {
-      border-color: var(--primary);
-    }
+    .qty-input:focus { border-color: var(--primary); }
 
-    .qty-separator {
-      font-family: 'Outfit', sans-serif;
-      font-size: 12px;
-      color: var(--secondary);
-    }
-
-    .qty-unit-price {
-      font-family: 'Outfit', sans-serif;
-      font-size: 12px;
-      color: var(--secondary);
-    }
-
-    .qty-equals {
-      font-family: 'Outfit', sans-serif;
-      font-size: 12px;
-      color: var(--secondary);
-      margin: 0 2px;
-    }
-
-    /* ══════════════════════════════════════════
+    /* ======================================================
        VARIANT VISIBILITY
-       ══════════════════════════════════════════ */
+       ====================================================== */
 
     .variant-hero { display: block; }
     .variant-new-scan { display: none; }
     .variant-validation { display: none; }
     .variant-decimal-qty { display: none; }
 
-    body.variant-new-scan .variant-hero { display: none; }
-    body.variant-new-scan .variant-new-scan { display: block; }
+    body.show-new-scan .variant-hero { display: none; }
+    body.show-new-scan .variant-new-scan { display: block; }
 
-    body.variant-validation .variant-hero { display: none; }
-    body.variant-validation .variant-validation { display: block; }
+    body.show-validation .variant-hero { display: none; }
+    body.show-validation .variant-validation { display: block; }
 
-    body.variant-decimal-qty .variant-hero { display: none; }
-    body.variant-decimal-qty .variant-decimal-qty { display: block; }
+    body.show-decimal-qty .variant-hero { display: none; }
+    body.show-decimal-qty .variant-decimal-qty { display: block; }
 
-    /* ══════════════════════════════════════════
+    /* ======================================================
        RESPONSIVE
-       ══════════════════════════════════════════ */
+       ====================================================== */
 
     @media (max-width: 460px) {
-      .phone-frame {
-        width: 100%;
-        border-radius: 0;
-        padding: 0;
-      }
-      .phone-screen {
-        border-radius: 0;
-      }
+      .phone-frame { width: 100%; border-radius: 0; padding: 0; }
+      .phone-screen { border-radius: 0; }
       .phone-notch { display: none; }
     }
   </style>
 </head>
 <body data-theme="normal" data-mode="light">
 
-  <!-- ════════════════════════════════════════
+  <!-- ====================================================
        CONTROLS (outside phone frame)
-       ════════════════════════════════════════ -->
+       ==================================================== -->
   <div class="controls">
     <div class="controls-row">
       <div class="theme-tabs">
@@ -1334,9 +1167,9 @@
     </div>
   </div>
 
-  <!-- ════════════════════════════════════════
+  <!-- ====================================================
        PHONE FRAME
-       ════════════════════════════════════════ -->
+       ==================================================== -->
   <div class="phone-frame">
     <div class="phone-notch"></div>
     <div class="phone-screen">
@@ -1345,33 +1178,33 @@
       <div class="status-bar">
         <span class="status-bar-left">9:41</span>
         <div class="status-bar-right">
-          <!-- Signal -->
           <svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="11" width="2.5" height="4" rx="0.5"/><rect x="5" y="8" width="2.5" height="7" rx="0.5"/><rect x="9" y="5" width="2.5" height="10" rx="0.5"/><rect x="13" y="1" width="2.5" height="14" rx="0.5"/></svg>
-          <!-- WiFi -->
-          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 12.5a1.25 1.25 0 110 2.5 1.25 1.25 0 010-2.5zM8 8.5c2.07 0 3.94.84 5.3 2.2l-1.42 1.42A5.48 5.48 0 008 10.5c-1.52 0-2.9.62-3.88 1.62L2.7 10.7A7.47 7.47 0 018 8.5zM8 4.5c3.18 0 6.07 1.29 8.16 3.38l-1.42 1.42A9.47 9.47 0 008 6.5c-2.62 0-5 1.06-6.74 2.8L-.16 7.88A11.47 11.47 0 018 4.5z"/></svg>
-          <!-- Battery -->
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 12.5a1.25 1.25 0 110 2.5 1.25 1.25 0 010-2.5zM8 8.5c2.07 0 3.94.84 5.3 2.2l-1.42 1.42A5.48 5.48 0 008 10.5c-1.52 0-2.9.62-3.88 1.62L2.7 10.7A7.47 7.47 0 018 8.5z"/></svg>
           <svg viewBox="0 0 24 12" fill="currentColor"><rect x="0" y="0" width="20" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="2" width="14" height="8" rx="1"/><rect x="21" y="3.5" width="2.5" height="5" rx="1"/></svg>
         </div>
       </div>
 
-      <!-- ═══════════════════════════════════════
-           VARIANT 1: HERO (Editing Existing)
-           ═══════════════════════════════════════ -->
+      <!-- ===================================================
+           VARIANT 1: EDITING (Hero) — Existing Transaction
+           =================================================== -->
       <div class="variant-hero">
 
         <!-- Editor Header -->
         <div class="editor-header">
           <div class="editor-header-left">
             <button class="editor-back-btn">
-              <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
             <span class="editor-title">Mi Compra</span>
           </div>
           <div class="editor-header-right">
-            <span class="credit-badge normal">12</span>
-            <span class="credit-badge super">3</span>
+            <span class="credit-badge normal-credits">&#9889;100</span>
+            <span class="credit-badge super-credits">@1K</span>
+            <button class="eye-btn">
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
             <button class="delete-btn">
-              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             </button>
           </div>
         </div>
@@ -1379,236 +1212,260 @@
         <!-- Scrollable Content -->
         <div class="scroll-content">
 
-          <!-- Main Editor Card -->
-          <div class="editor-card">
-
-            <!-- Metadata Row -->
-            <div class="metadata-row">
-              <div class="metadata-info">
-                <div class="merchant-row">
-                  <span class="merchant-name">Supermercado Lider</span>
-                  <span class="merchant-edit-icon">
-                    <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  </span>
+          <!-- Merchant Card -->
+          <div class="merchant-card">
+            <!-- Row 1: Merchant name + edit + receipt thumbnail -->
+            <div class="merchant-top-row">
+              <div class="merchant-details">
+                <div class="merchant-name-row">
+                  <span class="merchant-name">SUPER BODEGA ACUE...</span>
+                  <span class="edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
                 </div>
-                <div class="badges-row">
-                  <span class="category-pill">&#x1F6D2; Supermercado</span>
-                  <span class="learned-badge">
-                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                    Aprendido
-                  </span>
+                <!-- Row 2: Category badge -->
+                <div>
+                  <span class="merchant-category-pill cat-supermercado">&#x1F6D2; SUPERMERC...</span>
+                </div>
+                <!-- Row 3: Location -->
+                <div>
+                  <span class="info-pill">&#x1F4CD; Villarrica, Chile</span>
+                </div>
+                <!-- Row 4: Date + Time + Currency -->
+                <div class="merchant-pills-row">
+                  <span class="info-pill">&#x1F4C5; 13 Feb</span>
+                  <span class="info-pill">&#x1F550; 15:39</span>
+                  <span class="info-pill">$</span>
                 </div>
               </div>
-              <div class="thumbnail">
-                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <div class="receipt-thumbnail">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               </div>
             </div>
-
-            <!-- Info Tags -->
-            <div class="info-tags">
-              <span class="info-tag">&#x1F4CD; Santiago, Chile</span>
-              <span class="info-tag">&#x1F4C5; 20 mar 2026</span>
-              <span class="info-tag">&#x1F554; 14:30</span>
-              <span class="info-tag">&#x1F4B0; CLP</span>
+            <!-- Rescan icon button -->
+            <div class="rescan-icon-btn">
+              <button>
+                <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              </button>
             </div>
-
-            <!-- Re-scan Button -->
-            <div class="rescan-btn">
-              <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-              <span>Reescanear</span>
-            </div>
-
           </div>
 
-          <!-- Items Section -->
-          <div class="items-section">
-            <div class="items-header">
-              <span class="items-title">Items (5)</span>
-              <div class="view-toggle">
-                <button class="view-toggle-btn active">Agrupado</button>
-                <button class="view-toggle-btn">Original</button>
-              </div>
-            </div>
-
-            <!-- Category Group: Alimentacion -->
-            <div class="category-group">
-              <div class="category-group-header">
-                <span class="category-group-label">
-                  <span class="emoji">&#x1F6D2;</span>
-                  Alimentacion (3)
-                </span>
-                <svg class="category-group-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-              </div>
-              <div class="category-group-items">
-                <div class="item-row">
-                  <div class="item-info">
-                    <span class="item-name">Leche Entera 1L</span>
-                  </div>
-                  <span class="item-price">$2.390</span>
-                  <button class="item-edit-btn">
-                    <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  </button>
-                </div>
-                <div class="item-row">
-                  <div class="item-info">
-                    <span class="item-name">Pan Molde</span>
-                  </div>
-                  <span class="item-price">$1.890</span>
-                  <button class="item-edit-btn">
-                    <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  </button>
-                </div>
-                <div class="item-row">
-                  <div class="item-info">
-                    <span class="item-name">Queso Gouda</span>
-                    <span class="item-qty-detail">2.5 x $3.490</span>
-                  </div>
-                  <span class="item-price">$8.725</span>
-                  <button class="item-edit-btn">
-                    <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  </button>
-                </div>
-              </div>
-              <div class="category-group-footer">
-                <span class="subtotal-label">Subtotal</span>
-                <span class="subtotal-amount">$13.005</span>
-              </div>
-            </div>
-
-            <!-- Category Group: Hogar -->
-            <div class="category-group">
-              <div class="category-group-header">
-                <span class="category-group-label">
-                  <span class="emoji">&#x1F9F9;</span>
-                  Hogar (2)
-                </span>
-                <svg class="category-group-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-              </div>
-              <div class="category-group-items">
-                <div class="item-row">
-                  <div class="item-info">
-                    <span class="item-name">Detergente Omo</span>
-                  </div>
-                  <span class="item-price">$4.590</span>
-                  <button class="item-edit-btn">
-                    <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  </button>
-                </div>
-                <div class="item-row">
-                  <div class="item-info">
-                    <span class="item-name">Papel Higienico</span>
-                  </div>
-                  <span class="item-price">$3.290</span>
-                  <button class="item-edit-btn">
-                    <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  </button>
-                </div>
-              </div>
-              <div class="category-group-footer">
-                <span class="subtotal-label">Subtotal</span>
-                <span class="subtotal-amount">$7.880</span>
-              </div>
-            </div>
-
-            <!-- Add Item Button -->
-            <button class="add-item-btn">
-              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              <span>Agregar item</span>
-            </button>
+          <!-- View Mode Toggle -->
+          <div class="view-mode-toggle">
+            <button class="view-mode-btn active">Por Grupo</button>
+            <button class="view-mode-btn">Original</button>
           </div>
+
+          <!-- Item Group 1: Alimentos Frescos -->
+          <div class="item-group">
+            <div class="item-group-header">
+              <span class="group-emoji">&#x1F969;</span>
+              <span class="group-name">Alimentos Frescos</span>
+              <span class="group-count">8</span>
+              <span class="group-total">$111.464</span>
+              <svg class="group-chevron" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+            </div>
+            <div class="item-group-items">
+              <!-- Item 1 -->
+              <div class="item-row">
+                <div class="item-top-line">
+                  <span class="item-name">FILETE VACUNO</span>
+                  <span class="item-edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
+                  <span class="item-price">$18.990</span>
+                </div>
+                <div class="item-bottom-line">
+                  <span class="item-category-badge cat-carnes">CARNES Y MARISCOS</span>
+                </div>
+              </div>
+              <!-- Item 2 -->
+              <div class="item-row">
+                <div class="item-top-line">
+                  <span class="item-name">PECHUGA POLLO ENTERA</span>
+                  <span class="item-edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
+                  <span class="item-price">$6.990</span>
+                </div>
+                <div class="item-bottom-line">
+                  <span class="item-category-badge cat-carnes">CARNES Y MARISCOS</span>
+                  <span class="item-qty-badge">x3</span>
+                </div>
+              </div>
+              <!-- Item 3 -->
+              <div class="item-row">
+                <div class="item-top-line">
+                  <span class="item-name">SALMON FILETE 500G</span>
+                  <span class="item-edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
+                  <span class="item-price">$12.490</span>
+                </div>
+                <div class="item-bottom-line">
+                  <span class="item-category-badge cat-carnes">CARNES Y MARISCOS</span>
+                </div>
+              </div>
+              <!-- Item 4 -->
+              <div class="item-row">
+                <div class="item-top-line">
+                  <span class="item-name">QUESO GAUDA LAM 500G</span>
+                  <span class="item-edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
+                  <span class="item-price">$5.990</span>
+                </div>
+                <div class="item-bottom-line">
+                  <span class="item-category-badge cat-lacteos">LACTEOS Y HUEVOS</span>
+                </div>
+              </div>
+              <!-- Item 5 -->
+              <div class="item-row">
+                <div class="item-top-line">
+                  <span class="item-name">LECHE ENTERA COLUN 1L</span>
+                  <span class="item-edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
+                  <span class="item-price">$1.290</span>
+                </div>
+                <div class="item-bottom-line">
+                  <span class="item-category-badge cat-lacteos">LACTEOS Y HUEVOS</span>
+                  <span class="item-qty-badge">x2</span>
+                </div>
+              </div>
+              <!-- Item 6 -->
+              <div class="item-row">
+                <div class="item-top-line">
+                  <span class="item-name">YOGURT GRIEGO NATURAL</span>
+                  <span class="item-edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
+                  <span class="item-price">$2.490</span>
+                </div>
+                <div class="item-bottom-line">
+                  <span class="item-category-badge cat-lacteos">LACTEOS Y HUEVOS</span>
+                </div>
+              </div>
+              <!-- Item 7 -->
+              <div class="item-row">
+                <div class="item-top-line">
+                  <span class="item-name">HUEVOS DOCENA CAMPO</span>
+                  <span class="item-edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
+                  <span class="item-price">$4.290</span>
+                </div>
+                <div class="item-bottom-line">
+                  <span class="item-category-badge cat-lacteos">LACTEOS Y HUEVOS</span>
+                </div>
+              </div>
+              <!-- Item 8 -->
+              <div class="item-row">
+                <div class="item-top-line">
+                  <span class="item-name">MANTEQUILLA COLUN 250G</span>
+                  <span class="item-edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
+                  <span class="item-price">$3.990</span>
+                </div>
+                <div class="item-bottom-line">
+                  <span class="item-category-badge cat-lacteos">LACTEOS Y HUEVOS</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Item Group 2: Alimentos Envasados -->
+          <div class="item-group">
+            <div class="item-group-header">
+              <span class="group-emoji">&#x1F9CA;</span>
+              <span class="group-name">Alimentos Envasados</span>
+              <span class="group-count">1</span>
+              <span class="group-total">$1.800</span>
+              <svg class="group-chevron" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+            </div>
+            <div class="item-group-items">
+              <div class="item-row">
+                <div class="item-top-line">
+                  <span class="item-name">HIELO CUBO LIDER 1</span>
+                  <span class="item-edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
+                  <span class="item-price">$1.800</span>
+                </div>
+                <div class="item-bottom-line">
+                  <span class="item-category-badge cat-congelados">CONGELADOS</span>
+                  <span class="item-qty-badge">x2</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Item Button -->
+          <button class="add-item-btn">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>+ Agregar</span>
+          </button>
 
           <!-- Total Row -->
           <div class="total-row">
-            <span class="total-label">Total (5 items)</span>
-            <span class="total-amount">$20.885</span>
+            <span class="total-label">Total (9 items)</span>
+            <span class="total-amount">$113.264</span>
           </div>
 
           <!-- Save Button -->
           <button class="save-btn">
-            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
             Guardar Transaccion
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
           </button>
 
         </div>
       </div>
 
-      <!-- ═══════════════════════════════════════
-           VARIANT 2: NEW SCAN
-           ═══════════════════════════════════════ -->
+      <!-- ===================================================
+           VARIANT 2: NEW SCAN — Empty State
+           =================================================== -->
       <div class="variant-new-scan">
 
-        <!-- Editor Header (no delete) -->
+        <!-- Editor Header (no delete, no eye) -->
         <div class="editor-header">
           <div class="editor-header-left">
             <button class="editor-back-btn">
-              <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
             <span class="editor-title">Mi Compra</span>
           </div>
           <div class="editor-header-right">
-            <span class="credit-badge normal">12</span>
-            <span class="credit-badge super">3</span>
+            <span class="credit-badge normal-credits">&#9889;100</span>
+            <span class="credit-badge super-credits">@1K</span>
           </div>
         </div>
 
         <!-- Scrollable Content -->
         <div class="scroll-content">
 
-          <!-- Main Editor Card -->
-          <div class="editor-card">
-
-            <!-- Scan Section -->
-            <div class="scan-section">
-              <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              <span class="scan-section-text">Foto lista para procesar</span>
-              <button class="scan-process-btn">Procesar Escaneo</button>
-            </div>
-
-            <!-- Metadata Row (empty merchant) -->
-            <div class="metadata-row">
-              <div class="metadata-info">
-                <div class="merchant-row">
-                  <span class="merchant-name" style="color: var(--secondary); font-weight: 400; font-style: italic; opacity: 0.6;">Comercio sin nombre</span>
-                  <span class="merchant-edit-icon">
-                    <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  </span>
+          <!-- Merchant Card (empty) -->
+          <div class="merchant-card">
+            <div class="merchant-top-row">
+              <div class="merchant-details">
+                <div class="merchant-name-row">
+                  <span class="merchant-name" style="color: var(--text-secondary); font-weight: 400; text-transform: none; opacity: 0.6; font-style: italic;">Nombre del comercio</span>
+                  <span class="edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
                 </div>
-                <div class="badges-row">
-                  <span class="category-pill" style="opacity: 0.5;">&#x2753; Sin categoria</span>
+                <div>
+                  <span class="merchant-category-pill cat-supermercado" style="opacity: 0.4;">&#x2753; SIN CATEGORIA</span>
+                </div>
+                <div class="merchant-pills-row">
+                  <span class="info-pill">&#x1F4C5; 20 Mar</span>
+                  <span class="info-pill">&#x1F550; 14:30</span>
+                  <span class="info-pill">$</span>
                 </div>
               </div>
-              <!-- Add Photo Thumbnail -->
-              <div class="thumbnail-add">
+              <div class="receipt-thumbnail-add">
                 <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                <span>Agregar</span>
+                <span>Agregar foto</span>
               </div>
             </div>
-
-            <!-- Info Tags -->
-            <div class="info-tags">
-              <span class="info-tag">&#x1F4C5; 20 mar 2026</span>
-              <span class="info-tag">&#x1F554; 14:30</span>
-              <span class="info-tag">&#x1F4B0; CLP</span>
-            </div>
-
           </div>
 
-          <!-- Items Section (empty) -->
-          <div class="items-section">
-            <div class="items-header">
-              <span class="items-title">Items (0)</span>
-              <div class="view-toggle">
-                <button class="view-toggle-btn active">Agrupado</button>
-                <button class="view-toggle-btn">Original</button>
-              </div>
-            </div>
-
-            <!-- Add Item Button -->
-            <button class="add-item-btn">
-              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              <span>Agregar item</span>
-            </button>
+          <!-- Scan Section -->
+          <div class="scan-section">
+            <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <span class="scan-section-text">Foto lista para procesar</span>
+            <button class="scan-process-btn">Procesar Escaneo</button>
           </div>
+
+          <!-- View Mode Toggle -->
+          <div class="view-mode-toggle">
+            <button class="view-mode-btn active">Por Grupo</button>
+            <button class="view-mode-btn">Original</button>
+          </div>
+
+          <!-- No groups, just add item -->
+          <button class="add-item-btn">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>+ Agregar</span>
+          </button>
 
           <!-- Total Row -->
           <div class="total-row">
@@ -1618,31 +1475,34 @@
 
           <!-- Save Button -->
           <button class="save-btn">
-            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
             Guardar Transaccion
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
           </button>
 
         </div>
       </div>
 
-      <!-- ═══════════════════════════════════════
+      <!-- ===================================================
            VARIANT 3: VALIDATION ERRORS
-           ═══════════════════════════════════════ -->
+           =================================================== -->
       <div class="variant-validation">
 
         <!-- Editor Header -->
         <div class="editor-header">
           <div class="editor-header-left">
             <button class="editor-back-btn">
-              <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
             <span class="editor-title">Mi Compra</span>
           </div>
           <div class="editor-header-right">
-            <span class="credit-badge normal">12</span>
-            <span class="credit-badge super">3</span>
+            <span class="credit-badge normal-credits">&#9889;100</span>
+            <span class="credit-badge super-credits">@1K</span>
+            <button class="eye-btn">
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
             <button class="delete-btn">
-              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             </button>
           </div>
         </div>
@@ -1650,173 +1510,140 @@
         <!-- Scrollable Content -->
         <div class="scroll-content">
 
-          <!-- Main Editor Card -->
-          <div class="editor-card">
-
-            <!-- Error: Empty Merchant Input -->
-            <div class="merchant-input-error">
-              <input type="text" placeholder="Nombre del comercio" value="">
-            </div>
-            <div class="error-text">Campo requerido</div>
-
-            <!-- Metadata Row (no merchant, just badges) -->
-            <div class="metadata-row" style="padding-top: 0;">
-              <div class="metadata-info">
-                <div class="badges-row">
-                  <span class="category-pill">&#x1F6D2; Supermercado</span>
+          <!-- Merchant Card with error -->
+          <div class="merchant-card">
+            <div class="merchant-top-row">
+              <div class="merchant-details">
+                <div class="merchant-input-error">
+                  <input type="text" placeholder="Nombre del comercio" value="">
+                </div>
+                <div class="error-text">Campo requerido</div>
+                <div>
+                  <span class="merchant-category-pill cat-supermercado">&#x1F6D2; SUPERMERC...</span>
+                </div>
+                <div>
+                  <span class="info-pill">&#x1F4CD; Villarrica, Chile</span>
+                </div>
+                <div class="merchant-pills-row">
+                  <span class="info-pill">&#x1F4C5; 13 Feb</span>
+                  <span class="info-pill">&#x1F550; 15:39</span>
+                  <span class="info-pill">$</span>
                 </div>
               </div>
-              <div class="thumbnail">
-                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <div class="receipt-thumbnail">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               </div>
             </div>
-
-            <!-- Info Tags -->
-            <div class="info-tags">
-              <span class="info-tag">&#x1F4CD; Santiago, Chile</span>
-              <span class="info-tag">&#x1F4C5; 20 mar 2026</span>
-              <span class="info-tag">&#x1F554; 14:30</span>
-              <span class="info-tag">&#x1F4B0; CLP</span>
+            <div class="rescan-icon-btn">
+              <button>
+                <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              </button>
             </div>
-
-            <!-- Re-scan Button -->
-            <div class="rescan-btn">
-              <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-              <span>Reescanear</span>
-            </div>
-
           </div>
 
-          <!-- Items Section -->
-          <div class="items-section">
-            <div class="items-header">
-              <span class="items-title">Items (5)</span>
-              <div class="view-toggle">
-                <button class="view-toggle-btn active">Agrupado</button>
-                <button class="view-toggle-btn">Original</button>
-              </div>
-            </div>
-
-            <!-- Category Group: Alimentacion -->
-            <div class="category-group">
-              <div class="category-group-header">
-                <span class="category-group-label">
-                  <span class="emoji">&#x1F6D2;</span>
-                  Alimentacion (3)
-                </span>
-                <svg class="category-group-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-              </div>
-              <div class="category-group-items">
-                <div class="item-row">
-                  <div class="item-info">
-                    <span class="item-name">Leche Entera 1L</span>
-                  </div>
-                  <span class="item-price">$2.390</span>
-                  <button class="item-edit-btn">
-                    <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  </button>
-                </div>
-                <div class="item-row">
-                  <div class="item-info">
-                    <span class="item-name">Pan Molde</span>
-                  </div>
-                  <span class="item-price">$1.890</span>
-                  <button class="item-edit-btn">
-                    <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  </button>
-                </div>
-                <div class="item-row">
-                  <div class="item-info">
-                    <span class="item-name">Queso Gouda</span>
-                    <span class="item-qty-detail">2.5 x $3.490</span>
-                  </div>
-                  <span class="item-price">$8.725</span>
-                  <button class="item-edit-btn">
-                    <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  </button>
-                </div>
-              </div>
-              <div class="category-group-footer">
-                <span class="subtotal-label">Subtotal</span>
-                <span class="subtotal-amount">$13.005</span>
-              </div>
-            </div>
-
-            <!-- Category Group: Hogar -->
-            <div class="category-group">
-              <div class="category-group-header">
-                <span class="category-group-label">
-                  <span class="emoji">&#x1F9F9;</span>
-                  Hogar (2)
-                </span>
-                <svg class="category-group-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-              </div>
-              <div class="category-group-items">
-                <div class="item-row">
-                  <div class="item-info">
-                    <span class="item-name">Detergente Omo</span>
-                  </div>
-                  <span class="item-price">$4.590</span>
-                  <button class="item-edit-btn">
-                    <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  </button>
-                </div>
-                <div class="item-row">
-                  <div class="item-info">
-                    <span class="item-name">Papel Higienico</span>
-                  </div>
-                  <span class="item-price">$3.290</span>
-                  <button class="item-edit-btn">
-                    <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  </button>
-                </div>
-              </div>
-              <div class="category-group-footer">
-                <span class="subtotal-label">Subtotal</span>
-                <span class="subtotal-amount">$7.880</span>
-              </div>
-            </div>
-
-            <!-- Add Item Button -->
-            <button class="add-item-btn">
-              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              <span>Agregar item</span>
-            </button>
+          <!-- View Mode Toggle -->
+          <div class="view-mode-toggle">
+            <button class="view-mode-btn active">Por Grupo</button>
+            <button class="view-mode-btn">Original</button>
           </div>
 
-          <!-- Total Row -->
+          <!-- Same groups as hero but abbreviated -->
+          <div class="item-group">
+            <div class="item-group-header">
+              <span class="group-emoji">&#x1F969;</span>
+              <span class="group-name">Alimentos Frescos</span>
+              <span class="group-count">8</span>
+              <span class="group-total">$111.464</span>
+              <svg class="group-chevron" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+            </div>
+            <div class="item-group-items">
+              <div class="item-row">
+                <div class="item-top-line">
+                  <span class="item-name">FILETE VACUNO</span>
+                  <span class="item-edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
+                  <span class="item-price">$18.990</span>
+                </div>
+                <div class="item-bottom-line">
+                  <span class="item-category-badge cat-carnes">CARNES Y MARISCOS</span>
+                </div>
+              </div>
+              <div class="item-row">
+                <div class="item-top-line">
+                  <span class="item-name">PECHUGA POLLO ENTERA</span>
+                  <span class="item-edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
+                  <span class="item-price">$6.990</span>
+                </div>
+                <div class="item-bottom-line">
+                  <span class="item-category-badge cat-carnes">CARNES Y MARISCOS</span>
+                  <span class="item-qty-badge">x3</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="item-group collapsed">
+            <div class="item-group-header">
+              <span class="group-emoji">&#x1F9CA;</span>
+              <span class="group-name">Alimentos Envasados</span>
+              <span class="group-count">1</span>
+              <span class="group-total">$1.800</span>
+              <svg class="group-chevron" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+            </div>
+            <div class="item-group-items">
+              <div class="item-row">
+                <div class="item-top-line">
+                  <span class="item-name">HIELO CUBO LIDER 1</span>
+                  <span class="item-edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
+                  <span class="item-price">$1.800</span>
+                </div>
+                <div class="item-bottom-line">
+                  <span class="item-category-badge cat-congelados">CONGELADOS</span>
+                  <span class="item-qty-badge">x2</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button class="add-item-btn">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>+ Agregar</span>
+          </button>
+
           <div class="total-row">
-            <span class="total-label">Total (5 items)</span>
-            <span class="total-amount">$20.885</span>
+            <span class="total-label">Total (9 items)</span>
+            <span class="total-amount">$113.264</span>
           </div>
 
           <!-- Save Button (disabled) -->
           <button class="save-btn disabled">
-            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
             Guardar Transaccion
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
           </button>
 
         </div>
       </div>
 
-      <!-- ═══════════════════════════════════════
-           VARIANT 4: DECIMAL QTY DETAIL
-           ═══════════════════════════════════════ -->
+      <!-- ===================================================
+           VARIANT 4: DECIMAL QTY
+           =================================================== -->
       <div class="variant-decimal-qty">
 
         <!-- Editor Header -->
         <div class="editor-header">
           <div class="editor-header-left">
             <button class="editor-back-btn">
-              <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
             <span class="editor-title">Mi Compra</span>
           </div>
           <div class="editor-header-right">
-            <span class="credit-badge normal">12</span>
-            <span class="credit-badge super">3</span>
+            <span class="credit-badge normal-credits">&#9889;100</span>
+            <span class="credit-badge super-credits">@1K</span>
+            <button class="eye-btn">
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
             <button class="delete-btn">
-              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             </button>
           </div>
         </div>
@@ -1824,160 +1651,128 @@
         <!-- Scrollable Content -->
         <div class="scroll-content">
 
-          <!-- Main Editor Card -->
-          <div class="editor-card">
-
-            <!-- Metadata Row -->
-            <div class="metadata-row">
-              <div class="metadata-info">
-                <div class="merchant-row">
-                  <span class="merchant-name">Supermercado Lider</span>
-                  <span class="merchant-edit-icon">
-                    <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  </span>
+          <!-- Merchant Card -->
+          <div class="merchant-card">
+            <div class="merchant-top-row">
+              <div class="merchant-details">
+                <div class="merchant-name-row">
+                  <span class="merchant-name">SUPER BODEGA ACUE...</span>
+                  <span class="edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
                 </div>
-                <div class="badges-row">
-                  <span class="category-pill">&#x1F6D2; Supermercado</span>
-                  <span class="learned-badge">
-                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                    Aprendido
-                  </span>
+                <div>
+                  <span class="merchant-category-pill cat-supermercado">&#x1F6D2; SUPERMERC...</span>
+                </div>
+                <div>
+                  <span class="info-pill">&#x1F4CD; Villarrica, Chile</span>
+                </div>
+                <div class="merchant-pills-row">
+                  <span class="info-pill">&#x1F4C5; 13 Feb</span>
+                  <span class="info-pill">&#x1F550; 15:39</span>
+                  <span class="info-pill">$</span>
                 </div>
               </div>
-              <div class="thumbnail">
-                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <div class="receipt-thumbnail">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               </div>
             </div>
-
-            <!-- Info Tags -->
-            <div class="info-tags">
-              <span class="info-tag">&#x1F4CD; Santiago, Chile</span>
-              <span class="info-tag">&#x1F4C5; 20 mar 2026</span>
-              <span class="info-tag">&#x1F554; 14:30</span>
-              <span class="info-tag">&#x1F4B0; CLP</span>
+            <div class="rescan-icon-btn">
+              <button>
+                <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              </button>
             </div>
-
-            <!-- Re-scan Button -->
-            <div class="rescan-btn">
-              <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-              <span>Reescanear</span>
-            </div>
-
           </div>
 
-          <!-- Items Section -->
-          <div class="items-section">
-            <div class="items-header">
-              <span class="items-title">Items (5)</span>
-              <div class="view-toggle">
-                <button class="view-toggle-btn active">Agrupado</button>
-                <button class="view-toggle-btn">Original</button>
-              </div>
-            </div>
+          <!-- View Mode Toggle -->
+          <div class="view-mode-toggle">
+            <button class="view-mode-btn active">Por Grupo</button>
+            <button class="view-mode-btn">Original</button>
+          </div>
 
-            <!-- Category Group: Alimentacion — expanded with qty editing -->
-            <div class="category-group">
-              <div class="category-group-header">
-                <span class="category-group-label">
-                  <span class="emoji">&#x1F6D2;</span>
-                  Alimentacion (3)
-                </span>
-                <svg class="category-group-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          <!-- Item Group with decimal qty highlight -->
+          <div class="item-group">
+            <div class="item-group-header">
+              <span class="group-emoji">&#x1F969;</span>
+              <span class="group-name">Alimentos Frescos</span>
+              <span class="group-count">3</span>
+              <span class="group-total">$32.205</span>
+              <svg class="group-chevron" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+            </div>
+            <div class="item-group-items">
+              <div class="item-row">
+                <div class="item-top-line">
+                  <span class="item-name">FILETE VACUNO</span>
+                  <span class="item-edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
+                  <span class="item-price">$18.990</span>
+                </div>
+                <div class="item-bottom-line">
+                  <span class="item-category-badge cat-carnes">CARNES Y MARISCOS</span>
+                </div>
               </div>
-              <div class="category-group-items">
-                <div class="item-row">
-                  <div class="item-info">
-                    <span class="item-name">Leche Entera 1L</span>
-                  </div>
-                  <span class="item-price">$2.390</span>
-                  <button class="item-edit-btn">
-                    <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  </button>
-                </div>
-                <div class="item-row">
-                  <div class="item-info">
-                    <span class="item-name">Pan Molde</span>
-                  </div>
-                  <span class="item-price">$1.890</span>
-                  <button class="item-edit-btn">
-                    <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  </button>
-                </div>
-                <!-- Decimal Qty Item — with editable qty input -->
-                <div class="item-row" style="background: rgba(var(--primary-rgb), 0.04); border-radius: 8px; margin: 0 4px; padding: 12px 10px;">
-                  <div class="item-info" style="gap: 6px;">
-                    <span class="item-name" style="font-weight: 600;">Queso Gouda</span>
-                    <div class="qty-input-group">
-                      <input class="qty-input" type="text" value="2.5">
-                      <span class="qty-separator">x</span>
-                      <span class="qty-unit-price">$3.490</span>
-                      <span class="qty-equals">=</span>
-                    </div>
-                  </div>
+              <!-- Highlighted decimal qty item -->
+              <div class="item-row qty-highlight">
+                <div class="item-top-line">
+                  <span class="item-name" style="font-weight: 700;">GAUDA LAM 500 GRS</span>
+                  <span class="item-edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
                   <span class="item-price" style="font-weight: 700; color: var(--primary);">$8.725</span>
-                  <button class="item-edit-btn">
-                    <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  </button>
+                </div>
+                <div class="item-bottom-line">
+                  <span class="item-category-badge cat-lacteos">LACTEOS Y HUEVOS</span>
+                  <span class="item-qty-badge">x3</span>
+                </div>
+                <div class="qty-detail-line">
+                  <input class="qty-input" type="text" value="2.5"> x $3.490 = $8.725
                 </div>
               </div>
-              <div class="category-group-footer">
-                <span class="subtotal-label">Subtotal</span>
-                <span class="subtotal-amount">$13.005</span>
+              <div class="item-row">
+                <div class="item-top-line">
+                  <span class="item-name">LECHE ENTERA COLUN 1L</span>
+                  <span class="item-edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
+                  <span class="item-price">$1.290</span>
+                </div>
+                <div class="item-bottom-line">
+                  <span class="item-category-badge cat-lacteos">LACTEOS Y HUEVOS</span>
+                </div>
               </div>
             </div>
-
-            <!-- Category Group: Hogar -->
-            <div class="category-group">
-              <div class="category-group-header">
-                <span class="category-group-label">
-                  <span class="emoji">&#x1F9F9;</span>
-                  Hogar (2)
-                </span>
-                <svg class="category-group-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-              </div>
-              <div class="category-group-items">
-                <div class="item-row">
-                  <div class="item-info">
-                    <span class="item-name">Detergente Omo</span>
-                  </div>
-                  <span class="item-price">$4.590</span>
-                  <button class="item-edit-btn">
-                    <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  </button>
-                </div>
-                <div class="item-row">
-                  <div class="item-info">
-                    <span class="item-name">Papel Higienico</span>
-                  </div>
-                  <span class="item-price">$3.290</span>
-                  <button class="item-edit-btn">
-                    <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  </button>
-                </div>
-              </div>
-              <div class="category-group-footer">
-                <span class="subtotal-label">Subtotal</span>
-                <span class="subtotal-amount">$7.880</span>
-              </div>
-            </div>
-
-            <!-- Add Item Button -->
-            <button class="add-item-btn">
-              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              <span>Agregar item</span>
-            </button>
           </div>
 
-          <!-- Total Row -->
+          <!-- Second group collapsed -->
+          <div class="item-group collapsed">
+            <div class="item-group-header">
+              <span class="group-emoji">&#x1F9CA;</span>
+              <span class="group-name">Alimentos Envasados</span>
+              <span class="group-count">1</span>
+              <span class="group-total">$1.800</span>
+              <svg class="group-chevron" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+            </div>
+            <div class="item-group-items">
+              <div class="item-row">
+                <div class="item-top-line">
+                  <span class="item-name">HIELO CUBO LIDER 1</span>
+                  <span class="item-edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
+                  <span class="item-price">$1.800</span>
+                </div>
+                <div class="item-bottom-line">
+                  <span class="item-category-badge cat-congelados">CONGELADOS</span>
+                  <span class="item-qty-badge">x2</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button class="add-item-btn">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>+ Agregar</span>
+          </button>
+
           <div class="total-row">
-            <span class="total-label">Total (5 items)</span>
-            <span class="total-amount">$20.885</span>
+            <span class="total-label">Total (4 items)</span>
+            <span class="total-amount">$34.005</span>
           </div>
 
-          <!-- Save Button -->
           <button class="save-btn">
-            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
             Guardar Transaccion
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
           </button>
 
         </div>
@@ -1989,18 +1784,18 @@
     </div><!-- /phone-screen -->
   </div><!-- /phone-frame -->
 
-  <!-- ════════════════════════════════════════
-       JAVASCRIPT — Theme / Mode / Variant
-       ════════════════════════════════════════ -->
+  <!-- ====================================================
+       JAVASCRIPT — Theme / Mode / Variant Switching
+       ==================================================== -->
   <script>
     (function() {
-      const body = document.body;
-      const themeTabs = document.querySelectorAll('.theme-tab');
-      const modeToggle = document.getElementById('modeToggle');
-      const variantTabs = document.querySelectorAll('.variant-tab');
+      var body = document.body;
+      var themeTabs = document.querySelectorAll('.theme-tab');
+      var modeToggle = document.getElementById('modeToggle');
+      var variantTabs = document.querySelectorAll('.variant-tab');
 
-      let currentTheme = 'normal';
-      let currentMode = 'light';
+      var currentTheme = 'normal';
+      var currentMode = 'light';
 
       function applyTheme() {
         body.setAttribute('data-theme', currentTheme);
@@ -2008,9 +1803,9 @@
       }
 
       // Theme tabs
-      themeTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          themeTabs.forEach(t => t.classList.remove('active'));
+      themeTabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          themeTabs.forEach(function(t) { t.classList.remove('active'); });
           tab.classList.add('active');
           currentTheme = tab.dataset.themeVal;
           applyTheme();
@@ -2018,38 +1813,38 @@
       });
 
       // Mode toggle
-      modeToggle.addEventListener('click', () => {
+      modeToggle.addEventListener('click', function() {
         currentMode = currentMode === 'light' ? 'dark' : 'light';
         modeToggle.classList.toggle('dark', currentMode === 'dark');
         applyTheme();
       });
 
       // Variant tabs
-      variantTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          variantTabs.forEach(t => t.classList.remove('active'));
+      variantTabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          variantTabs.forEach(function(t) { t.classList.remove('active'); });
           tab.classList.add('active');
-          body.classList.remove('variant-new-scan', 'variant-validation', 'variant-decimal-qty');
-          const variant = tab.dataset.variant;
-          if (variant !== 'hero') {
-            body.classList.add('variant-' + variant);
-          }
+          body.classList.remove('show-new-scan', 'show-validation', 'show-decimal-qty');
+          var variant = tab.dataset.variant;
+          if (variant === 'new-scan') body.classList.add('show-new-scan');
+          else if (variant === 'validation') body.classList.add('show-validation');
+          else if (variant === 'decimal-qty') body.classList.add('show-decimal-qty');
         });
       });
 
-      // Collapsible category groups
-      document.querySelectorAll('.category-group-header').forEach(header => {
-        header.addEventListener('click', () => {
-          header.closest('.category-group').classList.toggle('collapsed');
+      // Collapsible item groups
+      document.querySelectorAll('.item-group-header').forEach(function(header) {
+        header.addEventListener('click', function() {
+          header.closest('.item-group').classList.toggle('collapsed');
         });
       });
 
-      // View toggle buttons (cosmetic)
-      document.querySelectorAll('.view-toggle').forEach(toggle => {
-        const btns = toggle.querySelectorAll('.view-toggle-btn');
-        btns.forEach(btn => {
-          btn.addEventListener('click', () => {
-            btns.forEach(b => b.classList.remove('active'));
+      // View mode toggle buttons (cosmetic)
+      document.querySelectorAll('.view-mode-toggle').forEach(function(toggle) {
+        var btns = toggle.querySelectorAll('.view-mode-btn');
+        btns.forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            btns.forEach(function(b) { b.classList.remove('active'); });
             btn.classList.add('active');
           });
         });
