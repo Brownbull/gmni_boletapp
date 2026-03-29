@@ -42,7 +42,7 @@ const { mockScanStoreActions, mockNavigationStoreActions } = vi.hoisted(() => ({
 vi.mock('../../../../../src/features/scan/store/useScanStore', () => ({
   useScanStore: Object.assign(
     () => mockScanStoreActions,
-    { getState: () => ({ pendingScanId: null, processedScanId: null }) }
+    { getState: () => ({ pendingScanId: null, processedScanId: null, processStart: vi.fn(), resetOverlay: vi.fn() }) }
   ),
 }));
 

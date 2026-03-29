@@ -366,11 +366,7 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
       return;
     }
 
-    // Single image → show feedback immediately before base64 conversion
-    // This prevents the "dead zone" where nothing visually happens
-    if (files.length === 1) {
-      startOverlayUpload();
-    }
+    // Note: startOverlayUpload moved to after setScanImages (startSingle resets overlay state)
 
     const newImages = await Promise.all(
       files.map(
@@ -409,6 +405,9 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
     setSkipScanCompleteModal(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
 
+    // Show upload overlay AFTER setScanImages (startSingle resets overlay to idle)
+    startOverlayUpload();
+
     // Start async scan pipeline
     const scanId = crypto.randomUUID();
 
@@ -421,8 +420,10 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
         (pct) => setOverlayProgress(pct)
       );
 
-      // Queue for server-side processing (deducts credit server-side)
+      // Transition phase to 'scanning' — AFTER upload (images now in store, setTimeout resolved)
+      // Required for: overlay visibility (ScanFeature:446) + processSuccess guard (scanCoreSlice:208)
       startOverlayProcessing();
+      useScanStore.getState().processStart('normal', 1);
       const response = await queueReceiptScan({
         scanId,
         imageUrls,
@@ -620,7 +621,10 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
         (pct) => setOverlayProgress(pct)
       );
 
+      // Transition phase to 'scanning' — AFTER upload (images in store, setTimeout resolved)
       startOverlayProcessing();
+      useScanStore.getState().processStart('normal', 1);
+
       const response = await queueReceiptScan({
         scanId,
         imageUrls,

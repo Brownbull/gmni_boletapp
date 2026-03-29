@@ -56,6 +56,7 @@ import {
 } from '@features/scan';
 import type { ScanInitiationProps } from '@features/scan';
 import { usePendingScan, useScanLock } from '@features/scan/hooks';
+import { useScanEventSubscription } from '@features/transaction-editor/hooks/useScanEventSubscription';
 import { collection, query, where, getDocs, doc as firestoreDoc, deleteDoc } from 'firebase/firestore';
 import type { ScanResult } from '@features/scan/handlers/processScan/types';
 import type { FirestorePendingScan } from '@/types/pendingScan';
@@ -629,6 +630,9 @@ function App() {
     });
 
     const { isLocked: isScanLocked } = useScanLock(user?.uid ?? null);
+
+    // Listen for scan:completed events and set transaction in editor
+    useScanEventSubscription();
 
     // Story 18-13b: Detect pending scans on app init (after auth)
     // Handles all states: processing → restore listener, completed → deliver result, failed → clean up
