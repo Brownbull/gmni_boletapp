@@ -61,8 +61,6 @@ import { applyItemNameMappings as pureApplyItemNameMappings } from '@/features/c
 import { classifyError, getErrorInfo } from '@/utils/errorHandler';
 // Story 15b-5a: Direct store access for error recovery reset
 import { useScanStore } from '../store/useScanStore';
-// TD-18-4: Workflow store for image access during retry
-import { useScanWorkflowStore } from '@shared/stores/useScanWorkflowStore';
 
 // Story 15b-2l: Types extracted to scanHandlerTypes.ts
 import type { UseScanHandlersProps, UseScanHandlersResult } from './scanHandlerTypes';
@@ -137,9 +135,6 @@ export function useScanHandlers(
         setTrustPromptData,
         setShowTrustPrompt,
         t,
-        // TD-18-4: Retry support
-        processScan,
-        userCreditsRemaining,
     } = props;
     // Silence unused variable warnings - these are reserved for future integration
     void _currency;
@@ -224,43 +219,14 @@ export function useScanHandlers(
      * processScan handles its own credit lifecycle (deduct → process → refund on error).
      */
     const handleScanOverlayRetry = useCallback(() => {
-        // Step 1: Stash images BEFORE any state reset (processError doesn't clear images)
-        // Images live on the shared workflow store, not useScanStore directly
-        const stashedImages = useScanWorkflowStore.getState().images;
-
-        // Step 2: Check credits — after first failure, credit was refunded by processScan.
-        // If user has 0 credits (edge case: spent on another device), bail to dashboard.
-        // UI guard only — server enforces credits authoritatively in processScan.
-        // Uses scanOverlay.reset() (not .retry()) because we're abandoning the retry path.
-        if (userCreditsRemaining < 1) {
-            setToastMessage({ text: t('noCreditsMessage'), type: 'info' });
-            scanOverlay.reset();
-            useScanStore.getState().reset();
-            setScanImages([]);
-            setCurrentTransaction(null);
-            setView('dashboard');
-            return;
-        }
-
-        // Step 3: Reset overlay and store (so processScan can start fresh)
-        scanOverlay.retry();
+        // All scans go through async pipeline — retry = dismiss + scan again
+        scanOverlay.reset();
         useScanStore.getState().reset();
-
-        // Step 4: Re-trigger processScan with stashed images
-        // processScan handles its own credit lifecycle (deduct → process → refund on error)
-        if (stashedImages.length > 0) {
-            setScanImages(stashedImages);
-            processScan(stashedImages).catch(() => {
-                // processScan surfaces errors via scan overlay state — no additional handling needed
-            });
-        } else {
-            // No images to retry — fall back to dashboard
-            setScanImages([]);
-            setCurrentTransaction(null);
-            setView('dashboard');
-        }
-    }, [scanOverlay, setScanImages, setCurrentTransaction, setView, setToastMessage,
-        userCreditsRemaining, processScan, t]);
+        setScanImages([]);
+        setCurrentTransaction(null);
+        setView('dashboard');
+        setToastMessage({ text: t('scanRetryMessage') || 'Please try scanning again', type: 'info' });
+    }, [scanOverlay, setScanImages, setCurrentTransaction, setView, setToastMessage, t]);
 
     /**
      * Handle dismiss from scan overlay error state.

@@ -863,7 +863,7 @@ function App() {
             },
             scanOverlay,
             services: {
-                analyzeReceipt,
+                analyzeReceipt, // Only used by handleRescan (separate path)
                 deductUserCredits,
                 addUserCredits,
                 getCitiesForCountry,

@@ -163,15 +163,15 @@ describe('handleScanOverlayRetry — error recovery (Story 15b-5a, TD-18-4)', ()
         mockStoreImages = ['base64-image-data-1'];
     });
 
-    it('should call scanOverlay.retry() (not reset) when images available', () => {
+    it('should call scanOverlay.reset() (dismiss + toast pattern)', () => {
         const scanOverlay = createMockScanOverlay();
         const props = createProps({ scanOverlay });
         const { result } = renderHook(() => useScanHandlers(props));
 
         act(() => { result.current.handleScanOverlayRetry(); });
 
-        expect(scanOverlay.retry).toHaveBeenCalledOnce();
-        expect(scanOverlay.reset).not.toHaveBeenCalled();
+        expect(scanOverlay.reset).toHaveBeenCalledOnce();
+        expect(scanOverlay.retry).not.toHaveBeenCalled();
     });
 
     it('should reset scan store before re-triggering processScan', () => {
@@ -184,19 +184,23 @@ describe('handleScanOverlayRetry — error recovery (Story 15b-5a, TD-18-4)', ()
         expect(mockStoreReset).toHaveBeenCalledOnce();
     });
 
-    it('should stash images and call processScan with them (TD-18-4 AC-6, AC-7)', () => {
+    it('should dismiss and show toast instead of re-triggering processScan', () => {
         const processScan = vi.fn(() => Promise.resolve());
         const setScanImages = vi.fn();
-        const props = createProps({ processScan, setScanImages });
+        const setToastMessage = vi.fn();
+        const setView = vi.fn();
+        const props = createProps({ processScan, setScanImages, setToastMessage, setView });
         const { result } = renderHook(() => useScanHandlers(props));
 
         act(() => { result.current.handleScanOverlayRetry(); });
 
-        expect(processScan).toHaveBeenCalledWith(['base64-image-data-1']);
-        expect(setScanImages).toHaveBeenCalledWith(['base64-image-data-1']);
+        expect(processScan).not.toHaveBeenCalled();
+        expect(setScanImages).toHaveBeenCalledWith([]);
+        expect(setView).toHaveBeenCalledWith('dashboard');
+        expect(setToastMessage).toHaveBeenCalled();
     });
 
-    it('should show toast and navigate to dashboard when 0 credits (TD-18-4 AC-8)', () => {
+    it('should dismiss and show toast regardless of credit count', () => {
         const setToastMessage = vi.fn();
         const setView = vi.fn();
         const setScanImages = vi.fn();
@@ -216,7 +220,7 @@ describe('handleScanOverlayRetry — error recovery (Story 15b-5a, TD-18-4)', ()
 
         act(() => { result.current.handleScanOverlayRetry(); });
 
-        expect(setToastMessage).toHaveBeenCalledWith({ text: 'noCreditsMessage', type: 'info' });
+        expect(setToastMessage).toHaveBeenCalled();
         expect(processScan).not.toHaveBeenCalled();
         expect(setView).toHaveBeenCalledWith('dashboard');
         expect(scanOverlay.reset).toHaveBeenCalled();

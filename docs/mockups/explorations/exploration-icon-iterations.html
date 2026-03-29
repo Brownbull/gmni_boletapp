@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gastify -- Icon Iteration Playground</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Outfit:wght@400;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #1e293b; --bg-deep: #0f172a; --fg: #f8fafc;
+    --green: #4a7c59; --green-light: #5e9970; --peach: #e8a87c;
+    --blue: #5b8fa8; --dark: #2d3a4a; --cream: #f5f0e8;
+    --mono-dark: #18181b;
+    --bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  body { font-family: 'Outfit', sans-serif; background: var(--bg-deep); min-height: 100vh; padding: 0; color: #e2e8f0; }
+
+  /* COLOR BLINDNESS SVG FILTERS */
+  .cb-filter-svg { position: absolute; width: 0; height: 0; }
+
+  /* PAGE HEADER */
+  .page-header { text-align: center; padding: 36px 24px 28px; }
+  .page-header h1 { font-weight: 800; font-size: 30px; color: var(--fg); margin-bottom: 8px; letter-spacing: -0.5px; }
+  .page-header h1 span { color: var(--green); }
+  .page-header p { font-size: 14px; color: #94a3b8; max-width: 700px; margin: 0 auto; line-height: 1.6; }
+  .page-header .instruction { display: inline-block; margin-top: 12px; padding: 6px 18px; background: rgba(74,124,89,0.15); border: 1px solid rgba(74,124,89,0.35); border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--green-light); }
+
+  /* TWO-COLUMN LAYOUT */
+  .main-layout { max-width: 1440px; margin: 0 auto; padding: 0 24px 60px; display: flex; gap: 32px; align-items: flex-start; }
+
+  /* LEFT: STICKY PREVIEW + CONTROLS */
+  .preview-col { width: 40%; min-width: 380px; position: sticky; top: 20px; flex-shrink: 0; max-height: calc(100vh - 40px); overflow-y: auto; padding-right: 8px; }
+  .preview-col::-webkit-scrollbar { width: 4px; }
+  .preview-col::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+
+  /* RIGHT: VARIATIONS */
+  .variations-col { flex: 1; min-width: 0; }
+
+  /* PREVIEW AREA */
+  .preview-area { background: var(--bg); border: 2px solid #334155; border-radius: 20px; padding: 24px; margin-bottom: 16px; }
+
+  /* Large icon preview */
+  .large-preview { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+  .large-icon-circle { width: 160px; height: 160px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; transition: all 0.3s var(--bounce); position: relative; overflow: hidden; background: var(--green); }
+  .large-icon-circle svg { width: 88px; height: 88px; transition: transform 0.2s ease; }
+  .large-preview-wordmark { font-family: 'Baloo 2', cursive; font-weight: 700; font-size: 36px; color: var(--fg); }
+
+  /* App header mockup */
+  .app-header-mockup { display: flex; align-items: center; gap: 10px; background: var(--bg-deep); border: 1px solid #334155; border-radius: 12px; padding: 10px 20px; margin-bottom: 16px; width: 100%; }
+  .app-header-mockup .header-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; overflow: hidden; background: var(--green); }
+  .app-header-mockup .header-icon svg { width: 20px; height: 20px; }
+  .app-header-mockup .header-wordmark { font-family: 'Baloo 2', cursive; font-weight: 700; font-size: 20px; color: var(--fg); }
+
+  /* Favicon strip */
+  .favicon-strip { display: flex; align-items: flex-end; gap: 12px; background: var(--bg-deep); border: 1px solid #334155; border-radius: 12px; padding: 12px 16px; width: 100%; }
+  .favicon-strip-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; margin-bottom: 8px; }
+  .favicon-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .favicon-item .fav-circle { display: flex; align-items: center; justify-content: center; border-radius: 50%; position: relative; overflow: hidden; background: var(--green); }
+  .favicon-item .fav-label { font-size: 9px; color: #64748b; font-weight: 600; }
+
+  /* Selected variation name */
+  .preview-selected-name { font-size: 11px; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: 1px; margin-top: 12px; text-align: center; padding: 4px 14px; background: rgba(74,124,89,0.08); border-radius: 999px; }
+
+  /* TEXT OVERLAY */
+  .text-overlay { position: absolute; font-weight: 700; pointer-events: none; display: none; z-index: 5; line-height: 1; white-space: nowrap; }
+
+  /* CONTROL PANELS */
+  .control-panel { background: var(--bg); border: 2px solid var(--green); border-radius: 16px; padding: 16px; box-shadow: 3px 3px 0px 0px var(--green); margin-bottom: 12px; }
+  .panel-title { font-weight: 700; font-size: 14px; color: var(--fg); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .panel-title .panel-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: var(--green); color: white; font-size: 10px; font-weight: 800; border-radius: 6px; }
+  .control-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+  .control-row + .control-row { margin-top: 10px; }
+  .control-group { display: flex; flex-direction: column; gap: 5px; }
+  .control-group-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; }
+  .chip-row { display: flex; gap: 4px; flex-wrap: wrap; }
+  .chip-btn { padding: 4px 10px; border: 2px solid #475569; border-radius: 999px; background: transparent; color: #cbd5e1; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+  .chip-btn:hover { border-color: var(--green); color: white; }
+  .chip-btn.active { background: var(--green); border-color: var(--green); color: white; }
+
+  .color-picker-wrap { display: flex; align-items: center; gap: 6px; }
+  .color-picker-wrap input[type="color"] { width: 28px; height: 28px; border: 2px solid #475569; border-radius: 6px; cursor: pointer; background: none; padding: 2px; }
+  .color-picker-wrap .hex-val { font-size: 11px; font-weight: 600; color: #cbd5e1; font-family: monospace; }
+
+  .slider-wrap { display: flex; align-items: center; gap: 6px; }
+  .slider-wrap input[type="range"] { width: 100px; accent-color: var(--green); }
+  .slider-wrap .slider-val { font-size: 11px; font-weight: 600; color: #cbd5e1; min-width: 32px; text-align: right; }
+
+  .custom-text-input { width: 56px; padding: 4px 6px; border: 2px solid #475569; border-radius: 999px; background: transparent; color: #cbd5e1; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600; text-align: center; outline: none; transition: border-color 0.2s ease; }
+  .custom-text-input:focus { border-color: var(--green); }
+
+  /* Background fill chips */
+  .bg-chip { width: 28px; height: 28px; border-radius: 999px; border: 2px solid #475569; cursor: pointer; transition: all 0.2s ease; }
+  .bg-chip:hover { border-color: var(--green); transform: scale(1.1); }
+  .bg-chip.active { border-color: white; box-shadow: 0 0 8px rgba(255,255,255,0.3); }
+
+  /* Disabled state */
+  .disabled-group { opacity: 0.4; pointer-events: none; }
+
+  /* SECTION TITLES */
+  .section-title { font-weight: 700; font-size: 20px; color: var(--fg); margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+  .section-title .badge { display: inline-block; padding: 3px 10px; font-size: 11px; font-weight: 700; border-radius: 6px; background: var(--green); color: white; letter-spacing: 0.5px; }
+
+  /* VARIATION GRID */
+  .concept-section { margin-bottom: 32px; }
+  .variation-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 8px; }
+
+  /* VARIATION CARD */
+  .variation-card { background: var(--bg); border: 2px solid #334155; border-radius: 14px; padding: 12px 8px; text-align: center; cursor: pointer; transition: all 0.3s var(--bounce); position: relative; }
+  .variation-card:hover { border-color: #475569; transform: translateY(-3px); }
+  .variation-card.selected { border-color: var(--green); border-width: 3px; box-shadow: 0 0 20px rgba(74,124,89,0.35); }
+  .variation-card .selected-badge { position: absolute; top: -1px; right: -1px; padding: 2px 7px; background: var(--green); color: white; font-size: 9px; font-weight: 700; border-radius: 0 12px 0 10px; opacity: 0; transition: opacity 0.2s ease; }
+  .variation-card.selected .selected-badge { opacity: 1; }
+
+  /* ICON CIRCLE (card) */
+  .icon-circle { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; transition: all 0.3s var(--bounce); position: relative; overflow: hidden; }
+  .variation-card:hover .icon-circle { transform: scale(1.05); }
+  .icon-circle svg { width: 44px; height: 44px; transition: transform 0.2s ease; }
+
+  .variation-title { font-weight: 700; font-size: 12px; color: var(--fg); margin-bottom: 2px; }
+  .variation-label { font-size: 9px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+
+  /* RESPONSIVE: MOBILE */
+  @media (max-width: 768px) {
+    .main-layout { flex-direction: column; padding: 0 16px 60px; gap: 20px; }
+    .preview-col { width: 100%; min-width: 0; position: sticky; top: 0; z-index: 50; padding: 12px 0; background: var(--bg-deep); max-height: 50vh; overflow-y: auto; }
+    .large-icon-circle { width: 100px; height: 100px; }
+    .large-icon-circle svg { width: 56px; height: 56px; }
+    .large-preview-wordmark { font-size: 28px; }
+    .variations-col { width: 100%; }
+    .variation-grid { grid-template-columns: repeat(2, 1fr); }
+    .page-header { padding: 24px 16px 20px; }
+    .page-header h1 { font-size: 24px; }
+    .slider-wrap input[type="range"] { width: 80px; }
+  }
+
+  @keyframes float-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .variations-col .concept-section { animation: float-in 0.4s ease forwards; }
+</style>
+</head>
+<body>
+
+<!-- COLOR BLINDNESS SVG FILTERS -->
+<svg class="cb-filter-svg" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="deuteranopia">
+      <feColorMatrix type="matrix" values="0.625 0.375 0 0 0  0.7 0.3 0 0 0  0 0.3 0.7 0 0  0 0 0 1 0"/>
+    </filter>
+    <filter id="protanopia">
+      <feColorMatrix type="matrix" values="0.567 0.433 0 0 0  0.558 0.442 0 0 0  0 0.242 0.758 0 0  0 0 0 1 0"/>
+    </filter>
+  </defs>
+</svg>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <h1><span>Gastify</span> -- Icon Iteration Playground</h1>
+  <p>30 distinct icon concepts across 5 themes: Monogram, Receipt, Scan, Growth, Abstract. Click any variation to preview at multiple sizes with full text overlay, effects, and shape controls.</p>
+  <div class="instruction">Click any icon variation to select, tweak controls on the left</div>
+</div>
+
+<!-- MAIN TWO-COLUMN LAYOUT -->
+<div class="main-layout" id="mainLayout">
+
+  <!-- LEFT: STICKY PREVIEW + CONTROLS -->
+  <div class="preview-col">
+
+    <!-- PREVIEW AREA -->
+    <div class="preview-area">
+      <div class="large-preview">
+        <div class="large-icon-circle" id="previewCircle">
+          <svg id="previewSvg" viewBox="0 0 64 64"></svg>
+          <div class="text-overlay" id="previewOverlay"></div>
+        </div>
+        <div class="large-preview-wordmark">Gastify</div>
+      </div>
+
+      <!-- App header mockup -->
+      <div class="app-header-mockup">
+        <div class="header-icon" id="headerIcon">
+          <svg id="headerSvg" viewBox="0 0 64 64"></svg>
+          <div class="text-overlay" id="headerOverlay"></div>
+        </div>
+        <div class="header-wordmark">Gastify</div>
+      </div>
+
+      <!-- Favicon strip -->
+      <div>
+        <div class="favicon-strip-label">Favicons</div>
+        <div class="favicon-strip">
+          <div class="favicon-item">
+            <div class="fav-circle" id="fav16" style="width:16px;height:16px"><svg viewBox="0 0 64 64" style="width:10px;height:10px"></svg></div>
+            <span class="fav-label">16</span>
+          </div>
+          <div class="favicon-item">
+            <div class="fav-circle" id="fav32" style="width:32px;height:32px"><svg viewBox="0 0 64 64" style="width:18px;height:18px"></svg></div>
+            <span class="fav-label">32</span>
+          </div>
+          <div class="favicon-item">
+            <div class="fav-circle" id="fav48" style="width:48px;height:48px"><svg viewBox="0 0 64 64" style="width:28px;height:28px"></svg></div>
+            <span class="fav-label">48</span>
+          </div>
+          <div class="favicon-item">
+            <div class="fav-circle" id="fav180" style="width:60px;height:60px"><svg viewBox="0 0 64 64" style="width:34px;height:34px"></svg><div class="text-overlay" id="fav180Overlay"></div></div>
+            <span class="fav-label">180</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="preview-selected-name" id="previewSelectedName">Monogram / Bold G</div>
+    </div>
+
+    <!-- PANEL 1: TEXT OVERLAY CONTROLS -->
+    <div class="control-panel">
+      <div class="panel-title"><span class="panel-icon">Aa</span> Text Overlay</div>
+      <div class="control-row">
+        <div class="control-group">
+          <div class="control-group-label">Text Content</div>
+          <div class="chip-row">
+            <button class="chip-btn active" data-text="none" onclick="setOverlayText(this)">None</button>
+            <button class="chip-btn" data-text="G" onclick="setOverlayText(this)">G</button>
+            <button class="chip-btn" data-text="Ga" onclick="setOverlayText(this)">Ga</button>
+            <button class="chip-btn" data-text="custom" onclick="setOverlayText(this)">Custom</button>
+            <input type="text" class="custom-text-input" id="customTextInput" maxlength="5" placeholder="Abc" oninput="onCustomTextInput(this.value)">
+          </div>
+        </div>
+      </div>
+      <div class="control-row">
+        <div class="control-group">
+          <div class="control-group-label">Typography</div>
+          <div class="chip-row">
+            <button class="chip-btn font-btn active" data-font="'Baloo 2'" onclick="setFont(this)">Baloo 2</button>
+            <button class="chip-btn font-btn" data-font="'Outfit'" onclick="setFont(this)">Outfit</button>
+            <button class="chip-btn font-btn" data-font="'Space Grotesk'" onclick="setFont(this)">Space Grotesk</button>
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="control-group-label">Color</div>
+          <div class="color-picker-wrap">
+            <input type="color" id="textColorPicker" value="#FFFFFF" oninput="setOverlayColor(this.value)">
+            <span class="hex-val" id="textColorHex">#FFFFFF</span>
+          </div>
+        </div>
+      </div>
+      <div class="control-row">
+        <div class="control-group">
+          <div class="control-group-label">Text X</div>
+          <div class="slider-wrap">
+            <input type="range" min="-40" max="40" value="0" id="textXSlider" oninput="setTextX(this.value)">
+            <span class="slider-val" id="textXVal">0px</span>
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="control-group-label">Text Y</div>
+          <div class="slider-wrap">
+            <input type="range" min="-40" max="40" value="0" id="textYSlider" oninput="setTextY(this.value)">
+            <span class="slider-val" id="textYVal">0px</span>
+          </div>
+        </div>
+      </div>
+      <div class="control-row">
+        <div class="control-group">
+          <div class="control-group-label">Size</div>
+          <div class="slider-wrap">
+            <input type="range" min="12" max="36" value="24" id="overlaySizeSlider" oninput="setOverlaySize(this.value)">
+            <span class="slider-val" id="overlaySizeVal">24px</span>
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="control-group-label">Opacity</div>
+          <div class="slider-wrap">
+            <input type="range" min="10" max="100" value="100" id="opacitySlider" oninput="setOpacity(this.value)">
+            <span class="slider-val" id="opacityVal">100%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 2: EFFECTS -->
+    <div class="control-panel">
+      <div class="panel-title"><span class="panel-icon" style="font-size:9px">Fx</span> Effects</div>
+      <div class="control-row">
+        <div class="control-group">
+          <div class="control-group-label">Shadow</div>
+          <div class="chip-row">
+            <button class="chip-btn shadow-btn active" data-shadow="none" onclick="setShadow(this)">None</button>
+            <button class="chip-btn shadow-btn" data-shadow="drop" onclick="setShadow(this)">Drop</button>
+            <button class="chip-btn shadow-btn" data-shadow="hard" onclick="setShadow(this)">Hard</button>
+            <button class="chip-btn shadow-btn" data-shadow="3d" onclick="setShadow(this)">3D Extrude</button>
+          </div>
+        </div>
+      </div>
+      <div class="control-row">
+        <div class="control-group">
+          <div class="control-group-label">Stroke</div>
+          <div class="chip-row">
+            <button class="chip-btn stroke-toggle active" data-stroke="off" onclick="setStroke(this)">Off</button>
+            <button class="chip-btn stroke-toggle" data-stroke="on" onclick="setStroke(this)">On</button>
+          </div>
+        </div>
+        <div class="control-group disabled-group" id="strokeWidthGroup">
+          <div class="control-group-label">Stroke Width</div>
+          <div class="slider-wrap">
+            <input type="range" min="0" max="4" value="1" step="0.5" id="strokeWidthSlider" oninput="setStrokeWidth(this.value)">
+            <span class="slider-val" id="strokeWidthVal">1px</span>
+          </div>
+        </div>
+        <div class="control-group disabled-group" id="strokeColorGroup">
+          <div class="control-group-label">Stroke Color</div>
+          <div class="color-picker-wrap">
+            <input type="color" id="strokeColorPicker" value="#1E293B" oninput="setStrokeColor(this.value)">
+            <span class="hex-val" id="strokeColorHex">#1E293B</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 3: LOGO ADJUSTMENTS -->
+    <div class="control-panel">
+      <div class="panel-title"><span class="panel-icon" style="font-size:9px">&#9881;</span> Logo Adjustments</div>
+      <div class="control-row">
+        <div class="control-group">
+          <div class="control-group-label">Logo X</div>
+          <div class="slider-wrap">
+            <input type="range" min="-20" max="20" value="0" id="logoXSlider" oninput="setLogoX(this.value)">
+            <span class="slider-val" id="logoXVal">0px</span>
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="control-group-label">Logo Y</div>
+          <div class="slider-wrap">
+            <input type="range" min="-20" max="20" value="0" id="logoYSlider" oninput="setLogoY(this.value)">
+            <span class="slider-val" id="logoYVal">0px</span>
+          </div>
+        </div>
+      </div>
+      <div class="control-row">
+        <div class="control-group">
+          <div class="control-group-label">Logo Scale</div>
+          <div class="slider-wrap">
+            <input type="range" min="50" max="200" value="100" id="logoScaleSlider" oninput="setLogoScale(this.value)">
+            <span class="slider-val" id="logoScaleVal">100%</span>
+          </div>
+        </div>
+      </div>
+      <div class="control-row">
+        <div class="control-group">
+          <div class="control-group-label">Circle Shape</div>
+          <div class="chip-row">
+            <button class="chip-btn shape-btn active" data-shape="50%" onclick="setCircleShape(this)">Circle</button>
+            <button class="chip-btn shape-btn" data-shape="22%" onclick="setCircleShape(this)">Rounded Sq</button>
+            <button class="chip-btn shape-btn" data-shape="4px" onclick="setCircleShape(this)">Square</button>
+            <button class="chip-btn shape-btn" data-shape="35%" onclick="setCircleShape(this)">Squircle</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 4: BACKGROUND -->
+    <div class="control-panel">
+      <div class="panel-title"><span class="panel-icon" style="font-size:9px">&#9632;</span> Background</div>
+      <div class="control-row">
+        <div class="control-group">
+          <div class="control-group-label">Fill Color</div>
+          <div class="chip-row" id="bgChips">
+            <button class="bg-chip active" data-bg="#4a7c59" style="background:#4a7c59" onclick="setBgFill(this)" title="Forest Green"></button>
+            <button class="bg-chip" data-bg="#5b8fa8" style="background:#5b8fa8" onclick="setBgFill(this)" title="Blue"></button>
+            <button class="bg-chip" data-bg="#e8a87c" style="background:#e8a87c" onclick="setBgFill(this)" title="Peach"></button>
+            <button class="bg-chip" data-bg="#18181b" style="background:#18181b" onclick="setBgFill(this)" title="Dark"></button>
+            <button class="bg-chip" data-bg="#f5f0e8" style="background:#f5f0e8" onclick="setBgFill(this)" title="Cream"></button>
+            <button class="bg-chip" data-bg="linear-gradient(135deg, #4a7c59, #5b8fa8)" style="background:linear-gradient(135deg, #4a7c59, #5b8fa8)" onclick="setBgFill(this)" title="Gradient"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 5: COLOR BLINDNESS -->
+    <div class="control-panel">
+      <div class="panel-title"><span class="panel-icon" style="font-size:9px">&#128065;</span> Color Blindness</div>
+      <div class="control-row">
+        <div class="control-group">
+          <div class="control-group-label">Simulation</div>
+          <div class="chip-row">
+            <button class="chip-btn cb-btn active" data-cb="normal" onclick="setColorBlind(this)">Normal</button>
+            <button class="chip-btn cb-btn" data-cb="deuteranopia" onclick="setColorBlind(this)">Deuteranopia</button>
+            <button class="chip-btn cb-btn" data-cb="protanopia" onclick="setColorBlind(this)">Protanopia</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /preview-col -->
+
+  <!-- RIGHT: VARIATION GRIDS -->
+  <div class="variations-col" id="variationsCol">
+  </div>
+
+</div><!-- /main-layout -->
+
+<script>
+// ===== STATE =====
+var overlayText = 'none';
+var customText = '';
+var textFont = "'Baloo 2'";
+var textFontWeight = '700';
+var textX = 0, textY = 0;
+var overlaySize = 24;
+var overlayColor = '#FFFFFF';
+var textOpacity = 1.0;
+var shadowType = 'none';
+var strokeOn = false;
+var strokeWidth = 1;
+var strokeColor = '#1E293B';
+var logoX = 0, logoY = 0, logoScale = 100;
+var circleShape = '50%';
+var selectedCard = null;
+var bgFill = '#4a7c59';
+
+var fontWeights = {
+  "'Baloo 2'": '700',
+  "'Outfit'": '800',
+  "'Space Grotesk'": '700'
+};
+
+// ===== 5 CONCEPTS x 6 VARIATIONS = 30 ICONS =====
+var concepts = [
+  {
+    name: 'Monogram',
+    badge: 'Letter-based',
+    variations: [
+      { label: 'Bold G', fill: 'white', detail: '#4a7c59' },
+      { label: 'Outlined G', fill: 'white', detail: '#5b8fa8' },
+      { label: 'Stacked Ga', fill: 'white', detail: '#e8a87c' },
+      { label: 'Cursive G', fill: '#4a7c59', detail: 'white' },
+      { label: 'G Badge', fill: 'white', detail: '#18181b' },
+      { label: 'Split G', fill: 'white', detail: '#4a7c59' }
+    ]
+  },
+  {
+    name: 'Receipt',
+    badge: 'Document',
+    variations: [
+      { label: 'Classic Receipt', fill: 'white', detail: '#4a7c59' },
+      { label: 'Receipt + $', fill: 'white', detail: '#5b8fa8' },
+      { label: 'Torn Receipt', fill: 'white', detail: '#e8a87c' },
+      { label: 'Receipt Check', fill: 'white', detail: '#4a7c59' },
+      { label: 'Folded Receipt', fill: 'white', detail: '#18181b' },
+      { label: 'Receipt Stack', fill: 'white', detail: '#4a7c59' }
+    ]
+  },
+  {
+    name: 'Scan',
+    badge: 'Camera/AI',
+    variations: [
+      { label: 'Scan Frame', fill: 'white', detail: '#4a7c59' },
+      { label: 'Camera Lens', fill: 'white', detail: '#5b8fa8' },
+      { label: 'AI Eye', fill: 'white', detail: '#e8a87c' },
+      { label: 'Barcode Scan', fill: 'white', detail: '#4a7c59' },
+      { label: 'Focus Ring', fill: '#4a7c59', detail: 'white' },
+      { label: 'Smart Scan', fill: 'white', detail: '#18181b' }
+    ]
+  },
+  {
+    name: 'Growth',
+    badge: 'Finance',
+    variations: [
+      { label: 'Bar Chart', fill: 'white', detail: '#4a7c59' },
+      { label: 'Trend Arrow', fill: 'white', detail: '#5b8fa8' },
+      { label: 'Pie Slice', fill: 'white', detail: '#e8a87c' },
+      { label: 'Coin Stack', fill: 'white', detail: '#4a7c59' },
+      { label: 'Piggy Bank', fill: 'white', detail: '#18181b' },
+      { label: 'Wallet', fill: 'white', detail: '#4a7c59' }
+    ]
+  },
+  {
+    name: 'Abstract',
+    badge: 'Geometric',
+    variations: [
+      { label: 'Hex Node', fill: 'white', detail: '#4a7c59' },
+      { label: 'Spiral', fill: 'white', detail: '#5b8fa8' },
+      { label: 'Diamond Cut', fill: 'white', detail: '#e8a87c' },
+      { label: 'Wave Flow', fill: 'white', detail: '#4a7c59' },
+      { label: 'Atom', fill: '#4a7c59', detail: 'white' },
+      { label: 'Infinity Loop', fill: 'white', detail: '#18181b' }
+    ]
+  }  ,
+  {
+    name: 'Wallet',
+    badge: 'Payment',
+    variations: [
+      { label: 'Open Wallet', fill: 'white', detail: '#4a7c59' },
+      { label: 'Credit Card', fill: 'white', detail: '#5b8fa8' },
+      { label: 'Tap to Pay', fill: '#2d3a4a', detail: '#e8a87c' },
+      { label: 'Digital Wallet', fill: 'white', detail: '#4a7c59' },
+      { label: 'Money Clip', fill: '#4a7c59', detail: '#18181b' },
+      { label: 'Payment Terminal', fill: 'white', detail: '#4a7c59' }
+    ]
+  },
+  {
+    name: 'Chilean',
+    badge: 'Local',
+    variations: [
+      { label: 'Araucaria', fill: 'white', detail: '#4a7c59' },
+      { label: 'Andes', fill: 'white', detail: '#5b8fa8' },
+      { label: 'Condor', fill: '#2d3a4a', detail: '#e8a87c' },
+      { label: 'Copper Coin', fill: 'white', detail: '#4a7c59' },
+      { label: 'Huemul', fill: '#4a7c59', detail: '#18181b' },
+      { label: 'Moai Receipt', fill: 'white', detail: '#4a7c59' }
+    ]
+  },
+  {
+    name: 'AI Smart',
+    badge: 'Intelligence',
+    variations: [
+      { label: 'Brain Scan', fill: 'white', detail: '#4a7c59' },
+      { label: 'Neural Net', fill: 'white', detail: '#5b8fa8' },
+      { label: 'Magic Wand', fill: '#2d3a4a', detail: '#e8a87c' },
+      { label: 'AI Eye', fill: 'white', detail: '#4a7c59' },
+      { label: 'Circuit G', fill: '#4a7c59', detail: '#18181b' },
+      { label: 'Data Bulb', fill: 'white', detail: '#4a7c59' }
+    ]
+  },
+  {
+    name: 'Currency',
+    badge: 'Peso',
+    variations: [
+      { label: 'Peso Lines', fill: 'white', detail: '#4a7c59' },
+      { label: 'Coin Tower', fill: 'white', detail: '#5b8fa8' },
+      { label: 'Bill Origami', fill: '#2d3a4a', detail: '#e8a87c' },
+      { label: 'Exchange', fill: 'white', detail: '#4a7c59' },
+      { label: 'Vault Door', fill: '#4a7c59', detail: '#18181b' },
+      { label: 'Digital Peso', fill: 'white', detail: '#4a7c59' }
+    ]
+  },
+  {
+    name: 'Letterform',
+    badge: 'Combo',
+    variations: [
+      { label: 'G + Receipt', fill: 'white', detail: '#4a7c59' },
+      { label: 'G + Crosshair', fill: 'white', detail: '#5b8fa8' },
+      { label: 'G as Chart', fill: '#2d3a4a', detail: '#e8a87c' },
+      { label: 'G in Shield', fill: 'white', detail: '#4a7c59' },
+      { label: 'G of Coins', fill: '#4a7c59', detail: '#18181b' },
+      { label: 'G + Arrow', fill: 'white', detail: '#4a7c59' }
+    ]
+  }
+];
+
+// ===== SVG ICON DEFINITIONS =====
+function getConceptSvg(conceptIdx, varIdx, fillColor, detailColor) {
+  switch (conceptIdx) {
+    case 0: return getMonogramSvg(varIdx, fillColor, detailColor);
+    case 1: return getReceiptSvg(varIdx, fillColor, detailColor);
+    case 2: return getScanSvg(varIdx, fillColor, detailColor);
+    case 3: return getGrowthSvg(varIdx, fillColor, detailColor);
+    case 4: return getAbstractSvg(varIdx, fillColor, detailColor);
+    case 5: return getWalletSvg(varIdx, fillColor, detailColor);
+    case 6: return getChileanSvg(varIdx, fillColor, detailColor);
+    case 7: return getAISvg(varIdx, fillColor, detailColor);
+    case 8: return getCurrencySvg(varIdx, fillColor, detailColor);
+    case 9: return getLetterformSvg(varIdx, fillColor, detailColor);
+    default: return '';
+  }
+}
+
+function getMonogramSvg(vi, f, d) {
+  switch (vi) {
+    case 0: // Bold G
+      return '<text x="32" y="45" text-anchor="middle" font-family="Outfit,sans-serif" font-weight="800" font-size="38" fill="' + f + '">G</text>';
+    case 1: // Outlined G
+      return '<text x="32" y="45" text-anchor="middle" font-family="Outfit,sans-serif" font-weight="800" font-size="38" fill="none" stroke="' + f + '" stroke-width="2.5">G</text>' +
+        '<line x1="32" y1="32" x2="42" y2="32" stroke="' + f + '" stroke-width="2.5" stroke-linecap="round"/>';
+    case 2: // Stacked Ga
+      return '<text x="32" y="34" text-anchor="middle" font-family="Baloo 2,cursive" font-weight="700" font-size="24" fill="' + f + '">Ga</text>' +
+        '<line x1="18" y1="40" x2="46" y2="40" stroke="' + f + '" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>' +
+        '<text x="32" y="52" text-anchor="middle" font-family="Outfit,sans-serif" font-weight="600" font-size="9" fill="' + f + '" opacity="0.7">stify</text>';
+    case 3: // Cursive G
+      return '<path d="M40 18c-12-4-22 4-22 14s10 18 22 14c4-1 6-4 6-8h-10" fill="none" stroke="' + d + '" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<circle cx="44" cy="44" r="2" fill="' + d + '"/>';
+    case 4: // G Badge
+      return '<rect x="14" y="14" width="36" height="36" rx="8" fill="' + f + '"/>' +
+        '<text x="32" y="41" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" font-size="28" fill="' + d + '">G</text>';
+    case 5: // Split G
+      return '<path d="M32 10v44" stroke="' + f + '" stroke-width="1" opacity="0.3"/>' +
+        '<text x="30" y="44" text-anchor="end" font-family="Outfit,sans-serif" font-weight="800" font-size="36" fill="' + f + '">G</text>' +
+        '<text x="34" y="44" text-anchor="start" font-family="Outfit,sans-serif" font-weight="800" font-size="36" fill="' + f + '" opacity="0.4">G</text>';
+    default: return '';
+  }
+}
+
+function getReceiptSvg(vi, f, d) {
+  switch (vi) {
+    case 0: // Classic Receipt
+      return '<path d="M18 8h28v44l-4-3-4 3-4-3-4 3-4-3-4 3-4-3-4 3z" fill="' + f + '"/>' +
+        '<line x1="24" y1="18" x2="40" y2="18" stroke="' + d + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<line x1="24" y1="24" x2="36" y2="24" stroke="' + d + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<line x1="24" y1="30" x2="38" y2="30" stroke="' + d + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<line x1="24" y1="36" x2="34" y2="36" stroke="' + d + '" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>';
+    case 1: // Receipt + $
+      return '<path d="M18 8h28v44l-4-3-4 3-4-3-4 3-4-3-4 3-4-3-4 3z" fill="' + f + '"/>' +
+        '<line x1="24" y1="18" x2="40" y2="18" stroke="' + d + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<line x1="24" y1="24" x2="36" y2="24" stroke="' + d + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<line x1="24" y1="30" x2="38" y2="30" stroke="' + d + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<text x="32" y="44" text-anchor="middle" font-family="Outfit,sans-serif" font-weight="800" font-size="14" fill="' + d + '">$</text>';
+    case 2: // Torn Receipt
+      return '<path d="M18 8h28v38l-2 2-3-2-3 2-3-2-3 2-3-2-3 2-2-2-2 2V8z" fill="' + f + '"/>' +
+        '<path d="M18 8l2 3 3-3 3 3 3-3 3 3 3-3 3 3 3-3 2 3" fill="none" stroke="' + d + '" stroke-width="1" opacity="0.3"/>' +
+        '<line x1="24" y1="18" x2="40" y2="18" stroke="' + d + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<line x1="24" y1="24" x2="38" y2="24" stroke="' + d + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<line x1="24" y1="30" x2="35" y2="30" stroke="' + d + '" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>' +
+        '<line x1="24" y1="36" x2="40" y2="36" stroke="' + d + '" stroke-width="1" stroke-dasharray="2 2" opacity="0.4"/>';
+    case 3: // Receipt Check
+      return '<path d="M18 8h28v44l-4-3-4 3-4-3-4 3-4-3-4 3-4-3-4 3z" fill="' + f + '"/>' +
+        '<line x1="26" y1="18" x2="40" y2="18" stroke="' + d + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<line x1="26" y1="24" x2="38" y2="24" stroke="' + d + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<polyline points="22,30 26,34 34,24" fill="none" stroke="' + d + '" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>';
+    case 4: // Folded Receipt
+      return '<path d="M18 8h22l8 8v36l-4-3-4 3-4-3-4 3-4-3-4 3-4-3-4 3z" fill="' + f + '"/>' +
+        '<path d="M40 8v8h8" fill="none" stroke="' + d + '" stroke-width="1.5" opacity="0.5"/>' +
+        '<path d="M40 8l8 8" fill="none" stroke="' + d + '" stroke-width="0.5" opacity="0.3"/>' +
+        '<line x1="24" y1="22" x2="38" y2="22" stroke="' + d + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<line x1="24" y1="28" x2="34" y2="28" stroke="' + d + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<line x1="24" y1="34" x2="36" y2="34" stroke="' + d + '" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>';
+    case 5: // Receipt Stack
+      return '<rect x="22" y="12" width="24" height="38" rx="2" fill="' + f + '" opacity="0.3"/>' +
+        '<rect x="19" y="9" width="24" height="38" rx="2" fill="' + f + '" opacity="0.5"/>' +
+        '<path d="M16 6h24v42l-3-2-3 2-3-2-3 2-3-2-3 2-3-2-3 2z" fill="' + f + '"/>' +
+        '<line x1="22" y1="16" x2="34" y2="16" stroke="' + d + '" stroke-width="1.5" stroke-linecap="round"/>' +
+        '<line x1="22" y1="21" x2="32" y2="21" stroke="' + d + '" stroke-width="1.5" stroke-linecap="round"/>' +
+        '<line x1="22" y1="26" x2="34" y2="26" stroke="' + d + '" stroke-width="1" stroke-linecap="round" opacity="0.5"/>';
+    default: return '';
+  }
+}
+
+function getScanSvg(vi, f, d) {
+  switch (vi) {
+    case 0: // Scan Frame
+      return '<path d="M14 24V16a2 2 0 0 1 2-2h8" fill="none" stroke="' + f + '" stroke-width="3" stroke-linecap="round"/>' +
+        '<path d="M40 14h8a2 2 0 0 1 2 2v8" fill="none" stroke="' + f + '" stroke-width="3" stroke-linecap="round"/>' +
+        '<path d="M50 40v8a2 2 0 0 1-2 2h-8" fill="none" stroke="' + f + '" stroke-width="3" stroke-linecap="round"/>' +
+        '<path d="M24 50h-8a2 2 0 0 1-2-2v-8" fill="none" stroke="' + f + '" stroke-width="3" stroke-linecap="round"/>' +
+        '<line x1="20" y1="32" x2="44" y2="32" stroke="' + f + '" stroke-width="2" stroke-linecap="round" opacity="0.6"/>' +
+        '<rect x="24" y="22" width="16" height="20" rx="2" fill="' + f + '" opacity="0.15"/>';
+    case 1: // Camera Lens
+      return '<circle cx="32" cy="30" r="14" fill="none" stroke="' + f + '" stroke-width="2.5"/>' +
+        '<circle cx="32" cy="30" r="8" fill="none" stroke="' + f + '" stroke-width="2"/>' +
+        '<circle cx="32" cy="30" r="3" fill="' + f + '"/>' +
+        '<rect x="20" y="48" width="24" height="6" rx="3" fill="' + f + '" opacity="0.4"/>' +
+        '<circle cx="42" cy="18" r="3" fill="' + f + '" opacity="0.5"/>';
+    case 2: // AI Eye
+      return '<ellipse cx="32" cy="32" rx="20" ry="12" fill="none" stroke="' + f + '" stroke-width="2.5"/>' +
+        '<circle cx="32" cy="32" r="8" fill="' + f + '"/>' +
+        '<circle cx="32" cy="32" r="4" fill="' + d + '"/>' +
+        '<circle cx="35" cy="29" r="2" fill="' + f + '" opacity="0.6"/>' +
+        '<path d="M14 32c0 0 8-16 18-16s18 16 18 16" fill="none" stroke="' + f + '" stroke-width="1" opacity="0.3"/>';
+    case 3: // Barcode Scan
+      return '<rect x="16" y="18" width="3" height="28" rx="1" fill="' + f + '"/>' +
+        '<rect x="22" y="18" width="2" height="28" rx="1" fill="' + f + '" opacity="0.7"/>' +
+        '<rect x="27" y="18" width="4" height="28" rx="1" fill="' + f + '"/>' +
+        '<rect x="34" y="18" width="2" height="28" rx="1" fill="' + f + '" opacity="0.7"/>' +
+        '<rect x="39" y="18" width="3" height="28" rx="1" fill="' + f + '"/>' +
+        '<rect x="45" y="18" width="2" height="28" rx="1" fill="' + f + '" opacity="0.5"/>' +
+        '<line x1="12" y1="32" x2="52" y2="32" stroke="' + d + '" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.5"/>';
+    case 4: // Focus Ring
+      return '<circle cx="32" cy="32" r="16" fill="none" stroke="' + d + '" stroke-width="2.5" stroke-dasharray="8 4"/>' +
+        '<line x1="32" y1="12" x2="32" y2="20" stroke="' + d + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<line x1="32" y1="44" x2="32" y2="52" stroke="' + d + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<line x1="12" y1="32" x2="20" y2="32" stroke="' + d + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<line x1="44" y1="32" x2="52" y2="32" stroke="' + d + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<circle cx="32" cy="32" r="4" fill="' + d + '"/>';
+    case 5: // Smart Scan
+      return '<path d="M14 22V16a2 2 0 0 1 2-2h6" fill="none" stroke="' + f + '" stroke-width="2.5" stroke-linecap="round"/>' +
+        '<path d="M42 14h6a2 2 0 0 1 2 2v6" fill="none" stroke="' + f + '" stroke-width="2.5" stroke-linecap="round"/>' +
+        '<path d="M50 42v6a2 2 0 0 1-2 2h-6" fill="none" stroke="' + f + '" stroke-width="2.5" stroke-linecap="round"/>' +
+        '<path d="M22 50h-6a2 2 0 0 1-2-2v-6" fill="none" stroke="' + f + '" stroke-width="2.5" stroke-linecap="round"/>' +
+        '<path d="M24 26l4 4-4 4" fill="none" stroke="' + f + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<path d="M40 26l-4 4 4 4" fill="none" stroke="' + f + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<circle cx="32" cy="38" r="2" fill="' + f + '" opacity="0.6"/>' +
+        '<circle cx="32" cy="22" r="2" fill="' + f + '" opacity="0.6"/>';
+    default: return '';
+  }
+}
+
+function getGrowthSvg(vi, f, d) {
+  switch (vi) {
+    case 0: // Bar Chart
+      return '<line x1="12" y1="52" x2="52" y2="52" stroke="' + f + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<line x1="12" y1="52" x2="12" y2="12" stroke="' + f + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<rect x="18" y="36" width="7" height="16" rx="1.5" fill="' + f + '" opacity="0.5"/>' +
+        '<rect x="28" y="26" width="7" height="26" rx="1.5" fill="' + f + '" opacity="0.7"/>' +
+        '<rect x="38" y="16" width="7" height="36" rx="1.5" fill="' + f + '"/>';
+    case 1: // Trend Arrow
+      return '<polyline points="12,46 24,34 34,38 52,16" fill="none" stroke="' + f + '" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<polygon points="52,16 44,18 50,24" fill="' + f + '"/>' +
+        '<line x1="12" y1="52" x2="52" y2="52" stroke="' + f + '" stroke-width="1.5" opacity="0.3"/>' +
+        '<circle cx="12" cy="46" r="2.5" fill="' + f + '" opacity="0.6"/>' +
+        '<circle cx="24" cy="34" r="2.5" fill="' + f + '" opacity="0.6"/>' +
+        '<circle cx="34" cy="38" r="2.5" fill="' + f + '" opacity="0.6"/>';
+    case 2: // Pie Slice
+      return '<circle cx="32" cy="32" r="18" fill="' + f + '" opacity="0.2"/>' +
+        '<path d="M32 32L32 14A18 18 0 0 1 49 38Z" fill="' + f + '"/>' +
+        '<path d="M32 32L49 38A18 18 0 0 1 38 49Z" fill="' + f + '" opacity="0.6"/>' +
+        '<circle cx="32" cy="32" r="5" fill="' + d + '"/>';
+    case 3: // Coin Stack
+      return '<ellipse cx="32" cy="44" rx="14" ry="5" fill="' + f + '" opacity="0.3"/>' +
+        '<ellipse cx="32" cy="38" rx="14" ry="5" fill="' + f + '" opacity="0.5"/>' +
+        '<ellipse cx="32" cy="32" rx="14" ry="5" fill="' + f + '" opacity="0.7"/>' +
+        '<ellipse cx="32" cy="26" rx="14" ry="5" fill="' + f + '"/>' +
+        '<text x="32" y="30" text-anchor="middle" font-family="Outfit,sans-serif" font-weight="800" font-size="10" fill="' + d + '">$</text>';
+    case 4: // Piggy Bank
+      return '<ellipse cx="30" cy="34" rx="16" ry="12" fill="' + f + '"/>' +
+        '<circle cx="22" cy="30" r="2" fill="' + d + '"/>' +
+        '<ellipse cx="16" cy="34" rx="4" ry="3" fill="' + f + '"/>' +
+        '<path d="M46 30c4 0 6 3 6 6" fill="none" stroke="' + f + '" stroke-width="2.5" stroke-linecap="round"/>' +
+        '<rect x="22" y="44" width="4" height="6" rx="1" fill="' + f + '" opacity="0.7"/>' +
+        '<rect x="34" y="44" width="4" height="6" rx="1" fill="' + f + '" opacity="0.7"/>' +
+        '<line x1="28" y1="16" x2="28" y2="22" stroke="' + f + '" stroke-width="3" stroke-linecap="round"/>' +
+        '<line x1="26" y1="18" x2="30" y2="18" stroke="' + d + '" stroke-width="1.5"/>';
+    case 5: // Wallet
+      return '<rect x="12" y="20" width="40" height="28" rx="4" fill="' + f + '"/>' +
+        '<path d="M12 24h40v4H12z" fill="' + d + '" opacity="0.15"/>' +
+        '<rect x="36" y="30" width="16" height="10" rx="3" fill="' + d + '" opacity="0.2"/>' +
+        '<circle cx="44" cy="35" r="3" fill="' + d + '" opacity="0.5"/>' +
+        '<path d="M16 20v-4a2 2 0 0 1 2-2h24a2 2 0 0 1 2 2v4" fill="none" stroke="' + f + '" stroke-width="1.5" opacity="0.5"/>';
+    default: return '';
+  }
+}
+
+function getAbstractSvg(vi, f, d) {
+  switch (vi) {
+    case 0: // Hex Node
+      return '<polygon points="32,10 50,21 50,43 32,54 14,43 14,21" fill="none" stroke="' + f + '" stroke-width="2.5"/>' +
+        '<polygon points="32,20 41,25 41,37 32,42 23,37 23,25" fill="' + f + '" opacity="0.3"/>' +
+        '<circle cx="32" cy="31" r="5" fill="' + f + '"/>' +
+        '<line x1="32" y1="10" x2="32" y2="20" stroke="' + f + '" stroke-width="1.5" opacity="0.4"/>' +
+        '<line x1="50" y1="43" x2="41" y2="37" stroke="' + f + '" stroke-width="1.5" opacity="0.4"/>' +
+        '<line x1="14" y1="43" x2="23" y2="37" stroke="' + f + '" stroke-width="1.5" opacity="0.4"/>';
+    case 1: // Spiral
+      return '<path d="M32 32c0-3 3-6 6-6s6 3 6 6-3 9-9 9-12-6-12-12 9-15 15-15 18 9 18 18" fill="none" stroke="' + f + '" stroke-width="2.5" stroke-linecap="round"/>' +
+        '<circle cx="32" cy="32" r="2" fill="' + f + '"/>';
+    case 2: // Diamond Cut
+      return '<polygon points="32,8 52,32 32,56 12,32" fill="none" stroke="' + f + '" stroke-width="2.5"/>' +
+        '<line x1="12" y1="32" x2="52" y2="32" stroke="' + f + '" stroke-width="1.5" opacity="0.5"/>' +
+        '<line x1="32" y1="8" x2="22" y2="32" stroke="' + f + '" stroke-width="1.5" opacity="0.4"/>' +
+        '<line x1="32" y1="8" x2="42" y2="32" stroke="' + f + '" stroke-width="1.5" opacity="0.4"/>' +
+        '<polygon points="32,32 22,32 32,56 42,32" fill="' + f + '" opacity="0.15"/>';
+    case 3: // Wave Flow
+      return '<path d="M8 24c8 0 8 16 16 16s8-16 16-16 8 16 16 16" fill="none" stroke="' + f + '" stroke-width="3" stroke-linecap="round"/>' +
+        '<path d="M8 32c8 0 8 12 16 12s8-12 16-12 8 12 16 12" fill="none" stroke="' + f + '" stroke-width="2" stroke-linecap="round" opacity="0.4"/>' +
+        '<path d="M8 40c8 0 8 8 16 8s8-8 16-8 8 8 16 8" fill="none" stroke="' + f + '" stroke-width="1.5" stroke-linecap="round" opacity="0.2"/>';
+    case 4: // Atom
+      return '<ellipse cx="32" cy="32" rx="20" ry="8" fill="none" stroke="' + d + '" stroke-width="2" transform="rotate(0 32 32)"/>' +
+        '<ellipse cx="32" cy="32" rx="20" ry="8" fill="none" stroke="' + d + '" stroke-width="2" transform="rotate(60 32 32)"/>' +
+        '<ellipse cx="32" cy="32" rx="20" ry="8" fill="none" stroke="' + d + '" stroke-width="2" transform="rotate(120 32 32)"/>' +
+        '<circle cx="32" cy="32" r="4" fill="' + d + '"/>';
+    case 5: // Infinity Loop
+      return '<path d="M32 32c0-6 6-12 12-12s12 6 12 12-6 12-12 12" fill="none" stroke="' + f + '" stroke-width="3" stroke-linecap="round"/>' +
+        '<path d="M32 32c0 6-6 12-12 12S8 38 8 32s6-12 12-12" fill="none" stroke="' + f + '" stroke-width="3" stroke-linecap="round"/>' +
+        '<circle cx="32" cy="32" r="2.5" fill="' + f + '"/>';
+    default: return '';
+  }
+}
+
+
+function getWalletSvg(vi, f, d) {
+  switch (vi) {
+    case 0: return '<rect x="14" y="22" width="36" height="24" rx="4" fill="' + f + '"/><path d="M14 26h36v3H14z" fill="' + d + '" opacity="0.15"/><rect x="38" y="30" width="12" height="10" rx="3" fill="' + d + '" opacity="0.2"/><circle cx="44" cy="35" r="2.5" fill="' + d + '" opacity="0.4"/><rect x="20" y="16" width="24" height="4" rx="2" fill="' + f + '" opacity="0.5"/>';
+    case 1: return '<rect x="14" y="20" width="36" height="24" rx="4" fill="' + f + '"/><rect x="20" y="26" width="24" height="12" rx="2" fill="' + d + '" opacity="0.15"/><path d="M44 28c4 0 6 2 6 4s-2 4-6 4" fill="none" stroke="' + f + '" stroke-width="2" opacity="0.6"/><path d="M46 30c3 0 4 1 4 2s-1 2-4 2" fill="none" stroke="' + f + '" stroke-width="1.5" opacity="0.4"/><rect x="22" y="28" width="10" height="2" rx="1" fill="' + d + '" opacity="0.3"/>';
+    case 2: return '<circle cx="24" cy="30" r="12" fill="none" stroke="' + f + '" stroke-width="2"/><rect x="28" y="24" width="20" height="14" rx="3" fill="' + f + '"/><line x1="31" y1="28" x2="45" y2="28" stroke="' + d + '" stroke-width="1.5" opacity="0.3"/><line x1="31" y1="32" x2="40" y2="32" stroke="' + d + '" stroke-width="1.5" opacity="0.3"/><path d="M20 18l-4-6" fill="none" stroke="' + f + '" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="12" r="2" fill="' + f + '" opacity="0.5"/>';
+    case 3: return '<rect x="18" y="16" width="28" height="36" rx="6" fill="' + f + '"/><rect x="22" y="28" width="20" height="12" rx="2" fill="' + d + '" opacity="0.15"/><circle cx="32" cy="22" r="3" fill="' + d + '" opacity="0.2"/><rect x="28" y="46" width="8" height="3" rx="1.5" fill="' + d + '" opacity="0.2"/><line x1="25" y1="32" x2="39" y2="32" stroke="' + d + '" stroke-width="1" opacity="0.3"/><line x1="25" y1="36" x2="35" y2="36" stroke="' + d + '" stroke-width="1" opacity="0.2"/>';
+    case 4: return '<ellipse cx="32" cy="32" rx="8" ry="22" fill="' + f + '" opacity="0.3"/><rect x="22" y="24" width="20" height="18" rx="2" fill="' + f + '"/><line x1="26" y1="28" x2="38" y2="28" stroke="' + d + '" stroke-width="1.5" opacity="0.3"/><line x1="26" y1="32" x2="38" y2="32" stroke="' + d + '" stroke-width="1" opacity="0.2"/><line x1="26" y1="36" x2="34" y2="36" stroke="' + d + '" stroke-width="1" opacity="0.2"/><circle cx="40" cy="18" r="4" fill="' + f + '" opacity="0.6"/>';
+    case 5: return '<rect x="16" y="22" width="32" height="22" rx="4" fill="' + f + '"/><rect x="12" y="18" width="14" height="10" rx="2" fill="' + f + '" opacity="0.5"/><circle cx="38" cy="33" r="4" fill="' + d + '" opacity="0.2"/><polyline points="42,28 46,32 42,36" fill="none" stroke="' + d + '" stroke-width="2" stroke-linecap="round" opacity="0.3"/><line x1="20" y1="26" x2="32" y2="26" stroke="' + d + '" stroke-width="1.5" opacity="0.2"/>';
+    default: return '';
+  }
+}
+
+function getChileanSvg(vi, f, d) {
+  switch (vi) {
+    case 0: return '<line x1="32" y1="10" x2="32" y2="52" stroke="' + f + '" stroke-width="3" stroke-linecap="round"/><path d="M32 14l-14 8v10l14-6" fill="' + f + '" opacity="0.8"/><path d="M32 22l-10 6v8l10-4" fill="' + f + '" opacity="0.5"/><path d="M32 30l-6 4v6l6-2" fill="' + f + '" opacity="0.3"/><path d="M32 14l14 8v10l-14-6" fill="' + f + '" opacity="0.6"/><path d="M32 22l10 6v8l-10-4" fill="' + f + '" opacity="0.35"/>';
+    case 1: return '<path d="M8 44l12-20 8 8 8-24 8 16 8-4v24z" fill="' + f + '" opacity="0.3"/><path d="M12 44l10-16 6 6 8-22 6 14 6-3v21z" fill="' + f + '" opacity="0.6"/><path d="M16 44l8-12 4 4 8-20 4 12 4-2v18z" fill="' + f + '"/><text x="32" y="52" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="10" fill="' + d + '">$</text>';
+    case 2: return '<path d="M32 10l-6 16h-14l12 8-4 14 12-10 12 10-4-14 12-8h-14z" fill="' + f + '"/><circle cx="32" cy="28" r="4" fill="' + d + '" opacity="0.3"/>';
+    case 3: return '<circle cx="32" cy="32" r="18" fill="' + f + '" opacity="0.2"/><circle cx="32" cy="32" r="14" fill="' + f + '"/><circle cx="32" cy="32" r="10" fill="' + d + '" opacity="0.15"/><text x="32" y="37" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="14" fill="' + d + '">50</text><text x="32" y="20" text-anchor="middle" font-family="Outfit" font-weight="600" font-size="6" fill="' + f + '" opacity="0.6">CHILE</text>';
+    case 4: return '<path d="M32 14c-4 0-8 4-8 10s4 12 8 18c4-6 8-12 8-18s-4-10-8-10z" fill="' + f + '"/><circle cx="32" cy="26" r="3" fill="' + d + '" opacity="0.3"/><path d="M24 44c0 4 4 6 8 6s8-2 8-6" fill="none" stroke="' + f + '" stroke-width="2" opacity="0.5"/><line x1="22" y1="22" x2="18" y2="18" stroke="' + f + '" stroke-width="2" stroke-linecap="round" opacity="0.4"/><line x1="42" y1="22" x2="46" y2="18" stroke="' + f + '" stroke-width="2" stroke-linecap="round" opacity="0.4"/>';
+    case 5: return '<rect x="18" y="16" width="28" height="38" rx="2" fill="' + f + '" opacity="0.3"/><rect x="22" y="12" width="20" height="22" rx="0" fill="' + f + '"/><circle cx="32" cy="22" r="4" fill="' + d + '" opacity="0.3"/><line x1="24" y1="30" x2="40" y2="30" stroke="' + d + '" stroke-width="1" opacity="0.3"/><path d="M22 38h20v8l-3-2-3 2-3-2-3 2-3-2-3 2z" fill="' + f + '" opacity="0.7"/>';
+    default: return '';
+  }
+}
+
+function getAISvg(vi, f, d) {
+  switch (vi) {
+    case 0: return '<path d="M22 20c0-6 4-10 10-10s10 4 10 10c0 4-2 8-6 10v6h-8v-6c-4-2-6-6-6-10z" fill="' + f + '"/><path d="M28 36h8v6l-2 4h-4l-2-4v-6" fill="' + f + '" opacity="0.5"/><line x1="26" y1="24" x2="38" y2="24" stroke="' + d + '" stroke-width="1" opacity="0.3"/><rect x="28" y="20" width="3" height="6" rx="1" fill="' + d + '" opacity="0.15"/><rect x="33" y="18" width="3" height="8" rx="1" fill="' + d + '" opacity="0.15"/>';
+    case 1: return '<circle cx="22" cy="20" r="4" fill="' + f + '"/><circle cx="42" cy="20" r="4" fill="' + f + '"/><circle cx="32" cy="32" r="5" fill="' + f + '"/><circle cx="20" cy="44" r="3" fill="' + f + '" opacity="0.7"/><circle cx="44" cy="44" r="3" fill="' + f + '" opacity="0.7"/><line x1="22" y1="24" x2="30" y2="28" stroke="' + f + '" stroke-width="1.5"/><line x1="42" y1="24" x2="34" y2="28" stroke="' + f + '" stroke-width="1.5"/><line x1="30" y1="36" x2="22" y2="42" stroke="' + f + '" stroke-width="1.5"/><line x1="34" y1="36" x2="42" y2="42" stroke="' + f + '" stroke-width="1.5"/>';
+    case 2: return '<line x1="32" y1="14" x2="32" y2="26" stroke="' + f + '" stroke-width="2.5" stroke-linecap="round"/><circle cx="32" cy="12" r="3" fill="' + f + '"/><path d="M20 30h24l-4 22h-16z" fill="' + f + '"/><line x1="26" y1="36" x2="38" y2="36" stroke="' + d + '" stroke-width="1" opacity="0.3"/><line x1="27" y1="42" x2="37" y2="42" stroke="' + d + '" stroke-width="1" opacity="0.2"/><circle cx="22" cy="18" r="2" fill="' + f + '" opacity="0.4"/><circle cx="42" cy="18" r="2" fill="' + f + '" opacity="0.4"/><circle cx="18" cy="24" r="1.5" fill="' + f + '" opacity="0.2"/>';
+    case 3: return '<ellipse cx="32" cy="32" rx="18" ry="10" fill="none" stroke="' + f + '" stroke-width="2.5"/><circle cx="32" cy="32" r="7" fill="' + f + '"/><circle cx="32" cy="32" r="3" fill="' + d + '" opacity="0.3"/><path d="M15 32c0 0 7-14 17-14s17 14 17 14" fill="none" stroke="' + f + '" stroke-width="1" opacity="0.3"/><circle cx="20" cy="22" r="2" fill="' + f + '" opacity="0.3"/><circle cx="44" cy="22" r="2" fill="' + f + '" opacity="0.3"/><line x1="14" y1="32" x2="8" y2="32" stroke="' + f + '" stroke-width="1.5" opacity="0.4"/><line x1="50" y1="32" x2="56" y2="32" stroke="' + f + '" stroke-width="1.5" opacity="0.4"/>';
+    case 4: return '<text x="32" y="42" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="32" fill="' + f + '">G</text><path d="M18 18h4v4h-4z" fill="' + f + '" opacity="0.4"/><path d="M26 12h4v4h-4z" fill="' + f + '" opacity="0.3"/><path d="M42 14h4v4h-4z" fill="' + f + '" opacity="0.5"/><path d="M46 22h4v4h-4z" fill="' + f + '" opacity="0.3"/><line x1="20" y1="22" x2="26" y2="28" stroke="' + f + '" stroke-width="1" opacity="0.3"/><line x1="28" y1="16" x2="30" y2="24" stroke="' + f + '" stroke-width="1" opacity="0.2"/><line x1="44" y1="18" x2="42" y2="26" stroke="' + f + '" stroke-width="1" opacity="0.3"/>';
+    case 5: return '<path d="M32 10c0 0-6 4-6 10s6 12 6 12" fill="none" stroke="' + f + '" stroke-width="2.5" stroke-linecap="round"/><path d="M32 10c0 0 6 4 6 10s-6 12-6 12" fill="none" stroke="' + f + '" stroke-width="2.5" stroke-linecap="round"/><circle cx="32" cy="20" r="6" fill="' + f + '"/><circle cx="32" cy="20" r="3" fill="' + d + '" opacity="0.2"/><line x1="26" y1="36" x2="20" y2="42" stroke="' + f + '" stroke-width="1.5" opacity="0.5"/><line x1="38" y1="36" x2="44" y2="42" stroke="' + f + '" stroke-width="1.5" opacity="0.5"/><circle cx="20" cy="44" r="2" fill="' + f + '" opacity="0.4"/><circle cx="44" cy="44" r="2" fill="' + f + '" opacity="0.4"/><line x1="32" y1="36" x2="32" y2="50" stroke="' + f + '" stroke-width="1.5" opacity="0.4"/><circle cx="32" cy="52" r="2" fill="' + f + '" opacity="0.3"/>';
+    default: return '';
+  }
+}
+
+function getCurrencySvg(vi, f, d) {
+  switch (vi) {
+    case 0: return '<text x="32" y="44" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="36" fill="' + f + '">\$</text><line x1="18" y1="18" x2="46" y2="18" stroke="' + f + '" stroke-width="1.5" opacity="0.4"/><line x1="18" y1="46" x2="46" y2="46" stroke="' + f + '" stroke-width="1.5" opacity="0.4"/><line x1="16" y1="22" x2="48" y2="22" stroke="' + f + '" stroke-width="1" stroke-dasharray="3 2" opacity="0.2"/><line x1="16" y1="42" x2="48" y2="42" stroke="' + f + '" stroke-width="1" stroke-dasharray="3 2" opacity="0.2"/>';
+    case 1: return '<ellipse cx="32" cy="44" rx="12" ry="4" fill="' + f + '" opacity="0.3"/><ellipse cx="32" cy="38" rx="12" ry="4" fill="' + f + '" opacity="0.4"/><ellipse cx="32" cy="32" rx="12" ry="4" fill="' + f + '" opacity="0.6"/><ellipse cx="32" cy="26" rx="12" ry="4" fill="' + f + '" opacity="0.8"/><ellipse cx="32" cy="20" rx="12" ry="4" fill="' + f + '"/><text x="32" y="24" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="8" fill="' + d + '">\$</text>';
+    case 2: return '<path d="M20 14h24l-4 12h-16z" fill="' + f + '"/><path d="M24 26h16l-4 12h-8z" fill="' + f + '" opacity="0.7"/><path d="M28 38h8l-2 8h-4z" fill="' + f + '" opacity="0.4"/><text x="32" y="24" text-anchor="middle" font-family="Outfit" font-weight="700" font-size="8" fill="' + d + '" opacity="0.4">\$</text>';
+    case 3: return '<circle cx="22" cy="28" r="8" fill="none" stroke="' + f + '" stroke-width="2"/><circle cx="42" cy="36" r="8" fill="none" stroke="' + f + '" stroke-width="2"/><path d="M28 22l8 10" fill="none" stroke="' + f + '" stroke-width="2" stroke-linecap="round"/><polygon points="38 30 34 32 36 28" fill="' + f + '"/><path d="M36 42l-8-10" fill="none" stroke="' + f + '" stroke-width="2" stroke-linecap="round"/><polygon points="26 34 30 32 28 36" fill="' + f + '"/><text x="22" y="32" text-anchor="middle" font-family="Outfit" font-weight="700" font-size="8" fill="' + f + '">\$</text><text x="42" y="40" text-anchor="middle" font-family="Outfit" font-weight="700" font-size="8" fill="' + f + '">P</text>';
+    case 4: return '<circle cx="32" cy="32" r="18" fill="none" stroke="' + f + '" stroke-width="3"/><circle cx="32" cy="32" r="12" fill="none" stroke="' + f + '" stroke-width="1.5" opacity="0.4"/><line x1="32" y1="14" x2="32" y2="18" stroke="' + f + '" stroke-width="3" stroke-linecap="round"/><line x1="32" y1="46" x2="32" y2="50" stroke="' + f + '" stroke-width="3" stroke-linecap="round"/><circle cx="32" cy="32" r="6" fill="' + f + '" opacity="0.3"/><circle cx="32" cy="32" r="2" fill="' + f + '"/>';
+    case 5: return '<circle cx="32" cy="32" r="16" fill="' + f + '" opacity="0.15"/><circle cx="32" cy="32" r="12" fill="' + f + '" opacity="0.3"/><text x="32" y="38" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="20" fill="' + f + '">\$</text><circle cx="20" cy="20" r="2" fill="' + f + '" opacity="0.4"/><circle cx="44" cy="20" r="1.5" fill="' + f + '" opacity="0.3"/><circle cx="18" cy="38" r="1.5" fill="' + f + '" opacity="0.2"/><circle cx="46" cy="40" r="2" fill="' + f + '" opacity="0.3"/><line x1="22" y1="22" x2="26" y2="26" stroke="' + f + '" stroke-width="1" opacity="0.2"/><line x1="42" y1="22" x2="38" y2="26" stroke="' + f + '" stroke-width="1" opacity="0.2"/>';
+    default: return '';
+  }
+}
+
+function getLetterformSvg(vi, f, d) {
+  switch (vi) {
+    case 0: return '<text x="26" y="40" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="30" fill="' + f + '">G</text><path d="M38 12h8v40l-3-2-3 2-2-2z" fill="' + f + '" opacity="0.6"/><line x1="40" y1="20" x2="44" y2="20" stroke="' + d + '" stroke-width="1" opacity="0.3"/><line x1="40" y1="26" x2="44" y2="26" stroke="' + d + '" stroke-width="1" opacity="0.3"/>';
+    case 1: return '<text x="32" y="42" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="32" fill="' + f + '">G</text><path d="M14 24V16a2 2 0 0 1 2-2h6" fill="none" stroke="' + f + '" stroke-width="2" stroke-linecap="round" opacity="0.5"/><path d="M42 14h6a2 2 0 0 1 2 2v6" fill="none" stroke="' + f + '" stroke-width="2" stroke-linecap="round" opacity="0.5"/><path d="M50 40v6a2 2 0 0 1-2 2h-6" fill="none" stroke="' + f + '" stroke-width="2" stroke-linecap="round" opacity="0.5"/><path d="M22 48h-6a2 2 0 0 1-2-2v-6" fill="none" stroke="' + f + '" stroke-width="2" stroke-linecap="round" opacity="0.5"/>';
+    case 2: return '<line x1="14" y1="52" x2="14" y2="12" stroke="' + f + '" stroke-width="1.5" opacity="0.3"/><line x1="14" y1="52" x2="50" y2="52" stroke="' + f + '" stroke-width="1.5" opacity="0.3"/><rect x="18" y="36" width="6" height="16" rx="1" fill="' + f + '" opacity="0.4"/><rect x="27" y="26" width="6" height="26" rx="1" fill="' + f + '" opacity="0.6"/><rect x="36" y="16" width="6" height="36" rx="1" fill="' + f + '"/><path d="M18 36c0-10 6-20 24-20" fill="none" stroke="' + f + '" stroke-width="2" opacity="0.5" stroke-dasharray="3 2"/>';
+    case 3: return '<path d="M18 12h28v40H18z" fill="none" stroke="' + f + '" stroke-width="2.5" stroke-linejoin="round"/><path d="M18 12l14 8-14 8z" fill="' + f + '" opacity="0.2"/><text x="32" y="42" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="22" fill="' + f + '">G</text>';
+    case 4: return '<circle cx="22" cy="20" r="5" fill="' + f + '" opacity="0.6"/><circle cx="42" cy="20" r="5" fill="' + f + '" opacity="0.6"/><circle cx="18" cy="34" r="5" fill="' + f + '" opacity="0.6"/><circle cx="32" cy="44" r="5" fill="' + f + '" opacity="0.6"/><circle cx="46" cy="34" r="5" fill="' + f + '" opacity="0.6"/><circle cx="32" cy="28" r="4" fill="' + f + '" opacity="0.4"/><path d="M22 25c0 0 0 6-4 9" fill="none" stroke="' + f + '" stroke-width="1.5" opacity="0.3"/><path d="M42 25c0 0 0 6 4 9" fill="none" stroke="' + f + '" stroke-width="1.5" opacity="0.3"/><path d="M18 39c0 0 6 4 14 5" fill="none" stroke="' + f + '" stroke-width="1.5" opacity="0.3"/><path d="M46 39c0 0-6 4-14 5" fill="none" stroke="' + f + '" stroke-width="1.5" opacity="0.3"/>';
+    case 5: return '<text x="28" y="42" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="32" fill="' + f + '">G</text><path d="M40 14l6-4" fill="none" stroke="' + f + '" stroke-width="3" stroke-linecap="round"/><polygon points="48 8 44 12 48 14" fill="' + f + '"/>';
+    default: return '';
+  }
+}
+
+// ===== HELPERS =====
+function getDisplayText() {
+  if (overlayText === 'none') return null;
+  if (overlayText === 'custom') return customText || 'G';
+  return overlayText;
+}
+
+function getShadowCSS() {
+  switch (shadowType) {
+    case 'drop': return '2px 2px 6px rgba(0,0,0,0.5)';
+    case 'hard': return '3px 3px 0px #1e293b';
+    case '3d': return '1px 1px 0 rgba(0,0,0,0.4), 2px 2px 0 rgba(0,0,0,0.3), 3px 3px 0 rgba(0,0,0,0.2), 4px 4px 0 rgba(0,0,0,0.1)';
+    default: return 'none';
+  }
+}
+
+function applyOverlay(el, scale) {
+  var s = scale || 1;
+  var txt = getDisplayText();
+  if (!txt) { el.style.display = 'none'; return; }
+  el.textContent = txt;
+  el.style.display = 'block';
+  el.style.fontFamily = textFont;
+  el.style.fontWeight = textFontWeight;
+  el.style.fontSize = (overlaySize * s) + 'px';
+  el.style.color = overlayColor;
+  el.style.opacity = textOpacity;
+  el.style.textShadow = getShadowCSS();
+  if (strokeOn) {
+    el.style.webkitTextStroke = strokeWidth + 'px ' + strokeColor;
+  } else {
+    el.style.webkitTextStroke = '';
+  }
+  el.style.top = '50%';
+  el.style.left = '50%';
+  el.style.transform = 'translate(calc(-50% + ' + (textX * s) + 'px), calc(-50% + ' + (textY * s) + 'px))';
+}
+
+// ===== BUILD VARIATION GRID =====
+function buildVariationGrid() {
+  var col = document.getElementById('variationsCol');
+  col.innerHTML = '';
+  for (var ci = 0; ci < concepts.length; ci++) {
+    var concept = concepts[ci];
+    var section = document.createElement('div');
+    section.className = 'concept-section';
+    section.innerHTML = '<div class="section-title">' + concept.name + ' <span class="badge">' + concept.badge + '</span></div>';
+    var grid = document.createElement('div');
+    grid.className = 'variation-grid';
+
+    for (var vi = 0; vi < concept.variations.length; vi++) {
+      var v = concept.variations[vi];
+      var card = document.createElement('div');
+      card.className = 'variation-card';
+      card.setAttribute('data-concept', ci);
+      card.setAttribute('data-variation', vi);
+      card.setAttribute('data-label', concept.name + ' / ' + v.label);
+      card.onclick = (function(c) { return function() { selectVariation(c); }; })(card);
+
+      card.innerHTML =
+        '<div class="selected-badge">Selected</div>' +
+        '<div class="icon-circle" style="background:' + bgFill + '">' +
+          '<svg viewBox="0 0 64 64">' + getConceptSvg(ci, vi, v.fill, v.detail) + '</svg>' +
+          '<div class="text-overlay"></div>' +
+        '</div>' +
+        '<div class="variation-title">Gastify</div>' +
+        '<div class="variation-label">' + v.label + '</div>';
+
+      grid.appendChild(card);
+    }
+    section.appendChild(grid);
+    col.appendChild(section);
+  }
+}
+
+// ===== RENDER ALL SVGs (on icon redraw) =====
+function renderAllIcons() {
+  document.querySelectorAll('.variation-card').forEach(function(card) {
+    var ci = parseInt(card.dataset.concept);
+    var vi = parseInt(card.dataset.variation);
+    var v = concepts[ci].variations[vi];
+    var svg = card.querySelector('svg');
+    if (svg) {
+      svg.innerHTML = getConceptSvg(ci, vi, v.fill, v.detail);
+    }
+    // Apply bg fill
+    var circle = card.querySelector('.icon-circle');
+    if (circle) {
+      circle.style.background = bgFill;
+    }
+  });
+}
+
+// ===== SETTERS =====
+function setOverlayText(btn) {
+  document.querySelectorAll('[data-text]').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  overlayText = btn.dataset.text;
+  if (overlayText === 'custom') document.getElementById('customTextInput').focus();
+  updateAll();
+}
+
+function onCustomTextInput(val) {
+  customText = val;
+  if (overlayText !== 'custom') {
+    document.querySelectorAll('[data-text]').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelector('[data-text="custom"]').classList.add('active');
+    overlayText = 'custom';
+  }
+  updateAll();
+}
+
+function setFont(btn) {
+  document.querySelectorAll('.font-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  textFont = btn.dataset.font;
+  textFontWeight = fontWeights[textFont] || '700';
+  updateAll();
+}
+
+function setOverlayColor(val) {
+  overlayColor = val;
+  document.getElementById('textColorHex').textContent = val.toUpperCase();
+  updateAll();
+}
+
+function setTextX(val) {
+  textX = parseInt(val);
+  document.getElementById('textXVal').textContent = val + 'px';
+  updateAll();
+}
+
+function setTextY(val) {
+  textY = parseInt(val);
+  document.getElementById('textYVal').textContent = val + 'px';
+  updateAll();
+}
+
+function setOverlaySize(val) {
+  overlaySize = parseInt(val);
+  document.getElementById('overlaySizeVal').textContent = val + 'px';
+  updateAll();
+}
+
+function setOpacity(val) {
+  textOpacity = parseInt(val) / 100;
+  document.getElementById('opacityVal').textContent = val + '%';
+  updateAll();
+}
+
+function setShadow(btn) {
+  document.querySelectorAll('.shadow-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  shadowType = btn.dataset.shadow;
+  updateAll();
+}
+
+function setStroke(btn) {
+  document.querySelectorAll('.stroke-toggle').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  strokeOn = btn.dataset.stroke === 'on';
+  var grp1 = document.getElementById('strokeWidthGroup');
+  var grp2 = document.getElementById('strokeColorGroup');
+  if (strokeOn) {
+    grp1.classList.remove('disabled-group');
+    grp2.classList.remove('disabled-group');
+  } else {
+    grp1.classList.add('disabled-group');
+    grp2.classList.add('disabled-group');
+  }
+  updateAll();
+}
+
+function setStrokeWidth(val) {
+  strokeWidth = parseFloat(val);
+  document.getElementById('strokeWidthVal').textContent = val + 'px';
+  updateAll();
+}
+
+function setStrokeColor(val) {
+  strokeColor = val;
+  document.getElementById('strokeColorHex').textContent = val.toUpperCase();
+  updateAll();
+}
+
+function setLogoX(val) {
+  logoX = parseInt(val);
+  document.getElementById('logoXVal').textContent = val + 'px';
+  updateAll();
+}
+
+function setLogoY(val) {
+  logoY = parseInt(val);
+  document.getElementById('logoYVal').textContent = val + 'px';
+  updateAll();
+}
+
+function setLogoScale(val) {
+  logoScale = parseInt(val);
+  document.getElementById('logoScaleVal').textContent = val + '%';
+  updateAll();
+}
+
+function setCircleShape(btn) {
+  document.querySelectorAll('.shape-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  circleShape = btn.dataset.shape;
+  updateAll();
+}
+
+function setBgFill(btn) {
+  document.querySelectorAll('.bg-chip').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  bgFill = btn.dataset.bg;
+  renderAllIcons();
+  updateAll();
+}
+
+function setColorBlind(btn) {
+  document.querySelectorAll('.cb-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  var mode = btn.dataset.cb;
+  var layout = document.getElementById('mainLayout');
+  if (mode === 'normal') {
+    layout.style.filter = '';
+  } else {
+    layout.style.filter = 'url(#' + mode + ')';
+  }
+}
+
+// ===== CORE UPDATE =====
+function updateAll() {
+  // Update all variation card circles
+  document.querySelectorAll('.variation-card .icon-circle').forEach(function(circle) {
+    circle.style.borderRadius = circleShape;
+    var svg = circle.querySelector('svg');
+    if (svg) {
+      svg.style.transform = 'translate(' + logoX + 'px, ' + logoY + 'px) scale(' + (logoScale / 100) + ')';
+    }
+    var overlay = circle.querySelector('.text-overlay');
+    if (overlay) applyOverlay(overlay, 1);
+  });
+  updatePreview();
+}
+
+function updatePreview() {
+  var card = selectedCard;
+  if (!card) return;
+  var ci = parseInt(card.dataset.concept);
+  var vi = parseInt(card.dataset.variation);
+  var v = concepts[ci].variations[vi];
+  var svgContent = getConceptSvg(ci, vi, v.fill, v.detail);
+
+  // Large preview
+  var previewCircle = document.getElementById('previewCircle');
+  previewCircle.style.background = bgFill;
+  previewCircle.style.borderRadius = circleShape;
+  var previewSvg = document.getElementById('previewSvg');
+  previewSvg.innerHTML = svgContent;
+  var pScale = 2; // 160/80
+  previewSvg.style.transform = 'translate(' + (logoX * pScale) + 'px, ' + (logoY * pScale) + 'px) scale(' + (logoScale / 100) + ')';
+  var previewOverlay = document.getElementById('previewOverlay');
+  applyOverlay(previewOverlay, pScale);
+
+  // Header icon
+  var headerIcon = document.getElementById('headerIcon');
+  headerIcon.style.background = bgFill;
+  headerIcon.style.borderRadius = circleShape;
+  var headerSvg = document.getElementById('headerSvg');
+  headerSvg.innerHTML = svgContent;
+  var hScale = 0.45; // 36/80
+  headerSvg.style.transform = 'translate(' + (logoX * hScale) + 'px, ' + (logoY * hScale) + 'px) scale(' + (logoScale / 100) + ')';
+  var headerOverlay = document.getElementById('headerOverlay');
+  applyOverlay(headerOverlay, hScale);
+
+  // Favicons
+  var favIds = ['fav16', 'fav32', 'fav48', 'fav180'];
+  var favScales = [0.2, 0.4, 0.6, 0.75];
+  for (var i = 0; i < favIds.length; i++) {
+    var favEl = document.getElementById(favIds[i]);
+    favEl.style.background = bgFill;
+    favEl.style.borderRadius = circleShape;
+    var favSvg = favEl.querySelector('svg');
+    if (favSvg) {
+      favSvg.innerHTML = svgContent;
+      favSvg.style.transform = 'translate(' + (logoX * favScales[i]) + 'px, ' + (logoY * favScales[i]) + 'px) scale(' + (logoScale / 100) + ')';
+    }
+    // Only apply overlay to 180px favicon
+    if (favIds[i] === 'fav180') {
+      var fOverlay = document.getElementById('fav180Overlay');
+      if (fOverlay) applyOverlay(fOverlay, favScales[i]);
+    }
+  }
+
+  // Label
+  document.getElementById('previewSelectedName').textContent = card.dataset.label;
+}
+
+function selectVariation(card) {
+  if (selectedCard) selectedCard.classList.remove('selected');
+  card.classList.add('selected');
+  selectedCard = card;
+  updatePreview();
+}
+
+// ===== INIT =====
+(function init() {
+  buildVariationGrid();
+  // Select first card by default
+  var firstCard = document.querySelector('.variation-card');
+  if (firstCard) {
+    selectedCard = firstCard;
+    firstCard.classList.add('selected');
+    updateAll();
+  }
+})();
+</script>
+</body>
+</html>
