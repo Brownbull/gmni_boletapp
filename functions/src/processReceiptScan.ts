@@ -19,6 +19,7 @@ import { resizeAndCompress, generateThumbnail } from './imageProcessing'
 import { withRetry, isTransientGeminiError, GEMINI_RETRY_DELAY_MS } from './utils/retryHelper'
 import { buildPrompt, getActivePrompt } from './prompts'
 import type { ReceiptType } from './prompts'
+import { isFixtureMode, loadFixture } from './fixtureHelper'
 
 // Initialize Firebase Admin if not already initialized
 if (!admin.apps.length) {
@@ -229,43 +230,51 @@ export const processReceiptScan = functions
       }
 
       // 3. Fetch + resize/compress images
+      const rawBuffers: Buffer[] = []
       const fullSizeBuffers: Buffer[] = []
       for (const url of data.imageUrls) {
         const imageBuffer = await fetchImageFromUrl(url)
+        rawBuffers.push(imageBuffer)
         const processed = await resizeAndCompress(imageBuffer)
         fullSizeBuffers.push(processed.buffer)
       }
 
-      // 4. Call Gemini with retry
-      const genAI = getGenAI()
-      const geminiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
-      if (!ALLOWED_GEMINI_MODELS.includes(geminiModel)) {
-        throw new Error('Invalid GEMINI_MODEL configuration')
+      // 4. Get raw response text — from fixture (staging) or Gemini API (production)
+      let text: string
+      if (isFixtureMode()) {
+        text = await loadFixture(rawBuffers)
+        console.log(`processReceiptScan: FIXTURE MODE — loaded fixture for scan ${scanId}`)
+      } else {
+        const genAI = getGenAI()
+        const geminiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+        if (!ALLOWED_GEMINI_MODELS.includes(geminiModel)) {
+          throw new Error('Invalid GEMINI_MODEL configuration')
+        }
+        const model = genAI.getGenerativeModel(
+          { model: geminiModel },
+          { apiVersion: 'v1' }
+        )
+
+        const imageParts = fullSizeBuffers.map((buffer: Buffer) => ({
+          inlineData: {
+            mimeType: 'image/jpeg',
+            data: buffer.toString('base64'),
+          },
+        }))
+
+        const prompt = buildPrompt({
+          receiptType: data.receiptType as ReceiptType | undefined,
+          context: 'production',
+        })
+
+        const result = await withRetry(
+          () => model.generateContent([{ text: prompt }, ...imageParts]),
+          isTransientGeminiError,
+          { maxRetries: 1, delayMs: GEMINI_RETRY_DELAY_MS }
+        )
+
+        text = result.response.text()
       }
-      const model = genAI.getGenerativeModel(
-        { model: geminiModel },
-        { apiVersion: 'v1' }
-      )
-
-      const imageParts = fullSizeBuffers.map((buffer: Buffer) => ({
-        inlineData: {
-          mimeType: 'image/jpeg',
-          data: buffer.toString('base64'),
-        },
-      }))
-
-      const prompt = buildPrompt({
-        receiptType: data.receiptType as ReceiptType | undefined,
-        context: 'production',
-      })
-
-      const result = await withRetry(
-        () => model.generateContent([{ text: prompt }, ...imageParts]),
-        isTransientGeminiError,
-        { maxRetries: 1, delayMs: GEMINI_RETRY_DELAY_MS }
-      )
-
-      const text = result.response.text()
       const cleanedText = text
         .replace(/^```json\s*/i, '')
         .replace(/\s*```$/i, '')
