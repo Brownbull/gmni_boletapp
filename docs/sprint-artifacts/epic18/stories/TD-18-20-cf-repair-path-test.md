@@ -1,6 +1,6 @@
 # Tech Debt Story TD-18-20: CF-Level Test for JSON Repair Path
 
-Status: review
+Status: done
 
 > **Source:** ECC Code Review (2026-04-05) on story TD-18-17
 > **Priority:** HIGH | **Estimated Effort:** 2 points
@@ -25,5 +25,22 @@ TD-18-17 added `parseJsonWithRepair` and integrated it into 3 CFs. Unit tests fo
 ## Dev Notes
 - Source story: [TD-18-17](./TD-18-17-malformed-json-repair.md)
 - Review findings: #8
-- Files affected: `functions/src/__tests__/processReceiptScan.test.ts`, `functions/src/__tests__/analyzeReceipt.test.ts`
+- Files affected: `functions/src/__tests__/processReceiptScan.test.ts`, `functions/src/__tests__/analyzeReceipt.test.ts`, `functions/src/__tests__/testFixtures.ts` (new)
 - The fixture `prompt-testing/test-cases/adversarial/malformed-json.fixture.json` has both the raw malformed response and expected coerced output — use it as the test data source
+
+## Senior Developer Review (ECC)
+
+- **Date:** 2026-04-05
+- **Classification:** STANDARD
+- **Agents:** code-reviewer (8/10), security-reviewer (7/10), tdd-guide (8/10)
+- **Overall:** 8/10 — APPROVE
+- **Quick fixes applied:** 4 (tightened assertions, shared fixture, try/finally, length check)
+- **Deferred to backlog:** 2 PROD findings (sanitization assertion gap, unused fixture file)
+<!-- CITED: L2-008 (SSoT), L2-009 (Integration Seam) -->
+
+## Deferred Findings (Code Review 2026-04-05)
+
+| # | Finding | Stage | Destination | Tracking |
+|---|---------|-------|-------------|----------|
+| 3 | Repair path tests missing sanitization assertions (XSS) | PROD | Backlog | deferred-findings.md |
+| 6 | Adversarial fixture file unused by tests | PROD | Backlog | deferred-findings.md |

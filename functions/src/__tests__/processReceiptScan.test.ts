@@ -74,6 +74,7 @@ const mockFetch = jest.fn()
 ;(global as unknown as { fetch: typeof mockFetch }).fetch = mockFetch
 
 import { processReceiptScan } from '../processReceiptScan'
+import { MALFORMED_GEMINI_JSON } from './testFixtures'
 
 const VALID_URL = 'https://storage.googleapis.com/test-bucket/pending_scans/user1/scan1/image-0.jpg'
 
@@ -346,38 +347,43 @@ describe('processReceiptScan', () => {
     it('repairs malformed fixture JSON and completes successfully (TD-18-20)', async () => {
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation()
 
-      // Raw Gemini response with all four malformation types:
-      // markdown fence, unquoted keys, trailing commas, inline comments
-      const MALFORMED_FIXTURE =
-        '```json\n{\n  merchant: "Lider Express",\n  date: "2026-04-02",\n  total: 15990,\n  currency: "CLP",\n  category: "Groceries",\n  items: [\n    {name: "Leche Entera 1L", totalPrice: 1290, quantity: 2, category: "Dairy",},\n    {name: "Pan Molde Integral", totalPrice: 990, quantity: 1, category: "Bakery",},\n  ], // items extracted from receipt\n  metadata: {\n    receiptType: "receipt",\n    confidence: 0.88,\n  }\n}\n```'
-      mockLoadFixture.mockResolvedValue(MALFORMED_FIXTURE)
+      try {
+        mockLoadFixture.mockResolvedValue(MALFORMED_GEMINI_JSON)
 
-      const snap = makeFakeSnapshot(makeSnapshotData())
-      await handler(snap, makeEventContext())
+        const snap = makeFakeSnapshot(makeSnapshotData())
+        await handler(snap, makeEventContext())
 
-      // Verify repair path was exercised (not fast-path JSON.parse)
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('JSON repair applied')
-      )
+        // Verify repair path was exercised (not fast-path JSON.parse)
+        expect(warnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('jsonRepair: JSON repair applied')
+        )
 
-      // Verify scan completed successfully with coerced values
-      expect(mockDocUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          status: 'completed',
-          result: expect.objectContaining({
-            merchant: 'Lider Express',
-            date: '2026-04-02',
-            total: 15990,
-            category: 'Groceries',
-            items: expect.arrayContaining([
-              expect.objectContaining({ name: 'Leche Entera 1L', totalPrice: 1290 }),
-              expect.objectContaining({ name: 'Pan Molde Integral', totalPrice: 990 }),
-            ]),
-          }),
-        })
-      )
+        // Verify scan completed successfully with coerced values
+        expect(mockDocUpdate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            status: 'completed',
+            result: expect.objectContaining({
+              merchant: 'Lider Express',
+              date: '2026-04-02',
+              total: 15990,
+              category: 'Groceries',
+              items: expect.arrayContaining([
+                expect.objectContaining({ name: 'Leche Entera 1L', totalPrice: 1290 }),
+                expect.objectContaining({ name: 'Pan Molde Integral', totalPrice: 990 }),
+              ]),
+            }),
+          })
+        )
 
-      warnSpy.mockRestore()
+        // Verify exact item count (arrayContaining alone doesn't catch duplicates)
+        const updateCall = mockDocUpdate.mock.calls.find(
+          (call: unknown[]) => (call[0] as Record<string, unknown>).status === 'completed'
+        )
+        expect(updateCall).toBeDefined()
+        expect((updateCall![0] as Record<string, { items: unknown[] }>).result.items).toHaveLength(2)
+      } finally {
+        warnSpy.mockRestore()
+      }
     })
 
     it('refunds credit on fixture load failure', async () => {
