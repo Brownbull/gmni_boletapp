@@ -26,7 +26,7 @@
  * - Authentication: Required (Firebase Auth)
  * - Rate Limit: 10 requests/minute/user
  * - Image Validation: Max 5 images, 10MB each
- * - Model: gemini-2.0-flash (GA)
+ * - Model: gemini-2.5-flash-lite (configurable via GEMINI_MODEL)
  *
  * Dependencies: imageProcessing.ts, storageService.ts, prompts/
  */
@@ -42,7 +42,7 @@ export { analyzeReceipt } from './analyzeReceipt'
  * - Rate Limit: 5 requests/minute/user
  * - PDF Validation: Max 7MB (Firebase callable overhead; see analyzeStatement.ts)
  * - Timeout: 300s (statements are larger than receipts)
- * - Model: gemini-2.5-flash (configurable via GEMINI_MODEL)
+ * - Model: gemini-2.5-flash-lite (configurable via GEMINI_MODEL)
  *
  * Dependencies: prompts/statement/
  */

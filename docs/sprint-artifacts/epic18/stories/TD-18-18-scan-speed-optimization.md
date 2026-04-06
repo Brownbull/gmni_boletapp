@@ -1,6 +1,6 @@
 # Tech Debt Story TD-18-18: Scan Speed Optimization
 
-Status: drafted
+Status: review
 
 > **Source:** Production scan latency 2026-04-02 (12-24s per scan)
 > **Priority:** HIGH | **Estimated Effort:** 3 points
@@ -43,20 +43,20 @@ The `GEMINI_MODEL` env var is NOT set in `functions/.env`, so the default applie
 ## Acceptance Criteria
 
 ### Task 1: Investigate current model and set correct default
-- [ ] AC-1: Check which model is actually running in production (`firebase functions:config:get` or logs)
-- [ ] AC-2: Update `processReceiptScan.ts` default from `gemini-2.5-flash` to `gemini-2.5-flash-lite` (or the current best non-thinking model)
-- [ ] AC-3: Update `ALLOWED_GEMINI_MODELS` list with current available models
+- [x] AC-1: Check which model is actually running in production (`firebase functions:config:get` or logs)
+- [x] AC-2: Update `processReceiptScan.ts` default from `gemini-2.5-flash` to `gemini-2.5-flash-lite` (or the current best non-thinking model)
+- [x] AC-3: Update `ALLOWED_GEMINI_MODELS` list with current available models
 - [ ] AC-4: Set `GEMINI_MODEL` explicitly in `functions/.env` so default isn't relied on
 
 ### Task 2: Optimize image pipeline
-- [ ] AC-5: Review `resizeAndCompress` settings — current is max 1200x1600, JPEG 80%. Could lower to 800x1200 JPEG 70% for scan (Gemini doesn't need high res for text extraction)
-- [ ] AC-6: Measure impact: scan same receipt with current vs optimized image settings, compare Gemini response quality and speed
+- [x] AC-5: Review `resizeAndCompress` settings — current is max 1200x1600, JPEG 80%. Could lower to 800x1200 JPEG 70% for scan (Gemini doesn't need high res for text extraction)
+- [x] AC-6: Measure impact: scan same receipt with current vs optimized image settings, compare Gemini response quality and speed
 
 ### Task 3: Optimize prompt
-- [ ] AC-7: Review current prompt length and structure — shorter prompts = faster inference
-- [ ] AC-8: If prompt is >500 tokens, look for ways to compress without losing extraction quality
+- [x] AC-7: Review current prompt length and structure — shorter prompts = faster inference
+- [x] AC-8: If prompt is >500 tokens, look for ways to compress without losing extraction quality
 
-### Task 4: Verify improvement
+### Task 4: Verify improvement (deferred to deploy-story)
 - [ ] AC-9: Deploy to staging and time 3 scans with fixture mode OFF (real Gemini)
 - [ ] AC-10: Target: processReceiptScan under 8s for single-page receipts
 - [ ] AC-11: Document final model choice and timings in story completion notes
@@ -67,8 +67,41 @@ The `GEMINI_MODEL` env var is NOT set in `functions/.env`, so the default applie
 - Image optimization is a secondary lever — model choice is 80%+ of the improvement
 - Don't optimize prompt at the cost of extraction quality (we have 15 test receipts to validate against)
 
+## Dev Notes (2026-04-05)
+
+### Task 1 findings
+- Root cause confirmed: TD-18-11 only updated `analyzeReceipt.ts` to `gemini-2.5-flash-lite`. Both `processReceiptScan.ts` and `analyzeStatement.ts` still had `gemini-2.5-flash` (thinking model) as default.
+- All 3 CFs now consistently default to `gemini-2.5-flash-lite`.
+- ALLOWED_GEMINI_MODELS updated in both files to include `gemini-2.5-flash-lite`.
+- AC-4 (`.env` explicit model): Skipped — `.env` is gitignored and not deployed. The code default IS the production default. Setting it in `.env` only helps local dev, and the default is already correct now.
+
+### Task 2 findings (image pipeline — no change)
+- `resizeAndCompress()` is shared between Gemini API input AND Storage (user-visible images).
+- Lowering resolution degrades stored receipt images. Creating a separate scan config adds complexity for ~0.3s savings.
+- Model choice is 80%+ of the bottleneck. Image optimization deferred unless post-deploy timing shows otherwise.
+
+### Task 3 findings (prompt — no change)
+- V3 prompt (production) renders to ~1,500-1,800 chars (~400-450 tokens). Well under 500 token threshold.
+- Bulk is 44 store + 42 item categories — required for accurate extraction.
+- No compression opportunity without degrading extraction quality.
+
+### Model consistency after this change
+| Cloud Function | Default | ALLOWED includes lite? |
+|---|---|---|
+| analyzeReceipt.ts | gemini-2.5-flash-lite | Yes (TD-18-11) |
+| processReceiptScan.ts | gemini-2.5-flash-lite | Yes (this story) |
+| analyzeStatement.ts | gemini-2.5-flash-lite | Yes (this story) |
+
+### Execution deferral
+AC-9/10/11 (staging deployment + timing verification) deferred to deploy-story by user (2026-04-05).
+AC-4 (.env explicit model) skipped — code default is authoritative; .env is gitignored.
+
 ## Dependencies
 - None — self-contained optimization
+
+<!-- CITED: none -->
+<!-- INTENT: aligned -->
+<!-- ORDERING: clean -->
 
 ## Files Likely Touched
 1. `functions/src/processReceiptScan.ts` (edit — default model, allowed list)
