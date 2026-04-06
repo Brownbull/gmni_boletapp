@@ -58,6 +58,14 @@ jest.mock('../prompts', () => ({
   RECEIPT_TYPES: ['supermarket', 'restaurant'],
 }))
 
+// Mock fixtureHelper
+const mockIsFixtureMode = jest.fn().mockReturnValue(false)
+const mockLoadFixture = jest.fn()
+jest.mock('../fixtureHelper', () => ({
+  isFixtureMode: () => mockIsFixtureMode(),
+  loadFixture: (...args: unknown[]) => mockLoadFixture(...args),
+}))
+
 // Set env
 process.env.GEMINI_API_KEY = 'test-key'
 
@@ -271,5 +279,81 @@ describe('processReceiptScan', () => {
     // Should not call Gemini or update doc
     expect(mockGenerateContent).not.toHaveBeenCalled()
     expect(mockDocUpdate).not.toHaveBeenCalled()
+  })
+
+  describe('fixture mode (Plan B)', () => {
+    const RAW_FIXTURE = JSON.stringify({
+      merchant: 'Fixture Market',
+      date: '2026-03-15',
+      total: 15000,
+      category: 'Supermarket',
+      items: [{ name: 'Milk', totalPrice: 1500, category: 'Fresh Food' }],
+    })
+
+    beforeEach(() => {
+      mockIsFixtureMode.mockReturnValue(true)
+      mockLoadFixture.mockResolvedValue(RAW_FIXTURE)
+    })
+
+    afterEach(() => {
+      mockIsFixtureMode.mockReturnValue(false)
+    })
+
+    it('uses fixture instead of Gemini when fixture mode enabled', async () => {
+      const snap = makeFakeSnapshot(makeSnapshotData())
+      await handler(snap, makeEventContext())
+
+      expect(mockLoadFixture).toHaveBeenCalledWith(expect.arrayContaining([expect.any(Buffer)]))
+      expect(mockGenerateContent).not.toHaveBeenCalled()
+      expect(mockDocUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'completed',
+          result: expect.objectContaining({
+            merchant: 'Fixture Market',
+            total: 15000,
+          }),
+        })
+      )
+    })
+
+    it('runs coercion chain on raw fixture text (M4)', async () => {
+      // Fixture with string numbers and price→totalPrice remap
+      const rawWithCoercion = JSON.stringify({
+        merchant: 'Test',
+        date: '2026-01-15',
+        total: '12.400',
+        category: 'Other',
+        items: [{ name: 'Item', price: '6.200', quantity: 1 }],
+      })
+      mockLoadFixture.mockResolvedValue(rawWithCoercion)
+
+      const snap = makeFakeSnapshot(makeSnapshotData())
+      await handler(snap, makeEventContext())
+
+      expect(mockDocUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'completed',
+          result: expect.objectContaining({
+            total: 12400,
+            items: expect.arrayContaining([
+              expect.objectContaining({ totalPrice: 6200 }),
+            ]),
+          }),
+        })
+      )
+    })
+
+    it('refunds credit on fixture load failure', async () => {
+      mockLoadFixture.mockRejectedValue(new Error('No fixture found for image hash abc123'))
+
+      const snap = makeFakeSnapshot(makeSnapshotData())
+      await handler(snap, makeEventContext())
+
+      expect(mockRunTransaction).toHaveBeenCalled()
+      expect(mockTransaction.update).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ status: 'failed', creditDeducted: false })
+      )
+    })
   })
 })

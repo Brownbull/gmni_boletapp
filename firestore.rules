@@ -82,6 +82,15 @@ service cloud.firestore {
     }
 
     // ============================================================================
+    // Scan Fixtures - Admin SDK only (Plan B, M2)
+    // Used by fixture-based staging testing. Collection should not exist in
+    // production, but rule prevents accidental creation via client SDK.
+    // ============================================================================
+    match /scan_fixtures/{fixtureId} {
+      allow read, write: if false;
+    }
+
+    // ============================================================================
     // Default Deny - All other paths
     // ============================================================================
     match /{document=**} {

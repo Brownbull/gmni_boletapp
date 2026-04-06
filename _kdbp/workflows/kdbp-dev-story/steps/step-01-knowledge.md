@@ -15,6 +15,9 @@ Load all project knowledge once at session start. Cache for KDBP agents.
 <action>Load and cache .claude/rules/testing.md → {{cached_testing_guidelines}}</action>
 <action>Store as {{project_testing_patterns}} for TDD Guide agents</action>
 
+<!-- Pipeline context for integration seam checks (Pattern 9) -->
+<action>Load {project-root}/_kdbp/knowledge/pipeline-registry.md → {{pipeline_context}}</action>
+
 <output>**ECC Orchestrator Initialized — Project Knowledge Cached**
 
   Knowledge loaded for session:

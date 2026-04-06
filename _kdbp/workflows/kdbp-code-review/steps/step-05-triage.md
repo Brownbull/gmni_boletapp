@@ -21,12 +21,15 @@ Classify each finding by effort and product stage. Let user choose handling per 
     - Missing validation/guard clause (1-5 lines), naming fix, missing error handling (single call)
     - Missing test assertion, import cleanup, simple type fix, missing null check
     - Documentation/comment fix, single-file localized change
+    - Missing integration test for a single handoff (1 test file, <50 lines)
 
     COMPLEX (needs separate work):
     - Multi-file refactoring, new abstraction, architectural restructuring
     - Service layer redesign, new test infrastructure, security model change
     - State management refactoring, performance optimization requiring profiling
     - Changes touching >3 files
+    - Missing integration test infrastructure (emulator setup, fixture system, new test patterns) → COMPLEX/MVP
+    - Multiple untested integration seams across a pipeline → COMPLEX/MVP
   </action>
 
   <!-- Classify each COMPLEX finding by product stage -->

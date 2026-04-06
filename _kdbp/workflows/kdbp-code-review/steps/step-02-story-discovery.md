@@ -71,6 +71,13 @@ Load story, discover files to review, extract architectural ACs, classify comple
   <check if="{{has_architecture_files}} AND task_count > 6">
     <action>Force add "architect" to {{review_agents}} if not already present</action>
   </check>
+  <!-- Force-include TDD guide when async pipeline files touched (Pattern 9: Integration Seam Coverage) -->
+  <action>Check if {{file_paths}} match pipeline patterns: "functions/**", "src/hooks/use*Scan*", "src/hooks/use*Pending*",
+    "src/hooks/use*Event*", "src/stores/*scan*", or any component listed in {{pipeline_context}}</action>
+  <action>Set {{has_pipeline_files}} = true/false</action>
+  <check if="{{has_pipeline_files}}">
+    <action>Force add "tdd-guide" to {{review_agents}} if not already present</action>
+  </check>
 
   <check if="file_count > 12">
     <output>**Context Budget Warning:** {{file_count}} files exceeds the 12-file guideline. Consider splitting via `/story-sizing` or running agents in two passes.</output>

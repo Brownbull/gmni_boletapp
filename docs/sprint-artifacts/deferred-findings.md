@@ -367,3 +367,11 @@
 - **Files:** `src/features/transaction-editor/views/EditViewItemsSection.qty.test.tsx`
 - **Stage:** PROD — mock accuracy for future test reliability
 - **Estimated effort:** 0.5 points (align stub with real implementation)
+
+### [PROD] JSON Repair Regex Not String-Aware (Comment Stripping + Key Quoting)
+
+- **Source:** TD-18-17 review (2026-04-05)
+- **Finding:** Two regex patterns in `repairJson` are not string-aware: (1) `//` comment stripping fires inside double-quoted strings (e.g., `"https://store.cl//promo"` truncated), and (2) key-quoting regex matches `{word:` patterns inside string values. Both are documented limitations. Safe for current Gemini schema which has no URL fields or colon-containing values. If schema evolves, upgrade to string-aware tokenizer or `jsonrepair` library.
+- **Files:** `functions/src/utils/jsonRepair.ts:30,37`
+- **Stage:** PROD — No current trigger; mitigation needed if Gemini schema adds URL or free-text fields
+- **Estimated effort:** 3 points (string-aware tokenizer or switch to `jsonrepair` library — addresses both issues)

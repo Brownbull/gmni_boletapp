@@ -529,7 +529,9 @@
       transform: scale(1.05);
     }
 
+    .logo-circle img { display:block; }
     .logo-circle span {
+      display:none;
       font-family: 'Baloo 2', cursive;
       font-weight: 700;
       font-size: 18px;
@@ -545,29 +547,34 @@
       line-height: 1;
     }
 
-    .avatar-circle {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: var(--bg-tertiary);
+    .header-bell {
+      position: relative;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
-      transition: transform 0.15s;
+      width: 36px;
+      height: 36px;
       flex-shrink: 0;
+      transition: transform 0.15s;
     }
 
-    .avatar-circle:hover {
+    .header-bell:hover {
       transform: scale(1.05);
     }
 
-    .avatar-circle span {
+    .header-bell .bell-badge {
+      position: absolute;
+      top: 2px;
+      right: 0;
+      background: #ef4444;
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
       font-family: 'Outfit', sans-serif;
-      font-weight: 600;
-      font-size: 13px;
-      color: var(--text);
-      line-height: 1;
+      border-radius: 999px;
+      padding: 1px 5px;
+      line-height: 1.3;
     }
 
     /* ======================================================
@@ -1191,8 +1198,8 @@
       background: var(--indicator-inactive);
     }
 
-    /* ======================================================
-       BOTTOM NAVIGATION
+        /* ======================================================
+       BOTTOM NAVIGATION (5 equal items — restructured)
        ====================================================== */
 
     .bottom-nav {
@@ -1257,89 +1264,6 @@
     .nav-item:not(.active) .nav-icon svg {
       stroke: var(--secondary);
       opacity: 0.45;
-    }
-
-    /* -- FAB -- */
-    .fab-wrapper {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 52px;
-    }
-
-    .fab {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--fab-gradient-from), var(--fab-gradient-to));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: -28px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      cursor: pointer;
-      transition: transform 0.15s, box-shadow 0.15s;
-      border: none;
-      position: relative;
-      z-index: 2;
-    }
-
-    .fab:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-    }
-
-    .fab svg {
-      width: 24px;
-      height: 24px;
-      stroke: #fff;
-      stroke-width: 2;
-      fill: none;
-    }
-
-    .fab-badge-left {
-      position: absolute;
-      top: -24px;
-      left: -6px;
-      background: var(--primary);
-      border-radius: 999px;
-      padding: 2px 6px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 9px;
-      font-weight: 700;
-      color: #fff;
-      line-height: 1.3;
-      z-index: 3;
-      white-space: nowrap;
-    }
-
-    .fab-badge-right {
-      position: absolute;
-      top: -24px;
-      right: -6px;
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 2px 5px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 9px;
-      font-weight: 700;
-      color: var(--text);
-      line-height: 1.3;
-      z-index: 3;
-      white-space: nowrap;
-    }
-
-    /* -- Alert dot -- */
-    .alert-dot {
-      position: absolute;
-      top: 2px;
-      right: 8px;
-      width: 6px;
-      height: 6px;
-      background: #ef4444;
-      border-radius: 50%;
     }
 
     /* ======================================================
@@ -1505,6 +1429,55 @@
     body.variant-skeleton .skeleton-state { display: block; }
     body.variant-skeleton .recientes-section { display: none; }
 
+
+    /* -- Pending Scan Variant -- */
+    .pending-dot {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 8px;
+      height: 8px;
+      background: #8b5cf6;
+      border-radius: 50%;
+      animation: pending-pulse 1.5s ease-in-out infinite;
+      z-index: 10;
+    }
+    @keyframes pending-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.3); }
+    }
+    .resume-banner {
+      display: none;
+      margin: 8px 16px;
+      padding: 12px 16px;
+      background: rgba(139, 92, 246, 0.08);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      border-radius: 12px;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+    .resume-banner-icon { font-size: 20px; }
+    .resume-banner-text { flex: 1; }
+    .resume-banner-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      color: #8b5cf6;
+    }
+    .resume-banner-subtitle {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 400;
+      font-size: 11px;
+      color: var(--secondary);
+    }
+    .resume-banner-arrow {
+      color: #8b5cf6;
+      font-size: 16px;
+    }
+    body.variant-pending .pending-dot { display: block; }
+    body.variant-pending .resume-banner { display: flex; }
+
     /* ======================================================
        RESPONSIVE (just in case)
        ====================================================== */
@@ -1547,6 +1520,7 @@
         <button class="variant-tab active" data-variant="hero">Hero</button>
         <button class="variant-tab" data-variant="empty">Empty State</button>
         <button class="variant-tab" data-variant="skeleton">Loading</button>
+        <button class="variant-tab" data-variant="pending">Pending Scan</button>
       </div>
     </div>
   </div>
@@ -1573,13 +1547,29 @@
 
       <!-- Top Header -->
       <div class="top-header">
-        <div class="logo-circle"><span>G</span></div>
+        <div class="logo-circle"><img src="piggy-bank.png" style="width:80%;height:80%;object-fit:contain;image-rendering:pixelated"></div>
         <span class="wordmark">Gastify</span>
-        <div class="avatar-circle"><span>GC</span></div>
+        <div class="header-bell">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span class="bell-badge">3</span>
+        </div>
       </div>
 
       <!-- Scrollable Content -->
       <div class="scroll-content">
+
+        <!-- Resume banner (visible in pending variant) -->
+        <div class="resume-banner">
+          <div class="resume-banner-icon">📋</div>
+          <div class="resume-banner-text">
+            <div class="resume-banner-title">Estado de cuenta procesandose...</div>
+            <div class="resume-banner-subtitle">Toca para ver el progreso</div>
+          </div>
+          <div class="resume-banner-arrow">›</div>
+        </div>
 
         <!-- === HERO STATE === -->
         <div class="hero-state">
@@ -1920,8 +1910,8 @@
       </div><!-- /scroll-content -->
 
       <!-- Bottom Navigation -->
-      <div class="bottom-nav">
-        <!-- Home (active) -->
+            <div class="bottom-nav">
+        <!-- Inicio -->
         <div class="nav-item active">
           <div class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -1931,7 +1921,29 @@
           </div>
           <span class="nav-label">Inicio</span>
         </div>
-        <!-- BarChart3 (no label visible) -->
+        <!-- Compras -->
+        <div class="nav-item">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <span class="nav-label">Compras</span>
+        </div>
+        <!-- Escanear -->
+        <div class="nav-item">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </div>
+          <span class="nav-label">Escanear</span>
+        </div>
+        <!-- Gastos -->
         <div class="nav-item">
           <div class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -1940,44 +1952,20 @@
               <line x1="6" y1="20" x2="6" y2="14"/>
             </svg>
           </div>
-          <span class="nav-label" style="visibility:hidden;">_</span>
+          <span class="nav-label">Gastos</span>
         </div>
-        <!-- FAB (center) -->
-        <div class="fab-wrapper">
-          <span class="fab-badge-left">100</span>
-          <span class="fab-badge-right">1K</span>
-          <button class="fab">
-            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-              <circle cx="12" cy="13" r="4"/>
-            </svg>
-          </button>
-        </div>
-        <!-- Lightbulb -->
+        <!-- Perfil -->
         <div class="nav-item">
           <div class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 18h6"/>
-              <path d="M10 22h4"/>
-              <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/>
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
             </svg>
           </div>
-          <span class="nav-label" style="visibility:hidden;">_</span>
-        </div>
-        <!-- Bell -->
-        <div class="nav-item">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
-          </div>
-          <span class="nav-label" style="visibility:hidden;">_</span>
-          <div class="alert-dot"></div>
+          <span class="nav-label">Perfil</span>
         </div>
       </div>
-
-      <!-- Home Indicator -->
+<!-- Home Indicator -->
       <div class="home-indicator"></div>
 
     </div><!-- /phone-screen -->
@@ -2023,7 +2011,7 @@
         tab.addEventListener('click', function() {
           variantTabs.forEach(function(t) { t.classList.remove('active'); });
           tab.classList.add('active');
-          body.classList.remove('variant-empty', 'variant-skeleton');
+          body.classList.remove('variant-empty', 'variant-skeleton', 'variant-pending');
           var variant = tab.dataset.variant;
           if (variant !== 'hero') {
             body.classList.add('variant-' + variant);

@@ -288,9 +288,13 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
       style={{
-        padding: 'calc(1rem + var(--safe-top, 0px)) calc(1rem + var(--safe-right, 0px)) calc(1rem + var(--safe-bottom, 0px)) calc(1rem + var(--safe-left, 0px))',
+        padding: '1rem',
+        paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))',
+        paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         transitionDuration: prefersReducedMotion ? '0ms' : `${DURATION.NORMAL}ms`,
+        overflow: 'hidden',
+        touchAction: 'none',
       }}
       role="dialog"
       aria-modal="true"

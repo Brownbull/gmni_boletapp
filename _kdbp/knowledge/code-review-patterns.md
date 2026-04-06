@@ -214,6 +214,56 @@ ls scripts/check-*-sync.* 2>/dev/null
 
 ---
 
+### 9. Integration Seam Coverage
+
+**Severity:** HIGH — Prevents post-deploy integration failures invisible to unit tests
+
+**Trigger:** Story introduces or modifies a chain where data flows across integration seams:
+- Cloud Function → Firestore → Client listener
+- Event emitter → Event handler (mitt bus)
+- Upload → Queue → Process → Deliver
+
+NOTE: store→component and hook→store are NOT integration seams — those are standard React data flow covered by unit tests.
+
+**Check:** For each seam crossing, verify at least ONE test exercises the handoff with data flowing through (not mocked on both sides). Tests MUST use Firestore emulator or staging fixtures — shared mocks do not count as integration coverage.
+
+**Anti-pattern (The Mocking Trap):**
+```typescript
+// Test A: mocks Firestore, tests CF writes correct data
+mockFirestore.set.mockResolvedValue(undefined)
+expect(mockFirestore.set).toHaveBeenCalledWith({ status: 'completed', ... })
+
+// Test B: mocks onSnapshot, tests hook calls callback
+mockOnSnapshot.mockImplementation((_, callback) => callback({ data: () => mockData }))
+expect(onCompleted).toHaveBeenCalledWith(mockData)
+
+// PROBLEM: Neither test verifies that CF's write format matches hook's read format
+// Neither test verifies the listener actually subscribes at the right time
+```
+
+**Required test pattern:**
+```typescript
+// Integration test: data flows from writer to reader
+// MUST use Firestore emulator or staging fixtures — shared mocks do NOT qualify
+const realDoc = { status: 'completed', result: { merchant: 'Test', ... } }
+// Writer side: verify this is what gets written
+// Reader side: verify this exact shape triggers the callback
+// REQUIRED: verify timing — listener is subscribed BEFORE write happens
+// (timing was the ROOT CAUSE of Epic 18 — listener not mounted when write arrived)
+```
+
+**Verification:**
+```bash
+# Check for integration tests covering async pipelines
+ls tests/integration/*pipeline* tests/integration/*scan* tests/integration/*event* 2>/dev/null
+# Check for mocking trap — both sides of a handoff mocked independently
+grep -rn "mockOnSnapshot\|mockFirestore" tests/unit/ | head -20
+```
+
+**Historical frequency:** Critical — Epic 18 Story 18-13: 794 unit tests passed, 5 of 7 post-deploy bugs were integration seam failures. useScanEventSubscription never mounted, processStart never called, price field not remapped between two CFs.
+
+---
+
 ## Additional Review Checks
 
 - **Defensive timestamps:** Use optional chaining + try/catch when converting DB timestamps

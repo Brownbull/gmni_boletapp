@@ -6,7 +6,7 @@
   <title>Transaction Editor — Gastify (Production Design System)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Baloo+2:wght@700&display=swap" rel="stylesheet">
   <style>
     /* ======================================================
        GASTIFY — PRODUCTION DESIGN SYSTEM
@@ -1128,6 +1128,346 @@
     body.show-decimal-qty .variant-hero { display: none; }
     body.show-decimal-qty .variant-decimal-qty { display: block; }
 
+    .variant-statement { display: none; }
+    .variant-hardlock { display: none; }
+
+    body.show-statement .variant-hero { display: none; }
+    body.show-statement .variant-statement { display: block; }
+
+    body.show-hardlock .variant-hero { display: none; }
+    body.show-hardlock .variant-hardlock { display: block; }
+
+    /* -- Statement banner -- */
+    .statement-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(139, 92, 246, 0.08);
+      border: 1.5px solid rgba(139, 92, 246, 0.2);
+      margin-bottom: 10px;
+    }
+
+    .statement-banner-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .statement-banner-text {
+      flex: 1;
+    }
+
+    .statement-banner-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      color: #7c3aed;
+      margin-bottom: 2px;
+    }
+
+    .statement-banner-subtitle {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 400;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    /* -- Statement fields section -- */
+    .statement-fields {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+
+    .statement-field-label {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .statement-field-group {
+      margin-bottom: 12px;
+    }
+
+    .statement-field-group:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Pill selector */
+    .pill-selector {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .pill-option {
+      padding: 5px 12px;
+      border-radius: 9999px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .pill-option.selected-green {
+      background: rgba(34, 197, 94, 0.12);
+      border-color: #22c55e;
+      color: #16a34a;
+    }
+
+    .pill-option.opt-blue {
+      border-color: var(--border);
+      color: var(--text-secondary);
+    }
+
+    .pill-option.opt-amber {
+      border-color: var(--border);
+      color: var(--text-secondary);
+    }
+
+    .pill-option.opt-red {
+      border-color: var(--border);
+      color: var(--text-secondary);
+    }
+
+    /* Installments display */
+    .installments-display {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .installments-text {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    .installments-bar {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--bg-tertiary);
+      overflow: hidden;
+    }
+
+    .installments-bar-fill {
+      height: 100%;
+      width: 50%;
+      border-radius: 3px;
+      background: #f59e0b;
+    }
+
+    /* Recurrence dropdown */
+    .recurrence-select {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+
+    /* Cardholder input */
+    .cardholder-input {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      outline: none;
+      text-transform: uppercase;
+    }
+
+    /* Origin section */
+    .statement-origin-divider {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 14px 0 10px;
+    }
+
+    .statement-origin-divider::before,
+    .statement-origin-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .statement-origin-divider span {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .source-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(139, 92, 246, 0.1);
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: #7c3aed;
+      margin-bottom: 10px;
+    }
+
+    /* -- Hard Lock banner -- */
+    .hardlock-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(239, 68, 68, 0.06);
+      border: 1.5px solid rgba(239, 68, 68, 0.2);
+      margin-bottom: 10px;
+    }
+
+    .hardlock-banner-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .hardlock-banner-text {
+      flex: 1;
+    }
+
+    .hardlock-banner-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--error);
+      margin-bottom: 2px;
+    }
+
+    .hardlock-banner-subtitle {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 400;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    /* Lock overlay on form */
+    .hardlock-overlay {
+      position: relative;
+    }
+
+    .hardlock-overlay::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(var(--primary-rgb), 0.03);
+      border-radius: 12px;
+      pointer-events: none;
+    }
+
+    .hardlock-overlay .merchant-card,
+    .hardlock-overlay .item-group,
+    .hardlock-overlay .view-mode-toggle,
+    .hardlock-overlay .total-row {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .hardlock-overlay .add-item-btn {
+      display: none;
+    }
+
+    .hardlock-lock-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 48px;
+      height: 48px;
+      background: rgba(var(--primary-rgb), 0.08);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    .hardlock-lock-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--text-secondary);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Unlock button */
+    .unlock-btn {
+      width: 100%;
+      height: 48px;
+      border-radius: 14px;
+      border: 2px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-bottom: 8px;
+    }
+
+    .unlock-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .unlock-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
     /* ======================================================
        RESPONSIVE
        ====================================================== */
@@ -1163,6 +1503,8 @@
         <button class="variant-tab" data-variant="new-scan">New Scan</button>
         <button class="variant-tab" data-variant="validation">Errors</button>
         <button class="variant-tab" data-variant="decimal-qty">Decimal Qty</button>
+        <button class="variant-tab" data-variant="statement">Statement</button>
+        <button class="variant-tab" data-variant="hardlock">Hard Lock</button>
       </div>
     </div>
   </div>
@@ -1778,6 +2120,268 @@
         </div>
       </div>
 
+      <!-- ===================================================
+           VARIANT 5: STATEMENT — Credit Card Statement Fields
+           =================================================== -->
+      <div class="variant-statement">
+
+        <!-- Editor Header -->
+        <div class="editor-header">
+          <div class="editor-header-left">
+            <button class="editor-back-btn">
+              <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <span class="editor-title">Mi Compra</span>
+          </div>
+          <div class="editor-header-right">
+            <span class="credit-badge normal-credits">&#9889;100</span>
+            <span class="credit-badge super-credits">@1K</span>
+            <button class="eye-btn">
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <button class="delete-btn">
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="scroll-content">
+
+          <!-- Statement Banner -->
+          <div class="statement-banner">
+            <span class="statement-banner-icon">&#x1F4CB;</span>
+            <div class="statement-banner-text">
+              <div class="statement-banner-title">Campos de estado de cuenta</div>
+              <div class="statement-banner-subtitle">Estos campos fueron extraidos del estado de cuenta</div>
+            </div>
+          </div>
+
+          <!-- Merchant Card -->
+          <div class="merchant-card">
+            <div class="merchant-top-row">
+              <div class="merchant-details">
+                <div class="merchant-name-row">
+                  <span class="merchant-name">NETFLIX.COM</span>
+                  <span class="edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
+                </div>
+                <div>
+                  <span class="merchant-category-pill" style="background: #7c3aed;">&#x1F4B3; SUSCRIPCION</span>
+                </div>
+                <div class="merchant-pills-row">
+                  <span class="info-pill">&#x1F4C5; 05 Mar</span>
+                  <span class="info-pill">$</span>
+                </div>
+              </div>
+              <div class="receipt-thumbnail" style="background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(139,92,246,0.05));">
+                <svg viewBox="0 0 24 24" style="stroke: #7c3aed;"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="2" y1="8" x2="22" y2="8"/><line x1="6" y1="14" x2="10" y2="14"/><line x1="6" y1="17" x2="14" y2="17"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Statement-specific fields -->
+          <div class="statement-fields">
+            <!-- Tipo de Cargo -->
+            <div class="statement-field-group">
+              <div class="statement-field-label">Tipo de Cargo</div>
+              <div class="pill-selector">
+                <button class="pill-option selected-green">Compra</button>
+                <button class="pill-option opt-blue">Suscripcion</button>
+                <button class="pill-option opt-amber">Cuota</button>
+                <button class="pill-option opt-red">Devolucion</button>
+              </div>
+            </div>
+
+            <!-- Cuotas -->
+            <div class="statement-field-group">
+              <div class="statement-field-label">Cuotas</div>
+              <div class="installments-display">
+                <span class="installments-text">3 de 6</span>
+                <div class="installments-bar">
+                  <div class="installments-bar-fill"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recurrencia -->
+            <div class="statement-field-group">
+              <div class="statement-field-label">Recurrencia</div>
+              <select class="recurrence-select">
+                <option selected>Mensual</option>
+                <option>Semanal</option>
+                <option>Ninguna</option>
+              </select>
+            </div>
+
+            <!-- Titular -->
+            <div class="statement-field-group">
+              <div class="statement-field-label">Titular</div>
+              <input class="cardholder-input" type="text" value="GABRIEL ANDRES" readonly>
+            </div>
+          </div>
+
+          <!-- Origin divider -->
+          <div class="statement-origin-divider">
+            <span>Origen</span>
+          </div>
+
+          <!-- Source badge -->
+          <div>
+            <span class="source-badge">&#x1F4B3; Estado de Cuenta &mdash; Marzo 2026</span>
+          </div>
+
+          <!-- Single item (statement typically = 1 line item) -->
+          <div class="item-group">
+            <div class="item-group-header">
+              <span class="group-emoji">&#x1F3AC;</span>
+              <span class="group-name">Entretenimiento</span>
+              <span class="group-count">1</span>
+              <span class="group-total">$8.490</span>
+              <svg class="group-chevron" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+            </div>
+            <div class="item-group-items">
+              <div class="item-row">
+                <div class="item-top-line">
+                  <span class="item-name">NETFLIX SUSCRIPCION</span>
+                  <span class="item-edit-icon"><svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
+                  <span class="item-price">$8.490</span>
+                </div>
+                <div class="item-bottom-line">
+                  <span class="item-category-badge" style="background: #7c3aed;">SUSCRIPCION</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Row -->
+          <div class="total-row">
+            <span class="total-label">Total (1 item)</span>
+            <span class="total-amount">$8.490</span>
+          </div>
+
+          <!-- Save Button -->
+          <button class="save-btn">
+            Guardar Transaccion
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+
+        </div>
+      </div>
+
+      <!-- ===================================================
+           VARIANT 6: HARD LOCK — Statement Verified (Read-Only)
+           =================================================== -->
+      <div class="variant-hardlock">
+
+        <!-- Editor Header -->
+        <div class="editor-header">
+          <div class="editor-header-left">
+            <button class="editor-back-btn">
+              <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <span class="editor-title">Mi Compra</span>
+          </div>
+          <div class="editor-header-right">
+            <span class="credit-badge normal-credits">&#9889;100</span>
+            <span class="credit-badge super-credits">@1K</span>
+            <button class="eye-btn">
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="scroll-content">
+
+          <!-- Hard Lock Banner -->
+          <div class="hardlock-banner">
+            <span class="hardlock-banner-icon">&#x1F512;</span>
+            <div class="hardlock-banner-text">
+              <div class="hardlock-banner-title">Transaccion verificada</div>
+              <div class="hardlock-banner-subtitle">Vinculada con estado de cuenta. Los campos estan bloqueados.</div>
+            </div>
+          </div>
+
+          <!-- Locked content overlay -->
+          <div class="hardlock-overlay">
+
+            <!-- Lock icon overlay -->
+            <div class="hardlock-lock-icon">
+              <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+
+            <!-- Merchant Card (dimmed) -->
+            <div class="merchant-card">
+              <div class="merchant-top-row">
+                <div class="merchant-details">
+                  <div class="merchant-name-row">
+                    <span class="merchant-name">NETFLIX.COM</span>
+                  </div>
+                  <div>
+                    <span class="merchant-category-pill" style="background: #7c3aed;">&#x1F4B3; SUSCRIPCION</span>
+                  </div>
+                  <div class="merchant-pills-row">
+                    <span class="info-pill">&#x1F4C5; 05 Mar</span>
+                    <span class="info-pill">$</span>
+                  </div>
+                </div>
+                <div class="receipt-thumbnail" style="background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(139,92,246,0.05));">
+                  <svg viewBox="0 0 24 24" style="stroke: #7c3aed;"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="2" y1="8" x2="22" y2="8"/><line x1="6" y1="14" x2="10" y2="14"/><line x1="6" y1="17" x2="14" y2="17"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- View Mode Toggle (dimmed) -->
+            <div class="view-mode-toggle">
+              <button class="view-mode-btn active">Por Grupo</button>
+              <button class="view-mode-btn">Original</button>
+            </div>
+
+            <!-- Item Group (dimmed) -->
+            <div class="item-group">
+              <div class="item-group-header">
+                <span class="group-emoji">&#x1F3AC;</span>
+                <span class="group-name">Entretenimiento</span>
+                <span class="group-count">1</span>
+                <span class="group-total">$8.490</span>
+                <svg class="group-chevron" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+              </div>
+              <div class="item-group-items">
+                <div class="item-row">
+                  <div class="item-top-line">
+                    <span class="item-name">NETFLIX SUSCRIPCION</span>
+                    <span class="item-price">$8.490</span>
+                  </div>
+                  <div class="item-bottom-line">
+                    <span class="item-category-badge" style="background: #7c3aed;">SUSCRIPCION</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add Item (hidden by CSS) -->
+            <button class="add-item-btn">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>+ Agregar</span>
+            </button>
+
+            <!-- Total Row (dimmed) -->
+            <div class="total-row">
+              <span class="total-label">Total (1 item)</span>
+              <span class="total-amount">$8.490</span>
+            </div>
+
+          </div><!-- /hardlock-overlay -->
+
+          <!-- Unlock Button -->
+          <button class="unlock-btn">
+            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Desbloquear para editar
+          </button>
+
+        </div>
+      </div>
+
       <!-- Home Indicator -->
       <div class="home-indicator"></div>
 
@@ -1824,11 +2428,13 @@
         tab.addEventListener('click', function() {
           variantTabs.forEach(function(t) { t.classList.remove('active'); });
           tab.classList.add('active');
-          body.classList.remove('show-new-scan', 'show-validation', 'show-decimal-qty');
+          body.classList.remove('show-new-scan', 'show-validation', 'show-decimal-qty', 'show-statement', 'show-hardlock');
           var variant = tab.dataset.variant;
           if (variant === 'new-scan') body.classList.add('show-new-scan');
           else if (variant === 'validation') body.classList.add('show-validation');
           else if (variant === 'decimal-qty') body.classList.add('show-decimal-qty');
+          else if (variant === 'statement') body.classList.add('show-statement');
+          else if (variant === 'hardlock') body.classList.add('show-hardlock');
         });
       });
 

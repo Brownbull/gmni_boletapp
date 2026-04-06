@@ -7,11 +7,47 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
+  :root {
+    --bg: var(--bg);
+    --bg-lighter: var(--bg-lighter);
+    --surface: var(--surface);
+    --border: var(--border);
+    --text: #e8e8f0;
+    --muted: #8888aa;
+    --primary: var(--primary);
+    --primary-dim: var(--primary-dim);
+    --primary-border: var(--primary-border);
+    --accent: var(--accent);
+    --accent-dim: #4a3020;
+    --accent-border: var(--accent-border);
+    --secondary: var(--secondary);
+    --secondary-dim: #1e3a4a;
+    --secondary-border: var(--secondary-border);
+    --green: var(--green);
+    --green-dim: #064e3b;
+    --green-border: var(--green-border);
+    --amber: var(--amber);
+    --amber-dim: #78350f;
+    --amber-border: var(--amber-border);
+    --blue: var(--blue);
+    --blue-dim: #1e3a5f;
+    --blue-border: var(--blue-border);
+    --purple: var(--purple);
+    --purple-dim: #3b1f7a;
+    --purple-border: var(--purple-border);
+    --red: var(--red);
+    --red-dim: #5b1a1a;
+    --red-border: var(--red-border);
+    --gold: #fde68a;
+    --gold-dim: #4a3f1a;
+    --gold-border: var(--amber);
+  }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      background: #1a1a2e;
-      color: #e0e0e0;
+      background: var(--bg);
+      color: var(--text);
       font-family: 'Outfit', sans-serif;
       min-height: 100vh;
       overflow-x: hidden;
@@ -63,13 +99,13 @@
     .header h1 {
       font-size: 36px;
       font-weight: 700;
-      color: #f0ebe3;
+      color: var(--text);
       margin-bottom: 12px;
       line-height: 1.2;
     }
 
     .header h1 span {
-      background: linear-gradient(135deg, #4a7c59, #e8a87c, #5b8fa8);
+      background: linear-gradient(135deg, var(--primary), var(--accent), var(--secondary));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -77,44 +113,54 @@
 
     .header .subtitle {
       font-size: 16px;
-      color: #9a9ab0;
+      color: var(--muted);
       max-width: 640px;
       margin: 0 auto;
       line-height: 1.7;
       font-weight: 400;
     }
 
-    /* Nav reference bar */
+    /* -- Nav Reference Bar (canonical — matches flow-06+) -- */
     .nav-ref {
       display: flex;
       justify-content: center;
-      gap: 6px;
-      margin-top: 20px;
-      flex-wrap: wrap;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 36px;
+      padding: 10px 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
     }
-    .nav-ref .nav-item {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 20px;
-      padding: 6px 14px;
-      font-size: 12px;
-      color: #8888a0;
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 6px 16px;
+      font-size: 10px;
       font-weight: 600;
-      transition: all 0.3s ease;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+      position: relative;
     }
-    .nav-ref .nav-item.active {
-      background: linear-gradient(135deg, rgba(74,124,89,0.3), rgba(74,124,89,0.15));
-      border-color: rgba(74,124,89,0.5);
-      color: #a0d4b0;
-      box-shadow: 0 0 12px rgba(74,124,89,0.15);
-    }
-    .nav-ref .nav-item.fab {
-      background: linear-gradient(135deg, #4a7c59, #3d6b4a);
-      border-color: rgba(74,124,89,0.6);
+    .nav-item .nav-icon { font-size: 18px; }
+    .nav-fab {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--primary-border));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
       color: #fff;
-      font-size: 16px;
-      padding: 4px 16px;
-      box-shadow: 0 2px 12px rgba(74,124,89,0.3);
+      box-shadow: 0 4px 16px rgba(74, 124, 89, 0.4);
+      margin: 0 8px;
+      flex-shrink: 0;
     }
 
     /* ======================== LEGEND ======================== */
@@ -134,7 +180,7 @@
       align-items: center;
       gap: 8px;
       font-size: 12px;
-      color: #8888a0;
+      color: var(--muted);
       font-weight: 500;
     }
     .legend-dot {
@@ -143,10 +189,10 @@
       border-radius: 4px;
       flex-shrink: 0;
     }
-    .legend-dot.red { background: #e05555; }
-    .legend-dot.amber { background: #e8a87c; }
-    .legend-dot.blue { background: #5b8fa8; }
-    .legend-dot.green { background: #4a7c59; }
+    .legend-dot.red { background: var(--red); }
+    .legend-dot.amber { background: var(--accent); }
+    .legend-dot.blue { background: var(--secondary); }
+    .legend-dot.green { background: var(--primary); }
     .legend-dot.purple { background: #a078d0; }
     .legend-dot.diamond {
       background: #a078d0;
@@ -223,7 +269,7 @@
       border-radius: 50%;
       font-size: 11px;
       font-weight: 700;
-      color: #4a7c59;
+      color: var(--primary);
       margin-right: 6px;
     }
 
@@ -245,7 +291,7 @@
       position: absolute;
       top: -10px;
       left: 24px;
-      background: #1a1a2e;
+      background: var(--bg);
       border: 2px solid;
       border-radius: 20px;
       padding: 2px 12px;
@@ -381,7 +427,7 @@
       box-shadow: 0 4px 20px rgba(74,124,89,0.1);
     }
     .node.screen:hover { box-shadow: 0 8px 30px rgba(74,124,89,0.2); }
-    .node.screen .step-badge { border-color: #4a7c59; color: #4a7c59; }
+    .node.screen .step-badge { border-color: var(--primary); color: var(--primary); }
     .node.screen .screen-name { color: #a0d4b0; }
     .node.screen .user-thought { background: rgba(74,124,89,0.08); color: #a0d4b8; }
     .node.screen .description ul li::before { background: rgba(74,124,89,0.4); }
@@ -393,7 +439,7 @@
       box-shadow: 0 4px 20px rgba(232,168,124,0.08);
     }
     .node.action:hover { box-shadow: 0 8px 30px rgba(232,168,124,0.18); }
-    .node.action .step-badge { border-color: #e8a87c; color: #e8a87c; }
+    .node.action .step-badge { border-color: var(--accent); color: var(--accent); }
     .node.action .screen-name { color: #f0d4b8; }
     .node.action .user-thought { background: rgba(232,168,124,0.08); color: #e0c8b0; }
     .node.action .description ul li::before { background: rgba(232,168,124,0.4); }
@@ -405,7 +451,7 @@
       box-shadow: 0 4px 20px rgba(91,143,168,0.08);
     }
     .node.overlay:hover { box-shadow: 0 8px 30px rgba(91,143,168,0.18); }
-    .node.overlay .step-badge { border-color: #5b8fa8; color: #5b8fa8; }
+    .node.overlay .step-badge { border-color: var(--secondary); color: var(--secondary); }
     .node.overlay .screen-name { color: #a0d0e8; }
     .node.overlay .user-thought { background: rgba(91,143,168,0.08); color: #a0c0d4; }
     .node.overlay .description ul li::before { background: rgba(91,143,168,0.4); }
@@ -531,7 +577,7 @@
       font-weight: 500;
     }
     .credit-box .credit-remaining {
-      color: #4a7c59;
+      color: var(--primary);
       font-weight: 700;
     }
 
@@ -550,14 +596,14 @@
     .progress-fill-mock {
       height: 100%;
       border-radius: 4px;
-      background: linear-gradient(90deg, #5b8fa8, #7ab8d4);
+      background: linear-gradient(90deg, var(--secondary), #7ab8d4);
       transition: width 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
     .progress-status {
       display: flex;
       justify-content: space-between;
       font-size: 12px;
-      color: #8888a0;
+      color: var(--muted);
       font-weight: 500;
     }
     .progress-indicators {
@@ -571,8 +617,8 @@
       border-radius: 3px;
       transition: background 0.5s ease;
     }
-    .receipt-indicator.done { background: #4a7c59; }
-    .receipt-indicator.active { background: #5b8fa8; animation: pulse-bar 1.2s ease-in-out infinite; }
+    .receipt-indicator.done { background: var(--primary); }
+    .receipt-indicator.active { background: var(--secondary); animation: pulse-bar 1.2s ease-in-out infinite; }
     .receipt-indicator.pending { background: rgba(255,255,255,0.08); }
     @keyframes pulse-bar {
       0%, 100% { opacity: 0.6; }
@@ -615,13 +661,13 @@
     }
     .batch-card .bc-category {
       font-size: 11px;
-      color: #8888a0;
+      color: var(--muted);
       font-weight: 500;
     }
     .batch-card .bc-amount {
       font-size: 14px;
       font-weight: 700;
-      color: #e8a87c;
+      color: var(--accent);
       flex-shrink: 0;
     }
     .batch-card .bc-actions {
@@ -637,8 +683,8 @@
       letter-spacing: 0.3px;
       text-transform: uppercase;
     }
-    .bc-btn.edit { background: rgba(91,143,168,0.2); color: #5b8fa8; }
-    .bc-btn.discard { background: rgba(224,85,85,0.15); color: #e05555; }
+    .bc-btn.edit { background: rgba(91,143,168,0.2); color: var(--secondary); }
+    .bc-btn.discard { background: rgba(224,85,85,0.15); color: var(--red); }
 
     /* Button mockups */
     .btn-row {
@@ -655,7 +701,7 @@
       letter-spacing: 0.3px;
     }
     .btn-primary {
-      background: linear-gradient(135deg, #4a7c59, #3d6b4a);
+      background: linear-gradient(135deg, var(--primary), #3d6b4a);
       color: #fff;
       box-shadow: 0 2px 12px rgba(74,124,89,0.3);
     }
@@ -666,7 +712,7 @@
     }
     .btn-cancel {
       background: rgba(255,255,255,0.04);
-      color: #8888a0;
+      color: var(--muted);
     }
 
     /* Summary stat row */
@@ -686,7 +732,7 @@
     }
     .stat-label {
       font-size: 11px;
-      color: #8888a0;
+      color: var(--muted);
       font-weight: 500;
       margin-top: 2px;
     }
@@ -701,7 +747,7 @@
       padding: 3px 10px;
       border-radius: 8px;
       background: rgba(91,143,168,0.15);
-      color: #5b8fa8;
+      color: var(--secondary);
       margin-bottom: 8px;
       letter-spacing: 0.3px;
       text-transform: uppercase;
@@ -764,11 +810,11 @@
         la eficiencia del escaneo por lote y la revision rapida.
       </p>
       <div class="nav-ref">
-        <div class="nav-item active">Home</div>
-        <div class="nav-item">Trends</div>
-        <div class="nav-item fab">+</div>
-        <div class="nav-item">Reports</div>
-        <div class="nav-item">Alerts</div>
+        <div class="nav-item" data-nav="home">Home</div>
+        <div class="nav-item" data-nav="trends">Trends</div>
+        <div class="nav-item fab" data-nav="fab">FAB Scan</div>
+        <div class="nav-item" data-nav="reports">Reports</div>
+        <div class="nav-item" data-nav="alerts">Alerts</div>
       </div>
     </div>
 
@@ -904,7 +950,7 @@
           <div class="gallery-thumb filled">&#129534;</div>
           <div class="gallery-thumb empty">+</div>
         </div>
-        <div style="font-size:12px; color:#8888a0; font-weight:600; margin-bottom:8px;">5 de 50 imagenes</div>
+        <div style="font-size:12px; color:var(--muted); font-weight:600; margin-bottom:8px;">5 de 50 imagenes</div>
         <div class="credit-box">
           <span class="credit-icon">&#11088;</span>
           <span class="credit-calc">5 boletas &times; 1 credito = 5 creditos</span>
@@ -930,7 +976,7 @@
         <div class="credit-box" style="border-color:rgba(74,124,89,0.25); background:rgba(74,124,89,0.06);">
           <span class="credit-icon">&#9989;</span>
           <span class="credit-calc" style="color:#a0d4b0;">5 boletas &times; 1 credito = <strong>5 creditos</strong></span>
-          <span class="credit-remaining" style="color:#4a7c59;">Restantes: 15</span>
+          <span class="credit-remaining" style="color:var(--primary);">Restantes: 15</span>
         </div>
         <div class="btn-row">
           <div class="btn-mock btn-cancel">Cancelar</div>
@@ -1012,7 +1058,7 @@
             <div class="stat-label">boletas</div>
           </div>
           <div class="stat-item">
-            <div class="stat-value" style="color:#e8a87c;">$45.230</div>
+            <div class="stat-value" style="color:var(--accent);">$45.230</div>
             <div class="stat-label">total</div>
           </div>
         </div>
@@ -1150,7 +1196,7 @@
       <div class="node success animate-in">
         <div class="celebration"></div>
         <div class="step-badge">10</div>
-        <div class="key-moment" style="background:linear-gradient(135deg,#4a7c59,#3d6b4a); color:#fff;">Momento clave</div>
+        <div class="key-moment" style="background:linear-gradient(135deg,var(--primary),#3d6b4a); color:#fff;">Momento clave</div>
         <div class="screen-name">BatchCompleteModal</div>
         <div class="screen-state">estado: summary &mdash; resumen final del lote</div>
         <div class="summary-stats" style="justify-content:center; gap:32px; margin:16px 0;">
@@ -1159,11 +1205,11 @@
             <div class="stat-label">transacciones guardadas</div>
           </div>
           <div class="stat-item">
-            <div class="stat-value" style="font-size:28px; color:#e8a87c;">$45.230</div>
+            <div class="stat-value" style="font-size:28px; color:var(--accent);">$45.230</div>
             <div class="stat-label">total</div>
           </div>
           <div class="stat-item">
-            <div class="stat-value" style="font-size:28px; color:#5b8fa8;">5</div>
+            <div class="stat-value" style="font-size:28px; color:var(--secondary);">5</div>
             <div class="stat-label">creditos usados</div>
           </div>
         </div>

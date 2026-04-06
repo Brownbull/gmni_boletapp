@@ -7,11 +7,47 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
+  :root {
+    --bg: var(--bg);
+    --bg-lighter: var(--bg-lighter);
+    --surface: var(--surface);
+    --border: var(--border);
+    --text: #e8e8f0;
+    --muted: #8888aa;
+    --primary: var(--primary);
+    --primary-dim: var(--primary-dim);
+    --primary-border: var(--primary-border);
+    --accent: var(--accent);
+    --accent-dim: #4a3020;
+    --accent-border: var(--accent-border);
+    --secondary: var(--secondary);
+    --secondary-dim: #1e3a4a;
+    --secondary-border: var(--secondary-border);
+    --green: var(--green);
+    --green-dim: #064e3b;
+    --green-border: var(--green-border);
+    --amber: var(--amber);
+    --amber-dim: #78350f;
+    --amber-border: var(--amber-border);
+    --blue: var(--blue);
+    --blue-dim: #1e3a5f;
+    --blue-border: var(--blue-border);
+    --purple: var(--purple);
+    --purple-dim: #3b1f7a;
+    --purple-border: var(--purple-border);
+    --red: var(--red);
+    --red-dim: #5b1a1a;
+    --red-border: var(--red-border);
+    --gold: #fde68a;
+    --gold-dim: #4a3f1a;
+    --gold-border: var(--amber);
+  }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      background: #1a1a2e;
-      color: #e0e0e0;
+      background: var(--bg);
+      color: var(--text);
       font-family: 'Outfit', sans-serif;
       min-height: 100vh;
       overflow-x: hidden;
@@ -64,13 +100,13 @@
     .header h1 {
       font-size: 34px;
       font-weight: 700;
-      color: #f0ebe3;
+      color: var(--text);
       margin-bottom: 12px;
       line-height: 1.2;
     }
 
     .header h1 .accent {
-      background: linear-gradient(135deg, #8B5CF6, #a78bfa, #c4b5fd);
+      background: linear-gradient(135deg, #8B5CF6, var(--purple), #c4b5fd);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -78,52 +114,56 @@
 
     .header .subtitle {
       font-size: 14px;
-      color: #9a9ab0;
+      color: var(--muted);
       max-width: 620px;
       margin: 0 auto;
       line-height: 1.7;
       font-weight: 400;
     }
 
-    /* Nav reference bar */
-    .nav-ref {
-      display: flex;
-      justify-content: center;
-      gap: 6px;
-      margin-top: 20px;
-      flex-wrap: wrap;
-    }
+      /* -- Nav Reference Bar (canonical — matches flow-06+) -- */
+  .nav-ref {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 36px;
+    padding: 10px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 16px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.03em;
+    position: relative;
+  }
+  .nav-item .nav-icon { font-size: 18px; }
+  .nav-fab {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-border));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(74, 124, 89, 0.4);
+    margin: 0 8px;
+    flex-shrink: 0;
+  }
 
-    .nav-ref .nav-item {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 20px;
-      padding: 5px 13px;
-      font-size: 11px;
-      color: #6e6e88;
-      font-weight: 600;
-      transition: all 0.25s ease;
-    }
-
-    .nav-ref .nav-item.fab {
-      background: linear-gradient(135deg, rgba(74,124,89,0.3), rgba(139,92,246,0.2));
-      border-color: rgba(74,124,89,0.4);
-      color: #a0d4a8;
-      border-radius: 50%;
-      width: 34px;
-      height: 34px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      font-size: 14px;
-    }
-
-    .nav-ref .nav-item.active-in-step {
-      background: rgba(139,92,246,0.15);
-      border-color: rgba(139,92,246,0.35);
-      color: #a78bfa;
-    }
 
     /* ════════════════ LEGEND ════════════════ */
     .legend {
@@ -143,7 +183,7 @@
       align-items: center;
       gap: 7px;
       font-size: 11px;
-      color: #8888a0;
+      color: var(--muted);
       font-weight: 500;
     }
 
@@ -154,10 +194,10 @@
       flex-shrink: 0;
     }
 
-    .legend-dot.red { background: #e05555; }
+    .legend-dot.red { background: var(--red); }
     .legend-dot.amber { background: #d4a03c; }
-    .legend-dot.blue { background: #5b8fa8; }
-    .legend-dot.green { background: #4a7c59; }
+    .legend-dot.blue { background: var(--secondary); }
+    .legend-dot.green { background: var(--primary); }
     .legend-dot.violet { background: #8B5CF6; }
     .legend-dot.diamond {
       background: #8B5CF6;
@@ -240,7 +280,7 @@
     }
 
     .connector.violet .label {
-      color: #a78bfa;
+      color: var(--purple);
     }
 
     /* ════════════════ NODE CARDS ════════════════ */
@@ -262,7 +302,7 @@
       position: absolute;
       top: -9px;
       left: 22px;
-      background: #1a1a2e;
+      background: var(--bg);
       border: 2px solid;
       border-radius: 16px;
       padding: 1px 10px;
@@ -334,7 +374,7 @@
       position: absolute;
       top: -9px;
       right: 18px;
-      background: linear-gradient(135deg, #8B5CF6, #a78bfa);
+      background: linear-gradient(135deg, #8B5CF6, var(--purple));
       color: #fff;
       font-size: 9px;
       font-weight: 800;
@@ -372,7 +412,7 @@
       align-items: flex-start;
       gap: 8px;
       font-size: 11px;
-      color: #8888a0;
+      color: var(--muted);
       margin-bottom: 5px;
       line-height: 1.4;
     }
@@ -401,7 +441,7 @@
       box-shadow: 0 3px 20px rgba(224,85,85,0.05);
     }
     .node.red:hover { box-shadow: 0 6px 30px rgba(224,85,85,0.12); }
-    .node.red .step-badge { border-color: #e05555; color: #e05555; }
+    .node.red .step-badge { border-color: var(--red); color: var(--red); }
     .node.red .screen-name { color: #f0a0a0; }
     .node.red .user-thought { background: rgba(224,85,85,0.06); color: #d4a8a8; }
 
@@ -421,7 +461,7 @@
       box-shadow: 0 3px 20px rgba(91,143,168,0.05);
     }
     .node.blue:hover { box-shadow: 0 6px 30px rgba(91,143,168,0.12); }
-    .node.blue .step-badge { border-color: #5b8fa8; color: #5b8fa8; }
+    .node.blue .step-badge { border-color: var(--secondary); color: var(--secondary); }
     .node.blue .screen-name { color: #a0cce0; }
     .node.blue .user-thought { background: rgba(91,143,168,0.06); color: #a0b8c4; }
 
@@ -431,7 +471,7 @@
       box-shadow: 0 3px 20px rgba(74,124,89,0.06);
     }
     .node.green:hover { box-shadow: 0 6px 30px rgba(74,124,89,0.16); }
-    .node.green .step-badge { border-color: #4a7c59; color: #4a7c59; }
+    .node.green .step-badge { border-color: var(--primary); color: var(--primary); }
     .node.green .screen-name { color: #a0d4b0; }
     .node.green .user-thought { background: rgba(74,124,89,0.07); color: #a0c8b0; }
 
@@ -552,12 +592,12 @@
 
     .branch-label.yes {
       background: rgba(74,124,89,0.18);
-      color: #4a7c59;
+      color: var(--primary);
     }
 
     .branch-label.no {
       background: rgba(224,85,85,0.12);
-      color: #e05555;
+      color: var(--red);
     }
 
     .branch-desc {
@@ -623,12 +663,12 @@
 
     .branch-path-label.yes {
       background: rgba(74,124,89,0.15);
-      color: #4a7c59;
+      color: var(--primary);
     }
 
     .branch-path-label.no {
       background: rgba(224,85,85,0.10);
-      color: #e05555;
+      color: var(--red);
     }
 
     /* ════════════════ INLINE DECISION (compact) ════════════════ */
@@ -676,7 +716,7 @@
 
     .inline-diamond .diamond-outcomes {
       font-size: 10px;
-      color: #8888a0;
+      color: var(--muted);
       line-height: 1.4;
     }
 
@@ -763,11 +803,11 @@
         y deja todo reconciliado. Multiples puntos de decision y procesamiento asincrono.
       </p>
       <div class="nav-ref">
-        <div class="nav-item">Home</div>
-        <div class="nav-item">Trends</div>
-        <div class="nav-item fab">+</div>
-        <div class="nav-item">Reports</div>
-        <div class="nav-item">Alerts</div>
+        <div class="nav-item" data-nav="home">Home</div>
+        <div class="nav-item" data-nav="trends">Trends</div>
+        <div class="nav-item fab" data-nav="fab">FAB Scan</div>
+        <div class="nav-item" data-nav="reports">Reports</div>
+        <div class="nav-item" data-nav="alerts">Alerts</div>
       </div>
     </div>
 
@@ -1173,7 +1213,7 @@
         <div class="screen-details">
           <div class="detail-row"><span class="detail-icon">&#9989;</span> <span style="color:#6aad7a">Verde:</span> Match encontrado — aprobar para fusionar</div>
           <div class="detail-row"><span class="detail-icon">&#9888;</span> <span style="color:#d4a03c">Amarillo:</span> Sin match — crear como nueva transaccion</div>
-          <div class="detail-row"><span class="detail-icon">&#10060;</span> <span style="color:#e05555">Rojo:</span> Conflicto de datos — requiere decision</div>
+          <div class="detail-row"><span class="detail-icon">&#10060;</span> <span style="color:var(--red)">Rojo:</span> Conflicto de datos — requiere decision</div>
           <div class="detail-row"><span class="detail-icon">&#128260;</span> matchStatementTransactions() acepta cualquier Transaction[]</div>
           <div class="detail-row"><span class="detail-icon">&#128640;</span> Extensible a grupos compartidos (Epic 19 Phase 2)</div>
         </div>
@@ -1303,7 +1343,7 @@
           <div style="font-size: 16px; font-weight: 700; color: #c4b5fd; margin-bottom: 4px;">
             Arquitectura del Pipeline
           </div>
-          <div style="font-size: 12px; color: #8888a0; font-weight: 500; margin-bottom: 10px;">
+          <div style="font-size: 12px; color: var(--muted); font-weight: 500; margin-bottom: 10px;">
             4 Cloud Functions &middot; Async &middot; Non-blocking
           </div>
           <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
@@ -1329,23 +1369,23 @@
             transition: max-height 0.4s ease, opacity 0.3s ease;
           ">
             <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; margin-top: 4px;">
-              <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: #8888a0; margin-bottom: 5px; line-height: 1.4;">
+              <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: var(--muted); margin-bottom: 5px; line-height: 1.4;">
                 <span style="width: 16px; text-align: center; flex-shrink: 0;">&#128640;</span>
                 Backend transformer corre dentro de processStatementScan CF
               </div>
-              <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: #8888a0; margin-bottom: 5px; line-height: 1.4;">
+              <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: var(--muted); margin-bottom: 5px; line-height: 1.4;">
                 <span style="width: 16px; text-align: center; flex-shrink: 0;">&#128176;</span>
                 1 super credito: deducido al queue, reembolsado si falla
               </div>
-              <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: #8888a0; margin-bottom: 5px; line-height: 1.4;">
+              <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: var(--muted); margin-bottom: 5px; line-height: 1.4;">
                 <span style="width: 16px; text-align: center; flex-shrink: 0;">&#128274;</span>
                 Hard lock: statementVerified=true bloquea editor
               </div>
-              <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: #8888a0; margin-bottom: 5px; line-height: 1.4;">
+              <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: var(--muted); margin-bottom: 5px; line-height: 1.4;">
                 <span style="width: 16px; text-align: center; flex-shrink: 0;">&#128269;</span>
                 Re-import fast path: PDF hash check antes de llamar Gemini
               </div>
-              <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: #8888a0; margin-bottom: 5px; line-height: 1.4;">
+              <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: var(--muted); margin-bottom: 5px; line-height: 1.4;">
                 <span style="width: 16px; text-align: center; flex-shrink: 0;">&#128197;</span>
                 Solo 1 mes por PDF — disclaimer sobre limites
               </div>

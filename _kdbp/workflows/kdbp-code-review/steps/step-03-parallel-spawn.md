@@ -190,10 +190,24 @@ Store as {{preclassified_findings}}.
 
       **Review:** AC coverage, edge cases, error scenarios, assertion quality, mock appropriateness, naming
 
+      **Known Async Pipelines (check if story touches any component):**
+      {{pipeline_context}}
+
+      **Integration Seam Check (MANDATORY for stories touching async pipelines or cross-boundary handoffs):**
+      Integration seams are: Cloud Function ↔ Firestore listener, Firestore write ↔ client onSnapshot,
+      event emitter ↔ event handler (mitt bus), upload ↔ queue ↔ process ↔ deliver.
+      NOTE: store→component and hook→store are NOT integration seams — those are unit test territory.
+      For each seam: does at least ONE test exercise the handoff with real data flow (emulator or staging)?
+      If ALL seams are mocked on both sides: flag as "Integration Gap" (severity: HIGH, certainty: HIGH).
+      Example gap: "usePendingScan mocks onSnapshot; processReceiptScan mocks Firestore write — nobody tests
+      that writing the doc actually triggers the listener."
+
       **Quality Score (each 0-100):** Determinism, Isolation, Maintainability, Coverage, Performance. 70+ = GOOD.
 
       **Output (max 50 lines):**
       Coverage gaps: [AC] missing test for [scenario] [file]
+      Integration Gaps: [handoff] [missing coverage] [files] — or NONE
+      <!-- INTEGRATION_SEAM_CHECK: [PASS|FAIL|N/A] handoffs=[N] tested=[N] -->
       | Dimension | Score | Notes |
       Overall: X/100 — GOOD / NEEDS IMPROVEMENT
       Recommendation: APPROVE / CHANGES REQUESTED

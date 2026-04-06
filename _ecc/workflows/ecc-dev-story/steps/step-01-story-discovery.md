@@ -39,6 +39,9 @@ Find next ready story, load it, parse ACs, classify complexity, extract architec
 <action>Set {{planning_model}} = "opus" if COMPLEX, "sonnet" if STANDARD</action>
 <action>Set {{tdd_model}} = "opus" if COMPLEX, "sonnet" if STANDARD</action>
 
+<!-- Pipeline context for integration seam checks (Pattern 9) -->
+<action>Load {project-root}/_kdbp/knowledge/pipeline-registry.md → {{pipeline_context}}</action>
+
 <!-- ARCHITECTURE ENFORCEMENT -->
 <critical>ARCHITECTURE ENFORCEMENT: Extract architectural ACs and pattern documentation</critical>
 <action>Parse "Architectural Acceptance Criteria" section from story</action>

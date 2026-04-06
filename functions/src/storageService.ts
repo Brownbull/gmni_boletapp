@@ -131,21 +131,29 @@ export async function deletePendingScanImages(
   scanId: string
 ): Promise<void> {
   const bucket = admin.storage().bucket()
-  const folderPath = `pending_scans/${userId}/${scanId}/`
+
+  // Clean up both paths: pending_scans/ (CF temp) and users/.../scans/ (client upload)
+  const paths = [
+    `pending_scans/${userId}/${scanId}/`,
+    `users/${userId}/scans/${scanId}/`,
+  ]
 
   try {
-    const [files] = await bucket.getFiles({ prefix: folderPath })
-
-    if (files.length === 0) {
-      return
+    let totalDeleted = 0
+    for (const folderPath of paths) {
+      const [files] = await bucket.getFiles({ prefix: folderPath })
+      if (files.length > 0) {
+        await Promise.all(files.map(file => file.delete()))
+        totalDeleted += files.length
+      }
     }
 
-    await Promise.all(files.map(file => file.delete()))
-
-    console.log(`Deleted ${files.length} pending scan images for scan ${scanId}`)
+    if (totalDeleted > 0) {
+      console.log(`Deleted ${totalDeleted} scan images for scan ${scanId}`)
+    }
   } catch (error) {
     // Log but don't throw — orphaned images are acceptable
-    console.error(`Failed to delete pending scan images for scan ${scanId}:`, error)
+    console.error(`Failed to delete scan images for scan ${scanId}:`, error)
   }
 }
 
