@@ -36,6 +36,9 @@ Load story, discover files to review, extract architectural ACs, classify comple
   <action>Read all {{files_to_review}} in parallel</action>
   <action>Store combined content as {{file_contents_manifest}}</action>
 
+  <!-- Pipeline context for integration seam checks (Pattern 9) -->
+  <action>Load {project-root}/_kdbp/knowledge/pipeline-registry.md → {{pipeline_context}}</action>
+
   <output>📋 **Review Target** — Story: {{story_key}} | Files: {{file_count}} | Functional ACs: {{functional_ac_count}} | Architectural ACs: {{arch_ac_count}}</output>
 </step>
 
@@ -70,6 +73,13 @@ Load story, discover files to review, extract architectural ACs, classify comple
   </check>
   <check if="{{has_architecture_files}} AND task_count > 6">
     <action>Force add "architect" to {{review_agents}} if not already present</action>
+  </check>
+  <!-- Force-include TDD guide when async pipeline files touched (Pattern 9: Integration Seam Coverage) -->
+  <action>Check if {{file_paths}} match pipeline patterns: "functions/**", "src/hooks/use*Scan*", "src/hooks/use*Pending*",
+    "src/hooks/use*Event*", "src/stores/*scan*", or any component listed in {{pipeline_context}}</action>
+  <action>Set {{has_pipeline_files}} = true/false</action>
+  <check if="{{has_pipeline_files}}">
+    <action>Force add "tdd-guide" to {{review_agents}} if not already present</action>
   </check>
 
   <check if="file_count > 12">

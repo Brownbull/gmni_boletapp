@@ -21,6 +21,17 @@ Cost tracking, E2E coverage check, backend analysis, commit commands, and final 
     <action>Set {{is_critical_path}} = true/false | Set {{critical_path_reason}} = brief explanation</action>
   </check>
 
+  <!-- Integration Seam Gap Check (fires regardless of has_ui_changes — backend-only pipelines need this too) -->
+  <action>Grep TDD agent output for "<!-- INTEGRATION_SEAM_CHECK:" tag</action>
+  <action>Set {{has_integration_gap}} = true if tag shows FAIL</action>
+  <action>Set {{integration_seam_check}} = full tag value (for reporting)</action>
+  <action>Check if integration gap was resolved in triage: search {{fixed_items}} and {{td_items}} for findings
+    tagged "Integration Gap". If found in either list, set {{integration_gap_resolved}} = true</action>
+  <check if="{{has_integration_gap}} and NOT {{integration_gap_resolved}}">
+    <output>**BLOCKING: INTEGRATION GAP** — Story has untested handoffs between components. This is the #1 source of post-deploy bugs (see Epic 18 post-mortem). Create TD story for integration test coverage before marking done.</output>
+    <action>Set {{new_status}} = "in-progress" (do NOT mark done)</action>
+  </check>
+
   <!-- Backend Change Detection -->
   <action>Check if {{files_to_review}} match backend patterns (e.g., security rules, DB indexes, cloud functions)</action>
   <action>Set {{has_backend_changes}} = true/false | Set {{backend_deploy_targets}} = list of targets</action>
@@ -89,7 +100,8 @@ Cost tracking, E2E coverage check, backend analysis, commit commands, and final 
     **Next Steps:**
     - Run `/workflow-close` to verify tests, status files, and branch state
     {{#if new_status == "done"}}- Run `/deploy-story` to deploy{{/if}}
-    {{#if has_ui_changes and ui_missing_e2e and is_critical_path}}- **Recommend:** Run `/ecc-e2e` — E2E gap on critical path{{/if}}
+    {{#if has_ui_changes and ui_missing_e2e and is_critical_path}}- **BLOCKING:** E2E gap on critical path ({{critical_path_reason}}). Create TD story for E2E coverage before deploy.{{/if}}
+    {{#if has_integration_gap}}- **BLOCKING:** Integration seam gap unresolved ({{integration_seam_check}}). Create TD story or add integration test.{{/if}}
     {{#if new_status != "done"}}- Address remaining issues, re-run `/ecc-code-review`{{/if}}
   </output>
 </step>

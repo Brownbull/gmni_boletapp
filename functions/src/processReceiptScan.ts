@@ -13,12 +13,14 @@
 
 import { randomBytes } from 'crypto'
 import * as functions from 'firebase-functions'
+import { parseJsonWithRepair } from './utils/jsonRepair'
 import * as admin from 'firebase-admin'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { resizeAndCompress, generateThumbnail } from './imageProcessing'
 import { withRetry, isTransientGeminiError, GEMINI_RETRY_DELAY_MS } from './utils/retryHelper'
 import { buildPrompt, getActivePrompt } from './prompts'
 import type { ReceiptType } from './prompts'
+import { isFixtureMode, loadFixture } from './fixtureHelper'
 
 // Initialize Firebase Admin if not already initialized
 if (!admin.apps.length) {
@@ -229,50 +231,58 @@ export const processReceiptScan = functions
       }
 
       // 3. Fetch + resize/compress images
+      const rawBuffers: Buffer[] = []
       const fullSizeBuffers: Buffer[] = []
       for (const url of data.imageUrls) {
         const imageBuffer = await fetchImageFromUrl(url)
+        rawBuffers.push(imageBuffer)
         const processed = await resizeAndCompress(imageBuffer)
         fullSizeBuffers.push(processed.buffer)
       }
 
-      // 4. Call Gemini with retry
-      const genAI = getGenAI()
-      const geminiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
-      if (!ALLOWED_GEMINI_MODELS.includes(geminiModel)) {
-        throw new Error('Invalid GEMINI_MODEL configuration')
+      // 4. Get raw response text — from fixture (staging) or Gemini API (production)
+      let text: string
+      if (isFixtureMode()) {
+        text = await loadFixture(rawBuffers)
+        console.log(`processReceiptScan: FIXTURE MODE — loaded fixture for scan ${scanId}`)
+      } else {
+        const genAI = getGenAI()
+        const geminiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+        if (!ALLOWED_GEMINI_MODELS.includes(geminiModel)) {
+          throw new Error('Invalid GEMINI_MODEL configuration')
+        }
+        const model = genAI.getGenerativeModel(
+          { model: geminiModel },
+          { apiVersion: 'v1' }
+        )
+
+        const imageParts = fullSizeBuffers.map((buffer: Buffer) => ({
+          inlineData: {
+            mimeType: 'image/jpeg',
+            data: buffer.toString('base64'),
+          },
+        }))
+
+        const prompt = buildPrompt({
+          receiptType: data.receiptType as ReceiptType | undefined,
+          context: 'production',
+        })
+
+        const result = await withRetry(
+          () => model.generateContent([{ text: prompt }, ...imageParts]),
+          isTransientGeminiError,
+          { maxRetries: 1, delayMs: GEMINI_RETRY_DELAY_MS }
+        )
+
+        text = result.response.text()
       }
-      const model = genAI.getGenerativeModel(
-        { model: geminiModel },
-        { apiVersion: 'v1' }
-      )
-
-      const imageParts = fullSizeBuffers.map((buffer: Buffer) => ({
-        inlineData: {
-          mimeType: 'image/jpeg',
-          data: buffer.toString('base64'),
-        },
-      }))
-
-      const prompt = buildPrompt({
-        receiptType: data.receiptType as ReceiptType | undefined,
-        context: 'production',
-      })
-
-      const result = await withRetry(
-        () => model.generateContent([{ text: prompt }, ...imageParts]),
-        isTransientGeminiError,
-        { maxRetries: 1, delayMs: GEMINI_RETRY_DELAY_MS }
-      )
-
-      const text = result.response.text()
       const cleanedText = text
         .replace(/^```json\s*/i, '')
         .replace(/\s*```$/i, '')
         .replace(/^```\s*/i, '')
         .trim()
 
-      const rawParsed: unknown = JSON.parse(cleanedText)
+      const rawParsed: unknown = parseJsonWithRepair(cleanedText)
       // Log raw Gemini items count for debugging empty items issue
       const rawObj = rawParsed as Record<string, unknown>
       const rawItems = Array.isArray(rawObj?.items) ? rawObj.items : []
@@ -300,8 +310,8 @@ export const processReceiptScan = functions
       const transactionId = generateTransactionId()
       const thumbnailResult = await generateThumbnail(fullSizeBuffers[0])
 
-      // Upload thumbnail to pending scan storage path
-      const thumbnailPath = `pending_scans/${userId}/${scanId}/thumbnail.jpg`
+      // Upload thumbnail to permanent receipts path (not pending_scans/ which gets cleaned up)
+      const thumbnailPath = `users/${userId}/receipts/${transactionId}/thumbnail.jpg`
       const thumbnailFile = bucket.file(thumbnailPath)
       // public: true matches existing receipt image pattern (storageService.ts uploadImage/uploadThumbnail).
       // URLs are unguessable (contain userId+scanId). Project-wide signed URL migration tracked separately.

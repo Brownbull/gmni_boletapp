@@ -566,10 +566,10 @@ describe('processScan', () => {
 
       expect(result.success).toBe(true);
       expect(result.hasDiscrepancy).toBe(true);
-      expect(params.ui.setToastMessage).toHaveBeenCalledWith({
-        text: 'discrepancyWarning',
-        type: 'info',
-      });
+      // Toast suppressed — reconciliation adds visible adjustment item instead
+      expect(params.ui.setToastMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ text: 'discrepancyWarning' })
+      );
     });
   });
 });

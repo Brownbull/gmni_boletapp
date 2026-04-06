@@ -287,15 +287,8 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
       navigator.vibrate(50);
     }
 
-    // Show warning only for significant discrepancies (>5% of total)
-    // Use parsedItems (before reconciliation) — reconciledItems includes adjustment item
-    if (hasDiscrepancy && finalTotal > 0) {
-      const originalItemsSum = parsedItems.reduce((sum, i) => sum + (i.totalPrice || 0), 0);
-      const discrepancyPct = Math.abs(finalTotal - originalItemsSum) / finalTotal;
-      if (discrepancyPct > 0.05) {
-        ui.setToastMessage({ text: t('discrepancyWarning'), type: 'info' });
-      }
-    }
+    // Discrepancy toast suppressed — reconciliation already adds visible adjustment item.
+    // Toast was confusing without actionable next step. User sees adjustment in editor.
 
     // ========================================================================
     // Step 13: Handle Trusted Merchant Auto-Save (if applicable)

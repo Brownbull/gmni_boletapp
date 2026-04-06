@@ -200,6 +200,15 @@ service cloud.firestore {
     }
 
     // ============================================================================
+    // Scan Fixtures - Admin SDK only (Plan B, M2)
+    // Used by fixture-based staging testing. No client access ever —
+    // fixtures are seeded via admin scripts only.
+    // ============================================================================
+    match /scan_fixtures/{fixtureId} {
+      allow read, write: if false;
+    }
+
+    // ============================================================================
     // DEFAULT DENY — All other paths
     // ============================================================================
     match /{document=**} {

@@ -14,12 +14,14 @@
  * Also includes the edit/re-scan button below the thumbnail.
  */
 
+import { useState, useCallback } from 'react';
 import {
   Check,
   X,
   Camera,
   RefreshCw,
   Pencil,
+  Loader2,
 } from 'lucide-react';
 import { getCategoryPillColors } from '@/config/categoryColors';
 import { getCategoryEmoji } from '@/utils/categoryEmoji';
@@ -97,7 +99,16 @@ export function EditorScanThumbnail({
 }: EditorScanThumbnailProps) {
   const pendingScanId = usePendingScanId();
   const overlayState = useOverlayState();
-  const isScanBusy = effectiveIsProcessing || !!pendingScanId || overlayState !== 'idle';
+  const [isClicked, setIsClicked] = useState(false);
+  const isScanBusy = effectiveIsProcessing || !!pendingScanId || overlayState !== 'idle' || isClicked;
+
+  const handleScanClick = useCallback(() => {
+    if (isScanBusy || !hasCredits) return;
+    setIsClicked(true);
+    onProcessScan();
+    // Reset after 10s in case something fails silently
+    setTimeout(() => setIsClicked(false), 10000);
+  }, [isScanBusy, hasCredits, onProcessScan]);
 
   return (
     <div
@@ -194,7 +205,7 @@ export function EditorScanThumbnail({
         ) : scanButtonState === 'pending' && pendingImageUrl ? (
           /* PENDING STATE - Photo selected, ready to scan */
           <button
-            onClick={hasCredits && !isScanBusy ? onProcessScan : undefined}
+            onClick={handleScanClick}
             disabled={!hasCredits || isScanBusy}
             className="w-full h-full rounded-xl overflow-hidden relative cursor-pointer"
             style={{
@@ -234,9 +245,13 @@ export function EditorScanThumbnail({
                   marginTop: '-2px',
                 }}
               >
-                <span className="text-xs font-semibold text-white relative z-10">
-                  {isScanBusy ? (t('scanning') || 'Escaneando...') : hasCredits ? t('scan') : t('noCredits')}
-                </span>
+                {isScanBusy ? (
+                  <Loader2 size={12} className="text-white relative z-10 animate-spin" />
+                ) : (
+                  <span className="text-xs font-semibold text-white relative z-10">
+                    {hasCredits ? t('scan') : t('noCredits')}
+                  </span>
+                )}
               </div>
             </div>
           </button>

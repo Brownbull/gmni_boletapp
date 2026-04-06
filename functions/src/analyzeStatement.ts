@@ -15,6 +15,7 @@ import * as functions from 'firebase-functions'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { buildStatementPrompt, getActiveStatementPrompt } from './prompts/statement'
 import type { StatementResult } from './prompts/statement'
+import { parseJsonWithRepair } from './utils/jsonRepair'
 
 // ============================================================================
 // Configuration
@@ -350,7 +351,7 @@ export const analyzeStatement = functions
         .replace(/^```\s*/i, '')
         .trim()
 
-      const rawParsed: unknown = JSON.parse(cleanedText)
+      const rawParsed: unknown = parseJsonWithRepair(cleanedText)
       const coerced = typeof rawParsed === 'object' && rawParsed !== null
         ? coerceStatementNumericFields(rawParsed as Record<string, unknown>)
         : rawParsed

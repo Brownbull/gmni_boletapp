@@ -396,6 +396,12 @@ development_status:
   18-12-item-fields-enrichment-analysis: absorbed      # absorbed-by: 18-8 (2026-03-13) — analysis folded into implementation
   18-11-statement-e2e: drafted                         # 5 pts - E2E tests: smoke + consent/password/matching/lock/reimport/credit/async-resilience (DEPENDS: 18-10b, 18-6)
 
+  # Scan quality + UX improvements (2026-04-02, post-Plan-B verification):
+  TD-18-17-malformed-json-repair: done                  # 2 pts - Fix Gemini malformed JSON (unquoted keys, trailing commas) + adversarial fixture (production error 2026-04-02)
+  TD-18-20-cf-repair-path-test: ready-for-dev          # 2 pts - CF-level test for JSON repair path (malformed→repair→complete) (Source: TD-18-17 review, DEPENDS: TD-18-17)
+  TD-18-18-scan-speed-optimization: drafted            # 3 pts - Switch to non-thinking model + image/prompt optimization (target: <8s single receipt) (DEPENDS: none)
+  TD-18-19-scan-ux-immediate-overlay: drafted          # 3 pts - Show scan result screen immediately (skeleton state) + smooth data fill transition (DEPENDS: benefits from TD-18-18)
+
   epic-18-retrospective: optional
 
   # ============================================================================

@@ -4,6 +4,7 @@ import * as admin from 'firebase-admin'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { base64ToBuffer, resizeAndCompress, generateThumbnail } from './imageProcessing'
 import { withRetry, isTransientGeminiError, GEMINI_RETRY_DELAY_MS } from './utils/retryHelper'
+import { parseJsonWithRepair } from './utils/jsonRepair'
 import { uploadReceiptImages } from './storageService'
 import { buildPrompt, getActivePrompt, RECEIPT_TYPES } from './prompts'
 import type { ReceiptType } from './prompts'
@@ -596,7 +597,7 @@ export const analyzeReceipt = functions.https.onCall(
         .replace(/^```\s*/i, '')
         .trim()
 
-      const rawParsed: unknown = JSON.parse(cleanedText)
+      const rawParsed: unknown = parseJsonWithRepair(cleanedText)
       const coerced = typeof rawParsed === 'object' && rawParsed !== null
         ? coerceGeminiNumericFields(rawParsed as Record<string, unknown>)
         : rawParsed

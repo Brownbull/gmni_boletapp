@@ -73,6 +73,15 @@ jobs:
         if: steps.functions-changed.outputs.skip != 'true'
         run: cd functions && npm ci && npm run build
 
+      - name: Validate production env safety (Plan B, M1)
+        if: steps.functions-changed.outputs.skip != 'true'
+        run: |
+          # Block deploy if fixture mode is set in functions source/config
+          if grep -rq 'SCAN_FIXTURE_MODE.*true' functions/.env 2>/dev/null; then
+            echo "FATAL: SCAN_FIXTURE_MODE=true found in functions/.env — refusing to deploy to production"
+            exit 1
+          fi
+
       - name: Deploy Cloud Functions
         if: steps.functions-changed.outputs.skip != 'true'
         run: |

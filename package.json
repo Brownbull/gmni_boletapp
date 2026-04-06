@@ -49,7 +49,9 @@
     "test:scan:validate": "tsx prompt-testing/scripts/index.ts validate",
     "test:scan:analyze": "tsx prompt-testing/scripts/index.ts analyze",
     "test:scan:self-test": "vitest run prompt-testing/scripts/__tests__",
-    "test:scan:compare": "tsx prompt-testing/scripts/compare-prompts.ts"
+    "test:scan:compare": "tsx prompt-testing/scripts/compare-prompts.ts",
+    "fixtures:export": "tsx prompt-testing/scripts/export-fixtures.ts --export-json",
+    "fixtures:seed": "tsx prompt-testing/scripts/export-fixtures.ts --seed-staging"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.16",

@@ -181,6 +181,88 @@ style={{ backgroundColor: record.color }}
 
 ---
 
+### 8. Single Source of Truth (SSoT)
+
+**Severity:** HIGH - Prevents type drift, duplication cascades, and multi-file refactoring debt
+
+| Check | Rule |
+|-------|------|
+| Type/const definitions | Each type, const array, or enum MUST be defined in exactly one file. Other files import or derive. |
+| Derived types | Use `typeof arr[number]`, `keyof typeof`, `Lowercase<>`, or equivalent derivation — not manual duplication |
+| Validation schemas | Validator (Zod, Set, array) must derive from the canonical type, not redefine it |
+| Cross-boundary types | When types cross a build boundary (e.g., client → cloud functions), a CI sync guard script MUST exist |
+| Re-exports | Barrel `index.ts` re-exports are acceptable. Duplicate `export type X =` definitions are not. |
+
+**Signals (any triggers review):**
+- Same `type X =` or `export const X =` in >1 file (excluding re-exports/barrel files)
+- Validation logic (Zod schema, Set, array) that manually lists values already defined in a type
+- Cloud functions or backend duplicating client-side type definitions without a sync guard
+- Multiple files defining overlapping category/enum values with different counts
+
+**Verification:**
+```bash
+# Find potential duplicate type definitions
+grep -rn "export type\|export const\|export enum" <src>/ --include="*.ts" | sort -t: -k3 | uniq -D -f2
+
+# Check for sync guard scripts (cross-boundary projects)
+ls scripts/check-*-sync.* 2>/dev/null
+```
+
+**Historical frequency:** High — Epic 2 generated 4 TD stories from a single AllergenType triple-definition that should have been caught at story creation.
+
+**Pattern:** When a story introduces a new type or const array, verify at review time that no other file defines the same concept. When a story touches a type already defined elsewhere, flag for consolidation.
+
+---
+
+### 9. Integration Seam Coverage
+
+**Severity:** HIGH — Prevents post-deploy integration failures invisible to unit tests
+
+**Trigger:** Story introduces or modifies a chain where data flows across integration seams:
+- Cloud Function → Firestore → Client listener
+- Event emitter → Event handler (mitt bus)
+- Upload → Queue → Process → Deliver
+
+NOTE: store→component and hook→store are NOT integration seams — those are standard React data flow covered by unit tests.
+
+**Check:** For each seam crossing, verify at least ONE test exercises the handoff with data flowing through (not mocked on both sides). Tests MUST use Firestore emulator or staging fixtures — shared mocks do not count as integration coverage.
+
+**Anti-pattern (The Mocking Trap):**
+```typescript
+// Test A: mocks Firestore, tests CF writes correct data
+mockFirestore.set.mockResolvedValue(undefined)
+expect(mockFirestore.set).toHaveBeenCalledWith({ status: 'completed', ... })
+
+// Test B: mocks onSnapshot, tests hook calls callback
+mockOnSnapshot.mockImplementation((_, callback) => callback({ data: () => mockData }))
+expect(onCompleted).toHaveBeenCalledWith(mockData)
+
+// PROBLEM: Neither test verifies that CF's write format matches hook's read format
+// Neither test verifies the listener actually subscribes at the right time
+```
+
+**Required test pattern:**
+```typescript
+// Integration test: data flows from writer to reader
+// MUST use Firestore emulator or staging fixtures — shared mocks do NOT qualify
+const realDoc = { status: 'completed', result: { merchant: 'Test', ... } }
+// Writer side: verify this is what gets written
+// Reader side: verify this exact shape triggers the callback
+// REQUIRED: verify timing — listener is subscribed BEFORE write happens
+```
+
+**Verification:**
+```bash
+# Check for integration tests covering async pipelines
+ls tests/integration/*pipeline* tests/integration/*scan* tests/integration/*event* 2>/dev/null
+# Check for mocking trap — both sides of a handoff mocked independently
+grep -rn "mockOnSnapshot\|mockFirestore" tests/unit/ | head -20
+```
+
+**Historical frequency:** Critical — Epic 18 Story 18-13: 794 unit tests passed, 5 of 7 post-deploy bugs were integration seam failures.
+
+---
+
 ## Additional Review Checks
 
 - **Defensive timestamps:** Use optional chaining + try/catch when converting DB timestamps
