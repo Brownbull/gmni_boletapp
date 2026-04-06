@@ -16,6 +16,9 @@ Load all project knowledge once at review session start. Cache for ECC review ag
 <action>Store testing content as {{project_testing_patterns}} for TDD Guide</action>
 <action>Store product stages as {{product_stages}} for Smart Triage (step-05)</action>
 
+<!-- Pipeline context for integration seam checks (Pattern 9) -->
+<action>Load {project-root}/_kdbp/knowledge/pipeline-registry.md → {{pipeline_context}}</action>
+
 <output>📚 **ECC Orchestrator Initialized for Parallel Review**
 
   Project knowledge loaded for review agents:

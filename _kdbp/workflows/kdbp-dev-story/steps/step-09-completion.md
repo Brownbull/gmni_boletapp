@@ -35,6 +35,14 @@ Cost tracking, E2E/backend analysis, behavioral ledger, final story status updat
   <action>Set {{is_critical_path}} = true/false | Set {{critical_path_reason}} = brief explanation</action>
 </check>
 
+<!-- Integration Seam Gap Check (fires regardless of has_ui_changes — backend-only pipelines need this too) -->
+<action>Check if any files in {{progress_tracker}}.files_changed touch a known async pipeline component (from {{pipeline_context}}):
+  Cloud Functions (functions/), Firestore listeners (onSnapshot hooks), event emitters/handlers (mitt bus)</action>
+<action>Set {{has_integration_gap}} = true if pipeline component changed but no integration test covers the seam</action>
+<check if="{{has_integration_gap}}">
+  <output>**INTEGRATION GAP:** Story touches async pipeline but no integration test covers the seam. Run `/kdbp-code-review` before deploying, or create TD story for integration coverage.</output>
+</check>
+
 <!-- Backend Change Detection -->
 <action>Check if any files in {{progress_tracker}}.files_changed match backend patterns
   (e.g., security rules, DB indexes, cloud functions, API routes)</action>
