@@ -2,6 +2,9 @@
 
 > Items identified during code review but deferred beyond the current epic.
 > Grouped by product stage. Review during epic planning for future epics.
+>
+> **Triage status:** NEEDS-TRIAGE (2026-04-06) — schedule deep triage during next Epic 18 dev session.
+> Items below have NOT been individually classified as fixed/remaining/won't-fix.
 
 ---
 
@@ -399,6 +402,22 @@
 - **Files:** `functions/src/__tests__/analyzeReceipt.test.ts`, `functions/src/__tests__/processReceiptScan.test.ts`
 - **Stage:** PROD — Sanitization layer exists in production code; gap is test coverage, not runtime safety
 - **Estimated effort:** 1 point (add one fixture case with payload string per test file)
+
+### [PROD] Integration Seam Gap: Scan Pipeline → Overlay Result Display
+
+- **Source:** TD-18-19-scan-ux-immediate-overlay review (2026-04-06)
+- **Finding:** Story touches the receipt scan pipeline (useScanInitiation → CF → Firestore → onSnapshot → ScanOverlay). All seams are mocked on both sides in unit tests — no emulator-backed integration test exercises the CF write → Firestore listener → overlay result render handoff. `INTEGRATION_SEAM_CHECK: FAIL`.
+- **Files:** `src/features/scan/hooks/useScanInitiation.ts`, `src/features/scan/components/ScanOverlay.tsx`, `tests/integration/`
+- **Stage:** PROD — Required for integration confidence, not for feature function
+- **Estimated effort:** 3 points (requires Firestore emulator setup, integration test infrastructure for scan pipeline)
+
+### [PROD] ScanOverlay Test File Exceeds 300-Line Unit Cap
+
+- **Source:** TD-18-19-scan-ux-immediate-overlay review (2026-04-06)
+- **Finding:** `ScanOverlay.test.tsx` is 450 lines, exceeding the 300-line unit test limit from testing.md. TD-18-19 added ~120 lines for ready state, fast scan, and action button tests. Split into focused test files (e.g., ScanOverlay.states.test.tsx, ScanOverlay.ready.test.tsx, ScanOverlay.accessibility.test.tsx).
+- **Files:** `tests/unit/features/scan/components/ScanOverlay.test.tsx`
+- **Stage:** PROD — Test maintainability
+- **Estimated effort:** 2 points (split file, update imports, verify all tests pass)
 
 ### [PROD] Adversarial Fixture File Unused by Tests
 
