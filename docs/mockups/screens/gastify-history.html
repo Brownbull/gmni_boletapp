@@ -40,10 +40,12 @@
       --status-bar-text: #fff;
       --fab-gradient-from: #4a7c59;
       --fab-gradient-to: #3d6b4b;
-      --cat-construccion: #4a7c59;
+      --cat-hogar: #4a7c59;
       --cat-farmacia: #dc2626;
-      --cat-vet: #5b8fa8;
+      --cat-mascotas: #5b8fa8;
       --cat-alimentos: #4a7c59;
+      --skeleton-base: #f1dbb6;
+      --skeleton-shine: #f5f0e8;
     }
 
     /* -- Normal Dark -- */
@@ -70,10 +72,12 @@
       --fab-gradient-to: #5a8a68;
       --warning: #fbbf24;
       --error: #f87171;
-      --cat-construccion: #6b9e7a;
+      --cat-hogar: #6b9e7a;
       --cat-farmacia: #f87171;
-      --cat-vet: #7ab5cc;
+      --cat-mascotas: #7ab5cc;
       --cat-alimentos: #6b9e7a;
+      --skeleton-base: #2d3a30;
+      --skeleton-shine: #3d4d42;
     }
 
     /* -- Professional Light -- */
@@ -100,10 +104,12 @@
       --fab-gradient-to: #1d4ed8;
       --warning: #f59e0b;
       --error: #ef4444;
-      --cat-construccion: #2563eb;
+      --cat-hogar: #2563eb;
       --cat-farmacia: #dc2626;
-      --cat-vet: #7c3aed;
+      --cat-mascotas: #7c3aed;
       --cat-alimentos: #2563eb;
+      --skeleton-base: #f1f5f9;
+      --skeleton-shine: #f8fafc;
     }
 
     /* -- Professional Dark -- */
@@ -130,10 +136,12 @@
       --fab-gradient-to: #2563eb;
       --warning: #fbbf24;
       --error: #f87171;
-      --cat-construccion: #3b82f6;
+      --cat-hogar: #3b82f6;
       --cat-farmacia: #f87171;
-      --cat-vet: #a78bfa;
+      --cat-mascotas: #a78bfa;
       --cat-alimentos: #3b82f6;
+      --skeleton-base: #1e293b;
+      --skeleton-shine: #334155;
     }
 
     /* -- Mono Light -- */
@@ -160,10 +168,12 @@
       --fab-gradient-to: #27272a;
       --warning: #a1a1aa;
       --error: #71717a;
-      --cat-construccion: #18181b;
+      --cat-hogar: #18181b;
       --cat-farmacia: #3f3f46;
-      --cat-vet: #a1a1aa;
+      --cat-mascotas: #a1a1aa;
       --cat-alimentos: #18181b;
+      --skeleton-base: #f4f4f5;
+      --skeleton-shine: #fafafa;
     }
 
     /* -- Mono Dark -- */
@@ -190,10 +200,12 @@
       --fab-gradient-to: #27272a;
       --warning: #71717a;
       --error: #a1a1aa;
-      --cat-construccion: #a1a1aa;
+      --cat-hogar: #a1a1aa;
       --cat-farmacia: #71717a;
-      --cat-vet: #71717a;
+      --cat-mascotas: #71717a;
       --cat-alimentos: #a1a1aa;
+      --skeleton-base: #18181b;
+      --skeleton-shine: #27272a;
     }
 
     /* ======================================================
@@ -493,29 +505,33 @@
       fill: none;
     }
 
-    .avatar-circle {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--bg-tertiary);
+    /* ── View Toggle ── */
+    .view-toggle {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: transform 0.15s;
-      flex-shrink: 0;
+      margin: 0 16px 8px;
+      background: var(--bg-tertiary, var(--wireframe-placeholder));
+      border-radius: 8px;
+      padding: 3px;
+      gap: 2px;
     }
-
-    .avatar-circle:hover {
-      transform: scale(1.05);
-    }
-
-    .avatar-circle span {
+    .view-toggle-btn {
+      flex: 1;
+      padding: 8px 0;
+      border-radius: 6px;
       font-family: 'Outfit', sans-serif;
+      font-size: 13px;
       font-weight: 600;
-      font-size: 11px;
-      color: var(--text);
-      line-height: 1;
+      text-align: center;
+      color: var(--text-secondary, var(--secondary));
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: none;
+      background: transparent;
+    }
+    .view-toggle-btn.active {
+      background: var(--surface);
+      color: var(--text, var(--text-primary));
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
     /* ======================================================
@@ -981,8 +997,8 @@
       stroke: var(--secondary);
     }
 
-    /* ======================================================
-       BOTTOM NAVIGATION (matches dashboard exactly)
+        /* ======================================================
+       BOTTOM NAVIGATION (5 equal items — restructured)
        ====================================================== */
 
     .bottom-nav {
@@ -1047,89 +1063,6 @@
     .nav-item:not(.active) .nav-icon svg {
       stroke: var(--secondary);
       opacity: 0.45;
-    }
-
-    /* -- FAB -- */
-    .fab-wrapper {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 52px;
-    }
-
-    .fab {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--fab-gradient-from), var(--fab-gradient-to));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: -28px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      cursor: pointer;
-      transition: transform 0.15s, box-shadow 0.15s;
-      border: none;
-      position: relative;
-      z-index: 2;
-    }
-
-    .fab:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-    }
-
-    .fab svg {
-      width: 24px;
-      height: 24px;
-      stroke: #fff;
-      stroke-width: 2;
-      fill: none;
-    }
-
-    .fab-badge-left {
-      position: absolute;
-      top: -24px;
-      left: -6px;
-      background: var(--primary);
-      border-radius: 999px;
-      padding: 2px 6px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 9px;
-      font-weight: 700;
-      color: #fff;
-      line-height: 1.3;
-      z-index: 3;
-      white-space: nowrap;
-    }
-
-    .fab-badge-right {
-      position: absolute;
-      top: -24px;
-      right: -6px;
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 2px 5px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 9px;
-      font-weight: 700;
-      color: var(--text);
-      line-height: 1.3;
-      z-index: 3;
-      white-space: nowrap;
-    }
-
-    /* -- Alert dot -- */
-    .alert-dot {
-      position: absolute;
-      top: 2px;
-      right: 8px;
-      width: 6px;
-      height: 6px;
-      background: #ef4444;
-      border-radius: 50%;
     }
 
     /* ======================================================
@@ -1276,6 +1209,51 @@
       text-decoration: underline;
     }
 
+
+    /* ======================================================
+       SKELETON / LOADING STATE
+       ====================================================== */
+
+    .skeleton-state {
+      display: none;
+      padding: 0 12px;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    .skel {
+      border-radius: 8px;
+      background: linear-gradient(
+        90deg,
+        var(--skeleton-base) 25%,
+        var(--skeleton-shine) 50%,
+        var(--skeleton-base) 75%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 1.8s ease-in-out infinite;
+    }
+
+    .skel-txn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+
+    .skel-txn-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
     /* ======================================================
        VARIANT VISIBILITY
        ====================================================== */
@@ -1304,6 +1282,77 @@
     body.variant-selection .txn-checkbox { display: flex; }
     body.variant-selection .filter-chips-row { display: none; }
 
+    /* Loading skeleton */
+    body.variant-loading .hero-content { display: none; }
+    body.variant-loading .empty-no-txn { display: none; }
+    body.variant-loading .empty-filtered-content { display: none; }
+    body.variant-loading .selection-mode-content { display: none; }
+    body.variant-loading .selection-bar { display: none; }
+    body.variant-loading .filter-chips-row { display: none; }
+    body.variant-loading .results-row { display: none; }
+    body.variant-loading .temporal-breadcrumb { display: none; }
+    body.variant-loading .skeleton-state { display: block; }
+
+
+    /* Producto aggregated view */
+    .producto-content { display: none; }
+    body.variant-producto .hero-content { display: none; }
+    body.variant-producto .empty-no-txn { display: none; }
+    body.variant-producto .empty-filtered-content { display: none; }
+    body.variant-producto .selection-mode-content { display: none; }
+    body.variant-producto .selection-bar { display: none; }
+    body.variant-producto .filter-chips-row { display: none; }
+    body.variant-producto .results-row { display: none; }
+    body.variant-producto .temporal-breadcrumb { display: none; }
+    body.variant-producto .skeleton-state { display: none; }
+    body.variant-producto .producto-content { display: block; }
+    body.variant-producto .view-toggle-btn:first-child { background: transparent; color: var(--secondary); box-shadow: none; }
+    body.variant-producto .view-toggle-btn:last-child { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    body.variant-producto .view-toggle-btn:first-child.active { background: transparent; color: var(--secondary); box-shadow: none; }
+
+    .producto-section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      padding: 12px 16px 8px;
+    }
+    .producto-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin: 0 16px 10px;
+    }
+    .producto-card-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .producto-card-stats {
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      color: var(--secondary);
+      margin-bottom: 6px;
+    }
+    .producto-card-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .producto-card-total {
+      font-family: 'Outfit', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .producto-card-avg {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      color: var(--secondary);
+    }
   </style>
 </head>
 <body data-theme="normal" data-mode="light">
@@ -1330,6 +1379,8 @@
         <button class="variant-tab" data-variant="empty">Empty</button>
         <button class="variant-tab" data-variant="filtered">Filtered</button>
         <button class="variant-tab" data-variant="selection">Selection</button>
+        <button class="variant-tab" data-variant="loading">Loading</button>
+        <button class="variant-tab" data-variant="producto">Producto</button>
       </div>
     </div>
   </div>
@@ -1374,9 +1425,19 @@
             <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
           </svg>
         </div>
-        <div class="avatar-circle">
-          <span>GC</span>
-        </div>
+        <div class="header-bell" style="position:relative;cursor:pointer;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <span style="position:absolute;top:-4px;right:-6px;background:#ef4444;color:#fff;font-size:9px;font-weight:700;font-family:'Outfit',sans-serif;border-radius:999px;padding:1px 5px;line-height:1.3;">3</span>
+          </div>
+      </div>
+
+      <!-- View Toggle: Fecha | Producto -->
+      <div class="view-toggle">
+        <button class="view-toggle-btn active">Fecha</button>
+        <button class="view-toggle-btn">Producto</button>
       </div>
 
       <!-- ===================================================
@@ -1469,10 +1530,10 @@
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
             </div>
-            <div class="txn-cat-badge" style="background:var(--cat-construccion)">&#x1F3E0;</div>
+            <div class="txn-cat-badge" style="background:var(--cat-hogar)">&#x1F3E0;</div>
           </div>
           <div class="txn-body">
-            <div class="txn-merchant" style="color:var(--cat-construccion)">DOBLER CONSTRUCCION &amp; HOGAR</div>
+            <div class="txn-merchant" style="color:var(--cat-hogar)">DOBLER CONSTRUCCION &amp; HOGAR</div>
             <div class="txn-pills">
               <span class="txn-pill">17/03/2026</span>
               <span class="txn-pill">Villarrica</span>
@@ -1534,10 +1595,10 @@
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
             </div>
-            <div class="txn-cat-badge" style="background:var(--cat-vet)">&#x1F43E;</div>
+            <div class="txn-cat-badge" style="background:var(--cat-mascotas)">&#x1F43E;</div>
           </div>
           <div class="txn-body">
-            <div class="txn-merchant" style="color:var(--cat-vet)">VETERINARIA ARAUCANIA LIMITADA</div>
+            <div class="txn-merchant" style="color:var(--cat-mascotas)">VETERINARIA ARAUCANIA LIMITADA</div>
             <div class="txn-pills">
               <span class="txn-pill">16/03/2026</span>
               <span class="txn-pill item-count">&#x2460; 1</span>
@@ -1562,10 +1623,10 @@
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
             </div>
-            <div class="txn-cat-badge" style="background:var(--cat-vet)">&#x1F43E;</div>
+            <div class="txn-cat-badge" style="background:var(--cat-mascotas)">&#x1F43E;</div>
           </div>
           <div class="txn-body">
-            <div class="txn-merchant" style="color:var(--cat-vet)">VETERINARIA CORRAL SUR LTDA</div>
+            <div class="txn-merchant" style="color:var(--cat-mascotas)">VETERINARIA CORRAL SUR LTDA</div>
             <div class="txn-pills">
               <span class="txn-pill">16/03/2026</span>
               <span class="txn-pill item-count">&#x2461; 2</span>
@@ -1590,10 +1651,10 @@
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
             </div>
-            <div class="txn-cat-badge" style="background:var(--cat-vet)">&#x1F43E;</div>
+            <div class="txn-cat-badge" style="background:var(--cat-mascotas)">&#x1F43E;</div>
           </div>
           <div class="txn-body">
-            <div class="txn-merchant" style="color:var(--cat-vet)">SOCIEDAD SERVICIOS VET CG LTDA</div>
+            <div class="txn-merchant" style="color:var(--cat-mascotas)">SOCIEDAD SERVICIOS VET CG LTDA</div>
             <div class="txn-pills">
               <span class="txn-pill">16/03/2026</span>
               <span class="txn-pill">17:54</span>
@@ -1666,7 +1727,7 @@
       <!-- ===================================================
            FILTERED VARIANT: Search active, no results
            =================================================== -->
-      <div class="scroll-content empty-filtered-content" style="display:none">
+      <div class="scroll-content empty-filtered-content">
         <!-- Search Bar (with active query) -->
         <div class="search-bar">
           <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
@@ -1752,7 +1813,7 @@
       <!-- ===================================================
            SELECTION VARIANT
            =================================================== -->
-      <div class="scroll-content selection-mode-content" style="display:none">
+      <div class="scroll-content selection-mode-content">
 
         <!-- Search Bar -->
         <div class="search-bar">
@@ -1825,10 +1886,10 @@
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
             </div>
-            <div class="txn-cat-badge" style="background:var(--cat-construccion)">&#x1F3E0;</div>
+            <div class="txn-cat-badge" style="background:var(--cat-hogar)">&#x1F3E0;</div>
           </div>
           <div class="txn-body">
-            <div class="txn-merchant" style="color:var(--cat-construccion)">DOBLER CONSTRUCCION &amp; HOGAR</div>
+            <div class="txn-merchant" style="color:var(--cat-hogar)">DOBLER CONSTRUCCION &amp; HOGAR</div>
             <div class="txn-pills">
               <span class="txn-pill">17/03/2026</span>
               <span class="txn-pill">Villarrica</span>
@@ -1900,10 +1961,10 @@
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
             </div>
-            <div class="txn-cat-badge" style="background:var(--cat-vet)">&#x1F43E;</div>
+            <div class="txn-cat-badge" style="background:var(--cat-mascotas)">&#x1F43E;</div>
           </div>
           <div class="txn-body">
-            <div class="txn-merchant" style="color:var(--cat-vet)">VETERINARIA ARAUCANIA LIMITADA</div>
+            <div class="txn-merchant" style="color:var(--cat-mascotas)">VETERINARIA ARAUCANIA LIMITADA</div>
             <div class="txn-pills">
               <span class="txn-pill">16/03/2026</span>
               <span class="txn-pill item-count">&#x2460; 1</span>
@@ -1933,10 +1994,10 @@
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
             </div>
-            <div class="txn-cat-badge" style="background:var(--cat-vet)">&#x1F43E;</div>
+            <div class="txn-cat-badge" style="background:var(--cat-mascotas)">&#x1F43E;</div>
           </div>
           <div class="txn-body">
-            <div class="txn-merchant" style="color:var(--cat-vet)">VETERINARIA CORRAL SUR LTDA</div>
+            <div class="txn-merchant" style="color:var(--cat-mascotas)">VETERINARIA CORRAL SUR LTDA</div>
             <div class="txn-pills">
               <span class="txn-pill">16/03/2026</span>
               <span class="txn-pill item-count">&#x2461; 2</span>
@@ -1966,10 +2027,10 @@
               <div class="txn-thumb-line"></div>
               <div class="txn-thumb-line"></div>
             </div>
-            <div class="txn-cat-badge" style="background:var(--cat-vet)">&#x1F43E;</div>
+            <div class="txn-cat-badge" style="background:var(--cat-mascotas)">&#x1F43E;</div>
           </div>
           <div class="txn-body">
-            <div class="txn-merchant" style="color:var(--cat-vet)">SOCIEDAD SERVICIOS VET CG LTDA</div>
+            <div class="txn-merchant" style="color:var(--cat-mascotas)">SOCIEDAD SERVICIOS VET CG LTDA</div>
             <div class="txn-pills">
               <span class="txn-pill">16/03/2026</span>
               <span class="txn-pill">17:54</span>
@@ -1988,6 +2049,56 @@
 
       </div><!-- /scroll-content selection-mode-content -->
 
+
+      <!-- ===================================================
+           PRODUCTO VARIANT: Aggregated by product
+           =================================================== -->
+      <div class="scroll-content producto-content">
+
+        <div class="producto-section-title">Productos frecuentes</div>
+
+        <!-- Product Card 1: Leche entera -->
+        <div class="producto-card">
+          <div class="producto-card-name">Leche entera</div>
+          <div class="producto-card-stats">8 compras &middot; 3 tiendas</div>
+          <div class="producto-card-row">
+            <div class="producto-card-total">$23.120</div>
+            <div class="producto-card-avg">Promedio: $2.890</div>
+          </div>
+        </div>
+
+        <!-- Product Card 2: Pan de molde -->
+        <div class="producto-card">
+          <div class="producto-card-name">Pan de molde</div>
+          <div class="producto-card-stats">12 compras &middot; 4 tiendas</div>
+          <div class="producto-card-row">
+            <div class="producto-card-total">$18.960</div>
+            <div class="producto-card-avg">Promedio: $1.580</div>
+          </div>
+        </div>
+
+        <!-- Product Card 3: Detergente Omo -->
+        <div class="producto-card">
+          <div class="producto-card-name">Detergente Omo</div>
+          <div class="producto-card-stats">3 compras &middot; 2 tiendas</div>
+          <div class="producto-card-row">
+            <div class="producto-card-total">$14.370</div>
+            <div class="producto-card-avg">Promedio: $4.790</div>
+          </div>
+        </div>
+
+        <!-- Product Card 4: Coca-Cola 1.5L -->
+        <div class="producto-card">
+          <div class="producto-card-name">Coca-Cola 1.5L</div>
+          <div class="producto-card-stats">6 compras &middot; 3 tiendas</div>
+          <div class="producto-card-row">
+            <div class="producto-card-total">$11.940</div>
+            <div class="producto-card-avg">Promedio: $1.990</div>
+          </div>
+        </div>
+
+      </div><!-- /scroll-content producto-content -->
+
       <!-- Selection Bar (shown in selection variant) -->
       <div class="selection-bar">
         <div class="selection-info">
@@ -1997,9 +2108,79 @@
         <button class="selection-delete">Eliminar</button>
       </div>
 
+
+      <!-- === LOADING SKELETON === -->
+      <div class="skeleton-state">
+        <!-- Skeleton section header -->
+        <div style="padding:8px 4px 12px">
+          <div class="skel" style="width:120px;height:14px;border-radius:6px"></div>
+        </div>
+        <!-- Skeleton Transaction Row 1 -->
+        <div class="skel-txn">
+          <div class="skel" style="width:40px;height:52px;border-radius:8px;flex-shrink:0"></div>
+          <div class="skel-txn-body">
+            <div class="skel" style="width:70%;height:13px;border-radius:4px"></div>
+            <div style="display:flex;gap:3px">
+              <div class="skel" style="width:56px;height:18px;border-radius:999px"></div>
+              <div class="skel" style="width:36px;height:18px;border-radius:999px"></div>
+            </div>
+          </div>
+          <div class="skel" style="width:50px;height:13px;border-radius:4px;flex-shrink:0"></div>
+        </div>
+        <!-- Skeleton Transaction Row 2 -->
+        <div class="skel-txn">
+          <div class="skel" style="width:40px;height:52px;border-radius:8px;flex-shrink:0"></div>
+          <div class="skel-txn-body">
+            <div class="skel" style="width:55%;height:13px;border-radius:4px"></div>
+            <div style="display:flex;gap:3px">
+              <div class="skel" style="width:48px;height:18px;border-radius:999px"></div>
+              <div class="skel" style="width:42px;height:18px;border-radius:999px"></div>
+            </div>
+          </div>
+          <div class="skel" style="width:46px;height:13px;border-radius:4px;flex-shrink:0"></div>
+        </div>
+        <!-- Skeleton Transaction Row 3 -->
+        <div class="skel-txn">
+          <div class="skel" style="width:40px;height:52px;border-radius:8px;flex-shrink:0"></div>
+          <div class="skel-txn-body">
+            <div class="skel" style="width:65%;height:13px;border-radius:4px"></div>
+            <div style="display:flex;gap:3px">
+              <div class="skel" style="width:56px;height:18px;border-radius:999px"></div>
+              <div class="skel" style="width:30px;height:18px;border-radius:999px"></div>
+              <div class="skel" style="width:50px;height:18px;border-radius:999px"></div>
+            </div>
+          </div>
+          <div class="skel" style="width:52px;height:13px;border-radius:4px;flex-shrink:0"></div>
+        </div>
+        <!-- Skeleton Transaction Row 4 -->
+        <div class="skel-txn">
+          <div class="skel" style="width:40px;height:52px;border-radius:8px;flex-shrink:0"></div>
+          <div class="skel-txn-body">
+            <div class="skel" style="width:60%;height:13px;border-radius:4px"></div>
+            <div style="display:flex;gap:3px">
+              <div class="skel" style="width:56px;height:18px;border-radius:999px"></div>
+              <div class="skel" style="width:36px;height:18px;border-radius:999px"></div>
+            </div>
+          </div>
+          <div class="skel" style="width:48px;height:13px;border-radius:4px;flex-shrink:0"></div>
+        </div>
+        <!-- Skeleton Transaction Row 5 -->
+        <div class="skel-txn">
+          <div class="skel" style="width:40px;height:52px;border-radius:8px;flex-shrink:0"></div>
+          <div class="skel-txn-body">
+            <div class="skel" style="width:50%;height:13px;border-radius:4px"></div>
+            <div style="display:flex;gap:3px">
+              <div class="skel" style="width:48px;height:18px;border-radius:999px"></div>
+              <div class="skel" style="width:40px;height:18px;border-radius:999px"></div>
+            </div>
+          </div>
+          <div class="skel" style="width:44px;height:13px;border-radius:4px;flex-shrink:0"></div>
+        </div>
+      </div>
+
       <!-- Bottom Navigation (no tab active — History accessed via menu) -->
-      <div class="bottom-nav">
-        <!-- Home -->
+            <div class="bottom-nav">
+        <!-- Inicio -->
         <div class="nav-item">
           <div class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -2009,7 +2190,29 @@
           </div>
           <span class="nav-label">Inicio</span>
         </div>
-        <!-- BarChart3 -->
+        <!-- Compras -->
+        <div class="nav-item active">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <span class="nav-label">Compras</span>
+        </div>
+        <!-- Escanear -->
+        <div class="nav-item">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </div>
+          <span class="nav-label">Escanear</span>
+        </div>
+        <!-- Gastos -->
         <div class="nav-item">
           <div class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -2018,44 +2221,20 @@
               <line x1="6" y1="20" x2="6" y2="14"/>
             </svg>
           </div>
-          <span class="nav-label" style="visibility:hidden;">_</span>
+          <span class="nav-label">Gastos</span>
         </div>
-        <!-- FAB (center) -->
-        <div class="fab-wrapper">
-          <span class="fab-badge-left">100</span>
-          <span class="fab-badge-right">1K</span>
-          <button class="fab">
-            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-              <circle cx="12" cy="13" r="4"/>
-            </svg>
-          </button>
-        </div>
-        <!-- Lightbulb -->
+        <!-- Perfil -->
         <div class="nav-item">
           <div class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 18h6"/>
-              <path d="M10 22h4"/>
-              <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/>
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
             </svg>
           </div>
-          <span class="nav-label" style="visibility:hidden;">_</span>
-        </div>
-        <!-- Bell -->
-        <div class="nav-item">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
-          </div>
-          <span class="nav-label" style="visibility:hidden;">_</span>
-          <div class="alert-dot"></div>
+          <span class="nav-label">Perfil</span>
         </div>
       </div>
-
-      <!-- Home Indicator -->
+<!-- Home Indicator -->
       <div class="home-indicator"></div>
 
     </div><!-- /phone-screen -->
@@ -2101,7 +2280,7 @@
         tab.addEventListener('click', function() {
           variantTabs.forEach(function(t) { t.classList.remove('active'); });
           tab.classList.add('active');
-          body.classList.remove('variant-empty', 'variant-filtered', 'variant-selection');
+          body.classList.remove('variant-empty', 'variant-filtered', 'variant-selection', 'variant-loading', 'variant-producto');
           var variant = tab.dataset.variant;
           if (variant !== 'hero') {
             body.classList.add('variant-' + variant);

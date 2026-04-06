@@ -7,11 +7,47 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
+  :root {
+    --bg: var(--bg);
+    --bg-lighter: var(--bg-lighter);
+    --surface: var(--surface);
+    --border: var(--border);
+    --text: #e8e8f0;
+    --muted: #8888aa;
+    --primary: var(--primary);
+    --primary-dim: var(--primary-dim);
+    --primary-border: var(--primary-border);
+    --accent: var(--accent);
+    --accent-dim: #4a3020;
+    --accent-border: var(--accent-border);
+    --secondary: var(--secondary);
+    --secondary-dim: #1e3a4a;
+    --secondary-border: var(--secondary-border);
+    --green: var(--green);
+    --green-dim: #064e3b;
+    --green-border: var(--green-border);
+    --amber: var(--amber);
+    --amber-dim: #78350f;
+    --amber-border: var(--amber-border);
+    --blue: var(--blue);
+    --blue-dim: #1e3a5f;
+    --blue-border: var(--blue-border);
+    --purple: var(--purple);
+    --purple-dim: #3b1f7a;
+    --purple-border: var(--purple-border);
+    --red: var(--red);
+    --red-dim: #5b1a1a;
+    --red-border: var(--red-border);
+    --gold: #fde68a;
+    --gold-dim: #4a3f1a;
+    --gold-border: var(--amber);
+  }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      background: #1a1a2e;
-      color: #e0e0e0;
+      background: var(--bg);
+      color: var(--text);
       font-family: 'Outfit', sans-serif;
       min-height: 100vh;
       overflow-x: hidden;
@@ -64,13 +100,13 @@
     .header h1 {
       font-size: 38px;
       font-weight: 700;
-      color: #f0ebe3;
+      color: var(--text);
       margin-bottom: 14px;
       line-height: 1.15;
     }
 
     .header h1 span {
-      background: linear-gradient(135deg, #4a7c59, #5b8fa8, #e8a87c);
+      background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -78,7 +114,7 @@
 
     .header .subtitle {
       font-size: 15px;
-      color: #9a9ab0;
+      color: var(--muted);
       max-width: 620px;
       margin: 0 auto;
       line-height: 1.7;
@@ -93,43 +129,54 @@
       padding: 5px 16px;
       font-size: 11px;
       font-weight: 700;
-      color: #5b8fa8;
+      color: var(--secondary);
       letter-spacing: 1px;
       text-transform: uppercase;
     }
 
-    /* Nav reference bar */
-    .nav-ref {
-      display: flex;
-      justify-content: center;
-      gap: 6px;
-      margin-top: 22px;
-      flex-wrap: wrap;
-    }
+      /* -- Nav Reference Bar (canonical — matches flow-06+) -- */
+  .nav-ref {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 36px;
+    padding: 10px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 16px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.03em;
+    position: relative;
+  }
+  .nav-item .nav-icon { font-size: 18px; }
+  .nav-fab {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-border));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(74, 124, 89, 0.4);
+    margin: 0 8px;
+    flex-shrink: 0;
+  }
 
-    .nav-ref .nav-item {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.07);
-      border-radius: 20px;
-      padding: 6px 14px;
-      font-size: 12px;
-      color: #6e6e88;
-      font-weight: 600;
-      transition: all 0.2s ease;
-    }
-
-    .nav-ref .nav-item.fab {
-      background: linear-gradient(135deg, rgba(74, 124, 89, 0.25), rgba(232, 168, 124, 0.20));
-      border-color: rgba(74, 124, 89, 0.40);
-      color: #4a7c59;
-      font-weight: 700;
-    }
-
-    .nav-ref .nav-item.active-in-step {
-      background: rgba(74, 124, 89, 0.18);
-      border-color: rgba(74, 124, 89, 0.35);
-      color: #6aad7a;
-    }
 
     /* ══════════════════════════════════════ LEGEND ══════════════════════════════════════ */
     .legend {
@@ -149,7 +196,7 @@
       align-items: center;
       gap: 8px;
       font-size: 12px;
-      color: #8888a0;
+      color: var(--muted);
     }
 
     .legend-dot {
@@ -159,12 +206,12 @@
       flex-shrink: 0;
     }
 
-    .legend-dot.red { background: #e05555; }
+    .legend-dot.red { background: var(--red); }
     .legend-dot.amber { background: #d4a03c; }
-    .legend-dot.blue { background: #5b8fa8; }
-    .legend-dot.green { background: #4a7c59; }
+    .legend-dot.blue { background: var(--secondary); }
+    .legend-dot.green { background: var(--primary); }
     .legend-dot.diamond {
-      background: #8b6fc0;
+      background: var(--purple);
       transform: rotate(45deg);
       width: 10px;
       height: 10px;
@@ -254,7 +301,7 @@
       position: absolute;
       top: -10px;
       left: 24px;
-      background: #1a1a2e;
+      background: var(--bg);
       border: 2px solid;
       border-radius: 20px;
       padding: 2px 12px;
@@ -319,8 +366,8 @@
       position: absolute;
       top: -10px;
       right: 20px;
-      background: linear-gradient(135deg, #e8a87c, #4a7c59);
-      color: #1a1a2e;
+      background: linear-gradient(135deg, var(--accent), var(--primary));
+      color: var(--bg);
       font-size: 10px;
       font-weight: 800;
       padding: 4px 12px;
@@ -343,7 +390,7 @@
       box-shadow: 0 4px 24px rgba(224, 85, 85, 0.06);
     }
     .node.red:hover { box-shadow: 0 8px 36px rgba(224, 85, 85, 0.14); }
-    .node.red .step-badge { border-color: #e05555; color: #e05555; }
+    .node.red .step-badge { border-color: var(--red); color: var(--red); }
     .node.red .screen-name { color: #f0a0a0; }
     .node.red .user-thought { background: rgba(224, 85, 85, 0.07); color: #d4a8a8; }
 
@@ -363,7 +410,7 @@
       box-shadow: 0 4px 24px rgba(91, 143, 168, 0.06);
     }
     .node.blue:hover { box-shadow: 0 8px 36px rgba(91, 143, 168, 0.14); }
-    .node.blue .step-badge { border-color: #5b8fa8; color: #5b8fa8; }
+    .node.blue .step-badge { border-color: var(--secondary); color: var(--secondary); }
     .node.blue .screen-name { color: #a0c8d8; }
     .node.blue .user-thought { background: rgba(91, 143, 168, 0.07); color: #a0b8c4; }
 
@@ -373,7 +420,7 @@
       box-shadow: 0 4px 24px rgba(74, 124, 89, 0.08);
     }
     .node.green:hover { box-shadow: 0 8px 36px rgba(74, 124, 89, 0.18); }
-    .node.green .step-badge { border-color: #4a7c59; color: #4a7c59; }
+    .node.green .step-badge { border-color: var(--primary); color: var(--primary); }
     .node.green .screen-name { color: #a0d8b0; }
     .node.green .user-thought { background: rgba(74, 124, 89, 0.08); color: #a0c4a8; }
 
@@ -444,7 +491,7 @@
       align-items: flex-start;
       gap: 10px;
       font-size: 12px;
-      color: #8888a0;
+      color: var(--muted);
       margin-bottom: 6px;
       line-height: 1.4;
     }
@@ -1142,7 +1189,7 @@
       <div style="width: 100%; max-width: 540px; position: relative; display: flex; flex-direction: column; align-items: center;">
         <div style="width: 100%; border: 1.5px dashed rgba(74,124,89,0.25); border-radius: 16px; padding: 24px 28px; background: linear-gradient(135deg, rgba(74,124,89,0.06), rgba(91,143,168,0.04)); cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 28px rgba(74,124,89,0.1)';" onmouseout="this.style.transform=''; this.style.boxShadow='';" onclick="this.classList.toggle('expanded')">
           <div style="font-size: 18px; font-weight: 700; color: #a0d8b0; margin-bottom: 4px;">Ciclo Continuo</div>
-          <div style="font-size: 13px; color: #8888a0; font-weight: 600; margin-bottom: 12px;">Escanear &#8594; Compartir &#8594; Revisar &#8594; Repetir</div>
+          <div style="font-size: 13px; color: var(--muted); font-weight: 600; margin-bottom: 12px;">Escanear &#8594; Compartir &#8594; Revisar &#8594; Repetir</div>
           <div style="font-size: 13px; font-style: italic; color: #a0c4a8; background: rgba(74,124,89,0.06); padding: 10px 14px; border-radius: 10px; line-height: 1.5; position: relative;">
             <span style="font-size: 28px; position: absolute; top: 0; left: 6px; opacity: 0.2; font-style: normal; font-weight: 700;">&#8220;</span>
             <span style="padding-left: 14px; display: block;">Cada vez que alguien del grupo escanea, todos ven los gastos. Ya no tenemos que preguntar "cuanto pagaste".</span>

@@ -6,7 +6,7 @@
   <title>Items (Productos) -- Gastify (Production Design System)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Baloo+2:wght@700&display=swap" rel="stylesheet">
   <style>
     /* ======================================================
        GASTIFY -- PRODUCTION DESIGN SYSTEM
@@ -37,11 +37,13 @@
       --frame-bg: #1a1a2e;
       --fab-gradient-from: #4a7c59;
       --fab-gradient-to: #3d6b4b;
-      --cat-grocery: #4a7c59;
-      --cat-pharmacy: #dc2626;
-      --cat-pet: #d97706;
-      --cat-construction: #0d9488;
-      --cat-cleaning: #7c3aed;
+      --cat-alimentos: #4a7c59;
+      --cat-farmacia: #dc2626;
+      --cat-mascotas: #d97706;
+      --cat-hogar: #0d9488;
+      --cat-limpieza: #7c3aed;
+      --skeleton-base: #f1dbb6;
+      --skeleton-shine: #f5f0e8;
     }
 
     /* -- Normal Dark -- */
@@ -64,11 +66,13 @@
       --fab-gradient-to: #5a8a68;
       --error: #f87171;
       --warning: #fbbf24;
-      --cat-grocery: #6b9e7a;
-      --cat-pharmacy: #f87171;
-      --cat-pet: #fbbf24;
-      --cat-construction: #2dd4bf;
-      --cat-cleaning: #a78bfa;
+      --cat-alimentos: #6b9e7a;
+      --cat-farmacia: #f87171;
+      --cat-mascotas: #fbbf24;
+      --cat-hogar: #2dd4bf;
+      --cat-limpieza: #a78bfa;
+      --skeleton-base: #2d3a30;
+      --skeleton-shine: #3d4d42;
     }
 
     /* -- Professional Light -- */
@@ -91,11 +95,13 @@
       --fab-gradient-to: #1d4ed8;
       --error: #ef4444;
       --warning: #f59e0b;
-      --cat-grocery: #2563eb;
-      --cat-pharmacy: #dc2626;
-      --cat-pet: #d97706;
-      --cat-construction: #0d9488;
-      --cat-cleaning: #7c3aed;
+      --cat-alimentos: #2563eb;
+      --cat-farmacia: #dc2626;
+      --cat-mascotas: #d97706;
+      --cat-hogar: #0d9488;
+      --cat-limpieza: #7c3aed;
+      --skeleton-base: #f1f5f9;
+      --skeleton-shine: #f8fafc;
     }
 
     /* -- Professional Dark -- */
@@ -118,11 +124,13 @@
       --fab-gradient-to: #2563eb;
       --error: #f87171;
       --warning: #fbbf24;
-      --cat-grocery: #3b82f6;
-      --cat-pharmacy: #f87171;
-      --cat-pet: #fbbf24;
-      --cat-construction: #2dd4bf;
-      --cat-cleaning: #a78bfa;
+      --cat-alimentos: #3b82f6;
+      --cat-farmacia: #f87171;
+      --cat-mascotas: #fbbf24;
+      --cat-hogar: #2dd4bf;
+      --cat-limpieza: #a78bfa;
+      --skeleton-base: #1e293b;
+      --skeleton-shine: #334155;
     }
 
     /* -- Mono Light -- */
@@ -145,11 +153,13 @@
       --fab-gradient-to: #27272a;
       --error: #71717a;
       --warning: #a1a1aa;
-      --cat-grocery: #18181b;
-      --cat-pharmacy: #3f3f46;
-      --cat-pet: #52525b;
-      --cat-construction: #71717a;
-      --cat-cleaning: #a1a1aa;
+      --cat-alimentos: #18181b;
+      --cat-farmacia: #3f3f46;
+      --cat-mascotas: #52525b;
+      --cat-hogar: #71717a;
+      --cat-limpieza: #a1a1aa;
+      --skeleton-base: #f4f4f5;
+      --skeleton-shine: #fafafa;
     }
 
     /* -- Mono Dark -- */
@@ -172,11 +182,13 @@
       --fab-gradient-to: #27272a;
       --error: #a1a1aa;
       --warning: #71717a;
-      --cat-grocery: #a1a1aa;
-      --cat-pharmacy: #71717a;
-      --cat-pet: #71717a;
-      --cat-construction: #a1a1aa;
-      --cat-cleaning: #71717a;
+      --cat-alimentos: #a1a1aa;
+      --cat-farmacia: #71717a;
+      --cat-mascotas: #71717a;
+      --cat-hogar: #a1a1aa;
+      --cat-limpieza: #71717a;
+      --skeleton-base: #18181b;
+      --skeleton-shine: #27272a;
     }
 
     /* ======================================================
@@ -474,31 +486,6 @@
       stroke: var(--text-secondary);
       stroke-width: 2;
       fill: none;
-    }
-
-    .avatar-circle {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--bg-tertiary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: transform 0.15s;
-      flex-shrink: 0;
-    }
-
-    .avatar-circle:hover {
-      transform: scale(1.05);
-    }
-
-    .avatar-circle span {
-      font-family: 'Outfit', sans-serif;
-      font-weight: 600;
-      font-size: 11px;
-      color: var(--text);
-      line-height: 1;
     }
 
     /* ======================================================
@@ -1096,8 +1083,8 @@
       cursor: not-allowed;
     }
 
-    /* ======================================================
-       BOTTOM NAVIGATION (matches dashboard exactly)
+        /* ======================================================
+       BOTTOM NAVIGATION (5 equal items — restructured)
        ====================================================== */
 
     .bottom-nav {
@@ -1145,97 +1132,23 @@
       font-family: 'Outfit', sans-serif;
       font-size: 10px;
       font-weight: 500;
-      color: var(--text-secondary);
+      color: var(--secondary);
       opacity: 0.5;
-      visibility: hidden;
+    }
+
+    .nav-item.active .nav-label {
+      color: var(--primary);
+      font-weight: 600;
+      opacity: 1;
+    }
+
+    .nav-item.active .nav-icon svg {
+      stroke: var(--primary);
     }
 
     .nav-item:not(.active) .nav-icon svg {
-      stroke: var(--text-secondary);
+      stroke: var(--secondary);
       opacity: 0.45;
-    }
-
-    /* -- FAB -- */
-    .fab-wrapper {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 52px;
-    }
-
-    .fab {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--fab-gradient-from), var(--fab-gradient-to));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: -28px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      cursor: pointer;
-      transition: transform 0.15s, box-shadow 0.15s;
-      border: none;
-      position: relative;
-      z-index: 2;
-    }
-
-    .fab:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-    }
-
-    .fab svg {
-      width: 24px;
-      height: 24px;
-      stroke: #fff;
-      stroke-width: 2;
-      fill: none;
-    }
-
-    .fab-badge-left {
-      position: absolute;
-      top: -24px;
-      left: -6px;
-      background: var(--primary);
-      border-radius: 999px;
-      padding: 2px 6px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 9px;
-      font-weight: 700;
-      color: #fff;
-      line-height: 1.3;
-      z-index: 3;
-      white-space: nowrap;
-    }
-
-    .fab-badge-right {
-      position: absolute;
-      top: -24px;
-      right: -6px;
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 2px 5px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 9px;
-      font-weight: 700;
-      color: var(--text);
-      line-height: 1.3;
-      z-index: 3;
-      white-space: nowrap;
-    }
-
-    /* -- Alert dot -- */
-    .alert-dot {
-      position: absolute;
-      top: 2px;
-      right: 8px;
-      width: 6px;
-      height: 6px;
-      background: #ef4444;
-      border-radius: 50%;
     }
 
     /* ======================================================
@@ -1288,6 +1201,41 @@
       max-width: 240px;
     }
 
+
+    /* ======================================================
+       SKELETON / LOADING STATE
+       ====================================================== */
+
+    .skeleton-state {
+      display: none;
+      padding: 0 12px;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    .skel {
+      border-radius: 8px;
+      background: linear-gradient(
+        90deg,
+        var(--skeleton-base) 25%,
+        var(--skeleton-shine) 50%,
+        var(--skeleton-base) 75%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 1.8s ease-in-out infinite;
+    }
+
+    .skel-card {
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+
     /* ======================================================
        VARIANT VISIBILITY
        ====================================================== */
@@ -1327,6 +1275,19 @@
     body.variant-search .search-bar-active { display: flex; }
     body.variant-search .pagination { display: none; }
 
+    /* Loading skeleton */
+    body.variant-loading .aggregated-content { display: none; }
+    body.variant-loading .duplicates-content { display: none; }
+    body.variant-loading .empty-content { display: none; }
+    body.variant-loading .search-content { display: none; }
+    body.variant-loading .temporal-breadcrumb { display: none; }
+    body.variant-loading .results-row { display: none; }
+    body.variant-loading .filter-chips-row { display: none; }
+    body.variant-loading .clear-all-link { display: none; }
+    body.variant-loading .pagination { display: none; }
+    body.variant-loading .search-bar { display: none; }
+    body.variant-loading .skeleton-state { display: block; }
+
     /* Default search bar visibility */
     .search-bar-active { display: none; }
 
@@ -1350,6 +1311,11 @@
   </style>
 </head>
 <body data-theme="normal" data-mode="light">
+  <!-- ⚠️ DEPRECATED: This screen has been merged into Compras (Producto toggle). Kept for reference only. -->
+  <div style="position:fixed;top:0;left:0;right:0;background:#f59e0b;color:#78350f;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;text-align:center;z-index:9999;">
+    MERGED into Compras (Producto toggle) — this file is for reference only
+  </div>
+
 
   <!-- ========================================
        CONTROLS (outside phone frame)
@@ -1373,6 +1339,7 @@
         <button class="variant-tab" data-variant="duplicates">Duplicates</button>
         <button class="variant-tab" data-variant="empty">Empty</button>
         <button class="variant-tab" data-variant="search">Search</button>
+        <button class="variant-tab" data-variant="loading">Loading</button>
       </div>
     </div>
   </div>
@@ -1417,9 +1384,13 @@
             <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
           </svg>
         </div>
-        <div class="avatar-circle">
-          <span>GC</span>
-        </div>
+        <div class="header-bell" style="position:relative;cursor:pointer;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <span style="position:absolute;top:-4px;right:-6px;background:#ef4444;color:#fff;font-size:9px;font-weight:700;font-family:'Outfit',sans-serif;border-radius:999px;padding:1px 5px;line-height:1.3;">3</span>
+          </div>
       </div>
 
       <!-- Scrollable Content -->
@@ -1595,10 +1566,10 @@
 
           <!-- Item 1: LUBRICANTE ANTICORROSIVO WD-... -->
           <div class="flat-item-card">
-            <div class="flat-color-strip" style="background: var(--cat-construction)"></div>
+            <div class="flat-color-strip" style="background: var(--cat-hogar)"></div>
             <div class="flat-body">
               <div class="flat-name-row">
-                <span class="flat-name" style="color: var(--cat-construction)">LUBRICANTE ANTICORROSIVO WD-...</span>
+                <span class="flat-name" style="color: var(--cat-hogar)">LUBRICANTE ANTICORROSIVO WD-...</span>
                 <span class="flat-amount">$9.920</span>
               </div>
               <div class="flat-pills">
@@ -1613,10 +1584,10 @@
 
           <!-- Item 2: Veterinary Services -->
           <div class="flat-item-card">
-            <div class="flat-color-strip" style="background: var(--cat-pet)"></div>
+            <div class="flat-color-strip" style="background: var(--cat-mascotas)"></div>
             <div class="flat-body">
               <div class="flat-name-row">
-                <span class="flat-name" style="color: var(--cat-pet)">VETERINARY SERVICES</span>
+                <span class="flat-name" style="color: var(--cat-mascotas)">VETERINARY SERVICES</span>
                 <span class="flat-amount">$40.000</span>
               </div>
               <div class="flat-pills">
@@ -1631,10 +1602,10 @@
 
           <!-- Item 3: PRED FTE.SOL.OFT.5ML -->
           <div class="flat-item-card">
-            <div class="flat-color-strip" style="background: var(--cat-pharmacy)"></div>
+            <div class="flat-color-strip" style="background: var(--cat-farmacia)"></div>
             <div class="flat-body">
               <div class="flat-name-row">
-                <span class="flat-name" style="color: var(--cat-pharmacy)">PRED FTE.SOL.OFT.5ML.</span>
+                <span class="flat-name" style="color: var(--cat-farmacia)">PRED FTE.SOL.OFT.5ML.</span>
                 <span class="flat-amount">$28.832</span>
               </div>
               <div class="flat-pills">
@@ -1649,10 +1620,10 @@
 
           <!-- Item 4: VETGASTRIL 50 ml Arm -->
           <div class="flat-item-card">
-            <div class="flat-color-strip" style="background: var(--cat-pet)"></div>
+            <div class="flat-color-strip" style="background: var(--cat-mascotas)"></div>
             <div class="flat-body">
               <div class="flat-name-row">
-                <span class="flat-name" style="color: var(--cat-pet)">VETGASTRIL 50 ML ARM</span>
+                <span class="flat-name" style="color: var(--cat-mascotas)">VETGASTRIL 50 ML ARM</span>
                 <span class="flat-amount">$16.900</span>
               </div>
               <div class="flat-pills">
@@ -1667,10 +1638,10 @@
 
           <!-- Item 5: CLINDABONE 165 MG X COMP -->
           <div class="flat-item-card">
-            <div class="flat-color-strip" style="background: var(--cat-pharmacy)"></div>
+            <div class="flat-color-strip" style="background: var(--cat-farmacia)"></div>
             <div class="flat-body">
               <div class="flat-name-row">
-                <span class="flat-name" style="color: var(--cat-pharmacy)">CLINDABONE 165 MG X COMP</span>
+                <span class="flat-name" style="color: var(--cat-farmacia)">CLINDABONE 165 MG X COMP</span>
                 <span class="flat-amount">$12.400</span>
               </div>
               <div class="flat-pills">
@@ -1686,10 +1657,10 @@
 
           <!-- Item 6: DERMISOLONA 0.4% SUSP. 30cc -->
           <div class="flat-item-card">
-            <div class="flat-color-strip" style="background: var(--cat-pet)"></div>
+            <div class="flat-color-strip" style="background: var(--cat-mascotas)"></div>
             <div class="flat-body">
               <div class="flat-name-row">
-                <span class="flat-name" style="color: var(--cat-pet)">DERMISOLONA 0.4% SUSP. 30CC</span>
+                <span class="flat-name" style="color: var(--cat-mascotas)">DERMISOLONA 0.4% SUSP. 30CC</span>
                 <span class="flat-amount">$11.500</span>
               </div>
               <div class="flat-pills">
@@ -1703,10 +1674,10 @@
 
           <!-- Item 7: MANTECA -->
           <div class="flat-item-card">
-            <div class="flat-color-strip" style="background: var(--cat-pharmacy)"></div>
+            <div class="flat-color-strip" style="background: var(--cat-farmacia)"></div>
             <div class="flat-body">
               <div class="flat-name-row">
-                <span class="flat-name" style="color: var(--cat-pharmacy)">MANTECA</span>
+                <span class="flat-name" style="color: var(--cat-farmacia)">MANTECA</span>
                 <span class="flat-amount">$8.000</span>
               </div>
               <div class="flat-pills">
@@ -1796,9 +1767,80 @@
 
       </div><!-- /scroll-content -->
 
+
+      <!-- === LOADING SKELETON === -->
+      <div class="skeleton-state">
+        <!-- Skeleton Product Card 1 -->
+        <div class="skel-card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <div class="skel" style="width:44px;height:44px;border-radius:10px;flex-shrink:0"></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+              <div class="skel" style="width:65%;height:14px;border-radius:4px"></div>
+              <div class="skel" style="width:40%;height:11px;border-radius:4px"></div>
+            </div>
+            <div class="skel" style="width:52px;height:14px;border-radius:4px;flex-shrink:0"></div>
+          </div>
+        </div>
+        <!-- Skeleton Product Card 2 -->
+        <div class="skel-card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <div class="skel" style="width:44px;height:44px;border-radius:10px;flex-shrink:0"></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+              <div class="skel" style="width:55%;height:14px;border-radius:4px"></div>
+              <div class="skel" style="width:35%;height:11px;border-radius:4px"></div>
+            </div>
+            <div class="skel" style="width:48px;height:14px;border-radius:4px;flex-shrink:0"></div>
+          </div>
+        </div>
+        <!-- Skeleton Product Card 3 -->
+        <div class="skel-card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <div class="skel" style="width:44px;height:44px;border-radius:10px;flex-shrink:0"></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+              <div class="skel" style="width:70%;height:14px;border-radius:4px"></div>
+              <div class="skel" style="width:45%;height:11px;border-radius:4px"></div>
+            </div>
+            <div class="skel" style="width:56px;height:14px;border-radius:4px;flex-shrink:0"></div>
+          </div>
+        </div>
+        <!-- Skeleton Product Card 4 -->
+        <div class="skel-card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <div class="skel" style="width:44px;height:44px;border-radius:10px;flex-shrink:0"></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+              <div class="skel" style="width:50%;height:14px;border-radius:4px"></div>
+              <div class="skel" style="width:30%;height:11px;border-radius:4px"></div>
+            </div>
+            <div class="skel" style="width:44px;height:14px;border-radius:4px;flex-shrink:0"></div>
+          </div>
+        </div>
+        <!-- Skeleton Product Card 5 -->
+        <div class="skel-card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <div class="skel" style="width:44px;height:44px;border-radius:10px;flex-shrink:0"></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+              <div class="skel" style="width:60%;height:14px;border-radius:4px"></div>
+              <div class="skel" style="width:38%;height:11px;border-radius:4px"></div>
+            </div>
+            <div class="skel" style="width:50px;height:14px;border-radius:4px;flex-shrink:0"></div>
+          </div>
+        </div>
+        <!-- Skeleton Product Card 6 -->
+        <div class="skel-card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <div class="skel" style="width:44px;height:44px;border-radius:10px;flex-shrink:0"></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+              <div class="skel" style="width:58%;height:14px;border-radius:4px"></div>
+              <div class="skel" style="width:42%;height:11px;border-radius:4px"></div>
+            </div>
+            <div class="skel" style="width:46px;height:14px;border-radius:4px;flex-shrink:0"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Bottom Navigation (no tab active -- Items accessed via menu) -->
-      <div class="bottom-nav">
-        <!-- Home -->
+            <div class="bottom-nav">
+        <!-- Inicio -->
         <div class="nav-item">
           <div class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -1806,9 +1848,31 @@
               <polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
           </div>
-          <span class="nav-label">_</span>
+          <span class="nav-label">Inicio</span>
         </div>
-        <!-- BarChart3 -->
+        <!-- Compras -->
+        <div class="nav-item active">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <span class="nav-label">Compras</span>
+        </div>
+        <!-- Escanear -->
+        <div class="nav-item">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </div>
+          <span class="nav-label">Escanear</span>
+        </div>
+        <!-- Gastos -->
         <div class="nav-item">
           <div class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -1817,44 +1881,20 @@
               <line x1="6" y1="20" x2="6" y2="14"/>
             </svg>
           </div>
-          <span class="nav-label">_</span>
+          <span class="nav-label">Gastos</span>
         </div>
-        <!-- FAB (center) -->
-        <div class="fab-wrapper">
-          <span class="fab-badge-left">100</span>
-          <span class="fab-badge-right">1K</span>
-          <button class="fab">
-            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-              <circle cx="12" cy="13" r="4"/>
-            </svg>
-          </button>
-        </div>
-        <!-- Lightbulb -->
+        <!-- Perfil -->
         <div class="nav-item">
           <div class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 18h6"/>
-              <path d="M10 22h4"/>
-              <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/>
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
             </svg>
           </div>
-          <span class="nav-label">_</span>
-        </div>
-        <!-- Bell -->
-        <div class="nav-item">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
-          </div>
-          <span class="nav-label">_</span>
-          <div class="alert-dot"></div>
+          <span class="nav-label">Perfil</span>
         </div>
       </div>
-
-      <!-- Home Indicator -->
+<!-- Home Indicator -->
       <div class="home-indicator"></div>
 
     </div><!-- /phone-screen -->
@@ -1900,7 +1940,7 @@
         tab.addEventListener('click', function() {
           variantTabs.forEach(function(t) { t.classList.remove('active'); });
           tab.classList.add('active');
-          body.classList.remove('variant-aggregated', 'variant-duplicates', 'variant-empty', 'variant-search');
+          body.classList.remove('variant-aggregated', 'variant-duplicates', 'variant-empty', 'variant-search', 'variant-loading');
           var variant = tab.dataset.variant;
           body.classList.add('variant-' + variant);
         });
