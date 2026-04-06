@@ -55,11 +55,16 @@ Merge parallel review outputs. Resolve conflicts. Produce unified findings table
     Each finding: ⚡ **QUICK** (fix now) or 🔧 **COMPLEX** (needs separate work)
     Certainty: **H** = act immediately · **M** = check context · **L** = human judgment
 
+    MANDATORY: Every row MUST include ALL 6 columns. Do NOT drop Agent or file:line.
+
     | # | Sev | Cert | Agent | Finding | Effort |
     |---|-----|------|-------|---------|--------|
     {{#each all_findings_numbered}}
     | {{index}} | {{severity}} | {{certainty}} | {{agent}} | {{description}} [{{file}}:{{line}}] | {{effort_class}} |
     {{/each}}
+
+    Agent = which reviewer found it (code-reviewer, security-reviewer, architect, tdd-guide).
+    Finding MUST end with [file:line] for traceability.
 
     **Recommendation:** {{final_recommendation}}
   </output>

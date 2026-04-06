@@ -42,7 +42,7 @@ project_knowledge:
   load_at_session_start: true
   files:
     required:
-      - "{project-root}/_ecc/knowledge/code-review-patterns.md"
+      - "{project-root}/_kdbp/knowledge/code-review-patterns.md"
       - "{project-root}/.claude/rules/testing.md"
       - "{project-root}/docs/architecture/firestore-patterns.md"
     optional:

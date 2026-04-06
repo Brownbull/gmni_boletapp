@@ -34,7 +34,7 @@ learning:
     min_confidence: 0.3
     auto_apply_threshold: 0.7
     source_directories:
-      - _ecc/knowledge/
+      - _kdbp/knowledge/
       - docs/architecture/
 
   # Enforcement (hooks already configured in .claude/settings.json)

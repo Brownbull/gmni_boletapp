@@ -4,7 +4,7 @@ Load all project knowledge once at review session start. Cache for ECC review ag
 
 <critical>📚 Load project patterns ONCE for all review agents</critical>
 
-<action>Load {project-root}/_ecc/knowledge/code-review-patterns.md → {{cached_review_patterns}}</action>
+<action>Load {project-root}/_kdbp/knowledge/code-review-patterns.md → {{cached_review_patterns}}</action>
 <action>Load {project-root}/docs/architecture/firestore-patterns.md → {{cached_firestore}}</action>
 <action>Load {project-root}/docs/architecture/state-management.md → {{cached_state_mgmt}}</action>
 <action>Load {project-root}/docs/architecture/component-patterns.md → {{cached_components}}</action>

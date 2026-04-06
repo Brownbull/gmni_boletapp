@@ -17,7 +17,7 @@ Load Scrum Master agent persona for sizing expertise, then load project knowledg
 
   <!-- Project Knowledge -->
   <action>Load project knowledge files:
-    - {project-root}/_ecc/knowledge/code-review-patterns.md
+    - {project-root}/_kdbp/knowledge/code-review-patterns.md
     - {project-root}/.claude/rules/testing.md</action>
   <action>Load sizing lessons from project docs if available</action>
 

@@ -1,6 +1,6 @@
 # Boletapp Documentation Index
 
-**Last Updated:** 2026-02-05 | **Version:** 12.0
+**Last Updated:** 2026-04-06 | **Version:** 13.0
 
 Smart Expense Tracker PWA - AI-assisted receipt scanning and expense management.
 
@@ -35,8 +35,10 @@ Smart Expense Tracker PWA - AI-assisted receipt scanning and expense management.
 - **Architecture:** Feature-based modular SPA with Zustand + TanStack Query
 - **Database:** Firebase Firestore (NoSQL)
 - **Auth:** Firebase Auth (Google OAuth)
-- **AI:** Google Gemini 2.5 Flash (receipt OCR)
+- **AI:** Google Gemini 2.5 Flash Lite (receipt + statement scanning)
 - **Production:** https://boletapp-d609f.web.app
+- **Current Epic:** 18 (Credit Card Statement Scanning) — in progress
+- **Next:** Epic 19 (Shared Groups/Gastify), Epic 20 (Subscriptions)
 
 ---
 
@@ -62,6 +64,12 @@ docs/
     source-tree-analysis.md    # Annotated file inventory
     state-management.md        # Zustand + React Query strategy
     diagrams/                  # Excalidraw and Mermaid diagrams
+    proposals/implemented/     # Implemented architecture proposals (Epic 18, 15b, etc.)
+
+  decisions/                   # ADRs and planning artifacts
+    PLAN-A-CODE-REVIEW-STRENGTHENING.md
+    PLAN-B-FIXTURE-BASED-STAGING-TESTING.md
+    PLAN-DOC-CONSOLIDATION.md  # Documentation consolidation plan (2026-04-06)
 
   business/                    # Pricing, costs, revenue
     cost-analysis.md, cost-monitoring.md, pricing-model.md,

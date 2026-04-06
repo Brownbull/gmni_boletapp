@@ -4,7 +4,7 @@ Load all project knowledge once at session start. Cache for ECC agents.
 
 <critical>Load ALL project knowledge ONCE at session start — pass to ECC agents via cached variables</critical>
 
-<action>Load and cache {project-root}/_ecc/knowledge/code-review-patterns.md → {{cached_review_patterns}}</action>
+<action>Load and cache {project-root}/_kdbp/knowledge/code-review-patterns.md → {{cached_review_patterns}}</action>
 <action>Load and cache {project-root}/docs/architecture/firestore-patterns.md → {{cached_firestore}}</action>
 <action>Load and cache {project-root}/docs/architecture/state-management.md → {{cached_state_mgmt}}</action>
 <action>Load and cache {project-root}/docs/architecture/component-patterns.md → {{cached_components}}</action>
