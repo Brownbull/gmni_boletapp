@@ -429,6 +429,10 @@ export function ScanFeature({
   // Story 14e-23a: Read activeDialog from Zustand store for dialog rendering
   const activeDialog = useScanStore((state) => state.activeDialog);
 
+  // TD-18-23: Read scan results for overlay save/edit handlers
+  const scanResults = useScanStore((state) => state.results);
+  const activeResultIndex = useScanStore((state) => state.activeResultIndex);
+
   // Story 16-2: Read overlay state from Zustand store (AC-3)
   const overlayState = useScanStore((state) => state.overlayState);
   const overlayProgress = useScanStore((state) => state.overlayProgress);
@@ -459,6 +463,9 @@ export function ScanFeature({
   // These are fixed-position overlays that render regardless of phase
   // =========================================================================
 
+  // TD-18-23: Confidence for overlay-triggered save (user explicitly accepted result)
+  const OVERLAY_SAVE_CONFIDENCE = 1;
+
   const renderOverlays = (): React.ReactNode => {
     // Default formatCurrency if not provided
     const formatCurrencyFn = formatCurrency || ((amount: number, curr: string) => `${curr} ${amount.toFixed(2)}`);
@@ -466,6 +473,7 @@ export function ScanFeature({
     return (
       <>
         {/* ScanOverlay for processing/error states — Story 16-2: reads from Zustand store */}
+        {/* TD-18-23: onSave/onEdit bypass QuickSaveCard — save/edit directly from overlay */}
         <ScanOverlay
           state={overlayState}
           progress={overlayProgress}
@@ -474,6 +482,22 @@ export function ScanFeature({
           onCancel={onScanOverlayCancel || onCancelProcessing || (() => {})}
           onRetry={onScanOverlayRetry || onRetry || (() => {})}
           onDismiss={onScanOverlayDismiss || onErrorDismiss || (() => {})}
+          onSave={onQuickSave ? () => {
+            const result = scanResults?.[activeResultIndex ?? 0];
+            if (result) {
+              onQuickSave({ transaction: result, confidence: OVERLAY_SAVE_CONFIDENCE });
+            } else {
+              onScanOverlayDismiss?.();
+            }
+          } : undefined}
+          onEdit={onQuickSaveEdit ? () => {
+            const result = scanResults?.[activeResultIndex ?? 0];
+            if (result) {
+              onQuickSaveEdit({ transaction: result, confidence: OVERLAY_SAVE_CONFIDENCE });
+            } else {
+              onScanOverlayDismiss?.();
+            }
+          } : undefined}
           theme={theme}
           t={t}
           visible={isScanOverlayVisible ?? false}

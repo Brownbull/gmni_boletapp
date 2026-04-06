@@ -149,6 +149,22 @@
 - **Stage:** PROD — Test coverage gap for financial operation
 - **Estimated effort:** 1-2 points (integration test asserting deductUserCredits called on retry path)
 
+### [PROD] Duplicate Store Reads for Scan Results in ScanFeature + ScanOverlay
+
+- **Source:** TD-18-23 review (2026-04-06)
+- **Finding:** `scanResults` and `activeResultIndex` are read from `useScanStore` in both `ScanFeature.tsx` (lines 433-434, for overlay onSave/onEdit handlers) and internally in `ScanOverlay.tsx` (for its own rendering). The two reads always agree (same store), but this architectural duplication means changes to index logic in ScanOverlay require parallel updates in ScanFeature's closures. The overlay's callback signature could pass the active result up instead.
+- **Files:** `src/features/scan/ScanFeature.tsx`, `src/features/scan/components/ScanOverlay.tsx`
+- **Stage:** PROD — Maintenance hazard, not feature-breaking
+- **Estimated effort:** 2 points (refactor ScanOverlay callbacks to pass result, remove ScanFeature store reads)
+
+### [PROD] Unhandled Promise Rejection in Overlay Save Handler
+
+- **Source:** TD-18-23 review (2026-04-06)
+- **Finding:** `onQuickSave` is typed `(data?: QuickSaveDialogData) => Promise<void>` but the overlay's `onSave` closure calls it without `await` or `.catch()`. If the parent's save handler throws, it produces an unhandled promise rejection. The sync `onEdit` handler is unaffected.
+- **Files:** `src/features/scan/ScanFeature.tsx:485-488`
+- **Stage:** PROD — Error handling gap, not feature-breaking (save failure still caught by parent)
+- **Estimated effort:** 1 point (add `.catch()` with toast feedback, or mark handler as void-returning)
+
 ---
 
 ## SCALE Backlog

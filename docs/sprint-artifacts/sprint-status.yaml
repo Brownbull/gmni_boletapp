@@ -404,7 +404,7 @@ development_status:
   TD-18-19-scan-ux-immediate-overlay: done                # 3 pts - Show scan result screen immediately (skeleton state) + smooth data fill transition (DEPENDS: benefits from TD-18-18)
 
   # TD-18-19 review deferrals (2026-04-06):
-  TD-18-23-overlay-save-edit-differentiation: ready-for-dev  # 2 pts - Differentiate scan overlay save/edit button behavior (Source: TD-18-19 review, DEPENDS: TD-18-19)
+  TD-18-23-overlay-save-edit-differentiation: done    # 2 pts - Differentiate scan overlay save/edit button behavior (Source: TD-18-19 review, DEPENDS: TD-18-19)
   TD-18-24-scan-skeleton-test-coverage: ready-for-dev        # 1 pt - ScanSkeleton component test coverage (Source: TD-18-19 review, DEPENDS: TD-18-19)
 
   # Production bugs (2026-04-06):

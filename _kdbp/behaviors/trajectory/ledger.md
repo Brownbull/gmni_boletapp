@@ -108,3 +108,5 @@
 | 2026-04-05 | TD-18-18 | dev | boletapp-dev | ✓ done | none |
 | 2026-04-05 | TD-18-18 | review | boletapp-dev | ✓ done | none |
 | 2026-04-06 | TD-18-19 | review | boletapp-dev | ✓ done | ⚑ save-edit-alias(TD-18-23) ⚑ integration-seam-preexisting |
+| 2026-04-06 | TD-18-23 | dev | boletapp-dev | ✓ done | none |
+| 2026-04-06 | TD-18-23 | review | boletapp-dev | ✓ done | none |
