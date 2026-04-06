@@ -1,6 +1,6 @@
 # Tech Debt Story TD-18-20: CF-Level Test for JSON Repair Path
 
-Status: ready-for-dev
+Status: review
 
 > **Source:** ECC Code Review (2026-04-05) on story TD-18-17
 > **Priority:** HIGH | **Estimated Effort:** 2 points
@@ -15,12 +15,12 @@ TD-18-17 added `parseJsonWithRepair` and integrated it into 3 CFs. Unit tests fo
 ## Acceptance Criteria
 
 ### Task 1: processReceiptScan fixture test with malformed JSON
-- [ ] AC-1: Add test to `processReceiptScan.test.ts` fixture-mode describe block where `mockLoadFixture` returns the raw `rawGeminiResponse` from `malformed-json.fixture.json` (with markdown fence + unquoted keys + trailing commas + inline comments)
-- [ ] AC-2: Assert scan completes with `status: 'completed'` and coerced values match `expectedAfterCoercion`
+- [x] AC-1: Add test to `processReceiptScan.test.ts` fixture-mode describe block where `mockLoadFixture` returns the raw `rawGeminiResponse` from `malformed-json.fixture.json` (with markdown fence + unquoted keys + trailing commas + inline comments)
+- [x] AC-2: Assert scan completes with `status: 'completed'` and coerced values match `expectedAfterCoercion`
 
 ### Task 2: analyzeReceipt test with malformed Gemini response
-- [ ] AC-3: Add test to `analyzeReceipt.test.ts` where `mockGenerateContent` returns malformed-but-repairable JSON response
-- [ ] AC-4: Assert CF returns valid parsed data (not an error)
+- [x] AC-3: Add test to `analyzeReceipt.test.ts` where `mockGenerateContent` returns malformed-but-repairable JSON response
+- [x] AC-4: Assert CF returns valid parsed data (not an error)
 
 ## Dev Notes
 - Source story: [TD-18-17](./TD-18-17-malformed-json-repair.md)

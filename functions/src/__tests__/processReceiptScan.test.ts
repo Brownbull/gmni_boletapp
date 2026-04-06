@@ -343,6 +343,43 @@ describe('processReceiptScan', () => {
       )
     })
 
+    it('repairs malformed fixture JSON and completes successfully (TD-18-20)', async () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation()
+
+      // Raw Gemini response with all four malformation types:
+      // markdown fence, unquoted keys, trailing commas, inline comments
+      const MALFORMED_FIXTURE =
+        '```json\n{\n  merchant: "Lider Express",\n  date: "2026-04-02",\n  total: 15990,\n  currency: "CLP",\n  category: "Groceries",\n  items: [\n    {name: "Leche Entera 1L", totalPrice: 1290, quantity: 2, category: "Dairy",},\n    {name: "Pan Molde Integral", totalPrice: 990, quantity: 1, category: "Bakery",},\n  ], // items extracted from receipt\n  metadata: {\n    receiptType: "receipt",\n    confidence: 0.88,\n  }\n}\n```'
+      mockLoadFixture.mockResolvedValue(MALFORMED_FIXTURE)
+
+      const snap = makeFakeSnapshot(makeSnapshotData())
+      await handler(snap, makeEventContext())
+
+      // Verify repair path was exercised (not fast-path JSON.parse)
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('JSON repair applied')
+      )
+
+      // Verify scan completed successfully with coerced values
+      expect(mockDocUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'completed',
+          result: expect.objectContaining({
+            merchant: 'Lider Express',
+            date: '2026-04-02',
+            total: 15990,
+            category: 'Groceries',
+            items: expect.arrayContaining([
+              expect.objectContaining({ name: 'Leche Entera 1L', totalPrice: 1290 }),
+              expect.objectContaining({ name: 'Pan Molde Integral', totalPrice: 990 }),
+            ]),
+          }),
+        })
+      )
+
+      warnSpy.mockRestore()
+    })
+
     it('refunds credit on fixture load failure', async () => {
       mockLoadFixture.mockRejectedValue(new Error('No fixture found for image hash abc123'))
 

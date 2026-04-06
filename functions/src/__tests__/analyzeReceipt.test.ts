@@ -414,6 +414,55 @@ describe('analyzeReceipt Cloud Function', () => {
     })
   })
 
+  describe('JSON Repair Path (TD-18-20)', () => {
+    it('should repair malformed Gemini JSON and return valid data', async () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation()
+
+      // Override mock to return malformed-but-repairable JSON:
+      // markdown fence, unquoted keys, trailing commas, inline comments
+      const { GoogleGenerativeAI } = require('@google/generative-ai')
+      GoogleGenerativeAI.mockImplementationOnce(() => ({
+        getGenerativeModel: () => ({
+          generateContent: jest.fn().mockResolvedValue({
+            response: {
+              text: () =>
+                '```json\n{\n  merchant: "Lider Express",\n  date: "2026-04-02",\n  total: 15990,\n  currency: "CLP",\n  category: "Groceries",\n  items: [\n    {name: "Leche Entera 1L", totalPrice: 1290, quantity: 2, category: "Dairy",},\n    {name: "Pan Molde Integral", totalPrice: 990, quantity: 1, category: "Bakery",},\n  ], // items extracted from receipt\n  metadata: {\n    receiptType: "receipt",\n    confidence: 0.88,\n  }\n}\n```',
+            },
+          }),
+        }),
+      }))
+
+      const data = {
+        images: ['data:image/jpeg;base64,/9j/4AAQSkZJRg=='],
+        currency: 'CLP',
+      }
+      const context = { auth: { uid: 'repair-test-1', token: {} } }
+
+      const result = await wrapped(data, context)
+
+      // Verify repair path was exercised (not fast-path JSON.parse)
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('JSON repair applied')
+      )
+
+      // Verify CF returned valid parsed data with correct values
+      expect(result.merchant).toBe('Lider Express')
+      expect(result.total).toBe(15990)
+      expect(result.category).toBe('Groceries')
+      expect(result.items).toHaveLength(2)
+      expect(result.items[0]).toMatchObject({
+        name: 'Leche Entera 1L',
+        totalPrice: 1290,
+      })
+      expect(result.items[1]).toMatchObject({
+        name: 'Pan Molde Integral',
+        totalPrice: 990,
+      })
+
+      warnSpy.mockRestore()
+    })
+  })
+
   describe('Number Coercion (TD-18-2)', () => {
     it('should coerce string-number total and prices to actual numbers', async () => {
       const { GoogleGenerativeAI } = require('@google/generative-ai')

@@ -103,3 +103,4 @@
 | 2026-03-19 | TD-18-16 | review | boletapp-dev | ✓ done | none |
 | 2026-04-05 | TD-18-17 | dev | boletapp-dev | ✓ done | none |
 | 2026-04-05 | TD-18-17 | review | boletapp-dev | ✓ done | ⚑ integration-gap-deferred (CF-level repair path test → TD-18-20) |
+| 2026-04-05 | TD-18-20 | dev | boletapp-dev | ✓ done | none |
