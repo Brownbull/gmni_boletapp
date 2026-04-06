@@ -1,6 +1,6 @@
 # Tech Debt Story TD-18-18: Scan Speed Optimization
 
-Status: review
+Status: done
 
 > **Source:** Production scan latency 2026-04-02 (12-24s per scan)
 > **Priority:** HIGH | **Estimated Effort:** 3 points
@@ -107,4 +107,17 @@ AC-4 (.env explicit model) skipped — code default is authoritative; .env is gi
 1. `functions/src/processReceiptScan.ts` (edit — default model, allowed list)
 2. `functions/.env` (edit — set GEMINI_MODEL explicitly)
 3. `functions/src/imageProcessing.ts` (edit — resize params, if optimizing)
+
+## Senior Developer Review (ECC)
+
+- **Date:** 2026-04-05
+- **Classification:** STANDARD
+- **Agents:** code-reviewer (9/10), security-reviewer (10/10), tdd-guide (9/10)
+- **Overall:** APPROVE 9.3/10
+- **Findings:** 3 LOW (0 fixed, 0 TD stories, 2 backlog PROD)
+- **Deferred:** ALLOWED_GEMINI_MODELS SSoT + model guard test gap → deferred-findings.md
+- **Tests:** All 3 changed CF suites pass. 3 pre-existing systemic failures (unrelated).
+
+<!-- CITED: P8-SSoT -->
+<!-- REVIEW: APPROVE 9.3/10 -->
 4. `prompt-testing/prompts/` (edit — if prompt optimization needed)
