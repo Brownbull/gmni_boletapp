@@ -13,6 +13,7 @@
 
 import { randomBytes } from 'crypto'
 import * as functions from 'firebase-functions'
+import { parseJsonWithRepair } from './utils/jsonRepair'
 import * as admin from 'firebase-admin'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { resizeAndCompress, generateThumbnail } from './imageProcessing'
@@ -281,7 +282,7 @@ export const processReceiptScan = functions
         .replace(/^```\s*/i, '')
         .trim()
 
-      const rawParsed: unknown = JSON.parse(cleanedText)
+      const rawParsed: unknown = parseJsonWithRepair(cleanedText)
       // Log raw Gemini items count for debugging empty items issue
       const rawObj = rawParsed as Record<string, unknown>
       const rawItems = Array.isArray(rawObj?.items) ? rawObj.items : []
