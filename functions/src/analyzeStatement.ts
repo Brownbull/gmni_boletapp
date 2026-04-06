@@ -32,7 +32,7 @@ const getGenAI = () => {
   return new GoogleGenerativeAI(apiKey)
 }
 
-const ALLOWED_GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']
+const ALLOWED_GEMINI_MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']
 
 // PDF validation
 const MAX_PDF_SIZE_MB = 7 // Firebase callable 10MB body limit minus base64 ~33% overhead
@@ -306,7 +306,7 @@ export const analyzeStatement = functions
     try {
       // Initialize Gemini
       const genAI = getGenAI()
-      const geminiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+      const geminiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite'
       if (!ALLOWED_GEMINI_MODELS.includes(geminiModel)) {
         throw new functions.https.HttpsError('internal', 'Invalid GEMINI_MODEL configuration.')
       }
