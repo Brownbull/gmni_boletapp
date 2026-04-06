@@ -375,3 +375,35 @@
 - **Files:** `functions/src/utils/jsonRepair.ts:30,37`
 - **Stage:** PROD — No current trigger; mitigation needed if Gemini schema adds URL or free-text fields
 - **Estimated effort:** 3 points (string-aware tokenizer or switch to `jsonrepair` library — addresses both issues)
+
+### [PROD] ALLOWED_GEMINI_MODELS Defined Independently in 3 Cloud Functions
+
+- **Source:** TD-18-18 review (2026-04-05)
+- **Finding:** `ALLOWED_GEMINI_MODELS` array is defined identically but independently in `analyzeReceipt.ts`, `processReceiptScan.ts`, and `analyzeStatement.ts`. A future model addition or removal requires editing all 3 files. Extract to a shared constants module (e.g., `functions/src/constants.ts` or `functions/src/geminiConfig.ts`).
+- **Files:** `functions/src/analyzeReceipt.ts`, `functions/src/processReceiptScan.ts`, `functions/src/analyzeStatement.ts`
+- **Stage:** PROD — DRY violation, maintenance risk for model list updates
+- **Estimated effort:** 1 point (extract const + default, update 3 imports)
+
+### [PROD] No Explicit Test for Disallowed GEMINI_MODEL Guard
+
+- **Source:** TD-18-18 review (2026-04-05)
+- **Finding:** The `if (!ALLOWED_GEMINI_MODELS.includes(geminiModel)) throw` guard in all 3 CFs has no explicit test setting `GEMINI_MODEL` to an invalid value and asserting the error. The guard is exercised indirectly (happy path uses a valid model), but the rejection branch is untested.
+- **Files:** `functions/src/__tests__/analyzeReceipt.test.ts`, `functions/src/__tests__/processReceiptScan.test.ts`
+- **Stage:** PROD — Test coverage gap for configuration validation guard
+- **Estimated effort:** 1 point (add 1 test per CF: set env to invalid model, assert error)
+
+### [PROD] Repair Path Tests Missing Sanitization Assertions
+
+- **Source:** TD-18-20 review (2026-04-05)
+- **Finding:** CF-level repair path tests verify syntactic repair (malformed JSON → valid JSON) but do not assert that repaired string values are sanitized before storage. A crafted AI response with XSS payload in `merchant`/`items` fields would pass current tests undetected. Add a fixture case where at least one string field contains a `<script>` or SQL injection payload; assert the stored value is sanitized or that `sanitizeInput()` was called.
+- **Files:** `functions/src/__tests__/analyzeReceipt.test.ts`, `functions/src/__tests__/processReceiptScan.test.ts`
+- **Stage:** PROD — Sanitization layer exists in production code; gap is test coverage, not runtime safety
+- **Estimated effort:** 1 point (add one fixture case with payload string per test file)
+
+### [PROD] Adversarial Fixture File Unused by Tests
+
+- **Source:** TD-18-20 review (2026-04-05)
+- **Finding:** `prompt-testing/test-cases/adversarial/malformed-json.fixture.json` contains both the raw malformed response and expected coerced output, but no test file loads it. TD-18-20 story background identified this fixture as the intended test data source, but the implementation inlined the malformed string instead. Loading the fixture file directly would make tests self-updating if the fixture evolves.
+- **Files:** `prompt-testing/test-cases/adversarial/malformed-json.fixture.json`, both CF test files
+- **Stage:** PROD — Test infrastructure improvement, not required for feature function
+- **Estimated effort:** 2 points (add fixture-loading utility, update both tests to load from file)

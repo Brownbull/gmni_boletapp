@@ -74,6 +74,7 @@ const mockFetch = jest.fn()
 ;(global as unknown as { fetch: typeof mockFetch }).fetch = mockFetch
 
 import { processReceiptScan } from '../processReceiptScan'
+import { MALFORMED_GEMINI_JSON } from './testFixtures'
 
 const VALID_URL = 'https://storage.googleapis.com/test-bucket/pending_scans/user1/scan1/image-0.jpg'
 
@@ -341,6 +342,48 @@ describe('processReceiptScan', () => {
           }),
         })
       )
+    })
+
+    it('repairs malformed fixture JSON and completes successfully (TD-18-20)', async () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation()
+
+      try {
+        mockLoadFixture.mockResolvedValue(MALFORMED_GEMINI_JSON)
+
+        const snap = makeFakeSnapshot(makeSnapshotData())
+        await handler(snap, makeEventContext())
+
+        // Verify repair path was exercised (not fast-path JSON.parse)
+        expect(warnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('jsonRepair: JSON repair applied')
+        )
+
+        // Verify scan completed successfully with coerced values
+        expect(mockDocUpdate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            status: 'completed',
+            result: expect.objectContaining({
+              merchant: 'Lider Express',
+              date: '2026-04-02',
+              total: 15990,
+              category: 'Groceries',
+              items: expect.arrayContaining([
+                expect.objectContaining({ name: 'Leche Entera 1L', totalPrice: 1290 }),
+                expect.objectContaining({ name: 'Pan Molde Integral', totalPrice: 990 }),
+              ]),
+            }),
+          })
+        )
+
+        // Verify exact item count (arrayContaining alone doesn't catch duplicates)
+        const updateCall = mockDocUpdate.mock.calls.find(
+          (call: unknown[]) => (call[0] as Record<string, unknown>).status === 'completed'
+        )
+        expect(updateCall).toBeDefined()
+        expect((updateCall![0] as Record<string, { items: unknown[] }>).result.items).toHaveLength(2)
+      } finally {
+        warnSpy.mockRestore()
+      }
     })
 
     it('refunds credit on fixture load failure', async () => {

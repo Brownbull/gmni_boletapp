@@ -39,7 +39,7 @@ const getGenAI = () => {
   return new GoogleGenerativeAI(apiKey)
 }
 
-const ALLOWED_GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']
+const ALLOWED_GEMINI_MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']
 
 // SSRF prevention: only fetch images from trusted Firebase Storage origins
 const ALLOWED_URL_ORIGINS: readonly string[] = [
@@ -247,7 +247,7 @@ export const processReceiptScan = functions
         console.log(`processReceiptScan: FIXTURE MODE — loaded fixture for scan ${scanId}`)
       } else {
         const genAI = getGenAI()
-        const geminiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+        const geminiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite'
         if (!ALLOWED_GEMINI_MODELS.includes(geminiModel)) {
           throw new Error('Invalid GEMINI_MODEL configuration')
         }
