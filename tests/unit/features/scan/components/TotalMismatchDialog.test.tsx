@@ -49,7 +49,7 @@ describe('TotalMismatchDialog', () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it('renders when isOpen is true', () => {
@@ -126,13 +126,10 @@ describe('TotalMismatchDialog', () => {
   it('does NOT call onCancel when backdrop is clicked (v9.7.0 - prevent accidental dismissal)', () => {
     render(<TotalMismatchDialog {...defaultProps} />);
     // v9.7.0: Backdrop no longer has onClick to prevent accidental dismissal
-    // User must explicitly choose an option or press X/Escape
     const backdrop = document.querySelector('.bg-black\\/50');
-    if (backdrop) {
-      fireEvent.click(backdrop);
-      // Should NOT be called - backdrop click is intentionally disabled
-      expect(defaultProps.onCancel).not.toHaveBeenCalled();
-    }
+    expect(backdrop).not.toBeNull();
+    fireEvent.click(backdrop!);
+    expect(defaultProps.onCancel).not.toHaveBeenCalled();
   });
 
   it('applies dark theme styles when theme is dark', () => {

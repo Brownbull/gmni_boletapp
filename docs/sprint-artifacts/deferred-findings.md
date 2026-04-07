@@ -173,6 +173,30 @@
 - **Stage:** PROD — Test infrastructure resilience, not feature-breaking
 - **Estimated effort:** 1 point (add data-testid to SkeletonLine, update test selectors)
 
+### [PROD] Scroll Lock Race Condition Across Nested Dialogs
+
+- **Source:** TD-18-26 review (2026-04-07)
+- **Finding:** `body.style.overflow` cleanup always resets to `''` instead of restoring the previous value. If another dialog sets `overflow: hidden`, then one of these portaled dialogs closes, it clears the lock for the still-open parent. A `useBodyScrollLock` shared hook exists but neither dialog uses it.
+- **Files:** `src/features/scan/components/CurrencyMismatchDialog.tsx:192-194`, `src/features/scan/components/TotalMismatchDialog.tsx:167-169`
+- **Stage:** PROD — Dialog nesting is rare but possible with rapid state transitions
+- **Estimated effort:** 2 points (migrate all scan dialogs to useBodyScrollLock)
+
+### [PROD] Scan Dialogs Use Tailwind Colors Instead of CSS Variables
+
+- **Source:** TD-18-26 review (2026-04-07)
+- **Finding:** Both CurrencyMismatchDialog and TotalMismatchDialog use Tailwind semantic color classes (`bg-gray-800`, `text-amber-500`, etc.) with `isDark` ternary instead of CSS variables (`var(--surface)`, `var(--text-primary)`). Violates UI pattern manifest theming rule. Pre-existing across scan feature.
+- **Files:** `src/features/scan/components/CurrencyMismatchDialog.tsx`, `src/features/scan/components/TotalMismatchDialog.tsx`
+- **Stage:** PROD — Theme consistency and maintainability
+- **Estimated effort:** 3 points (convert isDark ternary to CSS variables across both files)
+
+### [PROD] Inline @keyframes Instead of Animation Constants
+
+- **Source:** TD-18-26 review (2026-04-07)
+- **Finding:** Both dialogs inject identical `@keyframes slideUp` via inline `<style>` tags instead of using `animation/constants.ts`. Portal wrapping widens the collision window since both now render at document.body level.
+- **Files:** `src/features/scan/components/CurrencyMismatchDialog.tsx:339`, `src/features/scan/components/TotalMismatchDialog.tsx:354`
+- **Stage:** PROD — Animation infrastructure consistency
+- **Estimated effort:** 1 point (extract slideUp to animation constants, import in both files)
+
 ---
 
 ## SCALE Backlog

@@ -1,6 +1,6 @@
 # Tech Debt Story TD-18-26: Portal Fix for Scan Feature Sibling Dialogs
 
-Status: review
+Status: done
 
 > **Source:** ECC Code Review (2026-04-06) on story TD-18-21
 > **Priority:** HIGH | **Estimated Effort:** 2 points
@@ -35,3 +35,20 @@ Both render inside the same `FeatureOrchestrator` ancestor and are vulnerable to
 - Review findings: #1
 - Files affected: `src/features/scan/components/CurrencyMismatchDialog.tsx`, `src/features/scan/components/TotalMismatchDialog.tsx`
 - Pattern reference: See TD-18-21 implementation — identical `createPortal` wrapping
+
+## Senior Developer Review (ECC)
+- **Date:** 2026-04-07
+- **Classification:** SIMPLE
+- **Agents:** code-reviewer (9/10), tdd-guide (7/10), ui-consistency (8/10)
+- **Overall:** APPROVE 8.0/10
+- **Quick fixes:** 5 (Escape key test, backdrop assertion, resetAllMocks, touch targets, translation mocks)
+- **Backlog:** 3 PROD items (scroll lock race, CSS variables, animation constants)
+<!-- CITED: L2-004 -->
+
+## Review Deferred Items (2026-04-07)
+
+| # | Finding | Stage | Destination | Tracking |
+|---|---------|-------|-------------|----------|
+| 1 | Scroll lock race (body.style.overflow) | PROD | Backlog | deferred-findings.md |
+| 2 | Tailwind colors instead of CSS variables | PROD | Backlog | deferred-findings.md |
+| 3 | Inline @keyframes instead of animation constants | PROD | Backlog | deferred-findings.md |
