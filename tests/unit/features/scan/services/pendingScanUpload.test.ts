@@ -180,6 +180,7 @@ describe('copyPendingToReceipts', () => {
     mockUploadBytesResumable.mockResolvedValue(undefined);
     mockGetDownloadURL.mockResolvedValue('https://firebasestorage.googleapis.com/v0/b/bucket/o/receipt.jpg');
     global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
       blob: () => Promise.resolve(new Blob(['fake'], { type: 'image/jpeg' })),
     });
   });
@@ -233,6 +234,28 @@ describe('copyPendingToReceipts', () => {
 
     expect(onProgress).toHaveBeenCalledWith(100);
     expect(onProgress).toHaveBeenCalledTimes(1);
+  });
+
+  // TD-18-22: response.ok check — non-OK response throws
+  it('throws when fetch returns non-OK response (e.g., 404)', async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: false,
+      status: 404,
+      blob: () => Promise.resolve(new Blob([''], { type: 'image/jpeg' })),
+    });
+
+    await expect(copyPendingToReceipts([VALID_STORAGE_URL], 'user-1', 'tx-1'))
+      .rejects.toThrow('Failed to download image at index 0: HTTP 404');
+  });
+
+  // TD-18-22: Idempotency — URLs already at receipts path are passed through
+  it('passes through URLs already at permanent receipts path (idempotency)', async () => {
+    const receiptUrl = 'https://firebasestorage.googleapis.com/v0/b/bucket/o/receipts%2Fuser-1%2Ftx-1%2Fimage_0.jpg?alt=media';
+    const result = await copyPendingToReceipts([receiptUrl], 'user-1', 'tx-1');
+
+    expect(result).toEqual([receiptUrl]);
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(mockUploadBytesResumable).not.toHaveBeenCalled();
   });
 
   // Fetch failure propagates

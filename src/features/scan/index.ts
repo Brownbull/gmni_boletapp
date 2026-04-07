@@ -62,6 +62,9 @@ export * from './utils';
 // Re-export views (Story 15b-3)
 export * from './views';
 
+// Re-export services (TD-18-22: copyPendingToReceipts needed by useTransactionHandlers)
+export { copyPendingToReceipts } from './services/pendingScanUpload';
+
 // Types: scan-internal types available via @features/scan/types/scanStateMachine
 // Shared types available via @shared/types/scanWorkflow
 // Store re-exports commonly-used types (ScanState, ScanPhase, ScanMode, etc.)
