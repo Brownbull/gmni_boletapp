@@ -147,6 +147,20 @@ describe('TotalMismatchDialog', () => {
     expect(screen.getByText(/90%/)).toBeInTheDocument();
   });
 
+  // TD-18-26: Portal positioning tests
+  describe('TD-18-26: portal positioning', () => {
+    it('renders via portal as direct child of document.body', () => {
+      const { container } = render(<TotalMismatchDialog {...defaultProps} />);
+
+      // Dialog should NOT be inside the render container (it's portaled to body)
+      expect(container.querySelector('[role="dialog"]')).toBeNull();
+
+      // Dialog should be in document.body
+      const dialog = document.body.querySelector('[role="dialog"]');
+      expect(dialog).not.toBeNull();
+    });
+  });
+
   // Story 14.34: Currency handling tests
   // TotalMismatchDialog uses es-CL locale for all formatting, so USD shows as "US$18,99"
   describe('Story 14.34: currency handling', () => {

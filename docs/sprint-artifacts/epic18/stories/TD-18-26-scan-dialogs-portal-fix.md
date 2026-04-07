@@ -1,6 +1,6 @@
 # Tech Debt Story TD-18-26: Portal Fix for Scan Feature Sibling Dialogs
 
-Status: ready-for-dev
+Status: review
 
 > **Source:** ECC Code Review (2026-04-06) on story TD-18-21
 > **Priority:** HIGH | **Estimated Effort:** 2 points
@@ -22,13 +22,13 @@ Both render inside the same `FeatureOrchestrator` ancestor and are vulnerable to
 ## Acceptance Criteria
 
 ### Task 1: Add portal wrapping
-- [ ] AC-1: `CurrencyMismatchDialog` renders via `createPortal(…, document.body)`
-- [ ] AC-2: `TotalMismatchDialog` renders via `createPortal(…, document.body)`
-- [ ] AC-3: Both dialogs appear centered on screen on mobile (no downward slide)
+- [x] AC-1: `CurrencyMismatchDialog` renders via `createPortal(…, document.body)`
+- [x] AC-2: `TotalMismatchDialog` renders via `createPortal(…, document.body)`
+- [x] AC-3: Both dialogs appear centered on screen on mobile (no downward slide)
 
 ### Task 2: Test coverage
-- [ ] AC-4: Unit tests verify both dialogs render as direct children of `document.body`
-- [ ] AC-5: Existing tests still pass after portal wrapping
+- [x] AC-4: Unit tests verify both dialogs render as direct children of `document.body`
+- [x] AC-5: Existing tests still pass after portal wrapping
 
 ## Dev Notes
 - Source story: [TD-18-21](./TD-18-21-quicksave-card-positioning.md)

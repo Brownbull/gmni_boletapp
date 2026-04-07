@@ -21,6 +21,7 @@
  */
 
 import React, { useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, Calculator, ArrowRight, X } from 'lucide-react';
 import { TotalValidationResult } from '@features/scan/utils/totalValidation';
 import { formatCurrency, DEFAULT_CURRENCY } from '@/utils/currency';
@@ -188,7 +189,8 @@ export const TotalMismatchDialog: React.FC<TotalMismatchDialogProps> = ({
 
   const hintMessage = getHintMessage();
 
-  return (
+  // TD-18-26: Portal to document.body to avoid ancestor containing-block issues
+  return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
       role="dialog"
@@ -360,7 +362,8 @@ export const TotalMismatchDialog: React.FC<TotalMismatchDialogProps> = ({
           }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 };
 
