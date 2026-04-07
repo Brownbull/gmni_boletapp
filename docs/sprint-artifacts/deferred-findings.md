@@ -165,6 +165,14 @@
 - **Stage:** PROD — Error handling gap, not feature-breaking (save failure still caught by parent)
 - **Estimated effort:** 1 point (add `.catch()` with toast feedback, or mark handler as void-returning)
 
+### [PROD] Add data-testid to SkeletonLine for Test Resilience
+
+- **Source:** TD-18-25 review (2026-04-06)
+- **Finding:** ScanSkeleton tests query SkeletonLine elements via `.rounded` Tailwind class selector. A cosmetic className refactor would break all 8 shimmer-element tests simultaneously. Adding `data-testid="skeleton-line"` to the SkeletonLine sub-component would decouple tests from styling.
+- **Files:** `src/features/scan/components/ScanSkeleton.tsx:36`, `tests/unit/features/scan/components/ScanSkeleton.test.tsx:99`
+- **Stage:** PROD — Test infrastructure resilience, not feature-breaking
+- **Estimated effort:** 1 point (add data-testid to SkeletonLine, update test selectors)
+
 ---
 
 ## SCALE Backlog
