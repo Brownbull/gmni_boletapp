@@ -411,8 +411,9 @@ development_status:
   TD-18-25-skeleton-line-render-coverage: done            # 1 pt - SkeletonLine shimmer render coverage (Source: TD-18-24 review, DEPENDS: TD-18-24)
 
   # Production bugs (2026-04-06):
-  TD-18-21-quicksave-card-positioning: ready-for-dev    # 3 pts - QuickSaveCard slides to bottom of screen instead of staying centered (DEPENDS: none)
+  TD-18-21-quicksave-card-positioning: done              # 3 pts - QuickSaveCard slides to bottom of screen instead of staying centered (DEPENDS: none)
   TD-18-22-image-viewer-broken-urls: ready-for-dev      # 5 pts - Receipt images fail to load — copyPendingToReceipts never called, pending files deleted by cleanup (DEPENDS: none)
+  TD-18-26-scan-dialogs-portal-fix: ready-for-dev       # 2 pts - Portal fix for CurrencyMismatch + TotalMismatch dialogs (Source: TD-18-21 review, DEPENDS: TD-18-21)
 
   epic-18-retrospective: optional
 

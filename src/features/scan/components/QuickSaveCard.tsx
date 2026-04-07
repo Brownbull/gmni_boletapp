@@ -36,6 +36,7 @@
  */
 
 import React, { useCallback, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, X, AlertTriangle, ArrowLeft, Trash2, Pencil, Save, MapPin, Calendar, Clock, DollarSign } from 'lucide-react';
 import type { Transaction } from '@/types/transaction';
 import type { StoreCategory } from '../../../../shared/schema/categories';
@@ -282,7 +283,9 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
   // Items detected text
   const itemsDetectedText = `${itemCount} ${itemCount === 1 ? 'Item' : 'Items'} ${t('itemsDetected') || 'detectados'}`;
 
-  return (
+  // TD-18-21: Portal to document.body to prevent containing block issues
+  // (ancestor transform/will-change/filter breaks fixed positioning on mobile)
+  return createPortal(
     <div
       className={`fixed inset-0 z-[100] flex items-center justify-center transition-opacity ${
         isVisible ? 'opacity-100' : 'opacity-0'
@@ -648,7 +651,8 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 

@@ -450,3 +450,19 @@
 - **Files:** `prompt-testing/test-cases/adversarial/malformed-json.fixture.json`, both CF test files
 - **Stage:** PROD — Test infrastructure improvement, not required for feature function
 - **Estimated effort:** 2 points (add fixture-loading utility, update both tests to load from file)
+
+### [PROD] QuickSaveCard Test File Exceeds 300-Line Limit
+
+- **Source:** TD-18-21 review (2026-04-06)
+- **Finding:** `QuickSaveCard.test.tsx` is ~575 lines, nearly double the 300-line unit test limit from `testing.md`. Pre-existing violation worsened by +25 lines from TD-18-21 portal tests. File should be split into focused describe-group files (e.g., rendering, interactions, animations, portal, edge cases).
+- **Files:** `tests/unit/features/scan/components/QuickSaveCard.test.tsx`
+- **Stage:** PROD — Test maintainability, not required for feature function
+- **Estimated effort:** 2 points (split into 3-4 focused test files, update imports)
+
+### [PROD] QuickSaveCard Hardcoded rgba Cancel Button Color
+
+- **Source:** TD-18-21 review (2026-04-06)
+- **Finding:** Cancel button uses hardcoded `rgba(239, 68, 68, 0.2)` and `rgba(239, 68, 68, 0.1)` instead of CSS variable system (e.g., `var(--error)` at reduced opacity). Violates the UI pattern manifest theming rule. Pre-existing — not introduced by TD-18-21.
+- **Files:** `src/features/scan/components/QuickSaveCard.tsx:641`
+- **Stage:** PROD — UI consistency, not required for feature function
+- **Estimated effort:** 1 point (replace with CSS variable + opacity pattern)
