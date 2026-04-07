@@ -1,6 +1,6 @@
 # Tech Debt Story TD-18-24: ScanSkeleton Component Test Coverage
 
-Status: review
+Status: done
 
 > **Source:** ECC Code Review (2026-04-06) on story TD-18-19-scan-ux-immediate-overlay
 > **Priority:** MEDIUM | **Estimated Effort:** 1 point
@@ -22,6 +22,22 @@ TD-18-19 introduced `ScanSkeleton.tsx` (175 lines) as a new component replacing 
 - [x] AC-4: Tests verify light and dark theme rendering
 - [x] AC-5: Tests verify accessibility: `aria-label` attribute present
 - [x] AC-6: Tests verify cancel button renders when `onCancel` is provided and does not render when omitted
+
+## Review Deferrals (2026-04-06)
+
+| # | Finding | Stage | Destination | Tracking |
+|---|---------|-------|-------------|----------|
+| 2 | No test verifies SkeletonLine shimmer DOM elements render | MVP | TD-18-25 | ready-for-dev |
+
+## Senior Developer Review (ECC)
+- **Date:** 2026-04-06
+- **Agents:** code-reviewer (sonnet), tdd-guide (sonnet)
+- **Classification:** SIMPLE
+- **Outcome:** APPROVE 7.3/10
+- **Quick fixes:** 5 applied (#1 brittle selectors, #3 boundary test, #4 resetAllMocks, #5 regex consolidation, #6 vi.fn mock)
+- **TD stories created:** TD-18-25 (SkeletonLine render coverage)
+- **Session cost:** $6.95
+<!-- CITED: none -->
 
 ## Dev Notes
 - Source story: [TD-18-19-scan-ux-immediate-overlay](./TD-18-19-scan-ux-immediate-overlay.md)

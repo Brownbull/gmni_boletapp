@@ -8,22 +8,26 @@
  * theme support, and cancel button behavior.
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ScanSkeleton } from '@features/scan/components';
 
 // Mock translation function
-const mockT = (key: string) => {
+const mockT = vi.fn((key: string) => {
   const translations: Record<string, string> = {
     scanProcessing: 'Procesando boleta...',
     cancel: 'Cancelar',
     seconds: 'segundos',
   };
   return translations[key] || key;
-};
+});
 
 describe('ScanSkeleton', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
   // AC-2: Tests verify skeleton renders with processing text
   describe('processing text', () => {
     it('renders processing text from translation', () => {
@@ -38,8 +42,7 @@ describe('ScanSkeleton', () => {
     it('shows estimated time when estimatedTime is provided', () => {
       render(<ScanSkeleton theme="light" t={mockT} estimatedTime={5} />);
 
-      expect(screen.getByText(/~5/)).toBeInTheDocument();
-      expect(screen.getByText(/segundos/)).toBeInTheDocument();
+      expect(screen.getByText(/~5 segundos/)).toBeInTheDocument();
     });
 
     it('does not show estimated time when estimatedTime is null', () => {
@@ -53,21 +56,27 @@ describe('ScanSkeleton', () => {
 
       expect(screen.queryByText(/segundos/)).not.toBeInTheDocument();
     });
+
+    it('shows estimated time when estimatedTime is 0', () => {
+      render(<ScanSkeleton theme="light" t={mockT} estimatedTime={0} />);
+
+      expect(screen.getByText(/~0 segundos/)).toBeInTheDocument();
+    });
   });
 
   // AC-4: Tests verify light and dark theme rendering
   describe('theme rendering', () => {
     it('renders with light theme border color', () => {
-      const { container } = render(<ScanSkeleton theme="light" t={mockT} />);
+      render(<ScanSkeleton theme="light" t={mockT} />);
 
-      const root = container.firstElementChild as HTMLElement;
+      const root = screen.getByLabelText('Procesando boleta...');
       expect(root.style.border).toContain('#e2e8f0');
     });
 
     it('renders with dark theme border color', () => {
-      const { container } = render(<ScanSkeleton theme="dark" t={mockT} />);
+      render(<ScanSkeleton theme="dark" t={mockT} />);
 
-      const root = container.firstElementChild as HTMLElement;
+      const root = screen.getByLabelText('Procesando boleta...');
       expect(root.style.border).toContain('#334155');
     });
   });
