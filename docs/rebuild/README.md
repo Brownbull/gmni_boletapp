@@ -6,21 +6,26 @@ This folder holds all documentation for the **Gastify** full-stack rebuild — m
 
 | File | Purpose |
 |---|---|
-| [`ultraplan-rebuild-prompt.md`](ultraplan-rebuild-prompt.md) | The prompt to paste into `/ultraplan` — describes what to build. Incorporates all 16 architecture decisions. |
-| [`ADR-2026-04-20-REBUILD-STACK.md`](ADR-2026-04-20-REBUILD-STACK.md) | The "why" behind each technology choice. 16 decisions with analogies, constraint boxes, options considered, and revisit triggers. |
-| [`UX-PLAN.md`](UX-PLAN.md) | Phase-0 UX execution pipeline (7 phases, ~2 weeks). Resolves 17 UX gaps. Produces a Claude Code handoff bundle that the ultraplan implementation consumes. |
+| [`ultraplan-rebuild-prompt.md`](ultraplan-rebuild-prompt.md) | The prompt to paste into `/ultraplan` — describes what to build, structured as two parallel workstreams + integration + cutover. Incorporates all 18 architecture decisions. |
+| [`ADR-2026-04-20-REBUILD-STACK.md`](ADR-2026-04-20-REBUILD-STACK.md) | The "why" behind each technology choice. 18 decisions with analogies, constraint boxes, options considered, and revisit triggers. |
+| [`UX-PLAN.md`](UX-PLAN.md) | Workstream A — 7-phase UX execution pipeline (~2 weeks). Resolves 17 UX gaps. Produces a Claude Code handoff bundle consumed by the Integration phase. |
 | `ux/` _(created in Phase U0)_ | All UX artifacts: `USER-JOURNEYS.md`, `IA.md`, `wireframes/`, `COMPONENTS.md`, `mockups/`, `INTERACTIONS.md`, `A11Y-CHECKLIST.md`, `handoff/`. |
 
 ## Workflow
 
 1. **Read the ADR first** to understand why each choice was made. Each decision has a physical-system analogy to anchor the trade-off.
-2. **Run adversarial roasts** before sending the prompt to `/ultraplan`:
-   - ✅ `/gabe-roast architect` — completed 2026-04-20 (13 gaps → ADR D1-D13)
-   - ✅ `/gabe-roast ux-designer` — completed 2026-04-20 (17 gaps → UX-PLAN Section 1 + ADR D14-D16)
-   - Future passes (optional): domain expert, security auditor, QA/testing lead
-3. **Apply roast outcomes** back into the prompt + ADR + UX-PLAN before handing off.
-4. **Execute Phase 0 (UX)** per `UX-PLAN.md`. Produces `docs/rebuild/ux/handoff/`.
-5. **Send prompt to `/ultraplan`** — it consumes the UX handoff bundle + this prompt + the ADR to generate the implementation plan.
+2. **Adversarial roasts** before sending the prompt to `/ultraplan`:
+   - ✅ `/gabe-roast architect` — completed 2026-04-20 (13 gaps → ADR D1–D13)
+   - ✅ `/gabe-roast ux-designer` — completed 2026-04-20 (17 gaps → UX-PLAN Section 1 + ADR D14–D16)
+   - ✅ Domain clarifications resolved 2026-04-20 — no UF / no RUT / IVA via TaxFees → ADR D17
+   - Future passes (optional): security auditor, QA/testing lead
+3. **Run `/ultraplan`** with `ultraplan-rebuild-prompt.md` as the input. It produces a phased implementation plan structured as two parallel workstreams + Integration + Cutover.
+4. **Execute the plan** per the workstreams:
+   - **Workstream A (UX):** follow `UX-PLAN.md` phases U0–U7 → handoff bundle in `docs/rebuild/ux/handoff/`
+   - **Workstream B (Backend):** scaffold FastAPI, build DB + auth + scan pipeline + APIs, validate via simulated frontend payloads (pytest + OpenAPI + sandbox-mode Gemini)
+   - A and B run in parallel after initial scaffolding
+5. **Integration phase** — consume UX handoff + working backend; build real frontend; wire up SSE; E2E tests
+6. **Cutover** — production migration per the Cutover Plan section of the prompt
 
 ## Naming Convention
 

@@ -2,11 +2,14 @@
 
 **Date:** 2026-04-20
 **Scope:** PWA only (single codebase serves mobile + desktop + installable Android home-screen app). No native iOS/Android/desktop builds.
-**Status:** Planning — to be executed as Phase 0 of the rebuild, before any backend code.
+**Status:** Planning — executes as **Workstream A** (parallel to Workstream B / Backend per ADR D18), converging at Integration.
+**Handoff target:** `docs/rebuild/ux/handoff/` — consumed by the Integration phase of the ultraplan implementation.
 
 ## Why this phase exists
 
-The architect-perspective roast resolved 13 structural decisions in [`ADR-2026-04-20-REBUILD-STACK.md`](ADR-2026-04-20-REBUILD-STACK.md). The UX-perspective roast surfaced 17 additional gaps — none of which contradict the architecture but all of which must be resolved before implementation. Building the technical foundation without a design contract guarantees rework when UX reality meets the backend.
+The architect-perspective roast resolved 13 structural decisions in [`ADR-2026-04-20-REBUILD-STACK.md`](ADR-2026-04-20-REBUILD-STACK.md). The UX-perspective roast surfaced 17 additional gaps — none of which contradict the architecture but all of which must be resolved before integration. Building the frontend without a design contract guarantees rework when UX reality meets the backend.
+
+**Parallelism note (D18):** This UX work is **Workstream A** and runs in parallel with Workstream B (backend infrastructure). Workstream B uses simulated frontend payloads (pytest fixtures + OpenAPI contracts + sandbox-mode Gemini) to validate the API without waiting for real UI. The two workstreams converge at the Integration phase, where the UX handoff drives the actual frontend build that connects to the already-tested backend.
 
 This plan does two things:
 1. **UX Decisions already made** (Section 1) — captures resolutions to the UX roast gaps so they don't re-surface later

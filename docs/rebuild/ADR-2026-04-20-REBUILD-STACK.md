@@ -31,6 +31,8 @@ The current BoletApp prototype (React + Firebase + Cloud Functions + Firestore) 
 | **D14** | UX pipeline before backend code | 7-phase UX execution (journeys → IA → wireframes → components → hi-fi → interactions → a11y → handoff) using Claude Design as primary tool, HTML mockups as fallback. Full plan in [`UX-PLAN.md`](UX-PLAN.md). 17 UX decisions already resolved. |
 | **D15** | 90-day edit window for transactions | Add / edit / delete actions available only on transactions dated within the last 90 days. Older rows are read-only. Avoids statistics recomputation on historical periods. Soft-delete via `deleted_at`; 30-day trash retention. |
 | **D16** | Category language enforcement | Merchant + item names stored as-scanned (any language). Categories (L1–L4) always stored as English PascalCase keys, enforced via Pydantic `output_type` on Gemini calls. Frontend renders via `display[locale]` map from `shared/categories.json`. |
+| **D17** | Domain scope limits | No UF (Unidad de Fomento) currency support — amounts are always in CLP / USD / EUR. No RUT or other personal-identifier fields on users or transactions — PII limited to email (and optionally name later). IVA tracked via the existing `TaxFees` item category; no dedicated IVA field or rate column. |
+| **D18** | Two parallel workstreams | Execution splits into Workstream A (UX — per UX-PLAN) and Workstream B (Backend/Infrastructure). They run in parallel after the ultraplan phase breakdown, converging at a UI-integration phase. Backend uses simulated frontend payloads (pytest + OpenAPI) to validate before the real frontend arrives. |
 
 ---
 
@@ -659,6 +661,79 @@ RISK:   Gemini occasionally returns Spanish category keys ("Supermercado"
 - **Pydantic validator:** on parse failure, worker logs `category_validation_failed` to `scan_events`; retry with clarifying prompt; second failure → fallback to `Other`
 - **Watch:** rate of category validation failures in `scan_events`; if > 5%, tune prompt
 - **Revisit when:** adding a third locale — confirms the `display[locale]` pattern scales
+
+---
+
+## D17: Domain Scope Limits (Chilean Market)
+
+### What's Changing
+Explicit scope boundaries on three Chilean-market domain concerns:
+- **No UF currency.** Unidad de Fomento (inflation-indexed unit used for rent, loans, insurance in Chile) is NOT supported. All transactions are denominated in CLP, USD, or EUR.
+- **Email-only PII.** The users table stores `email` (and possibly `display_name` in the future). No RUT (Chilean national tax ID), no address, no phone number, no date of birth.
+- **IVA tracked via categories, not fields.** Chilean VAT (IVA, 19%) is not stored as a dedicated column or rate. Tax line items on receipts map to the existing `TaxFees` L4 item category. No `iva_amount` / `iva_rate` schema additions.
+
+### The Analogy
+Drawing a property boundary at the road instead of at the horizon. The owner doesn't need to maintain a forest they don't use — they maintain the plot they actually live on. Staying within the boundary is cheaper than expanding to cover every theoretical use.
+
+### Constraint Box
+```
+IS:     Sharp scope limits — only what Gastify's current + near-future usage actually
+        needs. Keeps schema minimal, auth surface minimal, legal compliance simple.
+IS NOT: A claim that UF / RUT / IVA-tracking will never matter. They may in a future
+        business-tier or Chile-tax-integration product. Those would be additive.
+RISK:   Users with rent tracked in UF, or small-business owners who want IVA
+        breakouts, are an unsupported segment. Documented as a known limit.
+```
+
+### Decision
+Pin the scope as stated. Reject schema additions or feature requests that cross these lines until a product decision explicitly expands scope.
+
+### Consequences
+- **Schema:** `currencies` reference table seeded with CLP / USD / EUR only. `users` table has no tax-id column. `transactions` has no `iva_*` column.
+- **Gemini prompt:** don't ask Gemini to extract IVA as a separate field; it naturally appears as a line item categorized as `TaxFees`.
+- **Watch:** repeated user requests for UF support or RUT tagging → signal to revisit
+- **Revisit when:** launching a business tier, or if Chilean SII tax integration becomes a product goal. Adding UF requires a migration; adding RUT requires a privacy policy update and consent flow.
+
+## D18: Two Parallel Workstreams
+
+### What's Changing
+Rather than strict sequential execution (UX finishes → backend starts), the rebuild runs as two parallel workstreams that converge at an integration phase:
+- **Workstream A — UX:** executes UX-PLAN phases U0–U7 (journeys → IA → wireframes → components → hi-fi → interactions → a11y → handoff bundle)
+- **Workstream B — Backend/Infrastructure:** scaffolds the FastAPI app, DB migrations, auth, scan pipeline, CRUD, analytics, cross-app API, data migration script, observability, rate limiting — all validated via **simulated frontend payloads** (pytest fixtures + OpenAPI contract tests) without waiting for the real frontend
+- **Integration:** a later phase consumes the UX handoff bundle + the working backend API to build and connect the real frontend
+
+### The Analogy
+Building a house. One crew pours the foundation and plumbs the walls (backend). Another crew draws the interior layout and picks the finishes (UX). They work concurrently on the same site but don't block each other — the pipes don't care what color the walls will be, the wallpaper pattern doesn't care about the pipe routing. The two crews meet at move-in day (integration) where the fixtures actually get installed.
+
+### Constraint Box
+```
+IS:     Two tracks with a deliberate convergence point. Backend treats frontend
+        as a contract (OpenAPI spec) not a dependency.
+IS NOT: Free-for-all parallel work. Some dependencies remain sequential: the data
+        model (defined in ADR D6/D15/D17) must be stable before backend migrations
+        can finalize; the UX handoff must be complete before frontend integration.
+RISK:   Backend ships API shapes that the UX handoff later wants changed → wasted
+        endpoint work. Mitigation: UX handoff must finalize the payload contracts
+        BEFORE the integration phase, and backend contract tests are cheap to
+        update when contracts shift.
+```
+
+### Workstream B — Simulated Frontend Testing
+Backend validates without the real frontend by:
+1. **OpenAPI contract as source of truth** — FastAPI auto-generates OpenAPI spec; frontend-payload fixtures are derived from it
+2. **pytest fixtures** represent realistic request bodies the frontend would send (scan queue, transaction create, analytics query)
+3. **Stored-response snapshots** verify API output shape and key values — when the real frontend arrives, any drift is caught by contract tests, not by manual debugging
+4. **Sandbox mode** for Gemini calls — cached real responses replayed during tests so the backend can be exercised end-to-end without paying Gemini or burning credits
+
+### Decision
+Structure the ultraplan implementation plan into two workstreams (A: UX, B: Backend) plus an Integration phase, per this decision. `/ultraplan` should emit a phase graph where A and B run in parallel, converging at Integration.
+
+### Consequences
+- **Implementation plan shape:** phases structured as `B0 → {A1, A2, ..., B1, B2, ...} → Integration → Cutover` where A-phases and B-phases do not block each other after the initial scaffolding
+- **Testing discipline:** backend cannot skip OpenAPI contract tests — they are the handshake with UX
+- **Sandbox mode:** cached Gemini responses stored in `tests/fixtures/gemini_responses/` keyed by SHA-256 of the image bytes
+- **Watch:** integration phase slippage; if UX handoff is late, backend is blocked on frontend build, not on API readiness
+- **Revisit when:** growing beyond solo dev — two parallel workstreams with one human is intensive; a team makes parallelism easier
 
 ---
 

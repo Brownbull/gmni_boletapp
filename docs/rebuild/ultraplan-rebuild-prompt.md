@@ -2,11 +2,18 @@
 
 > Copy everything below the line into `/ultraplan` after updating Claude Code to 2.1.91+.
 >
-> **Foundation decisions:** This prompt incorporates 16 architecture decisions resolved in [`ADR-2026-04-20-REBUILD-STACK.md`](ADR-2026-04-20-REBUILD-STACK.md) (same folder). Read the ADR for rationale behind each technology choice (Postgres-only queue, SSE over WebSocket, English-canonical 4-level taxonomy, provider-decoupled auth, UX pipeline, 90-day edit window, category language enforcement). The ADR is the "why"; this prompt is the "what to build."
+> **Foundation decisions:** This prompt incorporates 18 architecture decisions resolved in [`ADR-2026-04-20-REBUILD-STACK.md`](ADR-2026-04-20-REBUILD-STACK.md) (same folder). The ADR is the "why"; this prompt is the "what to build."
 >
-> **Phase 0 (UX):** Before any implementation phase, execute the 7-phase UX pipeline defined in [`UX-PLAN.md`](UX-PLAN.md) and consume its output from `docs/rebuild/ux/handoff/`. The UX plan already resolves 17 design gaps (progress UX, onboarding, credit UX, error taxonomy, accessibility, gestures, etc.). Implementation phases must treat the handoff bundle as source of truth for UI behavior.
+> **Execution strategy — two parallel workstreams (ADR D18):**
+> - **Workstream A — UX:** 7-phase pipeline per [`UX-PLAN.md`](UX-PLAN.md) (journeys → IA → wireframes → components → hi-fi → interactions → a11y → handoff bundle). Output: `docs/rebuild/ux/handoff/`.
+> - **Workstream B — Backend/Infrastructure:** FastAPI scaffold, DB migrations, auth, scan pipeline, CRUD, analytics, cross-app API, data migration, observability, rate limiting. Validated via simulated frontend payloads (pytest + OpenAPI contract tests + sandbox-mode Gemini) without waiting for the real frontend.
+> - **Integration phase:** consumes the UX handoff + working backend API to build the real frontend and connect it. Produces the deployable PWA.
+>
+> A and B run in parallel after initial scaffolding; they converge at Integration.
 >
 > **Platform:** PWA only — single codebase serves mobile browsers, desktop browsers, and installable home-screen app. No native iOS / Android / desktop builds.
+>
+> **Scope boundaries (ADR D17):** No UF currency (CLP / USD / EUR only). Email-only PII on users (no RUT, phone, address). IVA tracked via `TaxFees` L4 item category, not as a dedicated schema field.
 
 ---
 
@@ -878,28 +885,49 @@ Read these for full context:
 
 ## What I Want From This Plan
 
-1. **Monorepo structure** — Directory layout for FastAPI backend + React frontend + shared types
-2. **Database setup** — PostgreSQL schema, Alembic migrations, seed data
-3. **Auth architecture** — Keep Firebase Auth with JWT verification in FastAPI, or migrate to Supabase Auth
-4. **Async scan pipeline** — Celery + Redis setup, worker design, WebSocket delivery
-5. **API design** — Pydantic v2 models, OpenAPI spec, request/response contracts
-6. **Category system** — Shared enum generation (Python + TypeScript from single source)
-7. **AI integration** — Gemini direct from FastAPI/Celery workers, prompt management, retry logic
-8. **Frontend migration** — What to reuse vs rebuild, component structure
-9. **Real-time updates** — WebSocket or SSE for scan status (replace Firestore onSnapshot)
-10. **File storage** — S3-compatible storage for receipt images + thumbnails
-11. **Deployment architecture** — Railway/Fly.io + Vercel, CI/CD, environment management
-12. **Data migration script** — Export Firestore → PostgreSQL seed (production data)
-13. **Testing strategy** — pytest + Vitest + Playwright, coverage targets, test data management
-14. **Phase breakdown** — Ordered implementation phases with dependencies and milestones
+**Output a phased implementation plan structured as two parallel workstreams (A: UX, B: Backend) plus Integration and Cutover** — not a single linear sequence. A-phases and B-phases should be explicit about which can run in parallel vs which depend on each other.
+
+**Deliverables expected per workstream:**
+
+### Workstream B — Backend/Infrastructure (runs parallel to A after initial scaffolding)
+1. **Monorepo structure** — Directory layout for FastAPI backend + shared types + (later) React frontend
+2. **Database setup** — PostgreSQL schema per ADR (all tables, indexes, generated columns, pg_cron jobs, seed data)
+3. **Auth middleware** — Firebase ID token verification via `firebase-admin`
+4. **Async scan pipeline** — Postgres SKIP LOCKED worker + LISTEN/NOTIFY + SSE endpoint (no Celery/Redis)
+5. **API design** — Pydantic v2 models, OpenAPI auto-docs, request/response contracts as the handshake with UX
+6. **Category system** — `shared/categories.json` + codegen to Pydantic + TypeScript (U4-aligned runtime validation)
+7. **AI integration** — Gemini from worker process, prompt management, retry logic, circuit breaker, sandbox-mode cache
+8. **Cross-app API** — Gustify catalog mapping endpoints
+9. **Observability** — structured logs, scan_events audit table, `/scans/{id}/trace` endpoint
+10. **Rate limiting** — per-user caps + pybreaker + Postgres minute-window counter
+11. **File storage** — Railway Volume (Cloudflare R2 fallback) for receipt images + thumbnails
+12. **Data migration script** — Firestore export → PostgreSQL seed
+13. **Sandbox testing** — simulated frontend payloads via pytest fixtures + cached Gemini responses; contract tests verify OpenAPI spec
+14. **Deployment** — Railway (API + worker + Postgres + Volume), CI/CD, env management
+
+### Workstream A — UX (runs parallel to B, per UX-PLAN)
+15. Execute U0-U7 per [`UX-PLAN.md`](UX-PLAN.md) to produce the handoff bundle in `docs/rebuild/ux/handoff/`
+
+### Integration (after A + B converge)
+16. **Frontend scaffold** — React + TypeScript + Vite + Zustand + TanStack Query per UX handoff
+17. **Component implementation** — build the component library from U3 with real styling from U4
+18. **API wiring** — replace pytest fixtures with real UI calls; SSE + EventSource integration
+19. **E2E tests** — Playwright covering critical flows (scan, save, edit within 90-day window, offline view, settings)
+
+### Cutover (final phase)
+20. **Production migration** — per the Cutover Plan section; 2-hour maintenance window; 30-day Firestore read-only rollback window
+
+**Phase breakdown requirement:** emit the plan as a graph, not a list. Mark which B-phases can proceed independently of A, which A-phases block Integration, and which phases MUST be sequential (e.g., B2 DB schema before B4 scan pipeline).
 
 ## Constraints
 
-- Solo developer — no team ceremony overhead
+- Solo developer — no team ceremony overhead; tolerate parallel workstreams with one human executing
 - Chilean market first — Spanish-first UI, CLP currency default
-- Must preserve EXACT category taxonomy (44 store + 42 item, PascalCase)
-- Must preserve async scan pipeline behavior (queue → process → deliver)
-- Must preserve all credit system atomic guarantees (deduct/refund)
-- Must preserve all failure recovery paths
-- Budget-conscious: prefer free tiers (Railway free, Vercel free, Supabase free)
-- Cross-app integration with Gustify (sister cooking app) — shared user base, Gustify reads transactions
+- Must preserve EXACT 4-level category taxonomy (12 L1 + 44 L2 + 9 L3 + 42 L4, English PascalCase canonical)
+- Must preserve async scan pipeline behavior (queue → process → deliver via SSE)
+- Must preserve all credit system atomic guarantees (deduct/refund in one DB transaction)
+- Must preserve all failure recovery paths per the Async Scan Pipeline section
+- Budget-conscious: Railway (paid tier small) + Vercel free frontend + Cloudflare R2 fallback
+- Cross-app integration with Gustify — merchant-scoped mapping table in Gastify, Gustify reads via API
+- **Scope limits (ADR D17):** no UF currency, no RUT / personal-identifier PII beyond email, no dedicated IVA field
+- **90-day edit window (ADR D15):** transactions older than 90 days are read-only; no statistics recomputation on historical periods
