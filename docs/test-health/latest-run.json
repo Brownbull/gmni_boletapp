@@ -1,1 +1,1 @@
-{"date":"2026-03-10","story":"TD-17-4","type":"unit","total":7391,"passed":7391,"skipped":0,"failed":0,"files":318,"duration_s":35}
+{"date":"2026-04-06","story":"TD-18-24","type":"unit","total":7590,"passed":7556,"skipped":33,"failed":1,"files":329,"duration_s":35,"notes":"1 pre-existing failure: ScanStatusIndicator.test.tsx expects role=status on ScanSkeleton (stale from TD-18-19 rewrite)"}

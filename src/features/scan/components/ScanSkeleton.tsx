@@ -81,9 +81,7 @@ export const ScanSkeleton: React.FC<ScanSkeletonProps> = ({
         backgroundColor: 'var(--surface)',
         border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
       }}
-      role="status"
       aria-label={t('scanProcessing')}
-      aria-live="polite"
     >
       {/* Inline keyframes for shimmer animation */}
       <style>

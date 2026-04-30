@@ -6,7 +6,7 @@
  * Tests the quick save UI, button actions, accessibility, and animations.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { QuickSaveCard } from '@features/scan/components/QuickSaveCard';
 import type { Transaction } from '@/types/transaction';
@@ -253,6 +253,28 @@ describe('QuickSaveCard', () => {
       expect(card?.className).toContain('rounded-3xl');
       // Same CSS variable is used - theme determines actual color
       expect(card?.style.backgroundColor).toBe('var(--bg-secondary)');
+    });
+  });
+
+  describe('TD-18-21: portal positioning', () => {
+    it('renders via portal as direct child of document.body', () => {
+      const { container } = renderCard();
+
+      // Card should NOT be inside the render container (it's portaled to body)
+      expect(container.querySelector('[role="dialog"]')).toBeNull();
+
+      // Card should be in document.body
+      const dialog = document.body.querySelector('[role="dialog"]');
+      expect(dialog).not.toBeNull();
+    });
+
+    it('portal overlay is accessible as a dialog', () => {
+      renderCard();
+      const dialog = screen.getByRole('dialog');
+
+      // Verify the dialog is accessible and has proper ARIA attributes
+      expect(dialog).toHaveAttribute('aria-modal', 'true');
+      expect(dialog).toHaveAttribute('aria-labelledby', 'quick-save-title');
     });
   });
 

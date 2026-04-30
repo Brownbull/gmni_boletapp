@@ -66,16 +66,9 @@ export { onTransactionDeleted } from './deleteTransactionImages'
 // Scheduled and on-demand cleanup to prevent token accumulation
 // =============================================================================
 
-/**
- * cleanupStaleFcmTokens - Scheduled Function (MAINTENANCE)
- *
- * Deletes FCM tokens unused for 60+ days to prevent accumulation
- * from uninstalled apps and expired browser sessions.
- *
- * - Schedule: Daily at 3:00 AM UTC
- * - Also cleans up: Legacy tokens without lastUsedAt, old rate limit docs
- */
-export { cleanupStaleFcmTokens } from './cleanupStaleFcmTokens'
+// cleanupStaleFcmTokens (scheduled) — DISABLED 2026-04-28 during pre-migration
+// cost-cleanup. Source retained in cleanupStaleFcmTokens.ts for reference; not
+// exported so it isn't re-deployed by CI.
 
 /**
  * cleanupCrossUserFcmToken - HTTPS Callable (FEATURE)
@@ -200,16 +193,10 @@ export { processReceiptScan } from './processReceiptScan'
  */
 export { onPendingScanDeleted } from './onPendingScanDeleted'
 
-/**
- * cleanupPendingScans - Scheduled Function (MAINTENANCE)
- *
- * Runs hourly. Auto-fails stale processing scans (past deadline with
- * credit refund). Deletes expired scans (>24h) in batched loop.
- *
- * - Schedule: Every 60 minutes
- * - Batch: 500 ops per delete batch
- */
-export { cleanupPendingScans } from './cleanupPendingScans'
+// cleanupPendingScans (scheduled) — DISABLED 2026-04-28 during pre-migration
+// cost-cleanup. Without it, stuck `processing` scans no longer auto-fail and
+// expired pending_scans docs accumulate. Manual recovery required during
+// migration window. Source retained in cleanupPendingScans.ts for reference.
 
 // =============================================================================
 // ADMIN: One-Time Category Migration (Story 17-5)

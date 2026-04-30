@@ -75,7 +75,7 @@ project_knowledge:
   load_at_session_start: true
   files:
     required:
-      - "{project-root}/_ecc/knowledge/code-review-patterns.md"
+      - "{project-root}/_kdbp/knowledge/code-review-patterns.md"
       - "{project-root}/.claude/rules/testing.md"
       - "{project-root}/docs/architecture/firestore-patterns.md"
     optional:
@@ -115,7 +115,7 @@ epics_dir: "{output_folder}"
 
 # Knowledge cache files
 knowledge_cache_files:
-  - "_ecc/knowledge/code-review-patterns.md"
+  - "_kdbp/knowledge/code-review-patterns.md"
   - ".claude/rules/testing.md"
   - "docs/architecture/firestore-patterns.md"
 

@@ -4,7 +4,7 @@ Validate deployment against project patterns before any PRs.
 
 <step n="1" goal="Pre-deployment validation">
 
-  <action>Load project patterns from {project-root}/_ecc/knowledge/code-review-patterns.md</action>
+  <action>Load project patterns from {project-root}/_kdbp/knowledge/code-review-patterns.md</action>
   <action>Load architecture docs from {project-root}/docs/architecture/</action>
 
   <output>**Pre-Deployment Validation**

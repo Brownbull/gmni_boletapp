@@ -61,6 +61,8 @@ import { batchReviewActions, atomicBatchActions } from '@features/batch-review';
 
 import type { ToastMessage } from '@/shared/hooks';
 import { classifyError, getErrorInfo } from '@/utils/errorHandler';
+// TD-18-22: Copy pending scan images to permanent receipts path after save
+import { copyPendingToReceipts } from '@features/scan';
 
 /**
  * Session context for insight display
@@ -345,6 +347,13 @@ export function useTransactionHandlers(
             // Fire and forget chain: add transaction → generate insight → record with real ID
             txRepo.add(tDoc)
                 .then(async (transactionId) => {
+                    // TD-18-22: Copy scan images from pending to permanent path (fire-and-forget)
+                    if (tDoc.imageUrls && tDoc.imageUrls.length > 0) {
+                        copyPendingToReceipts(tDoc.imageUrls, user!.uid, transactionId)
+                            .then(newUrls => txRepo!.update(transactionId, { imageUrls: newUrls }))
+                            .catch(err => console.warn('Failed to copy scan images to receipts:', err));
+                    }
+
                     // Generate insight with real transaction ID
                     const txWithId = { ...tDoc, id: transactionId } as Transaction;
                     const insight = await generateInsightForTransaction(

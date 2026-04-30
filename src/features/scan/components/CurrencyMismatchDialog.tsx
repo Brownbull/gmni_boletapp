@@ -24,6 +24,7 @@
  */
 
 import React, { useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertCircle, ArrowRight, X } from 'lucide-react';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
 import { useScanActiveDialog, useScanActions } from '@features/scan/store';
@@ -199,7 +200,8 @@ export const CurrencyMismatchDialog: React.FC<CurrencyMismatchDialogProps> = ({
   const detectedName = getCurrencyDisplayName(detectedCurrency);
   // userCurrencyName is intentionally unused - showing code instead of full name
 
-  return (
+  // TD-18-26: Portal to document.body to avoid ancestor containing-block issues
+  return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
       role="dialog"
@@ -227,7 +229,7 @@ export const CurrencyMismatchDialog: React.FC<CurrencyMismatchDialogProps> = ({
         {/* Close button */}
         <button
           onClick={handleCancel}
-          className={`absolute top-4 right-4 p-2 rounded-full transition-colors ${
+          className={`absolute top-3 right-3 p-3 rounded-full transition-colors ${
             isDark
               ? 'text-gray-400 hover:text-white hover:bg-gray-700'
               : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
@@ -345,7 +347,8 @@ export const CurrencyMismatchDialog: React.FC<CurrencyMismatchDialogProps> = ({
           }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 };
 

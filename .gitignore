@@ -31,6 +31,10 @@ serviceAccountKey.staging.json
 *.json.enc
 scripts/keys/
 
+# Python bytecode
+__pycache__/
+*.pyc
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

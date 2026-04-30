@@ -4,8 +4,8 @@ Load all project knowledge ONCE at session start, pass to ECC agents.
 
 <step n="0" goal="Load project knowledge once at session start" tag="knowledge-init">
 
-  <action>Load and cache {project-root}/_ecc/knowledge/code-review-patterns.md -> {{cached_review_patterns}}</action>
-  <action>Load and cache {project-root}/_ecc/knowledge/hardening-patterns.md -> {{cached_hardening_patterns}}</action>
+  <action>Load and cache {project-root}/_kdbp/knowledge/code-review-patterns.md -> {{cached_review_patterns}}</action>
+  <action>Load and cache {project-root}/_kdbp/knowledge/hardening-patterns.md -> {{cached_hardening_patterns}}</action>
   <action>Load and cache {project-root}/.claude/rules/testing.md -> {{cached_testing_rules}}</action>
   <action>Load and cache {project-root}/.claude/rules/security.md -> {{cached_security_rules}}</action>
   <action>Load and cache any docs/architecture/*.md files that exist -> {{cached_architecture}}</action>

@@ -59,6 +59,8 @@ import { reconcileItemsTotal as entityReconcileItemsTotal } from '@entities/tran
 // Story 14e-42: applyItemNameMappings moved to @features/categories (single source of truth)
 import { applyItemNameMappings as pureApplyItemNameMappings } from '@/features/categories';
 import { classifyError, getErrorInfo } from '@/utils/errorHandler';
+// TD-18-22: Copy pending scan images to permanent receipts path after save
+import { copyPendingToReceipts } from '../services/pendingScanUpload';
 // Story 15b-5a: Direct store access for error recovery reset
 import { useScanStore } from '../store/useScanStore';
 
@@ -294,6 +296,13 @@ export function useScanHandlers(
             const repo = createTransactionRepository({ db: services.db, userId: user.uid, appId: services.appId });
             const transactionId = await repo.add(tDoc);
             const txWithId = { ...tDoc, id: transactionId } as Transaction;
+
+            // TD-18-22: Copy scan images from pending to permanent path (fire-and-forget)
+            if (tDoc.imageUrls && tDoc.imageUrls.length > 0) {
+                copyPendingToReceipts(tDoc.imageUrls, user.uid, transactionId)
+                    .then(newUrls => repo.update(transactionId, { imageUrls: newUrls }))
+                    .catch(err => console.warn('Failed to copy scan images to receipts:', err));
+            }
 
             const insight = await generateInsightForTransaction(
                 txWithId,
