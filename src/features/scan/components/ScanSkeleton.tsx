@@ -76,8 +76,6 @@ export const ScanSkeleton: React.FC<ScanSkeletonProps> = ({
 
   return (
     <div
-      role="status"
-      aria-live="polite"
       className="flex flex-col p-6 rounded-xl"
       style={{
         backgroundColor: 'var(--surface)',
