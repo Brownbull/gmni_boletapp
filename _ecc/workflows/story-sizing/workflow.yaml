@@ -22,7 +22,7 @@ instructions: "{installed_path}/instructions.xml"
 project_knowledge:
   enabled: true
   files:
-    - "{project-root}/_ecc/knowledge/code-review-patterns.md"
+    - "{project-root}/_kdbp/knowledge/code-review-patterns.md"
     - "{project-root}/.claude/rules/testing.md"
 
 # Variables and inputs
@@ -42,7 +42,7 @@ input_file_patterns:
     load_strategy: "FULL_LOAD"
   project_knowledge:
     description: "Project patterns for sizing context"
-    whole: "{project-root}/_ecc/knowledge/code-review-patterns.md"
+    whole: "{project-root}/_kdbp/knowledge/code-review-patterns.md"
     load_strategy: "SELECTIVE_LOAD"
   stories:
     description: "Existing story files to analyze"

@@ -4,7 +4,7 @@ Load project knowledge ONCE at session start, pass to ECC agents.
 
 <step n="0" goal="Load project knowledge for story creation context" tag="knowledge-init">
 
-  <action>Load and cache {project-root}/_ecc/knowledge/code-review-patterns.md -> {{cached_review_patterns}}</action>
+  <action>Load and cache {project-root}/_kdbp/knowledge/code-review-patterns.md -> {{cached_review_patterns}}</action>
   <action>Load and cache {project-root}/docs/architecture/firestore-patterns.md -> {{cached_firestore}}</action>
   <action>Load and cache {project-root}/docs/architecture/state-management.md -> {{cached_state_mgmt}}</action>
   <action>Load and cache {project-root}/docs/architecture/component-patterns.md -> {{cached_components}}</action>

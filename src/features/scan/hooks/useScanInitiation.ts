@@ -559,7 +559,7 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
     if (isQueueingRef.current) return;
     isQueueingRef.current = true;
 
-    setToastMessage({ text: t('scanStarted') || 'Scanning receipt...', type: 'info' });
+    // TD-18-19: Toast removed — overlay (with skeleton) replaces it as immediate feedback
     startOverlayUpload();
     const scanId = crypto.randomUUID();
 

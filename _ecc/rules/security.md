@@ -1,7 +1,7 @@
 # Security Patterns - MUST CHECK
 
 These patterns are mandatory. ECC code-review and security-reviewer agents enforce them.
-Full reference: `_ecc/knowledge/code-review-patterns.md`
+Full reference: `_kdbp/knowledge/code-review-patterns.md`
 
 ## Input Sanitization
 

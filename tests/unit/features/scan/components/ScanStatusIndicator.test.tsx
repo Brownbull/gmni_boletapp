@@ -214,16 +214,18 @@ describe('ScanSkeleton Component', () => {
   });
 
   it('should have proper accessibility attributes', () => {
-    render(
+    const { container } = render(
       <ScanSkeleton
         theme="light"
         t={mockT}
       />
     );
 
-    const status = screen.getByRole('status');
-    expect(status).toHaveAttribute('aria-label', 'Processing receipt...');
-    expect(status).toHaveAttribute('aria-live', 'polite');
+    // TD-18-19: ScanOverlay owns role=status + aria-live; ScanSkeleton only
+    // carries the aria-label so screen readers announce the in-progress task
+    // when it's read by the parent live region.
+    const root = container.firstElementChild;
+    expect(root).toHaveAttribute('aria-label', 'Processing receipt...');
   });
 
   it('should render without cancel button when onCancel is not provided', () => {

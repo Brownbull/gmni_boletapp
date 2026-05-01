@@ -122,10 +122,18 @@ export async function copyPendingToReceipts(
   const newUrls: string[] = [];
 
   for (let i = 0; i < pendingUrls.length; i++) {
+    // Idempotency: skip URLs already at permanent receipts path
+    if (pendingUrls[i].includes('receipts%2F')) {
+      newUrls.push(pendingUrls[i]);
+      continue;
+    }
     if (!STORAGE_URL_PATTERN.test(pendingUrls[i])) {
       throw new Error(`Invalid Storage URL at index ${i}: URL must be a Firebase Storage URL`);
     }
     const response = await fetch(pendingUrls[i]);
+    if (!response.ok) {
+      throw new Error(`Failed to download image at index ${i}: HTTP ${response.status}`);
+    }
     const blob = await response.blob();
     const storagePath = `receipts/${userId}/${transactionId}/image_${i}.jpg`;
     const storageRef = ref(storage, storagePath);

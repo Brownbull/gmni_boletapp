@@ -45,6 +45,9 @@ const mockT = (key: string) => {
     tipCanNavigateWhileProcessing: 'Puedes navegar mientras procesamos',
     scanError: 'Error al procesar',
     retry: 'Reintentar',
+    saveNow: 'Guardar ahora',
+    editFirst: 'Editar primero',
+    scanFailedCreditRefunded: 'No se usó tu crédito.',
   };
   return translations[key] || key;
 };
@@ -101,36 +104,30 @@ describe('ScanOverlay', () => {
     });
   });
 
-  describe('State: uploading', () => {
-    it('should show uploading indicator with progress', () => {
+  // TD-18-19: Uploading and processing now show skeleton placeholders
+  describe('State: uploading (TD-18-19: skeleton)', () => {
+    it('should show skeleton placeholders instead of upload progress (AC-1, AC-2)', () => {
       renderOverlay({ state: 'uploading', progress: 45 });
-
-      expect(screen.getByText('Subiendo imagen...')).toBeInTheDocument();
-      expect(screen.getByRole('progressbar')).toBeInTheDocument();
-      expect(screen.getByText('45%')).toBeInTheDocument();
+      // Should NOT show percentage-based progress
+      expect(screen.queryByText('45%')).not.toBeInTheDocument();
+      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+      // Should show skeleton with processing text
+      expect(screen.getByText('Procesando boleta...')).toBeInTheDocument();
     });
 
-    // Story 14d.4e: Cancel button removed during uploading to prevent credit exploits
     it('should NOT show cancel button during uploading (credit already deducted)', () => {
       renderOverlay({ state: 'uploading', progress: 45 });
       expect(screen.queryByRole('button', { name: /cancelar/i })).not.toBeInTheDocument();
     });
 
-    it('should clamp progress between 0 and 100', () => {
-      const { rerender } = renderOverlay({ state: 'uploading', progress: -10 });
-      expect(screen.getByText('0%')).toBeInTheDocument();
-
-      rerender(
-        <TestWrapper>
-          <ScanOverlay {...defaultProps} state="uploading" progress={150} />
-        </TestWrapper>
-      );
-      expect(screen.getByText('100%')).toBeInTheDocument();
+    it('should show navigation tip during uploading', () => {
+      renderOverlay({ state: 'uploading' });
+      expect(screen.getByText('Puedes navegar mientras procesamos')).toBeInTheDocument();
     });
   });
 
-  describe('State: processing', () => {
-    it('should show processing indicator', () => {
+  describe('State: processing (TD-18-19: skeleton)', () => {
+    it('should show skeleton with processing text (AC-3)', () => {
       renderOverlay({ state: 'processing' });
       expect(screen.getByText('Procesando boleta...')).toBeInTheDocument();
     });
@@ -151,7 +148,6 @@ describe('ScanOverlay', () => {
       expect(screen.getByText('Puedes navegar mientras procesamos')).toBeInTheDocument();
     });
 
-    // Story 14d.4e: Cancel button removed during processing to prevent credit exploits
     it('should NOT show cancel button during processing (credit already deducted)', () => {
       renderOverlay({ state: 'processing' });
       expect(screen.queryByRole('button', { name: /cancelar/i })).not.toBeInTheDocument();
@@ -225,6 +221,16 @@ describe('ScanOverlay', () => {
       });
       expect(screen.getByRole('button', { name: /cancelar/i })).toBeInTheDocument();
     });
+
+    // TD-18-19 AC-10: Credit refund message inline
+    it('should show credit refund message in error state (AC-10)', () => {
+      renderOverlay({
+        state: 'error',
+        error: { type: 'api', message: 'Server error' }
+      });
+      expect(screen.getByTestId('scan-error-credit-refund')).toBeInTheDocument();
+      expect(screen.getByText('No se usó tu crédito.')).toBeInTheDocument();
+    });
   });
 
   describe('Styling and Theme', () => {
@@ -263,6 +269,7 @@ describe('ScanOverlay', () => {
 
     it('should announce state changes with aria-live', () => {
       renderOverlay({ state: 'processing' });
+      // TD-18-19 review fix: ScanSkeleton no longer duplicates role="status"
       const statusContainer = screen.getByRole('status');
       expect(statusContainer).toHaveAttribute('aria-live', 'polite');
     });
@@ -298,14 +305,148 @@ describe('ScanOverlay', () => {
       expect(onDismiss).not.toHaveBeenCalled();
     });
 
-    // AC-8: No dialog → auto-dismiss fires normally
-    it('should auto-dismiss normally when activeDialog is null', () => {
+    // AC-8: No dialog → auto-dismiss fires normally (when no action buttons)
+    it('should auto-dismiss normally when activeDialog is null and no action buttons', () => {
       useScanStore.setState({ activeDialog: null });
       const onDismiss = vi.fn();
       renderOverlay({ state: 'ready', onDismiss });
 
       act(() => { vi.advanceTimersByTime(500); });
       expect(onDismiss).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // TD-18-19: Ready state with result data and action buttons
+  describe('TD-18-19: Ready state with result data (AC-5 to AC-7)', () => {
+    const mockResult = {
+      merchant: 'Supermercado Test',
+      total: 15990,
+      items: [
+        { name: 'Leche', totalPrice: 1990 },
+        { name: 'Pan', totalPrice: 990 },
+      ],
+      date: '2026-04-06',
+      category: 'supermercado' as const,
+    };
+
+    beforeEach(() => {
+      useScanStore.setState({
+        results: [mockResult],
+        activeResultIndex: 0,
+        activeDialog: null,
+      });
+    });
+
+    afterEach(() => {
+      useScanStore.setState(initialScanState);
+    });
+
+    it('should show merchant name and total in ready state (AC-5)', () => {
+      renderOverlay({ state: 'ready', onSave: vi.fn(), onEdit: vi.fn() });
+      expect(screen.getByText('Supermercado Test')).toBeInTheDocument();
+      expect(screen.getByText(/15,990/)).toBeInTheDocument();
+    });
+
+    it('should show item count in ready state', () => {
+      renderOverlay({ state: 'ready', onSave: vi.fn(), onEdit: vi.fn() });
+      expect(screen.getByText('2 items')).toBeInTheDocument();
+    });
+
+    it('should show "Escaneo completo!" header with checkmark (AC-6)', () => {
+      renderOverlay({ state: 'ready', onSave: vi.fn() });
+      expect(screen.getByText('¡Listo!')).toBeInTheDocument();
+    });
+
+    it('should show save and edit buttons after data (AC-7)', () => {
+      renderOverlay({ state: 'ready', onSave: vi.fn(), onEdit: vi.fn() });
+      expect(screen.getByTestId('scan-overlay-save-btn')).toBeInTheDocument();
+      expect(screen.getByTestId('scan-overlay-edit-btn')).toBeInTheDocument();
+      expect(screen.getByText('Guardar ahora')).toBeInTheDocument();
+      expect(screen.getByText('Editar primero')).toBeInTheDocument();
+    });
+
+    it('should call onSave when save button clicked', async () => {
+      vi.useRealTimers();
+      const onSave = vi.fn();
+      renderOverlay({ state: 'ready', onSave, onEdit: vi.fn() });
+      const user = userEvent.setup();
+      await user.click(screen.getByTestId('scan-overlay-save-btn'));
+      expect(onSave).toHaveBeenCalledTimes(1);
+      vi.useFakeTimers();
+    });
+
+    it('should call onEdit when edit button clicked', async () => {
+      vi.useRealTimers();
+      const onEdit = vi.fn();
+      renderOverlay({ state: 'ready', onSave: vi.fn(), onEdit });
+      const user = userEvent.setup();
+      await user.click(screen.getByTestId('scan-overlay-edit-btn'));
+      expect(onEdit).toHaveBeenCalledTimes(1);
+      vi.useFakeTimers();
+    });
+
+    it('should NOT auto-dismiss when action buttons are present', () => {
+      const onDismiss = vi.fn();
+      renderOverlay({ state: 'ready', onDismiss, onSave: vi.fn(), onEdit: vi.fn() });
+      act(() => { vi.advanceTimersByTime(1000); });
+      expect(onDismiss).not.toHaveBeenCalled();
+    });
+  });
+
+  // TD-18-19 AC-11: Pending scan detection preserved (no test needed — no changes to usePendingScan)
+
+  // TD-18-19 AC-12: Fast scan skips skeleton animation
+  describe('TD-18-19: Fast scan edge case (AC-12)', () => {
+    const mockResult = {
+      merchant: 'Fast Store',
+      total: 5000,
+      items: [{ name: 'Item', totalPrice: 5000 }],
+      date: '2026-04-06',
+      category: 'supermercado' as const,
+    };
+
+    afterEach(() => {
+      useScanStore.setState(initialScanState);
+    });
+
+    it('should skip fade animation when scan completes in under 1s', () => {
+      useScanStore.setState({ results: [mockResult], activeResultIndex: 0, activeDialog: null });
+
+      // First render in uploading state (starts the clock)
+      const { rerender } = renderOverlay({ state: 'uploading', onSave: vi.fn(), onEdit: vi.fn() });
+
+      // Immediately transition to ready (< 1s elapsed)
+      rerender(
+        <TestWrapper>
+          <ScanOverlay {...defaultProps} state="ready" visible={true} onSave={vi.fn()} onEdit={vi.fn()} />
+        </TestWrapper>
+      );
+
+      // Result summary should render without fade animation class
+      const summary = screen.getByTestId('scan-result-summary');
+      expect(summary.className).not.toContain('animate-');
+    });
+
+    // AC-5: Normal path — fade animation SHOULD apply when skeleton shown >1s
+    it('should apply fade animation when scan takes longer than 1s (AC-5)', () => {
+      useScanStore.setState({ results: [mockResult], activeResultIndex: 0, activeDialog: null });
+
+      // Render uploading state (starts the skeleton clock)
+      const { rerender } = renderOverlay({ state: 'uploading', onSave: vi.fn(), onEdit: vi.fn() });
+
+      // Advance time past 1s threshold
+      act(() => { vi.advanceTimersByTime(1500); });
+
+      // Transition to ready (> 1s elapsed)
+      rerender(
+        <TestWrapper>
+          <ScanOverlay {...defaultProps} state="ready" visible={true} onSave={vi.fn()} onEdit={vi.fn()} />
+        </TestWrapper>
+      );
+
+      // Result summary SHOULD have fade animation class
+      const summary = screen.getByTestId('scan-result-summary');
+      expect(summary.className).toContain('animate-');
     });
   });
 });

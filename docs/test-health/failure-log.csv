@@ -1,3 +1,4 @@
 date,test_name,error_type,classification
 # Append-only log. Written by ecc-dev-story step-06, ecc-code-review step-06, ecc-e2e step-06.
 # Classifications: FLAKY | REGRESSION | SYSTEMIC | COVERAGE_DROP
+2026-04-06,ScanStatusIndicator.test.tsx > ScanSkeleton Component > should have proper accessibility attributes,TestingLibraryElementError: Unable to find role="status",REGRESSION

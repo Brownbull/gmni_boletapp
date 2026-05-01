@@ -84,7 +84,7 @@ Use `dust` to analyze directory sizes before and during implementation for conte
 ## Project Knowledge Loading
 
 ECC workflows cache these at session start (Step 0):
-- `_ecc/knowledge/code-review-patterns.md` (MUST CHECK patterns)
+- `_kdbp/knowledge/code-review-patterns.md` (MUST CHECK patterns)
 - `.claude/rules/testing.md`
 - `docs/architecture/firestore-patterns.md`
 - `docs/architecture/state-management.md` (if relevant)

@@ -52,7 +52,7 @@ input_file_patterns:
     load_strategy: "SELECTIVE_LOAD"
   project_knowledge:
     description: "Project patterns for deployment context"
-    whole: "{project-root}/_ecc/knowledge/code-review-patterns.md"
+    whole: "{project-root}/_kdbp/knowledge/code-review-patterns.md"
     load_strategy: "SELECTIVE_LOAD"
 
 standalone: true

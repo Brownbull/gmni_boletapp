@@ -190,7 +190,7 @@ const realDoc = { status: 'completed', result: { merchant: 'Test', ... } }
 Mirror the same changes in simplified form to the ECC workflow:
 - `_ecc/workflows/ecc-code-review/steps/step-02-parallel-spawn.md` — Add integration seam check to TDD agent (lines 93-117)
 - `_ecc/workflows/ecc-code-review/steps/step-07-completion.md` — Add E2E gate enforcement
-- `_ecc/knowledge/code-review-patterns.md` — Add P10 pattern (same content)
+- `_kdbp/knowledge/code-review-patterns.md` — Add P10 pattern (same content)
 
 These are straight copies of the KDBP changes, adapted to ECC's simpler structure.
 

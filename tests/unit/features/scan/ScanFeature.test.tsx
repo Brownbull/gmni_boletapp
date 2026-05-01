@@ -708,6 +708,7 @@ describe('ScanFeature', () => {
       });
     });
 
+
     describe('TotalMismatchDialog', () => {
       const totalMismatchProps = {
         onTotalUseItemsSum: vi.fn(),

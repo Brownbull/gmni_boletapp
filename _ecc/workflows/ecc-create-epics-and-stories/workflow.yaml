@@ -46,8 +46,8 @@ project_knowledge:
   load_at_session_start: true
   files:
     required:
-      - "{project-root}/_ecc/knowledge/code-review-patterns.md"
-      - "{project-root}/_ecc/knowledge/hardening-patterns.md"
+      - "{project-root}/_kdbp/knowledge/code-review-patterns.md"
+      - "{project-root}/_kdbp/knowledge/hardening-patterns.md"
     optional:
       - "{project-root}/.claude/rules/testing.md"
       - "{project-root}/.claude/rules/security.md"
@@ -69,7 +69,7 @@ sizing_guidelines:
 # Hardening Analysis Configuration
 hardening_analysis:
   enabled: true
-  patterns_file: "{project-root}/_ecc/knowledge/hardening-patterns.md"
+  patterns_file: "{project-root}/_kdbp/knowledge/hardening-patterns.md"
   builtin_threshold:
     max_tasks: 2
     max_subtasks: 8

@@ -27,10 +27,10 @@ CLAUDE.md       ← Project-owned. Both BMAD and ECC reference it.
 
 ### What ECC Manages (source of truth in `_ecc/`)
 - `_ecc/workflows/` - 8 active workflow definitions
-- `_ecc/hooks/` - 8 hook scripts
-- `_ecc/knowledge/` - code-review-patterns.md, hardening-patterns.md
+- `_ecc/hooks/_archived/` - hook scripts (archived — KDBP hooks are canonical since 2026-04-02)
+- `_kdbp/knowledge/` - code-review-patterns.md, hardening-patterns.md (KDBP canonical since 2026-04-02)
 - `_ecc/rules/` - testing.md, security.md, workflow.md
-- `_ecc/config/` - settings.json, learning config
+- `_ecc/config/` - settings.json (mirrors .claude/settings.json, points to _kdbp/hooks/)
 - `_ecc/commands/` - 8 command stubs
 - `_ecc/plans/` - archived design documents (reference only)
 - `_ecc/tools/` - cozempic-toggle.sh

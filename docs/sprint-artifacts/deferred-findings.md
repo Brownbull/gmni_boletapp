@@ -2,6 +2,9 @@
 
 > Items identified during code review but deferred beyond the current epic.
 > Grouped by product stage. Review during epic planning for future epics.
+>
+> **Triage status:** NEEDS-TRIAGE (2026-04-06) — schedule deep triage during next Epic 18 dev session.
+> Items below have NOT been individually classified as fixed/remaining/won't-fix.
 
 ---
 
@@ -145,6 +148,54 @@
 - **Files:** `tests/unit/features/scan/hooks/useScanHandlers.errorRecovery.test.ts`, `src/features/scan/handlers/processScan/processScan.ts`
 - **Stage:** PROD — Test coverage gap for financial operation
 - **Estimated effort:** 1-2 points (integration test asserting deductUserCredits called on retry path)
+
+### [PROD] Duplicate Store Reads for Scan Results in ScanFeature + ScanOverlay
+
+- **Source:** TD-18-23 review (2026-04-06)
+- **Finding:** `scanResults` and `activeResultIndex` are read from `useScanStore` in both `ScanFeature.tsx` (lines 433-434, for overlay onSave/onEdit handlers) and internally in `ScanOverlay.tsx` (for its own rendering). The two reads always agree (same store), but this architectural duplication means changes to index logic in ScanOverlay require parallel updates in ScanFeature's closures. The overlay's callback signature could pass the active result up instead.
+- **Files:** `src/features/scan/ScanFeature.tsx`, `src/features/scan/components/ScanOverlay.tsx`
+- **Stage:** PROD — Maintenance hazard, not feature-breaking
+- **Estimated effort:** 2 points (refactor ScanOverlay callbacks to pass result, remove ScanFeature store reads)
+
+### [PROD] Unhandled Promise Rejection in Overlay Save Handler
+
+- **Source:** TD-18-23 review (2026-04-06)
+- **Finding:** `onQuickSave` is typed `(data?: QuickSaveDialogData) => Promise<void>` but the overlay's `onSave` closure calls it without `await` or `.catch()`. If the parent's save handler throws, it produces an unhandled promise rejection. The sync `onEdit` handler is unaffected.
+- **Files:** `src/features/scan/ScanFeature.tsx:485-488`
+- **Stage:** PROD — Error handling gap, not feature-breaking (save failure still caught by parent)
+- **Estimated effort:** 1 point (add `.catch()` with toast feedback, or mark handler as void-returning)
+
+### [PROD] Add data-testid to SkeletonLine for Test Resilience
+
+- **Source:** TD-18-25 review (2026-04-06)
+- **Finding:** ScanSkeleton tests query SkeletonLine elements via `.rounded` Tailwind class selector. A cosmetic className refactor would break all 8 shimmer-element tests simultaneously. Adding `data-testid="skeleton-line"` to the SkeletonLine sub-component would decouple tests from styling.
+- **Files:** `src/features/scan/components/ScanSkeleton.tsx:36`, `tests/unit/features/scan/components/ScanSkeleton.test.tsx:99`
+- **Stage:** PROD — Test infrastructure resilience, not feature-breaking
+- **Estimated effort:** 1 point (add data-testid to SkeletonLine, update test selectors)
+
+### [PROD] Scroll Lock Race Condition Across Nested Dialogs
+
+- **Source:** TD-18-26 review (2026-04-07)
+- **Finding:** `body.style.overflow` cleanup always resets to `''` instead of restoring the previous value. If another dialog sets `overflow: hidden`, then one of these portaled dialogs closes, it clears the lock for the still-open parent. A `useBodyScrollLock` shared hook exists but neither dialog uses it.
+- **Files:** `src/features/scan/components/CurrencyMismatchDialog.tsx:192-194`, `src/features/scan/components/TotalMismatchDialog.tsx:167-169`
+- **Stage:** PROD — Dialog nesting is rare but possible with rapid state transitions
+- **Estimated effort:** 2 points (migrate all scan dialogs to useBodyScrollLock)
+
+### [PROD] Scan Dialogs Use Tailwind Colors Instead of CSS Variables
+
+- **Source:** TD-18-26 review (2026-04-07)
+- **Finding:** Both CurrencyMismatchDialog and TotalMismatchDialog use Tailwind semantic color classes (`bg-gray-800`, `text-amber-500`, etc.) with `isDark` ternary instead of CSS variables (`var(--surface)`, `var(--text-primary)`). Violates UI pattern manifest theming rule. Pre-existing across scan feature.
+- **Files:** `src/features/scan/components/CurrencyMismatchDialog.tsx`, `src/features/scan/components/TotalMismatchDialog.tsx`
+- **Stage:** PROD — Theme consistency and maintainability
+- **Estimated effort:** 3 points (convert isDark ternary to CSS variables across both files)
+
+### [PROD] Inline @keyframes Instead of Animation Constants
+
+- **Source:** TD-18-26 review (2026-04-07)
+- **Finding:** Both dialogs inject identical `@keyframes slideUp` via inline `<style>` tags instead of using `animation/constants.ts`. Portal wrapping widens the collision window since both now render at document.body level.
+- **Files:** `src/features/scan/components/CurrencyMismatchDialog.tsx:339`, `src/features/scan/components/TotalMismatchDialog.tsx:354`
+- **Stage:** PROD — Animation infrastructure consistency
+- **Estimated effort:** 1 point (extract slideUp to animation constants, import in both files)
 
 ---
 
@@ -400,6 +451,22 @@
 - **Stage:** PROD — Sanitization layer exists in production code; gap is test coverage, not runtime safety
 - **Estimated effort:** 1 point (add one fixture case with payload string per test file)
 
+### [PROD] Integration Seam Gap: Scan Pipeline → Overlay Result Display
+
+- **Source:** TD-18-19-scan-ux-immediate-overlay review (2026-04-06)
+- **Finding:** Story touches the receipt scan pipeline (useScanInitiation → CF → Firestore → onSnapshot → ScanOverlay). All seams are mocked on both sides in unit tests — no emulator-backed integration test exercises the CF write → Firestore listener → overlay result render handoff. `INTEGRATION_SEAM_CHECK: FAIL`.
+- **Files:** `src/features/scan/hooks/useScanInitiation.ts`, `src/features/scan/components/ScanOverlay.tsx`, `tests/integration/`
+- **Stage:** PROD — Required for integration confidence, not for feature function
+- **Estimated effort:** 3 points (requires Firestore emulator setup, integration test infrastructure for scan pipeline)
+
+### [PROD] ScanOverlay Test File Exceeds 300-Line Unit Cap
+
+- **Source:** TD-18-19-scan-ux-immediate-overlay review (2026-04-06)
+- **Finding:** `ScanOverlay.test.tsx` is 450 lines, exceeding the 300-line unit test limit from testing.md. TD-18-19 added ~120 lines for ready state, fast scan, and action button tests. Split into focused test files (e.g., ScanOverlay.states.test.tsx, ScanOverlay.ready.test.tsx, ScanOverlay.accessibility.test.tsx).
+- **Files:** `tests/unit/features/scan/components/ScanOverlay.test.tsx`
+- **Stage:** PROD — Test maintainability
+- **Estimated effort:** 2 points (split file, update imports, verify all tests pass)
+
 ### [PROD] Adversarial Fixture File Unused by Tests
 
 - **Source:** TD-18-20 review (2026-04-05)
@@ -407,3 +474,19 @@
 - **Files:** `prompt-testing/test-cases/adversarial/malformed-json.fixture.json`, both CF test files
 - **Stage:** PROD — Test infrastructure improvement, not required for feature function
 - **Estimated effort:** 2 points (add fixture-loading utility, update both tests to load from file)
+
+### [PROD] QuickSaveCard Test File Exceeds 300-Line Limit
+
+- **Source:** TD-18-21 review (2026-04-06)
+- **Finding:** `QuickSaveCard.test.tsx` is ~575 lines, nearly double the 300-line unit test limit from `testing.md`. Pre-existing violation worsened by +25 lines from TD-18-21 portal tests. File should be split into focused describe-group files (e.g., rendering, interactions, animations, portal, edge cases).
+- **Files:** `tests/unit/features/scan/components/QuickSaveCard.test.tsx`
+- **Stage:** PROD — Test maintainability, not required for feature function
+- **Estimated effort:** 2 points (split into 3-4 focused test files, update imports)
+
+### [PROD] QuickSaveCard Hardcoded rgba Cancel Button Color
+
+- **Source:** TD-18-21 review (2026-04-06)
+- **Finding:** Cancel button uses hardcoded `rgba(239, 68, 68, 0.2)` and `rgba(239, 68, 68, 0.1)` instead of CSS variable system (e.g., `var(--error)` at reduced opacity). Violates the UI pattern manifest theming rule. Pre-existing — not introduced by TD-18-21.
+- **Files:** `src/features/scan/components/QuickSaveCard.tsx:641`
+- **Stage:** PROD — UI consistency, not required for feature function
+- **Estimated effort:** 1 point (replace with CSS variable + opacity pattern)

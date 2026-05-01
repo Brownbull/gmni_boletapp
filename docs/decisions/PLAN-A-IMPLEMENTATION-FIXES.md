@@ -164,7 +164,7 @@ Adversarial review of the actual implementation, checking KDBP/ECC mirror consis
 
 **Fix:** Added the same verification bash commands to ECC's Pattern 9.
 
-**Files:** `_ecc/knowledge/code-review-patterns.md`
+**Files:** `_kdbp/knowledge/code-review-patterns.md`
 
 ---
 
@@ -182,7 +182,7 @@ Adversarial review of the actual implementation, checking KDBP/ECC mirror consis
 | `_kdbp/.../step-05-triage.md` | R1 | Integration gap classification |
 | `_kdbp/.../step-08-completion.md` (code-review) | R1+R2 | M1 (gate), M3 (no escape), M2 (resolution check) |
 | `_kdbp/.../step-09-completion.md` (dev-story) | R1 | E2 (dev-story path) |
-| `_ecc/knowledge/code-review-patterns.md` | R1+R2 | M4, M5, M6 (Pattern 9), M6 (verification) |
+| `_kdbp/knowledge/code-review-patterns.md` | R1+R2 | M4, M5, M6 (Pattern 9), M6 (verification) |
 | `_ecc/.../step-01-story-discovery.md` | R1+R2 | M2, M4 (registry ref), M3 (force-include) |
 | `_ecc/.../step-02-parallel-spawn.md` | R1+R2 | M2, M4, M7, M5 (example gap) |
 | `_ecc/.../step-04-triage.md` | R2 | M1 (classification) |

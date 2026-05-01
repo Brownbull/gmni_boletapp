@@ -1,6 +1,6 @@
 # Tech Debt Story TD-18-19: Immediate Scan Overlay with Smooth Result Transition
 
-Status: drafted
+Status: done
 
 > **Source:** User feedback 2026-04-02 — scan feels disconnected (toast → wait → result)
 > **Priority:** MEDIUM | **Estimated Effort:** 3 points
@@ -74,9 +74,28 @@ The current ScanStore has phases: `idle` → `scanning` → `reviewing`. The ove
 ### Skeleton Pattern
 Use CSS shimmer animation on placeholder divs matching the exact layout of the completed state. This is a visual-only change — no data model changes needed.
 
+## Review Deferrals (2026-04-06)
+
+| # | Finding | Stage | Destination | Tracking |
+|---|---------|-------|-------------|----------|
+| 1 | onSave/onEdit alias — buttons do same thing | MVP | TD-18-23 | ready-for-dev |
+| 3 | ScanSkeleton 0 dedicated tests | MVP | TD-18-24 | ready-for-dev |
+| 4 | Integration seam gap (scan pipeline) | PROD | Backlog | deferred-findings.md |
+| 10 | Test file exceeds 300-line cap | PROD | Backlog | deferred-findings.md |
+
 ## Dependencies
 - **Benefits from TD-18-18** (scan speed) — with faster scans, the skeleton shows for less time, making the transition feel even smoother
 - **Independent of TD-18-17** (JSON repair) — handles success/error states regardless
+
+## Senior Developer Review (ECC)
+- **Date:** 2026-04-06
+- **Agents:** code-reviewer (sonnet), tdd-guide (sonnet)
+- **Classification:** SIMPLE
+- **Score:** 6.3/10 → post-fix: 8.1/10
+- **Outcome:** APPROVE with deferrals — 5 quick fixes applied, 2 TD stories created, 2 to backlog
+- **Action items:** TD-18-23 (save/edit differentiation), TD-18-24 (ScanSkeleton tests)
+
+<!-- CITED: L2-001 (git staging), L2-009 (integration seams) -->
 
 ## Files Likely Touched
 1. `src/features/scan/components/ScanOverlay.tsx` or equivalent (edit — add skeleton state)

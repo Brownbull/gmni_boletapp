@@ -30,7 +30,7 @@ echo "  -> $(ls "$SCRIPT_DIR/rules/"*.md | wc -l) rule files copied"
 # 3. Copy settings.json (hooks config) - preserves existing settings.local.json
 echo "[3/5] Copying settings.json (hook configuration)..."
 cp "$SCRIPT_DIR/config/settings.json" "$PROJECT_DIR/.claude/settings.json"
-echo "  -> Hook paths point to $SCRIPT_DIR/hooks/"
+echo "  -> Hook paths point to _kdbp/hooks/ (KDBP canonical since 2026-04-02)"
 
 # 4. Copy TEA customization to BMAD config (bridging ECC→BMAD)
 echo "[4/5] Copying TEA customization to BMAD..."
